@@ -45,6 +45,8 @@ public class MainTask extends Task<Void> {
                        // access is already guarded above
         
         // A task that only requires read access is run.
+        // No guard is required, static analysis finds that (read) access is
+        // already guarded above
         final Task<Void> task2 = new ReadTask(c);
         Guardian.share(c);
         TaskSystem.runTask(task2);
@@ -80,7 +82,7 @@ public class MainTask extends Task<Void> {
         
         @Override
         public Void call() {
-            Guardian.usePassed(c); // added by the compiler
+            Guardian.registerNewOwner(c); // added by the compiler
             
             final int i = c.get(); // No guard required, static analysis
                                    // finds that read access is available
@@ -88,7 +90,7 @@ public class MainTask extends Task<Void> {
             c.set(i + 10); // No guard required, static analysis
                            // finds that write access is available
             
-            Guardian.release(c); // added by the compiler
+            Guardian.releasePassed(c); // added by the compiler
             return null;
         }
     }
@@ -104,13 +106,12 @@ public class MainTask extends Task<Void> {
         
         @Override
         public Void call() {
-            Guardian.useShared(c); // added by the compiler
-            
             final int i = c.get(); // No guard required, static analysis
                                    // finds that read access is available
             
-            Guardian.release(c); // added here, static analysis finds that c
-                                 // is not used anymore
+            Guardian.releaseShared(c); // added here, static analysis finds that
+                                       // c
+            // is not used anymore
             
             System.out.println(i); // Non-deterministic call
             return null;
