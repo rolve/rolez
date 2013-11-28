@@ -1,8 +1,9 @@
 package ch.trick17.peppl.manual.simple;
 
+import ch.trick17.peppl.manual.lib.Guardian;
 import ch.trick17.peppl.manual.lib.Mutable;
-import ch.trick17.peppl.manual.lib.PepplSystem;
 import ch.trick17.peppl.manual.lib.Task;
+import ch.trick17.peppl.manual.lib.TaskSystem;
 import ch.trick17.peppl.manual.lib._Mutable;
 
 /**
@@ -15,7 +16,7 @@ public class MainTask extends Task<Void> {
     
     public static void main(final String[] args) {
         // Compiler generates the bootstrapping code:
-        PepplSystem.runTask(new MainTask());
+        TaskSystem.runTask(new MainTask());
     }
     
     @Override
@@ -31,13 +32,13 @@ public class MainTask extends Task<Void> {
         // A task that requires write access to container is run. Programmer
         // writes "HelperTask(c);", compiler generates the following:
         final Task<Void> task1 = new ReadWriteTask(c);
-        PepplSystem.pass(c);
-        PepplSystem.runTask(task1);
+        Guardian.pass(c);
+        TaskSystem.runTask(task1);
         
         // c is now inaccessible
         
-        PepplSystem.guardReadWrite(c); // read or write access might not be
-                                       // available: compiler adds guard
+        Guardian.guardReadWrite(c); // read or write access might not be
+                                    // available: compiler adds guard
         i = c.get();
         
         c.set(i + 10); // No guard required, static analysis finds that
@@ -45,8 +46,8 @@ public class MainTask extends Task<Void> {
         
         // A task that only requires read access is run.
         final Task<Void> task2 = new ReadTask(c);
-        PepplSystem.share(c);
-        PepplSystem.runTask(task2);
+        Guardian.share(c);
+        TaskSystem.runTask(task2);
         
         i = c.get(); // No guard required, static analysis finds that
                      // read access is available
@@ -61,14 +62,14 @@ public class MainTask extends Task<Void> {
         System.gc(); // Since we have a potentially time-consuming call here,
                      // compiler does not make the method unguarded.
         
-        PepplSystem.guardRead(c); // read access might not be available:
-                                  // compiler adds guard
+        Guardian.guardRead(c); // read access might not be available:
+                               // compiler adds guard
         final int i = c.get();
         
         System.out.println(i); // Non-deterministic call
     }
     
-    private class ReadWriteTask extends Task<Void> {
+    private static class ReadWriteTask extends Task<Void> {
         
         private final @_Mutable Container c;
         
@@ -79,7 +80,7 @@ public class MainTask extends Task<Void> {
         
         @Override
         public Void call() {
-            PepplSystem.usePassed(c); // added by the compiler
+            Guardian.usePassed(c); // added by the compiler
             
             final int i = c.get(); // No guard required, static analysis
                                    // finds that read access is available
@@ -87,12 +88,12 @@ public class MainTask extends Task<Void> {
             c.set(i + 10); // No guard required, static analysis
                            // finds that write access is available
             
-            PepplSystem.release(c); // added by the compiler
+            Guardian.release(c); // added by the compiler
             return null;
         }
     }
     
-    private class ReadTask extends Task<Void> {
+    private static class ReadTask extends Task<Void> {
         
         private final Container c;
         
@@ -103,13 +104,13 @@ public class MainTask extends Task<Void> {
         
         @Override
         public Void call() {
-            PepplSystem.useShared(c); // added by the compiler
+            Guardian.useShared(c); // added by the compiler
             
             final int i = c.get(); // No guard required, static analysis
                                    // finds that read access is available
             
-            PepplSystem.release(c); // added here, static analysis finds that c
-                                    // is not used anymore
+            Guardian.release(c); // added here, static analysis finds that c
+                                 // is not used anymore
             
             System.out.println(i); // Non-deterministic call
             return null;
