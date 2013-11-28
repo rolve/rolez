@@ -1,29 +1,43 @@
 package ch.trick17.peppl.manual.lib;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class PepplSystem {
     
-    public static void guardReadWrite(final Object target) {
-        // TODO
-    }
+    private static ExecutorService executor = Executors.newCachedThreadPool();
     
     public static <V> Future<V> runTask(final Task<V> task) {
-        // TODO
-        return null;
+        return executor.submit(task);
     }
     
-    public static void runVoidTask(final Task<Void> task) {
-        // TODO
-    }
-    
-    public static void pass(final Task<?> src, final Task<?> dest,
-            final Object o) {
+    public static void pass(final Object o) {
         // TODO
     }
     
-    public static void share(final Task<?> src, final Task<?> dest,
-            final Object o) {
+    public static void share(final Object o) {
         // TODO
     }
+    
+    public static void usePassed(final Object o) {
+        // TODO
+    }
+    
+    public static void useShared(final Object o) {
+        // TODO
+    }
+    
+    public static void release(final Object o) {
+        // TODO
+    }
+    
+    public static void guardRead(final Object o) {
+        // TODO
+    }
+    
+    public static void guardReadWrite(final Object o) {
+        // TODO
+    }
+    
 }
