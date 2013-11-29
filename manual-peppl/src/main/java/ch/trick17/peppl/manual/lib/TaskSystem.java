@@ -6,9 +6,17 @@ import java.util.concurrent.Future;
 
 public class TaskSystem {
     
-    private static ExecutorService executor = Executors.newCachedThreadPool();
+    private static final int NUM_THREADS = Runtime.getRuntime()
+            .availableProcessors();
+    
+    private static ExecutorService executor = Executors
+            .newFixedThreadPool(getNumThreads());
     
     public static <V> Future<V> runTask(final Task<V> task) {
         return executor.submit(task);
+    }
+    
+    public static int getNumThreads() {
+        return NUM_THREADS;
     }
 }

@@ -1,18 +1,21 @@
 package ch.trick17.peppl.manual.lib;
 
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 
+import com.google.common.collect.MapMaker;
+
 public class Guardian {
     
-    // FIXME: Use implementation which uses object identity!
-    // IMPROVE: Might use implementation with fewer concurrency guarantees, as
-    // new entries are always distinct from all existing ones
-    // FIXME: When to remove entries? Need some sort of weak map...
-    private static ConcurrentMap<Object, Record> records = new ConcurrentHashMap<>();
+    /**
+     * A concurrent hash map which uses weak keys (i.e. a record is
+     * automatically removed once the corresponding object is garbage-collected)
+     * and (therefore) identity for comparisons.
+     */
+    private static ConcurrentMap<Object, Record> records = new MapMaker()
+            .weakKeys().concurrencyLevel(TaskSystem.getNumThreads()).makeMap();
     
     public static void pass(final Object o) {
         final Record newRec = new Record();
