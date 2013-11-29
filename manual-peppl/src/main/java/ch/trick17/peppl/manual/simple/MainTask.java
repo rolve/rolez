@@ -1,5 +1,7 @@
 package ch.trick17.peppl.manual.simple;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import ch.trick17.peppl.manual.lib.Guardian;
 import ch.trick17.peppl.manual.lib.Mutable;
 import ch.trick17.peppl.manual.lib.Task;
@@ -20,7 +22,7 @@ public class MainTask extends Task<Void> {
     }
     
     @Override
-    public Void call() {
+    protected Void compute() {
         final @Mutable Container c = new Container();
         
         int i = c.get(); // No guard required, static analysis finds
@@ -36,6 +38,7 @@ public class MainTask extends Task<Void> {
         TaskSystem.runTask(task1);
         
         // c is now inaccessible
+        doSomeWork();
         
         Guardian.guardReadWrite(c); // read or write access might not be
                                     // available: compiler adds guard
@@ -54,13 +57,17 @@ public class MainTask extends Task<Void> {
         i = c.get(); // No guard required, static analysis finds that
                      // read access is available
         
-        doSomething(c); // No guard required, method handles guarding
+        randomMethod(c); // No guard required, method handles guarding
         
-        System.out.println(i); // Non-deterministic call
+        Guardian.guardReadWrite(c); // write access may not be available:
+                                    // compiler adds guard
+        c.set(c.get() + 10);
+        
+        System.out.println("MainTask: " + c.get());
         return null;
     }
     
-    public void doSomething(final Container c) {
+    public void randomMethod(final Container c) {
         System.gc(); // Since we have a potentially time-consuming call here,
                      // compiler does not make the method unguarded.
         
@@ -68,7 +75,7 @@ public class MainTask extends Task<Void> {
                                // compiler adds guard
         final int i = c.get();
         
-        System.out.println(i); // Non-deterministic call
+        System.out.println("randomMethod: " + i); // Non-deterministic call
     }
     
     private static class ReadWriteTask extends Task<Void> {
@@ -81,7 +88,7 @@ public class MainTask extends Task<Void> {
         }
         
         @Override
-        public Void call() {
+        protected Void compute() {
             Guardian.registerNewOwner(c); // added by the compiler
             
             final int i = c.get(); // No guard required, static analysis
@@ -91,6 +98,8 @@ public class MainTask extends Task<Void> {
                            // finds that write access is available
             
             Guardian.releasePassed(c); // added by the compiler
+            
+            doSomeWork();
             return null;
         }
     }
@@ -105,16 +114,30 @@ public class MainTask extends Task<Void> {
         }
         
         @Override
-        public Void call() {
+        protected Void compute() {
             final int i = c.get(); // No guard required, static analysis
                                    // finds that read access is available
             
             Guardian.releaseShared(c); // added here, static analysis finds that
-                                       // c
-            // is not used anymore
+                                       // c is not used anymore
             
-            System.out.println(i); // Non-deterministic call
+            doSomeWork();
+            
+            System.out.println("ReadTask: " + i); // Non-deterministic call
             return null;
         }
+    }
+    
+    private static final AtomicInteger workCounter = new AtomicInteger(0);
+    
+    private static void doSomeWork() {
+        final int workUnit = workCounter.incrementAndGet();
+        System.out.println("Doing work " + workUnit);
+        try {
+            Thread.sleep(1000);
+        } catch(final InterruptedException e) {
+            // Ignore
+        }
+        System.out.println("Work " + workUnit + " done.");
     }
 }
