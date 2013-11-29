@@ -2,11 +2,11 @@ package ch.trick17.peppl.manual.simple;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import ch.trick17.peppl.manual.lib.Guardian;
-import ch.trick17.peppl.manual.lib.Mutable;
-import ch.trick17.peppl.manual.lib.Task;
-import ch.trick17.peppl.manual.lib.TaskSystem;
-import ch.trick17.peppl.manual.lib._Mutable;
+import ch.trick17.peppl.lib.Guardian;
+import ch.trick17.peppl.lib.Mutable;
+import ch.trick17.peppl.lib.Task;
+import ch.trick17.peppl.lib.TaskSystem;
+import ch.trick17.peppl.lib._Mutable;
 
 /**
  * The main task is run when the program begins execution. The compiler adds a

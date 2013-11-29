@@ -1,4 +1,4 @@
-package ch.trick17.peppl.manual.lib;
+package ch.trick17.peppl.lib;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;

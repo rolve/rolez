@@ -1,4 +1,4 @@
-package ch.trick17.peppl.manual.lib;
+package ch.trick17.peppl.lib;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
@@ -99,7 +99,7 @@ public class Guardian {
     private static final class Record {
         
         volatile Thread owner = Thread.currentThread();
-        final ConcurrentLinkedQueue<Thread> prevOwners = new ConcurrentLinkedQueue<>();
+        final ConcurrentLinkedQueue<Thread> prevOwners = new ConcurrentLinkedQueue<Thread>();
         final AtomicInteger sharedCount = new AtomicInteger(0);
         
         private boolean isMutable() {

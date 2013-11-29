@@ -1,4 +1,4 @@
-package ch.trick17.peppl.manual.lib;
+package ch.trick17.peppl.lib;
 
 import java.util.concurrent.Callable;
 
