@@ -74,6 +74,11 @@ public class Guardian {
         final Record record = records.get(o);
         assert record != null;
         
+        /*
+         * isMutable() and isShared() read volatile (atomic) fields written by
+         * releasePassed and releaseShared. Therefore, there is a happens-before
+         * relationship between releasePassed()/releaseShared() and guardRead().
+         */
         while(!(record.isMutable() || record.isShared()))
             LockSupport.park();
     }
@@ -82,6 +87,11 @@ public class Guardian {
         final Record record = records.get(o);
         assert record != null;
         
+        /*
+         * isMutable() reads the volatile owner field written by releasePassed.
+         * Therefore, there is a happens-before relationship between
+         * releasePassed() and guardReadWrite().
+         */
         while(!record.isMutable())
             LockSupport.park();
     }
@@ -104,5 +114,4 @@ public class Guardian {
             return prevOwners.isEmpty();
         }
     }
-    
 }
