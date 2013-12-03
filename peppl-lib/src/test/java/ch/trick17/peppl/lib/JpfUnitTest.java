@@ -9,11 +9,26 @@ import java.util.Map.Entry;
 import java.util.Properties;
 
 import org.junit.BeforeClass;
-import org.junit.Test;
 
-public class JpfUnitTest extends TestJPF {
+/**
+ * Base class for unit tests that are run within JPF. Extends {@link TestJPF}
+ * and sets up JPF in a (relatively) portable way.
+ * <p>
+ * Tests should be written like this:
+ * 
+ * <pre>
+ * public void myTest() {
+ *     if(verifyNoPropertyViolation(args)) {
+ *         ...
+ *     }
+ * }
+ * </pre>
+ * 
+ * @author Michael Faes
+ */
+public abstract class JpfUnitTest extends TestJPF {
     
-    private static String[] args;
+    protected static String[] args;
     
     @BeforeClass
     public static void setup() throws IOException {
@@ -27,19 +42,5 @@ public class JpfUnitTest extends TestJPF {
             argList.add("+" + entry.getKey() + "=" + entry.getValue());
         
         args = argList.toArray(new String[argList.size()]);
-    }
-    
-    @Test
-    public void testPass() {
-        if(verifyNoPropertyViolation(args)) {
-            assertTrue(true);
-        }
-    }
-    
-    @Test(expected = AssertionError.class)
-    public void testFail() {
-        if(verifyNoPropertyViolation(args)) {
-            assertTrue(false);
-        }
     }
 }
