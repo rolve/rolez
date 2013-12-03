@@ -1,6 +1,6 @@
 package ch.trick17.peppl.lib;
 
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
@@ -9,8 +9,7 @@ import com.google.common.collect.MapMaker;
 
 public class Guardian {
     
-    private static final Guardian defaultGuardian = new Guardian(TaskSystem
-            .getNumThreads());
+    private static final Guardian defaultGuardian = new Guardian();
     
     public static Guardian get() {
         return defaultGuardian;
@@ -22,6 +21,10 @@ public class Guardian {
      * and (therefore) identity for comparisons.
      */
     private final ConcurrentMap<Object, Record> records;
+    
+    public Guardian() {
+        this(TaskSystem.getNumThreads());
+    }
     
     public Guardian(final int numThreads) {
         records = new MapMaker().weakKeys().concurrencyLevel(numThreads)
@@ -38,7 +41,7 @@ public class Guardian {
         
         /* First step of passing */
         record.owner = null;
-        record.prevOwners.add(Thread.currentThread());
+        record.prevOwners.addFirst(Thread.currentThread());
     }
     
     public void registerNewOwner(final Object o) {
@@ -68,7 +71,7 @@ public class Guardian {
         assert record.isMutable();
         assert !record.amOriginalOwner();
         
-        record.owner = record.prevOwners.remove();
+        record.owner = record.prevOwners.removeFirst();
         LockSupport.unpark(record.owner);
     }
     
@@ -110,7 +113,7 @@ public class Guardian {
     private static final class Record {
         
         volatile Thread owner = Thread.currentThread();
-        final ConcurrentLinkedQueue<Thread> prevOwners = new ConcurrentLinkedQueue<Thread>();
+        final ConcurrentLinkedDeque<Thread> prevOwners = new ConcurrentLinkedDeque<Thread>();
         final AtomicInteger sharedCount = new AtomicInteger(0);
         
         private boolean isMutable() {
