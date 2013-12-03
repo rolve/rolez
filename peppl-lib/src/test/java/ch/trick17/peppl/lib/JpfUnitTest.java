@@ -4,7 +4,7 @@ import gov.nasa.jpf.util.test.TestJPF;
 
 import org.junit.Test;
 
-public class JpfTest extends TestJPF {
+public class JpfUnitTest extends TestJPF {
     
     @Test
     public void test() {
