@@ -32,9 +32,12 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <!-- Installed using command: mvn install:install-file -Dfile=jpf.jar 
-                -DgroupId=gov.nasa.jpf -DartifactId=jpf-core -Dversion=1139 -Dpackaging=jar -DlocalRepositoryPath=lib 
-                -DcreateChecksum=true -->
+            <!-- Installed main artifact using command: mvn install:install-file 
+                -Dfile=jpf.jar -DgroupId=gov.nasa.jpf -DartifactId=jpf-core -Dversion=1139 -Dpackaging=jar 
+                -DlocalRepositoryPath=lib -DcreateChecksum=true -->
+            <!-- Installed sources using command: mvn install:install-file -Dfile=jpf.jar 
+                -DgroupId=gov.nasa.jpf -DartifactId=jpf-core -Dversion=1139 -Dpackaging=jar -Dclassifier=sources 
+                -DlocalRepositoryPath=lib -DcreateChecksum=true -->
             <groupId>gov.nasa.jpf</groupId>
             <artifactId>jpf-core</artifactId>
             <version>1139</version>
