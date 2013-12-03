@@ -9,15 +9,26 @@ import com.google.common.collect.MapMaker;
 
 public class Guardian {
     
+    private static final Guardian defaultGuardian = new Guardian(TaskSystem
+            .getNumThreads());
+    
+    public static Guardian get() {
+        return defaultGuardian;
+    }
+    
     /**
      * A concurrent hash map which uses weak keys (i.e. a record is
      * automatically removed once the corresponding object is garbage-collected)
      * and (therefore) identity for comparisons.
      */
-    private static ConcurrentMap<Object, Record> records = new MapMaker()
-            .weakKeys().concurrencyLevel(TaskSystem.getNumThreads()).makeMap();
+    private final ConcurrentMap<Object, Record> records;
     
-    public static void pass(final Object o) {
+    public Guardian(final int numThreads) {
+        records = new MapMaker().weakKeys().concurrencyLevel(numThreads)
+                .makeMap();
+    }
+    
+    public void pass(final Object o) {
         final Record newRec = new Record();
         Record record = records.putIfAbsent(o, newRec);
         if(record == null)
@@ -30,7 +41,7 @@ public class Guardian {
         record.prevOwners.add(Thread.currentThread());
     }
     
-    public static void registerNewOwner(final Object o) {
+    public void registerNewOwner(final Object o) {
         final Record record = records.get(o);
         assert record != null;
         assert record.owner == null;
@@ -40,7 +51,7 @@ public class Guardian {
         record.owner = Thread.currentThread();
     }
     
-    public static void share(final Object o) {
+    public void share(final Object o) {
         final Record newRec = new Record();
         Record record = records.putIfAbsent(o, newRec);
         if(record == null)
@@ -51,7 +62,7 @@ public class Guardian {
         record.sharedCount.incrementAndGet();
     }
     
-    public static void releasePassed(final Object o) {
+    public void releasePassed(final Object o) {
         final Record record = records.get(o);
         assert record != null;
         assert record.isMutable();
@@ -61,7 +72,7 @@ public class Guardian {
         LockSupport.unpark(record.owner);
     }
     
-    public static void releaseShared(final Object o) {
+    public void releaseShared(final Object o) {
         final Record record = records.get(o);
         assert record != null;
         assert record.isShared();
@@ -70,7 +81,7 @@ public class Guardian {
         LockSupport.unpark(record.owner);
     }
     
-    public static void guardRead(final Object o) {
+    public void guardRead(final Object o) {
         final Record record = records.get(o);
         assert record != null;
         
@@ -83,7 +94,7 @@ public class Guardian {
             LockSupport.park();
     }
     
-    public static void guardReadWrite(final Object o) {
+    public void guardReadWrite(final Object o) {
         final Record record = records.get(o);
         assert record != null;
         

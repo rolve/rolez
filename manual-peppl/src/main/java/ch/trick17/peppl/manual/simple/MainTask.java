@@ -34,14 +34,14 @@ public class MainTask extends Task<Void> {
         // A task that requires write access to container is run. Programmer
         // writes "HelperTask(c);", compiler generates the following:
         final Task<Void> task1 = new ReadWriteTask(c);
-        Guardian.pass(c);
+        Guardian.get().pass(c);
         TaskSystem.runTask(task1);
         
         // c is now inaccessible
         doSomeWork();
         
-        Guardian.guardReadWrite(c); // read or write access might not be
-                                    // available: compiler adds guard
+        Guardian.get().guardReadWrite(c); // read or write access might not be
+                                          // available: compiler adds guard
         i = c.get();
         
         c.set(i + 10); // No guard required, static analysis finds that
@@ -51,7 +51,7 @@ public class MainTask extends Task<Void> {
         // No guard is required, static analysis finds that (read) access is
         // already guarded above
         final Task<Void> task2 = new ReadTask(c);
-        Guardian.share(c);
+        Guardian.get().share(c);
         TaskSystem.runTask(task2);
         
         i = c.get(); // No guard required, static analysis finds that
@@ -59,8 +59,8 @@ public class MainTask extends Task<Void> {
         
         randomMethod(c); // No guard required, method handles guarding
         
-        Guardian.guardReadWrite(c); // write access may not be available:
-                                    // compiler adds guard
+        Guardian.get().guardReadWrite(c); // write access may not be available:
+                                          // compiler adds guard
         c.set(c.get() + 10);
         
         System.out.println("MainTask: " + c.get());
@@ -71,8 +71,8 @@ public class MainTask extends Task<Void> {
         System.gc(); // Since we have a potentially time-consuming call here,
                      // compiler does not make the method unguarded.
         
-        Guardian.guardRead(c); // read access might not be available:
-                               // compiler adds guard
+        Guardian.get().guardRead(c); // read access might not be available:
+                                     // compiler adds guard
         final int i = c.get();
         
         System.out.println("randomMethod: " + i); // Non-deterministic call
@@ -89,7 +89,7 @@ public class MainTask extends Task<Void> {
         
         @Override
         protected Void compute() {
-            Guardian.registerNewOwner(c); // added by the compiler
+            Guardian.get().registerNewOwner(c); // added by the compiler
             
             final int i = c.get(); // No guard required, static analysis
                                    // finds that read access is available
@@ -97,7 +97,7 @@ public class MainTask extends Task<Void> {
             c.set(i + 10); // No guard required, static analysis
                            // finds that write access is available
             
-            Guardian.releasePassed(c); // added by the compiler
+            Guardian.get().releasePassed(c); // added by the compiler
             
             doSomeWork();
             return null;
@@ -118,8 +118,8 @@ public class MainTask extends Task<Void> {
             final int i = c.get(); // No guard required, static analysis
                                    // finds that read access is available
             
-            Guardian.releaseShared(c); // added here, static analysis finds that
-                                       // c is not used anymore
+            Guardian.get().releaseShared(c); // added here, static analysis
+                                             // finds that c is not used anymore
             
             doSomeWork();
             
