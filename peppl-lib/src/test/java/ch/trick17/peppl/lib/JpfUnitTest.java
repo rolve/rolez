@@ -31,11 +31,11 @@ public abstract class JpfUnitTest extends TestJPF {
     protected static String[] args;
     
     @BeforeClass
-    public static void setup() throws IOException {
+    public static void setUpJpfArgs() throws IOException {
         final Properties props = new Properties();
         props.load(JpfUnitTest.class.getResourceAsStream("jpf.properties"));
         props.setProperty("classpath", "lib/jpf-classes.jar"
-                + File.pathSeparator + "target/test-classes");
+                + File.pathSeparator + System.getProperty("java.class.path"));
         
         final ArrayList<String> argList = new ArrayList<>();
         for(final Entry<Object, Object> entry : props.entrySet())
