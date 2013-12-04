@@ -137,9 +137,12 @@ public class GuardianTest extends JpfUnitTest {
             TaskSystem.get().runTask(new Task<Void>() {
                 @Override
                 public Void compute() {
-                    doBadStuff();
-                    // release is not called because of exception!
-                    guardian.releaseShared(c);
+                    try {
+                        doBadStuff();
+                    } finally {
+                        // Release needs to be in finally-block!
+                        guardian.releaseShared(c);
+                    }
                     return null;
                 }
                 
