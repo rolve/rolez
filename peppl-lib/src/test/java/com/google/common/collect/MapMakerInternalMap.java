@@ -125,7 +125,6 @@ class MapMakerInternalMap<K, V> extends AbstractMap<K, V> implements
      * Maximum number of entries to be drained in a single cleanup run. This
      * applies independently to the cleanup queue and both reference queues.
      */
-    // TODO(fry): empirically optimize this
     static final int DRAIN_MAX = 16;
     
     static final long CLEANUP_EXECUTOR_DELAY_SECS = 60;
@@ -177,8 +176,6 @@ class MapMakerInternalMap<K, V> extends AbstractMap<K, V> implements
     final long expireAfterWriteNanos;
     
     /** Entries waiting to be consumed by the removal listener. */
-    // TODO(fry): define a new type which creates event objects and automates
-    // the clear logic
     final Queue<RemovalNotification<K, V>> removalNotificationQueue;
     
     /**
@@ -297,7 +294,6 @@ class MapMakerInternalMap<K, V> extends AbstractMap<K, V> implements
     
     enum Strength {
         /*
-         * TODO(kevinb): If we strongly reference the value and aren't
          * computing, we needn't wrap the value. This could save ~8 bytes per
          * entry.
          */
@@ -556,9 +552,6 @@ class MapMakerInternalMap<K, V> extends AbstractMap<K, V> implements
         
         <K, V> void copyExpirableEntry(final ReferenceEntry<K, V> original,
                 final ReferenceEntry<K, V> newEntry) {
-            // TODO(fry): when we link values instead of entries this method can
-            // go
-            // away, as can connectExpirables, nullifyExpirable.
             newEntry.setExpirationTime(original.getExpirationTime());
             
             connectExpirables(original.getPreviousExpirable(), newEntry);
@@ -569,9 +562,6 @@ class MapMakerInternalMap<K, V> extends AbstractMap<K, V> implements
         
         <K, V> void copyEvictableEntry(final ReferenceEntry<K, V> original,
                 final ReferenceEntry<K, V> newEntry) {
-            // TODO(fry): when we link values instead of entries this method can
-            // go
-            // away, as can connectEvictables, nullifyEvictable.
             connectEvictables(original.getPreviousEvictable(), newEntry);
             connectEvictables(newEntry, original.getNextEvictable());
             
@@ -1878,7 +1868,6 @@ class MapMakerInternalMap<K, V> extends AbstractMap<K, V> implements
     static int rehash(int h) {
         // Spread bits to regularize both segment and index locations,
         // using variant of single-word Wang/Jenkins hash.
-        // TODO(kevinb): use Hashing/move this to Hashing?
         h += (h << 15) ^ 0xffffcd7d;
         h ^= (h >>> 10);
         h += (h << 3);
@@ -1955,7 +1944,6 @@ class MapMakerInternalMap<K, V> extends AbstractMap<K, V> implements
      * @return the segment
      */
     Segment<K, V> segmentFor(final int hash) {
-        // TODO(fry): Lazily create segments?
         return segments[(hash >>> segmentShift) & segmentMask];
     }
     
@@ -2063,12 +2051,6 @@ class MapMakerInternalMap<K, V> extends AbstractMap<K, V> implements
     @SuppressWarnings("serial")
     // This class is never serialized.
     static class Segment<K, V> extends ReentrantLock {
-        
-        /*
-         * TODO(fry): Consider copying variables (like evictsBySize) from outer
-         * class into this class. It will require more memory but will reduce
-         * indirection.
-         */
         
         /*
          * Segments maintain a table of entry lists that are ALWAYS kept in a

@@ -8,7 +8,7 @@ public class TaskSystemTest extends JpfUnitTest {
     
     @Test
     public void testExceptionInTask() {
-        if(verifyNoPropertyViolation(args)) {
+        if(verifyUnhandledException("java.lang.RuntimeException", args)) {
             new TaskSystem().runTask(new Task<Void>() {
                 @Override
                 protected Void compute() {
@@ -40,9 +40,9 @@ public class TaskSystemTest extends JpfUnitTest {
         }
     }
     
-    @Test(expected = AssertionError.class)
+    @Test
     public void testRunTaskDeadlock() {
-        if(verifyNoPropertyViolation(args)) {
+        if(verifyDeadlock(args)) {
             final TaskSystem system = new TaskSystem(2);
             
             flag = false;
@@ -94,9 +94,9 @@ public class TaskSystemTest extends JpfUnitTest {
         }
     }
     
-    @Test(expected = AssertionError.class)
+    @Test
     public void testAutomaticShutdown() {
-        if(verifyNoPropertyViolation(args)) {
+        if(verifyAssertionError(args)) {
             final TaskSystem system = new TaskSystem(2);
             system.runTask(new Task<Void>() {
                 @Override
@@ -104,7 +104,7 @@ public class TaskSystemTest extends JpfUnitTest {
                     return null;
                 }
             });
-            // This will cause an exception as the last task of the system will
+            // This will cause an error as the last task of the system will
             // shut it down automatically:
             system.runTask(new Task<Void>() {
                 @Override
@@ -115,9 +115,9 @@ public class TaskSystemTest extends JpfUnitTest {
         }
     }
     
-    @Test(expected = AssertionError.class)
+    @Test
     public void testAutomaticShutdownMultiple() {
-        if(verifyNoPropertyViolation(args)) {
+        if(verifyAssertionError(args)) {
             final TaskSystem system = new TaskSystem(2);
             system.runTask(new Task<Void>() {
                 @Override
@@ -143,7 +143,7 @@ public class TaskSystemTest extends JpfUnitTest {
                     return null;
                 }
             });
-            // This will cause an exception as the last task of the system will
+            // This will cause an error as the last task of the system will
             // shut it down automatically:
             system.runTask(new Task<Void>() {
                 @Override
