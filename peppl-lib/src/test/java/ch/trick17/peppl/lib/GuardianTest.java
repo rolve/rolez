@@ -1,5 +1,7 @@
 package ch.trick17.peppl.lib;
 
+import java.util.concurrent.Callable;
+
 import org.junit.Test;
 
 public class GuardianTest extends JpfUnitTest {
@@ -134,9 +136,9 @@ public class GuardianTest extends JpfUnitTest {
             final Container c = new Container();
             
             guardian.share(c);
-            TaskSystem.get().runTask(new Task<Void>() {
+            TaskSystem.get().runTask(new Callable<Void>() {
                 @Override
-                public Void compute() {
+                public Void call() {
                     try {
                         doBadStuff();
                     } finally {

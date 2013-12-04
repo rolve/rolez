@@ -1,10 +1,10 @@
 package ch.trick17.peppl.manual.simple;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import ch.trick17.peppl.lib.Guardian;
 import ch.trick17.peppl.lib.Mutable;
-import ch.trick17.peppl.lib.Task;
 import ch.trick17.peppl.lib.TaskSystem;
 import ch.trick17.peppl.lib._Mutable;
 
@@ -14,7 +14,7 @@ import ch.trick17.peppl.lib._Mutable;
  * 
  * @author Michael Faes
  */
-public class MainTask extends Task<Void> {
+public class MainTask implements Callable<Void> {
     
     public static void main(final String[] args) {
         // Compiler generates the bootstrapping code:
@@ -22,7 +22,7 @@ public class MainTask extends Task<Void> {
     }
     
     @Override
-    protected Void compute() {
+    public Void call() {
         final @Mutable Container c = new Container();
         
         int i = c.get(); // No guard required, static analysis finds
@@ -33,9 +33,8 @@ public class MainTask extends Task<Void> {
         
         // A task that requires write access to container is run. Programmer
         // writes "HelperTask(c);", compiler generates the following:
-        final Task<Void> task1 = new ReadWriteTask(c);
         Guardian.get().pass(c);
-        TaskSystem.get().runTask(task1);
+        TaskSystem.get().runTask(new ReadWriteTask(c));
         
         // c is now inaccessible
         doSomeWork();
@@ -50,9 +49,8 @@ public class MainTask extends Task<Void> {
         // A task that only requires read access is run.
         // No guard is required, static analysis finds that (read) access is
         // already guarded above
-        final Task<Void> task2 = new ReadTask(c);
         Guardian.get().share(c);
-        TaskSystem.get().runTask(task2);
+        TaskSystem.get().runTask(new ReadTask(c));
         
         i = c.get(); // No guard required, static analysis finds that
                      // read access is available
@@ -78,7 +76,7 @@ public class MainTask extends Task<Void> {
         System.out.println("randomMethod: " + i); // Non-deterministic call
     }
     
-    private static class ReadWriteTask extends Task<Void> {
+    private static class ReadWriteTask implements Callable<Void> {
         
         private final @_Mutable Container c;
         
@@ -88,7 +86,7 @@ public class MainTask extends Task<Void> {
         }
         
         @Override
-        protected Void compute() {
+        public Void call() {
             Guardian.get().registerNewOwner(c); // added by the compiler
             
             final int i = c.get(); // No guard required, static analysis
@@ -104,7 +102,7 @@ public class MainTask extends Task<Void> {
         }
     }
     
-    private static class ReadTask extends Task<Void> {
+    private static class ReadTask implements Callable<Void> {
         
         private final Container c;
         
@@ -114,7 +112,7 @@ public class MainTask extends Task<Void> {
         }
         
         @Override
-        protected Void compute() {
+        public Void call() {
             final int i = c.get(); // No guard required, static analysis
                                    // finds that read access is available
             

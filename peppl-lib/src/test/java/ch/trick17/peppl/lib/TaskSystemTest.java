@@ -1,5 +1,6 @@
 package ch.trick17.peppl.lib;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.locks.LockSupport;
 
 import org.junit.Test;
@@ -9,9 +10,9 @@ public class TaskSystemTest extends JpfUnitTest {
     @Test
     public void testExceptionInTask() {
         if(verifyUnhandledException("java.lang.RuntimeException", args)) {
-            new TaskSystem().runTask(new Task<Void>() {
+            new TaskSystem().runTask(new Callable<Void>() {
                 @Override
-                protected Void compute() {
+                public Void call() {
                     throw new RuntimeException();
                 }
             });
@@ -23,13 +24,13 @@ public class TaskSystemTest extends JpfUnitTest {
     @Test
     public void testRunTask() {
         if(verifyNoPropertyViolation(args)) {
-            final TaskSystem system = new TaskSystem(2);
+            final TaskSystem system = new TaskSystem();
             
             flag = false;
             final Thread original = Thread.currentThread();
-            system.runTask(new Task<Void>() {
+            system.runTask(new Callable<Void>() {
                 @Override
-                protected Void compute() {
+                public Void call() {
                     flag = true;
                     LockSupport.unpark(original);
                     return null;
@@ -43,13 +44,13 @@ public class TaskSystemTest extends JpfUnitTest {
     @Test
     public void testRunTaskDeadlock() {
         if(verifyDeadlock(args)) {
-            final TaskSystem system = new TaskSystem(2);
+            final TaskSystem system = new TaskSystem();
             
             flag = false;
             final Thread original = Thread.currentThread();
-            system.runTask(new Task<Void>() {
+            system.runTask(new Callable<Void>() {
                 @Override
-                protected Void compute() {
+                public Void call() {
                     // Not setting the flag will result in a deadlock:
                     // flag = true;
                     LockSupport.unpark(original);
@@ -64,19 +65,19 @@ public class TaskSystemTest extends JpfUnitTest {
     @Test
     public void testRunTaskMultiple() {
         if(verifyNoPropertyViolation(args)) {
-            final TaskSystem system = new TaskSystem(2);
+            final TaskSystem system = new TaskSystem();
             
             flag = false;
             final Thread original = Thread.currentThread();
-            system.runTask(new Task<Void>() {
+            system.runTask(new Callable<Void>() {
                 @Override
-                protected Void compute() {
-                    system.runTask(new Task<Void>() {
+                public Void call() {
+                    system.runTask(new Callable<Void>() {
                         @Override
-                        protected Void compute() {
-                            system.runTask(new Task<Void>() {
+                        public Void call() {
+                            system.runTask(new Callable<Void>() {
                                 @Override
-                                protected Void compute() {
+                                public Void call() {
                                     flag = true;
                                     LockSupport.unpark(original);
                                     return null;
@@ -98,86 +99,23 @@ public class TaskSystemTest extends JpfUnitTest {
     public void testRunTaskWaiting() {
         if(verifyNoPropertyViolation(args)) {
             // TaskSystem with only one thread
-            final TaskSystem system = new TaskSystem(1);
+            final TaskSystem system = new TaskSystem();
             
-            system.runTask(new Task<Void>() {
+            system.runTask(new Callable<Void>() {
                 @Override
-                protected Void compute() {
+                public Void call() {
                     flag = false;
                     final Thread original = Thread.currentThread();
-                    system.runTask(new Task<Void>() {
+                    system.runTask(new Callable<Void>() {
                         @Override
-                        protected Void compute() {
+                        public Void call() {
                             flag = true;
                             LockSupport.unpark(original);
                             return null;
                         }
                     });
-                    // Since there is only one thread in the task system, the
-                    // child task is only executed when the current task is
-                    // finished. Which obviously is a bad idea...
                     while(!flag)
                         LockSupport.park();
-                    return null;
-                }
-            });
-        }
-    }
-    
-    @Test
-    public void testAutomaticShutdown() {
-        if(verifyAssertionError(args)) {
-            final TaskSystem system = new TaskSystem(2);
-            system.runTask(new Task<Void>() {
-                @Override
-                protected Void compute() {
-                    return null;
-                }
-            });
-            // This will cause an error as the last task of the system will
-            // shut it down automatically:
-            system.runTask(new Task<Void>() {
-                @Override
-                protected Void compute() {
-                    return null;
-                }
-            });
-        }
-    }
-    
-    @Test
-    public void testAutomaticShutdownMultiple() {
-        if(verifyAssertionError(args)) {
-            final TaskSystem system = new TaskSystem(2);
-            system.runTask(new Task<Void>() {
-                @Override
-                protected Void compute() {
-                    system.runTask(new Task<Void>() {
-                        @Override
-                        protected Void compute() {
-                            system.runTask(new Task<Void>() {
-                                @Override
-                                protected Void compute() {
-                                    system.runTask(new Task<Void>() {
-                                        @Override
-                                        protected Void compute() {
-                                            return null;
-                                        }
-                                    });
-                                    return null;
-                                }
-                            });
-                            return null;
-                        }
-                    });
-                    return null;
-                }
-            });
-            // This will cause an error as the last task of the system will
-            // shut it down automatically:
-            system.runTask(new Task<Void>() {
-                @Override
-                protected Void compute() {
                     return null;
                 }
             });
