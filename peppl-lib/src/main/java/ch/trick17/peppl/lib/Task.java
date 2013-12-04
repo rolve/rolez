@@ -8,9 +8,11 @@ public abstract class Task<V> implements Callable<V> {
     
     @Override
     public final V call() {
-        final V result = compute();
-        system.finishedTask(this);
-        return result;
+        try {
+            return compute();
+        } finally {
+            system.finishedTask(this);
+        }
     }
     
     abstract protected V compute();

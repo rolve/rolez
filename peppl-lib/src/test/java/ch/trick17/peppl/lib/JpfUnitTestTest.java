@@ -10,16 +10,28 @@ import org.junit.Test;
 public class JpfUnitTestTest extends JpfUnitTest {
     
     @Test
-    public void testPass() {
+    public void testAssertPass() {
         if(verifyNoPropertyViolation(args)) {
             assertTrue(true);
         }
     }
     
     @Test(expected = AssertionError.class)
-    public void testFail() {
+    public void testAssertFail() {
         if(verifyNoPropertyViolation(args)) {
             assertTrue(false);
+        }
+    }
+    
+    @Test(expected = AssertionError.class)
+    public void testAssertFailOtherThread() {
+        if(verifyNoPropertyViolation(args)) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    assertTrue(false);
+                }
+            }).start();
         }
     }
 }
