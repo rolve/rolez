@@ -1,23 +1,13 @@
 package ch.trick17.peppl.lib;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.locks.LockSupport;
 
 import org.junit.Test;
 
 public class TaskSystemTest extends JpfUnitTest {
-    
-    @Test
-    public void testExceptionInTask() {
-        if(verifyUnhandledException("java.lang.RuntimeException", args)) {
-            new TaskSystem().runTask(new Callable<Void>() {
-                @Override
-                public Void call() {
-                    throw new RuntimeException();
-                }
-            });
-        }
-    }
     
     volatile boolean flag;
     
@@ -119,6 +109,32 @@ public class TaskSystemTest extends JpfUnitTest {
                     return null;
                 }
             });
+        }
+    }
+    
+    @Test
+    public void testExceptionInTask() throws Throwable {
+        if(verifyUnhandledExceptionDetails("java.lang.RuntimeException",
+                "Hello", args)) {
+            final TaskSystem system = new TaskSystem();
+            final Future<Void> future = system.runTask(new Callable<Void>() {
+                @Override
+                public Void call() {
+                    throw new RuntimeException("Hello");
+                }
+            });
+            
+            // Propagate thrown exception to original task (thread)
+            try {
+                while(true)
+                    try {
+                        future.get();
+                    } catch(final InterruptedException e) {
+                        // Ignore
+                    }
+            } catch(final ExecutionException e) {
+                throw e.getCause();
+            }
         }
     }
 }

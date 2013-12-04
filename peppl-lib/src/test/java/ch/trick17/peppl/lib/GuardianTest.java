@@ -1,6 +1,8 @@
 package ch.trick17.peppl.lib;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import org.junit.Test;
 
@@ -129,32 +131,45 @@ public class GuardianTest extends JpfUnitTest {
     }
     
     @Test
-    public void testGuardReadWriteException() {
+    public void testGuardReadWriteException() throws Throwable {
         if(verifyUnhandledException("java.lang.RuntimeException", args)) {
             final Guardian guardian = new Guardian();
             
             final Container c = new Container();
             
             guardian.share(c);
-            TaskSystem.get().runTask(new Callable<Void>() {
-                @Override
-                public Void call() {
-                    try {
-                        doBadStuff();
-                    } finally {
-                        // Release needs to be in finally-block!
-                        guardian.releaseShared(c);
-                    }
-                    return null;
-                }
-                
-                private void doBadStuff() {
-                    throw new RuntimeException();
-                }
-            });
+            final Future<Void> future = TaskSystem.get().runTask(
+                    new Callable<Void>() {
+                        @Override
+                        public Void call() {
+                            try {
+                                doBadStuff();
+                            } finally {
+                                // Release needs to be in finally-block!
+                                guardian.releaseShared(c);
+                            }
+                            return null;
+                        }
+                        
+                        private void doBadStuff() {
+                            throw new RuntimeException();
+                        }
+                    });
             
             guardian.guardReadWrite(c);
             c.value = 1;
+            
+            // Propagate thrown exception to original task (thread)
+            try {
+                while(true)
+                    try {
+                        future.get();
+                    } catch(final InterruptedException e) {
+                        // Ignore
+                    }
+            } catch(final ExecutionException e) {
+                throw e.getCause();
+            }
         }
     }
     
