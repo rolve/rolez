@@ -23,7 +23,7 @@ public class Guardian {
     private final ConcurrentMap<Object, Record> records;
     
     public Guardian() {
-        this(TaskSystem.getNumThreads());
+        this(TaskSystem.get().getNumThreads());
     }
     
     public Guardian(final int numThreads) {

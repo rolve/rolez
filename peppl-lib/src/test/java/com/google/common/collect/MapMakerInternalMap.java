@@ -64,6 +64,7 @@ import com.google.common.primitives.Ints;
  * @author Charles Fry
  * @author Doug Lea ({@code ConcurrentHashMap})
  */
+@SuppressWarnings("all")
 class MapMakerInternalMap<K, V> extends AbstractMap<K, V> implements
         ConcurrentMap<K, V>, Serializable {
     

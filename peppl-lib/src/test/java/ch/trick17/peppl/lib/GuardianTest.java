@@ -12,7 +12,7 @@ public class GuardianTest extends JpfUnitTest {
             final Container c = new Container();
             
             guardian.share(c);
-            run(new Runnable() {
+            start(new Runnable() {
                 
                 @Override
                 public void run() {
@@ -34,7 +34,7 @@ public class GuardianTest extends JpfUnitTest {
             final Container c = new Container();
             
             guardian.share(c);
-            run(new Runnable() {
+            start(new Runnable() {
                 
                 @Override
                 public void run() {
@@ -57,7 +57,7 @@ public class GuardianTest extends JpfUnitTest {
             final Container c = new Container();
             
             guardian.share(c);
-            run(new Runnable() {
+            start(new Runnable() {
                 
                 @Override
                 public void run() {
@@ -82,7 +82,7 @@ public class GuardianTest extends JpfUnitTest {
             
             for(int i = 0; i < 3; i++) {
                 guardian.share(c);
-                run(new Runnable() {
+                start(new Runnable() {
                     
                     @Override
                     public void run() {
@@ -108,7 +108,7 @@ public class GuardianTest extends JpfUnitTest {
                 final int theI = i;
                 
                 guardian.share(c);
-                run(new Runnable() {
+                start(new Runnable() {
                     
                     @Override
                     public void run() {
@@ -134,7 +134,7 @@ public class GuardianTest extends JpfUnitTest {
             final Container c = new Container();
             
             guardian.pass(c);
-            run(new Runnable() {
+            start(new Runnable() {
                 
                 @Override
                 public void run() {
@@ -157,7 +157,7 @@ public class GuardianTest extends JpfUnitTest {
             final Container c = new Container();
             
             guardian.pass(c);
-            run(new Runnable() {
+            start(new Runnable() {
                 
                 @Override
                 public void run() {
@@ -181,7 +181,7 @@ public class GuardianTest extends JpfUnitTest {
             final Container c = new Container();
             
             guardian.pass(c);
-            run(new Runnable() {
+            start(new Runnable() {
                 
                 @Override
                 public void run() {
@@ -206,7 +206,7 @@ public class GuardianTest extends JpfUnitTest {
             final Container c = new Container();
             
             guardian.pass(c);
-            run(new Runnable() {
+            start(new Runnable() {
                 
                 @Override
                 public void run() {
@@ -214,7 +214,7 @@ public class GuardianTest extends JpfUnitTest {
                     c.value++;
                     
                     guardian.pass(c);
-                    GuardianTest.run(new Runnable() {
+                    start(new Runnable() {
                         
                         @Override
                         public void run() {
@@ -247,7 +247,7 @@ public class GuardianTest extends JpfUnitTest {
             final Container c = new Container();
             
             guardian.pass(c);
-            run(new Runnable() {
+            start(new Runnable() {
                 
                 @Override
                 public void run() {
@@ -255,7 +255,7 @@ public class GuardianTest extends JpfUnitTest {
                     c.value++;
                     
                     guardian.pass(c);
-                    GuardianTest.run(new Runnable() {
+                    start(new Runnable() {
                         
                         @Override
                         public void run() {
@@ -277,12 +277,11 @@ public class GuardianTest extends JpfUnitTest {
         }
     }
     
-    private static void run(final Runnable task) {
+    private static void start(final Runnable task) {
         new Thread(task).start();
     }
     
     private static class Container {
-        
         int value = 0;
     }
 }

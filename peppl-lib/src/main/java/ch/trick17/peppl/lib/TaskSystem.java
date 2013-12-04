@@ -7,25 +7,46 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class TaskSystem {
     
-    private static final int NUM_THREADS = Runtime.getRuntime()
-            .availableProcessors();
+    private final int numThreads;
+    private final ExecutorService executor;
+    private final AtomicInteger taskCount = new AtomicInteger(0);
     
-    private static ExecutorService executor = Executors
-            .newFixedThreadPool(getNumThreads());
-    
-    private static final AtomicInteger taskCount = new AtomicInteger(0);
-    
-    public static int getNumThreads() {
-        return NUM_THREADS;
+    public TaskSystem() {
+        this(Runtime.getRuntime().availableProcessors());
     }
     
-    public static <V> Future<V> runTask(final Task<V> task) {
+    public TaskSystem(final int numThreads) {
+        this.numThreads = numThreads;
+        executor = Executors.newFixedThreadPool(numThreads);
+    }
+    
+    public int getNumThreads() {
+        return numThreads;
+    }
+    
+    public <V> Future<V> runTask(final Task<V> task) {
+        assert !executor.isShutdown();
+        assert task.system == null;
+        
+        task.system = this;
         taskCount.incrementAndGet();
         return executor.submit(task);
     }
     
-    static void finishedTask(final Task<?> task) {
+    void finishedTask(final Task<?> task) {
+        assert task.system == this;
+        
         if(taskCount.decrementAndGet() == 0)
             executor.shutdown();
+    }
+    
+    /*
+     * Global default task system
+     */
+    
+    private static final TaskSystem defaultSystem = new TaskSystem();
+    
+    public static TaskSystem get() {
+        return defaultSystem;
     }
 }

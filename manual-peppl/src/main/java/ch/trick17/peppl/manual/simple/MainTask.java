@@ -18,7 +18,7 @@ public class MainTask extends Task<Void> {
     
     public static void main(final String[] args) {
         // Compiler generates the bootstrapping code:
-        TaskSystem.runTask(new MainTask());
+        TaskSystem.get().runTask(new MainTask());
     }
     
     @Override
@@ -35,7 +35,7 @@ public class MainTask extends Task<Void> {
         // writes "HelperTask(c);", compiler generates the following:
         final Task<Void> task1 = new ReadWriteTask(c);
         Guardian.get().pass(c);
-        TaskSystem.runTask(task1);
+        TaskSystem.get().runTask(task1);
         
         // c is now inaccessible
         doSomeWork();
@@ -52,7 +52,7 @@ public class MainTask extends Task<Void> {
         // already guarded above
         final Task<Void> task2 = new ReadTask(c);
         Guardian.get().share(c);
-        TaskSystem.runTask(task2);
+        TaskSystem.get().runTask(task2);
         
         i = c.get(); // No guard required, static analysis finds that
                      // read access is available
