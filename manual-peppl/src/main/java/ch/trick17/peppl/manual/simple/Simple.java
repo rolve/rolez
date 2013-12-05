@@ -9,16 +9,17 @@ import ch.trick17.peppl.lib.TaskSystem;
 import ch.trick17.peppl.lib._Mutable;
 
 /**
- * The main task is run when the program begins execution. The compiler adds a
- * bootstrapping main-Method to the main-Task, so the JVM can start it.
+ * This is the main task which is run when the program begins execution. The
+ * compiler adds a bootstrapping main-Method to the main-Task, so the JVM can
+ * start it.
  * 
  * @author Michael Faes
  */
-public class MainTask implements Callable<Void> {
+public class Simple implements Callable<Void> {
     
     public static void main(final String[] args) {
         // Compiler generates the bootstrapping code:
-        TaskSystem.get().runTask(new MainTask());
+        TaskSystem.get().runTask(new Simple());
     }
     
     @Override
