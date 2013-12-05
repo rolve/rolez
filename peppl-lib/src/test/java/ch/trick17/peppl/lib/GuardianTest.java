@@ -1,10 +1,10 @@
 package ch.trick17.peppl.lib;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 import org.junit.Test;
+
+import ch.trick17.peppl.lib.TaskSystem.Task;
 
 public class GuardianTest extends JpfUnitTest {
     
@@ -131,14 +131,14 @@ public class GuardianTest extends JpfUnitTest {
     }
     
     @Test
-    public void testGuardReadWriteException() throws Throwable {
+    public void testGuardReadWriteException() {
         if(verifyUnhandledException("java.lang.RuntimeException", args)) {
             final Guardian guardian = new Guardian();
             
             final Container c = new Container();
             
             guardian.share(c);
-            final Future<Void> future = TaskSystem.get().runTask(
+            final Task<Void> task = TaskSystem.get().runTask(
                     new Callable<Void>() {
                         @Override
                         public Void call() {
@@ -160,16 +160,7 @@ public class GuardianTest extends JpfUnitTest {
             c.value = 1;
             
             // Propagate thrown exception to original task (thread)
-            try {
-                while(true)
-                    try {
-                        future.get();
-                    } catch(final InterruptedException e) {
-                        // Ignore
-                    }
-            } catch(final ExecutionException e) {
-                throw e.getCause();
-            }
+            task.get();
         }
     }
     
