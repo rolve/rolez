@@ -26,22 +26,9 @@
             <version>15.0</version>
         </dependency>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.11</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <!-- Installed main artifact using command: mvn install:install-file 
-                -Dfile=jpf.jar -DgroupId=gov.nasa.jpf -DartifactId=jpf-core -Dversion=1139 -Dpackaging=jar 
-                -DlocalRepositoryPath=lib -DcreateChecksum=true -->
-            <!-- Installed sources using command: mvn install:install-file -Dfile=jpf.jar 
-                -DgroupId=gov.nasa.jpf -DartifactId=jpf-core -Dversion=1139 -Dpackaging=jar -Dclassifier=sources 
-                -DlocalRepositoryPath=lib -DcreateChecksum=true -->
-            <groupId>gov.nasa.jpf</groupId>
-            <artifactId>jpf-core</artifactId>
-            <version>1139</version>
-            <scope>test</scope>
+            <groupId>ch.trick17.simplejpf</groupId>
+            <artifactId>simple-jpf-core</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <!-- Required for the JPF VM -->
@@ -51,12 +38,4 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
-    <repositories>
-        <repository>
-            <id>in-project</id>
-            <name>In Project Repo</name>
-            <url>file://${project.basedir}/lib</url>
-        </repository>
-    </repositories>
 </project>

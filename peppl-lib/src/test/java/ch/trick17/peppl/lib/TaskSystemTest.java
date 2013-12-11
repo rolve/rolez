@@ -6,6 +6,7 @@ import java.util.concurrent.locks.LockSupport;
 import org.junit.Test;
 
 import ch.trick17.peppl.lib.TaskSystem.Task;
+import ch.trick17.simplejpf.JpfUnitTest;
 
 public class TaskSystemTest extends JpfUnitTest {
     

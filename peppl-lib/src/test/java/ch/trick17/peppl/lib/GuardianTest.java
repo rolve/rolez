@@ -5,6 +5,7 @@ import java.util.concurrent.Callable;
 import org.junit.Test;
 
 import ch.trick17.peppl.lib.TaskSystem.Task;
+import ch.trick17.simplejpf.JpfUnitTest;
 
 public class GuardianTest extends JpfUnitTest {
     
