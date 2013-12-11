@@ -1,7 +1,8 @@
 package ch.trick17.peppl.manual.simple;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import ch.trick17.peppl.lib.Guardian;
 import ch.trick17.peppl.lib.Mutable;
@@ -19,7 +20,8 @@ public class Simple implements Callable<Void> {
     
     public static void main(final String[] args) {
         // Compiler generates the bootstrapping code:
-        TaskSystem.get().runTask(new Simple());
+        TaskSystem.get().runTask(new Simple()).get();
+        // get() Propagates exceptions to the main thread
     }
     
     @Override
@@ -43,6 +45,7 @@ public class Simple implements Callable<Void> {
         Guardian.get().guardReadWrite(c); // read or write access might not be
                                           // available: compiler adds guard
         i = c.get();
+        assertEquals(20, i);
         
         c.set(i + 10); // No guard required, static analysis finds that
                        // access is already guarded above
@@ -55,6 +58,7 @@ public class Simple implements Callable<Void> {
         
         i = c.get(); // No guard required, static analysis finds that
                      // read access is available
+        assertEquals(30, i);
         
         randomMethod(c); // No guard required, method handles guarding
         
@@ -62,7 +66,7 @@ public class Simple implements Callable<Void> {
                                           // compiler adds guard
         c.set(c.get() + 10);
         
-        System.out.println("MainTask: " + c.get());
+        assertEquals(40, c.get());
         return null;
     }
     
@@ -73,8 +77,7 @@ public class Simple implements Callable<Void> {
         Guardian.get().guardRead(c); // read access might not be available:
                                      // compiler adds guard
         final int i = c.get();
-        
-        System.out.println("randomMethod: " + i); // Non-deterministic call
+        assertEquals(30, i);
     }
     
     private static class ReadWriteTask implements Callable<Void> {
@@ -92,6 +95,7 @@ public class Simple implements Callable<Void> {
             
             final int i = c.get(); // No guard required, static analysis
                                    // finds that read access is available
+            assertEquals(10, i);
             
             c.set(i + 10); // No guard required, static analysis
                            // finds that write access is available
@@ -116,27 +120,21 @@ public class Simple implements Callable<Void> {
         public Void call() {
             final int i = c.get(); // No guard required, static analysis
                                    // finds that read access is available
+            assertEquals(30, i);
             
             Guardian.get().releaseShared(c); // added here, static analysis
                                              // finds that c is not used anymore
             
             doSomeWork();
-            
-            System.out.println("ReadTask: " + i); // Non-deterministic call
             return null;
         }
     }
     
-    private static final AtomicInteger workCounter = new AtomicInteger(0);
-    
     private static void doSomeWork() {
-        final int workUnit = workCounter.incrementAndGet();
-        System.out.println("Doing work " + workUnit);
         try {
             Thread.sleep(1000);
         } catch(final InterruptedException e) {
             // Ignore
         }
-        System.out.println("Work " + workUnit + " done.");
     }
 }
