@@ -1,5 +1,7 @@
 package ch.trick17.peppl.manual.reduce;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.Random;
 import java.util.concurrent.Callable;
 
@@ -8,11 +10,11 @@ import ch.trick17.peppl.lib.TaskSystem.Task;
 
 public class Reduce implements Callable<Void> {
     
-    private static final int SIZE = 5000000;
-    private static int SPLIT_SIZE = SIZE / 8;
+    private static final int SIZE = 1000;
+    private static int SPLIT_SIZE = SIZE / 2;
     
     public static void main(final String[] args) {
-        TaskSystem.get().runTask(new Reduce());
+        TaskSystem.get().runTask(new Reduce()).get();
     }
     
     @Override
@@ -22,10 +24,8 @@ public class Reduce implements Callable<Void> {
         final Task<Long> task = TaskSystem.get().runTask(
                 new SumPrimesTask(data, 0, SIZE));
         
-        final Long sum = task.get();
-        if(sum != 838596693106L)
-            throw new AssertionError();
-        
+        final long sum = task.get();
+        assertEquals(76125, sum);
         return null;
     }
     
