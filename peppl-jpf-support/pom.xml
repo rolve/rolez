@@ -22,9 +22,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>ch.trick17.simplejpf</groupId>
+            <groupId>ch.trick17.simple-jpf</groupId>
             <artifactId>simple-jpf-core</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>1139</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>

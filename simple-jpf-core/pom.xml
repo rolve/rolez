@@ -1,9 +1,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>ch.trick17.simplejpf</groupId>
+    <groupId>ch.trick17.simple-jpf</groupId>
     <artifactId>simple-jpf-core</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1139</version>
     <name>Simple JPF Core</name>
     <description>Simple model checking of unit tests and other code with JPF (Core)</description>
 
