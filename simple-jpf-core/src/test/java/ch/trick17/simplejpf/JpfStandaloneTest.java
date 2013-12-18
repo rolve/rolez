@@ -1,4 +1,4 @@
-package ch.trick17.peppl.lib;
+package ch.trick17.simplejpf;
 
 import gov.nasa.jpf.Config;
 import gov.nasa.jpf.JPF;

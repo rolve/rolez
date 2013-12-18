@@ -1,11 +1,8 @@
 package ch.trick17.peppl.lib;
 
-import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 
-import com.google.common.collect.MapMaker;
+import ch.trick17.peppl.lib.PepplObject.Record;
 
 public class Guardian {
     
@@ -15,37 +12,22 @@ public class Guardian {
         return defaultGuardian;
     }
     
-    /**
-     * A concurrent hash map which uses weak keys (i.e. a record is
-     * automatically removed once the corresponding object is garbage-collected)
-     * and (therefore) identity for comparisons.
-     */
-    private final ConcurrentMap<Object, Record> records;
-    
-    public Guardian() {
-        this(Runtime.getRuntime().availableProcessors());
-    }
-    
-    public Guardian(final int numThreads) {
-        records = new MapMaker().weakKeys().concurrencyLevel(numThreads)
-                .makeMap();
-    }
-    
-    public void pass(final Object o) {
-        final Record newRec = new Record();
-        Record record = records.putIfAbsent(o, newRec);
-        if(record == null)
-            record = newRec;
-        
-        assert record.isMutable();
+    public void pass(final PepplObject o) {
+        Record record = o.record;
+        if(record == null) {
+            record = new Record();
+            o.record = record;
+        }
+        else
+            guardReadWrite(o);
         
         /* First step of passing */
         record.owner = null;
         record.prevOwners.addFirst(Thread.currentThread());
     }
     
-    public void registerNewOwner(final Object o) {
-        final Record record = records.get(o);
+    public void registerNewOwner(final PepplObject o) {
+        final Record record = o.record;
         assert record != null;
         assert record.owner == null;
         assert !record.amOriginalOwner();
@@ -54,19 +36,21 @@ public class Guardian {
         record.owner = Thread.currentThread();
     }
     
-    public void share(final Object o) {
-        final Record newRec = new Record();
-        Record record = records.putIfAbsent(o, newRec);
-        if(record == null)
-            record = newRec;
-        
-        assert record.isMutable() || record.isShared();
+    public void share(final PepplObject o) {
+        Record record = o.record;
+        if(record == null) {
+            record = new Record();
+            record.owner = Thread.currentThread();
+            o.record = record;
+        }
+        else
+            guardRead(o);
         
         record.sharedCount.incrementAndGet();
     }
     
-    public void releasePassed(final Object o) {
-        final Record record = records.get(o);
+    public void releasePassed(final PepplObject o) {
+        final Record record = o.record;
         assert record != null;
         assert record.isMutable();
         assert !record.amOriginalOwner();
@@ -75,8 +59,8 @@ public class Guardian {
         LockSupport.unpark(record.owner);
     }
     
-    public void releaseShared(final Object o) {
-        final Record record = records.get(o);
+    public void releaseShared(final PepplObject o) {
+        final Record record = o.record;
         assert record != null;
         assert record.isShared();
         
@@ -84,48 +68,29 @@ public class Guardian {
         LockSupport.unpark(record.owner);
     }
     
-    public void guardRead(final Object o) {
-        final Record record = records.get(o);
-        assert record != null;
+    public void guardRead(final PepplObject o) {
+        final Record record = o.record;
         
         /*
          * isMutable() and isShared() read volatile (atomic) fields written by
          * releasePassed and releaseShared. Therefore, there is a happens-before
          * relationship between releasePassed()/releaseShared() and guardRead().
          */
-        while(!(record.isMutable() || record.isShared()))
-            LockSupport.park();
+        if(record != null)
+            while(!(record.isMutable() || record.isShared()))
+                LockSupport.park();
     }
     
-    public void guardReadWrite(final Object o) {
-        final Record record = records.get(o);
-        assert record != null;
+    public void guardReadWrite(final PepplObject o) {
+        final Record record = o.record;
         
         /*
          * isMutable() reads the volatile owner field written by releasePassed.
          * Therefore, there is a happens-before relationship between
          * releasePassed() and guardReadWrite().
          */
-        while(!record.isMutable())
-            LockSupport.park();
-    }
-    
-    private static final class Record {
-        
-        volatile Thread owner = Thread.currentThread();
-        final ConcurrentLinkedDeque<Thread> prevOwners = new ConcurrentLinkedDeque<Thread>();
-        final AtomicInteger sharedCount = new AtomicInteger(0);
-        
-        private boolean isMutable() {
-            return owner == Thread.currentThread() && !isShared();
-        }
-        
-        private boolean isShared() {
-            return sharedCount.get() > 0;
-        }
-        
-        private boolean amOriginalOwner() {
-            return prevOwners.isEmpty();
-        }
+        if(record != null)
+            while(!record.isMutable())
+                LockSupport.park();
     }
 }

@@ -21,15 +21,10 @@
 
     <dependencies>
         <dependency>
-            <groupId>ch.trick17.peppl</groupId>
-            <artifactId>peppl-jpf-support</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <groupId>ch.trick17.simple-jpf</groupId>
+            <artifactId>simple-jpf-core</artifactId>
+            <version>1139</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>15.0</version>
         </dependency>
     </dependencies>
 </project>

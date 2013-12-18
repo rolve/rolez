@@ -18,9 +18,12 @@ import ch.trick17.peppl.lib._Mutable;
  */
 public class Simple implements Callable<Void> {
     
+    private static final TaskSystem S = TaskSystem.get();
+    private static final Guardian G = Guardian.get();
+    
     public static void main(final String[] args) {
         // Compiler generates the bootstrapping code:
-        TaskSystem.get().runTask(new Simple()).get();
+        S.runTask(new Simple()).get();
         // get() Propagates exceptions to the main thread
     }
     
@@ -35,15 +38,15 @@ public class Simple implements Callable<Void> {
                        // that write access is available
         
         // A task that requires write access to container is run. Programmer
-        // writes "HelperTask(c);", compiler generates the following:
-        Guardian.get().pass(c);
-        TaskSystem.get().runTask(new ReadWriteTask(c));
+        // writes "ReadWriteTask(c);", compiler generates the following:
+        G.pass(c);
+        S.runTask(new ReadWriteTask(c));
         
         // c is now inaccessible
         doSomeWork();
         
-        Guardian.get().guardReadWrite(c); // read or write access might not be
-                                          // available: compiler adds guard
+        G.guardReadWrite(c); // read or write access might not be
+                             // available: compiler adds guard
         i = c.get();
         assertEquals(20, i);
         
@@ -51,10 +54,8 @@ public class Simple implements Callable<Void> {
                        // access is already guarded above
         
         // A task that only requires read access is run.
-        // No guard is required, static analysis finds that (read) access is
-        // already guarded above
-        Guardian.get().share(c);
-        TaskSystem.get().runTask(new ReadTask(c));
+        G.share(c);
+        S.runTask(new ReadTask(c));
         
         i = c.get(); // No guard required, static analysis finds that
                      // read access is available
@@ -62,8 +63,8 @@ public class Simple implements Callable<Void> {
         
         randomMethod(c); // No guard required, method handles guarding
         
-        Guardian.get().guardReadWrite(c); // write access may not be available:
-                                          // compiler adds guard
+        G.guardReadWrite(c); // write access may not be available:
+                             // compiler adds guard
         c.set(c.get() + 10);
         
         assertEquals(40, c.get());
@@ -74,8 +75,8 @@ public class Simple implements Callable<Void> {
         System.gc(); // Since we have a potentially time-consuming call here,
                      // compiler does not make the method unguarded.
         
-        Guardian.get().guardRead(c); // read access might not be available:
-                                     // compiler adds guard
+        G.guardRead(c); // read access might not be available:
+                        // compiler adds guard
         final int i = c.get();
         assertEquals(30, i);
     }
@@ -91,7 +92,7 @@ public class Simple implements Callable<Void> {
         
         @Override
         public Void call() {
-            Guardian.get().registerNewOwner(c); // added by the compiler
+            G.registerNewOwner(c); // added by the compiler
             
             final int i = c.get(); // No guard required, static analysis
                                    // finds that read access is available
@@ -100,7 +101,7 @@ public class Simple implements Callable<Void> {
             c.set(i + 10); // No guard required, static analysis
                            // finds that write access is available
             
-            Guardian.get().releasePassed(c); // added by the compiler
+            G.releasePassed(c); // added by the compiler
             
             doSomeWork();
             return null;
@@ -122,8 +123,8 @@ public class Simple implements Callable<Void> {
                                    // finds that read access is available
             assertEquals(30, i);
             
-            Guardian.get().releaseShared(c); // added here, static analysis
-                                             // finds that c is not used anymore
+            G.releaseShared(c); // added here, static analysis
+                                // finds that c is not used anymore
             
             doSomeWork();
             return null;

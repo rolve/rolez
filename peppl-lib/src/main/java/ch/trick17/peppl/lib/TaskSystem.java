@@ -29,6 +29,20 @@ public class TaskSystem {
         }
         
         @Override
+        protected void done() {
+            /*
+             * Print the exception as soon as the task is finished, in case the
+             * parent task does not finish (e.g. because of a deadlock) and the
+             * exception is not propagated.
+             */
+            try {
+                super.get();
+            } catch(final ExecutionException e) {
+                e.getCause().printStackTrace();
+            } catch(final InterruptedException e) {}
+        }
+        
+        @Override
         public V get() {
             try {
                 while(true)

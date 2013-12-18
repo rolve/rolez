@@ -320,7 +320,7 @@ public class GuardianTest extends JpfUnitTest {
         new Thread(task).start();
     }
     
-    private static class Container {
+    private static class Container extends PepplObject {
         int value = 0;
     }
 }

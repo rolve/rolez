@@ -22,12 +22,6 @@
     <dependencies>
         <dependency>
             <groupId>ch.trick17.peppl</groupId>
-            <artifactId>peppl-jpf-support</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>ch.trick17.peppl</groupId>
             <artifactId>peppl-lib</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
@@ -35,6 +29,12 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.11</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.trick17.simple-jpf</groupId>
+            <artifactId>simple-jpf-core</artifactId>
+            <version>1139</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>
