@@ -18,7 +18,6 @@ public class GuardianTest extends JpfUnitTest {
             
             guardian.share(c);
             start(new Runnable() {
-                
                 @Override
                 public void run() {
                     assertEquals(0, c.value);
@@ -40,7 +39,6 @@ public class GuardianTest extends JpfUnitTest {
             
             guardian.share(c);
             start(new Runnable() {
-                
                 @Override
                 public void run() {
                     assertEquals(0, c.value);
@@ -63,7 +61,6 @@ public class GuardianTest extends JpfUnitTest {
             
             guardian.share(c);
             start(new Runnable() {
-                
                 @Override
                 public void run() {
                     assertEquals(0, c.value);
@@ -88,7 +85,6 @@ public class GuardianTest extends JpfUnitTest {
             for(int i = 0; i < 3; i++) {
                 guardian.share(c);
                 start(new Runnable() {
-                    
                     @Override
                     public void run() {
                         assertEquals(0, c.value);
@@ -114,7 +110,6 @@ public class GuardianTest extends JpfUnitTest {
                 
                 guardian.share(c);
                 start(new Runnable() {
-                    
                     @Override
                     public void run() {
                         assertEquals(0, c.value);
@@ -174,7 +169,6 @@ public class GuardianTest extends JpfUnitTest {
             
             guardian.pass(c);
             start(new Runnable() {
-                
                 @Override
                 public void run() {
                     guardian.registerNewOwner(c);
@@ -197,7 +191,6 @@ public class GuardianTest extends JpfUnitTest {
             
             guardian.pass(c);
             start(new Runnable() {
-                
                 @Override
                 public void run() {
                     guardian.registerNewOwner(c);
@@ -221,7 +214,6 @@ public class GuardianTest extends JpfUnitTest {
             
             guardian.pass(c);
             start(new Runnable() {
-                
                 @Override
                 public void run() {
                     guardian.registerNewOwner(c);
@@ -246,7 +238,6 @@ public class GuardianTest extends JpfUnitTest {
             
             guardian.pass(c);
             start(new Runnable() {
-                
                 @Override
                 public void run() {
                     guardian.registerNewOwner(c);
@@ -254,7 +245,6 @@ public class GuardianTest extends JpfUnitTest {
                     
                     guardian.pass(c);
                     start(new Runnable() {
-                        
                         @Override
                         public void run() {
                             guardian.registerNewOwner(c);
@@ -287,7 +277,6 @@ public class GuardianTest extends JpfUnitTest {
             
             guardian.pass(c);
             start(new Runnable() {
-                
                 @Override
                 public void run() {
                     guardian.registerNewOwner(c);
@@ -295,7 +284,6 @@ public class GuardianTest extends JpfUnitTest {
                     
                     guardian.pass(c);
                     start(new Runnable() {
-                        
                         @Override
                         public void run() {
                             guardian.registerNewOwner(c);
@@ -313,6 +301,99 @@ public class GuardianTest extends JpfUnitTest {
             
             guardian.guardRead(c);
             assertEquals(3, c.value);
+        }
+    }
+    
+    @Test
+    public void testPassMultiple() {
+        if(verifyNoPropertyViolation(args)) {
+            final Guardian guardian = new Guardian();
+            
+            final Container c = new Container();
+            
+            guardian.pass(c);
+            start(new Runnable() {
+                @Override
+                public void run() {
+                    guardian.registerNewOwner(c);
+                    c.value++;
+                    guardian.releasePassed(c);
+                }
+            });
+            
+            guardian.pass(c);
+            start(new Runnable() {
+                @Override
+                public void run() {
+                    guardian.registerNewOwner(c);
+                    c.value++;
+                    guardian.releasePassed(c);
+                }
+            });
+            
+            guardian.guardRead(c);
+            assertEquals(2, c.value);
+        }
+    }
+    
+    @Test
+    public void testShareMultiple() {
+        if(verifyNoPropertyViolation(args)) {
+            final Guardian guardian = new Guardian();
+            
+            final Container c = new Container();
+            
+            guardian.share(c);
+            start(new Runnable() {
+                @Override
+                public void run() {
+                    assertEquals(0, c.value);
+                    guardian.releaseShared(c);
+                }
+            });
+            
+            guardian.share(c);
+            start(new Runnable() {
+                @Override
+                public void run() {
+                    assertEquals(0, c.value);
+                    guardian.releaseShared(c);
+                }
+            });
+            
+            guardian.guardReadWrite(c);
+            c.value++;
+        }
+    }
+    
+    @Test
+    public void testPassShare() {
+        if(verifyNoPropertyViolation(args)) {
+            final Guardian guardian = new Guardian();
+            
+            final Container c = new Container();
+            
+            guardian.pass(c);
+            start(new Runnable() {
+                @Override
+                public void run() {
+                    guardian.registerNewOwner(c);
+                    c.value++;
+                    guardian.releasePassed(c);
+                }
+            });
+            
+            guardian.share(c);
+            start(new Runnable() {
+                @Override
+                public void run() {
+                    assertEquals(1, c.value);
+                    guardian.releaseShared(c);
+                }
+            });
+            
+            guardian.guardReadWrite(c);
+            c.value++;
         }
     }
     
