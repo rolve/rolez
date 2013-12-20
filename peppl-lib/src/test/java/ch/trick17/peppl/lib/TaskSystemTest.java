@@ -2,31 +2,44 @@ package ch.trick17.peppl.lib;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.LockSupport;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
-import ch.trick17.peppl.lib.TaskSystem.Task;
 import ch.trick17.simplejpf.JpfUnitTest;
 
+@RunWith(Parameterized.class)
 public class TaskSystemTest extends JpfUnitTest {
+    
+    @Parameterized.Parameters(name = "{0}")
+    public static List<?> taskSystems() {
+        return Arrays.asList(new TaskSystem[][] {
+                {new SingleThreadTaskSystem()}, {new NewThreadTaskSystem()}});
+    }
+    
+    private final TaskSystem system;
+    
+    public TaskSystemTest(final TaskSystem system) {
+        this.system = system;
+    }
     
     volatile boolean flag;
     
     @Test
     public void testRunTask() {
         if(verifyNoPropertyViolation()) {
-            final TaskSystem system = new TaskSystem();
-            
             flag = false;
             final Thread original = Thread.currentThread();
-            system.runTask(new Callable<Void>() {
+            system.run(new Runnable() {
                 @Override
-                public Void call() {
+                public void run() {
                     flag = true;
                     LockSupport.unpark(original);
-                    return null;
                 }
             });
             while(!flag)
@@ -37,17 +50,14 @@ public class TaskSystemTest extends JpfUnitTest {
     @Test
     public void testRunTaskDeadlock() {
         if(verifyDeadlock()) {
-            final TaskSystem system = new TaskSystem();
-            
             flag = false;
             final Thread original = Thread.currentThread();
-            system.runTask(new Callable<Void>() {
+            system.run(new Runnable() {
                 @Override
-                public Void call() {
+                public void run() {
                     // Not setting the flag will result in a deadlock:
                     // flag = true;
                     LockSupport.unpark(original);
-                    return null;
                 }
             });
             while(!flag)
@@ -58,28 +68,23 @@ public class TaskSystemTest extends JpfUnitTest {
     @Test
     public void testRunTaskMultiple() {
         if(verifyNoPropertyViolation()) {
-            final TaskSystem system = new TaskSystem();
-            
             flag = false;
             final Thread original = Thread.currentThread();
-            system.runTask(new Callable<Void>() {
+            system.run(new Runnable() {
                 @Override
-                public Void call() {
-                    system.runTask(new Callable<Void>() {
+                public void run() {
+                    system.run(new Runnable() {
                         @Override
-                        public Void call() {
-                            system.runTask(new Callable<Void>() {
+                        public void run() {
+                            system.run(new Runnable() {
                                 @Override
-                                public Void call() {
+                                public void run() {
                                     flag = true;
                                     LockSupport.unpark(original);
-                                    return null;
                                 }
                             });
-                            return null;
                         }
                     });
-                    return null;
                 }
             });
             
@@ -91,25 +96,20 @@ public class TaskSystemTest extends JpfUnitTest {
     @Test
     public void testRunTaskWaiting() {
         if(verifyNoPropertyViolation()) {
-            // TaskSystem with only one thread
-            final TaskSystem system = new TaskSystem();
-            
-            system.runTask(new Callable<Void>() {
+            system.run(new Runnable() {
                 @Override
-                public Void call() {
+                public void run() {
                     flag = false;
                     final Thread original = Thread.currentThread();
-                    system.runTask(new Callable<Void>() {
+                    system.run(new Runnable() {
                         @Override
-                        public Void call() {
+                        public void run() {
                             flag = true;
                             LockSupport.unpark(original);
-                            return null;
                         }
                     });
                     while(!flag)
                         LockSupport.park();
-                    return null;
                 }
             });
         }
@@ -118,10 +118,9 @@ public class TaskSystemTest extends JpfUnitTest {
     @Test
     public void testExceptionInTask() {
         if(verifyUnhandledException("java.lang.RuntimeException", "Hello")) {
-            final TaskSystem system = new TaskSystem();
-            final Task<Void> task = system.runTask(new Callable<Void>() {
+            final Task<Void> task = system.run(new Runnable() {
                 @Override
-                public Void call() {
+                public void run() {
                     throw new RuntimeException("Hello");
                 }
             });
@@ -134,8 +133,7 @@ public class TaskSystemTest extends JpfUnitTest {
     @Test
     public void testReturnValue() throws Throwable {
         if(verifyNoPropertyViolation()) {
-            final TaskSystem system = new TaskSystem();
-            final Task<Integer> task = system.runTask(new Callable<Integer>() {
+            final Task<Integer> task = system.run(new Callable<Integer>() {
                 @Override
                 public Integer call() {
                     return 42;

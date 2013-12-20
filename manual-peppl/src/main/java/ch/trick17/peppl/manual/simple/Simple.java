@@ -23,7 +23,7 @@ public class Simple implements Callable<Void> {
     
     public static void main(final String[] args) {
         // Compiler generates the bootstrapping code:
-        S.runTask(new Simple()).get();
+        S.run(new Simple()).get();
         // get() Propagates exceptions to the main thread
     }
     
@@ -40,7 +40,7 @@ public class Simple implements Callable<Void> {
         // A task that requires write access to container is run. Programmer
         // writes "ReadWriteTask(c);", compiler generates the following:
         G.pass(c);
-        S.runTask(new ReadWriteTask(c));
+        S.run(new ReadWriteTask(c));
         
         // c is now inaccessible
         doSomeWork();
@@ -55,7 +55,7 @@ public class Simple implements Callable<Void> {
         
         // A task that only requires read access is run.
         G.share(c);
-        S.runTask(new ReadTask(c));
+        S.run(new ReadTask(c));
         
         i = c.get(); // No guard required, static analysis finds that
                      // read access is available

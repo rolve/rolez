@@ -1,65 +1,36 @@
 package ch.trick17.peppl.lib;
 
+import java.io.Serializable;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.FutureTask;
 
-public class TaskSystem {
+public abstract class TaskSystem implements Serializable {
     
-    public <V> Task<V> runTask(final Callable<V> callable) {
-        final Task<V> task = new Task<>(callable);
-        new Thread(task).start();
+    public Task<Void> run(final Runnable runnable) {
+        final Task<Void> task = new Task<>(runnable);
+        doRun(task);
         return task;
+    }
+    
+    public <V> Task<V> run(final Callable<V> callable) {
+        final Task<V> task = new Task<>(callable);
+        doRun(task);
+        return task;
+    }
+    
+    protected abstract void doRun(final Task<?> task);
+    
+    @Override
+    public String toString() {
+        return getClass().getSimpleName();
     }
     
     /*
      * Global default task system
      */
     
-    private static final TaskSystem defaultSystem = new TaskSystem();
+    private static final TaskSystem defaultSystem = new NewThreadTaskSystem();
     
     public static TaskSystem get() {
         return defaultSystem;
-    }
-    
-    public class Task<V> extends FutureTask<V> {
-        
-        public Task(final Callable<V> callable) {
-            super(callable);
-        }
-        
-        @Override
-        protected void done() {
-            /*
-             * Print the exception as soon as the task is finished, in case the
-             * parent task does not finish (e.g. because of a deadlock) and the
-             * exception is not propagated.
-             */
-            try {
-                super.get();
-            } catch(final ExecutionException e) {
-                e.getCause().printStackTrace();
-            } catch(final InterruptedException e) {}
-        }
-        
-        @Override
-        public V get() {
-            try {
-                while(true)
-                    try {
-                        return super.get();
-                    } catch(final InterruptedException e) {
-                        // Ignore
-                    }
-            } catch(final ExecutionException e) {
-                final Throwable cause = e.getCause();
-                if(cause instanceof RuntimeException)
-                    throw (RuntimeException) cause;
-                else if(cause instanceof Error)
-                    throw (Error) cause;
-                else
-                    throw new AssertionError("Checked exception in task", cause);
-            }
-        }
     }
 }

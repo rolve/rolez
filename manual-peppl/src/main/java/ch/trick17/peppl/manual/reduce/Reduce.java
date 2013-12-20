@@ -5,8 +5,8 @@ import static org.junit.Assert.assertEquals;
 import java.util.Random;
 import java.util.concurrent.Callable;
 
+import ch.trick17.peppl.lib.Task;
 import ch.trick17.peppl.lib.TaskSystem;
-import ch.trick17.peppl.lib.TaskSystem.Task;
 
 public class Reduce implements Callable<Void> {
     
@@ -14,14 +14,14 @@ public class Reduce implements Callable<Void> {
     private static int SPLIT_SIZE = SIZE / 2;
     
     public static void main(final String[] args) {
-        TaskSystem.get().runTask(new Reduce()).get();
+        TaskSystem.get().run(new Reduce()).get();
     }
     
     @Override
     public Void call() {
         final int[] data = shuffledInts();
         
-        final Task<Long> task = TaskSystem.get().runTask(
+        final Task<Long> task = TaskSystem.get().run(
                 new SumPrimesTask(data, 0, SIZE));
         
         final long sum = task.get();
@@ -54,9 +54,9 @@ public class Reduce implements Callable<Void> {
             }
             else {
                 final int cut = begin + size / 2;
-                final Task<Long> leftTask = TaskSystem.get().runTask(
+                final Task<Long> leftTask = TaskSystem.get().run(
                         new SumPrimesTask(data, begin, cut));
-                final Task<Long> rightTask = TaskSystem.get().runTask(
+                final Task<Long> rightTask = TaskSystem.get().run(
                         new SumPrimesTask(data, cut, end));
                 return leftTask.get() + rightTask.get();
             }
