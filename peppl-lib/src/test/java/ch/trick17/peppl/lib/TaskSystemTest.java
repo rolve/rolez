@@ -1,5 +1,7 @@
 package ch.trick17.peppl.lib;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.LockSupport;
 
@@ -14,7 +16,7 @@ public class TaskSystemTest extends JpfUnitTest {
     
     @Test
     public void testRunTask() {
-        if(verifyNoPropertyViolation(args)) {
+        if(verifyNoPropertyViolation()) {
             final TaskSystem system = new TaskSystem();
             
             flag = false;
@@ -34,7 +36,7 @@ public class TaskSystemTest extends JpfUnitTest {
     
     @Test
     public void testRunTaskDeadlock() {
-        if(verifyDeadlock(args)) {
+        if(verifyDeadlock()) {
             final TaskSystem system = new TaskSystem();
             
             flag = false;
@@ -55,7 +57,7 @@ public class TaskSystemTest extends JpfUnitTest {
     
     @Test
     public void testRunTaskMultiple() {
-        if(verifyNoPropertyViolation(args)) {
+        if(verifyNoPropertyViolation()) {
             final TaskSystem system = new TaskSystem();
             
             flag = false;
@@ -88,7 +90,7 @@ public class TaskSystemTest extends JpfUnitTest {
     
     @Test
     public void testRunTaskWaiting() {
-        if(verifyNoPropertyViolation(args)) {
+        if(verifyNoPropertyViolation()) {
             // TaskSystem with only one thread
             final TaskSystem system = new TaskSystem();
             
@@ -115,8 +117,7 @@ public class TaskSystemTest extends JpfUnitTest {
     
     @Test
     public void testExceptionInTask() {
-        if(verifyUnhandledExceptionDetails("java.lang.RuntimeException",
-                "Hello", args)) {
+        if(verifyUnhandledException("java.lang.RuntimeException", "Hello")) {
             final TaskSystem system = new TaskSystem();
             final Task<Void> task = system.runTask(new Callable<Void>() {
                 @Override
@@ -132,7 +133,7 @@ public class TaskSystemTest extends JpfUnitTest {
     
     @Test
     public void testReturnValue() throws Throwable {
-        if(verifyNoPropertyViolation(args)) {
+        if(verifyNoPropertyViolation()) {
             final TaskSystem system = new TaskSystem();
             final Task<Integer> task = system.runTask(new Callable<Integer>() {
                 @Override

@@ -1,17 +1,20 @@
 package ch.trick17.peppl.lib;
 
-import java.util.concurrent.Callable;
+import static org.junit.Assert.assertEquals;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 
 import org.junit.Test;
 
-import ch.trick17.peppl.lib.TaskSystem.Task;
 import ch.trick17.simplejpf.JpfUnitTest;
 
 public class GuardianTest extends JpfUnitTest {
     
     @Test
     public void testGuardReadWrite() {
-        if(verifyNoPropertyViolation(args)) {
+        if(verifyNoPropertyViolation()) {
             final Guardian guardian = new Guardian();
             
             final Container c = new Container();
@@ -31,14 +34,14 @@ public class GuardianTest extends JpfUnitTest {
     }
     
     @Test
-    public void testGuardReadWriteFail() {
-        if(verifyAssertionError(args)) {
+    public void testGuardReadWriteFail() throws Throwable {
+        if(verifyAssertionError()) {
             final Guardian guardian = new Guardian();
             
             final Container c = new Container();
             
             guardian.share(c);
-            start(new Runnable() {
+            final Future<?> result = start(new Runnable() {
                 @Override
                 public void run() {
                     assertEquals(0, c.value);
@@ -49,12 +52,17 @@ public class GuardianTest extends JpfUnitTest {
             // A missed guard causes non-determinism:
             // guardian.guardReadWrite(c);
             c.value = 1;
+            try {
+                result.get();
+            } catch(final ExecutionException e) {
+                throw e.getCause();
+            }
         }
     }
     
     @Test
     public void testGuardReadWriteDeadlock() {
-        if(verifyDeadlock(args)) {
+        if(verifyDeadlock()) {
             final Guardian guardian = new Guardian();
             
             final Container c = new Container();
@@ -77,7 +85,7 @@ public class GuardianTest extends JpfUnitTest {
     
     @Test
     public void testGuardReadWriteMultiple() {
-        if(verifyNoPropertyViolation(args)) {
+        if(verifyNoPropertyViolation()) {
             final Guardian guardian = new Guardian();
             
             final Container c = new Container();
@@ -100,7 +108,7 @@ public class GuardianTest extends JpfUnitTest {
     
     @Test
     public void testGuardReadWriteMultipleDeadlock() {
-        if(verifyDeadlock(args)) {
+        if(verifyDeadlock()) {
             final Guardian guardian = new Guardian();
             
             final Container c = new Container();
@@ -127,42 +135,44 @@ public class GuardianTest extends JpfUnitTest {
     }
     
     @Test
-    public void testGuardReadWriteException() {
-        if(verifyUnhandledException("java.lang.RuntimeException", args)) {
+    public void testGuardReadWriteException() throws Throwable {
+        if(verifyUnhandledException("java.lang.RuntimeException", "Hello")) {
             final Guardian guardian = new Guardian();
             
             final Container c = new Container();
             
             guardian.share(c);
-            final Task<Void> task = TaskSystem.get().runTask(
-                    new Callable<Void>() {
-                        @Override
-                        public Void call() {
-                            try {
-                                doBadStuff();
-                            } finally {
-                                // Release needs to be in finally-block!
-                                guardian.releaseShared(c);
-                            }
-                            return null;
-                        }
-                        
-                        private void doBadStuff() {
-                            throw new RuntimeException();
-                        }
-                    });
+            final Future<?> result = start(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        doBadStuff();
+                    } finally {
+                        // Release needs to be in finally-block!
+                        guardian.releaseShared(c);
+                    }
+                }
+                
+                private void doBadStuff() {
+                    throw new RuntimeException("Hello");
+                }
+            });
             
             guardian.guardReadWrite(c);
             c.value = 1;
             
             // Propagate thrown exception to original task (thread)
-            task.get();
+            try {
+                result.get();
+            } catch(final ExecutionException e) {
+                throw e.getCause();
+            }
         }
     }
     
     @Test
     public void testGuardRead() {
-        if(verifyNoPropertyViolation(args)) {
+        if(verifyNoPropertyViolation()) {
             final Guardian guardian = new Guardian();
             
             final Container c = new Container();
@@ -184,7 +194,7 @@ public class GuardianTest extends JpfUnitTest {
     
     @Test
     public void testGuardReadFail() {
-        if(verifyAssertionError(args)) {
+        if(verifyAssertionError()) {
             final Guardian guardian = new Guardian();
             
             final Container c = new Container();
@@ -207,7 +217,7 @@ public class GuardianTest extends JpfUnitTest {
     
     @Test
     public void testGuardReadDeadlock() {
-        if(verifyDeadlock(args)) {
+        if(verifyDeadlock()) {
             final Guardian guardian = new Guardian();
             
             final Container c = new Container();
@@ -231,7 +241,7 @@ public class GuardianTest extends JpfUnitTest {
     
     @Test
     public void testGuardReadMultiple() {
-        if(verifyNoPropertyViolation(args)) {
+        if(verifyNoPropertyViolation()) {
             final Guardian guardian = new Guardian();
             
             final Container c = new Container();
@@ -270,7 +280,7 @@ public class GuardianTest extends JpfUnitTest {
     
     @Test
     public void testGuardReadMultipleDeadlock() {
-        if(verifyDeadlock(args)) {
+        if(verifyDeadlock()) {
             final Guardian guardian = new Guardian();
             
             final Container c = new Container();
@@ -306,7 +316,7 @@ public class GuardianTest extends JpfUnitTest {
     
     @Test
     public void testPassMultiple() {
-        if(verifyNoPropertyViolation(args)) {
+        if(verifyNoPropertyViolation()) {
             final Guardian guardian = new Guardian();
             
             final Container c = new Container();
@@ -338,7 +348,7 @@ public class GuardianTest extends JpfUnitTest {
     
     @Test
     public void testShareMultiple() {
-        if(verifyNoPropertyViolation(args)) {
+        if(verifyNoPropertyViolation()) {
             final Guardian guardian = new Guardian();
             
             final Container c = new Container();
@@ -368,7 +378,7 @@ public class GuardianTest extends JpfUnitTest {
     
     @Test
     public void testPassShare() {
-        if(verifyNoPropertyViolation(args)) {
+        if(verifyNoPropertyViolation()) {
             final Guardian guardian = new Guardian();
             
             final Container c = new Container();
@@ -397,8 +407,10 @@ public class GuardianTest extends JpfUnitTest {
         }
     }
     
-    private static void start(final Runnable task) {
-        new Thread(task).start();
+    private static Future<?> start(final Runnable task) {
+        final FutureTask<?> result = new FutureTask<>(task, null);
+        new Thread(result).start();
+        return result;
     }
     
     private static class Container extends PepplObject {

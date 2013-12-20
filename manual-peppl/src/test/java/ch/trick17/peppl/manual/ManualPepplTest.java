@@ -10,14 +10,14 @@ public class ManualPepplTest extends JpfUnitTest {
     
     @Test
     public void testSimple() {
-        if(verifyNoPropertyViolation(args)) {
+        if(verifyNoPropertyViolation()) {
             Simple.main(new String[0]);
         }
     }
     
     @Test
     public void testReduce() {
-        if(verifyNoPropertyViolation(args)) {
+        if(verifyNoPropertyViolation()) {
             Reduce.main(new String[0]);
         }
     }
