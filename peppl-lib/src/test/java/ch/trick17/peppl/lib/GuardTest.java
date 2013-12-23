@@ -32,7 +32,7 @@ public class GuardTest extends JpfUnitTest {
             final Int i = new Int();
             
             i.share();
-            s.run(new Runnable() {
+            final Task<Void> task = s.run(new Runnable() {
                 @Override
                 public void run() {
                     assertEquals(0, i.value);
@@ -42,6 +42,7 @@ public class GuardTest extends JpfUnitTest {
             
             i.guardReadWrite();
             i.value = 1;
+            task.get();
         }
     }
     
@@ -71,7 +72,7 @@ public class GuardTest extends JpfUnitTest {
             final Int i = new Int();
             
             i.share();
-            s.run(new Runnable() {
+            final Task<Void> task = s.run(new Runnable() {
                 @Override
                 public void run() {
                     assertEquals(0, i.value);
@@ -82,6 +83,7 @@ public class GuardTest extends JpfUnitTest {
             
             i.guardReadWrite();
             i.value = 1;
+            task.get();
         }
     }
     
@@ -90,9 +92,10 @@ public class GuardTest extends JpfUnitTest {
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
             
+            final Task<?>[] tasks = new Task<?>[3];
             for(int k = 0; k < 3; k++) {
                 i.share();
-                s.run(new Runnable() {
+                tasks[k] = s.run(new Runnable() {
                     @Override
                     public void run() {
                         assertEquals(0, i.value);
@@ -103,6 +106,8 @@ public class GuardTest extends JpfUnitTest {
             
             i.guardReadWrite();
             i.value = 1;
+            for(final Task<?> task : tasks)
+                task.get();
         }
     }
     
@@ -111,11 +116,12 @@ public class GuardTest extends JpfUnitTest {
         if(verifyDeadlock()) {
             final Int i = new Int();
             
+            final Task<?>[] tasks = new Task<?>[3];
             for(int k = 0; k < 3; k++) {
                 final int theI = k;
                 
                 i.share();
-                s.run(new Runnable() {
+                tasks[k] = s.run(new Runnable() {
                     @Override
                     public void run() {
                         assertEquals(0, i.value);
@@ -129,6 +135,8 @@ public class GuardTest extends JpfUnitTest {
             
             i.guardReadWrite();
             i.value = 1;
+            for(final Task<?> task : tasks)
+                task.get();
         }
     }
     
@@ -138,18 +146,18 @@ public class GuardTest extends JpfUnitTest {
             final Int i = new Int();
             
             i.pass();
-            final Runnable task = new Runnable() {
+            final Task<Void> task = s.run(new Runnable() {
                 @Override
                 public void run() {
                     i.registerNewOwner();
                     i.value++;
                     i.releasePassed();
                 }
-            };
-            s.run(task);
+            });
             
             i.guardRead();
             assertEquals(1, i.value);
+            task.get();
         }
     }
     
@@ -159,18 +167,18 @@ public class GuardTest extends JpfUnitTest {
             final Int i = new Int();
             
             i.pass();
-            final Runnable task = new Runnable() {
+            final Task<Void> task = s.run(new Runnable() {
                 @Override
                 public void run() {
                     i.registerNewOwner();
                     i.value = 1;
                     i.releasePassed();
                 }
-            };
-            s.run(task);
+            });
             
             // A missing guard causes non-determinism
             assertEquals(1, i.value);
+            task.get();
         }
     }
     
@@ -180,18 +188,18 @@ public class GuardTest extends JpfUnitTest {
             final Int i = new Int();
             
             i.pass();
-            final Runnable task = new Runnable() {
+            final Task<Void> task = s.run(new Runnable() {
                 @Override
                 public void run() {
                     i.registerNewOwner();
                     i.value = 1;
                     // A missing release causes a deadlock
                 }
-            };
-            s.run(task);
+            });
             
             i.guardRead();
             assertEquals(1, i.value);
+            task.get();
         }
     }
     
@@ -200,9 +208,10 @@ public class GuardTest extends JpfUnitTest {
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
             
+            final Task<?>[] tasks = new Task<?>[3];
             for(int k = 0; k < 3; k++) {
                 i.pass();
-                s.run(new Runnable() {
+                tasks[k] = s.run(new Runnable() {
                     @Override
                     public void run() {
                         i.registerNewOwner();
@@ -214,6 +223,8 @@ public class GuardTest extends JpfUnitTest {
             
             i.guardRead();
             assertEquals(3, i.value);
+            for(final Task<?> task : tasks)
+                task.get();
         }
     }
     
@@ -222,10 +233,11 @@ public class GuardTest extends JpfUnitTest {
         if(multithreaded() && verifyDeadlock()) {
             final Int i = new Int();
             
+            final Task<?>[] tasks = new Task<?>[3];
             for(int k = 0; k < 3; k++) {
                 final int theK = k;
                 i.pass();
-                s.run(new Runnable() {
+                tasks[k] = s.run(new Runnable() {
                     @Override
                     public void run() {
                         i.registerNewOwner();
@@ -240,6 +252,8 @@ public class GuardTest extends JpfUnitTest {
             
             i.guardRead();
             assertEquals(2, i.value);
+            for(final Task<?> task : tasks)
+                task.get();
         }
     }
     
@@ -249,14 +263,14 @@ public class GuardTest extends JpfUnitTest {
             final Int i = new Int();
             
             i.pass();
-            s.run(new Runnable() {
+            final Task<Void> task = s.run(new Runnable() {
                 @Override
                 public void run() {
                     i.registerNewOwner();
                     i.value++;
                     
                     i.pass();
-                    s.run(new Runnable() {
+                    final Task<Void> task2 = s.run(new Runnable() {
                         @Override
                         public void run() {
                             i.registerNewOwner();
@@ -272,11 +286,13 @@ public class GuardTest extends JpfUnitTest {
                     i.value++;
                     
                     i.releasePassed();
+                    task2.get();
                 }
             });
             
             i.guardRead();
             assertEquals(3, i.value);
+            task.get();
         }
     }
     
@@ -286,14 +302,14 @@ public class GuardTest extends JpfUnitTest {
             final Int i = new Int();
             
             i.pass();
-            s.run(new Runnable() {
+            final Task<Void> task = s.run(new Runnable() {
                 @Override
                 public void run() {
                     i.registerNewOwner();
                     i.value++;
                     
                     i.pass();
-                    s.run(new Runnable() {
+                    final Task<Void> task2 = s.run(new Runnable() {
                         @Override
                         public void run() {
                             i.registerNewOwner();
@@ -303,11 +319,13 @@ public class GuardTest extends JpfUnitTest {
                     });
                     
                     i.releasePassed();
+                    task2.get();
                 }
             });
             
             i.guardRead();
             assertEquals(3, i.value);
+            task.get();
         }
     }
     
@@ -317,7 +335,7 @@ public class GuardTest extends JpfUnitTest {
             final Int i = new Int();
             
             i.pass();
-            s.run(new Runnable() {
+            final Task<Void> task = s.run(new Runnable() {
                 @Override
                 public void run() {
                     i.registerNewOwner();
@@ -327,7 +345,7 @@ public class GuardTest extends JpfUnitTest {
             });
             
             i.share();
-            s.run(new Runnable() {
+            final Task<Void> task2 = s.run(new Runnable() {
                 @Override
                 public void run() {
                     assertEquals(1, i.value);
@@ -337,6 +355,8 @@ public class GuardTest extends JpfUnitTest {
             
             i.guardReadWrite();
             i.value++;
+            task.get();
+            task2.get();
         }
     }
     
