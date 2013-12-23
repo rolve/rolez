@@ -76,7 +76,6 @@ public class GuardTest extends JpfUnitTest {
                 @Override
                 public void run() {
                     assertEquals(0, i.value);
-                    
                     // A missing release causes a deadlock
                 }
             });
@@ -360,11 +359,348 @@ public class GuardTest extends JpfUnitTest {
         }
     }
     
+    @Test
+    public void testShareGroup() {
+        if(verifyNoPropertyViolation()) {
+            final IntContainer c = new IntContainer();
+            
+            c.share();
+            final Task<Void> task = s.run(new Runnable() {
+                @Override
+                public void run() {
+                    assertEquals(0, c.i.value);
+                    c.releaseShared();
+                }
+            });
+            
+            c.guardRead(); // To read i
+            c.i.guardReadWrite();
+            c.i.value = 1;
+            task.get();
+        }
+    }
+    
+    @Test
+    public void testShareGroupMultiple() {
+        if(verifyNoPropertyViolation()) {
+            final Int i = new Int();
+            final IntContainer c = new IntContainer(i);
+            
+            final Task<?>[] tasks = new Task<?>[3];
+            for(int k = 0; k < 3; k++) {
+                c.share();
+                tasks[k] = s.run(new Runnable() {
+                    @Override
+                    public void run() {
+                        assertEquals(0, c.i.value);
+                        c.releaseShared();
+                    }
+                });
+            }
+            
+            i.guardReadWrite();
+            i.value = 1;
+            for(final Task<?> task : tasks)
+                task.get();
+        }
+    }
+    
+    @Test
+    public void testPassGroup() {
+        if(verifyNoPropertyViolation()) {
+            final Int i = new Int();
+            final IntContainer c = new IntContainer(i);
+            
+            c.pass();
+            final Task<Void> task = s.run(new Runnable() {
+                @Override
+                public void run() {
+                    c.registerNewOwner();
+                    c.i.value++;
+                    c.releasePassed();
+                }
+            });
+            
+            i.guardRead();
+            assertEquals(1, i.value);
+            task.get();
+        }
+    }
+    
+    @Test
+    public void testPassGroupMultiple() {
+        if(verifyNoPropertyViolation()) {
+            final Int i = new Int();
+            final IntContainer c = new IntContainer(i);
+            
+            final Task<?>[] tasks = new Task<?>[3];
+            for(int k = 0; k < 3; k++) {
+                c.pass();
+                tasks[k] = s.run(new Runnable() {
+                    @Override
+                    public void run() {
+                        c.registerNewOwner();
+                        c.i.value++;
+                        c.releasePassed();
+                    }
+                });
+            }
+            
+            i.guardRead();
+            assertEquals(3, i.value);
+            for(final Task<?> task : tasks)
+                task.get();
+        }
+    }
+    
+    @Test
+    public void testPassGroupNested() {
+        if(verifyNoPropertyViolation()) {
+            final Int i = new Int();
+            final IntContainer c = new IntContainer(i);
+            
+            c.pass();
+            final Task<Void> task = s.run(new Runnable() {
+                @Override
+                public void run() {
+                    c.registerNewOwner();
+                    final Int i2 = c.i;
+                    i2.value++;
+                    
+                    c.pass();
+                    final Task<Void> task2 = s.run(new Runnable() {
+                        @Override
+                        public void run() {
+                            c.registerNewOwner();
+                            c.i.value++;
+                            c.releasePassed();
+                        }
+                    });
+                    
+                    i2.guardRead();
+                    assertEquals(2, i2.value);
+                    
+                    i2.guardReadWrite(); // Not necessary here...
+                    i2.value++;
+                    
+                    c.releasePassed();
+                    task2.get();
+                }
+            });
+            
+            i.guardRead();
+            assertEquals(3, i.value);
+            task.get();
+        }
+    }
+    
+    @Test
+    public void testPassShareGroup() {
+        if(verifyNoPropertyViolation()) {
+            final Int i = new Int();
+            final IntContainer c = new IntContainer(i);
+            
+            c.pass();
+            final Task<Void> task = s.run(new Runnable() {
+                @Override
+                public void run() {
+                    c.registerNewOwner();
+                    c.i.value++;
+                    c.releasePassed();
+                }
+            });
+            
+            c.share();
+            final Task<Void> task2 = s.run(new Runnable() {
+                @Override
+                public void run() {
+                    assertEquals(1, c.i.value);
+                    c.releaseShared();
+                }
+            });
+            
+            i.guardReadWrite();
+            i.value++;
+            task.get();
+            task2.get();
+        }
+    }
+    
+    @Test
+    public void testShareSubgroupMultiple() {
+        if(verifyNoPropertyViolation()) {
+            final Int i = new Int();
+            final IntContainer c = new IntContainer(i);
+            
+            i.share();
+            final Task<Void> task1 = s.run(new Runnable() {
+                @Override
+                public void run() {
+                    assertEquals(0, i.value);
+                    i.releaseShared();
+                }
+            });
+            
+            c.share();
+            final Task<Void> task2 = s.run(new Runnable() {
+                @Override
+                public void run() {
+                    assertEquals(0, c.i.value);
+                    c.releaseShared();
+                }
+            });
+            
+            i.share();
+            final Task<Void> task3 = s.run(new Runnable() {
+                @Override
+                public void run() {
+                    assertEquals(0, i.value);
+                    i.releaseShared();
+                }
+            });
+            
+            i.guardReadWrite();
+            i.value = 1;
+            task1.get();
+            task2.get();
+            task3.get();
+        }
+    }
+    
+    @Test
+    public void testPassSubgroupMultiple() {
+        if(verifyNoPropertyViolation()) {
+            final Int i = new Int();
+            final IntContainer c = new IntContainer(i);
+            
+            i.pass();
+            final Task<Void> task1 = s.run(new Runnable() {
+                @Override
+                public void run() {
+                    i.registerNewOwner();
+                    i.value++;
+                    i.releasePassed();
+                }
+            });
+            
+            c.pass();
+            final Task<Void> task2 = s.run(new Runnable() {
+                @Override
+                public void run() {
+                    c.registerNewOwner();
+                    c.i.value++;
+                    c.releasePassed();
+                }
+            });
+            
+            i.pass();
+            final Task<Void> task3 = s.run(new Runnable() {
+                @Override
+                public void run() {
+                    i.registerNewOwner();
+                    i.value++;
+                    i.releasePassed();
+                }
+            });
+            
+            i.guardRead();
+            assertEquals(3, i.value);
+            task1.get();
+            task2.get();
+            task3.get();
+        }
+    }
+    
+    @Test
+    public void testPassSubgroupNested() {
+        if(verifyNoPropertyViolation()) {
+            final Int i = new Int();
+            final IntContainer c = new IntContainer(i);
+            
+            c.pass();
+            final Task<Void> task = s.run(new Runnable() {
+                @Override
+                public void run() {
+                    c.registerNewOwner();
+                    final Int i2 = c.i;
+                    i2.value++;
+                    
+                    i2.pass();
+                    final Task<Void> task2 = s.run(new Runnable() {
+                        @Override
+                        public void run() {
+                            i2.registerNewOwner();
+                            i2.value++;
+                            i2.releasePassed();
+                        }
+                    });
+                    
+                    i2.guardRead();
+                    assertEquals(2, i2.value);
+                    
+                    i2.guardReadWrite(); // Not necessary here...
+                    i2.value++;
+                    
+                    c.releasePassed();
+                    task2.get();
+                }
+            });
+            
+            i.guardRead();
+            assertEquals(3, i.value);
+            task.get();
+        }
+    }
+    
+    @Test
+    public void testPassShareSubgroup() {
+        if(verifyNoPropertyViolation()) {
+            final Int i = new Int();
+            final IntContainer c = new IntContainer(i);
+            
+            c.pass();
+            final Task<Void> task = s.run(new Runnable() {
+                @Override
+                public void run() {
+                    c.registerNewOwner();
+                    c.i.value++;
+                    c.releasePassed();
+                }
+            });
+            
+            i.share();
+            final Task<Void> task2 = s.run(new Runnable() {
+                @Override
+                public void run() {
+                    assertEquals(1, i.value);
+                    i.releaseShared();
+                }
+            });
+            
+            i.guardReadWrite();
+            i.value++;
+            task.get();
+            task2.get();
+        }
+    }
+    
     private boolean multithreaded() {
         return !(s instanceof SingleThreadTaskSystem);
     }
     
     private static class Int extends PepplObject {
         int value;
+    }
+    
+    private static class IntContainer extends PepplObject {
+        Int i;
+        
+        public IntContainer() {
+            i = new Int();
+        }
+        
+        public IntContainer(final Int i) {
+            this.i = i;
+        }
     }
 }
