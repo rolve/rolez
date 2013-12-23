@@ -1,27 +1,45 @@
 package ch.trick17.peppl.lib;
 
-import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.atomic.AtomicInteger;
-
 public class PepplObject {
     
-    volatile Record record = null;
+    // IMPROVE: volatile unnecessary? (other volatile fields are written before
+    // object is visible to other tasks)
+    private volatile Guard guard;
     
-    static class Record {
-        volatile Thread owner = null;
-        final ConcurrentLinkedDeque<Thread> prevOwners = new ConcurrentLinkedDeque<Thread>();
-        final AtomicInteger sharedCount = new AtomicInteger(0);
-        
-        boolean isMutable() {
-            return owner == Thread.currentThread() && !isShared();
-        }
-        
-        boolean isShared() {
-            return sharedCount.get() > 0;
-        }
-        
-        boolean amOriginalOwner() {
-            return prevOwners.isEmpty();
-        }
+    public final void share() {
+        if(guard == null)
+            guard = GuardFactory.getDefault().newGuard();
+        guard.share();
+    }
+    
+    public final void pass() {
+        if(guard == null)
+            guard = GuardFactory.getDefault().newGuard();
+        guard.pass();
+    }
+    
+    public final void registerNewOwner() {
+        assert guard != null;
+        guard.registerNewOwner();
+    }
+    
+    public final void releaseShared() {
+        assert guard != null;
+        guard.releaseShared();
+    }
+    
+    public final void releasePassed() {
+        assert guard != null;
+        guard.releasePassed();
+    }
+    
+    public final void guardRead() {
+        if(guard != null)
+            guard.guardRead();
+    }
+    
+    public final void guardReadWrite() {
+        if(guard != null)
+            guard.guardReadWrite();
     }
 }

@@ -5,7 +5,6 @@ import static org.junit.Assert.assertEquals;
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -13,7 +12,7 @@ import org.junit.runners.Parameterized;
 import ch.trick17.simplejpf.JpfUnitTest;
 
 @RunWith(Parameterized.class)
-public class GuardianTest extends JpfUnitTest {
+public class GuardTest extends JpfUnitTest {
     
     @Parameterized.Parameters(name = "{0}")
     public static List<?> taskSystems() {
@@ -22,53 +21,46 @@ public class GuardianTest extends JpfUnitTest {
     }
     
     private final TaskSystem s;
-    private Guardian guardian;
     
-    public GuardianTest(final TaskSystem s) {
+    public GuardTest(final TaskSystem s) {
         this.s = s;
-    }
-    
-    @Before
-    public void setUp() {
-        guardian = new Guardian();
     }
     
     @Test
     public void testShare() {
         if(verifyNoPropertyViolation()) {
-            final Container c = new Container();
+            final Int i = new Int();
             
-            guardian.share(c);
+            i.share();
             s.run(new Runnable() {
                 @Override
                 public void run() {
-                    assertEquals(0, c.value);
-                    guardian.releaseShared(c);
+                    assertEquals(0, i.value);
+                    i.releaseShared();
                 }
             });
             
-            guardian.guardReadWrite(c);
-            c.value = 1;
+            i.guardReadWrite();
+            i.value = 1;
         }
     }
     
     @Test
     public void testShareMissingGuard() {
         if(multithreaded() && verifyAssertionError()) {
-            final Container c = new Container();
+            final Int i = new Int();
             
-            guardian.share(c);
+            i.share();
             final Task<Void> task = s.run(new Runnable() {
                 @Override
                 public void run() {
-                    assertEquals(0, c.value);
-                    guardian.releaseShared(c);
+                    assertEquals(0, i.value);
+                    i.releaseShared();
                 }
             });
             
-            // A missing guard causes non-determinism:
-            // guardian.guardReadWrite(c);
-            c.value = 1;
+            // A missing guard causes non-determinism
+            i.value = 1;
             task.get();
         }
     }
@@ -76,279 +68,275 @@ public class GuardianTest extends JpfUnitTest {
     @Test
     public void testShareMissingRelease() {
         if(verifyDeadlock()) {
-            final Container c = new Container();
+            final Int i = new Int();
             
-            guardian.share(c);
+            i.share();
             s.run(new Runnable() {
                 @Override
                 public void run() {
-                    assertEquals(0, c.value);
+                    assertEquals(0, i.value);
                     
-                    // A missing release causes a deadlock:
-                    // guardian.releaseShared(c);
+                    // A missing release causes a deadlock
                 }
             });
             
-            guardian.guardReadWrite(c);
-            c.value = 1;
+            i.guardReadWrite();
+            i.value = 1;
         }
     }
     
     @Test
     public void testShareMultiple() {
         if(verifyNoPropertyViolation()) {
-            final Container c = new Container();
+            final Int i = new Int();
             
-            for(int i = 0; i < 3; i++) {
-                guardian.share(c);
+            for(int k = 0; k < 3; k++) {
+                i.share();
                 s.run(new Runnable() {
                     @Override
                     public void run() {
-                        assertEquals(0, c.value);
-                        guardian.releaseShared(c);
+                        assertEquals(0, i.value);
+                        i.releaseShared();
                     }
                 });
             }
             
-            guardian.guardReadWrite(c);
-            c.value = 1;
+            i.guardReadWrite();
+            i.value = 1;
         }
     }
     
     @Test
     public void testShareMultipleMissingRelease() {
         if(verifyDeadlock()) {
-            final Container c = new Container();
+            final Int i = new Int();
             
-            for(int i = 0; i < 3; i++) {
-                final int theI = i;
+            for(int k = 0; k < 3; k++) {
+                final int theI = k;
                 
-                guardian.share(c);
+                i.share();
                 s.run(new Runnable() {
                     @Override
                     public void run() {
-                        assertEquals(0, c.value);
+                        assertEquals(0, i.value);
                         
                         // A single missing release causes a deadlock:
                         if(theI != 0)
-                            guardian.releaseShared(c);
+                            i.releaseShared();
                     }
                 });
             }
             
-            guardian.guardReadWrite(c);
-            c.value = 1;
+            i.guardReadWrite();
+            i.value = 1;
         }
     }
     
     @Test
     public void testPass() {
         if(verifyNoPropertyViolation()) {
-            final Container c = new Container();
+            final Int i = new Int();
             
-            guardian.pass(c);
+            i.pass();
             final Runnable task = new Runnable() {
                 @Override
                 public void run() {
-                    guardian.registerNewOwner(c);
-                    c.value++;
-                    guardian.releasePassed(c);
+                    i.registerNewOwner();
+                    i.value++;
+                    i.releasePassed();
                 }
             };
             s.run(task);
             
-            guardian.guardRead(c);
-            assertEquals(1, c.value);
+            i.guardRead();
+            assertEquals(1, i.value);
         }
     }
     
     @Test
     public void testPassMissingGuard() {
         if(multithreaded() && verifyAssertionError()) {
-            final Container c = new Container();
+            final Int i = new Int();
             
-            guardian.pass(c);
+            i.pass();
             final Runnable task = new Runnable() {
                 @Override
                 public void run() {
-                    guardian.registerNewOwner(c);
-                    c.value = 1;
-                    guardian.releasePassed(c);
+                    i.registerNewOwner();
+                    i.value = 1;
+                    i.releasePassed();
                 }
             };
             s.run(task);
             
-            // A missing guard causes non-determinism:
-            // guardian.guardRead(c);
-            assertEquals(1, c.value);
+            // A missing guard causes non-determinism
+            assertEquals(1, i.value);
         }
     }
     
     @Test
     public void testPassMissingRelease() {
         if(multithreaded() && verifyDeadlock()) {
-            final Container c = new Container();
+            final Int i = new Int();
             
-            guardian.pass(c);
+            i.pass();
             final Runnable task = new Runnable() {
                 @Override
                 public void run() {
-                    guardian.registerNewOwner(c);
-                    c.value = 1;
-                    // A missing release causes a deadlock:
-                    // guardian.releasePassed(c);
+                    i.registerNewOwner();
+                    i.value = 1;
+                    // A missing release causes a deadlock
                 }
             };
             s.run(task);
             
-            guardian.guardRead(c);
-            assertEquals(1, c.value);
+            i.guardRead();
+            assertEquals(1, i.value);
         }
     }
     
     @Test
     public void testPassMultiple() {
         if(verifyNoPropertyViolation()) {
-            final Container c = new Container();
+            final Int i = new Int();
             
-            for(int i = 0; i < 3; i++) {
-                guardian.pass(c);
+            for(int k = 0; k < 3; k++) {
+                i.pass();
                 s.run(new Runnable() {
                     @Override
                     public void run() {
-                        guardian.registerNewOwner(c);
-                        c.value++;
-                        guardian.releasePassed(c);
+                        i.registerNewOwner();
+                        i.value++;
+                        i.releasePassed();
                     }
                 });
             }
             
-            guardian.guardRead(c);
-            assertEquals(3, c.value);
+            i.guardRead();
+            assertEquals(3, i.value);
         }
     }
     
     @Test
     public void testPassMultipleMissingRelease() {
         if(multithreaded() && verifyDeadlock()) {
-            final Container c = new Container();
+            final Int i = new Int();
             
-            for(int i = 0; i < 3; i++) {
-                final int theI = i;
-                guardian.pass(c);
+            for(int k = 0; k < 3; k++) {
+                final int theK = k;
+                i.pass();
                 s.run(new Runnable() {
                     @Override
                     public void run() {
-                        guardian.registerNewOwner(c);
-                        c.value++;
+                        i.registerNewOwner();
+                        i.value++;
                         
                         // A single missing release causes a deadlock:
-                        if(theI != 0)
-                            guardian.releasePassed(c);
+                        if(theK != 0)
+                            i.releasePassed();
                     }
                 });
             }
             
-            guardian.guardRead(c);
-            assertEquals(2, c.value);
+            i.guardRead();
+            assertEquals(2, i.value);
         }
     }
     
     @Test
     public void testPassNested() {
         if(verifyNoPropertyViolation()) {
-            final Container c = new Container();
+            final Int i = new Int();
             
-            guardian.pass(c);
+            i.pass();
             s.run(new Runnable() {
                 @Override
                 public void run() {
-                    guardian.registerNewOwner(c);
-                    c.value++;
+                    i.registerNewOwner();
+                    i.value++;
                     
-                    guardian.pass(c);
+                    i.pass();
                     s.run(new Runnable() {
                         @Override
                         public void run() {
-                            guardian.registerNewOwner(c);
-                            c.value++;
-                            guardian.releasePassed(c);
+                            i.registerNewOwner();
+                            i.value++;
+                            i.releasePassed();
                         }
                     });
                     
-                    guardian.guardRead(c);
-                    assertEquals(2, c.value);
+                    i.guardRead();
+                    assertEquals(2, i.value);
                     
-                    guardian.guardReadWrite(c); // Not necessary here...
-                    c.value++;
+                    i.guardReadWrite(); // Not necessary here...
+                    i.value++;
                     
-                    guardian.releasePassed(c);
+                    i.releasePassed();
                 }
             });
             
-            guardian.guardRead(c);
-            assertEquals(3, c.value);
+            i.guardRead();
+            assertEquals(3, i.value);
         }
     }
     
     @Test
     public void testPassNestedMissingRelease() {
         if(multithreaded() && verifyDeadlock()) {
-            final Container c = new Container();
+            final Int i = new Int();
             
-            guardian.pass(c);
+            i.pass();
             s.run(new Runnable() {
                 @Override
                 public void run() {
-                    guardian.registerNewOwner(c);
-                    c.value++;
+                    i.registerNewOwner();
+                    i.value++;
                     
-                    guardian.pass(c);
+                    i.pass();
                     s.run(new Runnable() {
                         @Override
                         public void run() {
-                            guardian.registerNewOwner(c);
-                            c.value++;
-                            // A missed release causes deadlock:
-                            // guardian.releasePassed(c);
+                            i.registerNewOwner();
+                            i.value++;
+                            // A missed release causes deadlock
                         }
                     });
                     
-                    guardian.releasePassed(c);
+                    i.releasePassed();
                 }
             });
             
-            guardian.guardRead(c);
-            assertEquals(3, c.value);
+            i.guardRead();
+            assertEquals(3, i.value);
         }
     }
     
     @Test
     public void testPassShare() {
         if(verifyNoPropertyViolation()) {
-            final Container c = new Container();
+            final Int i = new Int();
             
-            guardian.pass(c);
+            i.pass();
             s.run(new Runnable() {
                 @Override
                 public void run() {
-                    guardian.registerNewOwner(c);
-                    c.value++;
-                    guardian.releasePassed(c);
+                    i.registerNewOwner();
+                    i.value++;
+                    i.releasePassed();
                 }
             });
             
-            guardian.share(c);
+            i.share();
             s.run(new Runnable() {
                 @Override
                 public void run() {
-                    assertEquals(1, c.value);
-                    guardian.releaseShared(c);
+                    assertEquals(1, i.value);
+                    i.releaseShared();
                 }
             });
             
-            guardian.guardReadWrite(c);
-            c.value++;
+            i.guardReadWrite();
+            i.value++;
         }
     }
     
@@ -356,7 +344,7 @@ public class GuardianTest extends JpfUnitTest {
         return !(s instanceof SingleThreadTaskSystem);
     }
     
-    private static class Container extends PepplObject {
+    private static class Int extends PepplObject {
         int value;
     }
 }

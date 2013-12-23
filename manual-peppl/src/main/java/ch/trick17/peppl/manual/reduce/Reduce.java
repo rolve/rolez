@@ -14,14 +14,14 @@ public class Reduce implements Callable<Void> {
     private static int SPLIT_SIZE = SIZE / 2;
     
     public static void main(final String[] args) {
-        TaskSystem.get().run(new Reduce()).get();
+        TaskSystem.getDefault().run(new Reduce()).get();
     }
     
     @Override
     public Void call() {
         final int[] data = shuffledInts();
         
-        final Task<Long> task = TaskSystem.get().run(
+        final Task<Long> task = TaskSystem.getDefault().run(
                 new SumPrimesTask(data, 0, SIZE));
         
         final long sum = task.get();
@@ -54,9 +54,9 @@ public class Reduce implements Callable<Void> {
             }
             else {
                 final int cut = begin + size / 2;
-                final Task<Long> leftTask = TaskSystem.get().run(
+                final Task<Long> leftTask = TaskSystem.getDefault().run(
                         new SumPrimesTask(data, begin, cut));
-                final Task<Long> rightTask = TaskSystem.get().run(
+                final Task<Long> rightTask = TaskSystem.getDefault().run(
                         new SumPrimesTask(data, cut, end));
                 return leftTask.get() + rightTask.get();
             }

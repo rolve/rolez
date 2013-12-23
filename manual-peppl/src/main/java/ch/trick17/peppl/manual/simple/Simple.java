@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.concurrent.Callable;
 
-import ch.trick17.peppl.lib.Guardian;
 import ch.trick17.peppl.lib.Mutable;
 import ch.trick17.peppl.lib.TaskSystem;
 import ch.trick17.peppl.lib._Mutable;
@@ -18,8 +17,7 @@ import ch.trick17.peppl.lib._Mutable;
  */
 public class Simple implements Callable<Void> {
     
-    private static final TaskSystem S = TaskSystem.get();
-    private static final Guardian G = Guardian.get();
+    private static final TaskSystem S = TaskSystem.getDefault();
     
     public static void main(final String[] args) {
         // Compiler generates the bootstrapping code:
@@ -39,14 +37,14 @@ public class Simple implements Callable<Void> {
         
         // A task that requires write access to container is run. Programmer
         // writes "ReadWriteTask(c);", compiler generates the following:
-        G.pass(c);
+        c.pass();
         S.run(new ReadWriteTask(c));
         
         // c is now inaccessible
         doSomeWork();
         
-        G.guardReadWrite(c); // read or write access might not be
-                             // available: compiler adds guard
+        c.guardReadWrite(); // read or write access might not be
+                            // available: compiler adds guard
         i = c.get();
         assertEquals(20, i);
         
@@ -54,7 +52,7 @@ public class Simple implements Callable<Void> {
                        // access is already guarded above
         
         // A task that only requires read access is run.
-        G.share(c);
+        c.share();
         S.run(new ReadTask(c));
         
         i = c.get(); // No guard required, static analysis finds that
@@ -63,8 +61,8 @@ public class Simple implements Callable<Void> {
         
         randomMethod(c); // No guard required, method handles guarding
         
-        G.guardReadWrite(c); // write access may not be available:
-                             // compiler adds guard
+        c.guardReadWrite(); // write access may not be available:
+                            // compiler adds guard
         c.set(c.get() + 10);
         
         assertEquals(40, c.get());
@@ -75,8 +73,8 @@ public class Simple implements Callable<Void> {
         System.gc(); // Since we have a potentially time-consuming call here,
                      // compiler does not make the method unguarded.
         
-        G.guardRead(c); // read access might not be available:
-                        // compiler adds guard
+        c.guardRead(); // read access might not be available:
+                       // compiler adds guard
         final int i = c.get();
         assertEquals(30, i);
     }
@@ -92,7 +90,7 @@ public class Simple implements Callable<Void> {
         
         @Override
         public Void call() {
-            G.registerNewOwner(c); // added by the compiler
+            c.registerNewOwner(); // added by the compiler
             
             final int i = c.get(); // No guard required, static analysis
                                    // finds that read access is available
@@ -101,7 +99,7 @@ public class Simple implements Callable<Void> {
             c.set(i + 10); // No guard required, static analysis
                            // finds that write access is available
             
-            G.releasePassed(c); // added by the compiler
+            c.releasePassed(); // added by the compiler
             
             doSomeWork();
             return null;
@@ -123,8 +121,8 @@ public class Simple implements Callable<Void> {
                                    // finds that read access is available
             assertEquals(30, i);
             
-            G.releaseShared(c); // added here, static analysis
-                                // finds that c is not used anymore
+            c.releaseShared(); // added here, static analysis
+                               // finds that c is not used anymore
             
             doSomeWork();
             return null;

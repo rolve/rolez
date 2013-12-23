@@ -30,7 +30,7 @@ public abstract class TaskSystem implements Serializable {
     
     private static final TaskSystem defaultSystem = new NewThreadTaskSystem();
     
-    public static TaskSystem get() {
+    public static TaskSystem getDefault() {
         return defaultSystem;
     }
 }
