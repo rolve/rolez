@@ -1,4 +1,4 @@
-package ch.trick17.peppl.lib;
+package ch.trick17.peppl.lib.guard;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -16,28 +16,28 @@ public class Guard {
     private final ConcurrentLinkedDeque<Thread> prevOwners = new ConcurrentLinkedDeque<>();
     private final AtomicInteger sharedCount = new AtomicInteger(0);
     
-    public void share(final PepplObject o) {
+    public void share(final GuardedObject o) {
         processRecusively(o, Op.SHARE, newIdentitySet());
     }
     
-    public void pass(final PepplObject o) {
+    public void pass(final GuardedObject o) {
         processRecusively(o, Op.PASS, newIdentitySet());
     }
     
-    public void registerNewOwner(final PepplObject o) {
+    public void registerNewOwner(final GuardedObject o) {
         processRecusively(o, Op.REGISTER_OWNER, newIdentitySet());
     }
     
-    public void releaseShared(final PepplObject o) {
+    public void releaseShared(final GuardedObject o) {
         processRecusively(o, Op.RELEASE_SHARED, newIdentitySet());
     }
     
-    public void releasePassed(final PepplObject o) {
+    public void releasePassed(final GuardedObject o) {
         processRecusively(o, Op.RELEASE_PASSED, newIdentitySet());
     }
     
-    private void processRecusively(final PepplObject o, final Op op,
-            final Set<PepplObject> processed) {
+    private void processRecusively(final GuardedObject o, final Op op,
+            final Set<GuardedObject> processed) {
         if(processed.add(o)) {
             /* Process current object */
             o.getGuard().process(op);
@@ -53,8 +53,8 @@ public class Guard {
                     throw new AssertionError(e);
                 }
                 if(ref != null) {
-                    assert ref instanceof PepplObject;
-                    final PepplObject other = (PepplObject) ref;
+                    assert ref instanceof GuardedObject;
+                    final GuardedObject other = (GuardedObject) ref;
                     processRecusively(other, op, processed);
                 }
             }
@@ -125,10 +125,10 @@ public class Guard {
         return prevOwners.isEmpty();
     }
     
-    private static List<Field> allRefFields(final PepplObject o) {
+    private static List<Field> allRefFields(final GuardedObject o) {
         final ArrayList<Field> fields = new ArrayList<>();
         Class<?> currentClass = o.getClass();
-        while(currentClass != PepplObject.class) {
+        while(currentClass != GuardedObject.class) {
             final Field[] declaredFields = currentClass.getDeclaredFields();
             for(final Field declaredField : declaredFields)
                 if(!declaredField.getType().isPrimitive())
@@ -138,9 +138,9 @@ public class Guard {
         return Collections.unmodifiableList(fields);
     }
     
-    private static Set<PepplObject> newIdentitySet() {
+    private static Set<GuardedObject> newIdentitySet() {
         return Collections
-                .newSetFromMap(new IdentityHashMap<PepplObject, Boolean>());
+                .newSetFromMap(new IdentityHashMap<GuardedObject, Boolean>());
     }
     
     private static enum Op {

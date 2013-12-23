@@ -1,4 +1,4 @@
-package ch.trick17.peppl.lib;
+package ch.trick17.peppl.lib.task;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;

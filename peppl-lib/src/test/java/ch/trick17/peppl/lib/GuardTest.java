@@ -9,6 +9,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import ch.trick17.peppl.lib.guard.GuardedObject;
+import ch.trick17.peppl.lib.task.NewThreadTaskSystem;
+import ch.trick17.peppl.lib.task.SingleThreadTaskSystem;
+import ch.trick17.peppl.lib.task.Task;
+import ch.trick17.peppl.lib.task.TaskSystem;
 import ch.trick17.simplejpf.JpfUnitTest;
 
 @RunWith(Parameterized.class)
@@ -688,11 +693,11 @@ public class GuardTest extends JpfUnitTest {
         return !(s instanceof SingleThreadTaskSystem);
     }
     
-    private static class Int extends PepplObject {
+    private static class Int extends GuardedObject {
         int value;
     }
     
-    private static class IntContainer extends PepplObject {
+    private static class IntContainer extends GuardedObject {
         Int i;
         
         public IntContainer() {

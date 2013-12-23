@@ -1,4 +1,4 @@
-package ch.trick17.peppl.lib;
+package ch.trick17.peppl.lib.task;
 
 /**
  * A simple {@link TaskSystem} that runs each task in a new thread.

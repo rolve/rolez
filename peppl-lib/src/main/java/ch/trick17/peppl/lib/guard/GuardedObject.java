@@ -1,6 +1,6 @@
-package ch.trick17.peppl.lib;
+package ch.trick17.peppl.lib.guard;
 
-public class PepplObject {
+public class GuardedObject {
     
     // IMPROVE: volatile unnecessary? (other volatile fields are written before
     // object is visible to other tasks)

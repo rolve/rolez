@@ -5,8 +5,8 @@ import static org.junit.Assert.assertEquals;
 import java.util.Random;
 import java.util.concurrent.Callable;
 
-import ch.trick17.peppl.lib.Task;
-import ch.trick17.peppl.lib.TaskSystem;
+import ch.trick17.peppl.lib.task.Task;
+import ch.trick17.peppl.lib.task.TaskSystem;
 
 public class Reduce implements Callable<Void> {
     

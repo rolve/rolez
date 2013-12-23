@@ -5,10 +5,10 @@ import static org.junit.Assert.assertEquals;
 import java.util.concurrent.Callable;
 
 import ch.trick17.peppl.lib.Mutable;
-import ch.trick17.peppl.lib.PepplObject;
-import ch.trick17.peppl.lib.Task;
-import ch.trick17.peppl.lib.TaskSystem;
 import ch.trick17.peppl.lib._Mutable;
+import ch.trick17.peppl.lib.guard.GuardedObject;
+import ch.trick17.peppl.lib.task.Task;
+import ch.trick17.peppl.lib.task.TaskSystem;
 
 public class SimpleGroups implements Callable<Void> {
     
@@ -84,15 +84,15 @@ public class SimpleGroups implements Callable<Void> {
         }
     }
     
-    public static class X extends PepplObject {
+    public static class X extends GuardedObject {
         public Y y;
     }
     
-    public static class Y extends PepplObject {
+    public static class Y extends GuardedObject {
         public int i;
     }
     
-    public static class Z extends PepplObject {
+    public static class Z extends GuardedObject {
         public Y y;
     }
 }

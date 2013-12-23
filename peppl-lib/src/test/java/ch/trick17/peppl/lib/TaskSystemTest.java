@@ -11,6 +11,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import ch.trick17.peppl.lib.task.NewThreadTaskSystem;
+import ch.trick17.peppl.lib.task.SingleThreadTaskSystem;
+import ch.trick17.peppl.lib.task.Task;
+import ch.trick17.peppl.lib.task.TaskSystem;
 import ch.trick17.simplejpf.JpfUnitTest;
 
 @RunWith(Parameterized.class)

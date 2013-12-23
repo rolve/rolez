@@ -1,11 +1,11 @@
 package ch.trick17.peppl.manual.simple;
 
 import ch.trick17.peppl.lib.Mutable;
-import ch.trick17.peppl.lib.PepplObject;
 import ch.trick17.peppl.lib._UnguardedRead;
 import ch.trick17.peppl.lib._UnguardedReadWrite;
+import ch.trick17.peppl.lib.guard.GuardedObject;
 
-public class Container extends PepplObject {
+public class Container extends GuardedObject {
     
     private int i;
     

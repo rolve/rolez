@@ -1,4 +1,4 @@
-package ch.trick17.peppl.lib;
+package ch.trick17.peppl.lib.task;
 
 public class SingleThreadTaskSystem extends TaskSystem {
     
