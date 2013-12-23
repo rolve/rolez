@@ -7,30 +7,32 @@ public class PepplObject {
     private volatile Guard guard;
     
     public final void share() {
-        if(guard == null)
-            guard = GuardFactory.getDefault().newGuard();
-        guard.share();
+        getGuard().share(this);
     }
     
     public final void pass() {
+        getGuard().pass(this);
+    }
+    
+    Guard getGuard() {
         if(guard == null)
             guard = GuardFactory.getDefault().newGuard();
-        guard.pass();
+        return guard;
     }
     
     public final void registerNewOwner() {
         assert guard != null;
-        guard.registerNewOwner();
+        guard.registerNewOwner(this);
     }
     
     public final void releaseShared() {
         assert guard != null;
-        guard.releaseShared();
+        guard.releaseShared(this);
     }
     
     public final void releasePassed() {
         assert guard != null;
-        guard.releasePassed();
+        guard.releasePassed(this);
     }
     
     public final void guardRead() {

@@ -1,5 +1,11 @@
 package ch.trick17.peppl.lib;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
@@ -10,41 +16,81 @@ public class Guard {
     private final ConcurrentLinkedDeque<Thread> prevOwners = new ConcurrentLinkedDeque<>();
     private final AtomicInteger sharedCount = new AtomicInteger(0);
     
-    public void pass() {
-        guardReadWrite();
-        
-        /* First step of passing */
-        owner = null;
-        prevOwners.addFirst(Thread.currentThread());
+    public void share(final PepplObject o) {
+        processRecusively(o, Op.SHARE, newIdentitySet());
     }
     
-    public void registerNewOwner() {
-        assert owner == null;
-        assert !amOriginalOwner();
-        
-        /* Second step of passing */
-        owner = Thread.currentThread();
+    public void pass(final PepplObject o) {
+        processRecusively(o, Op.PASS, newIdentitySet());
     }
     
-    public void share() {
-        guardRead();
-        
-        sharedCount.incrementAndGet();
+    public void registerNewOwner(final PepplObject o) {
+        processRecusively(o, Op.REGISTER_OWNER, newIdentitySet());
     }
     
-    public void releasePassed() {
-        assert isMutable();
-        assert !amOriginalOwner();
-        
-        owner = prevOwners.removeFirst();
-        LockSupport.unpark(owner);
+    public void releaseShared(final PepplObject o) {
+        processRecusively(o, Op.RELEASE_SHARED, newIdentitySet());
     }
     
-    public void releaseShared() {
-        assert isShared();
-        
-        sharedCount.decrementAndGet();
-        LockSupport.unpark(owner);
+    public void releasePassed(final PepplObject o) {
+        processRecusively(o, Op.RELEASE_PASSED, newIdentitySet());
+    }
+    
+    private void processRecusively(final PepplObject o, final Op op,
+            final Set<PepplObject> processed) {
+        if(processed.add(o)) {
+            /* Process current object */
+            o.getGuard().process(op);
+            
+            /* Process children */
+            final List<Field> fields = allRefFields(o);
+            for(final Field field : fields) {
+                field.setAccessible(true);
+                final Object ref;
+                try {
+                    ref = field.get(o);
+                } catch(final IllegalAccessException e) {
+                    throw new AssertionError(e);
+                }
+                if(ref != null) {
+                    assert ref instanceof PepplObject;
+                    final PepplObject other = (PepplObject) ref;
+                    processRecusively(other, op, processed);
+                }
+            }
+        }
+    }
+    
+    private void process(final Op op) {
+        switch(op) {
+        case SHARE:
+            guardRead();
+            sharedCount.incrementAndGet();
+            break;
+        case PASS:
+            guardReadWrite();
+            /* First step of passing */
+            owner = null;
+            prevOwners.addFirst(Thread.currentThread());
+            break;
+        case REGISTER_OWNER:
+            assert owner == null;
+            assert !amOriginalOwner();
+            /* Second step of passing */
+            owner = Thread.currentThread();
+            break;
+        case RELEASE_SHARED:
+            assert isShared();
+            sharedCount.decrementAndGet();
+            LockSupport.unpark(owner);
+            break;
+        case RELEASE_PASSED:
+            assert isMutable();
+            assert !amOriginalOwner();
+            owner = prevOwners.removeFirst();
+            LockSupport.unpark(owner);
+            break;
+        }
     }
     
     public void guardRead() {
@@ -77,5 +123,31 @@ public class Guard {
     
     private boolean amOriginalOwner() {
         return prevOwners.isEmpty();
+    }
+    
+    private static List<Field> allRefFields(final PepplObject o) {
+        final ArrayList<Field> fields = new ArrayList<>();
+        Class<?> currentClass = o.getClass();
+        while(currentClass != PepplObject.class) {
+            final Field[] declaredFields = currentClass.getDeclaredFields();
+            for(final Field declaredField : declaredFields)
+                if(!declaredField.getType().isPrimitive())
+                    fields.add(declaredField);
+            currentClass = currentClass.getSuperclass();
+        }
+        return Collections.unmodifiableList(fields);
+    }
+    
+    private static Set<PepplObject> newIdentitySet() {
+        return Collections
+                .newSetFromMap(new IdentityHashMap<PepplObject, Boolean>());
+    }
+    
+    private static enum Op {
+        SHARE,
+        PASS,
+        REGISTER_OWNER,
+        RELEASE_SHARED,
+        RELEASE_PASSED;
     }
 }
