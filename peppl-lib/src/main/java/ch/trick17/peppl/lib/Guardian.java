@@ -1,10 +1,11 @@
 package ch.trick17.peppl.lib;
 
+import java.io.Serializable;
 import java.util.concurrent.locks.LockSupport;
 
 import ch.trick17.peppl.lib.PepplObject.Record;
 
-public class Guardian {
+public class Guardian implements Serializable {
     
     private static final Guardian defaultGuardian = new Guardian();
     
