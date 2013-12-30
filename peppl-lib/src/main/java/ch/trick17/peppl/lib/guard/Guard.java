@@ -21,11 +21,27 @@ public class Guard {
     
     private final Deque<Set<GuardedObject>> reachables = new ConcurrentLinkedDeque<>();
     
+    /*
+     * Object state operations
+     */
+    
+    private static abstract class Op {
+        abstract void process(Guard guard);
+    }
+    
     public void share(final GuardedObject o) {
         final Set<GuardedObject> reachable = newIdentitySet();
         processRecusively(o, SHARE, reachable);
         reachables.addFirst(reachable);
     }
+    
+    private static final Op SHARE = new Op() {
+        @Override
+        void process(final Guard guard) {
+            guard.guardRead();
+            guard.sharedCount.incrementAndGet();
+        }
+    };
     
     public void pass(final GuardedObject o) {
         final Set<GuardedObject> reachable = newIdentitySet();
@@ -33,14 +49,43 @@ public class Guard {
         reachables.addFirst(reachable);
     }
     
+    private static final Op PASS = new Op() {
+        @Override
+        void process(final Guard guard) {
+            guard.guardReadWrite();
+            /* First step of passing */
+            guard.owner = null;
+            guard.prevOwners.addFirst(Thread.currentThread());
+        }
+    };
+    
     public void registerNewOwner(final GuardedObject o) {
         processReachables(REGISTER_OWNER);
     }
+    
+    private static final Op REGISTER_OWNER = new Op() {
+        @Override
+        void process(final Guard guard) {
+            assert guard.owner == null;
+            assert !guard.amOriginalOwner();
+            /* Second step of passing */
+            guard.owner = Thread.currentThread();
+        }
+    };
     
     public void releaseShared(final GuardedObject o) {
         processReachables(RELEASE_SHARED);
         reachables.removeFirst();
     }
+    
+    private static final Op RELEASE_SHARED = new Op() {
+        @Override
+        void process(final Guard guard) {
+            assert guard.isShared();
+            guard.sharedCount.decrementAndGet();
+            LockSupport.unpark(guard.owner);
+        }
+    };
     
     public void releasePassed(final GuardedObject o) {
         /* First, make "parent" task the owner of newly reachable objects */
@@ -60,83 +105,6 @@ public class Guard {
         reachables.removeFirst();
     }
     
-    private void processRecusively(final GuardedObject o, final Op op,
-            final Set<GuardedObject> processed) {
-        if(processed.add(o)) {
-            /* Process current object */
-            op.process(o.getGuard());
-            
-            /* Process children */
-            final List<Field> fields = allRefFields(o);
-            for(final Field field : fields) {
-                field.setAccessible(true);
-                final Object ref;
-                try {
-                    ref = field.get(o);
-                } catch(final IllegalAccessException e) {
-                    throw new AssertionError(e);
-                }
-                if(ref != null) {
-                    assert ref instanceof GuardedObject;
-                    final GuardedObject other = (GuardedObject) ref;
-                    processRecusively(other, op, processed);
-                }
-            }
-        }
-    }
-    
-    private void processReachables(final Op op) {
-        final Set<GuardedObject> reachable = reachables.peekFirst();
-        assert reachable != null;
-        
-        for(final GuardedObject object : reachable)
-            op.process(object.getGuard());
-    }
-    
-    /*
-     * Guard operations
-     */
-    private static abstract class Op {
-        abstract void process(Guard guard);
-    }
-    
-    private static final Op SHARE = new Op() {
-        @Override
-        void process(final Guard guard) {
-            guard.guardRead();
-            guard.sharedCount.incrementAndGet();
-        }
-    };
-    
-    private static final Op PASS = new Op() {
-        @Override
-        void process(final Guard guard) {
-            guard.guardReadWrite();
-            /* First step of passing */
-            guard.owner = null;
-            guard.prevOwners.addFirst(Thread.currentThread());
-        }
-    };
-    
-    private static final Op REGISTER_OWNER = new Op() {
-        @Override
-        void process(final Guard guard) {
-            assert guard.owner == null;
-            assert !guard.amOriginalOwner();
-            /* Second step of passing */
-            guard.owner = Thread.currentThread();
-        }
-    };
-    
-    private static final Op RELEASE_SHARED = new Op() {
-        @Override
-        void process(final Guard guard) {
-            assert guard.isShared();
-            guard.sharedCount.decrementAndGet();
-            LockSupport.unpark(guard.owner);
-        }
-    };
-    
     private static final Op RELEASE_PASSED = new Op() {
         @Override
         void process(final Guard guard) {
@@ -148,7 +116,7 @@ public class Guard {
     };
     
     /*
-     * Guard methods
+     * Guarding methods
      */
     
     public void guardRead() {
@@ -172,7 +140,7 @@ public class Guard {
     }
     
     /*
-     * Helper methods
+     * Implementation methods
      */
     
     private boolean isMutable() {
@@ -185,6 +153,39 @@ public class Guard {
     
     private boolean amOriginalOwner() {
         return prevOwners.isEmpty();
+    }
+    
+    private void processReachables(final Op op) {
+        final Set<GuardedObject> reachable = reachables.peekFirst();
+        assert reachable != null;
+        
+        for(final GuardedObject object : reachable)
+            op.process(object.getGuard());
+    }
+    
+    private static void processRecusively(final GuardedObject o, final Op op,
+            final Set<GuardedObject> processed) {
+        if(processed.add(o)) {
+            /* Process current object */
+            op.process(o.getGuard());
+            
+            /* Process children */
+            final List<Field> fields = allRefFields(o);
+            for(final Field field : fields) {
+                field.setAccessible(true);
+                final Object ref;
+                try {
+                    ref = field.get(o);
+                } catch(final IllegalAccessException e) {
+                    throw new AssertionError(e);
+                }
+                if(ref != null) {
+                    assert ref instanceof GuardedObject;
+                    final GuardedObject other = (GuardedObject) ref;
+                    processRecusively(other, op, processed);
+                }
+            }
+        }
     }
     
     private static List<Field> allRefFields(final GuardedObject o) {
