@@ -8,7 +8,6 @@ import java.util.Deque;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 
@@ -16,10 +15,9 @@ public class Guard {
     
     private volatile Thread owner = Thread.currentThread();
     private final Deque<Thread> prevOwners = new ArrayDeque<>();
+    private final Deque<Set<GuardedObject>> reachables = new ArrayDeque<>();
     
     private final AtomicInteger sharedCount = new AtomicInteger(0);
-    
-    private final Deque<Set<GuardedObject>> reachables = new ConcurrentLinkedDeque<>();
     
     /*
      * Object state operations
@@ -30,9 +28,7 @@ public class Guard {
     }
     
     public void share(final GuardedObject o) {
-        final Set<GuardedObject> reachable = newIdentitySet();
-        processRecusively(o, SHARE, reachable);
-        reachables.addFirst(reachable);
+        processRecursively(o, SHARE, newIdentitySet());
     }
     
     private static final Op SHARE = new Op() {
@@ -45,7 +41,7 @@ public class Guard {
     
     public void pass(final GuardedObject o) {
         final Set<GuardedObject> reachable = newIdentitySet();
-        processRecusively(o, PASS, reachable);
+        processRecursively(o, PASS, reachable);
         reachables.addFirst(reachable);
     }
     
@@ -74,8 +70,7 @@ public class Guard {
     };
     
     public void releaseShared(final GuardedObject o) {
-        processReachables(RELEASE_SHARED);
-        reachables.removeFirst();
+        processRecursively(o, RELEASE_SHARED, newIdentitySet());
     }
     
     private static final Op RELEASE_SHARED = new Op() {
@@ -98,7 +93,7 @@ public class Guard {
                     guard.owner = parent;
             }
         };
-        processRecusively(o, transferOwner, newIdentitySet());
+        processRecursively(o, transferOwner, newIdentitySet());
         
         /* Second, release originally reachable objects */
         processReachables(RELEASE_PASSED);
@@ -163,7 +158,7 @@ public class Guard {
             op.process(object.getGuard());
     }
     
-    private static void processRecusively(final GuardedObject o, final Op op,
+    private static void processRecursively(final GuardedObject o, final Op op,
             final Set<GuardedObject> processed) {
         if(processed.add(o)) {
             /* Process current object */
@@ -182,7 +177,7 @@ public class Guard {
                 if(ref != null) {
                     assert ref instanceof GuardedObject;
                     final GuardedObject other = (GuardedObject) ref;
-                    processRecusively(other, op, processed);
+                    processRecursively(other, op, processed);
                 }
             }
         }
