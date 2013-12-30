@@ -8,6 +8,8 @@ import java.util.concurrent.locks.LockSupport;
 
 import org.junit.Test;
 
+import ch.trick17.simplejpf.test.JpfUnitTest;
+
 public class JpfUnitTestTest extends JpfUnitTest {
     
     @Test

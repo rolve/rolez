@@ -15,7 +15,7 @@ import ch.trick17.peppl.lib.task.NewThreadTaskSystem;
 import ch.trick17.peppl.lib.task.SingleThreadTaskSystem;
 import ch.trick17.peppl.lib.task.Task;
 import ch.trick17.peppl.lib.task.TaskSystem;
-import ch.trick17.simplejpf.JpfUnitTest;
+import ch.trick17.simplejpf.test.JpfUnitTest;
 
 @RunWith(Parameterized.class)
 public class TaskSystemTest extends JpfUnitTest {

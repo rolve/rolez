@@ -10,6 +10,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
+import ch.trick17.simplejpf.test.JpfUnitTest;
+
 @RunWith(Parameterized.class)
 public class ParameterizedJpfUnitTestTest extends JpfUnitTest {
     

@@ -5,7 +5,7 @@ import org.junit.Test;
 import ch.trick17.peppl.manual.reduce.Reduce;
 import ch.trick17.peppl.manual.simple.Simple;
 import ch.trick17.peppl.manual.simplegroups.SimpleGroups;
-import ch.trick17.simplejpf.JpfUnitTest;
+import ch.trick17.simplejpf.test.JpfUnitTest;
 
 public class ManualPepplTest extends JpfUnitTest {
     

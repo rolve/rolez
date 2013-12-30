@@ -1,9 +1,10 @@
-package ch.trick17.simplejpf;
+package ch.trick17.simplejpf.test;
 
 import static org.junit.Assert.fail;
 import gov.nasa.jpf.Config;
 import gov.nasa.jpf.Error;
 import gov.nasa.jpf.JPF;
+import gov.nasa.jpf.JPFListener;
 import gov.nasa.jpf.Property;
 import gov.nasa.jpf.util.test.TestJPF;
 import gov.nasa.jpf.vm.ExceptionInfo;
@@ -172,7 +173,7 @@ public class JpfUnitTest implements Serializable {
                 .toString().indexOf("jdwp") >= 0;
     }
     
-    private JPF runJpf() {
+    JPF runJpf(final JPFListener... listeners) {
         final String serializedTest = serialize(this);
         final String methodName = getCaller();
         
@@ -182,14 +183,18 @@ public class JpfUnitTest implements Serializable {
         config.setTargetArgs(new String[] {serializedTest, methodName});
         
         final JPF jpf = new JPF(config);
+        for(final JPFListener listener : listeners)
+            jpf.addListener(listener);
+        
         jpf.run();
         return jpf;
     }
     
-    private static String getCaller() {
+    static String getCaller() {
         final StackTraceElement[] trace = (new Throwable()).getStackTrace();
         for(final StackTraceElement e : trace)
-            if(!e.getClassName().equals(JpfUnitTest.class.getName()))
+            if(!e.getClassName().startsWith(
+                    JpfUnitTest.class.getPackage().getName()))
                 return e.getMethodName();
         throw new AssertionError("method not found");
     }
