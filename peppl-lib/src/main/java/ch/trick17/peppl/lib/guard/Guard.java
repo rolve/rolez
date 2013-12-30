@@ -23,27 +23,40 @@ public class Guard {
     
     public void share(final GuardedObject o) {
         final Set<GuardedObject> reachable = newIdentitySet();
-        processRecusively(o, Op.SHARE, reachable);
+        processRecusively(o, SHARE, reachable);
         reachables.addFirst(reachable);
     }
     
     public void pass(final GuardedObject o) {
         final Set<GuardedObject> reachable = newIdentitySet();
-        processRecusively(o, Op.PASS, reachable);
+        processRecusively(o, PASS, reachable);
         reachables.addFirst(reachable);
     }
     
     public void registerNewOwner(final GuardedObject o) {
-        processReachables(Op.REGISTER_OWNER);
+        processReachables(REGISTER_OWNER);
     }
     
     public void releaseShared(final GuardedObject o) {
-        processReachables(Op.RELEASE_SHARED);
+        processReachables(RELEASE_SHARED);
         reachables.removeFirst();
     }
     
     public void releasePassed(final GuardedObject o) {
-        processReachables(Op.RELEASE_PASSED);
+        /* First, make "parent" task the owner of newly reachable objects */
+        final Thread parent = prevOwners.peekFirst();
+        assert parent != null;
+        final Op transferOwner = new Op() {
+            @Override
+            void process(final Guard guard) {
+                if(guard.amOriginalOwner())
+                    guard.owner = parent;
+            }
+        };
+        processRecusively(o, transferOwner, newIdentitySet());
+        
+        /* Second, release originally reachable objects */
+        processReachables(RELEASE_PASSED);
         reachables.removeFirst();
     }
     
@@ -51,7 +64,7 @@ public class Guard {
             final Set<GuardedObject> processed) {
         if(processed.add(o)) {
             /* Process current object */
-            o.getGuard().process(op);
+            op.process(o.getGuard());
             
             /* Process children */
             final List<Field> fields = allRefFields(o);
@@ -77,40 +90,66 @@ public class Guard {
         assert reachable != null;
         
         for(final GuardedObject object : reachable)
-            object.getGuard().process(op);
+            op.process(object.getGuard());
     }
     
-    private void process(final Op op) {
-        switch(op) {
-        case SHARE:
-            guardRead();
-            sharedCount.incrementAndGet();
-            break;
-        case PASS:
-            guardReadWrite();
-            /* First step of passing */
-            owner = null;
-            prevOwners.addFirst(Thread.currentThread());
-            break;
-        case REGISTER_OWNER:
-            assert owner == null;
-            assert !amOriginalOwner();
-            /* Second step of passing */
-            owner = Thread.currentThread();
-            break;
-        case RELEASE_SHARED:
-            assert isShared();
-            sharedCount.decrementAndGet();
-            LockSupport.unpark(owner);
-            break;
-        case RELEASE_PASSED:
-            assert isMutable();
-            assert !amOriginalOwner();
-            owner = prevOwners.removeFirst();
-            LockSupport.unpark(owner);
-            break;
-        }
+    /*
+     * Guard operations
+     */
+    private static abstract class Op {
+        abstract void process(Guard guard);
     }
+    
+    private static final Op SHARE = new Op() {
+        @Override
+        void process(final Guard guard) {
+            guard.guardRead();
+            guard.sharedCount.incrementAndGet();
+        }
+    };
+    
+    private static final Op PASS = new Op() {
+        @Override
+        void process(final Guard guard) {
+            guard.guardReadWrite();
+            /* First step of passing */
+            guard.owner = null;
+            guard.prevOwners.addFirst(Thread.currentThread());
+        }
+    };
+    
+    private static final Op REGISTER_OWNER = new Op() {
+        @Override
+        void process(final Guard guard) {
+            assert guard.owner == null;
+            assert !guard.amOriginalOwner();
+            /* Second step of passing */
+            guard.owner = Thread.currentThread();
+        }
+    };
+    
+    private static final Op RELEASE_SHARED = new Op() {
+        @Override
+        void process(final Guard guard) {
+            assert guard.isShared();
+            guard.sharedCount.decrementAndGet();
+            LockSupport.unpark(guard.owner);
+        }
+    };
+    
+    private static final Op RELEASE_PASSED = new Op() {
+        @Override
+        void process(final Guard guard) {
+            assert guard.isMutable();
+            assert !guard.amOriginalOwner();
+            guard.owner = guard.prevOwners.removeFirst();
+            LockSupport.unpark(guard.owner);
+        }
+    };
+    
+    /*
+     * Guard methods
+     */
     
     public void guardRead() {
         /*
@@ -131,6 +170,10 @@ public class Guard {
         while(!isMutable())
             LockSupport.park();
     }
+    
+    /*
+     * Helper methods
+     */
     
     private boolean isMutable() {
         return owner == Thread.currentThread() && !isShared();
@@ -160,13 +203,5 @@ public class Guard {
     private static Set<GuardedObject> newIdentitySet() {
         return Collections
                 .newSetFromMap(new IdentityHashMap<GuardedObject, Boolean>());
-    }
-    
-    private static enum Op {
-        SHARE,
-        PASS,
-        REGISTER_OWNER,
-        RELEASE_SHARED,
-        RELEASE_PASSED;
     }
 }
