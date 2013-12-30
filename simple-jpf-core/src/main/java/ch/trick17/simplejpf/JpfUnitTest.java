@@ -9,6 +9,7 @@ import gov.nasa.jpf.util.test.TestJPF;
 import gov.nasa.jpf.vm.ExceptionInfo;
 import gov.nasa.jpf.vm.NoUncaughtExceptionsProperty;
 import gov.nasa.jpf.vm.NotDeadlockedProperty;
+import gov.nasa.jpf.vm.Verify;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -60,7 +61,7 @@ public class JpfUnitTest implements Serializable {
     private static final Properties generalConfig;
     
     static {
-        if(TestJPF.isJPFRun())
+        if(Verify.isRunningInJPF())
             generalConfig = null;
         else
             try {
@@ -163,7 +164,7 @@ public class JpfUnitTest implements Serializable {
      */
     
     private static boolean runDirectly() {
-        return TestJPF.isJPFRun() || isDebugRun();
+        return Verify.isRunningInJPF() || isDebugRun();
     }
     
     private static boolean isDebugRun() {

@@ -9,7 +9,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import ch.trick17.peppl.lib.guard.GuardedObject;
 import ch.trick17.peppl.lib.task.NewThreadTaskSystem;
 import ch.trick17.peppl.lib.task.SingleThreadTaskSystem;
 import ch.trick17.peppl.lib.task.Task;
@@ -766,21 +765,5 @@ public class GuardTest extends JpfUnitTest {
     
     private boolean multithreaded() {
         return !(s instanceof SingleThreadTaskSystem);
-    }
-    
-    private static class Int extends GuardedObject {
-        int value;
-    }
-    
-    private static class IntContainer extends GuardedObject {
-        Int i;
-        
-        public IntContainer() {
-            i = new Int();
-        }
-        
-        public IntContainer(final Int i) {
-            this.i = i;
-        }
     }
 }
