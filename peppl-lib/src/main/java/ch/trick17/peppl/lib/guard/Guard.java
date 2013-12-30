@@ -1,8 +1,10 @@
 package ch.trick17.peppl.lib.guard;
 
 import java.lang.reflect.Field;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
@@ -13,27 +15,36 @@ import java.util.concurrent.locks.LockSupport;
 public class Guard {
     
     private volatile Thread owner = Thread.currentThread();
-    private final ConcurrentLinkedDeque<Thread> prevOwners = new ConcurrentLinkedDeque<>();
+    private final Deque<Thread> prevOwners = new ArrayDeque<>();
+    
     private final AtomicInteger sharedCount = new AtomicInteger(0);
     
+    private final Deque<Set<GuardedObject>> reachables = new ConcurrentLinkedDeque<>();
+    
     public void share(final GuardedObject o) {
-        processRecusively(o, Op.SHARE, newIdentitySet());
+        final Set<GuardedObject> reachable = newIdentitySet();
+        processRecusively(o, Op.SHARE, reachable);
+        reachables.addFirst(reachable);
     }
     
     public void pass(final GuardedObject o) {
-        processRecusively(o, Op.PASS, newIdentitySet());
+        final Set<GuardedObject> reachable = newIdentitySet();
+        processRecusively(o, Op.PASS, reachable);
+        reachables.addFirst(reachable);
     }
     
     public void registerNewOwner(final GuardedObject o) {
-        processRecusively(o, Op.REGISTER_OWNER, newIdentitySet());
+        processReachables(Op.REGISTER_OWNER);
     }
     
     public void releaseShared(final GuardedObject o) {
-        processRecusively(o, Op.RELEASE_SHARED, newIdentitySet());
+        processReachables(Op.RELEASE_SHARED);
+        reachables.removeFirst();
     }
     
     public void releasePassed(final GuardedObject o) {
-        processRecusively(o, Op.RELEASE_PASSED, newIdentitySet());
+        processReachables(Op.RELEASE_PASSED);
+        reachables.removeFirst();
     }
     
     private void processRecusively(final GuardedObject o, final Op op,
@@ -59,6 +70,14 @@ public class Guard {
                 }
             }
         }
+    }
+    
+    private void processReachables(final Op op) {
+        final Set<GuardedObject> reachable = reachables.peekFirst();
+        assert reachable != null;
+        
+        for(final GuardedObject object : reachable)
+            object.getGuard().process(op);
     }
     
     private void process(final Op op) {

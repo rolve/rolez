@@ -96,8 +96,9 @@ public class GuardTest extends JpfUnitTest {
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
             
-            final Task<?>[] tasks = new Task<?>[3];
-            for(int k = 0; k < 3; k++) {
+            final int taskCount = 2;
+            final Task<?>[] tasks = new Task<?>[taskCount];
+            for(int k = 0; k < taskCount; k++) {
                 i.share();
                 tasks[k] = s.run(new Runnable() {
                     @Override
@@ -212,8 +213,9 @@ public class GuardTest extends JpfUnitTest {
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
             
-            final Task<?>[] tasks = new Task<?>[3];
-            for(int k = 0; k < 3; k++) {
+            final int taskCount = 2;
+            final Task<?>[] tasks = new Task<?>[taskCount];
+            for(int k = 0; k < taskCount; k++) {
                 i.pass();
                 tasks[k] = s.run(new Runnable() {
                     @Override
@@ -226,7 +228,7 @@ public class GuardTest extends JpfUnitTest {
             }
             
             i.guardRead();
-            assertEquals(3, i.value);
+            assertEquals(taskCount, i.value);
             for(final Task<?> task : tasks)
                 task.get();
         }
@@ -237,8 +239,9 @@ public class GuardTest extends JpfUnitTest {
         if(multithreaded() && verifyDeadlock()) {
             final Int i = new Int();
             
-            final Task<?>[] tasks = new Task<?>[3];
-            for(int k = 0; k < 3; k++) {
+            final int taskCount = 2;
+            final Task<?>[] tasks = new Task<?>[taskCount];
+            for(int k = 0; k < taskCount; k++) {
                 final int theK = k;
                 i.pass();
                 tasks[k] = s.run(new Runnable() {
@@ -255,7 +258,7 @@ public class GuardTest extends JpfUnitTest {
             }
             
             i.guardRead();
-            assertEquals(2, i.value);
+            assertEquals(taskCount, i.value);
             for(final Task<?> task : tasks)
                 task.get();
         }
@@ -391,8 +394,9 @@ public class GuardTest extends JpfUnitTest {
             final Int i = new Int();
             final IntContainer c = new IntContainer(i);
             
-            final Task<?>[] tasks = new Task<?>[3];
-            for(int k = 0; k < 3; k++) {
+            final int taskCount = 2;
+            final Task<?>[] tasks = new Task<?>[taskCount];
+            for(int k = 0; k < taskCount; k++) {
                 c.share();
                 tasks[k] = s.run(new Runnable() {
                     @Override
@@ -438,8 +442,9 @@ public class GuardTest extends JpfUnitTest {
             final Int i = new Int();
             final IntContainer c = new IntContainer(i);
             
-            final Task<?>[] tasks = new Task<?>[3];
-            for(int k = 0; k < 3; k++) {
+            final int taskCount = 2;
+            final Task<?>[] tasks = new Task<?>[taskCount];
+            for(int k = 0; k < taskCount; k++) {
                 c.pass();
                 tasks[k] = s.run(new Runnable() {
                     @Override
@@ -452,7 +457,7 @@ public class GuardTest extends JpfUnitTest {
             }
             
             i.guardRead();
-            assertEquals(3, i.value);
+            assertEquals(taskCount, i.value);
             for(final Task<?> task : tasks)
                 task.get();
         }
@@ -532,7 +537,7 @@ public class GuardTest extends JpfUnitTest {
     }
     
     @Test
-    public void testShareSubgroupMultiple() {
+    public void testShareSubgroup() {
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
             final IntContainer c = new IntContainer(i);
@@ -573,7 +578,7 @@ public class GuardTest extends JpfUnitTest {
     }
     
     @Test
-    public void testPassSubgroupMultiple() {
+    public void testPassSubgroup() {
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
             final IntContainer c = new IntContainer(i);
@@ -686,6 +691,76 @@ public class GuardTest extends JpfUnitTest {
             i.value++;
             task.get();
             task2.get();
+        }
+    }
+    
+    @Test
+    public void testPassGroupModify() {
+        if(verifyNoPropertyViolation()) {
+            final Int i = new Int();
+            final IntContainer c = new IntContainer(i);
+            
+            c.pass();
+            final Task<Void> task = s.run(new Runnable() {
+                @Override
+                public void run() {
+                    c.registerNewOwner();
+                    c.i = new Int();
+                    c.i.value = 10;
+                    c.releasePassed();
+                }
+            });
+            
+            i.guardRead();
+            assertEquals(0, i.value);
+            
+            c.guardRead();
+            c.i.guardRead();
+            assertEquals(10, c.i.value);
+            task.get();
+        }
+    }
+    
+    @Test
+    public void testPassSubgroupNestedModify() {
+        if(verifyNoPropertyViolation()) {
+            final Int i = new Int();
+            final IntContainer c = new IntContainer(i);
+            
+            c.pass();
+            final Task<Void> task = s.run(new Runnable() {
+                @Override
+                public void run() {
+                    c.registerNewOwner();
+                    c.i = new Int();
+                    
+                    final Int i2 = c.i;
+                    i2.value++;
+                    i2.pass();
+                    final Task<Void> task2 = s.run(new Runnable() {
+                        @Override
+                        public void run() {
+                            i2.registerNewOwner();
+                            i2.value++;
+                            i2.releasePassed();
+                        }
+                    });
+                    
+                    i2.guardRead();
+                    assertEquals(2, i2.value);
+                    
+                    i2.guardReadWrite(); // Not necessary here...
+                    i2.value++;
+                    
+                    c.releasePassed();
+                    task2.get();
+                }
+            });
+            
+            c.guardRead();
+            c.i.guardRead();
+            assertEquals(3, c.i.value);
+            task.get();
         }
     }
     

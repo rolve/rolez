@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -91,7 +92,7 @@ public class JpfUnitTest implements Serializable {
     
     protected boolean verifyUnhandledException(final String className,
             final String details) {
-        if(TestJPF.isJPFRun())
+        if(runDirectly())
             return true;
         else {
             final Error error = runJpf().getLastError();
@@ -127,7 +128,7 @@ public class JpfUnitTest implements Serializable {
     }
     
     protected boolean verifyNoPropertyViolation() {
-        if(TestJPF.isJPFRun())
+        if(runDirectly())
             return true;
         else {
             final Error error = runJpf().getLastError();
@@ -139,7 +140,7 @@ public class JpfUnitTest implements Serializable {
     
     protected boolean verifyPropertyViolation(
             final Class<? extends Property> propertyCls) {
-        if(TestJPF.isJPFRun())
+        if(runDirectly())
             return true;
         else {
             final List<Error> errors = runJpf().getSearchErrors();
@@ -160,6 +161,15 @@ public class JpfUnitTest implements Serializable {
     /*
      * Implementation - JUnit part
      */
+    
+    private static boolean runDirectly() {
+        return TestJPF.isJPFRun() || isDebugRun();
+    }
+    
+    private static boolean isDebugRun() {
+        return ManagementFactory.getRuntimeMXBean().getInputArguments()
+                .toString().indexOf("jdwp") >= 0;
+    }
     
     private JPF runJpf() {
         final String serializedTest = serialize(this);
