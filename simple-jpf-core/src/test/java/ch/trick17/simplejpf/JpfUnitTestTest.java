@@ -40,6 +40,17 @@ public class JpfUnitTestTest extends JpfUnitTest {
         }
     }
     
+    /**
+     * Not quite the same as {@link #testDeadlock()}. This tests if JPF is doing
+     * anything at all.
+     */
+    @Test(expected = AssertionError.class)
+    public void testNoPropertyViolationFail() {
+        if(verifyNoPropertyViolation()) {
+            LockSupport.park();
+        }
+    }
+    
     @Test
     public void testPropertyViolation() {
         if(verifyPropertyViolation(NoOutOfMemoryErrorProperty.class)) {
