@@ -13,7 +13,7 @@ public class GuardParallelismTest extends JpfParallelismTest {
     
     @Test
     public void parallelTest() {
-        if(verifyParallelism()) {
+        if(verifyParallelism(new int[][]{{1, 3}, {2, 4}, {2, 3}})) {
             final Int i = new Int();
             
             i.share();

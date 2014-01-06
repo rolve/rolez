@@ -32,15 +32,32 @@ public abstract class JpfParallelismTest extends JpfUnitTest {
         }
     }
     
-    protected boolean verifyParallelism() {
+    protected boolean verifyParallelism(final int[][] parGroups) {
         if(Verify.isRunningInJPF())
             return true;
         else {
-            final Set<Set<ParRegionPair>> parRegions = computeParRegions();
-            for(final Set<ParRegionPair> set : parRegions)
-                System.out.println(set);
+            final Set<Set<ParRegionPair>> parRegionSets = computeParRegions();
+            
+            for(final int[] group : parGroups) {
+                pairs: for(final ParRegionPair pair : allPairs(group)) {
+                    for(final Set<ParRegionPair> set : parRegionSets)
+                        if(set.contains(pair))
+                            continue pairs;
+                    fail(String
+                            .format("JPF could not execute regions %d and %d in parallel.",
+                                    pair.first, pair.second));
+                }
+            }
             return false;
         }
+    }
+    
+    private static Iterable<ParRegionPair> allPairs(final int[] group) {
+        final Set<ParRegionPair> result = new HashSet<ParRegionPair>();
+        for(int i = 0; i < group.length; i++)
+            for(int j = 0; j < i; j++)
+                result.add(new ParRegionPair(group[i], group[j]));
+        return result;
     }
     
     /**
@@ -90,24 +107,26 @@ public abstract class JpfParallelismTest extends JpfUnitTest {
         Set<Set<ParRegionPair>> getParRegions() {
             final Set<Set<ParRegionPair>> result = new HashSet<>();
             for(final String string : eventStrings) {
-                final String[] events = string.split("(?<!^)(?=[SE])");
-                
-                final Set<ParRegionPair> parRegions = new HashSet<>();
-                final Deque<Integer> currentRegions = new ArrayDeque<>();
-                for(final String event : events) {
-                    final int id = Integer.parseInt(event.substring(1));
-                    if(event.charAt(0) == 'S') {
-                        for(final Integer other : currentRegions)
-                            parRegions.add(new ParRegionPair(other, id));
-                        currentRegions.addFirst(id);
+                if(!string.isEmpty()) {
+                    final String[] events = string.split("(?<!^)(?=[SE])");
+                    
+                    final Set<ParRegionPair> parRegions = new HashSet<>();
+                    final Deque<Integer> currentRegions = new ArrayDeque<>();
+                    for(final String event : events) {
+                        final int id = Integer.parseInt(event.substring(1));
+                        if(event.charAt(0) == 'S') {
+                            for(final Integer other : currentRegions)
+                                parRegions.add(new ParRegionPair(other, id));
+                            currentRegions.addFirst(id);
+                        }
+                        else {
+                            assert event.charAt(0) == 'E';
+                            final boolean removed = currentRegions.remove(id);
+                            assert removed;
+                        }
                     }
-                    else {
-                        assert event.charAt(0) == 'E';
-                        final boolean removed = currentRegions.remove(id);
-                        assert removed;
-                    }
+                    result.add(parRegions);
                 }
-                result.add(parRegions);
             }
             return result;
         }
