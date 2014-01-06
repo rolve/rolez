@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Test;
+import org.junit.internal.AssumptionViolatedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -20,8 +21,8 @@ public class GuardTest extends JpfUnitTest {
     
     @Parameterized.Parameters(name = "{0}")
     public static List<?> taskSystems() {
-        return Arrays.asList(new TaskSystem[][] {
-                {new SingleThreadTaskSystem()}, {new NewThreadTaskSystem()}});
+        return Arrays.asList(new TaskSystem[][]{{new SingleThreadTaskSystem()},
+                {new NewThreadTaskSystem()}});
     }
     
     private final TaskSystem s;
@@ -52,7 +53,8 @@ public class GuardTest extends JpfUnitTest {
     
     @Test
     public void testShareMissingGuard() {
-        if(multithreaded() && verifyAssertionError()) {
+        assumeMultithreaded();
+        if(verifyAssertionError()) {
             final Int i = new Int();
             
             i.share();
@@ -167,7 +169,8 @@ public class GuardTest extends JpfUnitTest {
     
     @Test
     public void testPassMissingGuard() {
-        if(multithreaded() && verifyAssertionError()) {
+        assumeMultithreaded();
+        if(verifyAssertionError()) {
             final Int i = new Int();
             
             i.pass();
@@ -188,7 +191,8 @@ public class GuardTest extends JpfUnitTest {
     
     @Test
     public void testPassMissingRelease() {
-        if(multithreaded() && verifyDeadlock()) {
+        assumeMultithreaded();
+        if(verifyDeadlock()) {
             final Int i = new Int();
             
             i.pass();
@@ -235,7 +239,8 @@ public class GuardTest extends JpfUnitTest {
     
     @Test
     public void testPassMultipleMissingRelease() {
-        if(multithreaded() && verifyDeadlock()) {
+        assumeMultithreaded();
+        if(verifyDeadlock()) {
             final Int i = new Int();
             
             final int taskCount = 2;
@@ -304,7 +309,8 @@ public class GuardTest extends JpfUnitTest {
     
     @Test
     public void testPassNestedMissingRelease() {
-        if(multithreaded() && verifyDeadlock()) {
+        assumeMultithreaded();
+        if(verifyDeadlock()) {
             final Int i = new Int();
             
             i.pass();
@@ -763,7 +769,8 @@ public class GuardTest extends JpfUnitTest {
         }
     }
     
-    private boolean multithreaded() {
-        return !(s instanceof SingleThreadTaskSystem);
+    private void assumeMultithreaded() {
+        if(s instanceof SingleThreadTaskSystem)
+            throw new AssumptionViolatedException("not a multithreaded test");
     }
 }
