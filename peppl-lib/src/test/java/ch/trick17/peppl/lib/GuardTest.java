@@ -14,14 +14,14 @@ import ch.trick17.peppl.lib.task.NewThreadTaskSystem;
 import ch.trick17.peppl.lib.task.SingleThreadTaskSystem;
 import ch.trick17.peppl.lib.task.Task;
 import ch.trick17.peppl.lib.task.TaskSystem;
-import ch.trick17.simplejpf.test.JpfUnitTest;
+import ch.trick17.simplejpf.test.JpfTest;
 
 @RunWith(Parameterized.class)
-public class GuardTest extends JpfUnitTest {
+public class GuardTest extends JpfTest {
     
     @Parameterized.Parameters(name = "{0}")
     public static List<?> taskSystems() {
-        return Arrays.asList(new TaskSystem[][]{{new SingleThreadTaskSystem()},
+        return Arrays.asList(new Object[][]{{new SingleThreadTaskSystem()},
                 {new NewThreadTaskSystem()}});
     }
     

@@ -33,12 +33,13 @@ import org.junit.Before;
 import org.junit.runners.Parameterized;
 
 /**
- * Base class for unit tests that are executed in {@link JPF}. Automatically
+ * Base class for JUnit tests that are executed in {@link JPF}. Automatically
  * sets up JPF in a (relatively) portable way.
  * <p>
  * To be executed in JPF, tests should be written like this:
  * 
  * <pre>
+ * &#064;Test
  * public void myTest() {
  *     if(verifySomething()) { // e.g. verifyNoPropertyViolation()
  *         // actual test code
@@ -46,7 +47,7 @@ import org.junit.runners.Parameterized;
  * }
  * </pre>
  * 
- * In contrast to {@link TestJPF}, this implementation fully supports
+ * In contrast to {@link TestJPF}, this implementation better supports
  * {@link Before} and {@link After} methods and, in addition,
  * {@link Parameterized} tests. This is achieved by fully serializing each test
  * instance and passing it to JPF for execution. The {@link TestJPF} class, in
@@ -57,7 +58,7 @@ import org.junit.runners.Parameterized;
  * 
  * @author Michael Faes
  */
-public class JpfUnitTest implements Serializable {
+public abstract class JpfTest implements Serializable {
     
     private static final Properties generalConfig;
     
@@ -67,7 +68,7 @@ public class JpfUnitTest implements Serializable {
         else
             try {
                 generalConfig = new Properties();
-                generalConfig.load(JpfUnitTest.class
+                generalConfig.load(JpfTest.class
                         .getResourceAsStream("jpf.properties"));
                 generalConfig.setProperty("classpath", System
                         .getProperty("java.class.path"));
@@ -178,9 +179,9 @@ public class JpfUnitTest implements Serializable {
         final String methodName = getCaller();
         
         final Config config = new Config(propsToArgs(generalConfig));
-        config.setTarget(JpfUnitTest.class.getName());
+        config.setTarget(JpfTest.class.getName());
         config.setTargetEntry("runTest([Ljava/lang/String;)V");
-        config.setTargetArgs(new String[] {serializedTest, methodName});
+        config.setTargetArgs(new String[]{serializedTest, methodName});
         
         final JPF jpf = new JPF(config);
         for(final JPFListener listener : listeners)
@@ -194,7 +195,7 @@ public class JpfUnitTest implements Serializable {
         final StackTraceElement[] trace = (new Throwable()).getStackTrace();
         for(final StackTraceElement e : trace)
             if(!e.getClassName().startsWith(
-                    JpfUnitTest.class.getPackage().getName()))
+                    JpfTest.class.getPackage().getName()))
                 return e.getMethodName();
         throw new AssertionError("method not found");
     }

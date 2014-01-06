@@ -47,19 +47,12 @@ public class JpfParallelismTestTest extends JpfParallelismTest {
     }
     
     @Test
-    public void testVerifyParallelismMultiple() throws InterruptedException {
+    public void testVerifyParallelismMultiple() {
         if(verifyParallelism(new int[][]{{0, 1, 2, 3}})) {
-            final Thread[] threads = new Thread[3];
             for(int i = 0; i < 3; i++)
-                threads[i] = new Thread(newRegion(i));
-            
-            for(final Thread thread : threads)
-                thread.start();
+                new Thread(newRegion(i)).start();
             
             region(3);
-            
-            for(final Thread thread : threads)
-                thread.join();
         }
     }
     
@@ -67,24 +60,17 @@ public class JpfParallelismTestTest extends JpfParallelismTest {
     public void testVerifyParallelismMultiMultiple()
             throws InterruptedException {
         if(verifyParallelism(new int[][]{{0, 1}, {2, 3}})) {
-            Thread[] threads = new Thread[2];
+            final Thread[] threads = new Thread[2];
             for(int i = 0; i < 2; i++)
                 threads[i] = new Thread(newRegion(i));
-            
             for(final Thread thread : threads)
                 thread.start();
             
             for(final Thread thread : threads)
                 thread.join();
             
-            threads = new Thread[2];
             for(int i = 0; i < 2; i++)
-                threads[i] = new Thread(newRegion(i + 2));
-            
-            for(final Thread thread : threads)
-                thread.start();
-            for(final Thread thread : threads)
-                thread.join();
+                new Thread(newRegion(i + 2)).start();
         }
     }
     

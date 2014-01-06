@@ -10,10 +10,10 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-import ch.trick17.simplejpf.test.JpfUnitTest;
+import ch.trick17.simplejpf.test.JpfTest;
 
 @RunWith(Parameterized.class)
-public class ParameterizedJpfUnitTestTest extends JpfUnitTest {
+public class ParameterizedJpfUnitTestTest extends JpfTest {
     
     @Parameters(name = "{0}, {1}")
     public static List<?> parameters() {

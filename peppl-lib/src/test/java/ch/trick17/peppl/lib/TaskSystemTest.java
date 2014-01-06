@@ -15,10 +15,10 @@ import ch.trick17.peppl.lib.task.NewThreadTaskSystem;
 import ch.trick17.peppl.lib.task.SingleThreadTaskSystem;
 import ch.trick17.peppl.lib.task.Task;
 import ch.trick17.peppl.lib.task.TaskSystem;
-import ch.trick17.simplejpf.test.JpfUnitTest;
+import ch.trick17.simplejpf.test.JpfTest;
 
 @RunWith(Parameterized.class)
-public class TaskSystemTest extends JpfUnitTest {
+public class TaskSystemTest extends JpfTest {
     
     @Parameterized.Parameters(name = "{0}")
     public static List<?> taskSystems() {

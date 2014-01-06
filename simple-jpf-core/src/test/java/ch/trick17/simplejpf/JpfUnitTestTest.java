@@ -8,9 +8,9 @@ import java.util.concurrent.locks.LockSupport;
 
 import org.junit.Test;
 
-import ch.trick17.simplejpf.test.JpfUnitTest;
+import ch.trick17.simplejpf.test.JpfTest;
 
-public class JpfUnitTestTest extends JpfUnitTest {
+public class JpfUnitTestTest extends JpfTest {
     
     @Test
     public void testAssertionError() {

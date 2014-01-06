@@ -14,7 +14,31 @@ import java.util.Deque;
 import java.util.HashSet;
 import java.util.Set;
 
-public abstract class JpfParallelismTest extends JpfUnitTest {
+/**
+ * An extension of {@link JpfTest} which provides a way to verify that certain
+ * code regions may be executed in parallel.
+ * <p>
+ * For example, a test could be written like this:
+ * 
+ * <pre>
+ * &#064;Test
+ * public void myTest() {
+ *     // Verify that regions 0 and 1 may be executed in parallel:
+ *     if(verifyParallelism(new int[][]{{0, 1}})) {
+ *         new Thread() {
+ *             public void run() {
+ *                 region(0);
+ *             }
+ *         }.start();
+ *         
+ *         region(1);
+ *     }
+ * }
+ * </pre>
+ * 
+ * @author Michael Faes
+ */
+public abstract class JpfParallelismTest extends JpfTest {
     
     private String regionEvents = "";
     
