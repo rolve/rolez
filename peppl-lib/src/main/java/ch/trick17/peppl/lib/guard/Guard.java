@@ -83,6 +83,7 @@ public class Guard {
     };
     
     public void releasePassed(final GuardedObject o) {
+        o.guardReadWrite();
         /* First, make "parent" task the owner of newly reachable objects */
         final Thread parent = prevOwners.peekFirst();
         assert parent != null;

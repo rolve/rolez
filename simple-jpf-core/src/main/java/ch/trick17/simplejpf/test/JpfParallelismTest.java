@@ -1,7 +1,6 @@
 package ch.trick17.simplejpf.test;
 
 import static org.junit.Assert.fail;
-import gov.nasa.jpf.Error;
 import gov.nasa.jpf.ListenerAdapter;
 import gov.nasa.jpf.vm.ElementInfo;
 import gov.nasa.jpf.vm.MethodInfo;
@@ -40,40 +39,88 @@ import java.util.Set;
  */
 public abstract class JpfParallelismTest extends JpfTest {
     
+    private boolean verifyParallelism = false;
     private String regionEvents = "";
     
     protected final void region(final int id) {
-        synchronized(this) {
-            final String event = "S" + id;
-            if(regionEvents.contains(event))
-                throw new IllegalArgumentException(
-                        "duplicate region identifier: " + id);
-            regionEvents += event;
-        }
+        if(verifyParallelism)
+            synchronized(this) {
+                final String event = "S" + id;
+                if(regionEvents.contains(event))
+                    throw new IllegalArgumentException(
+                            "duplicate region identifier: " + id);
+                regionEvents += event;
+            }
         
-        synchronized(this) {
-            regionEvents += "E" + id;
-        }
+        if(verifyParallelism)
+            synchronized(this) {
+                regionEvents += "E" + id;
+            }
     }
     
-    protected boolean verifyParallelism(final int[][] parGroups) {
+    /**
+     * Verifies that there is a thread interleaving for which the
+     * {@link #region(int) regions} in the calling method may be executed in
+     * parallel, according to the given "parallel groups". More precisely, this
+     * method verifies that there is at least one (single) thread interleaving,
+     * for which it holds that for each parallel group, all regions in the group
+     * are executed in parallel.
+     * 
+     * @param parGroups
+     *            The parallel groups, as <code>int</code>-arrays.
+     * @return <code>true</code> if being executed in JPF, <code>false</code>
+     *         otherwise
+     * @throws AssertionError
+     *             If the given parallelism specification is not met
+     * @see JpfTest
+     */
+    protected boolean verifyParallelism(final int[]... parGroups) {
+        verifyParallelism = true;
         if(Verify.isRunningInJPF())
             return true;
         else {
             final Set<Set<ParRegionPair>> parRegionSets = computeParRegions();
-            
-            for(final int[] group : parGroups) {
-                pairs: for(final ParRegionPair pair : allPairs(group)) {
-                    for(final Set<ParRegionPair> set : parRegionSets)
-                        if(set.contains(pair))
-                            continue pairs;
-                    fail(String
-                            .format("JPF could not execute regions %d and %d in parallel.",
-                                    pair.first, pair.second));
+            sets: for(final Set<ParRegionPair> set : parRegionSets) {
+                for(final int[] group : parGroups) {
+                    for(final ParRegionPair pair : allPairs(group)) {
+                        if(!set.contains(pair)) {
+                            /* Fail: try next interleaving */
+                            continue sets;
+                        }
+                    }
                 }
+                /*
+                 * Specification was met for this interleaving, return
+                 * immediately:
+                 */
+                return false;
             }
+            fail("JPF could not find an interleaving with the specified parallelism");
             return false;
         }
+    }
+    
+    /**
+     * Convenience method to either verify that there are no property violations
+     * or to verify the given parallelism, depending on the given
+     * {@link VerifyMode}.
+     * 
+     * @param mode
+     *            If {@link VerifyMode#NO_PROPERTY_VIOLATIONS}, then
+     *            {@link #verifyNoPropertyViolation()} is called, otherwise
+     *            {@link #verifyParallelism(int[][])} is called.
+     * @param parGroups
+     *            The parallel groups specification
+     * @return <code>true</code> if being executed in JPF, <code>false</code>
+     *         otherwise
+     * @throws AssertionError
+     *             According to the called <code>verify</code> method
+     */
+    protected boolean verify(final VerifyMode mode, final int[]... parGroups) {
+        if(mode == VerifyMode.PARALLELISM)
+            return verifyParallelism(parGroups);
+        else
+            return verifyNoPropertyViolation();
     }
     
     private static Iterable<ParRegionPair> allPairs(final int[] group) {
@@ -93,11 +140,7 @@ public abstract class JpfParallelismTest extends JpfTest {
      */
     private Set<Set<ParRegionPair>> computeParRegions() {
         final ParListener listener = new ParListener();
-        
-        final Error error = runJpf(listener).getLastError();
-        if(error != null)
-            fail("JPF found unexpected errors: " + error.getDescription());
-        
+        runJpf(listener);
         return listener.getParRegions();
     }
     
@@ -131,7 +174,9 @@ public abstract class JpfParallelismTest extends JpfTest {
         Set<Set<ParRegionPair>> getParRegions() {
             final Set<Set<ParRegionPair>> result = new HashSet<>();
             for(final String string : eventStrings) {
-                if(!string.isEmpty()) {
+                if(string.isEmpty())
+                    result.add(new HashSet<ParRegionPair>());
+                else {
                     final String[] events = string.split("(?<!^)(?=[SE])");
                     
                     final Set<ParRegionPair> parRegions = new HashSet<>();
@@ -203,4 +248,13 @@ public abstract class JpfParallelismTest extends JpfTest {
         }
     }
     
+    protected static enum VerifyMode {
+        NO_PROPERTY_VIOLATIONS,
+        PARALLELISM;
+        
+        @Override
+        public String toString() {
+            return name().toLowerCase().replace('_', ' ');
+        }
+    }
 }

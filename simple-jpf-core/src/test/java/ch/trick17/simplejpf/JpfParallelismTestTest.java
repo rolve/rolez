@@ -8,7 +8,7 @@ public class JpfParallelismTestTest extends JpfParallelismTest {
     
     @Test
     public void testVerifyParallelism() {
-        if(verifyParallelism(new int[][]{{0, 1}})) {
+        if(verifyParallelism(new int[]{0, 1})) {
             new Thread(newRegion(0)).start();
             region(1);
         }
@@ -29,7 +29,7 @@ public class JpfParallelismTestTest extends JpfParallelismTest {
     
     @Test(expected = AssertionError.class)
     public void testVerifyParallelismFailSequential() {
-        if(verifyParallelism(new int[][]{{0, 1}})) {
+        if(verifyParallelism(new int[]{0, 1})) {
             region(0);
             region(1);
         }
@@ -37,7 +37,7 @@ public class JpfParallelismTestTest extends JpfParallelismTest {
     
     @Test(expected = AssertionError.class)
     public void testVerifyParallelismFailJoin() throws InterruptedException {
-        if(verifyParallelism(new int[][]{{0, 2}})) {
+        if(verifyParallelism(new int[]{0, 2})) {
             final Thread first = new Thread(newRegion(0));
             first.start();
             
@@ -48,7 +48,7 @@ public class JpfParallelismTestTest extends JpfParallelismTest {
     
     @Test
     public void testVerifyParallelismMultiple() {
-        if(verifyParallelism(new int[][]{{0, 1, 2, 3}})) {
+        if(verifyParallelism(new int[]{0, 1, 2, 3})) {
             for(int i = 0; i < 3; i++)
                 new Thread(newRegion(i)).start();
             
@@ -76,7 +76,7 @@ public class JpfParallelismTestTest extends JpfParallelismTest {
     
     @Test
     public void testVerifyParallelismNoRegions() {
-        if(verifyParallelism(new int[][]{})) {
+        if(verifyParallelism()) {
             /* Nothing at all */
         }
     }
