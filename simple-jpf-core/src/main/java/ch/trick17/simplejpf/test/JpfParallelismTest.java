@@ -10,7 +10,6 @@ import gov.nasa.jpf.vm.VM;
 import gov.nasa.jpf.vm.Verify;
 
 import java.util.ArrayDeque;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.Set;
@@ -37,42 +36,28 @@ public abstract class JpfParallelismTest extends JpfUnitTest {
         if(Verify.isRunningInJPF())
             return true;
         else {
-            final ParListener listener = new ParListener();
-            
-            final Error error = runJpf(listener).getLastError();
-            if(error != null)
-                fail("JPF found unexpected errors: " + error.getDescription());
-            
-            computeParallelism(listener.getEventStrings());
+            final Set<Set<ParRegionPair>> parRegions = computeParRegions();
+            for(final Set<ParRegionPair> set : parRegions)
+                System.out.println(set);
             return false;
         }
     }
     
-    private static void computeParallelism(final Set<String> eventStrings) {
-        final Set<Set<ParRegionPair>> allParallelRegions = new HashSet<>();
-        for(final String string : eventStrings) {
-            final String[] events = string.split("(?<!^)(?=[SE])");
-            
-            final Set<ParRegionPair> parallelRegions = new HashSet<>();
-            final Deque<Integer> currentRegions = new ArrayDeque<>();
-            for(final String event : events) {
-                final int id = Integer.parseInt(event.substring(1));
-                if(event.charAt(0) == 'S') {
-                    for(final Integer other : currentRegions)
-                        parallelRegions.add(new ParRegionPair(other, id));
-                    currentRegions.addFirst(id);
-                }
-                else {
-                    assert event.charAt(0) == 'E';
-                    final boolean removed = currentRegions.remove(id);
-                    assert removed;
-                }
-            }
-            allParallelRegions.add(parallelRegions);
-        }
+    /**
+     * Runs the current test method in JPF and records the regions that are
+     * executed in parallel.
+     * 
+     * @return A set that contains, for each possible thread interleaving, the
+     *         set of pairs of regions that were being executed in parallel.
+     */
+    private Set<Set<ParRegionPair>> computeParRegions() {
+        final ParListener listener = new ParListener();
         
-        for(final Set<ParRegionPair> parallelRegions : allParallelRegions)
-            System.out.println(parallelRegions);
+        final Error error = runJpf(listener).getLastError();
+        if(error != null)
+            fail("JPF found unexpected errors: " + error.getDescription());
+        
+        return listener.getParRegions();
     }
     
     private final class ParListener extends ListenerAdapter {
@@ -102,8 +87,29 @@ public abstract class JpfParallelismTest extends JpfUnitTest {
                     && method.getName().equals(testMethod);
         }
         
-        Set<String> getEventStrings() {
-            return Collections.unmodifiableSet(eventStrings);
+        Set<Set<ParRegionPair>> getParRegions() {
+            final Set<Set<ParRegionPair>> result = new HashSet<>();
+            for(final String string : eventStrings) {
+                final String[] events = string.split("(?<!^)(?=[SE])");
+                
+                final Set<ParRegionPair> parRegions = new HashSet<>();
+                final Deque<Integer> currentRegions = new ArrayDeque<>();
+                for(final String event : events) {
+                    final int id = Integer.parseInt(event.substring(1));
+                    if(event.charAt(0) == 'S') {
+                        for(final Integer other : currentRegions)
+                            parRegions.add(new ParRegionPair(other, id));
+                        currentRegions.addFirst(id);
+                    }
+                    else {
+                        assert event.charAt(0) == 'E';
+                        final boolean removed = currentRegions.remove(id);
+                        assert removed;
+                    }
+                }
+                result.add(parRegions);
+            }
+            return result;
         }
     }
     
