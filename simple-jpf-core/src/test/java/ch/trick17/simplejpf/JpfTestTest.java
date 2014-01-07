@@ -10,7 +10,7 @@ import org.junit.Test;
 
 import ch.trick17.simplejpf.test.JpfTest;
 
-public class JpfUnitTestTest extends JpfTest {
+public class JpfTestTest extends JpfTest {
     
     @Test
     public void testAssertionError() {
