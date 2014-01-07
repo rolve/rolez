@@ -9,9 +9,14 @@ import gov.nasa.jpf.vm.VM;
 import gov.nasa.jpf.vm.Verify;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
+
+import org.slf4j.LoggerFactory;
 
 /**
  * An extension of {@link JpfTest} which provides a way to verify that certain
@@ -139,15 +144,27 @@ public abstract class JpfParallelismTest extends JpfTest {
      *         set of pairs of regions that were being executed in parallel.
      */
     private Set<Set<ParRegionPair>> computeParRegions() {
-        final ParListener listener = new ParListener();
-        runJpf(listener);
-        return listener.getParRegions();
+        final ParListener l = new ParListener();
+        runJpf(l);
+        
+        final Set<Set<ParRegionPair>> parRegions = l.getPossibleParRegions();
+        
+        final StringBuilder msg = new StringBuilder(
+                "Possible parallel regions:");
+        for(final Set<ParRegionPair> set : parRegions) {
+            final ArrayList<ParRegionPair> list = new ArrayList<>(set);
+            Collections.sort(list);
+            msg.append("\n    ").append(list);
+        }
+        LoggerFactory.getLogger(JpfParallelismTest.class).info(msg.toString());
+        
+        return parRegions;
     }
     
     private final class ParListener extends ListenerAdapter {
         
         private final String testMethod;
-        private final Set<String> eventStrings = new HashSet<>();
+        private final Set<Set<ParRegionPair>> possibleParRegions = new HashSet<>();
         
         ParListener() {
             testMethod = getCaller();
@@ -159,25 +176,15 @@ public abstract class JpfParallelismTest extends JpfTest {
             if(isTestMethod(method)) {
                 final int testRef = thread.getTopFrame().getThis();
                 final ElementInfo instance = vm.getHeap().get(testRef);
-                final ElementInfo events = (ElementInfo) instance
-                        .getFieldValueObject("regionEvents");
-                eventStrings.add(events.asString());
-            }
-        }
-        
-        private boolean isTestMethod(final MethodInfo method) {
-            return method.getClassName().equals(
-                    JpfParallelismTest.this.getClass().getName())
-                    && method.getName().equals(testMethod);
-        }
-        
-        Set<Set<ParRegionPair>> getParRegions() {
-            final Set<Set<ParRegionPair>> result = new HashSet<>();
-            for(final String string : eventStrings) {
-                if(string.isEmpty())
-                    result.add(new HashSet<ParRegionPair>());
+                final String eventsString = ((ElementInfo) instance
+                        .getFieldValueObject("regionEvents")).asString();
+                
+                if(eventsString.isEmpty())
+                    addWithoutSubsets(possibleParRegions,
+                            new HashSet<ParRegionPair>());
                 else {
-                    final String[] events = string.split("(?<!^)(?=[SE])");
+                    final String[] events = eventsString
+                            .split("(?<!^)(?=[SE])");
                     
                     final Set<ParRegionPair> parRegions = new HashSet<>();
                     final Deque<Integer> currentRegions = new ArrayDeque<>();
@@ -194,14 +201,44 @@ public abstract class JpfParallelismTest extends JpfTest {
                             assert removed;
                         }
                     }
-                    result.add(parRegions);
+                    addWithoutSubsets(possibleParRegions, parRegions);
                 }
             }
-            return result;
+        }
+        
+        private <E> void addWithoutSubsets(final Set<Set<E>> sets,
+                final Set<E> set) {
+            for(final Set<E> other : sets)
+                if(isSubset(set, other))
+                    return;
+            
+            final Iterator<Set<E>> i = sets.iterator();
+            while(i.hasNext())
+                if(isSubset(i.next(), set))
+                    i.remove();
+            
+            sets.add(set);
+        }
+        
+        private <E> boolean isSubset(final Set<E> set, final Set<E> other) {
+            for(final E e : set)
+                if(!other.contains(e))
+                    return false;
+            return true;
+        }
+        
+        private boolean isTestMethod(final MethodInfo method) {
+            return method.getClassName().equals(
+                    JpfParallelismTest.this.getClass().getName())
+                    && method.getName().equals(testMethod);
+        }
+        
+        Set<Set<ParRegionPair>> getPossibleParRegions() {
+            return Collections.unmodifiableSet(possibleParRegions);
         }
     }
     
-    private static class ParRegionPair {
+    private static class ParRegionPair implements Comparable<ParRegionPair> {
         
         private final int first;
         private final int second;
@@ -244,7 +281,15 @@ public abstract class JpfParallelismTest extends JpfTest {
         
         @Override
         public String toString() {
-            return "[" + first + " -> " + second + "]";
+            return "(" + first + ", " + second + ")";
+        }
+        
+        public int compareTo(final ParRegionPair other) {
+            final int compareFirst = Integer.compare(first, other.first);
+            if(compareFirst != 0)
+                return compareFirst;
+            else
+                return Integer.compare(second, other.second);
         }
     }
     

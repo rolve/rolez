@@ -102,25 +102,28 @@ public class GuardTest extends JpfParallelismTest {
     
     @Test
     public void testShareMultiple() {
-        // TODO: Verify parallelism
-        assumeCorrectnessMultithreaded();
-        if(verifyNoPropertyViolation()) {
+        if(verify(mode, new int[][]{{0, 1}, {2, 3, 4}})) {
             final Int i = new Int();
             
             final int taskCount = 2;
             final Task<?>[] tasks = new Task<?>[taskCount];
             for(int k = 0; k < taskCount; k++) {
+                final int theK = k;
                 i.share();
                 tasks[k] = s.run(new Runnable() {
                     public void run() {
+                        region(theK);
                         assertEquals(0, i.value);
                         i.releaseShared();
+                        region(theK + 2);
                     }
                 });
             }
             
             i.guardReadWrite();
             i.value = 1;
+            
+            region(4);
             for(final Task<?> task : tasks)
                 task.get();
         }
