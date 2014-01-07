@@ -44,7 +44,6 @@ public class GuardTest extends JpfParallelismTest {
             
             i.share();
             final Task<Void> task = s.run(new Runnable() {
-                @Override
                 public void run() {
                     region(0);
                     assertEquals(0, i.value);
@@ -70,7 +69,6 @@ public class GuardTest extends JpfParallelismTest {
             
             i.share();
             final Task<Void> task = s.run(new Runnable() {
-                @Override
                 public void run() {
                     assertEquals(0, i.value);
                     i.releaseShared();
@@ -91,7 +89,6 @@ public class GuardTest extends JpfParallelismTest {
             
             i.share();
             final Task<Void> task = s.run(new Runnable() {
-                @Override
                 public void run() {
                     assertEquals(0, i.value);
                     // A missing release causes a deadlock
@@ -116,7 +113,6 @@ public class GuardTest extends JpfParallelismTest {
             for(int k = 0; k < taskCount; k++) {
                 i.share();
                 tasks[k] = s.run(new Runnable() {
-                    @Override
                     public void run() {
                         assertEquals(0, i.value);
                         i.releaseShared();
@@ -143,7 +139,6 @@ public class GuardTest extends JpfParallelismTest {
                 
                 i.share();
                 tasks[k] = s.run(new Runnable() {
-                    @Override
                     public void run() {
                         assertEquals(0, i.value);
                         
@@ -170,7 +165,6 @@ public class GuardTest extends JpfParallelismTest {
             
             i.pass();
             final Task<Void> task = s.run(new Runnable() {
-                @Override
                 public void run() {
                     i.registerNewOwner();
                     i.value++;
@@ -192,7 +186,6 @@ public class GuardTest extends JpfParallelismTest {
             
             i.pass();
             final Task<Void> task = s.run(new Runnable() {
-                @Override
                 public void run() {
                     i.registerNewOwner();
                     i.value = 1;
@@ -214,7 +207,6 @@ public class GuardTest extends JpfParallelismTest {
             
             i.pass();
             final Task<Void> task = s.run(new Runnable() {
-                @Override
                 public void run() {
                     i.registerNewOwner();
                     i.value = 1;
@@ -240,7 +232,6 @@ public class GuardTest extends JpfParallelismTest {
             for(int k = 0; k < taskCount; k++) {
                 i.pass();
                 tasks[k] = s.run(new Runnable() {
-                    @Override
                     public void run() {
                         i.registerNewOwner();
                         i.value++;
@@ -268,7 +259,6 @@ public class GuardTest extends JpfParallelismTest {
                 final int theK = k;
                 i.pass();
                 tasks[k] = s.run(new Runnable() {
-                    @Override
                     public void run() {
                         i.registerNewOwner();
                         i.value++;
@@ -296,14 +286,12 @@ public class GuardTest extends JpfParallelismTest {
             
             i.pass();
             final Task<Void> task = s.run(new Runnable() {
-                @Override
                 public void run() {
                     i.registerNewOwner();
                     i.value++;
                     
                     i.pass();
                     final Task<Void> task2 = s.run(new Runnable() {
-                        @Override
                         public void run() {
                             i.registerNewOwner();
                             i.value++;
@@ -336,14 +324,12 @@ public class GuardTest extends JpfParallelismTest {
             
             i.pass();
             final Task<Void> task = s.run(new Runnable() {
-                @Override
                 public void run() {
                     i.registerNewOwner();
                     i.value++;
                     
                     i.pass();
                     final Task<Void> task2 = s.run(new Runnable() {
-                        @Override
                         public void run() {
                             i.registerNewOwner();
                             i.value++;
@@ -371,7 +357,6 @@ public class GuardTest extends JpfParallelismTest {
             
             i.pass();
             final Task<Void> task = s.run(new Runnable() {
-                @Override
                 public void run() {
                     i.registerNewOwner();
                     i.value++;
@@ -381,7 +366,6 @@ public class GuardTest extends JpfParallelismTest {
             
             i.share();
             final Task<Void> task2 = s.run(new Runnable() {
-                @Override
                 public void run() {
                     assertEquals(1, i.value);
                     i.releaseShared();
@@ -404,7 +388,6 @@ public class GuardTest extends JpfParallelismTest {
             
             c.share();
             final Task<Void> task = s.run(new Runnable() {
-                @Override
                 public void run() {
                     assertEquals(0, c.i.value);
                     c.releaseShared();
@@ -431,7 +414,6 @@ public class GuardTest extends JpfParallelismTest {
             for(int k = 0; k < taskCount; k++) {
                 c.share();
                 tasks[k] = s.run(new Runnable() {
-                    @Override
                     public void run() {
                         assertEquals(0, c.i.value);
                         c.releaseShared();
@@ -456,7 +438,6 @@ public class GuardTest extends JpfParallelismTest {
             
             c.pass();
             final Task<Void> task = s.run(new Runnable() {
-                @Override
                 public void run() {
                     c.registerNewOwner();
                     c.i.value++;
@@ -483,7 +464,6 @@ public class GuardTest extends JpfParallelismTest {
             for(int k = 0; k < taskCount; k++) {
                 c.pass();
                 tasks[k] = s.run(new Runnable() {
-                    @Override
                     public void run() {
                         c.registerNewOwner();
                         c.i.value++;
@@ -509,7 +489,6 @@ public class GuardTest extends JpfParallelismTest {
             
             c.pass();
             final Task<Void> task = s.run(new Runnable() {
-                @Override
                 public void run() {
                     c.registerNewOwner();
                     final Int i2 = c.i;
@@ -517,7 +496,6 @@ public class GuardTest extends JpfParallelismTest {
                     
                     c.pass();
                     final Task<Void> task2 = s.run(new Runnable() {
-                        @Override
                         public void run() {
                             c.registerNewOwner();
                             c.i.value++;
@@ -552,7 +530,6 @@ public class GuardTest extends JpfParallelismTest {
             
             c.pass();
             final Task<Void> task = s.run(new Runnable() {
-                @Override
                 public void run() {
                     c.registerNewOwner();
                     c.i.value++;
@@ -562,7 +539,6 @@ public class GuardTest extends JpfParallelismTest {
             
             c.share();
             final Task<Void> task2 = s.run(new Runnable() {
-                @Override
                 public void run() {
                     assertEquals(1, c.i.value);
                     c.releaseShared();
@@ -586,7 +562,6 @@ public class GuardTest extends JpfParallelismTest {
             
             i.share();
             final Task<Void> task1 = s.run(new Runnable() {
-                @Override
                 public void run() {
                     assertEquals(0, i.value);
                     i.releaseShared();
@@ -595,7 +570,6 @@ public class GuardTest extends JpfParallelismTest {
             
             c.share();
             final Task<Void> task2 = s.run(new Runnable() {
-                @Override
                 public void run() {
                     assertEquals(0, c.i.value);
                     c.releaseShared();
@@ -604,7 +578,6 @@ public class GuardTest extends JpfParallelismTest {
             
             i.share();
             final Task<Void> task3 = s.run(new Runnable() {
-                @Override
                 public void run() {
                     assertEquals(0, i.value);
                     i.releaseShared();
@@ -629,7 +602,6 @@ public class GuardTest extends JpfParallelismTest {
             
             i.pass();
             final Task<Void> task1 = s.run(new Runnable() {
-                @Override
                 public void run() {
                     i.registerNewOwner();
                     i.value++;
@@ -639,7 +611,6 @@ public class GuardTest extends JpfParallelismTest {
             
             c.pass();
             final Task<Void> task2 = s.run(new Runnable() {
-                @Override
                 public void run() {
                     c.registerNewOwner();
                     c.i.value++;
@@ -649,7 +620,6 @@ public class GuardTest extends JpfParallelismTest {
             
             i.pass();
             final Task<Void> task3 = s.run(new Runnable() {
-                @Override
                 public void run() {
                     i.registerNewOwner();
                     i.value++;
@@ -675,7 +645,6 @@ public class GuardTest extends JpfParallelismTest {
             
             c.pass();
             final Task<Void> task = s.run(new Runnable() {
-                @Override
                 public void run() {
                     c.registerNewOwner();
                     final Int i2 = c.i;
@@ -683,7 +652,6 @@ public class GuardTest extends JpfParallelismTest {
                     
                     i2.pass();
                     final Task<Void> task2 = s.run(new Runnable() {
-                        @Override
                         public void run() {
                             i2.registerNewOwner();
                             i2.value++;
@@ -718,7 +686,6 @@ public class GuardTest extends JpfParallelismTest {
             
             c.pass();
             final Task<Void> task = s.run(new Runnable() {
-                @Override
                 public void run() {
                     c.registerNewOwner();
                     c.i.value++;
@@ -728,7 +695,6 @@ public class GuardTest extends JpfParallelismTest {
             
             i.share();
             final Task<Void> task2 = s.run(new Runnable() {
-                @Override
                 public void run() {
                     assertEquals(1, i.value);
                     i.releaseShared();
@@ -752,7 +718,6 @@ public class GuardTest extends JpfParallelismTest {
             
             c.pass();
             final Task<Void> task = s.run(new Runnable() {
-                @Override
                 public void run() {
                     c.registerNewOwner();
                     c.i = new Int();
@@ -781,7 +746,6 @@ public class GuardTest extends JpfParallelismTest {
             
             c.pass();
             final Task<Void> task = s.run(new Runnable() {
-                @Override
                 public void run() {
                     c.registerNewOwner();
                     c.i = new Int();
@@ -790,7 +754,6 @@ public class GuardTest extends JpfParallelismTest {
                     i2.value++;
                     i2.pass();
                     final Task<Void> task2 = s.run(new Runnable() {
-                        @Override
                         public void run() {
                             i2.registerNewOwner();
                             i2.value++;

@@ -23,8 +23,8 @@ public class Guard {
      * Object state operations
      */
     
-    private static abstract class Op {
-        abstract void process(Guard guard);
+    private static interface Op {
+        void process(Guard guard);
     }
     
     public void share(final GuardedObject o) {
@@ -32,8 +32,7 @@ public class Guard {
     }
     
     private static final Op SHARE = new Op() {
-        @Override
-        void process(final Guard guard) {
+        public void process(final Guard guard) {
             guard.guardRead();
             guard.sharedCount.incrementAndGet();
         }
@@ -46,8 +45,7 @@ public class Guard {
     }
     
     private static final Op PASS = new Op() {
-        @Override
-        void process(final Guard guard) {
+        public void process(final Guard guard) {
             guard.guardReadWrite();
             /* First step of passing */
             guard.owner = null;
@@ -60,8 +58,7 @@ public class Guard {
     }
     
     private static final Op REGISTER_OWNER = new Op() {
-        @Override
-        void process(final Guard guard) {
+        public void process(final Guard guard) {
             assert guard.owner == null;
             assert !guard.amOriginalOwner();
             /* Second step of passing */
@@ -74,8 +71,7 @@ public class Guard {
     }
     
     private static final Op RELEASE_SHARED = new Op() {
-        @Override
-        void process(final Guard guard) {
+        public void process(final Guard guard) {
             assert guard.isShared();
             guard.sharedCount.decrementAndGet();
             LockSupport.unpark(guard.owner);
@@ -88,8 +84,7 @@ public class Guard {
         final Thread parent = prevOwners.peekFirst();
         assert parent != null;
         final Op transferOwner = new Op() {
-            @Override
-            void process(final Guard guard) {
+            public void process(final Guard guard) {
                 if(guard.amOriginalOwner())
                     guard.owner = parent;
             }
@@ -102,8 +97,7 @@ public class Guard {
     }
     
     private static final Op RELEASE_PASSED = new Op() {
-        @Override
-        void process(final Guard guard) {
+        public void process(final Guard guard) {
             assert guard.isMutable();
             assert !guard.amOriginalOwner();
             guard.owner = guard.prevOwners.removeFirst();

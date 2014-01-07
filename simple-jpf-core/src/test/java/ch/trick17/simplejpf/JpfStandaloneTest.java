@@ -9,7 +9,7 @@ import java.io.IOException;
 public class JpfStandaloneTest {
     
     public static void main(final String[] args) throws IOException {
-        final Config config = JPF.createConfig(new String[] {"-show"});
+        final Config config = JPF.createConfig(new String[]{"-show"});
         config.load(JpfStandaloneTest.class
                 .getResourceAsStream("jpf.properties"));
         
@@ -29,8 +29,6 @@ public class JpfStandaloneTest {
         
         public static void main(final String[] args) {
             new Thread(new Runnable() {
-                
-                @Override
                 public void run() {
                     for(int i = 0; i < 3000; i++)
                         counter = i;

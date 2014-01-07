@@ -83,7 +83,6 @@ public class JpfParallelismTestTest extends JpfParallelismTest {
     
     private Runnable newRegion(final int id) {
         return new Runnable() {
-            @Override
             public void run() {
                 region(id);
             }

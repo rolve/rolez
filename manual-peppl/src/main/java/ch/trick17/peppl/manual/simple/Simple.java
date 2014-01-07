@@ -25,7 +25,6 @@ public class Simple implements Callable<Void> {
         // get() Propagates exceptions to the main thread
     }
     
-    @Override
     public Void call() {
         final @Mutable Container c = new Container();
         
@@ -88,7 +87,6 @@ public class Simple implements Callable<Void> {
             this.c = c;
         }
         
-        @Override
         public Void call() {
             c.registerNewOwner(); // added by the compiler
             
@@ -115,7 +113,6 @@ public class Simple implements Callable<Void> {
             this.c = c;
         }
         
-        @Override
         public Void call() {
             final int i = c.get(); // No guard required, static analysis
                                    // finds that read access is available

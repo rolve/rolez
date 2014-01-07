@@ -18,7 +18,6 @@ public class SimpleGroups implements Callable<Void> {
         new SimpleGroups().call();
     }
     
-    @Override
     public Void call() {
         final X x = new X();
         x.y = new Y();
@@ -43,7 +42,6 @@ public class SimpleGroups implements Callable<Void> {
             this.x = x;
         }
         
-        @Override
         public void run() {
             x.registerNewOwner();
             
@@ -74,7 +72,6 @@ public class SimpleGroups implements Callable<Void> {
             this.z = z;
         }
         
-        @Override
         public void run() {
             z.guardRead();
             z.y.guardRead();

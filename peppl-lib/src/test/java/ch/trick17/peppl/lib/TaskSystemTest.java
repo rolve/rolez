@@ -22,8 +22,8 @@ public class TaskSystemTest extends JpfTest {
     
     @Parameterized.Parameters(name = "{0}")
     public static List<?> taskSystems() {
-        return Arrays.asList(new TaskSystem[][] {
-                {new SingleThreadTaskSystem()}, {new NewThreadTaskSystem()}});
+        return Arrays.asList(new TaskSystem[][]{{new SingleThreadTaskSystem()},
+                {new NewThreadTaskSystem()}});
     }
     
     private final TaskSystem system;
@@ -40,7 +40,6 @@ public class TaskSystemTest extends JpfTest {
             flag = false;
             final Thread original = Thread.currentThread();
             system.run(new Runnable() {
-                @Override
                 public void run() {
                     flag = true;
                     LockSupport.unpark(original);
@@ -57,7 +56,6 @@ public class TaskSystemTest extends JpfTest {
             flag = false;
             final Thread original = Thread.currentThread();
             system.run(new Runnable() {
-                @Override
                 public void run() {
                     // Not setting the flag will result in a deadlock:
                     // flag = true;
@@ -75,13 +73,10 @@ public class TaskSystemTest extends JpfTest {
             flag = false;
             final Thread original = Thread.currentThread();
             system.run(new Runnable() {
-                @Override
                 public void run() {
                     system.run(new Runnable() {
-                        @Override
                         public void run() {
                             system.run(new Runnable() {
-                                @Override
                                 public void run() {
                                     flag = true;
                                     LockSupport.unpark(original);
@@ -101,12 +96,10 @@ public class TaskSystemTest extends JpfTest {
     public void testRunTaskWaiting() {
         if(verifyNoPropertyViolation()) {
             system.run(new Runnable() {
-                @Override
                 public void run() {
                     flag = false;
                     final Thread original = Thread.currentThread();
                     system.run(new Runnable() {
-                        @Override
                         public void run() {
                             flag = true;
                             LockSupport.unpark(original);
@@ -123,7 +116,6 @@ public class TaskSystemTest extends JpfTest {
     public void testExceptionInTask() {
         if(verifyUnhandledException("java.lang.RuntimeException", "Hello")) {
             final Task<Void> task = system.run(new Runnable() {
-                @Override
                 public void run() {
                     throw new RuntimeException("Hello");
                 }
@@ -138,7 +130,6 @@ public class TaskSystemTest extends JpfTest {
     public void testReturnValue() throws Throwable {
         if(verifyNoPropertyViolation()) {
             final Task<Integer> task = system.run(new Callable<Integer>() {
-                @Override
                 public Integer call() {
                     return 42;
                 }

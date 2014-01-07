@@ -17,7 +17,6 @@ public class Reduce implements Callable<Void> {
         TaskSystem.getDefault().run(new Reduce()).get();
     }
     
-    @Override
     public Void call() {
         final int[] data = shuffledInts();
         
@@ -41,7 +40,6 @@ public class Reduce implements Callable<Void> {
             this.end = end;
         }
         
-        @Override
         public Long call() throws Exception {
             final int size = end - begin;
             if(size <= SPLIT_SIZE) {
