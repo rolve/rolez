@@ -24,9 +24,7 @@ public abstract class TaskSystem implements Serializable {
         return getClass().getSimpleName();
     }
     
-    /*
-     * Global default task system
-     */
+    /* Global default task system */
     
     private static final TaskSystem defaultSystem = new NewThreadTaskSystem();
     

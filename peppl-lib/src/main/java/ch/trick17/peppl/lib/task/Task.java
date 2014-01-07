@@ -16,11 +16,9 @@ public class Task<V> extends FutureTask<V> {
     
     @Override
     protected void done() {
-        /*
-         * Print the exception as soon as the task is finished, in case the
+        /* Print the exception as soon as the task is finished, in case the
          * parent task does not finish (e.g. because of a deadlock) and the
-         * exception is not propagated.
-         */
+         * exception is not propagated. */
         try {
             super.get();
         } catch(final ExecutionException e) {

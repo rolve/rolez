@@ -19,9 +19,7 @@ public class Guard {
     
     private final AtomicInteger sharedCount = new AtomicInteger(0);
     
-    /*
-     * Object state operations
-     */
+    /* Object state operations */
     
     private static interface Op {
         void process(Guard guard);
@@ -105,33 +103,25 @@ public class Guard {
         }
     };
     
-    /*
-     * Guarding methods
-     */
+    /* Guarding methods */
     
     public void guardRead() {
-        /*
-         * isMutable() and isShared() read volatile (atomic) fields written by
+        /* isMutable() and isShared() read volatile (atomic) fields written by
          * releasePassed and releaseShared. Therefore, there is a happens-before
-         * relationship between releasePassed()/releaseShared() and guardRead().
-         */
+         * relationship between releasePassed()/releaseShared() and guardRead(). */
         while(!(isMutable() || isShared()))
             LockSupport.park();
     }
     
     public void guardReadWrite() {
-        /*
-         * isMutable() reads the volatile owner field written by releasePassed.
+        /* isMutable() reads the volatile owner field written by releasePassed.
          * Therefore, there is a happens-before relationship between
-         * releasePassed() and guardReadWrite().
-         */
+         * releasePassed() and guardReadWrite(). */
         while(!isMutable())
             LockSupport.park();
     }
     
-    /*
-     * Implementation methods
-     */
+    /* Implementation methods */
     
     private boolean isMutable() {
         return owner == Thread.currentThread() && !isShared();
