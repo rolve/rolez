@@ -23,9 +23,8 @@ public class GuardTest extends JpfParallelismTest {
     @Parameters(name = "{0}, {1}")
     public static List<?> taskSystems() {
         return Arrays.asList(new Object[][]{
-                {new SingleThreadTaskSystem(),
-                        VerifyMode.NO_PROPERTY_VIOLATIONS},
-                {new NewThreadTaskSystem(), VerifyMode.NO_PROPERTY_VIOLATIONS},
+                {new SingleThreadTaskSystem(), VerifyMode.CORRECTNESS},
+                {new NewThreadTaskSystem(), VerifyMode.CORRECTNESS},
                 {new NewThreadTaskSystem(), VerifyMode.PARALLELISM}});
     }
     
@@ -63,7 +62,7 @@ public class GuardTest extends JpfParallelismTest {
     
     @Test
     public void testShareMissingGuard() {
-        assumeMultithreadedNoViolations();
+        assumeCorrectnessMultithreaded();
         if(verifyAssertionError()) {
             final Int i = new Int();
             
@@ -83,7 +82,7 @@ public class GuardTest extends JpfParallelismTest {
     
     @Test
     public void testShareMissingRelease() {
-        assumeMultithreadedNoViolations();
+        assumeCorrectnessMultithreaded();
         if(verifyDeadlock()) {
             final Int i = new Int();
             
@@ -104,7 +103,7 @@ public class GuardTest extends JpfParallelismTest {
     @Test
     public void testShareMultiple() {
         // TODO: Verify parallelism
-        assumeMultithreadedNoViolations();
+        assumeCorrectnessMultithreaded();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
             
@@ -129,7 +128,7 @@ public class GuardTest extends JpfParallelismTest {
     
     @Test
     public void testShareMultipleMissingRelease() {
-        assumeMultithreadedNoViolations();
+        assumeCorrectnessMultithreaded();
         if(verifyDeadlock()) {
             final Int i = new Int();
             
@@ -159,7 +158,7 @@ public class GuardTest extends JpfParallelismTest {
     @Test
     public void testPass() {
         // TODO: Verify parallelism
-        assumeMultithreadedNoViolations();
+        assumeCorrectnessMultithreaded();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
             
@@ -180,7 +179,7 @@ public class GuardTest extends JpfParallelismTest {
     
     @Test
     public void testPassMissingGuard() {
-        assumeMultithreadedNoViolations();
+        assumeCorrectnessMultithreaded();
         if(verifyAssertionError()) {
             final Int i = new Int();
             
@@ -201,7 +200,7 @@ public class GuardTest extends JpfParallelismTest {
     
     @Test
     public void testPassMissingRelease() {
-        assumeMultithreadedNoViolations();
+        assumeCorrectnessMultithreaded();
         if(verifyDeadlock()) {
             final Int i = new Int();
             
@@ -223,7 +222,7 @@ public class GuardTest extends JpfParallelismTest {
     @Test
     public void testPassMultiple() {
         // TODO: Verify parallelism
-        assumeMultithreadedNoViolations();
+        assumeCorrectnessMultithreaded();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
             
@@ -249,7 +248,7 @@ public class GuardTest extends JpfParallelismTest {
     
     @Test
     public void testPassMultipleMissingRelease() {
-        assumeMultithreadedNoViolations();
+        assumeCorrectnessMultithreaded();
         if(verifyDeadlock()) {
             final Int i = new Int();
             
@@ -280,7 +279,7 @@ public class GuardTest extends JpfParallelismTest {
     @Test
     public void testPassNested() {
         // TODO: Verify parallelism
-        assumeMultithreadedNoViolations();
+        assumeCorrectnessMultithreaded();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
             
@@ -318,7 +317,7 @@ public class GuardTest extends JpfParallelismTest {
     
     @Test
     public void testPassNestedMissingRelease() {
-        assumeMultithreadedNoViolations();
+        assumeCorrectnessMultithreaded();
         if(verifyDeadlock()) {
             final Int i = new Int();
             
@@ -351,7 +350,7 @@ public class GuardTest extends JpfParallelismTest {
     @Test
     public void testPassShare() {
         // TODO: Verify parallelism
-        assumeMultithreadedNoViolations();
+        assumeCorrectnessMultithreaded();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
             
@@ -382,7 +381,7 @@ public class GuardTest extends JpfParallelismTest {
     @Test
     public void testShareGroup() {
         // TODO: Verify parallelism
-        assumeMultithreadedNoViolations();
+        assumeCorrectnessMultithreaded();
         if(verifyNoPropertyViolation()) {
             final IntContainer c = new IntContainer();
             
@@ -404,7 +403,7 @@ public class GuardTest extends JpfParallelismTest {
     @Test
     public void testShareGroupMultiple() {
         // TODO: Verify parallelism
-        assumeMultithreadedNoViolations();
+        assumeCorrectnessMultithreaded();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
             final IntContainer c = new IntContainer(i);
@@ -431,7 +430,7 @@ public class GuardTest extends JpfParallelismTest {
     @Test
     public void testPassGroup() {
         // TODO: Verify parallelism
-        assumeMultithreadedNoViolations();
+        assumeCorrectnessMultithreaded();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
             final IntContainer c = new IntContainer(i);
@@ -454,7 +453,7 @@ public class GuardTest extends JpfParallelismTest {
     @Test
     public void testPassGroupMultiple() {
         // TODO: Verify parallelism
-        assumeMultithreadedNoViolations();
+        assumeCorrectnessMultithreaded();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
             final IntContainer c = new IntContainer(i);
@@ -482,7 +481,7 @@ public class GuardTest extends JpfParallelismTest {
     @Test
     public void testPassGroupNested() {
         // TODO: Verify parallelism
-        assumeMultithreadedNoViolations();
+        assumeCorrectnessMultithreaded();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
             final IntContainer c = new IntContainer(i);
@@ -523,7 +522,7 @@ public class GuardTest extends JpfParallelismTest {
     @Test
     public void testPassShareGroup() {
         // TODO: Verify parallelism
-        assumeMultithreadedNoViolations();
+        assumeCorrectnessMultithreaded();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
             final IntContainer c = new IntContainer(i);
@@ -555,7 +554,7 @@ public class GuardTest extends JpfParallelismTest {
     @Test
     public void testShareSubgroup() {
         // TODO: Verify parallelism
-        assumeMultithreadedNoViolations();
+        assumeCorrectnessMultithreaded();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
             final IntContainer c = new IntContainer(i);
@@ -595,7 +594,7 @@ public class GuardTest extends JpfParallelismTest {
     @Test
     public void testPassSubgroup() {
         // TODO: Verify parallelism
-        assumeMultithreadedNoViolations();
+        assumeCorrectnessMultithreaded();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
             final IntContainer c = new IntContainer(i);
@@ -638,7 +637,7 @@ public class GuardTest extends JpfParallelismTest {
     @Test
     public void testPassSubgroupNested() {
         // TODO: Verify parallelism
-        assumeMultithreadedNoViolations();
+        assumeCorrectnessMultithreaded();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
             final IntContainer c = new IntContainer(i);
@@ -679,7 +678,7 @@ public class GuardTest extends JpfParallelismTest {
     @Test
     public void testPassShareSubgroup() {
         // TODO: Verify parallelism
-        assumeMultithreadedNoViolations();
+        assumeCorrectnessMultithreaded();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
             final IntContainer c = new IntContainer(i);
@@ -711,7 +710,7 @@ public class GuardTest extends JpfParallelismTest {
     @Test
     public void testPassGroupModify() {
         // TODO: Verify parallelism
-        assumeMultithreadedNoViolations();
+        assumeCorrectnessMultithreaded();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
             final IntContainer c = new IntContainer(i);
@@ -739,7 +738,7 @@ public class GuardTest extends JpfParallelismTest {
     @Test
     public void testPassSubgroupNestedModify() {
         // TODO: Verify parallelism
-        assumeMultithreadedNoViolations();
+        assumeCorrectnessMultithreaded();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
             final IntContainer c = new IntContainer(i);
@@ -779,12 +778,12 @@ public class GuardTest extends JpfParallelismTest {
         }
     }
     
-    private void assumeMultithreadedNoViolations() {
+    private void assumeCorrectnessMultithreaded() {
         if(s instanceof SingleThreadTaskSystem)
             throw new AssumptionViolatedException("not a multithreaded test");
         
-        if(mode != VerifyMode.NO_PROPERTY_VIOLATIONS)
+        if(mode != VerifyMode.CORRECTNESS)
             throw new AssumptionViolatedException(
-                    "not verifying no property violations");
+                    "not verifying correctness properties");
     }
 }

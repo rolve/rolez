@@ -101,12 +101,12 @@ public abstract class JpfParallelismTest extends JpfTest {
     }
     
     /**
-     * Convenience method to either verify that there are no property violations
-     * or to verify the given parallelism, depending on the given
-     * {@link VerifyMode}.
+     * Convenience method to either verify that there are no correctness
+     * property violations or to verify the given parallelism, depending on the
+     * given {@link VerifyMode}.
      * 
      * @param mode
-     *            If {@link VerifyMode#NO_PROPERTY_VIOLATIONS}, then
+     *            If {@link VerifyMode#CORRECTNESS}, then
      *            {@link #verifyNoPropertyViolation()} is called, otherwise
      *            {@link #verifyParallelism(int[][])} is called.
      * @param parGroups
@@ -249,7 +249,7 @@ public abstract class JpfParallelismTest extends JpfTest {
     }
     
     protected static enum VerifyMode {
-        NO_PROPERTY_VIOLATIONS,
+        CORRECTNESS,
         PARALLELISM;
         
         @Override
