@@ -22,10 +22,7 @@ import java.io.Serializable;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map.Entry;
-import java.util.Properties;
 
 import javax.xml.bind.DatatypeConverter;
 
@@ -190,13 +187,6 @@ public abstract class JpfTest implements Serializable {
         } catch(final IOException e) {
             throw new AssertionError(e);
         }
-    }
-    
-    private static String[] propsToArgs(final Properties props) {
-        final ArrayList<String> args = new ArrayList<>();
-        for(final Entry<Object, Object> entry : props.entrySet())
-            args.add("+" + entry.getKey() + "=" + entry.getValue());
-        return args.toArray(new String[args.size()]);
     }
     
     /* Implementation - JPF part */
