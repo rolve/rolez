@@ -15,6 +15,7 @@ import gov.nasa.jpf.vm.Verify;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
@@ -60,26 +61,7 @@ import org.junit.runners.Parameterized;
  */
 public abstract class JpfTest implements Serializable {
     
-    private static final Properties generalConfig;
-    
-    static {
-        if(Verify.isRunningInJPF())
-            generalConfig = null;
-        else
-            try {
-                generalConfig = new Properties();
-                generalConfig.load(JpfTest.class
-                        .getResourceAsStream("jpf.properties"));
-                generalConfig.setProperty("classpath", System
-                        .getProperty("java.class.path"));
-            } catch(final IOException e) {
-                throw new RuntimeException(e);
-            }
-    }
-    
-    /*
-     * Verify methods. These are more or less copied from the TestJPF class
-     */
+    /* Verify methods. These are more or less copied from the TestJPF class */
     
     protected boolean verifyAssertionError() {
         return verifyUnhandledException("java.lang.AssertionError", null);
@@ -161,9 +143,7 @@ public abstract class JpfTest implements Serializable {
         return verifyPropertyViolation(NotDeadlockedProperty.class);
     }
     
-    /*
-     * Implementation - JUnit part
-     */
+    /* Implementation - JUnit part */
     
     private static boolean runDirectly() {
         return Verify.isRunningInJPF() || isDebugRun();
@@ -178,7 +158,9 @@ public abstract class JpfTest implements Serializable {
         final String serializedTest = serialize(this);
         final String methodName = getCaller();
         
-        final Config config = new Config(propsToArgs(generalConfig));
+        final Config config = new Config(new InputStreamReader(JpfTest.class
+                .getResourceAsStream("jpf.properties")));
+        config.setProperty("classpath", System.getProperty("java.class.path"));
         config.setTarget(JpfTest.class.getName());
         config.setTargetEntry("runTest([Ljava/lang/String;)V");
         config.setTargetArgs(new String[]{serializedTest, methodName});
@@ -217,9 +199,7 @@ public abstract class JpfTest implements Serializable {
         return args.toArray(new String[args.size()]);
     }
     
-    /*
-     * Implementation - JPF part
-     */
+    /* Implementation - JPF part */
     
     /**
      * This is the entry point of the JPF execution. Deserializes the given test
