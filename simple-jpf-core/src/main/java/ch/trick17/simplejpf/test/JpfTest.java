@@ -22,7 +22,10 @@ import java.io.Serializable;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.bind.DatatypeConverter;
 
@@ -140,6 +143,13 @@ public abstract class JpfTest implements Serializable {
         return verifyPropertyViolation(NotDeadlockedProperty.class);
     }
     
+    transient private Map<String, String> additionalProps = Collections
+            .emptyMap();
+    
+    protected void setJpfProperties(final Map<String, String> props) {
+        additionalProps = new HashMap<>(props);
+    }
+    
     /* Implementation - JUnit part */
     
     private static boolean runDirectly() {
@@ -161,6 +171,7 @@ public abstract class JpfTest implements Serializable {
         config.setTarget(JpfTest.class.getName());
         config.setTargetEntry("runTest([Ljava/lang/String;)V");
         config.setTargetArgs(new String[]{serializedTest, methodName});
+        config.putAll(additionalProps);
         
         final JPF jpf = new JPF(config);
         for(final JPFListener listener : listeners)

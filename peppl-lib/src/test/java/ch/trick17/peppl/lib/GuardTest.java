@@ -3,8 +3,11 @@ package ch.trick17.peppl.lib;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.internal.AssumptionViolatedException;
 import org.junit.runner.RunWith;
@@ -34,6 +37,13 @@ public class GuardTest extends JpfParallelismTest {
     public GuardTest(final TaskSystem s, final VerifyMode mode) {
         this.s = s;
         this.mode = mode;
+    }
+    
+    @Before
+    public void setJpfProps() {
+        final Map<String, String> props = new HashMap<>();
+        props.put("vm.por", "false");
+        setJpfProperties(props);
     }
     
     @Test
