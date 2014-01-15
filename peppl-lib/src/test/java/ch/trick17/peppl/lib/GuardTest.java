@@ -14,6 +14,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
+import ch.trick17.peppl.lib.guard.GuardedArray;
 import ch.trick17.peppl.lib.task.NewThreadTaskSystem;
 import ch.trick17.peppl.lib.task.SingleThreadTaskSystem;
 import ch.trick17.peppl.lib.task.Task;
@@ -828,6 +829,181 @@ public class GuardTest extends JpfParallelismTest {
             c.guardRead();
             c.i.guardRead();
             assertEquals(3, c.i.value);
+            task.get();
+        }
+    }
+    
+    @Test
+    public void testShareArray() {
+        assumeVerifyCorrectness();
+        if(verifyNoPropertyViolation()) {
+            final GuardedArray<Int> a = new GuardedArray<>(new Int[3]);
+            for(int i = 0; i < a.data.length; i++)
+                a.data[i] = new Int(i);
+            
+            a.share();
+            final Task<Void> task = s.run(new Runnable() {
+                public void run() {
+                    assertEquals(2, a.data[2].value);
+                    a.releaseShared();
+                }
+            });
+            
+            a.guardReadWrite();
+            a.data[2].value = 1;
+            
+            task.get();
+        }
+    }
+    
+    @Test
+    public void testPassArray() {
+        assumeVerifyCorrectness();
+        if(verifyNoPropertyViolation()) {
+            final GuardedArray<Int> a = new GuardedArray<>(new Int[3]);
+            for(int i = 0; i < a.data.length; i++)
+                a.data[i] = new Int(i);
+            
+            a.pass();
+            final Task<Void> task = s.run(new Runnable() {
+                public void run() {
+                    a.registerNewOwner();
+                    for(int i = 0; i < a.data.length; i++)
+                        a.data[i].value++;
+                    a.releasePassed();
+                }
+            });
+            
+            a.guardRead();
+            for(int i = 0; i < a.data.length; i++)
+                assertEquals(i + 1, a.data[i].value);
+            
+            task.get();
+        }
+    }
+    
+    @Test
+    public void testShareArrayElement() {
+        assumeVerifyCorrectness();
+        if(verifyNoPropertyViolation()) {
+            final Int i = new Int();
+            final GuardedArray<Int> a = new GuardedArray<>(i);
+            
+            i.share();
+            final Task<Void> task1 = s.run(new Runnable() {
+                public void run() {
+                    assertEquals(0, i.value);
+                    i.releaseShared();
+                }
+            });
+            
+            a.share();
+            final Task<Void> task2 = s.run(new Runnable() {
+                public void run() {
+                    assertEquals(0, a.data[0].value);
+                    a.releaseShared();
+                }
+            });
+            
+            i.share();
+            final Task<Void> task3 = s.run(new Runnable() {
+                public void run() {
+                    assertEquals(0, i.value);
+                    i.releaseShared();
+                }
+            });
+            
+            i.guardReadWrite();
+            i.value = 1;
+            
+            task1.get();
+            task2.get();
+            task3.get();
+        }
+    }
+    
+    @Test
+    public void testPassArrayElement() {
+        assumeVerifyCorrectness();
+        if(verifyNoPropertyViolation()) {
+            final Int i = new Int();
+            final GuardedArray<Int> a = new GuardedArray<>(i);
+            
+            i.pass();
+            final Task<Void> task1 = s.run(new Runnable() {
+                public void run() {
+                    i.registerNewOwner();
+                    region(0);
+                    i.value++;
+                    i.releasePassed();
+                }
+            });
+            
+            a.pass();
+            final Task<Void> task2 = s.run(new Runnable() {
+                public void run() {
+                    a.registerNewOwner();
+                    region(1);
+                    a.data[0].value++;
+                    a.releasePassed();
+                }
+            });
+            
+            i.pass();
+            final Task<Void> task3 = s.run(new Runnable() {
+                public void run() {
+                    i.registerNewOwner();
+                    region(2);
+                    i.value++;
+                    i.releasePassed();
+                }
+            });
+            region(3);
+            
+            i.guardRead();
+            assertEquals(3, i.value);
+            task1.get();
+            task2.get();
+            task3.get();
+        }
+    }
+    
+    @Test
+    public void testPassArrayElementNestedModify() {
+        assumeVerifyCorrectness();
+        if(verifyNoPropertyViolation()) {
+            final Int i = new Int();
+            final GuardedArray<Int> a = new GuardedArray<>(i);
+            
+            a.pass();
+            final Task<Void> task = s.run(new Runnable() {
+                public void run() {
+                    a.registerNewOwner();
+                    a.data[0] = new Int();
+                    
+                    final Int i2 = a.data[0];
+                    i2.value++;
+                    i2.pass();
+                    final Task<Void> task2 = s.run(new Runnable() {
+                        public void run() {
+                            i2.registerNewOwner();
+                            i2.value++;
+                            i2.releasePassed();
+                        }
+                    });
+                    
+                    i2.guardReadWrite();
+                    assertEquals(2, i2.value);
+                    i2.value++;
+                    
+                    a.releasePassed();
+                    task2.get();
+                }
+            });
+            
+            a.guardRead();
+            a.data[0].guardRead();
+            assertEquals(3, a.data[0].value);
             task.get();
         }
     }

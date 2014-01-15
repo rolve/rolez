@@ -12,14 +12,14 @@ class Guard {
     
     private volatile Thread owner = Thread.currentThread();
     private final Deque<Thread> prevOwners = new ArrayDeque<>();
-    private final Deque<Set<GuardedObject>> reachables = new ArrayDeque<>();
+    private final Deque<Set<Guarded>> reachables = new ArrayDeque<>();
     
     private final AtomicInteger sharedCount = new AtomicInteger(0);
     
     /* Object state operations */
     
-    void share(final GuardedObject o) {
-        o.processRecursively(SHARE, newIdentitySet());
+    void share(final Guarded guarded) {
+        guarded.processRecursively(SHARE, newIdentitySet());
     }
     
     private static final Op SHARE = new Op() {
@@ -29,9 +29,9 @@ class Guard {
         }
     };
     
-    void pass(final GuardedObject o) {
-        final Set<GuardedObject> reachable = newIdentitySet();
-        o.processRecursively(PASS, reachable);
+    void pass(final Guarded guarded) {
+        final Set<Guarded> reachable = newIdentitySet();
+        guarded.processRecursively(PASS, reachable);
         reachables.addFirst(reachable);
     }
     
@@ -44,7 +44,7 @@ class Guard {
         }
     };
     
-    void registerNewOwner(@SuppressWarnings("unused") final GuardedObject o) {
+    void registerNewOwner(@SuppressWarnings("unused") final Guarded guarded) {
         processReachables(REGISTER_OWNER);
     }
     
@@ -57,8 +57,8 @@ class Guard {
         }
     };
     
-    void releaseShared(final GuardedObject o) {
-        o.processRecursively(RELEASE_SHARED, newIdentitySet());
+    void releaseShared(final Guarded guarded) {
+        guarded.processRecursively(RELEASE_SHARED, newIdentitySet());
     }
     
     private static final Op RELEASE_SHARED = new Op() {
@@ -69,7 +69,7 @@ class Guard {
         }
     };
     
-    void releasePassed(final GuardedObject o) {
+    void releasePassed(final Guarded guarded) {
         /* First, make "parent" task the owner of newly reachable objects */
         final Thread parent = prevOwners.peekFirst();
         assert parent != null;
@@ -79,7 +79,7 @@ class Guard {
                     guard.owner = parent;
             }
         };
-        o.processRecursively(transferOwner, newIdentitySet());
+        guarded.processRecursively(transferOwner, newIdentitySet());
         
         /* Second, release originally reachable objects */
         processReachables(RELEASE_PASSED);
@@ -128,15 +128,15 @@ class Guard {
     }
     
     private void processReachables(final Op op) {
-        final Set<GuardedObject> reachable = reachables.peekFirst();
+        final Set<Guarded> reachable = reachables.peekFirst();
         assert reachable != null;
         
-        for(final GuardedObject object : reachable)
-            op.process(object.getGuard());
+        for(final Guarded guarded : reachable)
+            op.process(guarded.getGuard());
     }
     
-    private static Set<GuardedObject> newIdentitySet() {
+    private static Set<Guarded> newIdentitySet() {
         return Collections
-                .newSetFromMap(new IdentityHashMap<GuardedObject, Boolean>());
+                .newSetFromMap(new IdentityHashMap<Guarded, Boolean>());
     }
 }
