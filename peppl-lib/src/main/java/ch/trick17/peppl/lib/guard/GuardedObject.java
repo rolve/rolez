@@ -1,5 +1,11 @@
 package ch.trick17.peppl.lib.guard;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
 public class GuardedObject {
     
     // IMPROVE: volatile unnecessary? (other volatile fields are written before
@@ -43,5 +49,42 @@ public class GuardedObject {
     public final void guardReadWrite() {
         if(guard != null)
             guard.guardReadWrite();
+    }
+    
+    void processRecursively(final Op op, final Set<GuardedObject> processed) {
+        if(processed.add(this)) {
+            /* Process current object */
+            op.process(getGuard());
+            
+            /* Process children */
+            final List<Field> fields = allRefFields();
+            for(final Field field : fields) {
+                field.setAccessible(true);
+                final Object ref;
+                try {
+                    ref = field.get(this);
+                } catch(final IllegalAccessException e) {
+                    throw new AssertionError(e);
+                }
+                if(ref != null) {
+                    assert ref instanceof GuardedObject;
+                    final GuardedObject other = (GuardedObject) ref;
+                    other.processRecursively(op, processed);
+                }
+            }
+        }
+    }
+    
+    private List<Field> allRefFields() {
+        final ArrayList<Field> fields = new ArrayList<>();
+        Class<?> currentClass = getClass();
+        while(currentClass != GuardedObject.class) {
+            final Field[] declaredFields = currentClass.getDeclaredFields();
+            for(final Field declaredField : declaredFields)
+                if(!declaredField.getType().isPrimitive())
+                    fields.add(declaredField);
+            currentClass = currentClass.getSuperclass();
+        }
+        return Collections.unmodifiableList(fields);
     }
 }

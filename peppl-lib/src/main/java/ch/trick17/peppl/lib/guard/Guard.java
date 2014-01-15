@@ -1,17 +1,14 @@
 package ch.trick17.peppl.lib.guard;
 
-import java.lang.reflect.Field;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.IdentityHashMap;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 
-public class Guard {
+class Guard {
     
     private volatile Thread owner = Thread.currentThread();
     private final Deque<Thread> prevOwners = new ArrayDeque<>();
@@ -21,12 +18,8 @@ public class Guard {
     
     /* Object state operations */
     
-    private static interface Op {
-        void process(Guard guard);
-    }
-    
-    public void share(final GuardedObject o) {
-        processRecursively(o, SHARE, newIdentitySet());
+    void share(final GuardedObject o) {
+        o.processRecursively(SHARE, newIdentitySet());
     }
     
     private static final Op SHARE = new Op() {
@@ -36,9 +29,9 @@ public class Guard {
         }
     };
     
-    public void pass(final GuardedObject o) {
+    void pass(final GuardedObject o) {
         final Set<GuardedObject> reachable = newIdentitySet();
-        processRecursively(o, PASS, reachable);
+        o.processRecursively(PASS, reachable);
         reachables.addFirst(reachable);
     }
     
@@ -51,8 +44,7 @@ public class Guard {
         }
     };
     
-    public void registerNewOwner(
-            @SuppressWarnings("unused") final GuardedObject o) {
+    void registerNewOwner(@SuppressWarnings("unused") final GuardedObject o) {
         processReachables(REGISTER_OWNER);
     }
     
@@ -65,8 +57,8 @@ public class Guard {
         }
     };
     
-    public void releaseShared(final GuardedObject o) {
-        processRecursively(o, RELEASE_SHARED, newIdentitySet());
+    void releaseShared(final GuardedObject o) {
+        o.processRecursively(RELEASE_SHARED, newIdentitySet());
     }
     
     private static final Op RELEASE_SHARED = new Op() {
@@ -77,7 +69,7 @@ public class Guard {
         }
     };
     
-    public void releasePassed(final GuardedObject o) {
+    void releasePassed(final GuardedObject o) {
         /* First, make "parent" task the owner of newly reachable objects */
         final Thread parent = prevOwners.peekFirst();
         assert parent != null;
@@ -87,7 +79,7 @@ public class Guard {
                     guard.owner = parent;
             }
         };
-        processRecursively(o, transferOwner, newIdentitySet());
+        o.processRecursively(transferOwner, newIdentitySet());
         
         /* Second, release originally reachable objects */
         processReachables(RELEASE_PASSED);
@@ -105,7 +97,7 @@ public class Guard {
     
     /* Guarding methods */
     
-    public void guardRead() {
+    void guardRead() {
         /* isMutable() and isShared() read volatile (atomic) fields written by
          * releasePassed and releaseShared. Therefore, there is a happens-before
          * relationship between releasePassed()/releaseShared() and guardRead(). */
@@ -113,7 +105,7 @@ public class Guard {
             LockSupport.park();
     }
     
-    public void guardReadWrite() {
+    void guardReadWrite() {
         /* isMutable() reads the volatile owner field written by releasePassed.
          * Therefore, there is a happens-before relationship between
          * releasePassed() and guardReadWrite(). */
@@ -141,44 +133,6 @@ public class Guard {
         
         for(final GuardedObject object : reachable)
             op.process(object.getGuard());
-    }
-    
-    private static void processRecursively(final GuardedObject o, final Op op,
-            final Set<GuardedObject> processed) {
-        if(processed.add(o)) {
-            /* Process current object */
-            op.process(o.getGuard());
-            
-            /* Process children */
-            final List<Field> fields = allRefFields(o);
-            for(final Field field : fields) {
-                field.setAccessible(true);
-                final Object ref;
-                try {
-                    ref = field.get(o);
-                } catch(final IllegalAccessException e) {
-                    throw new AssertionError(e);
-                }
-                if(ref != null) {
-                    assert ref instanceof GuardedObject;
-                    final GuardedObject other = (GuardedObject) ref;
-                    processRecursively(other, op, processed);
-                }
-            }
-        }
-    }
-    
-    private static List<Field> allRefFields(final GuardedObject o) {
-        final ArrayList<Field> fields = new ArrayList<>();
-        Class<?> currentClass = o.getClass();
-        while(currentClass != GuardedObject.class) {
-            final Field[] declaredFields = currentClass.getDeclaredFields();
-            for(final Field declaredField : declaredFields)
-                if(!declaredField.getType().isPrimitive())
-                    fields.add(declaredField);
-            currentClass = currentClass.getSuperclass();
-        }
-        return Collections.unmodifiableList(fields);
     }
     
     private static Set<GuardedObject> newIdentitySet() {
