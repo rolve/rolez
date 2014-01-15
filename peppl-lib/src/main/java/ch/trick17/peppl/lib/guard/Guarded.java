@@ -50,7 +50,7 @@ abstract class Guarded {
             guard.guardReadWrite();
     }
     
-    protected void processRecursively(final Op op, final Set<Guarded> processed) {
+    void processRecursively(final GuardOp op, final Set<Guarded> processed) {
         if(processed.add(this)) {
             /* Process current object */
             op.process(getGuard());

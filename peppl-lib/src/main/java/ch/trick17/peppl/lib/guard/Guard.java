@@ -22,7 +22,7 @@ class Guard {
         guarded.processRecursively(SHARE, newIdentitySet());
     }
     
-    private static final Op SHARE = new Op() {
+    private static final GuardOp SHARE = new GuardOp() {
         public void process(final Guard guard) {
             guard.guardRead();
             guard.sharedCount.incrementAndGet();
@@ -35,7 +35,7 @@ class Guard {
         reachables.addFirst(reachable);
     }
     
-    private static final Op PASS = new Op() {
+    private static final GuardOp PASS = new GuardOp() {
         public void process(final Guard guard) {
             guard.guardReadWrite();
             /* First step of passing */
@@ -48,7 +48,7 @@ class Guard {
         processReachables(REGISTER_OWNER);
     }
     
-    private static final Op REGISTER_OWNER = new Op() {
+    private static final GuardOp REGISTER_OWNER = new GuardOp() {
         public void process(final Guard guard) {
             assert guard.owner == null;
             assert !guard.amOriginalOwner();
@@ -61,7 +61,7 @@ class Guard {
         guarded.processRecursively(RELEASE_SHARED, newIdentitySet());
     }
     
-    private static final Op RELEASE_SHARED = new Op() {
+    private static final GuardOp RELEASE_SHARED = new GuardOp() {
         public void process(final Guard guard) {
             assert guard.isShared();
             guard.sharedCount.decrementAndGet();
@@ -73,7 +73,7 @@ class Guard {
         /* First, make "parent" task the owner of newly reachable objects */
         final Thread parent = prevOwners.peekFirst();
         assert parent != null;
-        final Op transferOwner = new Op() {
+        final GuardOp transferOwner = new GuardOp() {
             public void process(final Guard guard) {
                 if(guard.amOriginalOwner())
                     guard.owner = parent;
@@ -86,7 +86,7 @@ class Guard {
         reachables.removeFirst();
     }
     
-    private static final Op RELEASE_PASSED = new Op() {
+    private static final GuardOp RELEASE_PASSED = new GuardOp() {
         public void process(final Guard guard) {
             guard.guardReadWrite();
             assert !guard.amOriginalOwner();
@@ -127,7 +127,7 @@ class Guard {
         return prevOwners.isEmpty();
     }
     
-    private void processReachables(final Op op) {
+    private void processReachables(final GuardOp op) {
         final Set<Guarded> reachable = reachables.peekFirst();
         assert reachable != null;
         

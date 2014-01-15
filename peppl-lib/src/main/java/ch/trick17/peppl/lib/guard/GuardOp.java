@@ -1,5 +1,6 @@
 package ch.trick17.peppl.lib.guard;
 
-interface Op {
+interface GuardOp {
+    
     void process(Guard guard);
 }
