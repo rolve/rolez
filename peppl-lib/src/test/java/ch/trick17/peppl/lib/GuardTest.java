@@ -48,7 +48,7 @@ public class GuardTest extends JpfParallelismTest {
     
     @Test
     public void testShare() {
-        if(verify(mode, new int[][]{{0, 2}, {1, 2}, {1, 3}})) {
+        if(verify(mode, new int[][]{{0, 1}, {2, 3}, {0, 3}})) {
             final Int i = new Int();
             
             i.share();
@@ -113,30 +113,37 @@ public class GuardTest extends JpfParallelismTest {
     
     @Test
     public void testShareMultiple() {
-        if(verify(mode, new int[][]{{0, 2, 4}, {1, 3, 5}})) {
+        if(verify(mode, new int[][]{{0, 1}, {2, 3}, {4, 5}, {0, 5}, {2, 5},
+                {0, 3 /* or: 1, 2 */}})) {
             final Int i = new Int();
             
-            final Task<?>[] tasks = new Task<?>[2];
-            for(int k = 0; k < 2; k++) {
-                final int k2 = 2 * k;
-                i.share();
-                tasks[k] = s.run(new Runnable() {
-                    public void run() {
-                        region(k2);
-                        assertEquals(0, i.value);
-                        i.releaseShared();
-                        region(k2 + 1);
-                    }
-                });
-            }
+            i.share();
+            final Task<?> task1 = s.run(new Runnable() {
+                public void run() {
+                    region(0);
+                    assertEquals(0, i.value);
+                    i.releaseShared();
+                    region(1);
+                }
+            });
+            
+            i.share();
+            final Task<?> task2 = s.run(new Runnable() {
+                public void run() {
+                    region(2);
+                    assertEquals(0, i.value);
+                    i.releaseShared();
+                    region(3);
+                }
+            });
             region(4);
             
             i.guardReadWrite();
             i.value = 1;
             region(5);
             
-            for(final Task<?> task : tasks)
-                task.get();
+            task1.get();
+            task2.get();
         }
     }
     
@@ -171,7 +178,7 @@ public class GuardTest extends JpfParallelismTest {
     
     @Test
     public void testPass() {
-        if(verify(mode, new int[][]{{0, 2}, {1, 2}, {1, 3}})) {
+        if(verify(mode, new int[][]{{0, 1}, {0, 3}, {2, 3}})) {
             final Int i = new Int();
             
             i.pass();
@@ -241,30 +248,40 @@ public class GuardTest extends JpfParallelismTest {
     @Test
     public void testPassMultiple() {
         /* IMPROVE: Allow {0, 4} in parallel by passing not-yet-available data
-         * to tasks (so far, pass() blocks) */
-        if(verify(mode, new int[][]{{1, 3, 4}, {1, 2}, {2, 4}})) {
+         * to tasks (so far, pass() is blocking) */
+        if(verify(mode, new int[][]{{0, 1}, {0, 2, 3}, {0, 2, 5}, {4, 5},
+                {0, 4}})) {
             final Int i = new Int();
             
-            final Task<?>[] tasks = new Task<?>[2];
-            for(int k = 0; k < 2; k++) {
-                final int theK = k;
-                i.pass();
-                tasks[k] = s.run(new Runnable() {
-                    public void run() {
-                        i.registerNewOwner();
-                        region(theK * 2);
-                        i.value++;
-                        i.releasePassed();
-                        region(theK * 2 + 1);
-                    }
-                });
-            }
+            i.pass();
+            final Task<?> task1 = s.run(new Runnable() {
+                public void run() {
+                    i.registerNewOwner();
+                    region(0);
+                    i.value++;
+                    i.releasePassed();
+                    region(1);
+                }
+            });
+            
+            i.pass();
+            final Task<?> task2 = s.run(new Runnable() {
+                public void run() {
+                    i.registerNewOwner();
+                    region(2);
+                    i.value++;
+                    i.releasePassed();
+                    region(3);
+                }
+            });
             region(4);
             
             i.guardRead();
             assertEquals(2, i.value);
-            for(final Task<?> task : tasks)
-                task.get();
+            
+            region(5);
+            task1.get();
+            task2.get();
         }
     }
     
@@ -301,7 +318,8 @@ public class GuardTest extends JpfParallelismTest {
     
     @Test
     public void testPassNested() {
-        if(verify(mode, new int[]{0, 1})) {
+        if(verify(mode, new int[][]{{0, 1}, {2, 3}, {4, 5}, {0, 3}, {2, 5},
+                {0, 5}})) {
             final Int i = new Int();
             
             i.pass();
@@ -317,22 +335,26 @@ public class GuardTest extends JpfParallelismTest {
                             i.value++;
                             region(0);
                             i.releasePassed();
+                            region(1);
                         }
                     });
+                    region(2);
                     
                     i.guardReadWrite();
                     assertEquals(2, i.value);
                     i.value++;
                     
                     i.releasePassed();
+                    region(3);
                     task2.get();
                 }
             });
-            region(1);
+            region(4);
             
             i.guardRead();
             assertEquals(3, i.value);
             
+            region(5);
             task.get();
         }
     }
@@ -372,7 +394,7 @@ public class GuardTest extends JpfParallelismTest {
     
     @Test
     public void testPassShare() {
-        if(verify(mode, new int[]{0, 1, 2})) {
+        if(verify(mode)) {
             final Int i = new Int();
             
             i.pass();
@@ -404,7 +426,7 @@ public class GuardTest extends JpfParallelismTest {
     
     @Test
     public void testShareGroup() {
-        if(verify(mode, new int[][]{{0, 2}, {1, 2}, {1, 3}})) {
+        if(verify(mode, new int[][]{{0, 1}, {2, 3}, {0, 3}})) {
             final IntContainer c = new IntContainer();
             
             c.share();
@@ -429,7 +451,7 @@ public class GuardTest extends JpfParallelismTest {
     
     @Test
     public void testShareGroupMultiple() {
-        if(verify(mode, new int[]{0, 1, 2})) {
+        if(verify(mode)) {
             final Int i = new Int();
             final IntContainer c = new IntContainer(i);
             
@@ -457,7 +479,7 @@ public class GuardTest extends JpfParallelismTest {
     
     @Test
     public void testPassGroup() {
-        if(verify(mode, new int[][]{{0, 2}, {1, 2}, {1, 3}})) {
+        if(verify(mode, new int[][]{{0, 1}, {2, 3}, {0, 3}})) {
             final Int i = new Int();
             final IntContainer c = new IntContainer(i);
             
@@ -547,7 +569,7 @@ public class GuardTest extends JpfParallelismTest {
     
     @Test
     public void testPassShareGroup() {
-        if(verify(mode, new int[]{0, 1, 2})) {
+        if(verify(mode)) {
             final Int i = new Int();
             final IntContainer c = new IntContainer(i);
             
@@ -580,7 +602,7 @@ public class GuardTest extends JpfParallelismTest {
     
     @Test
     public void testShareSubgroup() {
-        if(verify(mode, new int[][]{{0, 4}, {1, 5}})) {
+        if(verify(mode, new int[][]{{0, 1}, {4, 5}, {0, 5}})) {
             final Int i = new Int();
             final IntContainer c = new IntContainer(i);
             
@@ -599,6 +621,7 @@ public class GuardTest extends JpfParallelismTest {
                 public void run() {
                     assertEquals(0, c.i.value);
                     c.releaseShared();
+                    region(2);
                 }
             });
             
@@ -607,6 +630,7 @@ public class GuardTest extends JpfParallelismTest {
                 public void run() {
                     assertEquals(0, i.value);
                     i.releaseShared();
+                    region(3);
                 }
             });
             region(4);

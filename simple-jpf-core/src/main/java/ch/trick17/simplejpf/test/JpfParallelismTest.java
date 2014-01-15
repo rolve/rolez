@@ -8,12 +8,15 @@ import gov.nasa.jpf.vm.ThreadInfo;
 import gov.nasa.jpf.vm.VM;
 import gov.nasa.jpf.vm.Verify;
 
+import java.util.AbstractList;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -72,17 +75,17 @@ public abstract class JpfParallelismTest extends JpfTest {
      * @param mode
      *            If {@link VerifyMode#CORRECTNESS}, then
      *            {@link #verifyNoPropertyViolation()} is called, otherwise
-     *            {@link #verifyParallelism(int[][])} is called.
-     * @param parGroups
-     *            The parallel groups specification
+     *            {@link #verifyParallelExcept(int[][])} is called.
+     * @param seqGroups
+     *            The sequential groups specification
      * @return <code>true</code> if being executed in JPF, <code>false</code>
      *         otherwise
      * @throws AssertionError
      *             According to the called <code>verify</code> method
      */
-    protected boolean verify(final VerifyMode mode, final int[]... parGroups) {
+    protected boolean verify(final VerifyMode mode, final int[]... seqGroups) {
         if(mode == VerifyMode.PARALLELISM)
-            return verifyParallelism(parGroups);
+            return verifyParallelExcept(seqGroups);
         else
             return verifyNoPropertyViolation();
     }
@@ -96,15 +99,41 @@ public abstract class JpfParallelismTest extends JpfTest {
      * regions in the group are executed in parallel.
      * 
      * @param parSpec
-     *            The parallel groups specification, as <code>int</code>-arrays
+     *            The parallel groups specification, as <code>int</code> arrays
      * @return <code>true</code> if being executed in JPF, <code>false</code>
      *         otherwise
      * @throws AssertionError
      *             If the given parallelism specification is not met
      * @see JpfTest
      */
-    protected boolean verifyParallelism(final int[]... parSpec) {
-        if(parSpec.length == 0)
+    protected boolean verifyParallel(final int[]... parSpec) {
+        return verifyParallel(parSpec, false);
+    }
+    
+    /**
+     * Verifies that there is a thread interleaving for which the
+     * {@link #region(int) regions} in the calling method may be executed in
+     * parallel, according to the given "sequential groups" specification. More
+     * precisely, this method verifies that there is at least one (single)
+     * thread interleaving, for which it holds that all pairs of regions are
+     * executed in parallel except for the ones given: for each sequential
+     * group, no pair of regions in the group needs to be executed in parallel.
+     * 
+     * @param seqSpec
+     *            The sequential groups specification, as <code>int</code>
+     *            arrays
+     * @return <code>true</code> if being executed in JPF, <code>false</code>
+     *         otherwise
+     * @throws AssertionError
+     *             If the given parallelism specification is not met
+     * @see JpfTest
+     */
+    protected boolean verifyParallelExcept(final int[]... seqSpec) {
+        return verifyParallel(seqSpec, true);
+    }
+    
+    private boolean verifyParallel(final int[][] spec, final boolean seq) {
+        if(spec.length == 0)
             LoggerFactory.getLogger(JpfParallelismTest.class).warn(
                     "empty parallelism specification");
         
@@ -112,61 +141,46 @@ public abstract class JpfParallelismTest extends JpfTest {
         if(Verify.isRunningInJPF())
             return true;
         else {
-            final ParListener l = new ParListener(parSpec);
+            final ParListener l = new ParListener(spec, seq);
             runJpf(l);
             
-            if(!l.metParSpec) {
-                final Set<Set<ParRegionPair>> parRegions = l.possibleParRegions;
+            if(!l.unmatchedParRegions.isEmpty()) {
+                final Set<Set<RegionPair>> parRegions = l.possibleParRegions;
                 
                 final StringBuilder msg = new StringBuilder(
-                        "Possible parallel regions:");
-                for(final Set<ParRegionPair> set : parRegions) {
-                    final ArrayList<ParRegionPair> list = new ArrayList<>(set);
+                        "Found parallel regions:");
+                for(final Set<RegionPair> set : parRegions) {
+                    final ArrayList<RegionPair> list = new ArrayList<>(set);
                     Collections.sort(list);
                     msg.append("\n    ").append(list);
                 }
                 LoggerFactory.getLogger(JpfParallelismTest.class).info(
                         msg.toString());
                 
-                fail("JPF could not find an interleaving with the specified parallelism");
+                final StringBuilder sets = new StringBuilder();
+                for(final Set<RegionPair> set : l.unmatchedParRegions)
+                    sets.append(set).append(", ");
+                sets.setLength(sets.length() - 2);
+                fail("JPF could not find an interleaving with the parallel regions "
+                        + sets);
             }
             return false;
         }
     }
     
-    private static boolean meetsParSpec(final int[][] parSpec,
-            final Set<ParRegionPair> parRegions) {
-        for(final int[] group : parSpec)
-            for(final ParRegionPair pair : allPairs(group))
-                if(!parRegions.contains(pair))
-                    /* Fail: try next interleaving */
-                    return false;
-        
-        return true;
-    }
-    
-    private static Iterable<ParRegionPair> allPairs(final int[] group) {
-        final Set<ParRegionPair> result = new HashSet<ParRegionPair>();
-        for(int i = 0; i < group.length; i++)
-            for(int j = 0; j < i; j++)
-                result.add(new ParRegionPair(group[i], group[j]));
-        return result;
-    }
-    
     private final class ParListener extends ListenerAdapter {
         
-        private final String testMethod = getCaller();
+        final String testMethod = getCaller();
         
-        private final int[][] parSpec;
-        private final Set<Set<ParRegionPair>> possibleParRegions = new HashSet<>();
-        private boolean metParSpec = false;
+        final int[][] spec;
+        final boolean seq;
         
-        ParListener() {
-            parSpec = null;
-        }
+        final Set<Set<RegionPair>> possibleParRegions = new HashSet<>();
+        Set<Set<RegionPair>> unmatchedParRegions = null;
         
-        public ParListener(final int[][] parSpec) {
-            this.parSpec = parSpec;
+        public ParListener(final int[][] spec, final boolean seq) {
+            this.spec = spec;
+            this.seq = seq;
         }
         
         @Override
@@ -178,7 +192,8 @@ public abstract class JpfParallelismTest extends JpfTest {
                 final String eventsString = ((ElementInfo) instance
                         .getFieldValueObject("regionEvents")).asString();
                 
-                final Set<ParRegionPair> parRegions = new HashSet<>();
+                final List<Integer> regions = new ArrayList<>();
+                final Set<RegionPair> parRegions = new HashSet<>();
                 final Deque<Integer> currentRegions = new ArrayDeque<>();
                 
                 @SuppressWarnings("resource") final Scanner scanner = new Scanner(
@@ -188,8 +203,10 @@ public abstract class JpfParallelismTest extends JpfTest {
                     final String event = scanner.next();
                     final int id = Integer.parseInt(event.substring(1));
                     if(event.charAt(0) == 'S') {
+                        assert !regions.contains(id);
+                        regions.add(id);
                         for(final Integer other : currentRegions)
-                            parRegions.add(new ParRegionPair(other, id));
+                            parRegions.add(new RegionPair(other, id));
                         currentRegions.addFirst(id);
                     }
                     else {
@@ -200,11 +217,32 @@ public abstract class JpfParallelismTest extends JpfTest {
                 }
                 addWithoutSubsets(possibleParRegions, parRegions);
                 
-                if(parSpec != null && meetsParSpec(parSpec, parRegions)) {
-                    metParSpec = true;
-                    vm.getSearch().terminate();
+                if(spec == null)
+                    unmatchedParRegions = Collections.emptySet();
+                else {
+                    final Set<RegionPair> specParRegions = parRegionsFromSpec(regions);
+                    specParRegions.removeAll(parRegions);
+                    if(specParRegions.isEmpty())
+                        unmatchedParRegions = Collections.emptySet();
+                    else {
+                        if(unmatchedParRegions == null)
+                            unmatchedParRegions = new HashSet<>(Arrays
+                                    .asList(specParRegions));
+                        else
+                            addWithoutSupersets(unmatchedParRegions,
+                                    specParRegions);
+                    }
                 }
+                
+                if(unmatchedParRegions.isEmpty())
+                    vm.getSearch().terminate();
             }
+        }
+        
+        private boolean isTestMethod(final MethodInfo method) {
+            return method.getClassName().equals(
+                    JpfParallelismTest.this.getClass().getName())
+                    && method.getName().equals(testMethod);
         }
         
         private <E> void addWithoutSubsets(final Set<Set<E>> sets,
@@ -221,6 +259,20 @@ public abstract class JpfParallelismTest extends JpfTest {
             sets.add(set);
         }
         
+        private <E> void addWithoutSupersets(final Set<Set<E>> sets,
+                final Set<E> set) {
+            for(final Set<E> other : sets)
+                if(isSubset(other, set))
+                    return;
+            
+            final Iterator<Set<E>> i = sets.iterator();
+            while(i.hasNext())
+                if(isSubset(set, i.next()))
+                    i.remove();
+            
+            sets.add(set);
+        }
+        
         private <E> boolean isSubset(final Set<E> set, final Set<E> other) {
             for(final E e : set)
                 if(!other.contains(e))
@@ -228,19 +280,52 @@ public abstract class JpfParallelismTest extends JpfTest {
             return true;
         }
         
-        private boolean isTestMethod(final MethodInfo method) {
-            return method.getClassName().equals(
-                    JpfParallelismTest.this.getClass().getName())
-                    && method.getName().equals(testMethod);
+        private Set<RegionPair> parRegionsFromSpec(final List<Integer> regions) {
+            final Set<RegionPair> specPairs = new HashSet<>();
+            for(final int[] group : spec)
+                specPairs.addAll(pairs(asList(group)));
+            
+            final Set<RegionPair> parPairs;
+            if(seq) {
+                /* Specification contains sequential regions */
+                parPairs = pairs(regions);
+                parPairs.removeAll(specPairs);
+            }
+            else
+                /* Specification contains parallel regions */
+                parPairs = specPairs;
+            return parPairs;
+        }
+        
+        private Set<RegionPair> pairs(final List<Integer> group) {
+            final Set<RegionPair> result = new HashSet<RegionPair>();
+            for(int i = 0; i < group.size(); i++)
+                for(int j = 0; j < i; j++)
+                    result.add(new RegionPair(group.get(i), group.get(j)));
+            return result;
+        }
+        
+        private List<Integer> asList(final int[] is) {
+            return new AbstractList<Integer>() {
+                @Override
+                public Integer get(final int i) {
+                    return is[i];
+                }
+                
+                @Override
+                public int size() {
+                    return is.length;
+                }
+            };
         }
     }
     
-    private static class ParRegionPair implements Comparable<ParRegionPair> {
+    private static class RegionPair implements Comparable<RegionPair> {
         
         private final int first;
         private final int second;
         
-        public ParRegionPair(final int first, final int second) {
+        public RegionPair(final int first, final int second) {
             if(first < second) {
                 this.first = first;
                 this.second = second;
@@ -266,9 +351,9 @@ public abstract class JpfParallelismTest extends JpfTest {
                 return true;
             if(obj == null)
                 return false;
-            if(!(obj instanceof ParRegionPair))
+            if(!(obj instanceof RegionPair))
                 return false;
-            final ParRegionPair other = (ParRegionPair) obj;
+            final RegionPair other = (RegionPair) obj;
             if(first != other.first)
                 return false;
             if(second != other.second)
@@ -281,7 +366,7 @@ public abstract class JpfParallelismTest extends JpfTest {
             return "(" + first + ", " + second + ")";
         }
         
-        public int compareTo(final ParRegionPair other) {
+        public int compareTo(final RegionPair other) {
             final int compareFirst = Integer.compare(first, other.first);
             if(compareFirst != 0)
                 return compareFirst;
