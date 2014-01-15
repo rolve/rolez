@@ -602,7 +602,7 @@ public class GuardTest extends JpfParallelismTest {
     
     @Test
     public void testShareSubgroup() {
-        if(verify(mode, new int[][]{{0, 1}, {4, 5}, {0, 5}})) {
+        if(verify(mode, new int[][]{{0, 4}, {1, 4}, {2, 4}, {3, 4}})) {
             final Int i = new Int();
             final IntContainer c = new IntContainer(i);
             
@@ -612,7 +612,6 @@ public class GuardTest extends JpfParallelismTest {
                     assertEquals(0, i.value);
                     region(0);
                     i.releaseShared();
-                    region(1);
                 }
             });
             
@@ -620,8 +619,8 @@ public class GuardTest extends JpfParallelismTest {
             final Task<Void> task2 = s.run(new Runnable() {
                 public void run() {
                     assertEquals(0, c.i.value);
+                    region(1);
                     c.releaseShared();
-                    region(2);
                 }
             });
             
@@ -629,15 +628,15 @@ public class GuardTest extends JpfParallelismTest {
             final Task<Void> task3 = s.run(new Runnable() {
                 public void run() {
                     assertEquals(0, i.value);
+                    region(2);
                     i.releaseShared();
-                    region(3);
                 }
             });
-            region(4);
+            region(3);
             
             i.guardReadWrite();
             i.value = 1;
-            region(5);
+            region(4);
             
             task1.get();
             task2.get();
@@ -647,9 +646,8 @@ public class GuardTest extends JpfParallelismTest {
     
     @Test
     public void testPassSubgroup() {
-        // TODO: Verify parallelism
-        assumeVerifyCorrectness();
-        if(verifyNoPropertyViolation()) {
+        /* IMPROVE: Allow all regions by passing not-yet-available data */
+        if(verify(mode, new int[][]{{0, 1, 2}, {0, 3}, {1, 3}})) {
             final Int i = new Int();
             final IntContainer c = new IntContainer(i);
             
@@ -657,6 +655,7 @@ public class GuardTest extends JpfParallelismTest {
             final Task<Void> task1 = s.run(new Runnable() {
                 public void run() {
                     i.registerNewOwner();
+                    region(0);
                     i.value++;
                     i.releasePassed();
                 }
@@ -666,6 +665,7 @@ public class GuardTest extends JpfParallelismTest {
             final Task<Void> task2 = s.run(new Runnable() {
                 public void run() {
                     c.registerNewOwner();
+                    region(1);
                     c.i.value++;
                     c.releasePassed();
                 }
@@ -675,10 +675,12 @@ public class GuardTest extends JpfParallelismTest {
             final Task<Void> task3 = s.run(new Runnable() {
                 public void run() {
                     i.registerNewOwner();
+                    region(2);
                     i.value++;
                     i.releasePassed();
                 }
             });
+            region(3);
             
             i.guardRead();
             assertEquals(3, i.value);
@@ -690,9 +692,7 @@ public class GuardTest extends JpfParallelismTest {
     
     @Test
     public void testPassSubgroupNested() {
-        // TODO: Verify parallelism
-        assumeVerifyCorrectness();
-        if(verifyNoPropertyViolation()) {
+        if(verify(mode, new int[][]{{0, 1}, {2, 3}, {0, 3}})) {
             final Int i = new Int();
             final IntContainer c = new IntContainer(i);
             
@@ -707,19 +707,24 @@ public class GuardTest extends JpfParallelismTest {
                     final Task<Void> task2 = s.run(new Runnable() {
                         public void run() {
                             i2.registerNewOwner();
+                            region(0);
                             i2.value++;
                             i2.releasePassed();
+                            region(1);
                         }
                     });
+                    region(2);
                     
                     i2.guardReadWrite();
                     assertEquals(2, i2.value);
                     i2.value++;
                     
                     c.releasePassed();
+                    region(3);
                     task2.get();
                 }
             });
+            region(4);
             
             i.guardRead();
             assertEquals(3, i.value);
@@ -729,9 +734,8 @@ public class GuardTest extends JpfParallelismTest {
     
     @Test
     public void testPassShareSubgroup() {
-        // TODO: Verify parallelism
-        assumeVerifyCorrectness();
-        if(verifyNoPropertyViolation()) {
+        /* IMPROVE: Allow {0, 2, 3} by sharing not-yet-available data? */
+        if(verify(mode, new int[][]{{0, 1}, {0, 2}, {0, 3}})) {
             final Int i = new Int();
             final IntContainer c = new IntContainer(i);
             
@@ -740,17 +744,21 @@ public class GuardTest extends JpfParallelismTest {
                 public void run() {
                     c.registerNewOwner();
                     c.i.value++;
+                    region(0);
                     c.releasePassed();
+                    region(1);
                 }
             });
             
             i.share();
             final Task<Void> task2 = s.run(new Runnable() {
                 public void run() {
+                    region(2);
                     assertEquals(1, i.value);
                     i.releaseShared();
                 }
             });
+            region(3);
             
             i.guardReadWrite();
             i.value++;
@@ -761,7 +769,6 @@ public class GuardTest extends JpfParallelismTest {
     
     @Test
     public void testPassGroupModify() {
-        // TODO: Verify parallelism
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
@@ -789,7 +796,6 @@ public class GuardTest extends JpfParallelismTest {
     
     @Test
     public void testPassSubgroupNestedModify() {
-        // TODO: Verify parallelism
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
