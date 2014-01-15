@@ -2,9 +2,8 @@ package ch.trick17.peppl.lib.guard;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 
-public class GuardedArray<E extends GuardedObject> extends Guarded {
+public final class GuardedArray<E extends Guarded> extends Guarded {
     
     public final E[] data;
     
@@ -14,7 +13,7 @@ public class GuardedArray<E extends GuardedObject> extends Guarded {
     }
     
     @Override
-    List<?> allRefs() {
+    Iterable<? extends Guarded> allRefs() {
         return Collections.unmodifiableList(Arrays.asList(data));
     }
 }

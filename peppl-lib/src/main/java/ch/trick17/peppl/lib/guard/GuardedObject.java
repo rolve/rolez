@@ -3,13 +3,12 @@ package ch.trick17.peppl.lib.guard;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 
 public class GuardedObject extends Guarded {
     
     @Override
-    List<?> allRefs() {
-        final ArrayList<Object> refs = new ArrayList<>();
+    final Iterable<? extends Guarded> allRefs() {
+        final ArrayList<Guarded> refs = new ArrayList<>();
         Class<?> currentClass = getClass();
         while(currentClass != GuardedObject.class
                 && currentClass != GuardedArray.class) {
@@ -23,7 +22,8 @@ public class GuardedObject extends Guarded {
                     } catch(final IllegalAccessException e) {
                         throw new AssertionError(e);
                     }
-                    refs.add(ref);
+                    assert ref == null || ref instanceof Guarded;
+                    refs.add((Guarded) ref);
                 }
             currentClass = currentClass.getSuperclass();
         }

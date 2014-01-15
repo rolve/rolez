@@ -1,6 +1,5 @@
 package ch.trick17.peppl.lib.guard;
 
-import java.util.List;
 import java.util.Set;
 
 abstract class Guarded {
@@ -19,7 +18,7 @@ abstract class Guarded {
         getGuard().pass(this);
     }
     
-    protected Guard getGuard() {
+    protected final Guard getGuard() {
         if(guard == null)
             guard = GuardFactory.getDefault().newGuard();
         return guard;
@@ -50,21 +49,17 @@ abstract class Guarded {
             guard.guardReadWrite();
     }
     
-    void processRecursively(final GuardOp op, final Set<Guarded> processed) {
+    final void processRecursively(final GuardOp op, final Set<Guarded> processed) {
         if(processed.add(this)) {
             /* Process current object */
             op.process(getGuard());
             
             /* Process references */
-            final List<?> refs = allRefs();
-            for(final Object ref : refs)
-                if(ref != null) {
-                    assert ref instanceof GuardedObject;
-                    final GuardedObject other = (GuardedObject) ref;
-                    other.processRecursively(op, processed);
-                }
+            for(final Guarded ref : allRefs())
+                if(ref != null)
+                    ref.processRecursively(op, processed);
         }
     }
     
-    abstract List<?> allRefs();
+    abstract Iterable<? extends Guarded> allRefs();
 }
