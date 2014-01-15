@@ -692,6 +692,8 @@ public class GuardTest extends JpfParallelismTest {
     
     @Test
     public void testPassSubgroupNested() {
+        /* IMPROVE: Allow {0, 3} by releasing objects independent of reachable
+         * objects that are still owned by other threads. */
         if(verify(mode, new int[][]{{0, 1}, {2, 3}, {0, 3}})) {
             final Int i = new Int();
             final IntContainer c = new IntContainer(i);
@@ -715,10 +717,6 @@ public class GuardTest extends JpfParallelismTest {
                     });
                     region(2);
                     
-                    i2.guardReadWrite();
-                    assertEquals(2, i2.value);
-                    i2.value++;
-                    
                     c.releasePassed();
                     region(3);
                     task2.get();
@@ -727,7 +725,7 @@ public class GuardTest extends JpfParallelismTest {
             region(4);
             
             i.guardRead();
-            assertEquals(3, i.value);
+            assertEquals(2, i.value);
             task.get();
         }
     }

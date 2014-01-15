@@ -51,7 +51,8 @@ public class Guard {
         }
     };
     
-    public void registerNewOwner(final GuardedObject o) {
+    public void registerNewOwner(
+            @SuppressWarnings("unused") final GuardedObject o) {
         processReachables(REGISTER_OWNER);
     }
     
@@ -77,7 +78,6 @@ public class Guard {
     };
     
     public void releasePassed(final GuardedObject o) {
-        o.guardReadWrite();
         /* First, make "parent" task the owner of newly reachable objects */
         final Thread parent = prevOwners.peekFirst();
         assert parent != null;
@@ -96,7 +96,7 @@ public class Guard {
     
     private static final Op RELEASE_PASSED = new Op() {
         public void process(final Guard guard) {
-            assert guard.isMutable();
+            guard.guardReadWrite();
             assert !guard.amOriginalOwner();
             guard.owner = guard.prevOwners.removeFirst();
             LockSupport.unpark(guard.owner);
