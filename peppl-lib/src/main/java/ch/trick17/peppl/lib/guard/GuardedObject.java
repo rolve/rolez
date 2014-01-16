@@ -10,8 +10,7 @@ public class GuardedObject extends Guarded {
     final Iterable<? extends Guarded> allRefs() {
         final ArrayList<Guarded> refs = new ArrayList<>();
         Class<?> currentClass = getClass();
-        while(currentClass != GuardedObject.class
-                && currentClass != GuardedArray.class) {
+        while(currentClass != GuardedObject.class) {
             final Field[] declaredFields = currentClass.getDeclaredFields();
             for(final Field field : declaredFields)
                 if(!field.getType().isPrimitive()) {
