@@ -1,24 +1,21 @@
 package ch.trick17.peppl.manual.simplegroups;
 
 import static org.junit.Assert.assertEquals;
-
-import java.util.concurrent.Callable;
-
 import ch.trick17.peppl.lib.Mutable;
 import ch.trick17.peppl.lib._Mutable;
 import ch.trick17.peppl.lib.guard.GuardedObject;
 import ch.trick17.peppl.lib.task.Task;
 import ch.trick17.peppl.lib.task.TaskSystem;
 
-public class SimpleGroups implements Callable<Void> {
+public class SimpleGroups implements Runnable {
     
     public static TaskSystem S = TaskSystem.getDefault();
     
     public static void main(final String[] args) {
-        new SimpleGroups().call();
+        new SimpleGroups().run();
     }
     
-    public Void call() {
+    public void run() {
         final X x = new X();
         x.y = new Y();
         x.y.i = 10;
@@ -31,7 +28,6 @@ public class SimpleGroups implements Callable<Void> {
         assertEquals(x.y.i, 30);
         
         a.get(); // Propagate exceptions
-        return null;
     }
     
     public static class A implements Runnable {

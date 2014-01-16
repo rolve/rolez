@@ -1,9 +1,6 @@
 package ch.trick17.peppl.manual.simple;
 
 import static org.junit.Assert.assertEquals;
-
-import java.util.concurrent.Callable;
-
 import ch.trick17.peppl.lib.Mutable;
 import ch.trick17.peppl.lib._Mutable;
 import ch.trick17.peppl.lib.task.TaskSystem;
@@ -15,7 +12,7 @@ import ch.trick17.peppl.lib.task.TaskSystem;
  * 
  * @author Michael Faes
  */
-public class Simple implements Callable<Void> {
+public class Simple implements Runnable {
     
     private static final TaskSystem S = TaskSystem.getDefault();
     
@@ -25,7 +22,7 @@ public class Simple implements Callable<Void> {
         // get() Propagates exceptions to the main thread
     }
     
-    public Void call() {
+    public void run() {
         final @Mutable Container c = new Container();
         
         int i = c.get(); // No guard required, static analysis finds
@@ -65,7 +62,6 @@ public class Simple implements Callable<Void> {
         c.set(c.get() + 10);
         
         assertEquals(40, c.get());
-        return null;
     }
     
     public void randomMethod(final Container c) {
@@ -78,7 +74,7 @@ public class Simple implements Callable<Void> {
         assertEquals(30, i);
     }
     
-    private static class ReadWriteTask implements Callable<Void> {
+    private static class ReadWriteTask implements Runnable {
         
         private final @_Mutable Container c;
         
@@ -87,7 +83,7 @@ public class Simple implements Callable<Void> {
             this.c = c;
         }
         
-        public Void call() {
+        public void run() {
             c.registerNewOwner(); // added by the compiler
             
             final int i = c.get(); // No guard required, static analysis
@@ -100,11 +96,10 @@ public class Simple implements Callable<Void> {
             c.releasePassed(); // added by the compiler
             
             doSomeWork();
-            return null;
         }
     }
     
-    private static class ReadTask implements Callable<Void> {
+    private static class ReadTask implements Runnable {
         
         private final Container c;
         
@@ -113,7 +108,7 @@ public class Simple implements Callable<Void> {
             this.c = c;
         }
         
-        public Void call() {
+        public void run() {
             final int i = c.get(); // No guard required, static analysis
                                    // finds that read access is available
             assertEquals(30, i);
@@ -122,7 +117,6 @@ public class Simple implements Callable<Void> {
                                // finds that c is not used anymore
             
             doSomeWork();
-            return null;
         }
     }
     

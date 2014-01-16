@@ -43,7 +43,7 @@ public class Reduce implements Callable<Void> {
             this.end = end;
         }
         
-        public Long call() throws Exception {
+        public Long call() {
             final int size = end - begin;
             if(size <= SPLIT_SIZE) {
                 long sum = 0;
