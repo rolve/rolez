@@ -5,7 +5,7 @@ import static org.junit.Assert.assertEquals;
 import java.util.Random;
 import java.util.concurrent.Callable;
 
-import ch.trick17.peppl.lib.guard.GuardedIntArray;
+import ch.trick17.peppl.lib.guard.IntArray;
 import ch.trick17.peppl.lib.task.Task;
 import ch.trick17.peppl.lib.task.TaskSystem;
 
@@ -19,7 +19,7 @@ public class Reduce implements Callable<Void> {
     }
     
     public Void call() {
-        final GuardedIntArray array = shuffledInts();
+        final IntArray array = shuffledInts();
         
         array.share();
         final Task<Long> task = TaskSystem.getDefault().run(
@@ -32,11 +32,11 @@ public class Reduce implements Callable<Void> {
     
     public class SumPrimesTask implements Callable<Long> {
         
-        private final GuardedIntArray array;
+        private final IntArray array;
         private final int begin;
         private final int end;
         
-        public SumPrimesTask(final GuardedIntArray array, final int begin,
+        public SumPrimesTask(final IntArray array, final int begin,
                 final int end) {
             this.array = array;
             this.begin = begin;
@@ -68,11 +68,11 @@ public class Reduce implements Callable<Void> {
         }
     }
     
-    private static GuardedIntArray shuffledInts() {
-        final GuardedIntArray array = new GuardedIntArray(new int[SIZE]);
+    private static IntArray shuffledInts() {
+        final IntArray array = new IntArray(new int[SIZE]);
         final Random random = new Random();
         for(int i = 0; i < SIZE; i++)
-            array.data[i] = i + 2;
+            array.data[i] = i;
         for(int i = SIZE - 1; i > 0; i--) {
             final int index = random.nextInt(i + 1);
             
@@ -84,6 +84,8 @@ public class Reduce implements Callable<Void> {
     }
     
     private static boolean isPrime(final int n) {
+        if(n < 2)
+            return false;
         for(int i = 2; i < Math.sqrt(n) + 1; i++)
             if(n % i == 0)
                 return false;

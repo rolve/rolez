@@ -1,9 +1,9 @@
 package ch.trick17.peppl.lib.guard;
 
-public class GuardedIntArray extends GuardedIntSlice {
+public class IntArray extends IntSlice {
     
     @SafeVarargs
-    public GuardedIntArray(final int... data) {
+    public IntArray(final int... data) {
         super(data, 0, data.length);
     }
 }

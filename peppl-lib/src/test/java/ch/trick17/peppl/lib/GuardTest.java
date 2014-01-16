@@ -14,8 +14,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-import ch.trick17.peppl.lib.guard.GuardedArray;
-import ch.trick17.peppl.lib.guard.GuardedSlice;
+import ch.trick17.peppl.lib.guard.Array;
+import ch.trick17.peppl.lib.guard.Slice;
 import ch.trick17.peppl.lib.task.NewThreadTaskSystem;
 import ch.trick17.peppl.lib.task.SingleThreadTaskSystem;
 import ch.trick17.peppl.lib.task.Task;
@@ -838,7 +838,7 @@ public class GuardTest extends JpfParallelismTest {
     public void testShareArray() {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
-            final GuardedArray<Int> a = new GuardedArray<>(new Int[3]);
+            final Array<Int> a = new Array<>(new Int[3]);
             for(int i = 0; i < a.data.length; i++)
                 a.data[i] = new Int(i);
             
@@ -862,7 +862,7 @@ public class GuardTest extends JpfParallelismTest {
     public void testPassArray() {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
-            final GuardedArray<Int> a = new GuardedArray<>(new Int[3]);
+            final Array<Int> a = new Array<>(new Int[3]);
             for(int i = 0; i < a.data.length; i++)
                 a.data[i] = new Int(i);
             
@@ -891,7 +891,7 @@ public class GuardTest extends JpfParallelismTest {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
-            final GuardedArray<Int> a = new GuardedArray<>(i);
+            final Array<Int> a = new Array<>(i);
             
             i.share();
             final Task<Void> task1 = s.run(new Runnable() {
@@ -931,7 +931,7 @@ public class GuardTest extends JpfParallelismTest {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
-            final GuardedArray<Int> a = new GuardedArray<>(i);
+            final Array<Int> a = new Array<>(i);
             
             i.pass();
             final Task<Void> task1 = s.run(new Runnable() {
@@ -973,7 +973,7 @@ public class GuardTest extends JpfParallelismTest {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
-            final GuardedArray<Int> a = new GuardedArray<>(i);
+            final Array<Int> a = new Array<>(i);
             
             a.pass();
             final Task<Void> task = s.run(new Runnable() {
@@ -1012,11 +1012,11 @@ public class GuardTest extends JpfParallelismTest {
     public void testShareSlice() {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
-            final GuardedArray<Int> a = new GuardedArray<>(new Int[4]);
+            final Array<Int> a = new Array<>(new Int[4]);
             for(int i = 0; i < a.data.length; i++)
                 a.data[i] = new Int(i);
             
-            final GuardedSlice<Int> slice = a.slice(0, 2);
+            final Slice<Int> slice = a.slice(0, 2);
             slice.share();
             final Task<Void> task = s.run(new Runnable() {
                 public void run() {
@@ -1037,11 +1037,11 @@ public class GuardTest extends JpfParallelismTest {
     public void testPassSlice() {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
-            final GuardedArray<Int> a = new GuardedArray<>(new Int[10]);
+            final Array<Int> a = new Array<>(new Int[10]);
             for(int i = 0; i < a.data.length; i++)
                 a.data[i] = new Int(i);
             
-            final GuardedSlice<Int> slice = a.slice(0, 5);
+            final Slice<Int> slice = a.slice(0, 5);
             slice.pass();
             final Task<Void> task = s.run(new Runnable() {
                 public void run() {
@@ -1070,8 +1070,8 @@ public class GuardTest extends JpfParallelismTest {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
-            final GuardedArray<Int> a = new GuardedArray<>(i);
-            final GuardedSlice<Int> slice = a.slice(0, 1);
+            final Array<Int> a = new Array<>(i);
+            final Slice<Int> slice = a.slice(0, 1);
             
             slice.share();
             final Task<Void> task1 = s.run(new Runnable() {
@@ -1111,8 +1111,8 @@ public class GuardTest extends JpfParallelismTest {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
-            final GuardedArray<Int> a = new GuardedArray<>(i);
-            final GuardedSlice<Int> slice = a.slice(0, 1);
+            final Array<Int> a = new Array<>(i);
+            final Slice<Int> slice = a.slice(0, 1);
             
             slice.pass();
             final Task<Void> task1 = s.run(new Runnable() {
@@ -1152,12 +1152,12 @@ public class GuardTest extends JpfParallelismTest {
     @Test
     public void testPassDifferentSlices() {
         if(verify(mode)) {
-            final GuardedArray<Int> a = new GuardedArray<>(new Int[10]);
+            final Array<Int> a = new Array<>(new Int[10]);
             for(int i = 0; i < a.data.length; i++)
                 a.data[i] = new Int(i);
             
-            final GuardedSlice<Int> slice1 = a.slice(0, 5);
-            final GuardedSlice<Int> slice2 = a.slice(slice1.end, a.data.length);
+            final Slice<Int> slice1 = a.slice(0, 5);
+            final Slice<Int> slice2 = a.slice(slice1.end, a.data.length);
             
             slice1.pass();
             final Task<Void> task1 = s.run(new Runnable() {
@@ -1197,17 +1197,17 @@ public class GuardTest extends JpfParallelismTest {
         /* IMPROVE: Allow {0, 2} by releasing slices independent of subslices
          * that are still owned by other threads. */
         if(verify(mode, new int[][]{{1, 2}, {0, 2}})) {
-            final GuardedArray<Int> a = new GuardedArray<>(new Int[3]);
+            final Array<Int> a = new Array<>(new Int[3]);
             for(int i = 0; i < a.data.length; i++)
                 a.data[i] = new Int(i);
             
-            final GuardedSlice<Int> slice1 = a.slice(0, 2);
+            final Slice<Int> slice1 = a.slice(0, 2);
             slice1.pass();
             final Task<Void> task = s.run(new Runnable() {
                 public void run() {
                     slice1.registerNewOwner();
                     
-                    final GuardedSlice<Int> slice2 = slice1.slice(0, 1);
+                    final Slice<Int> slice2 = slice1.slice(0, 1);
                     slice2.pass();
                     final Task<Void> task2 = s.run(new Runnable() {
                         public void run() {

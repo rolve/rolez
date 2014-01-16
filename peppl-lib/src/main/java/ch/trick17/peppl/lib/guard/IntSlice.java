@@ -2,13 +2,13 @@ package ch.trick17.peppl.lib.guard;
 
 import java.util.Collections;
 
-public class GuardedIntSlice extends Guarded {
+public class IntSlice extends Guarded {
     
     public final int[] data;
     public final int begin;
     public final int end;
     
-    GuardedIntSlice(final int[] data, final int beginIndex, final int endIndex) {
+    IntSlice(final int[] data, final int beginIndex, final int endIndex) {
         assert beginIndex >= 0 && beginIndex <= data.length;
         assert endIndex > beginIndex && endIndex <= data.length;
         this.data = data;
@@ -16,10 +16,10 @@ public class GuardedIntSlice extends Guarded {
         this.end = endIndex;
     }
     
-    public final GuardedIntSlice slice(final int beginIndex, final int endIndex) {
+    public final IntSlice slice(final int beginIndex, final int endIndex) {
         assert beginIndex >= begin;
         assert endIndex <= end;
-        return new GuardedIntSlice(data, beginIndex, endIndex);
+        return new IntSlice(data, beginIndex, endIndex);
     }
     
     @Override
