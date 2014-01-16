@@ -15,6 +15,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 import ch.trick17.peppl.lib.guard.GuardedArray;
+import ch.trick17.peppl.lib.guard.GuardedSlice;
 import ch.trick17.peppl.lib.task.NewThreadTaskSystem;
 import ch.trick17.peppl.lib.task.SingleThreadTaskSystem;
 import ch.trick17.peppl.lib.task.Task;
@@ -849,7 +850,8 @@ public class GuardTest extends JpfParallelismTest {
                 }
             });
             
-            a.guardReadWrite();
+            a.guardRead();
+            a.data[2].guardReadWrite();
             a.data[2].value = 1;
             
             task.get();
@@ -875,8 +877,10 @@ public class GuardTest extends JpfParallelismTest {
             });
             
             a.guardRead();
-            for(int i = 0; i < a.data.length; i++)
+            for(int i = 0; i < a.data.length; i++) {
+                a.data[i].guardRead();
                 assertEquals(i + 1, a.data[i].value);
+            }
             
             task.get();
         }
@@ -933,7 +937,6 @@ public class GuardTest extends JpfParallelismTest {
             final Task<Void> task1 = s.run(new Runnable() {
                 public void run() {
                     i.registerNewOwner();
-                    region(0);
                     i.value++;
                     i.releasePassed();
                 }
@@ -943,7 +946,6 @@ public class GuardTest extends JpfParallelismTest {
             final Task<Void> task2 = s.run(new Runnable() {
                 public void run() {
                     a.registerNewOwner();
-                    region(1);
                     a.data[0].value++;
                     a.releasePassed();
                 }
@@ -953,12 +955,10 @@ public class GuardTest extends JpfParallelismTest {
             final Task<Void> task3 = s.run(new Runnable() {
                 public void run() {
                     i.registerNewOwner();
-                    region(2);
                     i.value++;
                     i.releasePassed();
                 }
             });
-            region(3);
             
             i.guardRead();
             assertEquals(3, i.value);
@@ -1004,6 +1004,237 @@ public class GuardTest extends JpfParallelismTest {
             a.guardRead();
             a.data[0].guardRead();
             assertEquals(3, a.data[0].value);
+            task.get();
+        }
+    }
+    
+    @Test
+    public void testShareSlice() {
+        assumeVerifyCorrectness();
+        if(verifyNoPropertyViolation()) {
+            final GuardedArray<Int> a = new GuardedArray<>(new Int[4]);
+            for(int i = 0; i < a.data.length; i++)
+                a.data[i] = new Int(i);
+            
+            final GuardedSlice<Int> slice = a.slice(0, 2);
+            slice.share();
+            final Task<Void> task = s.run(new Runnable() {
+                public void run() {
+                    assertEquals(1, slice.data[1].value);
+                    slice.releaseShared();
+                }
+            });
+            
+            a.guardRead();
+            a.data[1].guardReadWrite();
+            a.data[1].value = 0;
+            
+            task.get();
+        }
+    }
+    
+    @Test
+    public void testPassSlice() {
+        assumeVerifyCorrectness();
+        if(verifyNoPropertyViolation()) {
+            final GuardedArray<Int> a = new GuardedArray<>(new Int[10]);
+            for(int i = 0; i < a.data.length; i++)
+                a.data[i] = new Int(i);
+            
+            final GuardedSlice<Int> slice = a.slice(0, 5);
+            slice.pass();
+            final Task<Void> task = s.run(new Runnable() {
+                public void run() {
+                    slice.registerNewOwner();
+                    for(int i = slice.begin; i < slice.end; i++)
+                        slice.data[i].value++;
+                    slice.releasePassed();
+                }
+            });
+            
+            a.guardRead();
+            for(int i = 0; i < slice.end; i++) {
+                a.data[i].guardRead();
+                assertEquals(i + 1, a.data[i].value);
+            }
+            for(int i = slice.end; i < a.data.length; i++) {
+                a.data[i].guardRead();
+                assertEquals(i, a.data[i].value);
+            }
+            task.get();
+        }
+    }
+    
+    @Test
+    public void testShareSliceMultiple() {
+        assumeVerifyCorrectness();
+        if(verifyNoPropertyViolation()) {
+            final Int i = new Int();
+            final GuardedArray<Int> a = new GuardedArray<>(i);
+            final GuardedSlice<Int> slice = a.slice(0, 1);
+            
+            slice.share();
+            final Task<Void> task1 = s.run(new Runnable() {
+                public void run() {
+                    assertEquals(0, slice.data[0].value);
+                    slice.releaseShared();
+                }
+            });
+            
+            a.share();
+            final Task<Void> task2 = s.run(new Runnable() {
+                public void run() {
+                    assertEquals(0, a.data[0].value);
+                    a.releaseShared();
+                }
+            });
+            
+            slice.share();
+            final Task<Void> task3 = s.run(new Runnable() {
+                public void run() {
+                    assertEquals(0, slice.data[0].value);
+                    slice.releaseShared();
+                }
+            });
+            
+            i.guardReadWrite();
+            i.value = 1;
+            
+            task1.get();
+            task2.get();
+            task3.get();
+        }
+    }
+    
+    @Test
+    public void testPassSliceMultiple() {
+        assumeVerifyCorrectness();
+        if(verifyNoPropertyViolation()) {
+            final Int i = new Int();
+            final GuardedArray<Int> a = new GuardedArray<>(i);
+            final GuardedSlice<Int> slice = a.slice(0, 1);
+            
+            slice.pass();
+            final Task<Void> task1 = s.run(new Runnable() {
+                public void run() {
+                    slice.registerNewOwner();
+                    slice.data[0].value++;
+                    slice.releasePassed();
+                }
+            });
+            
+            a.pass();
+            final Task<Void> task2 = s.run(new Runnable() {
+                public void run() {
+                    a.registerNewOwner();
+                    a.data[0].value++;
+                    a.releasePassed();
+                }
+            });
+            
+            slice.pass();
+            final Task<Void> task3 = s.run(new Runnable() {
+                public void run() {
+                    slice.registerNewOwner();
+                    slice.data[0].value++;
+                    slice.releasePassed();
+                }
+            });
+            
+            i.guardRead();
+            assertEquals(3, i.value);
+            task1.get();
+            task2.get();
+            task3.get();
+        }
+    }
+    
+    @Test
+    public void testPassDifferentSlices() {
+        if(verify(mode)) {
+            final GuardedArray<Int> a = new GuardedArray<>(new Int[10]);
+            for(int i = 0; i < a.data.length; i++)
+                a.data[i] = new Int(i);
+            
+            final GuardedSlice<Int> slice1 = a.slice(0, 5);
+            final GuardedSlice<Int> slice2 = a.slice(slice1.end, a.data.length);
+            
+            slice1.pass();
+            final Task<Void> task1 = s.run(new Runnable() {
+                public void run() {
+                    slice1.registerNewOwner();
+                    for(int i = slice1.begin; i < slice1.end; i++)
+                        slice1.data[i].value++;
+                    region(0);
+                    slice1.releasePassed();
+                }
+            });
+            
+            slice2.pass();
+            final Task<Void> task2 = s.run(new Runnable() {
+                public void run() {
+                    slice2.registerNewOwner();
+                    for(int i = slice2.begin; i < slice2.end; i++)
+                        slice2.data[i].value++;
+                    region(1);
+                    slice2.releasePassed();
+                }
+            });
+            region(2);
+            
+            a.guardRead();
+            for(int i = 0; i < a.data.length; i++) {
+                a.data[i].guardRead();
+                assertEquals(i + 1, a.data[i].value);
+            }
+            task1.get();
+            task2.get();
+        }
+    }
+    
+    @Test
+    public void testPassSubsliceNested() {
+        /* IMPROVE: Allow {0, 2} by releasing slices independent of subslices
+         * that are still owned by other threads. */
+        if(verify(mode, new int[][]{{1, 2}, {0, 2}})) {
+            final GuardedArray<Int> a = new GuardedArray<>(new Int[3]);
+            for(int i = 0; i < a.data.length; i++)
+                a.data[i] = new Int(i);
+            
+            final GuardedSlice<Int> slice1 = a.slice(0, 2);
+            slice1.pass();
+            final Task<Void> task = s.run(new Runnable() {
+                public void run() {
+                    slice1.registerNewOwner();
+                    
+                    final GuardedSlice<Int> slice2 = slice1.slice(0, 1);
+                    slice2.pass();
+                    final Task<Void> task2 = s.run(new Runnable() {
+                        public void run() {
+                            slice2.registerNewOwner();
+                            slice2.data[0].value++;
+                            region(0);
+                            slice2.releasePassed();
+                        }
+                    });
+                    
+                    slice1.data[1].value++;
+                    region(1);
+                    
+                    slice1.releasePassed();
+                    region(2);
+                    task2.get();
+                }
+            });
+            
+            a.data[2].value++;
+            region(3);
+            
+            a.guardRead();
+            for(int i = 0; i < a.data.length; i++) {
+                a.data[i].guardRead();
+                assertEquals(i + 1, a.data[i].value);
+            }
             task.get();
         }
     }
