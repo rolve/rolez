@@ -15,6 +15,8 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 import ch.trick17.peppl.lib.guard.Array;
+import ch.trick17.peppl.lib.guard.IntArray;
+import ch.trick17.peppl.lib.guard.IntSlice;
 import ch.trick17.peppl.lib.guard.Slice;
 import ch.trick17.peppl.lib.task.NewThreadTaskSystem;
 import ch.trick17.peppl.lib.task.SingleThreadTaskSystem;
@@ -603,7 +605,7 @@ public class GuardTest extends JpfParallelismTest {
     }
     
     @Test
-    public void testShareSubgroup() {
+    public void testShareSubgroupMultiple() {
         if(verify(mode, new int[][]{{0, 4}, {1, 4}, {2, 4}, {3, 4}})) {
             final Int i = new Int();
             final IntContainer c = new IntContainer(i);
@@ -818,10 +820,6 @@ public class GuardTest extends JpfParallelismTest {
                         }
                     });
                     
-                    i2.guardReadWrite();
-                    assertEquals(2, i2.value);
-                    i2.value++;
-                    
                     c.releasePassed();
                     task2.get();
                 }
@@ -829,7 +827,7 @@ public class GuardTest extends JpfParallelismTest {
             
             c.guardRead();
             c.i.guardRead();
-            assertEquals(3, c.i.value);
+            assertEquals(2, c.i.value);
             task.get();
         }
     }
@@ -859,6 +857,26 @@ public class GuardTest extends JpfParallelismTest {
     }
     
     @Test
+    public void testSharePrimitiveArray() {
+        assumeVerifyCorrectness();
+        if(verifyNoPropertyViolation()) {
+            final IntArray a = new IntArray(0);
+            
+            a.share();
+            final Task<Void> task = s.run(new Runnable() {
+                public void run() {
+                    assertEquals(0, a.data[0]);
+                    a.releaseShared();
+                }
+            });
+            
+            a.guardReadWrite();
+            a.data[0] = 1;
+            task.get();
+        }
+    }
+    
+    @Test
     public void testPassArray() {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
@@ -882,6 +900,29 @@ public class GuardTest extends JpfParallelismTest {
                 assertEquals(i + 1, a.data[i].value);
             }
             
+            task.get();
+        }
+    }
+    
+    @Test
+    public void testPassPrimitiveArray() {
+        assumeVerifyCorrectness();
+        if(verifyNoPropertyViolation()) {
+            final IntArray a = new IntArray(0, 1, 2);
+            
+            a.pass();
+            final Task<Void> task = s.run(new Runnable() {
+                public void run() {
+                    a.registerNewOwner();
+                    for(int i = 0; i < a.data.length; i++)
+                        a.data[i]++;
+                    a.releasePassed();
+                }
+            });
+            
+            a.guardRead();
+            for(int i = 0; i < a.data.length; i++)
+                assertEquals(i + 1, a.data[i]);
             task.get();
         }
     }
@@ -1034,6 +1075,27 @@ public class GuardTest extends JpfParallelismTest {
     }
     
     @Test
+    public void testSharePrimitiveSlice() {
+        assumeVerifyCorrectness();
+        if(verifyNoPropertyViolation()) {
+            final IntArray a = new IntArray(0, 1);
+            
+            final IntSlice slice = a.slice(0, 1);
+            slice.share();
+            final Task<Void> task = s.run(new Runnable() {
+                public void run() {
+                    assertEquals(0, slice.data[0]);
+                    slice.releaseShared();
+                }
+            });
+            
+            a.guardReadWrite();
+            a.data[0] = 1;
+            task.get();
+        }
+    }
+    
+    @Test
     public void testPassSlice() {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
@@ -1061,6 +1123,32 @@ public class GuardTest extends JpfParallelismTest {
                 a.data[i].guardRead();
                 assertEquals(i, a.data[i].value);
             }
+            task.get();
+        }
+    }
+    
+    @Test
+    public void testPassPrimitiveSlice() {
+        assumeVerifyCorrectness();
+        if(verifyNoPropertyViolation()) {
+            final IntArray a = new IntArray(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+            
+            final IntSlice slice = a.slice(0, 5);
+            slice.pass();
+            final Task<Void> task = s.run(new Runnable() {
+                public void run() {
+                    slice.registerNewOwner();
+                    for(int i = slice.begin; i < slice.end; i++)
+                        slice.data[i]++;
+                    slice.releasePassed();
+                }
+            });
+            
+            a.guardRead();
+            for(int i = 0; i < slice.end; i++)
+                assertEquals(i + 1, a.data[i]);
+            for(int i = slice.end; i < a.data.length; i++)
+                assertEquals(i, a.data[i]);
             task.get();
         }
     }
@@ -1235,6 +1323,49 @@ public class GuardTest extends JpfParallelismTest {
                 a.data[i].guardRead();
                 assertEquals(i + 1, a.data[i].value);
             }
+            task.get();
+        }
+    }
+    
+    @Test
+    public void testPassPrimitiveSubsliceNested() {
+        /* IMPROVE: Allow {0, 2} by releasing slices independent of subslices
+         * that are still owned by other threads. */
+        if(verify(mode, new int[][]{{1, 2}, {0, 2}})) {
+            final IntArray a = new IntArray(0, 1, 2);
+            
+            final IntSlice slice1 = a.slice(0, 2);
+            slice1.pass();
+            final Task<Void> task = s.run(new Runnable() {
+                public void run() {
+                    slice1.registerNewOwner();
+                    
+                    final IntSlice slice2 = slice1.slice(0, 1);
+                    slice2.pass();
+                    final Task<Void> task2 = s.run(new Runnable() {
+                        public void run() {
+                            slice2.registerNewOwner();
+                            slice2.data[0]++;
+                            region(0);
+                            slice2.releasePassed();
+                        }
+                    });
+                    
+                    slice1.data[1]++;
+                    region(1);
+                    
+                    slice1.releasePassed();
+                    region(2);
+                    task2.get();
+                }
+            });
+            
+            a.data[2]++;
+            region(3);
+            
+            a.guardRead();
+            for(int i = 0; i < a.data.length; i++)
+                assertEquals(i + 1, a.data[i]);
             task.get();
         }
     }

@@ -75,6 +75,7 @@ class Guard {
         assert parent != null;
         final GuardOp transferOwner = new GuardOp() {
             public void process(final Guard guard) {
+                guard.guardReadWrite();
                 if(guard.amOriginalOwner())
                     guard.owner = parent;
             }
