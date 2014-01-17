@@ -10,11 +10,11 @@ abstract class Guarded {
         super();
     }
     
-    public final void share() {
+    public void share() {
         getGuard().share(this);
     }
     
-    public final void pass() {
+    public void pass() {
         getGuard().pass(this);
     }
     
@@ -24,27 +24,27 @@ abstract class Guarded {
         return guard;
     }
     
-    public final void registerNewOwner() {
+    public void registerNewOwner() {
         assert guard != null;
         guard.registerNewOwner(this);
     }
     
-    public final void releaseShared() {
+    public void releaseShared() {
         assert guard != null;
         guard.releaseShared(this);
     }
     
-    public final void releasePassed() {
+    public void releasePassed() {
         assert guard != null;
         guard.releasePassed(this);
     }
     
-    public final void guardRead() {
+    public void guardRead() {
         if(guard != null)
             guard.guardRead();
     }
     
-    public final void guardReadWrite() {
+    public void guardReadWrite() {
         if(guard != null)
             guard.guardReadWrite();
     }
