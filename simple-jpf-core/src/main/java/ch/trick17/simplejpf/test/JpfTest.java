@@ -31,6 +31,7 @@ import javax.xml.bind.DatatypeConverter;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Test;
 import org.junit.runners.Parameterized;
 
 /**
@@ -163,7 +164,7 @@ public abstract class JpfTest implements Serializable {
     
     JPF runJpf(final JPFListener... listeners) {
         final String serializedTest = serialize(this);
-        final String methodName = getCaller();
+        final String methodName = getTestMethod();
         
         final Config config = new Config(new InputStreamReader(JpfTest.class
                 .getResourceAsStream("jpf.properties")));
@@ -181,13 +182,22 @@ public abstract class JpfTest implements Serializable {
         return jpf;
     }
     
-    static String getCaller() {
-        final StackTraceElement[] trace = (new Throwable()).getStackTrace();
-        for(final StackTraceElement e : trace)
-            if(!e.getClassName().startsWith(
-                    JpfTest.class.getPackage().getName()))
-                return e.getMethodName();
-        throw new AssertionError("method not found");
+    static String getTestMethod() {
+        try {
+            final StackTraceElement[] trace = (new Throwable()).getStackTrace();
+            for(final StackTraceElement e : trace)
+                try {
+                    final Method method = Class.forName(e.getClassName())
+                            .getMethod(e.getMethodName());
+                    if(method.getAnnotation(Test.class) != null)
+                        return e.getMethodName();
+                } catch(final NoSuchMethodException ignore) {
+                    /* Not the right method yet... */
+                }
+            throw new AssertionError("method not found");
+        } catch(final ClassNotFoundException e) {
+            throw new AssertionError(e);
+        }
     }
     
     private static String serialize(final Object o) {

@@ -1,4 +1,4 @@
-package ch.trick17.simplejpf;
+package ch.trick17.simplejpf.test;
 
 import org.junit.Test;
 

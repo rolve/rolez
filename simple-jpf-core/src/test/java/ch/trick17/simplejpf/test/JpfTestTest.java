@@ -1,4 +1,4 @@
-package ch.trick17.simplejpf;
+package ch.trick17.simplejpf.test;
 
 import static org.junit.Assert.assertEquals;
 import gov.nasa.jpf.vm.NoOutOfMemoryErrorProperty;

@@ -170,7 +170,7 @@ public abstract class JpfParallelismTest extends JpfTest {
     
     private final class ParListener extends ListenerAdapter {
         
-        final String testMethod = getCaller();
+        final String testMethod = getTestMethod();
         
         final int[][] spec;
         final boolean seq;
