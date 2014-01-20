@@ -22,6 +22,7 @@ import ch.trick17.peppl.lib.task.NewThreadTaskSystem;
 import ch.trick17.peppl.lib.task.SingleThreadTaskSystem;
 import ch.trick17.peppl.lib.task.Task;
 import ch.trick17.peppl.lib.task.TaskSystem;
+import ch.trick17.peppl.lib.task.ThreadPoolTaskSystem;
 import ch.trick17.simplejpf.test.JpfParallelismTest;
 
 @RunWith(Parameterized.class)
@@ -32,7 +33,9 @@ public class GuardTest extends JpfParallelismTest {
         return Arrays.asList(new Object[][]{
                 {new SingleThreadTaskSystem(), VerifyMode.CORRECTNESS},
                 {new NewThreadTaskSystem(), VerifyMode.CORRECTNESS},
-                {new NewThreadTaskSystem(), VerifyMode.PARALLELISM}});
+                {new NewThreadTaskSystem(), VerifyMode.PARALLELISM},
+                {new ThreadPoolTaskSystem(), VerifyMode.CORRECTNESS},
+                {new ThreadPoolTaskSystem(), VerifyMode.PARALLELISM}});
     }
     
     private final TaskSystem s;
