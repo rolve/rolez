@@ -15,7 +15,7 @@ public class Reduce implements Callable<Void> {
     private static int SPLIT_SIZE = SIZE / 2;
     
     public static void main(final String[] args) {
-        TaskSystem.getDefault().run(new Reduce()).get();
+        TaskSystem.getDefault().runDirectly(new Reduce());
     }
     
     public Void call() {

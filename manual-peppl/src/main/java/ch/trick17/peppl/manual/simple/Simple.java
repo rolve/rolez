@@ -14,12 +14,9 @@ import ch.trick17.peppl.lib.task.TaskSystem;
  */
 public class Simple implements Runnable {
     
-    private static final TaskSystem S = TaskSystem.getDefault();
-    
     public static void main(final String[] args) {
         // Compiler generates the bootstrapping code:
-        S.run(new Simple()).get();
-        // get() Propagates exceptions to the main thread
+        TaskSystem.getDefault().runDirectly(new Simple());
     }
     
     public void run() {
@@ -34,7 +31,7 @@ public class Simple implements Runnable {
         // A task that requires write access to container is run. Programmer
         // writes "ReadWriteTask(c);", compiler generates the following:
         c.pass();
-        S.run(new ReadWriteTask(c));
+        TaskSystem.getDefault().run(new ReadWriteTask(c));
         
         // c is now inaccessible
         doSomeWork();
@@ -49,7 +46,7 @@ public class Simple implements Runnable {
         
         // A task that only requires read access is run.
         c.share();
-        S.run(new ReadTask(c));
+        TaskSystem.getDefault().run(new ReadTask(c));
         
         i = c.get(); // No guard required, static analysis finds that
                      // read access is available

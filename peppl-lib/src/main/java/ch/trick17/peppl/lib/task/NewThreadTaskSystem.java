@@ -8,7 +8,7 @@ package ch.trick17.peppl.lib.task;
 public final class NewThreadTaskSystem extends TaskSystem {
     
     @Override
-    protected void doRun(final Task<?> task) {
+    protected void start(final Task<?> task) {
         new Thread(task).start();
     }
 }

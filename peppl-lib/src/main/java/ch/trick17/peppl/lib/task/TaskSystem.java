@@ -1,23 +1,44 @@
 package ch.trick17.peppl.lib.task;
 
 import java.io.Serializable;
+import java.util.Deque;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 public abstract class TaskSystem implements Serializable {
     
+    final transient ThreadLocal<Deque<Task<?>>> localStack = new ThreadLocal<Deque<Task<?>>>() {
+        @Override
+        protected Deque<Task<?>> initialValue() {
+            return new ConcurrentLinkedDeque<Task<?>>();
+        }
+    };
+    
     public Task<Void> run(final Runnable runnable) {
-        final Task<Void> task = new Task<>(runnable);
-        doRun(task);
-        return task;
+        return run(new Task<Void>(runnable, this));
     }
     
     public <V> Task<V> run(final Callable<V> callable) {
-        final Task<V> task = new Task<>(callable);
-        doRun(task);
+        return run(new Task<>(callable, this));
+    }
+    
+    public void runDirectly(final Runnable runnable) {
+        new Task<>(runnable, this).run();
+    }
+    
+    public <V> void runDirectly(final Callable<V> callable) {
+        new Task<>(callable, this).run();
+    }
+    
+    private <V> Task<V> run(final Task<V> task) {
+        final Task<?> current = localStack.get().peek();
+        if(current != null)
+            current.addChild(task);
+        start(task);
         return task;
     }
     
-    protected abstract void doRun(final Task<?> task);
+    abstract void start(final Task<?> task);
     
     @Override
     public String toString() {

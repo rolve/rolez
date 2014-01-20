@@ -115,14 +115,16 @@ public class TaskSystemTest extends JpfTest {
     @Test
     public void testExceptionInTask() {
         if(verifyUnhandledException("java.lang.RuntimeException", "Hello")) {
-            final Task<Void> task = system.run(new Runnable() {
+            system.runDirectly(new Runnable() {
                 public void run() {
-                    throw new RuntimeException("Hello");
+                    system.run(new Runnable() {
+                        public void run() {
+                            throw new RuntimeException("Hello");
+                        }
+                    });
                 }
             });
-            
-            // Propagate thrown exception to original task (thread)
-            task.get();
+            /* Exception should be propagated automatically */
         }
     }
     

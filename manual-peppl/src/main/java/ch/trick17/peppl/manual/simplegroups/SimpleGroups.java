@@ -4,15 +4,12 @@ import static org.junit.Assert.assertEquals;
 import ch.trick17.peppl.lib.Mutable;
 import ch.trick17.peppl.lib._Mutable;
 import ch.trick17.peppl.lib.guard.GuardedObject;
-import ch.trick17.peppl.lib.task.Task;
 import ch.trick17.peppl.lib.task.TaskSystem;
 
 public class SimpleGroups implements Runnable {
     
-    public static TaskSystem S = TaskSystem.getDefault();
-    
     public static void main(final String[] args) {
-        new SimpleGroups().run();
+        TaskSystem.getDefault().runDirectly(new SimpleGroups());
     }
     
     public void run() {
@@ -21,13 +18,11 @@ public class SimpleGroups implements Runnable {
         x.y.i = 10;
         
         x.pass();
-        final Task<Void> a = S.run(new A(x));
+        TaskSystem.getDefault().run(new A(x));
         
         x.guardRead();
         x.y.guardRead();
         assertEquals(x.y.i, 30);
-        
-        a.get(); // Propagate exceptions
     }
     
     public static class A implements Runnable {
@@ -50,13 +45,12 @@ public class SimpleGroups implements Runnable {
             z.y = y;
             
             z.share();
-            final Task<Void> b = S.run(new B(z));
+            TaskSystem.getDefault().run(new B(z));
             
             y.guardReadWrite();
             y.i += 10;
             
             x.releasePassed();
-            b.get();
         }
     }
     

@@ -52,26 +52,26 @@ public class GuardTest extends JpfParallelismTest {
     
     @Test
     public void testShare() {
-        if(verify(mode, new int[][]{{0, 1}, {2, 3}, {0, 3}})) {
-            final Int i = new Int();
-            
-            i.share();
-            final Task<Void> task = s.run(new Runnable() {
-                public void run() {
-                    region(0);
-                    assertEquals(0, i.value);
-                    i.releaseShared();
-                    region(1);
-                }
-            });
-            region(2);
-            
-            i.guardReadWrite();
-            i.value = 1;
-            region(3);
-            
-            task.get();
-        }
+        verify(new int[][]{{0, 1}, {2, 3}, {0, 3}}, new Runnable() {
+            public void run() {
+                final Int i = new Int();
+                
+                i.share();
+                s.run(new Runnable() {
+                    public void run() {
+                        region(0);
+                        assertEquals(0, i.value);
+                        i.releaseShared();
+                        region(1);
+                    }
+                });
+                region(2);
+                
+                i.guardReadWrite();
+                i.value = 1;
+                region(3);
+            }
+        });
     }
     
     @Test
@@ -1367,6 +1367,14 @@ public class GuardTest extends JpfParallelismTest {
             for(int i = 0; i < a.data.length; i++)
                 assertEquals(i + 1, a.data[i]);
             task.get();
+        }
+    }
+    
+    // TODO: Change all tests to use implicit exception propagation using this
+    // method:
+    private void verify(final int[][] seqGroups, final Runnable test) {
+        if(verify(mode, seqGroups)) {
+            s.runDirectly(test);
         }
     }
     

@@ -1,6 +1,7 @@
 package ch.trick17.peppl.manual.quicksort;
 
 import static org.junit.Assert.assertEquals;
+import gov.nasa.jpf.vm.Verify;
 
 import java.util.Random;
 
@@ -8,7 +9,6 @@ import ch.trick17.peppl.lib._UnguardedRead;
 import ch.trick17.peppl.lib.guard.IntArray;
 import ch.trick17.peppl.lib.guard.IntSlice;
 import ch.trick17.peppl.lib.task.NewThreadTaskSystem;
-import ch.trick17.peppl.lib.task.Task;
 import ch.trick17.peppl.lib.task.TaskSystem;
 
 public class QuickSort implements Runnable {
@@ -16,7 +16,7 @@ public class QuickSort implements Runnable {
     private static final TaskSystem SYSTEM = new NewThreadTaskSystem();
     
     public static void main(final String[] args) {
-        new QuickSort(50000).run();
+        SYSTEM.runDirectly(new QuickSort(10000));
     }
     
     private final int size;
@@ -31,14 +31,14 @@ public class QuickSort implements Runnable {
         final long start = System.nanoTime();
         
         array.pass();
-        final Task<Void> task = SYSTEM.run(new SortTask(array));
+        SYSTEM.run(new SortTask(array));
         array.guardRead();
         
-        System.out.println((System.nanoTime() - start) / 1000000000.0);
+        if(!Verify.isRunningInJPF())
+            System.out.println((System.nanoTime() - start) / 1000000000.0);
         
         for(int i = 0; i < size; i++)
             assertEquals(i, array.data[i]);
-        task.get();
     }
     
     public class SortTask implements Runnable {
@@ -51,13 +51,11 @@ public class QuickSort implements Runnable {
         
         public void run() {
             s.registerNewOwner();
-            Task<Void> leftTask = null;
-            Task<Void> rightTask = null;
             
             int l = s.begin;
             int r = s.end - 1;
             if(s.length() > 2) {
-                final int pivot = privot(s);
+                final int pivot = pivot(s);
                 while(l <= r) {
                     while(s.data[l] < pivot)
                         l++;
@@ -75,12 +73,12 @@ public class QuickSort implements Runnable {
                 if(s.begin < r) {
                     final IntSlice left = s.slice(s.begin, r + 1);
                     left.pass();
-                    leftTask = SYSTEM.run(new SortTask(left));
+                    SYSTEM.run(new SortTask(left));
                 }
                 if(l < s.end - 1) {
                     final IntSlice right = s.slice(l, s.end);
                     right.pass();
-                    rightTask = SYSTEM.run(new SortTask(right));
+                    SYSTEM.run(new SortTask(right));
                 }
             }
             else if(s.length() == 2) {
@@ -94,14 +92,30 @@ public class QuickSort implements Runnable {
             /* else: s.length() == 1, already sorted */
             
             s.releasePassed();
-            if(leftTask != null)
-                leftTask.get();
-            if(rightTask != null)
-                rightTask.get();
         }
         
-        private int privot(final @_UnguardedRead IntSlice slice) {
-            return slice.data[slice.begin];
+        private int pivot(final @_UnguardedRead IntSlice slice) {
+            // IMPROVE: Random pivot
+            assert slice.length() > 0;
+            final int l = slice.data[slice.begin];
+            final int m = slice.data[slice.begin + slice.length() / 2];
+            final int r = slice.data[slice.end - 1];
+            if(l < m) {
+                if(m < r)
+                    return m;
+                else if(l < r)
+                    return l;
+                else
+                    return r;
+            }
+            else { // m < l
+                if(l < r)
+                    return l;
+                else if(m < r)
+                    return r;
+                else
+                    return m;
+            }
         }
     }
     
