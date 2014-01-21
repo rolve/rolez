@@ -14,6 +14,7 @@ import org.junit.runners.Parameterized.Parameters;
 import ch.trick17.peppl.lib.task.NewThreadTaskSystem;
 import ch.trick17.peppl.lib.task.SingleThreadTaskSystem;
 import ch.trick17.peppl.lib.task.TaskSystem;
+import ch.trick17.peppl.lib.task.ThreadPoolTaskSystem;
 import ch.trick17.peppl.manual.quicksort.QuickSort;
 import ch.trick17.peppl.manual.reduce.Reduce;
 import ch.trick17.peppl.manual.simple.Simple;
@@ -26,7 +27,7 @@ public class ManualPepplTest extends JpfTest {
     @Parameters(name = "{0}")
     public static List<?> taskSystems() {
         return Arrays.asList(new Object[][]{{new SingleThreadTaskSystem()},
-                {new NewThreadTaskSystem()}});
+                {new NewThreadTaskSystem()}, {new ThreadPoolTaskSystem()}});
     }
     
     private final TaskSystem system;

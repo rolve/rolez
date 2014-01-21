@@ -153,7 +153,7 @@ public abstract class JpfTest implements Serializable {
     
     /* Implementation - JUnit part */
     
-    private static boolean runDirectly() {
+    static boolean runDirectly() {
         return Verify.isRunningInJPF() || isDebugRun();
     }
     

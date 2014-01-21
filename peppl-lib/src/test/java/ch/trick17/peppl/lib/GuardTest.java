@@ -33,9 +33,9 @@ public class GuardTest extends JpfParallelismTest {
         return Arrays.asList(new Object[][]{
                 {new SingleThreadTaskSystem(), VerifyMode.CORRECTNESS},
                 {new NewThreadTaskSystem(), VerifyMode.CORRECTNESS},
-                {new NewThreadTaskSystem(), VerifyMode.PARALLELISM},
                 {new ThreadPoolTaskSystem(), VerifyMode.CORRECTNESS},
-                {new ThreadPoolTaskSystem(), VerifyMode.PARALLELISM}});
+                {new NewThreadTaskSystem(), VerifyMode.PARALLELISM},
+                {new ThreadPoolTaskSystem(3), VerifyMode.PARALLELISM}});
     }
     
     private final TaskSystem s;

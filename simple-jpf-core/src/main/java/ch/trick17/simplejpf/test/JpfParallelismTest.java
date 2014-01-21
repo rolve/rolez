@@ -6,7 +6,6 @@ import gov.nasa.jpf.vm.ElementInfo;
 import gov.nasa.jpf.vm.MethodInfo;
 import gov.nasa.jpf.vm.ThreadInfo;
 import gov.nasa.jpf.vm.VM;
-import gov.nasa.jpf.vm.Verify;
 
 import java.util.AbstractList;
 import java.util.ArrayDeque;
@@ -133,12 +132,12 @@ public abstract class JpfParallelismTest extends JpfTest {
     }
     
     private boolean verifyParallel(final int[][] spec, final boolean seq) {
-        if(spec.length == 0)
+        if(!seq && spec.length == 0)
             LoggerFactory.getLogger(JpfParallelismTest.class).warn(
                     "empty parallelism specification");
         
         verifyParallelism = true;
-        if(Verify.isRunningInJPF())
+        if(runDirectly())
             return true;
         else {
             final ParListener l = new ParListener(spec, seq);

@@ -1,22 +1,21 @@
 package ch.trick17.peppl.manual.quicksort;
 
 import static org.junit.Assert.assertEquals;
-import gov.nasa.jpf.vm.Verify;
 
 import java.util.Random;
 
 import ch.trick17.peppl.lib._UnguardedRead;
 import ch.trick17.peppl.lib.guard.IntArray;
 import ch.trick17.peppl.lib.guard.IntSlice;
-import ch.trick17.peppl.lib.task.NewThreadTaskSystem;
 import ch.trick17.peppl.lib.task.TaskSystem;
+import ch.trick17.peppl.lib.task.ThreadPoolTaskSystem;
 
 public class QuickSort implements Runnable {
     
-    private static final TaskSystem SYSTEM = new NewThreadTaskSystem();
+    private static final TaskSystem SYSTEM = new ThreadPoolTaskSystem();
     
     public static void main(final String[] args) {
-        SYSTEM.runDirectly(new QuickSort(10000));
+        SYSTEM.runDirectly(new QuickSort(200000));
     }
     
     private final int size;
@@ -34,8 +33,7 @@ public class QuickSort implements Runnable {
         SYSTEM.run(new SortTask(array));
         array.guardRead();
         
-        if(!Verify.isRunningInJPF())
-            System.out.println((System.nanoTime() - start) / 1000000000.0);
+        System.out.println((System.nanoTime() - start) / 1000000000.0);
         
         for(int i = 0; i < size; i++)
             assertEquals(i, array.data[i]);

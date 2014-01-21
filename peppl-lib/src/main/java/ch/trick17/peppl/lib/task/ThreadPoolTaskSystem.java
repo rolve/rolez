@@ -22,8 +22,13 @@ public final class ThreadPoolTaskSystem extends TaskSystem {
     }
     
     private void initializeWorkers() {
-        for(int i = 0; i < maxThreads; i++)
+        for(int i = 0; i < getMaxThreads(); i++)
             workers.add(new Worker());
+        initialized = true;
+    }
+    
+    public int getMaxThreads() {
+        return maxThreads;
     }
     
     @Override
@@ -84,6 +89,6 @@ public final class ThreadPoolTaskSystem extends TaskSystem {
     
     @Override
     public String toString() {
-        return super.toString() + "[" + maxThreads + "]";
+        return super.toString() + "[" + getMaxThreads() + "]";
     }
 }

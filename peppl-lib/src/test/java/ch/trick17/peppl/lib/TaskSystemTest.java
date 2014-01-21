@@ -8,6 +8,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.locks.LockSupport;
 
 import org.junit.Test;
+import org.junit.internal.AssumptionViolatedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -16,16 +17,16 @@ import ch.trick17.peppl.lib.task.SingleThreadTaskSystem;
 import ch.trick17.peppl.lib.task.Task;
 import ch.trick17.peppl.lib.task.TaskSystem;
 import ch.trick17.peppl.lib.task.ThreadPoolTaskSystem;
-import ch.trick17.simplejpf.test.JpfTest;
+import ch.trick17.simplejpf.test.JpfParallelismTest;
 
 @RunWith(Parameterized.class)
-public class TaskSystemTest extends JpfTest {
+public class TaskSystemTest extends JpfParallelismTest {
     
     @Parameterized.Parameters(name = "{0}")
     public static List<?> taskSystems() {
         return Arrays.asList(new TaskSystem[][]{{new SingleThreadTaskSystem()},
                 {new NewThreadTaskSystem()}, {new ThreadPoolTaskSystem()},
-                {new ThreadPoolTaskSystem(1)}});
+                {new ThreadPoolTaskSystem(1)}, {new ThreadPoolTaskSystem(2)}});
     }
     
     private final TaskSystem system;
@@ -141,5 +142,39 @@ public class TaskSystemTest extends JpfTest {
             
             assertEquals(42, (int) task.get());
         }
+    }
+    
+    @Test
+    public void testNestedParallelism() {
+        assumeMultithreaded();
+        if(verifyParallelExcept()) {
+            system.run(new Runnable() {
+                public void run() {
+                    /* Task 1 */
+                    final Task<Void> task = system.run(new Runnable() {
+                        public void run() {
+                            /* Task 2 */
+                            system.run(new Runnable() {
+                                public void run() {
+                                    /* Task 3 */
+                                    region(0);
+                                }
+                            });
+                            region(1);
+                        }
+                    });
+                    /* Waiting for other tasks should not block worker threads
+                     * of thread pools: */
+                    task.get();
+                }
+            }).get();
+        }
+    }
+    
+    private void assumeMultithreaded() {
+        if(system instanceof SingleThreadTaskSystem
+                || (system instanceof ThreadPoolTaskSystem && ((ThreadPoolTaskSystem) system)
+                        .getMaxThreads() == 1))
+            throw new AssumptionViolatedException("not a multithreaded test");
     }
 }
