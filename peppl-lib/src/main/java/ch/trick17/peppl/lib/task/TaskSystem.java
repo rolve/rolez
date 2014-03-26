@@ -47,7 +47,7 @@ public abstract class TaskSystem implements Serializable {
     
     /* Global default task system */
     
-    private static final TaskSystem defaultSystem = new NewThreadTaskSystem();
+    private static final TaskSystem defaultSystem = new ThreadPoolTaskSystem();
     
     public static TaskSystem getDefault() {
         return defaultSystem;

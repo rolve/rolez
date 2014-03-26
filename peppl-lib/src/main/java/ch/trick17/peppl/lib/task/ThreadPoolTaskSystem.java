@@ -1,72 +1,59 @@
 package ch.trick17.peppl.lib.task;
 
-import java.util.ArrayList;
-import java.util.List;
+import static java.util.Collections.newSetFromMap;
+
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 
 public final class ThreadPoolTaskSystem extends TaskSystem {
     
-    private final int maxThreads;
-    private volatile boolean initialized;
-    private final List<Worker> workers;
+    private final int baseSize;
+    private final Set<Worker> idleWorkers = newSetFromMap(new ConcurrentHashMap<Worker, Boolean>());
     
     public ThreadPoolTaskSystem() {
         this(Runtime.getRuntime().availableProcessors());
     }
     
-    public ThreadPoolTaskSystem(final int maxThreads) {
-        assert maxThreads > 0;
-        this.maxThreads = maxThreads;
-        workers = new ArrayList<>(maxThreads);
+    public ThreadPoolTaskSystem(final int baseSize) {
+        assert baseSize > 0;
+        this.baseSize = baseSize;
     }
     
-    private void initializeWorkers() {
-        for(int i = 0; i < getMaxThreads(); i++)
-            workers.add(new Worker());
-        initialized = true;
-    }
-    
-    public int getMaxThreads() {
-        return maxThreads;
+    public int getBaseSize() {
+        return baseSize;
     }
     
     @Override
     protected void start(final Task<?> task) {
-        if(!initialized)
-            synchronized(this) {
-                if(!initialized)
-                    initializeWorkers();
-            }
-        
         /* Try to find an idle worker */
-        /* IMPROVE: Do not always try the same worker first */
-        boolean found = false;
-        for(final Worker worker : workers) {
-            found = worker.tryExecute(task);
-            if(found)
+        boolean success = false;
+        for(final Worker worker : idleWorkers) {
+            success = worker.tryExecute(task);
+            if(success) {
+                idleWorkers.remove(worker);
                 break;
+            }
         }
         
-        /* Else run directly */
-        if(!found)
-            task.run();
+        /* Else create and start a new worker */
+        if(!success)
+            new Worker(task).start();
     }
     
-    private static class Worker extends Thread {
+    private class Worker extends Thread {
         
-        final AtomicReference<Task<?>> currentTask = new AtomicReference<Task<?>>();
+        final AtomicReference<Task<?>> currentTask;
         
-        public Worker() {
+        public Worker(final Task<?> task) {
             setDaemon(true);
+            currentTask = new AtomicReference<Task<?>>(task);
         }
         
         boolean tryExecute(final Task<?> task) {
             if(currentTask.compareAndSet(null, task)) {
-                if(!isAlive())
-                    start();
-                else
-                    LockSupport.unpark(this);
+                LockSupport.unpark(this);
                 return true;
             }
             else
@@ -82,6 +69,12 @@ public final class ThreadPoolTaskSystem extends TaskSystem {
                 else {
                     current.run();
                     currentTask.set(null);
+                    if(idleWorkers.size() < baseSize)
+                        /* Keep this worker */
+                        idleWorkers.add(this);
+                    else
+                        /* Kill this worker */
+                        break;
                 }
             }
         }
@@ -89,6 +82,6 @@ public final class ThreadPoolTaskSystem extends TaskSystem {
     
     @Override
     public String toString() {
-        return super.toString() + "[" + getMaxThreads() + "]";
+        return super.toString() + "[" + getBaseSize() + "]";
     }
 }

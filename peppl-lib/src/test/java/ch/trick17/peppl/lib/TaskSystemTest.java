@@ -174,7 +174,7 @@ public class TaskSystemTest extends JpfParallelismTest {
     private void assumeMultithreaded() {
         if(system instanceof SingleThreadTaskSystem
                 || (system instanceof ThreadPoolTaskSystem && ((ThreadPoolTaskSystem) system)
-                        .getMaxThreads() == 1))
+                        .getBaseSize() == 1))
             throw new AssumptionViolatedException("not a multithreaded test");
     }
 }
