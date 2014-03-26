@@ -13,6 +13,7 @@ import ch.trick17.peppl.lib.task.ThreadPoolTaskSystem;
 public class QuickSort implements Runnable {
     
     private static final TaskSystem SYSTEM = new ThreadPoolTaskSystem();
+    private static final int MIN_TASK_SIZE = 10000;
     
     public static void main(final String[] args) {
         SYSTEM.runDirectly(new QuickSort(200000));
@@ -49,7 +50,11 @@ public class QuickSort implements Runnable {
         
         public void run() {
             s.registerNewOwner();
-            
+            sort();
+            s.releasePassed();
+        }
+        
+        public void sort() {
             int l = s.begin;
             int r = s.end - 1;
             if(s.length() > 2) {
@@ -70,13 +75,23 @@ public class QuickSort implements Runnable {
                 
                 if(s.begin < r) {
                     final IntSlice left = s.slice(s.begin, r + 1);
-                    left.pass();
-                    SYSTEM.run(new SortTask(left));
+                    final SortTask task = new SortTask(left);
+                    if(left.length() >= MIN_TASK_SIZE) {
+                        left.pass();
+                        SYSTEM.run(task);
+                    }
+                    else
+                        task.sort();
                 }
                 if(l < s.end - 1) {
                     final IntSlice right = s.slice(l, s.end);
-                    right.pass();
-                    SYSTEM.run(new SortTask(right));
+                    final SortTask task = new SortTask(right);
+                    if(right.length() >= MIN_TASK_SIZE) {
+                        right.pass();
+                        SYSTEM.run(task);
+                    }
+                    else
+                        task.sort();
                 }
             }
             else if(s.length() == 2) {
@@ -88,8 +103,6 @@ public class QuickSort implements Runnable {
                 }
             }
             /* else: s.length() == 1, already sorted */
-            
-            s.releasePassed();
         }
         
         private int pivot(final @_UnguardedRead IntSlice slice) {
