@@ -32,6 +32,8 @@ public class NBodies implements Runnable {
         
         for(int i = 0; i < iterations; i++) {
             advanceSystem(system);
+            final Body body = system.data[1];
+            System.out.println(body.x + "\t" + body.y + "\t" + body.z);
         }
     }
     
@@ -55,9 +57,9 @@ public class NBodies implements Runnable {
         return system;
     }
     
-    private static void advanceSystem(final Array<Body> system) {
-        for(int i = system.begin; i < system.end; i++) {
-            for(int j = i + 1; j < system.end; j++) {
+    private void advanceSystem(final Array<Body> system) {
+        for(int i = 0; i < bodies; i++) {
+            for(int j = i + 1; j < bodies; j++) {
                 final Body body1 = system.data[i];
                 final Body body2 = system.data[j];
                 final double dx = body1.x - body2.x;
