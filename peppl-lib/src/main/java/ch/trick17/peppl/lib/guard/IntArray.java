@@ -9,6 +9,10 @@ public class IntArray extends IntSlice {
         super(data, 0, data.length);
     }
     
+    public IntArray(final int length) {
+        super(new int[length], 0, length);
+    }
+    
     @Override
     public String toString() {
         return Arrays.toString(data);
