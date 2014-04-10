@@ -49,9 +49,12 @@ public class QuickSort implements Runnable {
         }
         
         public void run() {
-            s.registerNewOwner();
-            sort();
-            s.releasePassed();
+            try {
+                s.registerNewOwner();
+                sort();
+            } finally {
+                s.releasePassed();
+            }
         }
         
         public void sort() {
