@@ -8,8 +8,7 @@ public class DoubleSlice extends AbstractSlice<DoubleSlice> {
     
     DoubleSlice(final double[] data, final int beginIndex, final int endIndex) {
         super(beginIndex, endIndex);
-        assert beginIndex >= 0 && beginIndex <= data.length;
-        assert endIndex > beginIndex && endIndex <= data.length;
+        assert endIndex <= data.length;
         this.data = data;
     }
     

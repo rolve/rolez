@@ -863,7 +863,7 @@ public class GuardTest extends JpfParallelismTest {
     public void testSharePrimitiveArray() {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
-            final IntArray a = new IntArray(0);
+            final IntArray a = new IntArray(new int[]{0});
             
             a.share();
             final Task<Void> task = s.run(new Runnable() {

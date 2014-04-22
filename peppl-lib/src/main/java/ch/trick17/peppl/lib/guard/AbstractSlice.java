@@ -42,7 +42,7 @@ abstract class AbstractSlice<S extends AbstractSlice<?>> extends Guarded {
         for(int i = 0; i < n; i++) {
             final int endIndex = beginIndex + baseSize
                     + (i < largeSlices ? 1 : 0);
-            slices.add(createSlice(beginIndex, endIndex));
+            slices.add(slice(beginIndex, endIndex));
             beginIndex = endIndex;
         }
         assert slices.size() == n;
