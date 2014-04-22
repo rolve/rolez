@@ -10,7 +10,7 @@
         <maven.compiler.source>1.7</maven.compiler.source>
         <maven.compiler.target>1.7</maven.compiler.target>
     </properties>
-    
+
     <dependencies>
         <dependency>
             <groupId>ch.trick17.peppl</groupId>
@@ -28,5 +28,56 @@
             <version>0.0.1-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>cz.advel.jbullet</groupId>
+            <artifactId>jbullet</artifactId>
+            <version>20101010</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>ant</groupId>
+                    <artifactId>ant</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.ant</groupId>
+            <artifactId>ant</artifactId>
+            <version>1.7.1</version>
+        </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.7</version>
+                <executions>
+                    <execution>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target name="instrument-classes">
+                                <property name="depClasspath"
+                                    refid="maven.dependency.classpath" />
+                                <taskdef name="instrument-stack"
+                                    classname="cz.advel.stack.instrument.InstrumentationTask"
+                                    classpath="${depClasspath}">
+                                </taskdef>
+                                <instrument-stack
+                                    dest="${project.build.outputDirectory}"
+                                    packageName="com.bulletphysics" isolated="true">
+                                    <fileset dir="${project.build.outputDirectory}"
+                                        includes="**/*.class" />
+                                </instrument-stack>
+                                <delete file="${project.build.outputDirectory}/com/bulletphysics/$Stack$1.class"/>
+                                <delete file="${project.build.outputDirectory}/com/bulletphysics/$Stack.class"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>
