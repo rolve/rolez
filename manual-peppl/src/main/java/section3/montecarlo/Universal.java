@@ -37,7 +37,7 @@ public class Universal {
     * Class variable, for whether to print debug messages.  This one is
     * unique to this class, and can hence be set in the one place.
     */
-  private static boolean UNIVERSAL_DEBUG;
+  private boolean UNIVERSAL_DEBUG;
   //------------------------------------------------------------------------
   // Instance variables.
   //------------------------------------------------------------------------

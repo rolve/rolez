@@ -43,12 +43,12 @@ public class ReturnPath extends PathId {
   /**
     * A class variable, for setting whether to print debug messages or not.
     */
-  public static boolean DEBUG=true;
+  public static final boolean DEBUG=true;
   /**
     * Class variable, for defining the prompt to print in front of debug
     * messages.
     */
-  protected static String prompt="ReturnPath> ";
+  protected static final String prompt="ReturnPath> ";
   /**
     * Flag for indicating one of the return definitions, via:
     *       u_i = \ln{\frac{S_i}{S_{i-1}}}

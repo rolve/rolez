@@ -48,11 +48,11 @@ public class RatePath extends PathId {
   /**
     * Class variable, for setting whether to print debug messages.
     */
-  public static boolean DEBUG=true;
+  public static final boolean DEBUG=true;
   /**
     * The prompt to write before any debug messages.
     */
-  protected static String prompt="RatePath> ";
+  protected static final String prompt="RatePath> ";
   /**
     * Class variable for determining which field in the stock data should be
     * used.  This is currently set to point to the 'closing price'.
@@ -90,19 +90,6 @@ public class RatePath extends PathId {
   //------------------------------------------------------------------------
   // Constructors.
   //------------------------------------------------------------------------
-  /**
-    * Constructor, where the user specifies the filename in from which the 
-    * data should be read.
-    *
-    * @param String filename
-    * @exception DemoException thrown if there is a problem reading in
-    *                          the data file.
-    */
-  public RatePath(String filename) throws DemoException {
-    set_prompt(prompt);
-    set_DEBUG(DEBUG);
-    readRatesFile(null,filename);
-  }
 
   /**
     * Constructor, where the user specifies the directory and filename in
@@ -117,30 +104,6 @@ public class RatePath extends PathId {
     set_prompt(prompt);
     set_DEBUG(DEBUG);
     readRatesFile(dirName,filename);
-  }
-  /**
-    * Constructor, for when the user specifies simply an array of values
-    * for the path.  User must also include information for specifying
-    * the other characteristics of the path.
-    *
-    * @param pathValue the array containing the values for the path.
-    * @param name the name to attach to the path.
-    * @param startDate date from which the path is supposed to start, in
-    *        'YYYYMMDD' format.
-    * @param startDate date from which the path is supposed to end, in
-    *        'YYYYMMDD' format.
-    * @param dTime the time interval between successive path values, in
-    *        fractions of a year.
-    */
-  public RatePath(double[] pathValue, String name, int startDate, int endDate, double dTime) {
-    set_name(name);
-    set_startDate(startDate);
-    set_endDate(endDate);
-    set_dTime(dTime);
-    set_prompt(prompt);
-    set_DEBUG(DEBUG);
-    this.pathValue = pathValue;
-    this.nAcceptedPathValue = pathValue.length;
   }
   /**
     * Constructor, for use by the Monte Carlo generator, when it wishes

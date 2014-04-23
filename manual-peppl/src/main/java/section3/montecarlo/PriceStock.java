@@ -40,11 +40,11 @@ public class PriceStock extends Universal {
     * Class variable for determining whether to switch on debug output or
     * not.
     */
-  public static boolean DEBUG=true;
+  public static final boolean DEBUG=true;
   /**
     * Class variable for defining the debug message prompt.
     */
-  protected static String prompt="PriceStock> ";
+  protected static final String prompt="PriceStock> ";
 
   //------------------------------------------------------------------------
   // Instance variables.

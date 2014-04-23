@@ -37,11 +37,11 @@ public class PathId extends Universal {
   /**
     * A class variable.
     */
-  public static boolean DEBUG=true;
+  public static final boolean DEBUG=true;
   /**
     * The prompt to write before any debug messages.
     */
-  protected static String prompt="PathId> ";
+  protected static final String prompt="PathId> ";
 
   //------------------------------------------------------------------------
   // Instance variables.
