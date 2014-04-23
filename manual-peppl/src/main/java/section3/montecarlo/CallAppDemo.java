@@ -53,7 +53,7 @@ public class CallAppDemo {
     }
 
     public void runiters () {
-      ap.runThread();
+      ap.runTasks();
     }
     public void presults () {
       ap.processSerial();

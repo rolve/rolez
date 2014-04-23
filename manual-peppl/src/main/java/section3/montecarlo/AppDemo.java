@@ -63,13 +63,9 @@ public class AppDemo extends Universal {
     */
   private int nRunsMC=0;
   private final int nthreads;
-  /**
-    * The default duration between time-steps, in units of a year.
-    */
-  private final double dTime = 1.0/365.0;
 
-  public Vector<ToTask> tasks;
-  public Vector<ToResult> results;
+  public Vector<Long> seeds;
+  public Vector<Double> results;
 
   public AppDemo(  
   String dataDirname, String dataFilename, int nTimeStepsMC, 
@@ -113,7 +109,7 @@ public class AppDemo extends Universal {
       pathStartValue);
       //
       // Now create the tasks.
-      initTasks();
+      initSeeds();
       //
     } catch( DemoException demoEx ) {
       dbgPrintln(demoEx.toString());
@@ -121,29 +117,23 @@ public class AppDemo extends Universal {
     }
   }
 
-  public void runThread() {
-    results = new Vector<ToResult>(nRunsMC);
+  public void runTasks() {
+    results = new Vector<Double>(nRunsMC);
 
-       Runnable thobjects[] = new Runnable [nthreads];
        Thread th[] = new Thread [nthreads];
-
         for(int i=1;i<nthreads;i++) {
-            thobjects[i] = new AppDemoThread(i,nRunsMC);
-            th[i] = new Thread(thobjects[i]);
+            th[i] = new Thread(new AppDemoThread(i,nRunsMC));
             th[i].start();
         }
 
-        thobjects[0] = new AppDemoThread(0,nRunsMC);
-        thobjects[0].run();
-
+        new AppDemoThread(0,nRunsMC).run();
 
         for(int i=1;i<nthreads;i++) {
             try {
                 th[i].join();
             }
             catch (InterruptedException e) {}
-        }      
-
+        }
   }
 
   public void processSerial() {
@@ -160,12 +150,10 @@ public class AppDemo extends Universal {
   /**
     * Generates the parameters for the given Monte Carlo simulation.
     */
-  private void initTasks() {
-    tasks = new Vector<ToTask>(nRunsMC);
+  private void initSeeds() {
+    seeds = new Vector<Long>(nRunsMC);
     for( int i=0; i < nRunsMC; i++ ) {
-      String header="MC run "+String.valueOf(i);
-      ToTask task = new ToTask(header, (long)i*11);
-      tasks.addElement(task);
+      seeds.addElement((long)i*11);
     }
   }
   /**
@@ -178,23 +166,14 @@ public class AppDemo extends Universal {
     */
   private void processResults() throws DemoException{
     double avgExpectedReturnRateMC = 0.0;
-    ToResult returnMC;
     if( nRunsMC != results.size() ) {
       errPrintln("Fatal: TaskRunner managed to finish with no all the results gathered in!");
       System.exit(-1);
     }
-    //
-    // Create an instance of a RatePath, for accumulating the results of the
-    // Monte Carlo simulations.
-    RatePath avgMCrate = new RatePath(nTimeStepsMC, "MC", 19990109, 19991231, dTime);
+
     for( int i=0; i < nRunsMC; i++ ) {
-      // First, create an instance which is supposed to generate a
-      // particularly simple MC path.
-      returnMC = results.elementAt(i);
-      avgMCrate.inc_pathValue(returnMC.get_pathValue());
-      avgExpectedReturnRateMC += returnMC.get_expectedReturnRate();
+      avgExpectedReturnRateMC += results.elementAt(i);
     } // for i;
-    avgMCrate.inc_pathValue(1.0/(nRunsMC));
     avgExpectedReturnRateMC /= nRunsMC;
     JGFavgExpectedReturnRateMC = avgExpectedReturnRateMC;
 
@@ -233,9 +212,9 @@ class AppDemoThread implements Runnable {
         for( int iRun=ilow; iRun < iupper; iRun++ ) {
         ps = new PriceStock();
         ps.setInitAllTasks(AppDemo.initAllTasks);
-        ps.setTask(tasks.elementAt(iRun));
+        ps.setSeed(seeds.elementAt(iRun));
         ps.run();
-            results.addElement(ps.getResult());
+            results.addElement(ps.getExpectedReturnRate());
         }
     }
 }

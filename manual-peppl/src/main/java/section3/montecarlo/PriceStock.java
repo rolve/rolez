@@ -41,10 +41,6 @@ public class PriceStock extends Universal {
     */
   private final MonteCarloPath mcPath;
   /**
-    * String identifier for a given task.
-    */
-  private String taskHeader;
-  /**
     * Random seed from which the Monte Carlo sequence is started.
     */
   private long randomSeed=-1;
@@ -89,21 +85,13 @@ public class PriceStock extends Universal {
     mcPath.set_returnDefinition(initAllTasks.get_returnDefinition());
     mcPath.set_expectedReturnRate(initAllTasks.get_expectedReturnRate());
     mcPath.set_volatility(initAllTasks.get_volatility());
-    int nTimeSteps = initAllTasks.get_nTimeSteps();
-    mcPath.set_nTimeSteps(nTimeSteps);
-    this.pathStartValue = initAllTasks.get_pathStartValue();
-    mcPath.set_pathValue(new double[nTimeSteps]);
-    mcPath.set_fluctuations(new double[nTimeSteps]);
+    mcPath.set_nTimeSteps(initAllTasks.get_nTimeSteps());
+    pathStartValue = initAllTasks.get_pathStartValue();
+    mcPath.set_pathValue(new double[initAllTasks.get_nTimeSteps()]);
+    mcPath.set_fluctuations(new double[initAllTasks.get_nTimeSteps()]);
   }
-  /**
-    * Method which is passed in the data representing each task, which then
-    * unpacks it for use by this object.
-    *
-    * @param task Object representing the data which defines a given task.
-    */
-  public void setTask(ToTask task) {
-    this.taskHeader     = task.get_header();
-    this.randomSeed     = task.get_randomSeed();
+  public void setSeed(long seed) {
+    this.randomSeed = seed;
   }
   /**
     * The business end.  Invokes the necessary computation routine, for a
@@ -122,14 +110,8 @@ public class PriceStock extends Universal {
       errPrintln(demoEx.toString());
     }
   }
-  /*
-   * Method which returns the results of a computation back to the caller.
-   *
-   * @return An object representing the computed results.
-   */
-  public ToResult getResult() {
-    String resultHeader = "Result of task with Header="+taskHeader+": randomSeed="+randomSeed+": pathStartValue="+pathStartValue;
-    ToResult res = new ToResult(resultHeader,expectedReturnRate,pathValue);
-    return res;
+
+  public double getExpectedReturnRate() {
+    return expectedReturnRate;
   }
 }
