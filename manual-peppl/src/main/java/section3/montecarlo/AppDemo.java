@@ -21,7 +21,10 @@
 
 package section3.montecarlo;
 
-import java.util.Vector;
+import static java.util.Collections.unmodifiableList;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Code, a test-harness for invoking and driving the Applications Demonstrator
@@ -38,74 +41,43 @@ import java.util.Vector;
  * @version $Revision: 1.12 $ $Date: 1999/02/16 19:13:38 $
  */
 public class AppDemo extends Universal {
-    // ------------------------------------------------------------------------
-    // Instance variables.
-    // ------------------------------------------------------------------------
+    
+    private static final double pathStartValue = 100.0;
     
     public double JGFavgExpectedReturnRateMC = 0.0;
-    /**
-     * Directory in which to find the historical rates.
-     */
-    private final String dataDirname;
-    /**
-     * Name of the historical rate to model.
-     */
-    private final String dataFilename;
-    /**
-     * The number of time-steps which the Monte Carlo simulation should run for.
-     */
-    private int nTimeStepsMC = 0;
-    /**
-     * The number of Monte Carlo simulations to run.
-     */
-    private int nRunsMC = 0;
+    private final int nRunsMC;
     private final int nthreads;
     
-    public Vector<Long> seeds;
-    public Vector<Double> results;
+    private ToInitAllTasks initAllTasks = null;
+    
+    public List<Long> seeds;
+    public List<Double> results;
     
     public AppDemo(final String dataDirname, final String dataFilename,
             final int nTimeStepsMC, final int nRunsMC, final int nthreads) {
-        this.dataDirname = dataDirname;
-        this.dataFilename = dataFilename;
-        this.nTimeStepsMC = nTimeStepsMC;
         this.nRunsMC = nRunsMC;
         this.nthreads = nthreads;
+        
+        seeds = new ArrayList<>(nRunsMC);
+        results = new ArrayList<>(nRunsMC);
+        
         set_prompt("AppDemo> ");
         set_DEBUG(true);
-    }
-    
-    /**
-     * Single point of contact for running this increasingly bloated class.
-     * Other run modes can later be defined for whether a new rate should be
-     * loaded in, etc. Note that if the <code>hostname</code> is set to the
-     * string "none", then the demonstrator runs in purely serial mode.
-     */
-    
-    /**
-     * Initialisation and Run methods.
-     */
-    
-    PriceStock psMC;
-    double pathStartValue = 100.0;
-    
-    public static ToInitAllTasks initAllTasks = null;
-    
-    public void initSerial() {
+        
         try {
-            //
             // Measure the requested path rate.
             final RatePath rateP = new RatePath(dataDirname, dataFilename);
             final ReturnPath returnP = rateP.getReturnCompounded();
             returnP.estimatePath();
-            //
+            
             // Now prepare for MC runs.
             initAllTasks = new ToInitAllTasks(returnP, nTimeStepsMC,
                     pathStartValue);
-            //
-            // Now create the tasks.
-            initSeeds();
-            //
+            
+            // Now create the seeds for the tasks.
+            for(int i = 0; i < nRunsMC; i++)
+                seeds.add((long) i * 11);
+            
         } catch(final DemoException demoEx) {
             dbgPrintln(demoEx.toString());
             System.exit(-1);
@@ -113,19 +85,24 @@ public class AppDemo extends Universal {
     }
     
     public void runTasks() {
-        results = new Vector<Double>(nRunsMC);
-        
-        final Thread th[] = new Thread[nthreads];
+        final AppDemoTask tasks[] = new AppDemoTask[nthreads];
+        final Thread threads[] = new Thread[nthreads];
         for(int i = 1; i < nthreads; i++) {
-            th[i] = new Thread(new AppDemoThread(i, nRunsMC));
-            th[i].start();
+            tasks[i] = new AppDemoTask(i, nRunsMC, nthreads, seeds,
+                    initAllTasks);
+            threads[i] = new Thread(tasks[i]);
+            threads[i].start();
         }
         
-        new AppDemoThread(0, nRunsMC).run();
+        final AppDemoTask task = new AppDemoTask(0, nRunsMC, nthreads, seeds,
+                initAllTasks);
+        task.run();
+        results.addAll(task.getResults());
         
         for(int i = 1; i < nthreads; i++) {
             try {
-                th[i].join();
+                threads[i].join();
+                results.addAll(tasks[i].getResults());
             } catch(final InterruptedException e) {}
         }
     }
@@ -138,17 +115,6 @@ public class AppDemo extends Universal {
         } catch(final DemoException demoEx) {
             dbgPrintln(demoEx.toString());
             System.exit(-1);
-        }
-    }
-    
-    // ------------------------------------------------------------------------
-    /**
-     * Generates the parameters for the given Monte Carlo simulation.
-     */
-    private void initSeeds() {
-        seeds = new Vector<Long>(nRunsMC);
-        for(int i = 0; i < nRunsMC; i++) {
-            seeds.addElement((long) i * 11);
         }
     }
     
@@ -167,21 +133,27 @@ public class AppDemo extends Universal {
             System.exit(-1);
         }
         
-        for(int i = 0; i < nRunsMC; i++) {
-            avgExpectedReturnRateMC += results.elementAt(i);
-        } // for i;
+        for(int i = 0; i < nRunsMC; i++)
+            avgExpectedReturnRateMC += results.get(i);
+        
         avgExpectedReturnRateMC /= nRunsMC;
         JGFavgExpectedReturnRateMC = avgExpectedReturnRateMC;
     }
     
-    class AppDemoThread implements Runnable {
+    private static class AppDemoTask implements Runnable {
         
-        int id, nRunsMC;
+        private final int id, nRunsMC, nthreads;
+        private final List<Double> results = new ArrayList<>();
+        private final List<Long> seeds;
+        private final ToInitAllTasks initAllTasks;
         
-        public AppDemoThread(final int id, final int nRunsMC) {
+        public AppDemoTask(final int id, final int nRunsMC, final int nthreads,
+                final List<Long> seeds, final ToInitAllTasks initAllTasks) {
             this.id = id;
             this.nRunsMC = nRunsMC;
-            
+            this.nthreads = nthreads;
+            this.seeds = seeds;
+            this.initAllTasks = initAllTasks;
         }
         
         public void run() {
@@ -194,11 +166,15 @@ public class AppDemo extends Universal {
             
             for(int iRun = ilow; iRun < iupper; iRun++) {
                 final PriceStock ps = new PriceStock();
-                ps.setInitAllTasks(AppDemo.initAllTasks);
-                ps.setSeed(seeds.elementAt(iRun));
+                ps.setInitAllTasks(initAllTasks);
+                ps.setSeed(seeds.get(iRun));
                 ps.run();
-                results.addElement(ps.getExpectedReturnRate());
+                results.add(ps.getExpectedReturnRate());
             }
+        }
+        
+        public List<Double> getResults() {
+            return unmodifiableList(results);
         }
     }
 }

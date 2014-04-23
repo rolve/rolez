@@ -51,7 +51,6 @@ public class PriceStock extends Universal {
      * Object which represents the results from a given computation task.
      */
     private double expectedReturnRate = Double.NaN;
-    private double[] pathValue;
     
     // ------------------------------------------------------------------------
     // Constructors.
@@ -108,7 +107,6 @@ public class PriceStock extends Universal {
             final ReturnPath returnP = rateP.getReturnCompounded();
             returnP.estimatePath();
             expectedReturnRate = returnP.get_expectedReturnRate();
-            pathValue = mcPath.get_pathValue();
         } catch(final DemoException demoEx) {
             errPrintln(demoEx.toString());
         }

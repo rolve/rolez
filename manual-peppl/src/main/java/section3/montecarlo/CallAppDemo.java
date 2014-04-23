@@ -39,14 +39,12 @@ public class CallAppDemo {
     }
     
     public void initialise() {
-        
         input[0] = 1000;
         input[1] = datasizes[size];
         
         final String dirName = "Data";
         final String filename = "hitData";
         ap = new AppDemo(dirName, filename, (input[0]), (input[1]), nthreads);
-        ap.initSerial();
     }
     
     public void runiters() {
