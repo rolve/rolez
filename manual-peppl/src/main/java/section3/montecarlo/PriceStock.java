@@ -97,10 +97,9 @@ public class PriceStock extends Universal {
     * Method which is passed in the initialisation data common to all tasks,
     * and then unpacks them for use by this object.
     *
-    * @param obj Object representing data which are common to all tasks.
+    * @param initAllTasks Object representing data which are common to all tasks.
     */
-  public void setInitAllTasks(Object obj) {
-    ToInitAllTasks initAllTasks = (ToInitAllTasks) obj;
+  public void setInitAllTasks(ToInitAllTasks initAllTasks) {
     mcPath.set_name(initAllTasks.get_name());
     mcPath.set_startDate(initAllTasks.get_startDate());
     mcPath.set_endDate(initAllTasks.get_endDate());
@@ -119,10 +118,9 @@ public class PriceStock extends Universal {
     * Method which is passed in the data representing each task, which then
     * unpacks it for use by this object.
     *
-    * @param obj Object representing the data which defines a given task.
+    * @param task Object representing the data which defines a given task.
     */
-  public void setTask(Object obj) {
-    ToTask task = (ToTask) obj;
+  public void setTask(ToTask task) {
     this.taskHeader     = task.get_header();
     this.randomSeed     = task.get_randomSeed();
   }
@@ -151,10 +149,10 @@ public class PriceStock extends Universal {
    *
    * @return An object representing the computed results.
    */
-  public Object getResult() {
+  public ToResult getResult() {
     String resultHeader = "Result of task with Header="+taskHeader+": randomSeed="+randomSeed+": pathStartValue="+pathStartValue;
     ToResult res = new ToResult(resultHeader,expectedReturnRate,volatility,
     volatility2,finalStockPrice,pathValue);
-    return (Object) res;
+    return res;
   }
 }

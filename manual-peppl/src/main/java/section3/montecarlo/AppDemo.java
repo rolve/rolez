@@ -79,17 +79,9 @@ public class AppDemo extends Universal {
     * The default duration between time-steps, in units of a year.
     */
   private double dTime = 1.0/365.0;
-  /**
-    * Flag to determine whether initialisation has already taken place.
-    */
-  private boolean initialised=false;
-  /**
-    * Variable to determine which deployment scenario to run.
-    */
-  private int runMode;
 
-  public Vector tasks;
-  public Vector results;
+  public Vector<ToTask> tasks;
+  public Vector<ToResult> results;
 
   public AppDemo(  
   String dataDirname, String dataFilename, int nTimeStepsMC, 
@@ -99,7 +91,6 @@ public class AppDemo extends Universal {
     this.nTimeStepsMC   = nTimeStepsMC;
     this.nRunsMC        = nRunsMC;
     this.nthreads       = nthreads;
-    this.initialised    = false;
     set_prompt(prompt);
     set_DEBUG(DEBUG);
   }
@@ -117,8 +108,6 @@ public class AppDemo extends Universal {
 
     PriceStock psMC;
     double pathStartValue = 100.0;
-    double avgExpectedReturnRateMC = 0.0;
-    double avgVolatilityMC = 0.0;
 
 
     public static ToInitAllTasks initAllTasks = null;
@@ -132,16 +121,13 @@ public class AppDemo extends Universal {
       ReturnPath returnP = rateP.getReturnCompounded();
       returnP.estimatePath();
       returnP.dbgDumpFields();
-      double expectedReturnRate = returnP.get_expectedReturnRate();
-      double volatility         = returnP.get_volatility();
       //
       // Now prepare for MC runs.
       initAllTasks = new ToInitAllTasks(returnP, nTimeStepsMC, 
       pathStartValue);
-      String slaveClassName = "MonteCarlo.PriceStock";
       //
       // Now create the tasks.
-      initTasks(nRunsMC);
+      initTasks();
       //
     } catch( DemoException demoEx ) {
       dbgPrintln(demoEx.toString());
@@ -150,7 +136,7 @@ public class AppDemo extends Universal {
   }
 
   public void runThread() {
-    results = new Vector(nRunsMC);
+    results = new Vector<ToResult>(nRunsMC);
 
        Runnable thobjects[] = new Runnable [nthreads];
        Thread th[] = new Thread [nthreads];
@@ -187,16 +173,13 @@ public class AppDemo extends Universal {
   //------------------------------------------------------------------------
   /**
     * Generates the parameters for the given Monte Carlo simulation.
-    *
-    * @param nRunsMC the number of tasks, and hence Monte Carlo paths to
-    *        produce.
     */
-  private void initTasks(int nRunsMC) {
-    tasks = new Vector(nRunsMC);
+  private void initTasks() {
+    tasks = new Vector<ToTask>(nRunsMC);
     for( int i=0; i < nRunsMC; i++ ) {
       String header="MC run "+String.valueOf(i);
       ToTask task = new ToTask(header, (long)i*11);
-      tasks.addElement((Object) task);
+      tasks.addElement(task);
     }
   }
   /**
@@ -209,9 +192,6 @@ public class AppDemo extends Universal {
     */
   private void processResults() throws DemoException{
     double avgExpectedReturnRateMC = 0.0;
-    double avgVolatilityMC = 0.0;
-    double runAvgExpectedReturnRateMC = 0.0;
-    double runAvgVolatilityMC = 0.0;
     ToResult returnMC;
     if( nRunsMC != results.size() ) {
       errPrintln("Fatal: TaskRunner managed to finish with no all the results gathered in!");
@@ -224,25 +204,12 @@ public class AppDemo extends Universal {
     for( int i=0; i < nRunsMC; i++ ) {
       // First, create an instance which is supposed to generate a
       // particularly simple MC path.
-      returnMC = (ToResult) results.elementAt(i);
+      returnMC = results.elementAt(i);
       avgMCrate.inc_pathValue(returnMC.get_pathValue());
       avgExpectedReturnRateMC += returnMC.get_expectedReturnRate();
-      avgVolatilityMC         += returnMC.get_volatility();
-      runAvgExpectedReturnRateMC = avgExpectedReturnRateMC /((double)(i+1));
-      runAvgVolatilityMC = avgVolatilityMC / ((double)(i+1));
     } // for i;
-    avgMCrate.inc_pathValue((double)1.0/((double)nRunsMC));
+    avgMCrate.inc_pathValue(1.0/(nRunsMC));
     avgExpectedReturnRateMC /= nRunsMC;
-    avgVolatilityMC         /= nRunsMC;
-    /*
-    try{
-      Thread.sleep(200);
-    } catch( InterruptedException intEx) {
-      errPrintln(intEx.toString());
-    }
-
-    */
-
     JGFavgExpectedReturnRateMC = avgExpectedReturnRateMC;
 
 //    dbgPrintln("Average over "+nRunsMC+": expectedReturnRate="+
@@ -322,7 +289,7 @@ public class AppDemo extends Universal {
     *
     * @return Value of instance variable <code>tasks</code>.
     */
-  public Vector get_tasks() {
+  public Vector<ToTask> get_tasks() {
     return(this.tasks);
   }
   /**
@@ -330,7 +297,7 @@ public class AppDemo extends Universal {
     *
     * @param tasks the value to set for the instance variable <code>tasks</code>.
     */
-  public void set_tasks(Vector tasks) {
+  public void set_tasks(Vector<ToTask> tasks) {
     this.tasks = tasks;
   }
   /**
@@ -338,7 +305,7 @@ public class AppDemo extends Universal {
     *
     * @return Value of instance variable <code>results</code>.
     */
-  public Vector get_results() {
+  public Vector<ToResult> get_results() {
     return(this.results);
   }
   /**
@@ -346,7 +313,7 @@ public class AppDemo extends Universal {
     *
     * @param results the value to set for the instance variable <code>results</code>.
     */
-  public void set_results(Vector results) {
+  public void set_results(Vector<ToResult> results) {
     this.results = results;
   }
   //------------------------------------------------------------------------
