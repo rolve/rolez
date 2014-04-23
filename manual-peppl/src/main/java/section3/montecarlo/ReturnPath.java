@@ -42,12 +42,6 @@ public class ReturnPath extends PathId {
      */
     public static final int COMPOUNDED = 1;
     
-    /**
-     * Flag for indicating one of the return definitions, via: u_i = \frac{S_i -
-     * S_{i-1}}{S_i} corresponding to the instantaneous non-compounded return.
-     */
-    public static final int NONCOMPOUNDED = 2;
-    
     // ------------------------------------------------------------------------
     // Instance variables.
     // ------------------------------------------------------------------------
@@ -59,10 +53,6 @@ public class ReturnPath extends PathId {
      * The number of accepted values in the rate path.
      */
     private final int nPathValue;
-    /**
-     * Integer flag for indicating how the return was calculated.
-     */
-    private final int returnDefinition;
     /**
      * Value for the expected return rate.
      */
@@ -97,34 +87,12 @@ public class ReturnPath extends PathId {
      *            Indexed from 1 to <code>nPathArray-1</code>.
      * @param nPathValue
      *            the number of accepted data points in the array.
-     * @param returnDefinition
-     *            to tell this class how the return path values were computed.
      */
-    public ReturnPath(final double[] pathValue, final int nPathValue,
-            final int returnDefinition) {
+    public ReturnPath(final double[] pathValue, final int nPathValue) {
         set_prompt("ReturnPath> ");
         set_DEBUG(true);
         this.pathValue = pathValue;
         this.nPathValue = nPathValue;
-        this.returnDefinition = returnDefinition;
-    }
-    
-    // ------------------------------------------------------------------------
-    // Methods.
-    // ------------------------------------------------------------------------
-    /**
-     * Accessor method for private instance variable
-     * <code>returnDefinition</code>.
-     *
-     * @return Value of instance variable <code>returnDefinition</code>.
-     * @exception DemoException
-     *                thrown if instance variable <code>returnDefinition</code>
-     *                is undefined.
-     */
-    public int get_returnDefinition() throws DemoException {
-        if(this.returnDefinition == 0)
-            throw new DemoException("Variable returnDefinition is undefined!");
-        return(this.returnDefinition);
     }
     
     /**

@@ -32,9 +32,6 @@ package section3.montecarlo;
  */
 public class PriceStock extends Universal {
     
-    // ------------------------------------------------------------------------
-    // Instance variables.
-    // ------------------------------------------------------------------------
     /**
      * The Monte Carlo path to be generated.
      */
@@ -52,24 +49,12 @@ public class PriceStock extends Universal {
      */
     private double expectedReturnRate = Double.NaN;
     
-    // ------------------------------------------------------------------------
-    // Constructors.
-    // ------------------------------------------------------------------------
-    /**
-     * Default constructor.
-     */
     public PriceStock() {
         mcPath = new MonteCarloPath();
         set_prompt("PriceStock> ");
         set_DEBUG(true);
     }
     
-    // ------------------------------------------------------------------------
-    // Methods.
-    // ------------------------------------------------------------------------
-    // ------------------------------------------------------------------------
-    // Methods which implement the Slaveable interface.
-    // ------------------------------------------------------------------------
     /**
      * Method which is passed in the initialisation data common to all tasks,
      * and then unpacks them for use by this object.
@@ -82,7 +67,6 @@ public class PriceStock extends Universal {
         mcPath.set_startDate(initAllTasks.get_startDate());
         mcPath.set_endDate(initAllTasks.get_endDate());
         mcPath.set_dTime(initAllTasks.get_dTime());
-        mcPath.set_returnDefinition(initAllTasks.get_returnDefinition());
         mcPath.set_expectedReturnRate(initAllTasks.get_expectedReturnRate());
         mcPath.set_volatility(initAllTasks.get_volatility());
         mcPath.set_nTimeSteps(initAllTasks.get_nTimeSteps());

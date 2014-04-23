@@ -27,12 +27,11 @@ package section3.montecarlo;
  * @author H W Yau
  * @version $Revision: 1.10 $ $Date: 1999/02/16 18:52:53 $
  */
-public class ToInitAllTasks implements java.io.Serializable {
+public class ToInitAllTasks {
     private final String name;
     private final int startDate;
     private final int endDate;
     private final double dTime;
-    private final int returnDefinition;
     private final double expectedReturnRate;
     private final double volatility;
     private final int nTimeSteps;
@@ -65,7 +64,6 @@ public class ToInitAllTasks implements java.io.Serializable {
         this.dTime = obj.get_dTime();
         //
         // Instance variables defined in ReturnPath object.
-        this.returnDefinition = obj.get_returnDefinition();
         this.expectedReturnRate = obj.get_expectedReturnRate();
         this.volatility = obj.get_volatility();
         this.nTimeSteps = nTimeSteps;
@@ -106,16 +104,6 @@ public class ToInitAllTasks implements java.io.Serializable {
      */
     public double get_dTime() {
         return(this.dTime);
-    }
-    
-    /**
-     * Accessor method for private instance variable
-     * <code>returnDefinition</code>.
-     *
-     * @return Value of instance variable <code>returnDefinition</code>.
-     */
-    public int get_returnDefinition() {
-        return(this.returnDefinition);
     }
     
     /**

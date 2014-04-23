@@ -293,40 +293,7 @@ public class RatePath extends PathId {
                     + aex.toString());
         }
         final ReturnPath rPath = new ReturnPath(returnPathValue,
-                nAcceptedPathValue, ReturnPath.COMPOUNDED);
-        //
-        // Copy the PathId information to the ReturnPath object.
-        rPath.copyInstanceVariables(this);
-        rPath.estimatePath();
-        return(rPath);
-    }
-    
-    /**
-     * Method for calculating the returns on a given rate path, via the
-     * definition for the instantaneous non-compounded return. u_i = \frac{S_i -
-     * S_{i-1}}{S_i}
-     * 
-     * @return the return, as defined.
-     * @exception DemoException
-     *                thrown if there is a problem with the calculation.
-     */
-    public ReturnPath getReturnNonCompounded() throws DemoException {
-        if(pathValue == null || nAcceptedPathValue == 0) {
-            throw new DemoException("The Rate Path has not been defined!");
-        }
-        final double[] returnPathValue = new double[nAcceptedPathValue];
-        returnPathValue[0] = 0.0;
-        try {
-            for(int i = 1; i < nAcceptedPathValue; i++) {
-                returnPathValue[i] = (pathValue[i] - pathValue[i - 1])
-                        / pathValue[i];
-            }
-        } catch(final ArithmeticException aex) {
-            throw new DemoException("Error in getReturnPercentage:"
-                    + aex.toString());
-        }
-        final ReturnPath rPath = new ReturnPath(returnPathValue,
-                nAcceptedPathValue, ReturnPath.NONCOMPOUNDED);
+                nAcceptedPathValue);
         //
         // Copy the PathId information to the ReturnPath object.
         rPath.copyInstanceVariables(this);
@@ -374,8 +341,8 @@ public class RatePath extends PathId {
      */
     private void readRatesFile(final String dirName, final String filename)
             throws DemoException {
-        final java.io.File ratesFile = new File(dirName, filename);
-        java.io.BufferedReader in;
+        final File ratesFile = new File(dirName, filename);
+        BufferedReader in;
         if(!ratesFile.canRead()) {
             throw new DemoException("Cannot read the file "
                     + ratesFile.toString());
@@ -385,7 +352,7 @@ public class RatePath extends PathId {
         } catch(final FileNotFoundException fnfex) {
             throw new DemoException(fnfex.toString());
         }
-        //
+        
         // Proceed to read all the lines of data into a Vector object.
         int iLine = 0;
         final int initNlines = 100;
@@ -397,10 +364,8 @@ public class RatePath extends PathId {
             while((aLine = in.readLine()) != null) {
                 iLine++;
                 
-                //
                 // Note, I'm not entirely sure whether the object passed in is
-                // copied
-                // by value, or just its reference.
+                // copied by value, or just its reference.
                 allLines.addElement(aLine);
             }
             in.close();
