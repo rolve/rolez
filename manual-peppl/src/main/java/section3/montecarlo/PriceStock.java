@@ -34,25 +34,12 @@ package section3.montecarlo;
 public class PriceStock extends Universal {
 
   //------------------------------------------------------------------------
-  // Class variables.
-  //------------------------------------------------------------------------
-  /**
-    * Class variable for determining whether to switch on debug output or
-    * not.
-    */
-  public static final boolean DEBUG=true;
-  /**
-    * Class variable for defining the debug message prompt.
-    */
-  protected static final String prompt="PriceStock> ";
-
-  //------------------------------------------------------------------------
   // Instance variables.
   //------------------------------------------------------------------------
   /**
     * The Monte Carlo path to be generated.
     */
-  private MonteCarloPath mcPath;
+  private final MonteCarloPath mcPath;
   /**
     * String identifier for a given task.
     */
@@ -68,11 +55,7 @@ public class PriceStock extends Universal {
   /**
     * Object which represents the results from a given computation task.
     */
-  private ToResult result;
   private double expectedReturnRate=Double.NaN;
-  private double volatility=Double.NaN;
-  private double volatility2=Double.NaN;
-  private double finalStockPrice=Double.NaN;
   private double[] pathValue;
 
   //------------------------------------------------------------------------
@@ -82,10 +65,9 @@ public class PriceStock extends Universal {
     * Default constructor.
     */
   public PriceStock() {
-    super();
     mcPath = new MonteCarloPath();
-    set_prompt(prompt);
-    set_DEBUG(DEBUG);
+    set_prompt("PriceStock> ");
+    set_DEBUG(true);
   }
   //------------------------------------------------------------------------
   // Methods.
@@ -110,7 +92,6 @@ public class PriceStock extends Universal {
     int nTimeSteps = initAllTasks.get_nTimeSteps();
     mcPath.set_nTimeSteps(nTimeSteps);
     this.pathStartValue = initAllTasks.get_pathStartValue();
-    mcPath.set_pathStartValue(pathStartValue);
     mcPath.set_pathValue(new double[nTimeSteps]);
     mcPath.set_fluctuations(new double[nTimeSteps]);
   }
@@ -136,9 +117,6 @@ public class PriceStock extends Universal {
       ReturnPath returnP = rateP.getReturnCompounded();
       returnP.estimatePath();
       expectedReturnRate = returnP.get_expectedReturnRate();
-      volatility = returnP.get_volatility();
-      volatility2 = returnP.get_volatility2();
-      finalStockPrice = rateP.getEndPathValue();
       pathValue = mcPath.get_pathValue();
     } catch( DemoException demoEx ) {
       errPrintln(demoEx.toString());
@@ -151,8 +129,7 @@ public class PriceStock extends Universal {
    */
   public ToResult getResult() {
     String resultHeader = "Result of task with Header="+taskHeader+": randomSeed="+randomSeed+": pathStartValue="+pathStartValue;
-    ToResult res = new ToResult(resultHeader,expectedReturnRate,volatility,
-    volatility2,finalStockPrice,pathValue);
+    ToResult res = new ToResult(resultHeader,expectedReturnRate,pathValue);
     return res;
   }
 }

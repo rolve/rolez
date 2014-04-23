@@ -29,10 +29,6 @@ public class JGFMonteCarloBench extends CallAppDemo {
     super(nthreads);
   }
 
-  public void JGFsetsize(int size){
-    this.size = size;
-  }
-
   public void JGFinitialise(){
 
       initialise();
@@ -66,12 +62,12 @@ public class JGFMonteCarloBench extends CallAppDemo {
   }
 
 
-  public void JGFrun(int size){
+  public void JGFrun(int theSize){
+    this.size = theSize; 
 
-    JGFInstrumentor.addTimer("Section3:MonteCarlo:Total", "Solutions",size);
-    JGFInstrumentor.addTimer("Section3:MonteCarlo:Run", "Samples",size);
+    JGFInstrumentor.addTimer("Section3:MonteCarlo:Total", "Solutions",theSize);
+    JGFInstrumentor.addTimer("Section3:MonteCarlo:Run", "Samples",theSize);
 
-    JGFsetsize(size); 
 
     JGFInstrumentor.startTimer("Section3:MonteCarlo:Total");
 
@@ -82,7 +78,7 @@ public class JGFMonteCarloBench extends CallAppDemo {
 
     JGFInstrumentor.stopTimer("Section3:MonteCarlo:Total");
 
-    JGFInstrumentor.addOpsToTimer("Section3:MonteCarlo:Run", (double) input[1] );
+    JGFInstrumentor.addOpsToTimer("Section3:MonteCarlo:Run", input[1] );
     JGFInstrumentor.addOpsToTimer("Section3:MonteCarlo:Total", 1);
 
     JGFInstrumentor.printTimer("Section3:MonteCarlo:Run"); 

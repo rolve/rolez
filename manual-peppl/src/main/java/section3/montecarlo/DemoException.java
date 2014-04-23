@@ -38,28 +38,11 @@ public class DemoException extends java.lang.Exception {
   public static final boolean DEBUG=true;
 
   /**
-    * Default constructor.
-    */
-  public DemoException() {
-    super();
-    if( DEBUG ) {
-      printStackTrace();
-    }
-  }
-  /**
     * Default constructor for reporting an error message.
+    * @param s the message
     */
   public DemoException(String s) {
     super(s);
-    if( DEBUG ) {
-      printStackTrace();
-    }
-  }
-  /**
-    * Default constructor for reporting an error code.
-    */
-  public DemoException(int ierr) {
-    super(String.valueOf(ierr));
     if( DEBUG ) {
       printStackTrace();
     }

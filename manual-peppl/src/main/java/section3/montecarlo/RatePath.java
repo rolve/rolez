@@ -42,22 +42,11 @@ import java.util.Vector;
   */
 public class RatePath extends PathId {
 
-  //------------------------------------------------------------------------
-  // Class variables.
-  //------------------------------------------------------------------------
-  /**
-    * Class variable, for setting whether to print debug messages.
-    */
-  public static final boolean DEBUG=true;
-  /**
-    * The prompt to write before any debug messages.
-    */
-  protected static final String prompt="RatePath> ";
   /**
     * Class variable for determining which field in the stock data should be
     * used.  This is currently set to point to the 'closing price'.
     */
-  public static int DATUMFIELD=4;
+  public static final int DATUMFIELD=4;
   /**
     * Class variable to represent the minimal date, whence the stock prices
     * appear. Used to trap any potential problems with the data.
@@ -95,14 +84,14 @@ public class RatePath extends PathId {
     * Constructor, where the user specifies the directory and filename in
     * from which the data should be read.
     *
-    * @param String dirName
-    * @param String filename
+    * @param dirName directory
+    * @param filename file
     * @exception DemoException thrown if there is a problem reading in
     *                          the data file.
     */
   public RatePath(String dirName, String filename) throws DemoException {
-    set_prompt(prompt);
-    set_DEBUG(DEBUG);
+    set_prompt("RatePath> ");
+    set_DEBUG(true);
     readRatesFile(dirName,filename);
   }
   /**
@@ -134,12 +123,12 @@ public class RatePath extends PathId {
     * Constructor, for when there is no actual pathValue with which to
     * initialise.
     *
-    * @param pathValueLegth the length of the array containing the values
+    * @param pathValueLength the length of the array containing the values
     *        for the path.
     * @param name the name to attach to the path.
     * @param startDate date from which the path is supposed to start, in
     *        'YYYYMMDD' format.
-    * @param startDate date from which the path is supposed to end, in
+    * @param endDate date from which the path is supposed to end, in
     *        'YYYYMMDD' format.
     * @param dTime the time interval between successive path values, in
     *        fractions of a year.
@@ -149,8 +138,8 @@ public class RatePath extends PathId {
     set_startDate(startDate);
     set_endDate(endDate);
     set_dTime(dTime);
-    set_prompt(prompt);
-    set_DEBUG(DEBUG);
+    set_prompt("RatePath> ");
+    set_DEBUG(true);
     this.pathValue = new double[pathValueLength];
     this.nAcceptedPathValue = pathValue.length;
   }
@@ -358,15 +347,17 @@ public class RatePath extends PathId {
     int iLine=0, initNlines=100, nLines=0;
     
     String aLine;
-    java.util.Vector allLines = new Vector(initNlines);
+    Vector<String> allLines = new Vector<String>(initNlines);
     try{
       while( (aLine = in.readLine()) != null ) {
 	iLine++;
+	
 	//
 	// Note, I'm not entirely sure whether the object passed in is copied
 	// by value, or just its reference.
 	allLines.addElement(aLine);
       }
+      in.close();
     } catch( IOException ioex ) {
       throw new DemoException("Problem reading data from the file "+ioex.toString());
     }
@@ -377,8 +368,8 @@ public class RatePath extends PathId {
     this.pathDate  = new int[nLines];
     nAcceptedPathValue=0;
     iLine=0;
-    for( java.util.Enumeration e = allLines.elements(); e.hasMoreElements(); ) {
-      aLine = (String) e.nextElement();
+    for( java.util.Enumeration<String> e = allLines.elements(); e.hasMoreElements(); ) {
+      aLine = e.nextElement();
       String[] field = aLine.split(",");
       int aDate = Integer.parseInt("19"+field[0]);
       //
@@ -400,6 +391,6 @@ public class RatePath extends PathId {
     set_name(ratesFile.getName());
     set_startDate(pathDate[0]);
     set_endDate(pathDate[nAcceptedPathValue-1]);
-    set_dTime((double)(1.0/365.0));
+    set_dTime(1.0/365.0);
   }
 }

@@ -32,18 +32,6 @@ package section3.montecarlo;
 public class PathId extends Universal {
 
   //------------------------------------------------------------------------
-  // Class variables.
-  //------------------------------------------------------------------------
-  /**
-    * A class variable.
-    */
-  public static final boolean DEBUG=true;
-  /**
-    * The prompt to write before any debug messages.
-    */
-  protected static final String prompt="PathId> ";
-
-  //------------------------------------------------------------------------
   // Instance variables.
   //------------------------------------------------------------------------
   /**
@@ -71,20 +59,8 @@ public class PathId extends Universal {
     * Default constructor.
     */
   public PathId() {
-    super();
-    set_prompt(prompt);
-    set_DEBUG(DEBUG);
-  }
-
-  /**
-    * Another constructor.
-    *
-    * @param name The name for the security to record.
-    */
-  public PathId(String name) {
-    set_prompt(prompt);
-    set_DEBUG(DEBUG);
-    this.name = name;
+    set_prompt("PathId> ");
+    set_DEBUG(true);
   }
 
   //------------------------------------------------------------------------
@@ -184,15 +160,6 @@ public class PathId extends Universal {
     this.startDate = obj.get_startDate();
     this.endDate   = obj.get_endDate();
     this.dTime     = obj.get_dTime();
-  }
-  /**
-    * Dumps the contents of the fields, to standard-out, for debugging.
-    */
-  public void dbgDumpFields() {
-//    dbgPrintln("name="     +this.name);
-//    dbgPrintln("startDate="+this.startDate);
-//    dbgPrintln("endDate="  +this.endDate);
-//    dbgPrintln("dTime="    +this.dTime);
   }
 }
 
