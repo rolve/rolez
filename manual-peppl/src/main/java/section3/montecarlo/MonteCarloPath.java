@@ -49,17 +49,17 @@ public class MonteCarloPath extends PathId {
     * Class variable for determining whether to switch on debug output or
     * not.
     */
-  public static boolean DEBUG=true;
+  public static final boolean DEBUG=true;
   /**
     * Class variable for defining the debug message prompt.
     */
-  protected static String prompt="MonteCarloPath> ";
+  protected static final String prompt="MonteCarloPath> ";
   /**
     * Class variable for determining which field in the stock data should be
     * used.  This is currently set to point to the 'closing price', as
     * defined in class RatePath.
     */
-  public static int DATUMFIELD=RatePath.DATUMFIELD;
+  public static final int DATUMFIELD=RatePath.DATUMFIELD;
 
   //------------------------------------------------------------------------
   // Instance variables.

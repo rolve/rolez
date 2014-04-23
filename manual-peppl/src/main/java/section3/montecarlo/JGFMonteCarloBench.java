@@ -22,14 +22,11 @@
 package section3.montecarlo; 
 
 import jgfutil.JGFInstrumentor;
-import jgfutil.JGFSection3;
 
-public class JGFMonteCarloBench extends CallAppDemo implements JGFSection3 {
-
-  public static int nthreads;
+public class JGFMonteCarloBench extends CallAppDemo {
 
   public JGFMonteCarloBench(int nthreads) {
-        this.nthreads=nthreads;
+    super(nthreads);
   }
 
   public void JGFsetsize(int size){
@@ -56,10 +53,10 @@ public class JGFMonteCarloBench extends CallAppDemo implements JGFSection3 {
 
   public void JGFvalidate(){
    double refval[] = {-0.0333976656762814,-0.03215796752868655};
-   double dev = Math.abs(AppDemo.JGFavgExpectedReturnRateMC - refval[size]);
+   double dev = Math.abs(ap.JGFavgExpectedReturnRateMC - refval[size]);
    if (dev > 1.0e-12 ){
      System.out.println("Validation failed");
-     System.out.println(" expectedReturnRate= " + AppDemo.JGFavgExpectedReturnRateMC + "  " + dev + "  " + size);
+     System.out.println(" expectedReturnRate= " + ap.JGFavgExpectedReturnRateMC + "  " + dev + "  " + size);
     }
   }
 

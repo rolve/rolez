@@ -42,21 +42,21 @@ public class AppDemo extends Universal {
   //------------------------------------------------------------------------
   // Class variables.
   //------------------------------------------------------------------------
-
-    public static double JGFavgExpectedReturnRateMC =0.0;
   /**
     * A class variable.
     */
-  public static boolean DEBUG=true;
+  public static final boolean DEBUG=true;
   /**
     * The prompt to write before any debug messages.
     */
-  protected static String prompt="AppDemo> ";
+  protected static final String prompt="AppDemo> ";
 
   public static final int Serial=1;
   //------------------------------------------------------------------------
   // Instance variables.
   //------------------------------------------------------------------------
+
+  public double JGFavgExpectedReturnRateMC =0.0;
   /**
     * Directory in which to find the historical rates.
     */
@@ -74,6 +74,7 @@ public class AppDemo extends Universal {
     * The number of Monte Carlo simulations to run.
     */
   private int nRunsMC=0;
+  private final int nthreads;
   /**
     * The default duration between time-steps, in units of a year.
     */
@@ -87,16 +88,17 @@ public class AppDemo extends Universal {
     */
   private int runMode;
 
-  public static Vector tasks;
-  public static Vector results;
+  public Vector tasks;
+  public Vector results;
 
   public AppDemo(  
   String dataDirname, String dataFilename, int nTimeStepsMC, 
-  int nRunsMC) {
+  int nRunsMC, int nthreads) {
     this.dataDirname    = dataDirname;
     this.dataFilename   = dataFilename;
     this.nTimeStepsMC   = nTimeStepsMC;
     this.nRunsMC        = nRunsMC;
+    this.nthreads       = nthreads;
     this.initialised    = false;
     set_prompt(prompt);
     set_DEBUG(DEBUG);
@@ -150,10 +152,10 @@ public class AppDemo extends Universal {
   public void runThread() {
     results = new Vector(nRunsMC);
 
-       Runnable thobjects[] = new Runnable [JGFMonteCarloBench.nthreads];
-       Thread th[] = new Thread [JGFMonteCarloBench.nthreads];
+       Runnable thobjects[] = new Runnable [nthreads];
+       Thread th[] = new Thread [nthreads];
 
-        for(int i=1;i<JGFMonteCarloBench.nthreads;i++) {
+        for(int i=1;i<nthreads;i++) {
             thobjects[i] = new AppDemoThread(i,nRunsMC);
             th[i] = new Thread(thobjects[i]);
             th[i].start();
@@ -163,7 +165,7 @@ public class AppDemo extends Universal {
         thobjects[0].run();
 
 
-        for(int i=1;i<JGFMonteCarloBench.nthreads;i++) {
+        for(int i=1;i<nthreads;i++) {
             try {
                 th[i].join();
             }
@@ -348,7 +350,6 @@ public class AppDemo extends Universal {
     this.results = results;
   }
   //------------------------------------------------------------------------
-}
 
 
 class AppDemoThread implements Runnable {
@@ -370,19 +371,20 @@ class AppDemoThread implements Runnable {
 
         int ilow, iupper, slice;
 
-        slice = (nRunsMC + JGFMonteCarloBench.nthreads-1)/JGFMonteCarloBench.nthreads;
+        slice = (nRunsMC + nthreads-1)/nthreads;
 
         ilow = id*slice;
         iupper = (id+1)*slice;
-        if (id==JGFMonteCarloBench.nthreads-1) iupper=nRunsMC;
+        if (id==nthreads-1) iupper=nRunsMC;
 
         for( int iRun=ilow; iRun < iupper; iRun++ ) {
         ps = new PriceStock();
         ps.setInitAllTasks(AppDemo.initAllTasks);
-        ps.setTask(AppDemo.tasks.elementAt(iRun));
+        ps.setTask(tasks.elementAt(iRun));
         ps.run();
-            AppDemo.results.addElement(ps.getResult());
+            results.addElement(ps.getResult());
         }
     }
 }
 
+}

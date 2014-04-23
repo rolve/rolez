@@ -33,7 +33,12 @@ public class CallAppDemo {
     public int size;
     int datasizes[] = {10000,60000};
     int input[] = new int[2];
+    int nthreads;
     AppDemo ap = null;
+    
+    public CallAppDemo(int nthreads) {
+      this.nthreads = nthreads;
+    }
 
     public void initialise () {
 
@@ -43,7 +48,7 @@ public class CallAppDemo {
       String dirName="Data";
       String filename="hitData";
       ap = new AppDemo(dirName, filename,
-      (input[0]),(input[1]));
+      (input[0]),(input[1]),nthreads);
       ap.initSerial();
     }
 

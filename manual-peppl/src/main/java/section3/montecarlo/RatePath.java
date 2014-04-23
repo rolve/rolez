@@ -416,7 +416,7 @@ public class RatePath extends PathId {
     iLine=0;
     for( java.util.Enumeration e = allLines.elements(); e.hasMoreElements(); ) {
       aLine = (String) e.nextElement();
-      String[] field = Utilities.splitString(",",aLine);
+      String[] field = aLine.split(",");
       int aDate = Integer.parseInt("19"+field[0]);
       //
       // static double Double.parseDouble() method is a feature of JDK1.2!
