@@ -66,11 +66,6 @@ public class RatePath extends PathId {
      */
     private double[] pathValue;
     /**
-     * An instance variable, for storing the corresponding date of the datum, in
-     * 'YYYYMMDD' format.
-     */
-    private int[] pathDate;
-    /**
      * The number of accepted values in the rate path.
      */
     private int nAcceptedPathValue = 0;
@@ -79,19 +74,16 @@ public class RatePath extends PathId {
     // Constructors.
     // ------------------------------------------------------------------------
     
-    /**
-     * Constructor, where the user specifies the directory and filename in from
-     * which the data should be read.
-     *
-     * @param dirName
-     *            directory
-     * @param filename
-     *            file
-     */
-    public RatePath(final String dirName, final String filename) {
+    public RatePath(final String name, final int startDate, final int endDate,
+            final double dTime, final double[] pathValue,
+            final int nAcceptedPathValue) {
+        super(name, startDate, endDate, dTime);
+        
+        this.pathValue = pathValue;
+        this.nAcceptedPathValue = nAcceptedPathValue;
+        
         set_prompt("RatePath> ");
         set_DEBUG(true);
-        readRatesFile(dirName, filename);
     }
     
     /**
@@ -103,19 +95,12 @@ public class RatePath extends PathId {
      *            over.
      */
     public RatePath(final MonteCarloPath mc) {
-        // Fields pertaining to the parent PathId object:
-        set_name(mc.get_name());
-        set_startDate(mc.get_startDate());
-        set_endDate(mc.get_endDate());
-        set_dTime(mc.get_dTime());
+        super(mc.get_name(), mc.get_startDate(), mc.get_endDate(), mc
+                .get_dTime());
         
         // Fields pertaining to RatePath object itself.
         pathValue = mc.get_pathValue();
         nAcceptedPathValue = mc.get_nTimeSteps();
-        
-        // Note that currently the pathDate is neither declared, defined,
-        // nor used in the MonteCarloPath object.
-        pathDate = new int[nAcceptedPathValue];
     }
     
     /**
@@ -138,14 +123,13 @@ public class RatePath extends PathId {
      */
     public RatePath(final int pathValueLength, final String name,
             final int startDate, final int endDate, final double dTime) {
-        set_name(name);
-        set_startDate(startDate);
-        set_endDate(endDate);
-        set_dTime(dTime);
-        set_prompt("RatePath> ");
-        set_DEBUG(true);
+        super(name, startDate, endDate, dTime);
+        
         this.pathValue = new double[pathValueLength];
         this.nAcceptedPathValue = pathValue.length;
+        
+        set_prompt("RatePath> ");
+        set_DEBUG(true);
     }
     
     // ------------------------------------------------------------------------
@@ -205,28 +189,6 @@ public class RatePath extends PathId {
         this.pathValue = pathValue;
     }
     
-    /**
-     * Accessor method for private instance variable <code>pathDate</code>.
-     *
-     * @return Value of instance variable <code>pathDate</code>.
-     */
-    public int[] get_pathDate() {
-        if(this.pathDate == null)
-            throw new DemoException("Variable pathDate is undefined!");
-        return(this.pathDate);
-    }
-    
-    /**
-     * Set method for private instance variable <code>pathDate</code>.
-     *
-     * @param pathDate
-     *            the value to set for the instance variable
-     *            <code>pathDate</code>.
-     */
-    public void set_pathDate(final int[] pathDate) {
-        this.pathDate = pathDate;
-    }
-    
     // ------------------------------------------------------------------------
     /**
      * Method to return the terminal value for a given rate path, as used in
@@ -271,18 +233,12 @@ public class RatePath extends PathId {
             throw new DemoException("Error in getReturnLogarithm:"
                     + aex.toString());
         }
-        final ReturnPath rPath = new ReturnPath(returnPathValue,
-                nAcceptedPathValue);
-        //
-        // Copy the PathId information to the ReturnPath object.
-        rPath.copyInstanceVariables(this);
+        final ReturnPath rPath = new ReturnPath(get_name(), get_startDate(),
+                get_endDate(), get_dTime(), returnPathValue, nAcceptedPathValue);
         rPath.estimatePath();
         return(rPath);
     }
     
-    // ------------------------------------------------------------------------
-    // Private methods.
-    // ------------------------------------------------------------------------
     /**
      * Method for reading in data file, in a given format. Namely:
      * 
@@ -315,8 +271,10 @@ public class RatePath extends PathId {
      *            the directory in which to search for the data file.
      * @param filename
      *            the data filename itself.
+     * @return A rate path with the read data
      */
-    private void readRatesFile(final String dirName, final String filename) {
+    public static RatePath readRatesFile(final String dirName,
+            final String filename) {
         final File ratesFile = new File(dirName, filename);
         BufferedReader in;
         if(!ratesFile.canRead()) {
@@ -350,11 +308,12 @@ public class RatePath extends PathId {
                     + ioex.toString());
         }
         nLines = iLine;
+        
         //
         // Now create an array to store the rates data.
-        this.pathValue = new double[nLines];
-        this.pathDate = new int[nLines];
-        nAcceptedPathValue = 0;
+        final double[] pathValue = new double[nLines];
+        final int[] pathDate = new int[nLines];
+        
         iLine = 0;
         for(final java.util.Enumeration<String> e = allLines.elements(); e
                 .hasMoreElements();) {
@@ -366,8 +325,8 @@ public class RatePath extends PathId {
             final double aPathValue = Double.valueOf(field[DATUMFIELD])
                     .doubleValue();
             if((aDate <= MINIMUMDATE) || (Math.abs(aPathValue) < EPSILON)) {
-                dbgPrintln("Skipped erroneous data in " + filename
-                        + " indexed by date=" + field[0] + ".");
+                // result.dbgPrintln("Skipped erroneous data in " + filename
+                // + " indexed by date=" + field[0] + ".");
             }
             else {
                 pathDate[iLine] = aDate;
@@ -375,14 +334,8 @@ public class RatePath extends PathId {
                 iLine++;
             }
         }
-        //
-        // Record the actual number of accepted data points.
-        nAcceptedPathValue = iLine;
-        //
-        // Now to fill in the structures from the 'PathId' class.
-        set_name(filename);
-        set_startDate(pathDate[0]);
-        set_endDate(pathDate[nAcceptedPathValue - 1]);
-        set_dTime(1.0 / 365.0);
+        
+        return new RatePath(filename, pathDate[0], pathDate[iLine - 1],
+                1.0 / 365.0, pathValue, iLine);
     }
 }

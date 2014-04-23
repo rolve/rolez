@@ -75,20 +75,17 @@ public class ReturnPath extends PathId {
      */
     private double variance = Double.NaN;
     
-    // ------------------------------------------------------------------------
-    // Constructors.
-    // ------------------------------------------------------------------------
-    
     /**
-     * Another constructor.
-     *
      * @param pathValue
      *            for creating a return path with a precomputed path value.
      *            Indexed from 1 to <code>nPathArray-1</code>.
      * @param nPathValue
      *            the number of accepted data points in the array.
      */
-    public ReturnPath(final double[] pathValue, final int nPathValue) {
+    public ReturnPath(final String name, final int startDate,
+            final int endDate, final double dTime, final double[] pathValue,
+            final int nPathValue) {
+        super(name, startDate, endDate, dTime);
         set_prompt("ReturnPath> ");
         set_DEBUG(true);
         this.pathValue = pathValue;

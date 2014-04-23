@@ -80,10 +80,8 @@ public class MonteCarloPath extends PathId {
      *            task parameters
      */
     public MonteCarloPath(final ToInitAllTasks initAllTasks) {
-        set_name(initAllTasks.get_name());
-        set_startDate(initAllTasks.get_startDate());
-        set_endDate(initAllTasks.get_endDate());
-        set_dTime(initAllTasks.get_dTime());
+        super(initAllTasks.get_name(), initAllTasks.get_startDate(),
+                initAllTasks.get_endDate(), initAllTasks.get_dTime());
         
         this.expectedReturnRate = initAllTasks.get_expectedReturnRate();
         this.volatility = initAllTasks.get_volatility();

@@ -65,7 +65,8 @@ public class AppDemo extends Universal {
         set_DEBUG(true);
         
         // Measure the requested path rate.
-        final RatePath rateP = new RatePath(dataDirname, dataFilename);
+        final RatePath rateP = RatePath
+                .readRatesFile(dataDirname, dataFilename);
         final ReturnPath returnP = rateP.getReturnCompounded();
         returnP.estimatePath();
         
