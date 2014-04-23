@@ -100,11 +100,8 @@ public class ReturnPath extends PathId {
      * <code>expectedReturnRate</code>.
      *
      * @return Value of instance variable <code>expectedReturnRate</code>.
-     * @exception DemoException
-     *                thrown if instance variable
-     *                <code>expectedReturnRate</code> is undefined.
      */
-    public double get_expectedReturnRate() throws DemoException {
+    public double get_expectedReturnRate() {
         if(this.expectedReturnRate == Double.NaN)
             throw new DemoException("Variable expectedReturnRate is undefined!");
         return(this.expectedReturnRate);
@@ -114,11 +111,8 @@ public class ReturnPath extends PathId {
      * Accessor method for private instance variable <code>volatility</code>.
      *
      * @return Value of instance variable <code>volatility</code>.
-     * @exception DemoException
-     *                thrown if instance variable <code>volatility</code> is
-     *                undefined.
      */
-    public double get_volatility() throws DemoException {
+    public double get_volatility() {
         if(this.volatility == Double.NaN)
             throw new DemoException("Variable volatility is undefined!");
         return(this.volatility);
@@ -128,11 +122,8 @@ public class ReturnPath extends PathId {
     /**
      * Method to calculate the expected return rate from the return data, using
      * the relationship: \mu = \frac{\bar{u}}{\Delta t} + \frac{\sigma^2}{2}
-     *
-     * @exception DemoException
-     *                thrown one tries to obtain an undefined variable.
      */
-    public void computeExpectedReturnRate() throws DemoException {
+    public void computeExpectedReturnRate() {
         this.expectedReturnRate = mean / get_dTime() + 0.5 * volatility2;
     }
     
@@ -140,12 +131,8 @@ public class ReturnPath extends PathId {
      * Method to calculate <code>volatility</code> and <code>volatility2</code>
      * from the return path data, using the relationship, based on the
      * precomputed <code>variance</code>. \sigma^2 = s^2\Delta t
-     * 
-     * @exception DemoException
-     *                thrown if one of the quantites in the computation are
-     *                undefined.
      */
-    public void computeVolatility() throws DemoException {
+    public void computeVolatility() {
         if(this.variance == Double.NaN)
             throw new DemoException("Variable variance is not defined!");
         this.volatility2 = variance / get_dTime();
@@ -155,11 +142,8 @@ public class ReturnPath extends PathId {
     /**
      * Method to calculate the mean of the return, for use by other
      * calculations.
-     *
-     * @exception DemoException
-     *                thrown if <code>nPathValue</code> is undefined.
      */
-    public void computeMean() throws DemoException {
+    public void computeMean() {
         if(this.nPathValue == 0)
             throw new DemoException("Variable nPathValue is undefined!");
         this.mean = 0.0;
@@ -172,12 +156,8 @@ public class ReturnPath extends PathId {
     /**
      * Method to calculate the variance of the retrun, for use by other
      * calculations.
-     *
-     * @exception DemoException
-     *                thrown if the <code>mean</code> or <code>nPathValue</code>
-     *                values are undefined.
      */
-    public void computeVariance() throws DemoException {
+    public void computeVariance() {
         if(this.mean == Double.NaN || this.nPathValue == 0)
             throw new DemoException(
                     "Variable mean and/or nPathValue are undefined!");
@@ -191,11 +171,8 @@ public class ReturnPath extends PathId {
     /**
      * A single method for invoking all the necessary methods which estimate the
      * parameters.
-     *
-     * @exception DemoException
-     *                thrown if there is a problem reading any variables.
      */
-    public void estimatePath() throws DemoException {
+    public void estimatePath() {
         computeMean();
         computeVariance();
         computeExpectedReturnRate();

@@ -48,7 +48,7 @@ public class AppDemo extends Universal {
     private final int nRunsMC;
     private final int nthreads;
     
-    private ToInitAllTasks initAllTasks = null;
+    private final ToInitAllTasks initAllTasks;
     
     public List<Long> seeds;
     public List<Double> results;
@@ -64,24 +64,17 @@ public class AppDemo extends Universal {
         set_prompt("AppDemo> ");
         set_DEBUG(true);
         
-        try {
-            // Measure the requested path rate.
-            final RatePath rateP = new RatePath(dataDirname, dataFilename);
-            final ReturnPath returnP = rateP.getReturnCompounded();
-            returnP.estimatePath();
-            
-            // Now prepare for MC runs.
-            initAllTasks = new ToInitAllTasks(returnP, nTimeStepsMC,
-                    pathStartValue);
-            
-            // Now create the seeds for the tasks.
-            for(int i = 0; i < nRunsMC; i++)
-                seeds.add((long) i * 11);
-            
-        } catch(final DemoException demoEx) {
-            dbgPrintln(demoEx.toString());
-            System.exit(-1);
-        }
+        // Measure the requested path rate.
+        final RatePath rateP = new RatePath(dataDirname, dataFilename);
+        final ReturnPath returnP = rateP.getReturnCompounded();
+        returnP.estimatePath();
+        
+        // Now prepare for MC runs.
+        initAllTasks = new ToInitAllTasks(returnP, nTimeStepsMC, pathStartValue);
+        
+        // Now create the seeds for the tasks.
+        for(int i = 0; i < nRunsMC; i++)
+            seeds.add((long) i * 11);
     }
     
     public void runTasks() {
@@ -107,26 +100,12 @@ public class AppDemo extends Universal {
         }
     }
     
-    public void processSerial() {
-        //
-        // Process the results.
-        try {
-            processResults();
-        } catch(final DemoException demoEx) {
-            dbgPrintln(demoEx.toString());
-            System.exit(-1);
-        }
-    }
-    
     /**
      * Method for doing something with the Monte Carlo simulations. It's
      * probably not mathematically correct, but shall take an average over all
      * the simulated rate paths.
-     *
-     * @exception DemoException
-     *                thrown if there is a problem with reading in any values.
      */
-    private void processResults() throws DemoException {
+    public void processResults() {
         double avgExpectedReturnRateMC = 0.0;
         if(nRunsMC != results.size()) {
             errPrintln("Fatal: TaskRunner managed to finish with no all the results gathered in!");
@@ -165,9 +144,8 @@ public class AppDemo extends Universal {
                 iupper = nRunsMC;
             
             for(int iRun = ilow; iRun < iupper; iRun++) {
-                final PriceStock ps = new PriceStock();
-                ps.setInitAllTasks(initAllTasks);
-                ps.setSeed(seeds.get(iRun));
+                final long seed = seeds.get(iRun);
+                final PriceStock ps = new PriceStock(initAllTasks, seed);
                 ps.run();
                 results.add(ps.getExpectedReturnRate());
             }

@@ -39,44 +39,24 @@ public class PriceStock extends Universal {
     /**
      * Random seed from which the Monte Carlo sequence is started.
      */
-    private long randomSeed = -1;
+    private final long randomSeed;
     /**
      * Initial stock price value.
      */
-    private double pathStartValue = Double.NaN;
+    private final double pathStartValue;
     /**
      * Object which represents the results from a given computation task.
      */
     private double expectedReturnRate = Double.NaN;
     
-    public PriceStock() {
-        mcPath = new MonteCarloPath();
+    public PriceStock(final ToInitAllTasks initAllTasks, final long seed) {
+        mcPath = new MonteCarloPath(initAllTasks);
+        
+        pathStartValue = initAllTasks.get_pathStartValue();
+        randomSeed = seed;
+        
         set_prompt("PriceStock> ");
         set_DEBUG(true);
-    }
-    
-    /**
-     * Method which is passed in the initialisation data common to all tasks,
-     * and then unpacks them for use by this object.
-     *
-     * @param initAllTasks
-     *            Object representing data which are common to all tasks.
-     */
-    public void setInitAllTasks(final ToInitAllTasks initAllTasks) {
-        mcPath.set_name(initAllTasks.get_name());
-        mcPath.set_startDate(initAllTasks.get_startDate());
-        mcPath.set_endDate(initAllTasks.get_endDate());
-        mcPath.set_dTime(initAllTasks.get_dTime());
-        mcPath.set_expectedReturnRate(initAllTasks.get_expectedReturnRate());
-        mcPath.set_volatility(initAllTasks.get_volatility());
-        mcPath.set_nTimeSteps(initAllTasks.get_nTimeSteps());
-        pathStartValue = initAllTasks.get_pathStartValue();
-        mcPath.set_pathValue(new double[initAllTasks.get_nTimeSteps()]);
-        mcPath.set_fluctuations(new double[initAllTasks.get_nTimeSteps()]);
-    }
-    
-    public void setSeed(final long seed) {
-        this.randomSeed = seed;
     }
     
     /**
@@ -84,16 +64,12 @@ public class PriceStock extends Universal {
      * given task.
      */
     public void run() {
-        try {
-            mcPath.computeFluctuationsGaussian(randomSeed);
-            mcPath.computePathValue(pathStartValue);
-            final RatePath rateP = new RatePath(mcPath);
-            final ReturnPath returnP = rateP.getReturnCompounded();
-            returnP.estimatePath();
-            expectedReturnRate = returnP.get_expectedReturnRate();
-        } catch(final DemoException demoEx) {
-            errPrintln(demoEx.toString());
-        }
+        mcPath.computeFluctuationsGaussian(randomSeed);
+        mcPath.computePathValue(pathStartValue);
+        final RatePath rateP = new RatePath(mcPath);
+        final ReturnPath returnP = rateP.getReturnCompounded();
+        returnP.estimatePath();
+        expectedReturnRate = returnP.get_expectedReturnRate();
     }
     
     public double getExpectedReturnRate() {

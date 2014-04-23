@@ -74,11 +74,8 @@ public class PathId extends Universal {
      * Accessor method for private instance variable <code>name</code>.
      *
      * @return Value of instance variable <code>name</code>.
-     * @exception DemoException
-     *                thrown if instance variable <code>name</code> is
-     *                undefined.
      */
-    public String get_name() throws DemoException {
+    public String get_name() {
         if(this.name == null)
             throw new DemoException("Variable name is undefined!");
         return(this.name);
@@ -98,11 +95,8 @@ public class PathId extends Universal {
      * Accessor method for private instance variable <code>startDate</code>.
      *
      * @return Value of instance variable <code>startDate</code>.
-     * @exception DemoException
-     *                thrown if instance variable <code>startDate</code> is
-     *                undefined.
      */
-    public int get_startDate() throws DemoException {
+    public int get_startDate() {
         if(this.startDate == 0)
             throw new DemoException("Variable startDate is undefined!");
         return(this.startDate);
@@ -123,11 +117,8 @@ public class PathId extends Universal {
      * Accessor method for private instance variable <code>endDate</code>.
      *
      * @return Value of instance variable <code>endDate</code>.
-     * @exception DemoException
-     *                thrown if instance variable <code>endDate</code> is
-     *                undefined.
      */
-    public int get_endDate() throws DemoException {
+    public int get_endDate() {
         if(this.endDate == 0)
             throw new DemoException("Variable endDate is undefined!");
         return(this.endDate);
@@ -148,11 +139,8 @@ public class PathId extends Universal {
      * Accessor method for private instance variable <code>dTime</code>.
      *
      * @return Value of instance variable <code>dTime</code>.
-     * @exception DemoException
-     *                thrown if instance variable <code>dTime</code> is
-     *                undefined.
      */
-    public double get_dTime() throws DemoException {
+    public double get_dTime() {
         if(this.dTime == Double.NaN)
             throw new DemoException("Variable dTime is undefined!");
         return(this.dTime);
@@ -175,11 +163,8 @@ public class PathId extends Universal {
      *
      * @param obj
      *            the PathId object from which to copy.
-     * @exception DemoException
-     *                thrown if the values to be copied contain any undefined
-     *                objects.
      */
-    public void copyInstanceVariables(final PathId obj) throws DemoException {
+    public void copyInstanceVariables(final PathId obj) {
         this.name = obj.get_name();
         this.startDate = obj.get_startDate();
         this.endDate = obj.get_endDate();

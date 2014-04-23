@@ -87,11 +87,8 @@ public class RatePath extends PathId {
      *            directory
      * @param filename
      *            file
-     * @exception DemoException
-     *                thrown if there is a problem reading in the data file.
      */
-    public RatePath(final String dirName, final String filename)
-            throws DemoException {
+    public RatePath(final String dirName, final String filename) {
         set_prompt("RatePath> ");
         set_DEBUG(true);
         readRatesFile(dirName, filename);
@@ -104,22 +101,18 @@ public class RatePath extends PathId {
      * @param mc
      *            the Monte Carlo generator object, whose data are to be copied
      *            over.
-     * @exception DemoException
-     *                thrown if there is an attempt to access an undefined
-     *                variable.
      */
-    public RatePath(final MonteCarloPath mc) throws DemoException {
-        //
+    public RatePath(final MonteCarloPath mc) {
         // Fields pertaining to the parent PathId object:
         set_name(mc.get_name());
         set_startDate(mc.get_startDate());
         set_endDate(mc.get_endDate());
         set_dTime(mc.get_dTime());
-        //
+        
         // Fields pertaining to RatePath object itself.
         pathValue = mc.get_pathValue();
         nAcceptedPathValue = mc.get_nTimeSteps();
-        //
+        
         // Note that currently the pathDate is neither declared, defined,
         // nor used in the MonteCarloPath object.
         pathDate = new int[nAcceptedPathValue];
@@ -164,11 +157,8 @@ public class RatePath extends PathId {
      *
      * @param operandPath
      *            the path value array to use for the update.
-     * @exception DemoException
-     *                thrown if there is a mismatch between the lengths of the
-     *                operand and target arrays.
      */
-    public void inc_pathValue(final double[] operandPath) throws DemoException {
+    public void inc_pathValue(final double[] operandPath) {
         if(pathValue.length != operandPath.length)
             throw new DemoException(
                     "The path to update has a different size to the path to update with!");
@@ -181,11 +171,8 @@ public class RatePath extends PathId {
      *
      * @param scale
      *            the constant with which to multiply to all the path values.
-     * @exception DemoException
-     *                thrown if there is a mismatch between the lengths of the
-     *                operand and target arrays.
      */
-    public void inc_pathValue(final double scale) throws DemoException {
+    public void inc_pathValue(final double scale) {
         if(pathValue == null)
             throw new DemoException("Variable pathValue is undefined!");
         for(int i = 0; i < pathValue.length; i++)
@@ -200,11 +187,8 @@ public class RatePath extends PathId {
      * Accessor method for private instance variable <code>pathValue</code>.
      *
      * @return Value of instance variable <code>pathValue</code>.
-     * @exception DemoException
-     *                thrown if instance variable <code>pathValue</code> is
-     *                undefined.
      */
-    public double[] get_pathValue() throws DemoException {
+    public double[] get_pathValue() {
         if(this.pathValue == null)
             throw new DemoException("Variable pathValue is undefined!");
         return(this.pathValue);
@@ -225,11 +209,8 @@ public class RatePath extends PathId {
      * Accessor method for private instance variable <code>pathDate</code>.
      *
      * @return Value of instance variable <code>pathDate</code>.
-     * @exception DemoException
-     *                thrown if instance variable <code>pathDate</code> is
-     *                undefined.
      */
-    public int[] get_pathDate() throws DemoException {
+    public int[] get_pathDate() {
         if(this.pathDate == null)
             throw new DemoException("Variable pathDate is undefined!");
         return(this.pathDate);
@@ -275,10 +256,8 @@ public class RatePath extends PathId {
      * \ln{\frac{S_i}{S_{i-1}}}
      * 
      * @return the return, as defined.
-     * @exception DemoException
-     *                thrown if there is a problem with the calculation.
      */
-    public ReturnPath getReturnCompounded() throws DemoException {
+    public ReturnPath getReturnCompounded() {
         if(pathValue == null || nAcceptedPathValue == 0) {
             throw new DemoException("The Rate Path has not been defined!");
         }
@@ -336,11 +315,8 @@ public class RatePath extends PathId {
      *            the directory in which to search for the data file.
      * @param filename
      *            the data filename itself.
-     * @exception DemoException
-     *                thrown if there was a problem with the data file.
      */
-    private void readRatesFile(final String dirName, final String filename)
-            throws DemoException {
+    private void readRatesFile(final String dirName, final String filename) {
         final File ratesFile = new File(dirName, filename);
         BufferedReader in;
         if(!ratesFile.canRead()) {
@@ -404,7 +380,7 @@ public class RatePath extends PathId {
         nAcceptedPathValue = iLine;
         //
         // Now to fill in the structures from the 'PathId' class.
-        set_name(ratesFile.getName());
+        set_name(filename);
         set_startDate(pathDate[0]);
         set_endDate(pathDate[nAcceptedPathValue - 1]);
         set_dTime(1.0 / 365.0);

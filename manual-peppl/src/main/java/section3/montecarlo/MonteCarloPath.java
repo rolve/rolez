@@ -50,11 +50,11 @@ public class MonteCarloPath extends PathId {
      * Random fluctuations generated as a series of random numbers with given
      * distribution.
      */
-    private double[] fluctuations;
+    private final double[] fluctuations;
     /**
      * The path values from which the random fluctuations are used to update.
      */
-    private double[] pathValue;
+    private final double[] pathValue;
     /**
      * Value for the mean drift, for use in the generation of the random path.
      */
@@ -75,96 +75,46 @@ public class MonteCarloPath extends PathId {
      * Default constructor. Needed by the HPT library to start create new
      * instances of this class. The instance variables for this should then be
      * initialised with the <code>setInitAllTasks()</code> method.
+     * 
+     * @param initAllTasks
+     *            task parameters
      */
-    public MonteCarloPath() {
+    public MonteCarloPath(final ToInitAllTasks initAllTasks) {
+        set_name(initAllTasks.get_name());
+        set_startDate(initAllTasks.get_startDate());
+        set_endDate(initAllTasks.get_endDate());
+        set_dTime(initAllTasks.get_dTime());
+        
+        this.expectedReturnRate = initAllTasks.get_expectedReturnRate();
+        this.volatility = initAllTasks.get_volatility();
+        this.nTimeSteps = initAllTasks.get_nTimeSteps();
+        this.pathValue = new double[initAllTasks.get_nTimeSteps()];
+        this.fluctuations = new double[initAllTasks.get_nTimeSteps()];
+        
         set_prompt("MonteCarloPath> ");
         set_DEBUG(true);
-    }
-    
-    // ------------------------------------------------------------------------
-    // Methods.
-    // ------------------------------------------------------------------------
-    /**
-     * Set method for private instance variable <code>fluctuations</code>.
-     *
-     * @param fluctuations
-     *            the value to set for the instance variable
-     *            <code>fluctuations</code>.
-     */
-    public void set_fluctuations(final double[] fluctuations) {
-        this.fluctuations = fluctuations;
     }
     
     /**
      * Accessor method for private instance variable <code>pathValue</code>.
      *
      * @return Value of instance variable <code>pathValue</code>.
-     * @exception DemoException
-     *                thrown if instance variable <code>pathValue</code> is
-     *                undefined.
      */
-    public double[] get_pathValue() throws DemoException {
+    public double[] get_pathValue() {
         if(this.pathValue == null)
             throw new DemoException("Variable pathValue is undefined!");
         return(this.pathValue);
     }
     
     /**
-     * Set method for private instance variable <code>pathValue</code>.
-     *
-     * @param pathValue
-     *            the value to set for the instance variable
-     *            <code>pathValue</code>.
-     */
-    public void set_pathValue(final double[] pathValue) {
-        this.pathValue = pathValue;
-    }
-    
-    /**
-     * Set method for private instance variable <code>expectedReturnRate</code>.
-     *
-     * @param expectedReturnRate
-     *            the value to set for the instance variable
-     *            <code>expectedReturnRate</code>.
-     */
-    public void set_expectedReturnRate(final double expectedReturnRate) {
-        this.expectedReturnRate = expectedReturnRate;
-    }
-    
-    /**
-     * Set method for private instance variable <code>volatility</code>.
-     *
-     * @param volatility
-     *            the value to set for the instance variable
-     *            <code>volatility</code>.
-     */
-    public void set_volatility(final double volatility) {
-        this.volatility = volatility;
-    }
-    
-    /**
      * Accessor method for private instance variable <code>nTimeSteps</code>.
      *
      * @return Value of instance variable <code>nTimeSteps</code>.
-     * @exception DemoException
-     *                thrown if instance variable <code>nTimeSteps</code> is
-     *                undefined.
      */
-    public int get_nTimeSteps() throws DemoException {
+    public int get_nTimeSteps() {
         if(this.nTimeSteps == 0)
             throw new DemoException("Variable nTimeSteps is undefined!");
         return(this.nTimeSteps);
-    }
-    
-    /**
-     * Set method for private instance variable <code>nTimeSteps</code>.
-     *
-     * @param nTimeSteps
-     *            the value to set for the instance variable
-     *            <code>nTimeSteps</code>.
-     */
-    public void set_nTimeSteps(final int nTimeSteps) {
-        this.nTimeSteps = nTimeSteps;
     }
     
     /**
@@ -177,11 +127,8 @@ public class MonteCarloPath extends PathId {
      * @param randomSeed
      *            The psuedo-random number seed value, to start off a given
      *            sequence of Gaussian fluctuations.
-     * @exception DemoException
-     *                thrown if there are any problems with the computation.
      */
-    public void computeFluctuationsGaussian(final long randomSeed)
-            throws DemoException {
+    public void computeFluctuationsGaussian(final long randomSeed) {
         if(nTimeSteps > fluctuations.length)
             throw new DemoException(
                     "Number of timesteps requested is greater than the allocated array!");
@@ -207,21 +154,6 @@ public class MonteCarloPath extends PathId {
             // Now map this onto a general Gaussian of given mean and variance.
             fluctuations[i] = mean + sd * gauss;
         }
-    }
-    
-    /**
-     * Method for calculating the sequence of fluctuations, based around a
-     * Gaussian distribution of given mean and variance, as defined in this
-     * class' instance variables. Mapping from Gaussian distribution of (0,1) to
-     * (mean-drift,volatility) is done via Ito's lemma on the log of the stock
-     * price. This overloaded method is for when the random seed should be
-     * decided by the system.
-     * 
-     * @exception DemoException
-     *                thrown if there are any problems with the computation.
-     */
-    public void computeFluctuationsGaussian() throws DemoException {
-        computeFluctuationsGaussian(-1);
     }
     
     /**

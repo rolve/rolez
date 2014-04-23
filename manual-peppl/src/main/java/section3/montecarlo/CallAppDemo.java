@@ -52,7 +52,7 @@ public class CallAppDemo {
     }
     
     public void presults() {
-        ap.processSerial();
+        ap.processResults();
     }
     
 }

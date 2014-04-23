@@ -50,12 +50,9 @@ public class ToInitAllTasks {
      * @param pathStartValue
      *            The stock price value to use at the start of each Monte Carlo
      *            simulation path.
-     * @exception DemoException
-     *                thrown if there is a problem accessing the instance
-     *                variables from the target objetct.
      */
     public ToInitAllTasks(final ReturnPath obj, final int nTimeSteps,
-            final double pathStartValue) throws DemoException {
+            final double pathStartValue) {
         //
         // Instance variables defined in the PathId object.
         this.name = obj.get_name();
