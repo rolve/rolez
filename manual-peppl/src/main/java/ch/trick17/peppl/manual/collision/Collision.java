@@ -2,6 +2,7 @@ package ch.trick17.peppl.manual.collision;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -36,7 +37,9 @@ public class Collision implements Runnable {
     private static final int SIZE = 20;
     private static final int BALLS = 4000;
     
+    @SuppressWarnings("resource")
     public static void main(final String[] args) {
+        new Scanner(System.in).nextLine();
         SYSTEM.runDirectly(new Collision());
     }
     
