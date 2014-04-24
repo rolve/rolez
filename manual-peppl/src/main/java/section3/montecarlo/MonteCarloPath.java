@@ -88,9 +88,6 @@ public class MonteCarloPath extends PathId {
         this.timeSteps = initAllTasks.get_timeSteps();
         this.pathValue = new double[initAllTasks.get_timeSteps()];
         this.fluctuations = new double[initAllTasks.get_timeSteps()];
-        
-        set_prompt("MonteCarloPath> ");
-        set_DEBUG(true);
     }
     
     /**

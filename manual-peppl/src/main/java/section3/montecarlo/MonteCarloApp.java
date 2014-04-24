@@ -40,7 +40,7 @@ import java.util.List;
  * @author H W Yau
  * @version $Revision: 1.12 $ $Date: 1999/02/16 19:13:38 $
  */
-public class MonteCarloApp extends Universal {
+public class MonteCarloApp {
     
     private static final double pathStartValue = 100.0;
     
@@ -61,9 +61,6 @@ public class MonteCarloApp extends Universal {
         
         seeds = new ArrayList<>(runs);
         results = new ArrayList<>(runs);
-        
-        set_prompt("AppDemo> ");
-        set_DEBUG(true);
         
         // Measure the requested path rate.
         final RatePath rateP = RatePath
@@ -108,10 +105,9 @@ public class MonteCarloApp extends Universal {
      */
     public void processResults() {
         double avgExpectedReturnRateMC = 0.0;
-        if(runs != results.size()) {
-            errPrintln("Fatal: TaskRunner managed to finish with no all the results gathered in!");
-            System.exit(-1);
-        }
+        if(runs != results.size())
+            throw new AssertionError(
+                    "Fatal: TaskRunner managed to finish with no all the results gathered in!");
         
         for(int i = 0; i < runs; i++)
             avgExpectedReturnRateMC += results.get(i);

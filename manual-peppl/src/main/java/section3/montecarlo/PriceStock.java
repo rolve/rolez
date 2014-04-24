@@ -30,7 +30,7 @@ package section3.montecarlo;
  * @author H W Yau
  * @version $Revision: 1.5 $ $Date: 1999/02/16 18:52:15 $
  */
-public class PriceStock extends Universal {
+public class PriceStock {
     
     /**
      * The Monte Carlo path to be generated.
@@ -50,9 +50,6 @@ public class PriceStock extends Universal {
         
         pathStartValue = initAllTasks.get_pathStartValue();
         randomSeed = seed;
-        
-        set_prompt("PriceStock> ");
-        set_DEBUG(true);
     }
     
     /**

@@ -89,9 +89,6 @@ public class ReturnPath extends PathId {
         super(name, startDate, endDate, dTime);
         this.pathValue = pathValue;
         this.nPathValue = nPathValue;
-        
-        set_prompt("ReturnPath> ");
-        set_DEBUG(true);
     }
     
     /**

@@ -29,7 +29,7 @@ package section3.montecarlo;
  * @author H W Yau
  * @version $Revision: 1.13 $ $Date: 1999/02/16 18:51:58 $
  */
-public class PathId extends Universal {
+public class PathId {
     
     // ------------------------------------------------------------------------
     // Instance variables.
@@ -58,9 +58,6 @@ public class PathId extends Universal {
         this.startDate = startDate;
         this.endDate = endDate;
         this.dTime = dTime;
-        
-        set_prompt("PathId> ");
-        set_DEBUG(true);
     }
     
     // ------------------------------------------------------------------------

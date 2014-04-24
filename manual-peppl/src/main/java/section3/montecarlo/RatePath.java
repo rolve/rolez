@@ -81,9 +81,6 @@ public class RatePath extends PathId {
         
         this.pathValue = pathValue;
         this.nAcceptedPathValue = nAcceptedPathValue;
-        
-        set_prompt("RatePath> ");
-        set_DEBUG(true);
     }
     
     /**
