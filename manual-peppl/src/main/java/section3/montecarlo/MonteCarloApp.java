@@ -118,34 +118,38 @@ public class MonteCarloApp {
     
     private static class AppDemoTask implements Runnable {
         
-        private final int id, nRunsMC, nthreads;
+        private final int id, runs, nthreads;
         private final List<Double> results = new ArrayList<>();
         private final List<Long> seeds;
         private final PathParameters pathParams;
         
-        public AppDemoTask(final int id, final int nRunsMC, final int nthreads,
+        public AppDemoTask(final int id, final int runs, final int nthreads,
                 final List<Long> seeds, final PathParameters pathParams) {
             this.id = id;
-            this.nRunsMC = nRunsMC;
+            this.runs = runs;
             this.nthreads = nthreads;
             this.seeds = seeds;
             this.pathParams = pathParams;
         }
         
         public void run() {
-            int ilow, iupper, slice;
-            slice = (nRunsMC + nthreads - 1) / nthreads;
-            ilow = id * slice;
+            final int slice = (runs + nthreads - 1) / nthreads;
+            final int ilow = id * slice;
+            
+            int iupper;
             iupper = (id + 1) * slice;
             if(id == nthreads - 1)
-                iupper = nRunsMC;
+                iupper = runs;
             
             for(int iRun = ilow; iRun < iupper; iRun++) {
-                final long seed = seeds.get(iRun);
-                final PriceStock ps = new PriceStock(pathParams, seed,
-                        pathStartValue);
-                final double expectedReturnRate = ps.run();
-                results.add(expectedReturnRate);
+                final MonteCarloPath mcPath = new MonteCarloPath(pathParams);
+                mcPath.computeFluctuationsGaussian(seeds.get(iRun));
+                mcPath.computePathValue(pathStartValue);
+                final RatePath rateP = new RatePath(mcPath);
+                final ReturnPath returnP = rateP.getReturnCompounded();
+                returnP.estimatePath();
+                
+                results.add(returnP.get_expectedReturnRate());
             }
         }
         
