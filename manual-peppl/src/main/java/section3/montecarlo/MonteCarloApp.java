@@ -145,7 +145,9 @@ public class MonteCarloApp {
                 final MonteCarloPath mcPath = new MonteCarloPath(pathParams);
                 mcPath.computeFluctuationsGaussian(seeds.get(iRun));
                 mcPath.computePathValue(pathStartValue);
-                final RatePath rateP = new RatePath(mcPath);
+                final RatePath rateP = new RatePath(mcPath.get_name(), mcPath
+                        .get_startDate(), mcPath.get_endDate(), mcPath
+                        .get_dTime(), mcPath.get_pathValue());
                 final ReturnPath returnP = rateP.getReturnCompounded();
                 returnP.estimatePath();
                 

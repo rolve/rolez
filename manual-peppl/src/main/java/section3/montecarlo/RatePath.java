@@ -76,22 +76,6 @@ public class RatePath extends Path {
     }
     
     /**
-     * Constructor, for use by the Monte Carlo generator, when it wishes to
-     * represent its findings as a RatePath object.
-     *
-     * @param mc
-     *            the Monte Carlo generator object, whose data are to be copied
-     *            over.
-     */
-    public RatePath(final MonteCarloPath mc) {
-        super(mc.get_name(), mc.get_startDate(), mc.get_endDate(), mc
-                .get_dTime());
-        
-        // Fields pertaining to RatePath object itself.
-        pathValue = mc.get_pathValue();
-    }
-    
-    /**
      * Method for calculating the returns on a given rate path, via the
      * definition for the instantaneous compounded return. u_i =
      * \ln{\frac{S_i}{S_{i-1}}}
