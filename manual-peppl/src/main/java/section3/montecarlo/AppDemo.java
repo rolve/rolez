@@ -147,8 +147,8 @@ public class AppDemo extends Universal {
             for(int iRun = ilow; iRun < iupper; iRun++) {
                 final long seed = seeds.get(iRun);
                 final PriceStock ps = new PriceStock(initAllTasks, seed);
-                ps.run();
-                results.add(ps.getExpectedReturnRate());
+                final double expectedReturnRate = ps.run();
+                results.add(expectedReturnRate);
             }
         }
         

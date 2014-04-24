@@ -58,15 +58,15 @@ public class MonteCarloPath extends PathId {
     /**
      * Value for the mean drift, for use in the generation of the random path.
      */
-    private double expectedReturnRate = Double.NaN;
+    private final double expectedReturnRate;
     /**
      * Value for the volatility, for use in the generation of the random path.
      */
-    private double volatility = Double.NaN;
+    private final double volatility;
     /**
      * Number of time steps for which the simulation should act over.
      */
-    private int nTimeSteps = 0;
+    private final int nTimeSteps;
     
     // ------------------------------------------------------------------------
     // Constructors.

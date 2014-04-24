@@ -44,10 +44,6 @@ public class PriceStock extends Universal {
      * Initial stock price value.
      */
     private final double pathStartValue;
-    /**
-     * Object which represents the results from a given computation task.
-     */
-    private double expectedReturnRate = Double.NaN;
     
     public PriceStock(final ToInitAllTasks initAllTasks, final long seed) {
         mcPath = new MonteCarloPath(initAllTasks);
@@ -62,17 +58,15 @@ public class PriceStock extends Universal {
     /**
      * The business end. Invokes the necessary computation routine, for a a
      * given task.
+     * 
+     * @return the expected return rate for the computed path
      */
-    public void run() {
+    public double run() {
         mcPath.computeFluctuationsGaussian(randomSeed);
         mcPath.computePathValue(pathStartValue);
         final RatePath rateP = new RatePath(mcPath);
         final ReturnPath returnP = rateP.getReturnCompounded();
         returnP.estimatePath();
-        expectedReturnRate = returnP.get_expectedReturnRate();
-    }
-    
-    public double getExpectedReturnRate() {
-        return expectedReturnRate;
+        return returnP.get_expectedReturnRate();
     }
 }

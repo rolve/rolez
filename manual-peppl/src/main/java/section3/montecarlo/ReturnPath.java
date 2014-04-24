@@ -35,13 +35,6 @@ package section3.montecarlo;
  */
 public class ReturnPath extends PathId {
     
-    /**
-     * Flag for indicating one of the return definitions, via: u_i =
-     * \ln{\frac{S_i}{S_{i-1}}} corresponding to the instantaneous compounded
-     * return.
-     */
-    public static final int COMPOUNDED = 1;
-    
     // ------------------------------------------------------------------------
     // Instance variables.
     // ------------------------------------------------------------------------
@@ -76,6 +69,14 @@ public class ReturnPath extends PathId {
     private double variance = Double.NaN;
     
     /**
+     * @param name
+     *            name of the path
+     * @param startDate
+     *            start date
+     * @param endDate
+     *            end date
+     * @param dTime
+     *            dTime
      * @param pathValue
      *            for creating a return path with a precomputed path value.
      *            Indexed from 1 to <code>nPathArray-1</code>.
@@ -86,10 +87,11 @@ public class ReturnPath extends PathId {
             final int endDate, final double dTime, final double[] pathValue,
             final int nPathValue) {
         super(name, startDate, endDate, dTime);
-        set_prompt("ReturnPath> ");
-        set_DEBUG(true);
         this.pathValue = pathValue;
         this.nPathValue = nPathValue;
+        
+        set_prompt("ReturnPath> ");
+        set_DEBUG(true);
     }
     
     /**
