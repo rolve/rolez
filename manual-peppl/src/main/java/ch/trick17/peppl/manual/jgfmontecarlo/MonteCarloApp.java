@@ -27,6 +27,8 @@ import java.util.concurrent.Callable;
 
 import section3.montecarlo.RatePath;
 import section3.montecarlo.ReturnPath;
+import ch.trick17.peppl.lib.guard.DoubleArray;
+import ch.trick17.peppl.lib.guard.DoubleSlice;
 import ch.trick17.peppl.lib.guard.LongArray;
 import ch.trick17.peppl.lib.guard.LongSlice;
 import ch.trick17.peppl.lib.task.Task;
@@ -42,7 +44,7 @@ public class MonteCarloApp {
     private final PathParameters pathParams;
     
     public LongArray seeds;
-    public List<Double> results;
+    public DoubleArray results;
     
     public double JGFavgExpectedReturnRateMC = 0.0;
     
@@ -52,7 +54,7 @@ public class MonteCarloApp {
         this.nthreads = nthreads;
         
         seeds = new LongArray(runs);
-        results = new ArrayList<>(runs);
+        results = new DoubleArray(runs);
         
         // Measure the requested path rate.
         final RatePath rateP = RatePath
@@ -75,34 +77,44 @@ public class MonteCarloApp {
             pathParams.share();
             seedParts.get(i).share();
             tasks.add(TaskSystem.getDefault().run(
-                    new AppDemoTask(seedParts.get(i), pathParams)));
+                    new RunTask(seedParts.get(i), pathParams)));
         }
         
-        for(final Task<List<Double>> task : tasks)
-            results.addAll(task.get());
+        int index = 0;
+        for(final Task<List<Double>> task : tasks) {
+            final List<Double> taskResults = task.get();
+            for(int i = 0; i < taskResults.size(); i++, index++)
+                results.data[index] = taskResults.get(i);
+        }
+        
+        if(index != runs)
+            throw new AssertionError(
+                    "Fatal: TaskRunner managed to finish with no all the results gathered in!");
     }
     
     public void processResults() {
-        double avgExpectedReturnRateMC = 0.0;
-        if(runs != results.size())
-            throw new AssertionError(
-                    "Fatal: TaskRunner managed to finish with no all the results gathered in!");
+        final List<DoubleSlice> resultParts = results.partition(nthreads);
+        final ArrayList<Task<Double>> tasks = new ArrayList<>(nthreads);
+        for(final DoubleSlice part : resultParts) {
+            part.share();
+            tasks.add(TaskSystem.getDefault().run(new SumTask(part)));
+        }
         
-        for(int i = 0; i < runs; i++)
-            avgExpectedReturnRateMC += results.get(i);
+        double avgExpectedReturnRateMC = 0.0;
+        for(final Task<Double> task : tasks)
+            avgExpectedReturnRateMC += task.get();
         
         avgExpectedReturnRateMC /= runs;
         JGFavgExpectedReturnRateMC = avgExpectedReturnRateMC;
     }
     
-    private static class AppDemoTask implements Callable<List<Double>> {
+    private static class RunTask implements Callable<List<Double>> {
         
         private final List<Double> results = new ArrayList<>();
         private final LongSlice seeds;
         private final PathParameters pathParams;
         
-        public AppDemoTask(final LongSlice seeds,
-                final PathParameters pathParams) {
+        public RunTask(final LongSlice seeds, final PathParameters pathParams) {
             this.seeds = seeds;
             this.pathParams = pathParams;
         }
@@ -123,6 +135,24 @@ public class MonteCarloApp {
             }
             pathParams.releaseShared();
             return results;
+        }
+    }
+    
+    private static class SumTask implements Callable<Double> {
+        
+        private final DoubleSlice data;
+        
+        public SumTask(final DoubleSlice data) {
+            this.data = data;
+        }
+        
+        public Double call() {
+            double sum = 0;
+            for(int i = data.begin; i < data.end; i++) {
+                sum += data.data[i];
+            }
+            data.releaseShared();
+            return sum;
         }
     }
 }
