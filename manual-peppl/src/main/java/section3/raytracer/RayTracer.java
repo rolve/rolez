@@ -25,25 +25,7 @@ package section3.raytracer;
 
 public class RayTracer {
     
-    /**
-     * Lights for the rendering scene
-     */
-    Light lights[];
-    
-    /**
-     * Objects (spheres) for the rendering scene
-     */
-    Primitive prim[];
-    
-    /**
-     * The view for the rendering scene
-     */
-    View view;
-    
-    /**
-     * Temporary ray
-     */
-    Ray tRay = new Ray();
+    protected final Scene scene;
     
     /**
      * Alpha channel
@@ -65,42 +47,15 @@ public class RayTracer {
      */
     Isect inter = new Isect();
     
-    /**
-     * Height of the <code>Image</code> to be rendered
-     */
-    int height;
-    
-    /**
-     * Width of the <code>Image</code> to be rendered
-     */
-    int width;
-    
     long checksum = 0;
     
-    int size;
+    /**
+     * Temporary ray
+     */
+    private final Ray tRay = new Ray();
     
-    int numobjects;
-    
-    public void setScene(final Scene scene) {
-        // Get the objects count
-        final int nLights = scene.getLights();
-        final int nObjects = scene.getObjects();
-        
-        lights = new Light[nLights];
-        prim = new Primitive[nObjects];
-        
-        // Get the lights
-        for(int l = 0; l < nLights; l++) {
-            lights[l] = scene.getLight(l);
-        }
-        
-        // Get the primitives
-        for(int o = 0; o < nObjects; o++) {
-            prim[o] = scene.getObject(o);
-        }
-        
-        // Set the view
-        view = scene.getView();
+    public RayTracer(final Scene scene) {
+        this.scene = scene;
     }
     
     public void render(final Interval interval, final int nthreads) {
@@ -114,25 +69,26 @@ public class RayTracer {
         double xlen, ylen;
         Vec viewVec;
         
-        viewVec = Vec.sub(view.at, view.from);
+        viewVec = Vec.sub(scene.view.at, scene.view.from);
         
         viewVec.normalize();
         
         final Vec tmpVec = new Vec(viewVec);
-        tmpVec.scale(Vec.dot(view.up, viewVec));
+        tmpVec.scale(Vec.dot(scene.view.up, viewVec));
         
-        final Vec upVec = Vec.sub(view.up, tmpVec);
+        final Vec upVec = Vec.sub(scene.view.up, tmpVec);
         upVec.normalize();
         
-        final Vec leftVec = Vec.cross(view.up, viewVec);
+        final Vec leftVec = Vec.cross(scene.view.up, viewVec);
         leftVec.normalize();
         
-        final double frustrumwidth = view.dist * Math.tan(view.angle);
+        final double frustrumwidth = scene.view.dist
+                * Math.tan(scene.view.angle);
         
         upVec.scale(-frustrumwidth);
-        leftVec.scale(view.aspect * frustrumwidth);
+        leftVec.scale(scene.view.aspect * frustrumwidth);
         
-        final Ray r = new Ray(view.from, voidVec);
+        final Ray r = new Ray(scene.view.from, voidVec);
         Vec col = new Vec();
         
         // Header for .ppm file
@@ -186,9 +142,9 @@ public class RayTracer {
         
         nhits = 0;
         inter.t = 1e9;
-        for(i = 0; i < prim.length; i++) {
+        for(i = 0; i < scene.objects.length; i++) {
             // uses global temporary Prim (tp) as temp.object for speedup
-            tp = prim[i].intersect(r);
+            tp = scene.objects[i].intersect(r);
             if(tp != null && tp.t < inter.t) {
                 inter.t = tp.t;
                 inter.prim = tp.prim;
@@ -264,8 +220,8 @@ public class RayTracer {
         }
         
         // Computes the effectof each light
-        for(l = 0; l < lights.length; l++) {
-            L.sub2(lights[l].pos, P);
+        for(l = 0; l < scene.lights.length; l++) {
+            L.sub2(scene.lights[l].pos, P);
             if(Vec.dot(N, L) >= 0.0) {
                 L.normalize();
                 
@@ -274,7 +230,7 @@ public class RayTracer {
                 
                 // Checks if there is a shadow
                 if(shadow(tRay)) {
-                    diff = Vec.dot(N, L) * mat.kd * lights[l].brightness;
+                    diff = Vec.dot(N, L) * mat.kd * scene.lights[l].brightness;
                     
                     col.adds(diff, mat.color);
                     if(mat.shine > 1e-6) {
@@ -333,20 +289,11 @@ public class RayTracer {
     }
     
     public static void main(final String argv[]) {
-        final RayTracer rt = new RayTracer();
-        rt.height = 100;
-        rt.width = 100;
-        
-        // create the objects to be rendered
-        final Scene scene = Scene.createScene();
-        
-        // get lights, objects etc. from scene.
-        rt.setScene(scene);
+        final RayTracer rt = new RayTracer(Scene.createScene());
         
         // Set interval to be rendered to the whole picture
         // (overkill, but will be useful to retain this for parallel versions)
-        final Interval interval = new Interval(rt.width, rt.height, 0,
-                rt.height, 0);
+        final Interval interval = new Interval(100, 100, 0, 100, 0);
         
         // Do the business!
         rt.render(interval, 1);

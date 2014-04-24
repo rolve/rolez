@@ -23,27 +23,19 @@
 
 package section3.raytracer;
 
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Scene {
-    public final Vector<Light> lights;
-    public final Vector<Primitive> objects;
-    private View view;
     
-    public Scene() {
-        this.lights = new Vector<Light>();
-        this.objects = new Vector<Primitive>();
-    }
+    public final Light[] lights;
+    public final Primitive[] objects;
+    public final View view;
     
-    public void addLight(final Light l) {
-        this.lights.addElement(l);
-    }
-    
-    public void addObject(final Primitive object) {
-        this.objects.addElement(object);
-    }
-    
-    public void setView(final View view) {
+    public Scene(final Light[] lights, final Primitive[] objects,
+            final View view) {
+        this.lights = lights;
+        this.objects = objects;
         this.view = view;
     }
     
@@ -51,35 +43,12 @@ public class Scene {
         return this.view;
     }
     
-    public Light getLight(final int number) {
-        return this.lights.elementAt(number);
-    }
-    
-    public Primitive getObject(final int number) {
-        return objects.elementAt(number);
-    }
-    
-    public int getLights() {
-        return this.lights.size();
-    }
-    
-    public int getObjects() {
-        return this.objects.size();
-    }
-    
-    public void setObject(final Primitive object, final int pos) {
-        this.objects.setElementAt(object, pos);
-    }
-    
     public static Scene createScene() {
         final int x = 0;
         final int y = 0;
         
-        final Scene scene = new Scene();
-        
         /* create spheres */
-        
-        Primitive p;
+        final List<Primitive> objects = new ArrayList<>();
         final int nx = 4;
         final int ny = 4;
         final int nz = 4;
@@ -90,24 +59,23 @@ public class Scene {
                     final double yy = 20.0 / (ny - 1) * j - 10.0;
                     final double zz = 20.0 / (nz - 1) * k - 10.0;
                     
-                    p = new Sphere(new Vec(xx, yy, zz), 3);
-                    // p.setColor(i/(double) (nx-1), j/(double)(ny-1),
-                    // k/(double) (nz-1));
+                    final Primitive p = new Sphere(new Vec(xx, yy, zz), 3);
                     p.setColor(0, 0, (i + j) / (double) (nx + ny - 2));
                     p.mat.shine = 15.0;
                     p.mat.ks = 1.5 - 1.0;
                     p.mat.kt = 1.5 - 1.0;
-                    scene.addObject(p);
+                    objects.add(p);
                 }
             }
         }
         
         /* Creates five lights for the scene */
-        scene.addLight(new Light(100, 100, -50, 1.0));
-        scene.addLight(new Light(-100, 100, -50, 1.0));
-        scene.addLight(new Light(100, -100, -50, 1.0));
-        scene.addLight(new Light(-100, -100, -50, 1.0));
-        scene.addLight(new Light(200, 200, 0, 1.0));
+        final List<Light> lights = new ArrayList<Light>();
+        lights.add(new Light(100, 100, -50, 1.0));
+        lights.add(new Light(-100, 100, -50, 1.0));
+        lights.add(new Light(100, -100, -50, 1.0));
+        lights.add(new Light(-100, -100, -50, 1.0));
+        lights.add(new Light(200, 200, 0, 1.0));
         
         /* Creates a View (viewing point) for the rendering scene */
         final View v = new View(new Vec(x, 20, -30), new Vec(x, y, 0), new Vec(
@@ -115,8 +83,8 @@ public class Scene {
         /* v.from = new Vec(x, y, -30); v.at = new Vec(x, y, -15); v.up = new
          * Vec(0, 1, 0); v.angle = 35.0 * 3.14159265 / 180.0; v.aspect = 1.0;
          * v.dist = 1.0; */
-        scene.setView(v);
         
-        return scene;
+        return new Scene(lights.toArray(new Light[lights.size()]), objects
+                .toArray(new Primitive[objects.size()]), v);
     }
 }

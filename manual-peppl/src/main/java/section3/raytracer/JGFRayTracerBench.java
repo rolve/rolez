@@ -48,15 +48,16 @@ public class JGFRayTracerBench {
         final Barrier br = new TournamentBarrier(nthreads);
         
         // Start Threads
-        
         for(int i = 1; i < nthreads; i++) {
+            JGFInstrumentor.startTimer("Section3:RayTracer:Init");
+            thobjects[i] = new RayTracerRunner(i, br);
+            JGFInstrumentor.stopTimer("Section3:RayTracer:Init");
             
-            thobjects[i] = new RayTracerRunner(i, width, height, br);
             th[i] = new Thread(thobjects[i]);
             th[i].start();
         }
         
-        thobjects[0] = new RayTracerRunner(0, width, height, br);
+        thobjects[0] = new RayTracerRunner(0, br);
         thobjects[0].run();
         
         for(int i = 1; i < nthreads; i++) {
@@ -102,29 +103,16 @@ public class JGFRayTracerBench {
     
     private class RayTracerRunner extends RayTracer implements Runnable {
         
-        int id, height, width;
+        int id;
         Barrier br;
         
-        public RayTracerRunner(final int id, final int width, final int height,
-                final Barrier br) {
+        public RayTracerRunner(final int id, final Barrier br) {
+            super(Scene.createScene());
+            
             this.id = id;
-            this.width = width;
-            this.height = height;
             this.br = br;
             
-            JGFInstrumentor.startTimer("Section3:RayTracer:Init");
-            
-            // create the objects to be rendered
-            final Scene scene = Scene.createScene();
-            
-            // get lights, objects etc. from scene.
-            setScene(scene);
-            
-            numobjects = scene.getObjects();
-            JGFRayTracerBench.staticnumobjects = numobjects;
-            
-            JGFInstrumentor.stopTimer("Section3:RayTracer:Init");
-            
+            JGFRayTracerBench.staticnumobjects = scene.objects.length;
         }
         
         public void run() {
