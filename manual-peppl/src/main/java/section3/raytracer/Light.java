@@ -23,11 +23,9 @@
 
 package section3.raytracer;
 
-public class Light implements java.io.Serializable {
-    public Vec pos;
-    public double brightness;
-    
-    public Light() {}
+public class Light {
+    public final Vec pos;
+    public final double brightness;
     
     public Light(final double x, final double y, final double z,
             final double brightness) {

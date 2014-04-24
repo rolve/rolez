@@ -23,11 +23,11 @@
 
 package section3.raytracer;
 
-public abstract class Primitive implements java.io.Serializable {
-    public Surface surf = new Surface();
+public abstract class Primitive {
+    public Material mat = new Material();
     
     public void setColor(final double r, final double g, final double b) {
-        surf.color = new Vec(r, g, b);
+        mat.color = new Vec(r, g, b);
     }
     
     public abstract Vec normal(Vec pnt);
@@ -38,6 +38,4 @@ public abstract class Primitive implements java.io.Serializable {
     public abstract String toString();
     
     public abstract Vec getCenter();
-    
-    public abstract void setCenter(Vec c);
 }

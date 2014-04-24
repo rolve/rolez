@@ -30,7 +30,7 @@ public abstract class Barrier {
     // DoBarrier() should cause each thread to wait until all threads
     // reach the barrier. The implementation can vary - see
     // definitions of TournamentBarrier for example.
-    public abstract void DoBarrier(int myid);
+    public abstract void doBarrier(int myid);
     
     // Number of threads to block for.
     public volatile int numThreads;

@@ -23,25 +23,20 @@
 
 package section3.raytracer;
 
-public class Interval implements java.io.Serializable {
-    /*public int number; public int width; public int height; public int yfrom;
-     * public int yto; public int total; */
-    public final int number;
+public class Interval {
+    
     public final int width;
     public final int height;
     public final int yfrom;
     public final int yto;
-    public final int total;
     public final int threadid;
     
-    public Interval(final int number, final int width, final int height,
-            final int yfrom, final int yto, final int total, final int threadid) {
-        this.number = number;
+    public Interval(final int width, final int height, final int yfrom,
+            final int yto, final int threadid) {
         this.width = width;
         this.height = height;
         this.yfrom = yfrom;
         this.yto = yto;
-        this.total = total;
         this.threadid = threadid;
     }
 }

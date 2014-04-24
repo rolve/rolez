@@ -23,7 +23,7 @@
 
 package section3.raytracer;
 
-public class Surface implements java.io.Serializable {
+public class Material {
     public Vec color;
     public double kd;
     public double ks;
@@ -31,7 +31,7 @@ public class Surface implements java.io.Serializable {
     public double kt;
     public double ior;
     
-    public Surface() {
+    public Material() {
         color = new Vec(1, 0, 0);
         kd = 1.0;
         ks = 0.0;

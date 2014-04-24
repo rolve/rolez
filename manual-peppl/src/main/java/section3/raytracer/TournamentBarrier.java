@@ -25,6 +25,15 @@ package section3.raytracer;
 // processes hogging the processor(s)!
 
 public class TournamentBarrier extends Barrier {
+    
+    private static final int maxBusyIter = 1;
+    
+    // Array of flags indicating whether the given process and all those
+    // for which it is responsible have finished. The "sense" of this
+    // array alternates with each barrier, to prevent having to
+    // reinitialise.
+    private volatile boolean[] isDone;
+    
     public TournamentBarrier(final int n) {
         // Superclass constructor should record the number of threads
         // and thread manager.
@@ -32,29 +41,19 @@ public class TournamentBarrier extends Barrier {
         
         // Initialise the IsDone array. The choice of initial value is
         // arbitrary, but must be consistent!
-        IsDone = new boolean[numThreads];
+        isDone = new boolean[numThreads];
         for(int i = 0; i < n; i++) {
-            IsDone[i] = false;
+            isDone[i] = false;
         }
     }
     
-    // Uses the manager's debug function, so this can only be used after
-    // construction!
-    public void debug(final String s) {
-        // System.err.println("Debug message");
-    }
-    
-    public void setMaxBusyIter(final int b) {
-        maxBusyIter = b;
-    }
-    
     @Override
-    public void DoBarrier(final int myid) {
+    public void doBarrier(final int myid) {
         int b;
         // debug("Thread " + myid + " checking in");
         
         int roundmask = 3;
-        final boolean donevalue = !IsDone[myid];
+        final boolean donevalue = !isDone[myid];
         
         while(((myid & roundmask) == 0) && (roundmask < (numThreads << 2))) {
             final int spacing = (roundmask + 1) >> 2;
@@ -62,7 +61,7 @@ public class TournamentBarrier extends Barrier {
                 // debug("Thread " + myid + " waiting for thread " +
                 // (myid+i*spacing));
                 b = maxBusyIter;
-                while(IsDone[myid + i * spacing] != donevalue) {
+                while(isDone[myid + i * spacing] != donevalue) {
                     b--;
                     if(b == 0) {
                         Thread.yield();
@@ -73,9 +72,9 @@ public class TournamentBarrier extends Barrier {
             roundmask = (roundmask << 2) + 3;
         }
         // debug("Thread " + myid + " reporting done");
-        IsDone[myid] = donevalue;
+        isDone[myid] = donevalue;
         b = maxBusyIter;
-        while(IsDone[0] != donevalue) {
+        while(isDone[0] != donevalue) {
             b--;
             if(b == 0) {
                 Thread.yield();
@@ -85,11 +84,4 @@ public class TournamentBarrier extends Barrier {
         // debug("Thread " + myid + " checking out");
         
     }
-    
-    // Array of flags indicating whether the given process and all those
-    // for which it is responsible have finished. The "sense" of this
-    // array alternates with each barrier, to prevent having to
-    // reinitialise.
-    volatile boolean[] IsDone;
-    public int maxBusyIter = 1;
 }

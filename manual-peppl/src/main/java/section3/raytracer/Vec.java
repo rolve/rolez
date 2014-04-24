@@ -26,7 +26,7 @@ package section3.raytracer;
 /**
  * This class reflects the 3d vectors used in 3d computations
  */
-public class Vec implements java.io.Serializable {
+public class Vec {
     
     /**
      * The x coordinate
@@ -59,9 +59,6 @@ public class Vec implements java.io.Serializable {
         z = c;
     }
     
-    /**
-     * Copy constructor
-     */
     public Vec(final Vec a) {
         x = a.x;
         y = a.y;
@@ -80,7 +77,8 @@ public class Vec implements java.io.Serializable {
     /**
      * Add a vector to the current vector
      * 
-     * @param: a The vector to be added
+     * @param a
+     *            The vector to be added
      */
     public final void add(final Vec a) {
         x += a.x;
@@ -89,17 +87,12 @@ public class Vec implements java.io.Serializable {
     }
     
     /**
-     * adds: Returns a new vector such as new = sA + B
-     */
-    public static Vec adds(final double s, final Vec a, final Vec b) {
-        return new Vec(s * a.x + b.x, s * a.y + b.y, s * a.z + b.z);
-    }
-    
-    /**
      * Adds vector such as: this+=sB
      * 
-     * @param: s The multiplier
-     * @param: b The vector to be added
+     * @param s
+     *            The multiplier
+     * @param b
+     *            The vector to be added
      */
     public final void adds(final double s, final Vec b) {
         x += s * b.x;
@@ -109,6 +102,12 @@ public class Vec implements java.io.Serializable {
     
     /**
      * Substracs two vectors
+     * 
+     * @param a
+     *            first vector
+     * @param b
+     *            second vector
+     * @return resulting vector
      */
     public static Vec sub(final Vec a, final Vec b) {
         return new Vec(a.x - b.x, a.y - b.y, a.z - b.z);
@@ -119,6 +118,11 @@ public class Vec implements java.io.Serializable {
      * for speedup with local variables -there were too much Vec to be gc'ed
      * Consumes about 10 units, whether sub consumes nearly 999 units!! cf
      * thinking in java p. 831,832
+     * 
+     * @param a
+     *            first vector
+     * @param b
+     *            second vector
      */
     public final void sub2(final Vec a, final Vec b) {
         this.x = a.x - b.x;
@@ -163,15 +167,13 @@ public class Vec implements java.io.Serializable {
         z = -z;
     }
     
-    public final double normalize() {
-        double len;
-        len = Math.sqrt(x * x + y * y + z * z);
+    public final void normalize() {
+        final double len = Math.sqrt(x * x + y * y + z * z);
         if(len > 0.0) {
             x /= len;
             y /= len;
             z /= len;
         }
-        return len;
     }
     
     @Override

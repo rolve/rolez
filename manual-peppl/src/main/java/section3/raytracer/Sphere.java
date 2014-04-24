@@ -23,17 +23,17 @@
 
 package section3.raytracer;
 
-public class Sphere extends Primitive implements java.io.Serializable {
-    Vec c;
-    double r, r2;
-    Vec v, b; // temporary vecs used to minimize the memory load
-            
+public class Sphere extends Primitive {
+    private final Vec c;
+    private final double r, r2;
+    
+    private final Vec v = new Vec(); // temporary vec used to minimize the
+                                     // memory load
+    
     public Sphere(final Vec center, final double radius) {
         c = center;
         r = radius;
         r2 = r * r;
-        v = new Vec();
-        b = new Vec();
     }
     
     @Override
@@ -55,16 +55,16 @@ public class Sphere extends Primitive implements java.io.Serializable {
         ip.t = t;
         ip.enter = Vec.dot(v, v) > r2 + 1e-6 ? 1 : 0;
         ip.prim = this;
-        ip.surf = surf;
+        ip.mat = mat;
         return ip;
     }
     
     @Override
     public Vec normal(final Vec p) {
-        Vec r;
-        r = Vec.sub(p, c);
-        r.normalize();
-        return r;
+        Vec result;
+        result = Vec.sub(p, c);
+        result.normalize();
+        return result;
     }
     
     @Override
@@ -75,10 +75,5 @@ public class Sphere extends Primitive implements java.io.Serializable {
     @Override
     public Vec getCenter() {
         return c;
-    }
-    
-    @Override
-    public void setCenter(final Vec c) {
-        this.c = c;
     }
 }

@@ -40,8 +40,8 @@ public class JGFRayTracerBenchSizeB {
         
         JGFInstrumentor.printHeader(3, 1, nthreads);
         
-        final JGFRayTracerBench rtb = new JGFRayTracerBench(nthreads);
-        rtb.JGFrun(1);
+        final JGFRayTracerBench rtb = new JGFRayTracerBench(nthreads, 1);
+        rtb.JGFrun();
         
     }
 }

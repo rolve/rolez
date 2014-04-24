@@ -25,7 +25,6 @@ package section3.raytracer;
 
 public class RayTracer {
     
-    Scene scene;
     /**
      * Lights for the rendering scene
      */
@@ -76,68 +75,11 @@ public class RayTracer {
      */
     int width;
     
-    int datasizes[] = {150, 500};
-    
     long checksum = 0;
     
     int size;
     
     int numobjects;
-    
-    /**
-     * Create and initialize the scene for the rendering picture.
-     * 
-     * @return The scene just created
-     */
-    
-    Scene createScene() {
-        final int x = 0;
-        final int y = 0;
-        
-        final Scene scene = new Scene();
-        
-        /* create spheres */
-        
-        Primitive p;
-        final int nx = 4;
-        final int ny = 4;
-        final int nz = 4;
-        for(int i = 0; i < nx; i++) {
-            for(int j = 0; j < ny; j++) {
-                for(int k = 0; k < nz; k++) {
-                    final double xx = 20.0 / (nx - 1) * i - 10.0;
-                    final double yy = 20.0 / (ny - 1) * j - 10.0;
-                    final double zz = 20.0 / (nz - 1) * k - 10.0;
-                    
-                    p = new Sphere(new Vec(xx, yy, zz), 3);
-                    // p.setColor(i/(double) (nx-1), j/(double)(ny-1),
-                    // k/(double) (nz-1));
-                    p.setColor(0, 0, (i + j) / (double) (nx + ny - 2));
-                    p.surf.shine = 15.0;
-                    p.surf.ks = 1.5 - 1.0;
-                    p.surf.kt = 1.5 - 1.0;
-                    scene.addObject(p);
-                }
-            }
-        }
-        
-        /* Creates five lights for the scene */
-        scene.addLight(new Light(100, 100, -50, 1.0));
-        scene.addLight(new Light(-100, 100, -50, 1.0));
-        scene.addLight(new Light(100, -100, -50, 1.0));
-        scene.addLight(new Light(-100, -100, -50, 1.0));
-        scene.addLight(new Light(200, 200, 0, 1.0));
-        
-        /* Creates a View (viewing point) for the rendering scene */
-        final View v = new View(new Vec(x, 20, -30), new Vec(x, y, 0), new Vec(
-                0, 1, 0), 1.0, 35.0 * 3.14159265 / 180.0, 1.0);
-        /*v.from = new Vec(x, y, -30); v.at = new Vec(x, y, -15); v.up = new
-         * Vec(0, 1, 0); v.angle = 35.0 * 3.14159265 / 180.0; v.aspect = 1.0;
-         * v.dist = 1.0; */
-        scene.setView(v);
-        
-        return scene;
-    }
     
     public void setScene(final Scene scene) {
         // Get the objects count
@@ -161,12 +103,11 @@ public class RayTracer {
         view = scene.getView();
     }
     
-    public void render(final Interval interval) {
+    public void render(final Interval interval, final int nthreads) {
         
         // Screen variables
         final int row[] = new int[interval.width
                 * (interval.yto - interval.yfrom)];
-        int pixCounter = 0; // iterator
         
         // Rendering variables
         int x, y, red, green, blue;
@@ -202,8 +143,8 @@ public class RayTracer {
         // All loops are reversed for 'speedup' (cf. thinking in java p331)
         
         // For each line
-        
-        for(y = interval.yfrom + interval.threadid; y < interval.yto; y += JGFRayTracerBench.nthreads) {
+        int pixCounter = 0;
+        for(y = interval.yfrom + interval.threadid; y < interval.yto; y += nthreads) {
             
             ylen = 2.0 * y / interval.width - 1.0;
             // System.out.println("Doing line " + y);
@@ -239,7 +180,7 @@ public class RayTracer {
         
     }
     
-    boolean intersect(final Ray r, final double maxt) {
+    private boolean intersect(final Ray r) {
         Isect tp;
         int i, nhits;
         
@@ -251,7 +192,7 @@ public class RayTracer {
             if(tp != null && tp.t < inter.t) {
                 inter.t = tp.t;
                 inter.prim = tp.prim;
-                inter.surf = tp.surf;
+                inter.mat = tp.mat;
                 inter.enter = tp.enter;
                 nhits++;
             }
@@ -266,10 +207,8 @@ public class RayTracer {
      *            The ray
      * @return Returns 1 if there is a shadow, 0 if there isn't
      */
-    int Shadow(final Ray r, final double tmax) {
-        if(intersect(r, tmax))
-            return 0;
-        return 1;
+    private boolean shadow(final Ray r) {
+        return !intersect(r);
     }
     
     /**
@@ -277,7 +216,7 @@ public class RayTracer {
      * 
      * @return The specular direction
      */
-    Vec SpecularDirection(final Vec I, final Vec N) {
+    private static Vec specularDirection(final Vec I, final Vec N) {
         Vec r;
         r = Vec.comb(1.0 / Math.abs(Vec.dot(I, N)), I, 2.0, N);
         r.normalize();
@@ -287,7 +226,8 @@ public class RayTracer {
     /**
      * Return the Vector's transmission direction
      */
-    Vec TransDir(final Surface m1, final Surface m2, final Vec I, final Vec N) {
+    private static Vec transDir(final Material m1, final Material m2,
+            final Vec I, final Vec N) {
         double n1, n2, eta, c1, cs2;
         Vec r;
         n1 = m1 == null ? 1.0 : m1.ior;
@@ -307,42 +247,40 @@ public class RayTracer {
      * 
      * @return The color in Vec form (rgb)
      */
-    Vec shade(final int level, final double weight, final Vec P, final Vec N,
-            final Vec I, final Isect hit) {
-        final double n1, n2, eta, c1, cs2;
-        final Vec r;
+    private Vec shade(final int level, final double weight, final Vec P,
+            final Vec N, final Vec I, final Isect hit) {
         Vec tcol;
         Vec R;
-        double t, diff, spec;
-        Surface surf;
+        double diff, spec;
+        Material mat;
         Vec col;
         int l;
         
         col = new Vec();
-        surf = hit.surf;
+        mat = hit.mat;
         R = new Vec();
-        if(surf.shine > 1e-6) {
-            R = SpecularDirection(I, N);
+        if(mat.shine > 1e-6) {
+            R = specularDirection(I, N);
         }
         
         // Computes the effectof each light
         for(l = 0; l < lights.length; l++) {
             L.sub2(lights[l].pos, P);
             if(Vec.dot(N, L) >= 0.0) {
-                t = L.normalize();
+                L.normalize();
                 
                 tRay.P = P;
                 tRay.D = L;
                 
                 // Checks if there is a shadow
-                if(Shadow(tRay, t) > 0) {
-                    diff = Vec.dot(N, L) * surf.kd * lights[l].brightness;
+                if(shadow(tRay)) {
+                    diff = Vec.dot(N, L) * mat.kd * lights[l].brightness;
                     
-                    col.adds(diff, surf.color);
-                    if(surf.shine > 1e-6) {
+                    col.adds(diff, mat.color);
+                    if(mat.shine > 1e-6) {
                         spec = Vec.dot(R, L);
                         if(spec > 1e-6) {
-                            spec = Math.pow(spec, surf.shine);
+                            spec = Math.pow(spec, mat.shine);
                             col.x += spec;
                             col.y += spec;
                             col.z += spec;
@@ -353,31 +291,26 @@ public class RayTracer {
         } // for
         
         tRay.P = P;
-        if(surf.ks * weight > 1e-3) {
-            tRay.D = SpecularDirection(I, N);
-            tcol = trace(level + 1, surf.ks * weight, tRay);
-            col.adds(surf.ks, tcol);
+        if(mat.ks * weight > 1e-3) {
+            tRay.D = specularDirection(I, N);
+            tcol = trace(level + 1, mat.ks * weight, tRay);
+            col.adds(mat.ks, tcol);
         }
-        if(surf.kt * weight > 1e-3) {
+        if(mat.kt * weight > 1e-3) {
             if(hit.enter > 0)
-                tRay.D = TransDir(null, surf, I, N);
+                tRay.D = transDir(null, mat, I, N);
             else
-                tRay.D = TransDir(surf, null, I, N);
-            tcol = trace(level + 1, surf.kt * weight, tRay);
-            col.adds(surf.kt, tcol);
+                tRay.D = transDir(mat, null, I, N);
+            tcol = trace(level + 1, mat.kt * weight, tRay);
+            col.adds(mat.kt, tcol);
         }
-        
-        // garbaging...
-        tcol = null;
-        surf = null;
-        
         return col;
     }
     
     /**
      * Launches a ray
      */
-    Vec trace(final int level, final double weight, final Ray r) {
+    private Vec trace(final int level, final double weight, final Ray r) {
         Vec P, N;
         boolean hit;
         
@@ -386,7 +319,7 @@ public class RayTracer {
             return new Vec();
         }
         
-        hit = intersect(r, 1e6);
+        hit = intersect(r);
         if(hit) {
             P = r.point(inter.t);
             N = inter.prim.normal(P);
@@ -400,23 +333,22 @@ public class RayTracer {
     }
     
     public static void main(final String argv[]) {
-        
         final RayTracer rt = new RayTracer();
+        rt.height = 100;
+        rt.width = 100;
         
         // create the objects to be rendered
-        rt.scene = rt.createScene();
+        final Scene scene = Scene.createScene();
         
         // get lights, objects etc. from scene.
-        rt.setScene(rt.scene);
+        rt.setScene(scene);
         
         // Set interval to be rendered to the whole picture
         // (overkill, but will be useful to retain this for parallel versions)
-        final Interval interval = new Interval(0, rt.width, rt.height, 0,
-                rt.height, 1, 0);
+        final Interval interval = new Interval(rt.width, rt.height, 0,
+                rt.height, 0);
         
         // Do the business!
-        rt.render(interval);
-        
+        rt.render(interval, 1);
     }
-    
 }
