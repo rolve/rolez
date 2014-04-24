@@ -66,7 +66,7 @@ public class MonteCarloPath extends PathId {
     /**
      * Number of time steps for which the simulation should act over.
      */
-    private final int nTimeSteps;
+    private final int timeSteps;
     
     // ------------------------------------------------------------------------
     // Constructors.
@@ -85,9 +85,9 @@ public class MonteCarloPath extends PathId {
         
         this.expectedReturnRate = initAllTasks.get_expectedReturnRate();
         this.volatility = initAllTasks.get_volatility();
-        this.nTimeSteps = initAllTasks.get_nTimeSteps();
-        this.pathValue = new double[initAllTasks.get_nTimeSteps()];
-        this.fluctuations = new double[initAllTasks.get_nTimeSteps()];
+        this.timeSteps = initAllTasks.get_timeSteps();
+        this.pathValue = new double[initAllTasks.get_timeSteps()];
+        this.fluctuations = new double[initAllTasks.get_timeSteps()];
         
         set_prompt("MonteCarloPath> ");
         set_DEBUG(true);
@@ -99,20 +99,16 @@ public class MonteCarloPath extends PathId {
      * @return Value of instance variable <code>pathValue</code>.
      */
     public double[] get_pathValue() {
-        if(this.pathValue == null)
-            throw new DemoException("Variable pathValue is undefined!");
         return(this.pathValue);
     }
     
     /**
-     * Accessor method for private instance variable <code>nTimeSteps</code>.
+     * Accessor method for private instance variable <code>timeSteps</code>.
      *
-     * @return Value of instance variable <code>nTimeSteps</code>.
+     * @return Value of instance variable <code>timeSteps</code>.
      */
-    public int get_nTimeSteps() {
-        if(this.nTimeSteps == 0)
-            throw new DemoException("Variable nTimeSteps is undefined!");
-        return(this.nTimeSteps);
+    public int get_timeSteps() {
+        return(this.timeSteps);
     }
     
     /**
@@ -127,7 +123,7 @@ public class MonteCarloPath extends PathId {
      *            sequence of Gaussian fluctuations.
      */
     public void computeFluctuationsGaussian(final long randomSeed) {
-        if(nTimeSteps > fluctuations.length)
+        if(timeSteps > fluctuations.length)
             throw new DemoException(
                     "Number of timesteps requested is greater than the allocated array!");
         //
@@ -146,7 +142,7 @@ public class MonteCarloPath extends PathId {
                 * get_dTime();
         final double sd = volatility * Math.sqrt(get_dTime());
         double gauss;
-        for(int i = 0; i < nTimeSteps; i++) {
+        for(int i = 0; i < timeSteps; i++) {
             gauss = rnd.nextGaussian();
             //
             // Now map this onto a general Gaussian of given mean and variance.
@@ -164,7 +160,7 @@ public class MonteCarloPath extends PathId {
      */
     public void computePathValue(final double startValue) {
         pathValue[0] = startValue;
-        for(int i = 1; i < nTimeSteps; i++) {
+        for(int i = 1; i < timeSteps; i++) {
             pathValue[i] = pathValue[i - 1] * Math.exp(fluctuations[i]);
         }
     }

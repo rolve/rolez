@@ -34,7 +34,7 @@ public class ToInitAllTasks {
     private final double dTime;
     private final double expectedReturnRate;
     private final double volatility;
-    private final int nTimeSteps;
+    private final int timeSteps;
     private final double pathStartValue;
     
     /**
@@ -44,26 +44,26 @@ public class ToInitAllTasks {
      * @param obj
      *            Object used to define the instance variables which should be
      *            carried over to this object.
-     * @param nTimeSteps
+     * @param timeSteps
      *            The number of time steps which the Monte Carlo generator
      *            should make.
      * @param pathStartValue
      *            The stock price value to use at the start of each Monte Carlo
      *            simulation path.
      */
-    public ToInitAllTasks(final ReturnPath obj, final int nTimeSteps,
+    public ToInitAllTasks(final ReturnPath obj, final int timeSteps,
             final double pathStartValue) {
-        //
+        
         // Instance variables defined in the PathId object.
         this.name = obj.get_name();
         this.startDate = obj.get_startDate();
         this.endDate = obj.get_endDate();
         this.dTime = obj.get_dTime();
-        //
+        
         // Instance variables defined in ReturnPath object.
         this.expectedReturnRate = obj.get_expectedReturnRate();
         this.volatility = obj.get_volatility();
-        this.nTimeSteps = nTimeSteps;
+        this.timeSteps = timeSteps;
         this.pathStartValue = pathStartValue;
     }
     
@@ -123,12 +123,12 @@ public class ToInitAllTasks {
     }
     
     /**
-     * Accessor method for private instance variable <code>nTimeSteps</code>.
+     * Accessor method for private instance variable <code>timeSteps</code>.
      *
-     * @return Value of instance variable <code>nTimeSteps</code>.
+     * @return Value of instance variable <code>timeSteps</code>.
      */
-    public int get_nTimeSteps() {
-        return(this.nTimeSteps);
+    public int get_timeSteps() {
+        return(this.timeSteps);
     }
     
     /**

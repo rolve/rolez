@@ -22,66 +22,68 @@ package section3.montecarlo;
 
 import jgfutil.JGFInstrumentor;
 
-public class JGFMonteCarloBench extends CallAppDemo {
+public class JGFMonteCarloBench {
     
-    public JGFMonteCarloBench(final int nthreads) {
-        super(nthreads);
+    private static final String DIR_NAME = "Data";
+    private static final String FILE_NAME = "hitData";
+    
+    private static final int TIME_STEPS = 1000;
+    private static final int DATA_SIZES[] = {10000, 60000};
+    
+    private final int nthreads;
+    private final int size;
+    private final int runs;
+    
+    private MonteCarloApp app = null;
+    
+    public JGFMonteCarloBench(final int nthreads, final int size) {
+        this.nthreads = nthreads;
+        this.size = size;
+        this.runs = DATA_SIZES[size];
     }
     
-    public void JGFinitialise() {
-        
-        initialise();
-        
-    }
-    
-    public void JGFapplication() {
-        
-        JGFInstrumentor.startTimer("Section3:MonteCarlo:Run");
-        
-        runiters();
-        
-        JGFInstrumentor.stopTimer("Section3:MonteCarlo:Run");
-        
-        presults();
-    }
-    
-    public void JGFvalidate() {
-        final double refval[] = {-0.0333976656762814, -0.03215796752868655};
-        final double dev = Math.abs(ap.JGFavgExpectedReturnRateMC
-                - refval[size]);
-        if(dev > 1.0e-12) {
-            System.out.println("Validation failed");
-            System.out.println(" expectedReturnRate= "
-                    + ap.JGFavgExpectedReturnRateMC + "  " + dev + "  " + size);
-        }
-    }
-    
-    public void JGFtidyup() {
-        
-        System.gc();
-    }
-    
-    public void JGFrun(final int theSize) {
-        this.size = theSize;
-        
-        JGFInstrumentor.addTimer("Section3:MonteCarlo:Total", "Solutions",
-                theSize);
-        JGFInstrumentor.addTimer("Section3:MonteCarlo:Run", "Samples", theSize);
+    public void runAll() {
+        JGFInstrumentor
+                .addTimer("Section3:MonteCarlo:Total", "Solutions", size);
+        JGFInstrumentor.addTimer("Section3:MonteCarlo:Run", "Samples", size);
         
         JGFInstrumentor.startTimer("Section3:MonteCarlo:Total");
         
-        JGFinitialise();
-        JGFapplication();
-        JGFvalidate();
-        JGFtidyup();
+        initialize();
+        run();
+        validate();
         
         JGFInstrumentor.stopTimer("Section3:MonteCarlo:Total");
         
-        JGFInstrumentor.addOpsToTimer("Section3:MonteCarlo:Run", input[1]);
+        JGFInstrumentor.addOpsToTimer("Section3:MonteCarlo:Run", runs);
         JGFInstrumentor.addOpsToTimer("Section3:MonteCarlo:Total", 1);
         
         JGFInstrumentor.printTimer("Section3:MonteCarlo:Run");
         JGFInstrumentor.printTimer("Section3:MonteCarlo:Total");
     }
     
+    public void initialize() {
+        app = new MonteCarloApp(DIR_NAME, FILE_NAME, TIME_STEPS, runs, nthreads);
+    }
+    
+    public void run() {
+        JGFInstrumentor.startTimer("Section3:MonteCarlo:Run");
+        app.runTasks();
+        JGFInstrumentor.stopTimer("Section3:MonteCarlo:Run");
+        
+        app.processResults();
+    }
+    
+    public void validate() {
+        final double refval[] = {-0.0333976656762814, -0.03215796752868655};
+        final double dev = Math.abs(app.JGFavgExpectedReturnRateMC
+                - refval[size]);
+        if(dev > 1.0e-12) {
+            System.out.println("Validation failed");
+            System.out
+                    .println(" expectedReturnRate= "
+                            + app.JGFavgExpectedReturnRateMC + "  " + dev
+                            + "  " + size);
+        }
+    }
 }

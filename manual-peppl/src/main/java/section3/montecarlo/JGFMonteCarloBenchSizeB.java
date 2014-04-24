@@ -9,50 +9,31 @@
  *                                at                                       *
  *                                                                         *
  *                Edinburgh Parallel Computing Centre                      *
- *                                                                         *
+ *                                                                         * 
  *                email: epcc-javagrande@epcc.ed.ac.uk                     *
  *                                                                         *
- *      Original version of this code by Hon Yau (hwyau@epcc.ed.ac.uk)     *
  *                                                                         *
  *      This version copyright (c) The University of Edinburgh, 2001.      *
  *                         All rights reserved.                            *
  *                                                                         *
  **************************************************************************/
-
 package section3.montecarlo;
 
-/**
- * Wrapper code to invoke the Application demonstrator.
- *
- * @author H W Yau
- * @version $Revision: 1.19 $ $Date: 1999/02/16 19:10:02 $
- */
-public class CallAppDemo {
-    public int size;
-    int datasizes[] = {10000, 60000};
-    int input[] = new int[2];
-    int nthreads;
-    AppDemo ap = null;
+import jgfutil.JGFInstrumentor;
+
+public class JGFMonteCarloBenchSizeB {
     
-    public CallAppDemo(final int nthreads) {
-        this.nthreads = nthreads;
-    }
-    
-    public void initialise() {
-        input[0] = 1000;
-        input[1] = datasizes[size];
+    public static void main(final String argv[]) {
+        int nthreads;
+        if(argv.length != 0)
+            nthreads = Integer.parseInt(argv[0]);
+        else {
+            System.out
+                    .println("The no of threads has not been specified, defaulting to 1\n");
+            nthreads = 1;
+        }
         
-        final String dirName = "Data";
-        final String filename = "hitData";
-        ap = new AppDemo(dirName, filename, (input[0]), (input[1]), nthreads);
+        JGFInstrumentor.printHeader(3, 1, nthreads);
+        new JGFMonteCarloBench(nthreads, 1).runAll();
     }
-    
-    public void runiters() {
-        ap.runTasks();
-    }
-    
-    public void presults() {
-        ap.processResults();
-    }
-    
 }

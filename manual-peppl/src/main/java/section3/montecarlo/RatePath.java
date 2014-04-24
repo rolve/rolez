@@ -100,7 +100,7 @@ public class RatePath extends PathId {
         
         // Fields pertaining to RatePath object itself.
         pathValue = mc.get_pathValue();
-        nAcceptedPathValue = mc.get_nTimeSteps();
+        nAcceptedPathValue = mc.get_timeSteps();
     }
     
     /**

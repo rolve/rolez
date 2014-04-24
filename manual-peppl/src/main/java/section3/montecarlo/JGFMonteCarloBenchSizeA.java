@@ -1,5 +1,3 @@
-package section3;
-
 /**************************************************************************
  *                                                                         *
  *         Java Grande Forum Benchmark Suite - Thread Version 1.0          *
@@ -19,30 +17,23 @@ package section3;
  *                         All rights reserved.                            *
  *                                                                         *
  **************************************************************************/
+package section3.montecarlo;
 
 import jgfutil.JGFInstrumentor;
-import section3.montecarlo.JGFMonteCarloBench;
 
-public class JGFMonteCarloBenchSizeB {
-    
-    public static int nthreads;
+public class JGFMonteCarloBenchSizeA {
     
     public static void main(final String argv[]) {
-        
-        if(argv.length != 0) {
+        int nthreads;
+        if(argv.length != 0)
             nthreads = Integer.parseInt(argv[0]);
-        }
         else {
             System.out
-                    .println("The no of threads has not been specified, defaulting to 1");
-            System.out.println("  ");
+                    .println("The no of threads has not been specified, defaulting to 1\n");
             nthreads = 1;
         }
         
-        JGFInstrumentor.printHeader(3, 1, nthreads);
-        
-        final JGFMonteCarloBench mc = new JGFMonteCarloBench(nthreads);
-        mc.JGFrun(1);
-        
+        JGFInstrumentor.printHeader(3, 0, nthreads);
+        new JGFMonteCarloBench(nthreads, 0).runAll();
     }
 }

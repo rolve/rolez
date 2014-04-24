@@ -40,12 +40,11 @@ import java.util.List;
  * @author H W Yau
  * @version $Revision: 1.12 $ $Date: 1999/02/16 19:13:38 $
  */
-public class AppDemo extends Universal {
+public class MonteCarloApp extends Universal {
     
     private static final double pathStartValue = 100.0;
     
-    public double JGFavgExpectedReturnRateMC = 0.0;
-    private final int nRunsMC;
+    private final int runs;
     private final int nthreads;
     
     private final ToInitAllTasks initAllTasks;
@@ -53,13 +52,15 @@ public class AppDemo extends Universal {
     public List<Long> seeds;
     public List<Double> results;
     
-    public AppDemo(final String dataDirname, final String dataFilename,
-            final int nTimeStepsMC, final int nRunsMC, final int nthreads) {
-        this.nRunsMC = nRunsMC;
+    public double JGFavgExpectedReturnRateMC = 0.0;
+    
+    public MonteCarloApp(final String dataDirname, final String dataFilename,
+            final int timeSteps, final int runs, final int nthreads) {
+        this.runs = runs;
         this.nthreads = nthreads;
         
-        seeds = new ArrayList<>(nRunsMC);
-        results = new ArrayList<>(nRunsMC);
+        seeds = new ArrayList<>(runs);
+        results = new ArrayList<>(runs);
         
         set_prompt("AppDemo> ");
         set_DEBUG(true);
@@ -71,10 +72,10 @@ public class AppDemo extends Universal {
         returnP.estimatePath();
         
         // Now prepare for MC runs.
-        initAllTasks = new ToInitAllTasks(returnP, nTimeStepsMC, pathStartValue);
+        initAllTasks = new ToInitAllTasks(returnP, timeSteps, pathStartValue);
         
         // Now create the seeds for the tasks.
-        for(int i = 0; i < nRunsMC; i++)
+        for(int i = 0; i < runs; i++)
             seeds.add((long) i * 11);
     }
     
@@ -82,13 +83,12 @@ public class AppDemo extends Universal {
         final AppDemoTask tasks[] = new AppDemoTask[nthreads];
         final Thread threads[] = new Thread[nthreads];
         for(int i = 1; i < nthreads; i++) {
-            tasks[i] = new AppDemoTask(i, nRunsMC, nthreads, seeds,
-                    initAllTasks);
+            tasks[i] = new AppDemoTask(i, runs, nthreads, seeds, initAllTasks);
             threads[i] = new Thread(tasks[i]);
             threads[i].start();
         }
         
-        final AppDemoTask task = new AppDemoTask(0, nRunsMC, nthreads, seeds,
+        final AppDemoTask task = new AppDemoTask(0, runs, nthreads, seeds,
                 initAllTasks);
         task.run();
         results.addAll(task.getResults());
@@ -108,15 +108,15 @@ public class AppDemo extends Universal {
      */
     public void processResults() {
         double avgExpectedReturnRateMC = 0.0;
-        if(nRunsMC != results.size()) {
+        if(runs != results.size()) {
             errPrintln("Fatal: TaskRunner managed to finish with no all the results gathered in!");
             System.exit(-1);
         }
         
-        for(int i = 0; i < nRunsMC; i++)
+        for(int i = 0; i < runs; i++)
             avgExpectedReturnRateMC += results.get(i);
         
-        avgExpectedReturnRateMC /= nRunsMC;
+        avgExpectedReturnRateMC /= runs;
         JGFavgExpectedReturnRateMC = avgExpectedReturnRateMC;
     }
     
