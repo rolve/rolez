@@ -33,19 +33,12 @@ package section3.montecarlo;
  * @author H W Yau
  * @version $Revision: 1.21 $ $Date: 1999/02/16 18:52:41 $
  */
-public class ReturnPath extends PathId {
+public class ReturnPath extends Path {
     
-    // ------------------------------------------------------------------------
-    // Instance variables.
-    // ------------------------------------------------------------------------
     /**
      * An instance variable, for storing the return values.
      */
     private final double[] pathValue;
-    /**
-     * The number of accepted values in the rate path.
-     */
-    private final int nPathValue;
     /**
      * Value for the expected return rate.
      */
@@ -80,15 +73,11 @@ public class ReturnPath extends PathId {
      * @param pathValue
      *            for creating a return path with a precomputed path value.
      *            Indexed from 1 to <code>nPathArray-1</code>.
-     * @param nPathValue
-     *            the number of accepted data points in the array.
      */
     public ReturnPath(final String name, final int startDate,
-            final int endDate, final double dTime, final double[] pathValue,
-            final int nPathValue) {
+            final int endDate, final double dTime, final double[] pathValue) {
         super(name, startDate, endDate, dTime);
         this.pathValue = pathValue;
-        this.nPathValue = nPathValue;
     }
     
     /**
@@ -114,12 +103,22 @@ public class ReturnPath extends PathId {
         return(this.volatility);
     }
     
-    // ------------------------------------------------------------------------
+    /**
+     * A single method for invoking all the necessary methods which estimate the
+     * parameters.
+     */
+    public void estimatePath() {
+        computeMean();
+        computeVariance();
+        computeExpectedReturnRate();
+        computeVolatility();
+    }
+    
     /**
      * Method to calculate the expected return rate from the return data, using
      * the relationship: \mu = \frac{\bar{u}}{\Delta t} + \frac{\sigma^2}{2}
      */
-    public void computeExpectedReturnRate() {
+    private void computeExpectedReturnRate() {
         this.expectedReturnRate = mean / get_dTime() + 0.5 * volatility2;
     }
     
@@ -128,7 +127,7 @@ public class ReturnPath extends PathId {
      * from the return path data, using the relationship, based on the
      * precomputed <code>variance</code>. \sigma^2 = s^2\Delta t
      */
-    public void computeVolatility() {
+    private void computeVolatility() {
         if(this.variance == Double.NaN)
             throw new DemoException("Variable variance is not defined!");
         this.volatility2 = variance / get_dTime();
@@ -139,39 +138,23 @@ public class ReturnPath extends PathId {
      * Method to calculate the mean of the return, for use by other
      * calculations.
      */
-    public void computeMean() {
-        if(this.nPathValue == 0)
-            throw new DemoException("Variable nPathValue is undefined!");
+    private void computeMean() {
         this.mean = 0.0;
-        for(int i = 1; i < nPathValue; i++) {
+        for(int i = 1; i < pathValue.length; i++) {
             mean += pathValue[i];
         }
-        this.mean /= (nPathValue - 1.0);
+        this.mean /= (pathValue.length - 1.0);
     }
     
     /**
      * Method to calculate the variance of the retrun, for use by other
      * calculations.
      */
-    public void computeVariance() {
-        if(this.mean == Double.NaN || this.nPathValue == 0)
-            throw new DemoException(
-                    "Variable mean and/or nPathValue are undefined!");
+    private void computeVariance() {
         this.variance = 0.0;
-        for(int i = 1; i < nPathValue; i++) {
+        for(int i = 1; i < pathValue.length; i++) {
             variance += (pathValue[i] - mean) * (pathValue[i] - mean);
         }
-        this.variance /= (nPathValue - 1.0);
-    }
-    
-    /**
-     * A single method for invoking all the necessary methods which estimate the
-     * parameters.
-     */
-    public void estimatePath() {
-        computeMean();
-        computeVariance();
-        computeExpectedReturnRate();
-        computeVolatility();
+        this.variance /= (pathValue.length - 1.0);
     }
 }

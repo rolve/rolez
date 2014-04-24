@@ -34,18 +34,8 @@ import java.util.Random;
  * @author H W Yau
  * @version $Revision: 1.18 $ $Date: 1999/02/16 18:51:28 $
  */
-public class MonteCarloPath extends PathId {
+public class MonteCarloPath extends Path {
     
-    /**
-     * Class variable for determining which field in the stock data should be
-     * used. This is currently set to point to the 'closing price', as defined
-     * in class RatePath.
-     */
-    public static final int DATUMFIELD = RatePath.DATUMFIELD;
-    
-    // ------------------------------------------------------------------------
-    // Instance variables.
-    // ------------------------------------------------------------------------
     /**
      * Random fluctuations generated as a series of random numbers with given
      * distribution.
@@ -63,31 +53,15 @@ public class MonteCarloPath extends PathId {
      * Value for the volatility, for use in the generation of the random path.
      */
     private final double volatility;
-    /**
-     * Number of time steps for which the simulation should act over.
-     */
-    private final int timeSteps;
     
-    // ------------------------------------------------------------------------
-    // Constructors.
-    // ------------------------------------------------------------------------
-    /**
-     * Default constructor. Needed by the HPT library to start create new
-     * instances of this class. The instance variables for this should then be
-     * initialised with the <code>setInitAllTasks()</code> method.
-     * 
-     * @param initAllTasks
-     *            task parameters
-     */
-    public MonteCarloPath(final ToInitAllTasks initAllTasks) {
-        super(initAllTasks.get_name(), initAllTasks.get_startDate(),
-                initAllTasks.get_endDate(), initAllTasks.get_dTime());
+    public MonteCarloPath(final PathParameters pathParams) {
+        super(pathParams.get_name(), pathParams.get_startDate(),
+                pathParams.get_endDate(), pathParams.get_dTime());
         
-        this.expectedReturnRate = initAllTasks.get_expectedReturnRate();
-        this.volatility = initAllTasks.get_volatility();
-        this.timeSteps = initAllTasks.get_timeSteps();
-        this.pathValue = new double[initAllTasks.get_timeSteps()];
-        this.fluctuations = new double[initAllTasks.get_timeSteps()];
+        this.expectedReturnRate = pathParams.get_expectedReturnRate();
+        this.volatility = pathParams.get_volatility();
+        this.pathValue = new double[pathParams.get_timeSteps()];
+        this.fluctuations = new double[pathParams.get_timeSteps()];
     }
     
     /**
@@ -97,15 +71,6 @@ public class MonteCarloPath extends PathId {
      */
     public double[] get_pathValue() {
         return(this.pathValue);
-    }
-    
-    /**
-     * Accessor method for private instance variable <code>timeSteps</code>.
-     *
-     * @return Value of instance variable <code>timeSteps</code>.
-     */
-    public int get_timeSteps() {
-        return(this.timeSteps);
     }
     
     /**
@@ -120,10 +85,7 @@ public class MonteCarloPath extends PathId {
      *            sequence of Gaussian fluctuations.
      */
     public void computeFluctuationsGaussian(final long randomSeed) {
-        if(timeSteps > fluctuations.length)
-            throw new DemoException(
-                    "Number of timesteps requested is greater than the allocated array!");
-        //
+        
         // First, make use of the passed in seed value.
         Random rnd;
         if(randomSeed == -1) {
@@ -132,16 +94,16 @@ public class MonteCarloPath extends PathId {
         else {
             rnd = new Random(randomSeed);
         }
-        //
+        
         // Determine the mean and standard-deviation, from the mean-drift and
         // volatility.
         final double mean = (expectedReturnRate - 0.5 * volatility * volatility)
                 * get_dTime();
         final double sd = volatility * Math.sqrt(get_dTime());
         double gauss;
-        for(int i = 0; i < timeSteps; i++) {
+        for(int i = 0; i < fluctuations.length; i++) {
             gauss = rnd.nextGaussian();
-            //
+            
             // Now map this onto a general Gaussian of given mean and variance.
             fluctuations[i] = mean + sd * gauss;
         }
@@ -157,7 +119,7 @@ public class MonteCarloPath extends PathId {
      */
     public void computePathValue(final double startValue) {
         pathValue[0] = startValue;
-        for(int i = 1; i < timeSteps; i++) {
+        for(int i = 1; i < pathValue.length; i++) {
             pathValue[i] = pathValue[i - 1] * Math.exp(fluctuations[i]);
         }
     }

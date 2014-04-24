@@ -22,57 +22,52 @@
 package section3.montecarlo;
 
 /**
- * Class for defining the initialisation data for all tasks.
+ * Base class for all the security objects, namely in terms of providing a
+ * consistent means of identifying each such object. Also provides some methods
+ * for writing out debug messages.
  *
  * @author H W Yau
- * @version $Revision: 1.10 $ $Date: 1999/02/16 18:52:53 $
+ * @version $Revision: 1.13 $ $Date: 1999/02/16 18:51:58 $
  */
-public class ToInitAllTasks {
-    private final String name;
-    private final int startDate;
-    private final int endDate;
-    private final double dTime;
-    private final double expectedReturnRate;
-    private final double volatility;
-    private final int timeSteps;
-    private final double pathStartValue;
+public class Path {
     
     /**
-     * Another constructor, slightly easier to use by having slightly fewer
-     * arguments. Makes use of the "ReturnPath" object to accomplish this.
-     *
-     * @param obj
-     *            Object used to define the instance variables which should be
-     *            carried over to this object.
-     * @param timeSteps
-     *            The number of time steps which the Monte Carlo generator
-     *            should make.
-     * @param pathStartValue
-     *            The stock price value to use at the start of each Monte Carlo
-     *            simulation path.
+     * Simple string name.
      */
-    public ToInitAllTasks(final ReturnPath obj, final int timeSteps,
-            final double pathStartValue) {
-        
-        // Instance variables defined in the PathId object.
-        this.name = obj.get_name();
-        this.startDate = obj.get_startDate();
-        this.endDate = obj.get_endDate();
-        this.dTime = obj.get_dTime();
-        
-        // Instance variables defined in ReturnPath object.
-        this.expectedReturnRate = obj.get_expectedReturnRate();
-        this.volatility = obj.get_volatility();
-        this.timeSteps = timeSteps;
-        this.pathStartValue = pathStartValue;
+    private final String name;
+    
+    /**
+     * The start date for the path, in YYYYMMDD format.
+     */
+    private final int startDate;
+    /**
+     * The end date for the path, in YYYYMMDD format.
+     */
+    private final int endDate;
+    /**
+     * The change in time between two successive data values.
+     */
+    private final double dTime;
+    
+    public Path(final String name, final int startDate, final int endDate,
+            final double dTime) {
+        this.name = name;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.dTime = dTime;
     }
     
+    // ------------------------------------------------------------------------
+    // Methods.
+    // ------------------------------------------------------------------------
     /**
      * Accessor method for private instance variable <code>name</code>.
      *
      * @return Value of instance variable <code>name</code>.
      */
     public String get_name() {
+        if(this.name == null)
+            throw new DemoException("Variable name is undefined!");
         return(this.name);
     }
     
@@ -82,6 +77,8 @@ public class ToInitAllTasks {
      * @return Value of instance variable <code>startDate</code>.
      */
     public int get_startDate() {
+        if(this.startDate == 0)
+            throw new DemoException("Variable startDate is undefined!");
         return(this.startDate);
     }
     
@@ -91,6 +88,8 @@ public class ToInitAllTasks {
      * @return Value of instance variable <code>endDate</code>.
      */
     public int get_endDate() {
+        if(this.endDate == 0)
+            throw new DemoException("Variable endDate is undefined!");
         return(this.endDate);
     }
     
@@ -100,45 +99,8 @@ public class ToInitAllTasks {
      * @return Value of instance variable <code>dTime</code>.
      */
     public double get_dTime() {
+        if(this.dTime == Double.NaN)
+            throw new DemoException("Variable dTime is undefined!");
         return(this.dTime);
     }
-    
-    /**
-     * Accessor method for private instance variable
-     * <code>expectedReturnRate</code>.
-     *
-     * @return Value of instance variable <code>expectedReturnRate</code>.
-     */
-    public double get_expectedReturnRate() {
-        return(this.expectedReturnRate);
-    }
-    
-    /**
-     * Accessor method for private instance variable <code>volatility</code>.
-     *
-     * @return Value of instance variable <code>volatility</code>.
-     */
-    public double get_volatility() {
-        return(this.volatility);
-    }
-    
-    /**
-     * Accessor method for private instance variable <code>timeSteps</code>.
-     *
-     * @return Value of instance variable <code>timeSteps</code>.
-     */
-    public int get_timeSteps() {
-        return(this.timeSteps);
-    }
-    
-    /**
-     * Accessor method for private instance variable <code>pathStartValue</code>
-     * .
-     *
-     * @return Value of instance variable <code>pathStartValue</code>.
-     */
-    public double get_pathStartValue() {
-        return(this.pathStartValue);
-    }
-    // ------------------------------------------------------------------------
 }

@@ -47,7 +47,7 @@ public class MonteCarloApp {
     private final int runs;
     private final int nthreads;
     
-    private final ToInitAllTasks initAllTasks;
+    private final PathParameters pathParams;
     
     public List<Long> seeds;
     public List<Double> results;
@@ -69,7 +69,7 @@ public class MonteCarloApp {
         returnP.estimatePath();
         
         // Now prepare for MC runs.
-        initAllTasks = new ToInitAllTasks(returnP, timeSteps, pathStartValue);
+        pathParams = new PathParameters(returnP, timeSteps);
         
         // Now create the seeds for the tasks.
         for(int i = 0; i < runs; i++)
@@ -80,13 +80,13 @@ public class MonteCarloApp {
         final AppDemoTask tasks[] = new AppDemoTask[nthreads];
         final Thread threads[] = new Thread[nthreads];
         for(int i = 1; i < nthreads; i++) {
-            tasks[i] = new AppDemoTask(i, runs, nthreads, seeds, initAllTasks);
+            tasks[i] = new AppDemoTask(i, runs, nthreads, seeds, pathParams);
             threads[i] = new Thread(tasks[i]);
             threads[i].start();
         }
         
         final AppDemoTask task = new AppDemoTask(0, runs, nthreads, seeds,
-                initAllTasks);
+                pathParams);
         task.run();
         results.addAll(task.getResults());
         
@@ -121,15 +121,15 @@ public class MonteCarloApp {
         private final int id, nRunsMC, nthreads;
         private final List<Double> results = new ArrayList<>();
         private final List<Long> seeds;
-        private final ToInitAllTasks initAllTasks;
+        private final PathParameters pathParams;
         
         public AppDemoTask(final int id, final int nRunsMC, final int nthreads,
-                final List<Long> seeds, final ToInitAllTasks initAllTasks) {
+                final List<Long> seeds, final PathParameters pathParams) {
             this.id = id;
             this.nRunsMC = nRunsMC;
             this.nthreads = nthreads;
             this.seeds = seeds;
-            this.initAllTasks = initAllTasks;
+            this.pathParams = pathParams;
         }
         
         public void run() {
@@ -142,7 +142,8 @@ public class MonteCarloApp {
             
             for(int iRun = ilow; iRun < iupper; iRun++) {
                 final long seed = seeds.get(iRun);
-                final PriceStock ps = new PriceStock(initAllTasks, seed);
+                final PriceStock ps = new PriceStock(pathParams, seed,
+                        pathStartValue);
                 final double expectedReturnRate = ps.run();
                 results.add(expectedReturnRate);
             }

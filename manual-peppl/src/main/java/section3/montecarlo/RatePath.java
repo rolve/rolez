@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Enumeration;
 import java.util.Vector;
 
 /**
@@ -39,7 +40,7 @@ import java.util.Vector;
  * @author H W Yau
  * @version $Revision: 1.28 $ $Date: 1999/02/16 18:52:29 $
  */
-public class RatePath extends PathId {
+public class RatePath extends Path {
     
     /**
      * Class variable for determining which field in the stock data should be
@@ -58,29 +59,20 @@ public class RatePath extends PathId {
      */
     public static final double EPSILON = 10.0 * Double.MIN_VALUE;
     
-    // ------------------------------------------------------------------------
-    // Instance variables.
-    // ------------------------------------------------------------------------
     /**
      * An instance variable, for storing the rate's path values itself.
      */
     private final double[] pathValue;
-    /**
-     * The number of accepted values in the rate path.
-     */
-    private final int nAcceptedPathValue;
     
     // ------------------------------------------------------------------------
     // Constructors.
     // ------------------------------------------------------------------------
     
     public RatePath(final String name, final int startDate, final int endDate,
-            final double dTime, final double[] pathValue,
-            final int nAcceptedPathValue) {
+            final double dTime, final double[] pathValue) {
         super(name, startDate, endDate, dTime);
         
         this.pathValue = pathValue;
-        this.nAcceptedPathValue = nAcceptedPathValue;
     }
     
     /**
@@ -97,41 +89,6 @@ public class RatePath extends PathId {
         
         // Fields pertaining to RatePath object itself.
         pathValue = mc.get_pathValue();
-        nAcceptedPathValue = mc.get_timeSteps();
-    }
-    
-    /**
-     * Accessor method for private instance variable <code>pathValue</code>.
-     *
-     * @return Value of instance variable <code>pathValue</code>.
-     */
-    public double[] get_pathValue() {
-        if(this.pathValue == null)
-            throw new DemoException("Variable pathValue is undefined!");
-        return(this.pathValue);
-    }
-    
-    // ------------------------------------------------------------------------
-    /**
-     * Method to return the terminal value for a given rate path, as used in
-     * derivative calculations.
-     * 
-     * @return The last value in the rate path.
-     */
-    public double getEndPathValue() {
-        return(getPathValue(pathValue.length - 1));
-    }
-    
-    /**
-     * Method to return the value for a given rate path, at a given index.
-     * <i>One may want to index this in a more user friendly manner!</i>
-     * 
-     * @param index
-     *            the index on which to return the path value.
-     * @return The value of the path at the designated index.
-     */
-    public double getPathValue(final int index) {
-        return(pathValue[index]);
     }
     
     /**
@@ -142,13 +99,10 @@ public class RatePath extends PathId {
      * @return the return, as defined.
      */
     public ReturnPath getReturnCompounded() {
-        if(pathValue == null || nAcceptedPathValue == 0) {
-            throw new DemoException("The Rate Path has not been defined!");
-        }
-        final double[] returnPathValue = new double[nAcceptedPathValue];
+        final double[] returnPathValue = new double[pathValue.length];
         returnPathValue[0] = 0.0;
         try {
-            for(int i = 1; i < nAcceptedPathValue; i++) {
+            for(int i = 1; i < pathValue.length; i++) {
                 returnPathValue[i] = Math.log(pathValue[i] / pathValue[i - 1]);
             }
         } catch(final ArithmeticException aex) {
@@ -156,7 +110,7 @@ public class RatePath extends PathId {
                     + aex.toString());
         }
         final ReturnPath rPath = new ReturnPath(get_name(), get_startDate(),
-                get_endDate(), get_dTime(), returnPathValue, nAcceptedPathValue);
+                get_endDate(), get_dTime(), returnPathValue);
         rPath.estimatePath();
         return(rPath);
     }
@@ -211,17 +165,12 @@ public class RatePath extends PathId {
         
         // Proceed to read all the lines of data into a Vector object.
         int iLine = 0;
-        final int initNlines = 100;
-        int nLines = 0;
         
         String aLine;
-        final Vector<String> allLines = new Vector<String>(initNlines);
+        final Vector<String> allLines = new Vector<String>(100);
         try {
             while((aLine = in.readLine()) != null) {
                 iLine++;
-                
-                // Note, I'm not entirely sure whether the object passed in is
-                // copied by value, or just its reference.
                 allLines.addElement(aLine);
             }
             in.close();
@@ -229,27 +178,22 @@ public class RatePath extends PathId {
             throw new DemoException("Problem reading data from the file "
                     + ioex.toString());
         }
-        nLines = iLine;
         
-        //
         // Now create an array to store the rates data.
-        final double[] pathValue = new double[nLines];
-        final int[] pathDate = new int[nLines];
+        final double[] pathValue = new double[iLine];
+        final int[] pathDate = new int[iLine];
         
         iLine = 0;
-        for(final java.util.Enumeration<String> e = allLines.elements(); e
+        for(final Enumeration<String> e = allLines.elements(); e
                 .hasMoreElements();) {
             aLine = e.nextElement();
             final String[] field = aLine.split(",");
             final int aDate = Integer.parseInt("19" + field[0]);
-            //
-            // static double Double.parseDouble() method is a feature of JDK1.2!
-            final double aPathValue = Double.valueOf(field[DATUMFIELD])
-                    .doubleValue();
-            if((aDate <= MINIMUMDATE) || (Math.abs(aPathValue) < EPSILON)) {
-                // result.dbgPrintln("Skipped erroneous data in " + filename
-                // + " indexed by date=" + field[0] + ".");
-            }
+            
+            final double aPathValue = Double.parseDouble(field[DATUMFIELD]);
+            if((aDate <= MINIMUMDATE) || (Math.abs(aPathValue) < EPSILON))
+                throw new AssertionError("erroneous data in " + filename
+                        + " indexed by date=" + field[0] + ".");
             else {
                 pathDate[iLine] = aDate;
                 pathValue[iLine] = aPathValue;
@@ -258,6 +202,6 @@ public class RatePath extends PathId {
         }
         
         return new RatePath(filename, pathDate[0], pathDate[iLine - 1],
-                1.0 / 365.0, pathValue, iLine);
+                1.0 / 365.0, pathValue);
     }
 }

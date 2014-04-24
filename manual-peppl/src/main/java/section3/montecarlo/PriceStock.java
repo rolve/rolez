@@ -45,10 +45,20 @@ public class PriceStock {
      */
     private final double pathStartValue;
     
-    public PriceStock(final ToInitAllTasks initAllTasks, final long seed) {
-        mcPath = new MonteCarloPath(initAllTasks);
+    /**
+     * @param pathParams
+     *            The parameters for the paths
+     * @param seed
+     *            The random seed
+     * @param pathStartValue
+     *            The stock price value to use at the start of each Monte Carlo
+     *            simulation path.
+     */
+    public PriceStock(final PathParameters pathParams, final long seed,
+            final double pathStartValue) {
+        mcPath = new MonteCarloPath(pathParams);
         
-        pathStartValue = initAllTasks.get_pathStartValue();
+        this.pathStartValue = pathStartValue;
         randomSeed = seed;
     }
     
