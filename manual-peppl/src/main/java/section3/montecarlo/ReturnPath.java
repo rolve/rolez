@@ -88,7 +88,8 @@ public class ReturnPath extends Path {
      */
     public double get_expectedReturnRate() {
         if(this.expectedReturnRate == Double.NaN)
-            throw new DemoException("Variable expectedReturnRate is undefined!");
+            throw new AssertionError(
+                    "Variable expectedReturnRate is undefined!");
         return(this.expectedReturnRate);
     }
     
@@ -99,7 +100,7 @@ public class ReturnPath extends Path {
      */
     public double get_volatility() {
         if(this.volatility == Double.NaN)
-            throw new DemoException("Variable volatility is undefined!");
+            throw new AssertionError("Variable volatility is undefined!");
         return(this.volatility);
     }
     
@@ -128,8 +129,6 @@ public class ReturnPath extends Path {
      * precomputed <code>variance</code>. \sigma^2 = s^2\Delta t
      */
     private void computeVolatility() {
-        if(this.variance == Double.NaN)
-            throw new DemoException("Variable variance is not defined!");
         this.volatility2 = variance / get_dTime();
         this.volatility = Math.sqrt(volatility2);
     }

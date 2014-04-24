@@ -66,8 +66,6 @@ public class Path {
      * @return Value of instance variable <code>name</code>.
      */
     public String get_name() {
-        if(this.name == null)
-            throw new DemoException("Variable name is undefined!");
         return(this.name);
     }
     
@@ -77,8 +75,6 @@ public class Path {
      * @return Value of instance variable <code>startDate</code>.
      */
     public int get_startDate() {
-        if(this.startDate == 0)
-            throw new DemoException("Variable startDate is undefined!");
         return(this.startDate);
     }
     
@@ -88,8 +84,6 @@ public class Path {
      * @return Value of instance variable <code>endDate</code>.
      */
     public int get_endDate() {
-        if(this.endDate == 0)
-            throw new DemoException("Variable endDate is undefined!");
         return(this.endDate);
     }
     
@@ -99,8 +93,6 @@ public class Path {
      * @return Value of instance variable <code>dTime</code>.
      */
     public double get_dTime() {
-        if(this.dTime == Double.NaN)
-            throw new DemoException("Variable dTime is undefined!");
         return(this.dTime);
     }
 }

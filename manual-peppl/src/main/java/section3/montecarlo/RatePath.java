@@ -101,13 +101,8 @@ public class RatePath extends Path {
     public ReturnPath getReturnCompounded() {
         final double[] returnPathValue = new double[pathValue.length];
         returnPathValue[0] = 0.0;
-        try {
-            for(int i = 1; i < pathValue.length; i++) {
-                returnPathValue[i] = Math.log(pathValue[i] / pathValue[i - 1]);
-            }
-        } catch(final ArithmeticException aex) {
-            throw new DemoException("Error in getReturnLogarithm:"
-                    + aex.toString());
+        for(int i = 1; i < pathValue.length; i++) {
+            returnPathValue[i] = Math.log(pathValue[i] / pathValue[i - 1]);
         }
         final ReturnPath rPath = new ReturnPath(get_name(), get_startDate(),
                 get_endDate(), get_dTime(), returnPathValue);
@@ -153,14 +148,10 @@ public class RatePath extends Path {
             final String filename) {
         final File ratesFile = new File(dirName, filename);
         BufferedReader in;
-        if(!ratesFile.canRead()) {
-            throw new DemoException("Cannot read the file "
-                    + ratesFile.toString());
-        }
         try {
             in = new BufferedReader(new FileReader(ratesFile));
-        } catch(final FileNotFoundException fnfex) {
-            throw new DemoException(fnfex.toString());
+        } catch(final FileNotFoundException e) {
+            throw new AssertionError(e);
         }
         
         // Proceed to read all the lines of data into a Vector object.
@@ -174,9 +165,8 @@ public class RatePath extends Path {
                 allLines.addElement(aLine);
             }
             in.close();
-        } catch(final IOException ioex) {
-            throw new DemoException("Problem reading data from the file "
-                    + ioex.toString());
+        } catch(final IOException e) {
+            throw new RuntimeException("Problem reading data from the file", e);
         }
         
         // Now create an array to store the rates data.
