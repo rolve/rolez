@@ -28,8 +28,8 @@ public class JGFRayTracerBench {
     
     private final int nthreads;
     private final int size;
-    private final int width;
-    private final int height;
+    
+    private final int[][] image;
     
     public long checksum = 0;
     public int objectCount = 0;
@@ -37,7 +37,7 @@ public class JGFRayTracerBench {
     public JGFRayTracerBench(final int nthreads, final int size) {
         this.nthreads = nthreads;
         this.size = size;
-        width = height = datasizes[size];
+        image = new int[datasizes[size]][datasizes[size]];
     }
     
     public void JGFapplication() {
@@ -95,7 +95,8 @@ public class JGFRayTracerBench {
         JGFInstrumentor.stopTimer("Section3:RayTracer:Total");
         
         JGFInstrumentor.addOpsToTimer("Section3:RayTracer:Init", objectCount);
-        JGFInstrumentor.addOpsToTimer("Section3:RayTracer:Run", width * height);
+        JGFInstrumentor.addOpsToTimer("Section3:RayTracer:Run", image.length
+                * image[0].length);
         JGFInstrumentor.addOpsToTimer("Section3:RayTracer:Total", 1);
         
         JGFInstrumentor.printTimer("Section3:RayTracer:Init");
@@ -116,7 +117,7 @@ public class JGFRayTracerBench {
         
         public void run() {
             final RayTracer tracer = new RayTracer(scene);
-            localChecksum = tracer.render(width, height, id, nthreads);
+            localChecksum = tracer.render(image, id, nthreads);
         }
         
         public long getChecksum() {

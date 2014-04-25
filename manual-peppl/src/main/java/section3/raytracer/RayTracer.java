@@ -41,8 +41,11 @@ public class RayTracer {
         this.scene = scene;
     }
     
-    public long render(final int width, final int height, final int threadId,
+    public long render(final int[][] image, final int threadId,
             final int nthreads) {
+        final int height = image.length;
+        final int width = image[0].length;
+        
         final Vec viewVec = Vec.sub(scene.view.at, scene.view.from);
         viewVec.normalize();
         
@@ -68,13 +71,10 @@ public class RayTracer {
         // System.out.println(width + " " + height);
         // System.out.println("255");
         
-        final int row[] = new int[width * height];
-        
         // All loops are reversed for 'speedup' (cf. thinking in java p331)
         // For each line
-        int pixCounter = 0;
         long checksum = 0;
-        for(int y = 0 + threadId; y < height; y += nthreads) {
+        for(int y = threadId; y < height; y += nthreads) {
             final double ylen = 2.0 * y / width - 1.0;
             
             // For each pixel of the line
@@ -103,7 +103,7 @@ public class RayTracer {
                 // RGB values for .ppm file
                 // System.out.println(red + " " + green + " " + blue);
                 // Sets the pixels
-                row[pixCounter++] = ALPHA | (red << 16) | (green << 8) | (blue);
+                image[y][x] = ALPHA | (red << 16) | (green << 8) | (blue);
             } // end for (x)
         } // end for (y)
         return checksum;
@@ -247,6 +247,7 @@ public class RayTracer {
         final RayTracer tracer = new RayTracer(Scene.createScene());
         
         // Do the business!
-        tracer.render(100, 100, 0, 1);
+        final int[][] image = new int[100][100];
+        tracer.render(image, 0, 1);
     }
 }
