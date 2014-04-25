@@ -41,7 +41,6 @@ public class JGFRayTracerBench {
     }
     
     public void JGFapplication() {
-        
         final RayTracerRunner[] thobjects = new RayTracerRunner[nthreads];
         
         JGFInstrumentor.startTimer("Section3:RayTracer:Init");
@@ -60,6 +59,7 @@ public class JGFRayTracerBench {
             th[i] = new Thread(thobjects[i]);
             th[i].start();
         }
+        
         thobjects[0].run();
         checksum += thobjects[0].getChecksum();
         
@@ -103,19 +103,20 @@ public class JGFRayTracerBench {
         JGFInstrumentor.printTimer("Section3:RayTracer:Total");
     }
     
-    private class RayTracerRunner extends RayTracer implements Runnable {
+    private class RayTracerRunner implements Runnable {
         
+        private final Scene scene;
         private final int id;
         public long localChecksum = 0;
         
         public RayTracerRunner(final Scene scene, final int id) {
-            super(scene);
+            this.scene = scene;
             this.id = id;
         }
         
         public void run() {
-            localChecksum = render(new Interval(width, height, 0, height, id),
-                    nthreads);
+            final RayTracer tracer = new RayTracer(scene);
+            localChecksum = tracer.render(width, height, id, nthreads);
         }
         
         public long getChecksum() {

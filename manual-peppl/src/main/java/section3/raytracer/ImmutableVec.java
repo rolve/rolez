@@ -28,6 +28,8 @@ package section3.raytracer;
  */
 public class ImmutableVec {
     
+    public static final ImmutableVec O = new ImmutableVec(0, 0, 0);
+    
     /**
      * The x coordinate
      */
@@ -46,17 +48,17 @@ public class ImmutableVec {
     /**
      * Constructor
      * 
-     * @param a
+     * @param x
      *            the x coordinate
-     * @param b
+     * @param y
      *            the y coordinate
-     * @param c
+     * @param z
      *            the z coordinate
      */
-    public ImmutableVec(final double a, final double b, final double c) {
-        x = a;
-        y = b;
-        z = c;
+    public ImmutableVec(final double x, final double y, final double z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
     }
     
     public ImmutableVec(final ImmutableVec a) {

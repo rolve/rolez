@@ -157,19 +157,22 @@ public class Vec {
         this.z = a.z - b.z;
     }
     
+    public final ImmutableVec immutable() {
+        return new ImmutableVec(x, y, z);
+    }
+    
     public static Vec cross(final Vec a, final Vec b) {
-        return new Vec(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x
-                * b.y - a.y * b.x);
+        return new Vec(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y
+                - a.y * b.x);
     }
     
     public static double dot(final Vec a, final Vec b) {
         return a.x * b.x + a.y * b.y + a.z * b.z;
     }
     
-    public static Vec comb(final double a, final Vec A,
-            final double b, final Vec B) {
-        return new Vec(a * A.x + b * B.x, a * A.y + b * B.y, a * A.z + b
-                * B.z);
+    public static Vec comb(final double a, final Vec A, final double b,
+            final Vec B) {
+        return new Vec(a * A.x + b * B.x, a * A.y + b * B.y, a * A.z + b * B.z);
     }
     
     public final void scale(final double t) {

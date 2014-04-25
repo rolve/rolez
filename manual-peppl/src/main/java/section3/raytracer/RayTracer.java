@@ -33,11 +33,6 @@ public class RayTracer {
     private static final int ALPHA = 255 << 24;
     
     /**
-     * Null vector (for speedup, instead of <code>new Vec(0,0,0)</code>
-     */
-    static final Vec voidVec = new Vec();
-    
-    /**
      * Temporary ray
      */
     private final Ray tRay = new Ray();
@@ -46,19 +41,9 @@ public class RayTracer {
         this.scene = scene;
     }
     
-    public long render(final Interval interval, final int nthreads) {
-        
-        // Screen variables
-        final int row[] = new int[interval.width
-                * (interval.yto - interval.yfrom)];
-        
-        // Rendering variables
-        int x, y, red, green, blue;
-        double xlen, ylen;
-        Vec viewVec;
-        
-        viewVec = Vec.sub(scene.view.at, scene.view.from);
-        
+    public long render(final int width, final int height, final int threadId,
+            final int nthreads) {
+        final Vec viewVec = Vec.sub(scene.view.at, scene.view.from);
         viewVec.normalize();
         
         final Vec tmpVec = new Vec(viewVec);
@@ -76,39 +61,38 @@ public class RayTracer {
         upVec.scale(-frustrumwidth);
         leftVec.scale(scene.view.aspect * frustrumwidth);
         
-        final Ray r = new Ray(scene.view.from, voidVec);
-        Vec col = new Vec();
+        final Ray r = new Ray(scene.view.from, new Vec());
         
         // Header for .ppm file
         // System.out.println("P3");
         // System.out.println(width + " " + height);
         // System.out.println("255");
         
-        // All loops are reversed for 'speedup' (cf. thinking in java p331)
+        final int row[] = new int[width * height];
         
+        // All loops are reversed for 'speedup' (cf. thinking in java p331)
         // For each line
         int pixCounter = 0;
         long checksum = 0;
-        for(y = interval.yfrom + interval.threadid; y < interval.yto; y += nthreads) {
+        for(int y = 0 + threadId; y < height; y += nthreads) {
+            final double ylen = 2.0 * y / width - 1.0;
             
-            ylen = 2.0 * y / interval.width - 1.0;
-            // System.out.println("Doing line " + y);
             // For each pixel of the line
-            for(x = 0; x < interval.width; x++) {
-                xlen = 2.0 * x / interval.width - 1.0;
+            for(int x = 0; x < width; x++) {
+                final double xlen = 2.0 * x / width - 1.0;
                 r.dir = Vec.comb(xlen, leftVec, ylen, upVec);
                 r.dir.add(viewVec);
                 r.dir.normalize();
-                col = trace(0, 1.0, r);
                 
-                // computes the color of the ray
-                red = (int) (col.x * 255.0);
+                // Compute the color of the ray
+                final ImmutableVec col = trace(0, 1.0, r);
+                int red = (int) (col.x * 255.0);
                 if(red > 255)
                     red = 255;
-                green = (int) (col.y * 255.0);
+                int green = (int) (col.y * 255.0);
                 if(green > 255)
                     green = 255;
-                blue = (int) (col.z * 255.0);
+                int blue = (int) (col.z * 255.0);
                 if(blue > 255)
                     blue = 255;
                 
@@ -183,8 +167,8 @@ public class RayTracer {
      * 
      * @return The color in Vec form (rgb)
      */
-    private Vec shade(final int level, final double weight, final Vec p,
-            final Vec normal, final Vec dir, final Intersection hit) {
+    private ImmutableVec shade(final int level, final double weight,
+            final Vec p, final Vec normal, final Vec dir, final Intersection hit) {
         final Material mat = hit.mat;
         Vec r = new Vec();
         if(mat.shine > 1e-6)
@@ -219,7 +203,7 @@ public class RayTracer {
             } // if
         } // for
         
-        Vec tcol;
+        ImmutableVec tcol;
         tRay.origin = p;
         if(mat.ks * weight > 1e-3) {
             tRay.dir = specularDirection(dir, normal);
@@ -234,16 +218,16 @@ public class RayTracer {
             tcol = trace(level + 1, mat.kt * weight, tRay);
             color.adds(mat.kt, tcol);
         }
-        return color;
+        return color.immutable();
     }
     
     /**
      * Launches a ray
      */
-    private Vec trace(final int level, final double weight, final Ray r) {
+    private ImmutableVec trace(final int level, final double weight, final Ray r) {
         // Checks the recursion level
         if(level > 6)
-            return new Vec();
+            return ImmutableVec.O;
         
         Vec p, n;
         final Intersection isect = intersect(r);
@@ -256,17 +240,13 @@ public class RayTracer {
             return shade(level, weight, p, n, r.dir, isect);
         }
         // no intersection --> col = 0,0,0
-        return voidVec;
+        return ImmutableVec.O;
     }
     
     public static void main(final String argv[]) {
-        final RayTracer rt = new RayTracer(Scene.createScene());
-        
-        // Set interval to be rendered to the whole picture
-        // (overkill, but will be useful to retain this for parallel versions)
-        final Interval interval = new Interval(100, 100, 0, 100, 0);
+        final RayTracer tracer = new RayTracer(Scene.createScene());
         
         // Do the business!
-        rt.render(interval, 1);
+        tracer.render(100, 100, 0, 1);
     }
 }
