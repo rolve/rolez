@@ -24,25 +24,26 @@
 package section3.raytracer;
 
 final public class Ray {
-    public Vec P, D;
+    public Vec origin, dir;
     
-    public Ray(final Vec pnt, final Vec dir) {
-        P = new Vec(pnt.x, pnt.y, pnt.z);
-        D = new Vec(dir.x, dir.y, dir.z);
-        D.normalize();
+    public Ray(final Vec origin, final Vec dir) {
+        this.origin = new Vec(origin.x, origin.y, origin.z);
+        this.dir = new Vec(dir.x, dir.y, dir.z);
+        this.dir.normalize();
     }
     
     public Ray() {
-        P = new Vec();
-        D = new Vec();
+        origin = new Vec();
+        dir = new Vec();
     }
     
     public Vec point(final double t) {
-        return new Vec(P.x + D.x * t, P.y + D.y * t, P.z + D.z * t);
+        return new Vec(origin.x + dir.x * t, origin.y + dir.y * t, origin.z + dir.z
+                * t);
     }
     
     @Override
     public String toString() {
-        return "{" + P.toString() + " -> " + D.toString() + "}";
+        return "{" + origin.toString() + " -> " + dir.toString() + "}";
     }
 }

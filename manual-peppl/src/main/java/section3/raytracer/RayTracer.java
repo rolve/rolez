@@ -40,9 +40,7 @@ public class RayTracer {
     /**
      * Temporary vect
      */
-    Vec L = new Vec();
-    
-    long checksum = 0;
+    private final Vec L = new Vec();
     
     /**
      * Temporary ray
@@ -53,7 +51,7 @@ public class RayTracer {
         this.scene = scene;
     }
     
-    public void render(final Interval interval, final int nthreads) {
+    public long render(final Interval interval, final int nthreads) {
         
         // Screen variables
         final int row[] = new int[interval.width
@@ -95,6 +93,7 @@ public class RayTracer {
         
         // For each line
         int pixCounter = 0;
+        long checksum = 0;
         for(y = interval.yfrom + interval.threadid; y < interval.yto; y += nthreads) {
             
             ylen = 2.0 * y / interval.width - 1.0;
@@ -102,9 +101,9 @@ public class RayTracer {
             // For each pixel of the line
             for(x = 0; x < interval.width; x++) {
                 xlen = 2.0 * x / interval.width - 1.0;
-                r.D = Vec.comb(xlen, leftVec, ylen, upVec);
-                r.D.add(viewVec);
-                r.D.normalize();
+                r.dir = Vec.comb(xlen, leftVec, ylen, upVec);
+                r.dir.add(viewVec);
+                r.dir.normalize();
                 col = trace(0, 1.0, r);
                 
                 // computes the color of the ray
@@ -128,6 +127,7 @@ public class RayTracer {
                 row[pixCounter++] = alpha | (red << 16) | (green << 8) | (blue);
             } // end for (x)
         } // end for (y)
+        return checksum;
     }
     
     private Intersection intersect(final Ray r) {
@@ -190,7 +190,7 @@ public class RayTracer {
     private Vec shade(final int level, final double weight, final Vec P,
             final Vec N, final Vec I, final Intersection hit) {
         Vec tcol;
-        Vec R;
+        Vec r;
         double diff, spec;
         Material mat;
         Vec col;
@@ -198,9 +198,9 @@ public class RayTracer {
         
         col = new Vec();
         mat = hit.mat;
-        R = new Vec();
+        r = new Vec();
         if(mat.shine > 1e-6) {
-            R = specularDirection(I, N);
+            r = specularDirection(I, N);
         }
         
         // Computes the effectof each light
@@ -209,8 +209,8 @@ public class RayTracer {
             if(Vec.dot(N, L) >= 0.0) {
                 L.normalize();
                 
-                tRay.P = P;
-                tRay.D = L;
+                tRay.origin = P;
+                tRay.dir = L;
                 
                 // Checks if there is a shadow
                 if(shadow(tRay)) {
@@ -218,7 +218,7 @@ public class RayTracer {
                     
                     col.adds(diff, mat.color);
                     if(mat.shine > 1e-6) {
-                        spec = Vec.dot(R, L);
+                        spec = Vec.dot(r, L);
                         if(spec > 1e-6) {
                             spec = Math.pow(spec, mat.shine);
                             col.x += spec;
@@ -230,17 +230,17 @@ public class RayTracer {
             } // if
         } // for
         
-        tRay.P = P;
+        tRay.origin = P;
         if(mat.ks * weight > 1e-3) {
-            tRay.D = specularDirection(I, N);
+            tRay.dir = specularDirection(I, N);
             tcol = trace(level + 1, mat.ks * weight, tRay);
             col.adds(mat.ks, tcol);
         }
         if(mat.kt * weight > 1e-3) {
             if(hit.enter > 0)
-                tRay.D = transDir(null, mat, I, N);
+                tRay.dir = transDir(null, mat, I, N);
             else
-                tRay.D = transDir(mat, null, I, N);
+                tRay.dir = transDir(mat, null, I, N);
             tcol = trace(level + 1, mat.kt * weight, tRay);
             col.adds(mat.kt, tcol);
         }
@@ -262,10 +262,10 @@ public class RayTracer {
         if(isect != null) {
             P = r.point(isect.t);
             N = isect.prim.normal(P);
-            if(Vec.dot(r.D, N) >= 0.0) {
+            if(Vec.dot(r.dir, N) >= 0.0) {
                 N.negate();
             }
-            return shade(level, weight, P, N, r.D, isect);
+            return shade(level, weight, P, N, r.dir, isect);
         }
         // no intersection --> col = 0,0,0
         return voidVec;

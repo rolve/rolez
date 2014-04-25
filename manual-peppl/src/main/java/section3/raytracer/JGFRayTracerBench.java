@@ -24,40 +24,42 @@ import jgfutil.JGFInstrumentor;
 
 public class JGFRayTracerBench {
     
-    public int nthreads;
-    public static long checksum = 0;
-    public static int staticnumobjects;
-    
     public static final int[] datasizes = {150, 500};
     
+    private final int nthreads;
     private final int size;
     private final int width;
-    private int height;
+    private final int height;
+    
+    public long checksum = 0;
+    public int objectCount = 0;
     
     public JGFRayTracerBench(final int nthreads, final int size) {
         this.nthreads = nthreads;
         this.size = size;
-        
         width = height = datasizes[size];
     }
     
     public void JGFapplication() {
         
         final Runnable thobjects[] = new Runnable[nthreads];
-        final Thread th[] = new Thread[nthreads];
         final Barrier br = new TournamentBarrier(nthreads);
         
-        // Start Threads
-        for(int i = 1; i < nthreads; i++) {
+        // Create tasks
+        for(int i = 0; i < nthreads; i++) {
             JGFInstrumentor.startTimer("Section3:RayTracer:Init");
-            thobjects[i] = new RayTracerRunner(i, br);
+            final Scene scene = Scene.createScene();
+            thobjects[i] = new RayTracerRunner(scene, i, br);
             JGFInstrumentor.stopTimer("Section3:RayTracer:Init");
-            
+            objectCount += scene.objects.length;
+        }
+        
+        // Start Threads
+        final Thread th[] = new Thread[nthreads];
+        for(int i = 1; i < nthreads; i++) {
             th[i] = new Thread(thobjects[i]);
             th[i].start();
         }
-        
-        thobjects[0] = new RayTracerRunner(0, br);
         thobjects[0].run();
         
         for(int i = 1; i < nthreads; i++) {
@@ -79,7 +81,6 @@ public class JGFRayTracerBench {
     }
     
     public void JGFrun() {
-        
         JGFInstrumentor.addTimer("Section3:RayTracer:Total", "Solutions", size);
         JGFInstrumentor.addTimer("Section3:RayTracer:Init", "Objects", size);
         JGFInstrumentor.addTimer("Section3:RayTracer:Run", "Pixels", size);
@@ -91,8 +92,7 @@ public class JGFRayTracerBench {
         
         JGFInstrumentor.stopTimer("Section3:RayTracer:Total");
         
-        JGFInstrumentor.addOpsToTimer("Section3:RayTracer:Init",
-                staticnumobjects);
+        JGFInstrumentor.addOpsToTimer("Section3:RayTracer:Init", objectCount);
         JGFInstrumentor.addOpsToTimer("Section3:RayTracer:Run", width * height);
         JGFInstrumentor.addOpsToTimer("Section3:RayTracer:Total", 1);
         
@@ -106,38 +106,28 @@ public class JGFRayTracerBench {
         int id;
         Barrier br;
         
-        public RayTracerRunner(final int id, final Barrier br) {
-            super(Scene.createScene());
-            
+        public RayTracerRunner(final Scene scene, final int id, final Barrier br) {
+            super(scene);
             this.id = id;
             this.br = br;
-            
-            JGFRayTracerBench.staticnumobjects = scene.objects.length;
         }
         
         public void run() {
-            
-            // Set interval to be rendered to the whole picture
-            // (overkill, but will be useful to retain this for parallel
-            // versions)
-            
-            final Interval interval = new Interval(width, height, 0, height, id);
-            
             // synchronise threads and start timer
             
             br.doBarrier(id);
             if(id == 0)
                 JGFInstrumentor.startTimer("Section3:RayTracer:Run");
             
-            render(interval, nthreads);
+            final long check = render(
+                    new Interval(width, height, 0, height, id), nthreads);
             
             // Signal this thread has done iteration
             
-            synchronized(JGFRayTracerBench.class) {
+            synchronized(JGFRayTracerBench.this) {
                 for(int i = 0; i < nthreads; i++)
                     if(id == i)
-                        JGFRayTracerBench.checksum = JGFRayTracerBench.checksum
-                                + checksum;
+                        checksum += check;
             }
             
             // synchronise threads and stop timer

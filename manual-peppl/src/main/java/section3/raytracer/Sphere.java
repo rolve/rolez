@@ -39,8 +39,8 @@ public class Sphere extends Primitive {
     @Override
     public Intersection intersect(final Ray ry) {
         double b, disc, t;
-        v.sub2(c, ry.P);
-        b = Vec.dot(v, ry.D);
+        v.sub2(c, ry.origin);
+        b = Vec.dot(v, ry.dir);
         disc = b * b - Vec.dot(v, v) + r2;
         if(disc < 0.0) {
             return null;
