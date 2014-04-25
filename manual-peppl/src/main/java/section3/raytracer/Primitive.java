@@ -32,7 +32,7 @@ public abstract class Primitive {
     
     public abstract Vec normal(Vec pnt);
     
-    public abstract Isect intersect(Ray ry);
+    public abstract Intersection intersect(Ray ry);
     
     @Override
     public abstract String toString();

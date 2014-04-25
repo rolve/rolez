@@ -42,11 +42,6 @@ public class RayTracer {
      */
     Vec L = new Vec();
     
-    /**
-     * Current intersection instance (only one is needed!)
-     */
-    Isect inter = new Isect();
-    
     long checksum = 0;
     
     /**
@@ -133,27 +128,16 @@ public class RayTracer {
                 row[pixCounter++] = alpha | (red << 16) | (green << 8) | (blue);
             } // end for (x)
         } // end for (y)
-        
     }
     
-    private boolean intersect(final Ray r) {
-        Isect tp;
-        int i, nhits;
-        
-        nhits = 0;
-        inter.t = 1e9;
-        for(i = 0; i < scene.objects.length; i++) {
-            // uses global temporary Prim (tp) as temp.object for speedup
-            tp = scene.objects[i].intersect(r);
-            if(tp != null && tp.t < inter.t) {
-                inter.t = tp.t;
-                inter.prim = tp.prim;
-                inter.mat = tp.mat;
-                inter.enter = tp.enter;
-                nhits++;
-            }
+    private Intersection intersect(final Ray r) {
+        Intersection closest = null;
+        for(final Primitive object : scene.objects) {
+            final Intersection isect = object.intersect(r);
+            if(isect != null && (closest == null || isect.t < closest.t))
+                closest = isect;
         }
-        return nhits > 0 ? true : false;
+        return closest;
     }
     
     /**
@@ -164,7 +148,7 @@ public class RayTracer {
      * @return Returns 1 if there is a shadow, 0 if there isn't
      */
     private boolean shadow(final Ray r) {
-        return !intersect(r);
+        return intersect(r) == null;
     }
     
     /**
@@ -204,7 +188,7 @@ public class RayTracer {
      * @return The color in Vec form (rgb)
      */
     private Vec shade(final int level, final double weight, final Vec P,
-            final Vec N, final Vec I, final Isect hit) {
+            final Vec N, final Vec I, final Intersection hit) {
         Vec tcol;
         Vec R;
         double diff, spec;
@@ -268,21 +252,20 @@ public class RayTracer {
      */
     private Vec trace(final int level, final double weight, final Ray r) {
         Vec P, N;
-        boolean hit;
         
         // Checks the recursion level
         if(level > 6) {
             return new Vec();
         }
         
-        hit = intersect(r);
-        if(hit) {
-            P = r.point(inter.t);
-            N = inter.prim.normal(P);
+        final Intersection isect = intersect(r);
+        if(isect != null) {
+            P = r.point(isect.t);
+            N = isect.prim.normal(P);
             if(Vec.dot(r.D, N) >= 0.0) {
                 N.negate();
             }
-            return shade(level, weight, P, N, r.D, inter);
+            return shade(level, weight, P, N, r.D, isect);
         }
         // no intersection --> col = 0,0,0
         return voidVec;

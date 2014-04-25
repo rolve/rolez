@@ -37,9 +37,8 @@ public class Sphere extends Primitive {
     }
     
     @Override
-    public Isect intersect(final Ray ry) {
+    public Intersection intersect(final Ray ry) {
         double b, disc, t;
-        Isect ip;
         v.sub2(c, ry.P);
         b = Vec.dot(v, ry.D);
         disc = b * b - Vec.dot(v, v) + r2;
@@ -51,12 +50,8 @@ public class Sphere extends Primitive {
         if(t < 1e-6) {
             return null;
         }
-        ip = new Isect();
-        ip.t = t;
-        ip.enter = Vec.dot(v, v) > r2 + 1e-6 ? 1 : 0;
-        ip.prim = this;
-        ip.mat = mat;
-        return ip;
+        
+        return new Intersection(t, Vec.dot(v, v) > r2 + 1e-6 ? 1 : 0, this, mat);
     }
     
     @Override

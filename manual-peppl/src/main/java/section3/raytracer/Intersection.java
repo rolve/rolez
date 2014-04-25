@@ -23,9 +23,17 @@
 
 package section3.raytracer;
 
-public class Isect {
-    public double t;
-    public int enter;
-    public Primitive prim;
-    public Material mat;
+public class Intersection {
+    public final double t;
+    public final int enter;
+    public final Primitive prim;
+    public final Material mat;
+    
+    public Intersection(final double t, final int enter, final Primitive prim,
+            final Material mat) {
+        this.t = t;
+        this.enter = enter;
+        this.prim = prim;
+        this.mat = mat;
+    }
 }
