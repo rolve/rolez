@@ -24,24 +24,26 @@
 package section3.raytracer;
 
 public class Material {
-    public Vec color;
-    public double kd;
-    public double ks;
-    public double shine;
-    public double kt;
-    public double ior;
+    public final ImmutableVec color;
+    public final double kd;
+    public final double ks;
+    public final double shine;
+    public final double kt;
+    public final double ior;
     
-    public Material() {
-        color = new Vec(1, 0, 0);
+    public Material(final ImmutableVec color, final double shine, final double ks,
+            final double kt) {
+        this.color = color;
+        this.shine = shine;
+        this.ks = ks;
+        this.kt = kt;
+        
         kd = 1.0;
-        ks = 0.0;
-        shine = 0.0;
-        kt = 0.0;
         ior = 1.0;
     }
     
     @Override
     public String toString() {
-        return "Surface { color=" + color + "}";
+        return "Material { color=" + color + "}";
     }
 }

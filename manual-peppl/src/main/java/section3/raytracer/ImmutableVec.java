@@ -23,20 +23,50 @@
 
 package section3.raytracer;
 
-public abstract class Primitive {
+/**
+ * This class reflects the 3d vectors used in 3d computations
+ */
+public class ImmutableVec {
     
-    public final Material mat;
+    /**
+     * The x coordinate
+     */
+    public final double x;
     
-    public Primitive(final Material mat) {
-        this.mat = mat;
+    /**
+     * The y coordinate
+     */
+    public final double y;
+    
+    /**
+     * The z coordinate
+     */
+    public final double z;
+    
+    /**
+     * Constructor
+     * 
+     * @param a
+     *            the x coordinate
+     * @param b
+     *            the y coordinate
+     * @param c
+     *            the z coordinate
+     */
+    public ImmutableVec(final double a, final double b, final double c) {
+        x = a;
+        y = b;
+        z = c;
     }
     
-    public abstract Vec normal(Vec pnt);
-    
-    public abstract Intersection intersect(Ray ry, Vec temp);
+    public ImmutableVec(final ImmutableVec a) {
+        x = a.x;
+        y = a.y;
+        z = a.z;
+    }
     
     @Override
-    public abstract String toString();
-    
-    public abstract ImmutableVec getCenter();
+    public final String toString() {
+        return "<" + x + "," + y + "," + z + ">";
+    }
 }

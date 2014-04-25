@@ -40,7 +40,7 @@ public class RayTracer {
     /**
      * Temporary vect
      */
-    private final Vec L = new Vec();
+    private final Vec temp = new Vec();
     
     /**
      * Temporary ray
@@ -132,8 +132,9 @@ public class RayTracer {
     
     private Intersection intersect(final Ray r) {
         Intersection closest = null;
+        final Vec t = new Vec();
         for(final Primitive object : scene.objects) {
-            final Intersection isect = object.intersect(r);
+            final Intersection isect = object.intersect(r, t);
             if(isect != null && (closest == null || isect.t < closest.t))
                 closest = isect;
         }
@@ -156,7 +157,8 @@ public class RayTracer {
      * 
      * @return The specular direction
      */
-    private static Vec specularDirection(final Vec I, final Vec N) {
+    private static Vec specularDirection(final Vec I,
+            final Vec N) {
         Vec r;
         r = Vec.comb(1.0 / Math.abs(Vec.dot(I, N)), I, 2.0, N);
         r.normalize();
@@ -187,8 +189,9 @@ public class RayTracer {
      * 
      * @return The color in Vec form (rgb)
      */
-    private Vec shade(final int level, final double weight, final Vec P,
-            final Vec N, final Vec I, final Intersection hit) {
+    private Vec shade(final int level, final double weight,
+            final Vec P, final Vec N, final Vec I,
+            final Intersection hit) {
         Vec tcol;
         Vec r;
         double diff, spec;
@@ -205,20 +208,21 @@ public class RayTracer {
         
         // Computes the effectof each light
         for(l = 0; l < scene.lights.length; l++) {
-            L.sub2(scene.lights[l].pos, P);
-            if(Vec.dot(N, L) >= 0.0) {
-                L.normalize();
+            temp.sub2(scene.lights[l].pos, P);
+            if(Vec.dot(N, temp) >= 0.0) {
+                temp.normalize();
                 
                 tRay.origin = P;
-                tRay.dir = L;
+                tRay.dir = temp;
                 
                 // Checks if there is a shadow
                 if(shadow(tRay)) {
-                    diff = Vec.dot(N, L) * mat.kd * scene.lights[l].brightness;
+                    diff = Vec.dot(N, temp) * mat.kd
+                            * scene.lights[l].brightness;
                     
                     col.adds(diff, mat.color);
                     if(mat.shine > 1e-6) {
-                        spec = Vec.dot(r, L);
+                        spec = Vec.dot(r, temp);
                         if(spec > 1e-6) {
                             spec = Math.pow(spec, mat.shine);
                             col.x += spec;

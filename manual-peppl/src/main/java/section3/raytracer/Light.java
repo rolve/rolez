@@ -24,12 +24,12 @@
 package section3.raytracer;
 
 public class Light {
-    public final Vec pos;
+    public final ImmutableVec pos;
     public final double brightness;
     
     public Light(final double x, final double y, final double z,
             final double brightness) {
-        this.pos = new Vec(x, y, z);
+        this.pos = new ImmutableVec(x, y, z);
         this.brightness = brightness;
     }
 }

@@ -24,24 +24,22 @@
 package section3.raytracer;
 
 public class Sphere extends Primitive {
-    private final Vec c;
+    private final ImmutableVec c;
     private final double r, r2;
     
-    private final Vec v = new Vec(); // temporary vec used to minimize the
-                                     // memory load
-    
-    public Sphere(final Vec center, final double radius) {
+    public Sphere(final Material mat, final ImmutableVec center, final double radius) {
+        super(mat);
         c = center;
         r = radius;
         r2 = r * r;
     }
     
     @Override
-    public Intersection intersect(final Ray ry) {
+    public Intersection intersect(final Ray ry, final Vec temp) {
         double b, disc, t;
-        v.sub2(c, ry.origin);
-        b = Vec.dot(v, ry.dir);
-        disc = b * b - Vec.dot(v, v) + r2;
+        temp.sub2(c, ry.origin);
+        b = Vec.dot(temp, ry.dir);
+        disc = b * b - Vec.dot(temp, temp) + r2;
         if(disc < 0.0) {
             return null;
         }
@@ -51,7 +49,8 @@ public class Sphere extends Primitive {
             return null;
         }
         
-        return new Intersection(t, Vec.dot(v, v) > r2 + 1e-6 ? 1 : 0, this, mat);
+        return new Intersection(t,
+                Vec.dot(temp, temp) > r2 + 1e-6 ? 1 : 0, this, mat);
     }
     
     @Override
@@ -68,7 +67,7 @@ public class Sphere extends Primitive {
     }
     
     @Override
-    public Vec getCenter() {
+    public ImmutableVec getCenter() {
         return c;
     }
 }

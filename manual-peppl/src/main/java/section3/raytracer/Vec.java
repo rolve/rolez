@@ -101,6 +101,20 @@ public class Vec {
     }
     
     /**
+     * Adds vector such as: this+=sB
+     * 
+     * @param s
+     *            The multiplier
+     * @param b
+     *            The vector to be added
+     */
+    public final void adds(final double s, final ImmutableVec b) {
+        x += s * b.x;
+        y += s * b.y;
+        z += s * b.z;
+    }
+    
+    /**
      * Substracs two vectors
      * 
      * @param a
@@ -110,6 +124,19 @@ public class Vec {
      * @return resulting vector
      */
     public static Vec sub(final Vec a, final Vec b) {
+        return new Vec(a.x - b.x, a.y - b.y, a.z - b.z);
+    }
+    
+    /**
+     * Substracs two vectors
+     * 
+     * @param a
+     *            first vector
+     * @param b
+     *            second vector
+     * @return resulting vector
+     */
+    public static Vec sub(final Vec a, final ImmutableVec b) {
         return new Vec(a.x - b.x, a.y - b.y, a.z - b.z);
     }
     
@@ -124,35 +151,25 @@ public class Vec {
      * @param b
      *            second vector
      */
-    public final void sub2(final Vec a, final Vec b) {
+    public final void sub2(final ImmutableVec a, final Vec b) {
         this.x = a.x - b.x;
         this.y = a.y - b.y;
         this.z = a.z - b.z;
     }
     
-    public static Vec mult(final Vec a, final Vec b) {
-        return new Vec(a.x * b.x, a.y * b.y, a.z * b.z);
-    }
-    
     public static Vec cross(final Vec a, final Vec b) {
-        return new Vec(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y
-                - a.y * b.x);
+        return new Vec(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x
+                * b.y - a.y * b.x);
     }
     
     public static double dot(final Vec a, final Vec b) {
         return a.x * b.x + a.y * b.y + a.z * b.z;
     }
     
-    public static Vec comb(final double a, final Vec A, final double b,
-            final Vec B) {
-        return new Vec(a * A.x + b * B.x, a * A.y + b * B.y, a * A.z + b * B.z);
-    }
-    
-    public final void comb2(final double a, final Vec A, final double b,
-            final Vec B) {
-        x = a * A.x + b * B.x;
-        y = a * A.y + b * B.y;
-        z = a * A.z + b * B.z;
+    public static Vec comb(final double a, final Vec A,
+            final double b, final Vec B) {
+        return new Vec(a * A.x + b * B.x, a * A.y + b * B.y, a * A.z + b
+                * B.z);
     }
     
     public final void scale(final double t) {

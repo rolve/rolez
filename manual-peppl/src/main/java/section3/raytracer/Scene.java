@@ -59,11 +59,11 @@ public class Scene {
                     final double yy = 20.0 / (ny - 1) * j - 10.0;
                     final double zz = 20.0 / (nz - 1) * k - 10.0;
                     
-                    final Primitive p = new Sphere(new Vec(xx, yy, zz), 3);
-                    p.setColor(0, 0, (i + j) / (double) (nx + ny - 2));
-                    p.mat.shine = 15.0;
-                    p.mat.ks = 1.5 - 1.0;
-                    p.mat.kt = 1.5 - 1.0;
+                    final ImmutableVec color = new ImmutableVec(0, 0, (i + j)
+                            / (double) (nx + ny - 2));
+                    final Material mat = new Material(color, 15.0, 1.5 - 1.0,
+                            1.5 - 1.0);
+                    final Primitive p = new Sphere(mat, new ImmutableVec(xx, yy, zz), 3);
                     objects.add(p);
                 }
             }
@@ -78,8 +78,9 @@ public class Scene {
         lights.add(new Light(200, 200, 0, 1.0));
         
         /* Creates a View (viewing point) for the rendering scene */
-        final View v = new View(new Vec(x, 20, -30), new Vec(x, y, 0), new Vec(
-                0, 1, 0), 1.0, 35.0 * 3.14159265 / 180.0, 1.0);
+        final View v = new View(new Vec(x, 20, -30), new Vec(x,
+                y, 0), new Vec(0, 1, 0), 1.0, 35.0 * 3.14159265 / 180.0,
+                1.0);
         /* v.from = new Vec(x, y, -30); v.at = new Vec(x, y, -15); v.up = new
          * Vec(0, 1, 0); v.angle = 35.0 * 3.14159265 / 180.0; v.aspect = 1.0;
          * v.dist = 1.0; */
