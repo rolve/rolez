@@ -31,7 +31,6 @@ public class JGFRayTracerBench {
     
     private final int[][] image;
     
-    public long checksum = 0;
     public int objectCount = 0;
     
     public JGFRayTracerBench(final int nthreads, final int size) {
@@ -61,18 +60,25 @@ public class JGFRayTracerBench {
         }
         
         thobjects[0].run();
-        checksum += thobjects[0].getChecksum();
         
-        for(int i = 1; i < nthreads; i++) {
+        for(int i = 1; i < nthreads; i++)
             try {
                 th[i].join();
-                checksum += thobjects[i].getChecksum();
             } catch(final InterruptedException e) {}
-        }
         JGFInstrumentor.stopTimer("Section3:RayTracer:Run");
     }
     
     public void JGFvalidate() {
+        long checksum = 0;
+        for(int y = 0; y < image.length; y++)
+            for(int x = 0; x < image[0].length; x++) {
+                final int color = image[y][x];
+                final int r = (color & 0xffffff) >> 16;
+                final int g = (color & 0xffff) >> 8;
+                final int b = (color & 0xff);
+                checksum += r + g + b;
+            }
+        
         final long refval[] = {2676692, 29827635};
         final long dev = checksum - refval[size];
         if(dev != 0) {
@@ -108,7 +114,6 @@ public class JGFRayTracerBench {
         
         private final Scene scene;
         private final int id;
-        public long localChecksum = 0;
         
         public RayTracerRunner(final Scene scene, final int id) {
             this.scene = scene;
@@ -117,11 +122,7 @@ public class JGFRayTracerBench {
         
         public void run() {
             final RayTracer tracer = new RayTracer(scene);
-            localChecksum = tracer.render(image, id, nthreads);
-        }
-        
-        public long getChecksum() {
-            return localChecksum;
+            tracer.render(image, id, nthreads);
         }
     }
 }

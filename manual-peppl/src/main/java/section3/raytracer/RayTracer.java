@@ -28,11 +28,6 @@ public class RayTracer {
     private final Scene scene;
     
     /**
-     * Alpha channel
-     */
-    private static final int ALPHA = 255 << 24;
-    
-    /**
      * Temporary ray
      */
     private final Ray tRay = new Ray();
@@ -41,7 +36,7 @@ public class RayTracer {
         this.scene = scene;
     }
     
-    public long render(final int[][] image, final int threadId,
+    public void render(final int[][] image, final int threadId,
             final int nthreads) {
         final int height = image.length;
         final int width = image[0].length;
@@ -73,7 +68,6 @@ public class RayTracer {
         
         // All loops are reversed for 'speedup' (cf. thinking in java p331)
         // For each line
-        long checksum = 0;
         for(int y = threadId; y < height; y += nthreads) {
             final double ylen = 2.0 * y / width - 1.0;
             
@@ -96,17 +90,12 @@ public class RayTracer {
                 if(blue > 255)
                     blue = 255;
                 
-                checksum += red;
-                checksum += green;
-                checksum += blue;
-                
                 // RGB values for .ppm file
                 // System.out.println(red + " " + green + " " + blue);
                 // Sets the pixels
-                image[y][x] = ALPHA | (red << 16) | (green << 8) | (blue);
+                image[y][x] = 255 << 24 | red << 16 | green << 8 | blue;
             } // end for (x)
         } // end for (y)
-        return checksum;
     }
     
     private Intersection intersect(final Ray r) {
