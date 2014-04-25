@@ -42,7 +42,7 @@ public class JGFRayTracerBench {
     
     public void JGFapplication() {
         
-        final Runnable thobjects[] = new Runnable[nthreads];
+        final RayTracerRunner[] thobjects = new RayTracerRunner[nthreads];
         
         JGFInstrumentor.startTimer("Section3:RayTracer:Init");
         final Scene scene = Scene.createScene();
@@ -55,16 +55,18 @@ public class JGFRayTracerBench {
         
         // Start Threads
         JGFInstrumentor.startTimer("Section3:RayTracer:Run");
-        final Thread th[] = new Thread[nthreads];
+        final Thread[] th = new Thread[nthreads];
         for(int i = 1; i < nthreads; i++) {
             th[i] = new Thread(thobjects[i]);
             th[i].start();
         }
         thobjects[0].run();
+        checksum += thobjects[0].getChecksum();
         
         for(int i = 1; i < nthreads; i++) {
             try {
                 th[i].join();
+                checksum += thobjects[i].getChecksum();
             } catch(final InterruptedException e) {}
         }
         JGFInstrumentor.stopTimer("Section3:RayTracer:Run");
@@ -104,6 +106,7 @@ public class JGFRayTracerBench {
     private class RayTracerRunner extends RayTracer implements Runnable {
         
         private final int id;
+        public long localChecksum = 0;
         
         public RayTracerRunner(final Scene scene, final int id) {
             super(scene);
@@ -111,14 +114,12 @@ public class JGFRayTracerBench {
         }
         
         public void run() {
-            final long check = render(
-                    new Interval(width, height, 0, height, id), nthreads);
-            
-            synchronized(JGFRayTracerBench.this) {
-                for(int i = 0; i < nthreads; i++)
-                    if(id == i)
-                        checksum += check;
-            }
+            localChecksum = render(new Interval(width, height, 0, height, id),
+                    nthreads);
+        }
+        
+        public long getChecksum() {
+            return localChecksum;
         }
     }
 }
