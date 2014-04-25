@@ -43,7 +43,6 @@ public class JGFRayTracerBench {
     public void JGFapplication() {
         
         final Runnable thobjects[] = new Runnable[nthreads];
-        final Barrier br = new TournamentBarrier(nthreads);
         
         JGFInstrumentor.startTimer("Section3:RayTracer:Init");
         final Scene scene = Scene.createScene();
@@ -52,9 +51,10 @@ public class JGFRayTracerBench {
         
         // Create tasks
         for(int i = 0; i < nthreads; i++)
-            thobjects[i] = new RayTracerRunner(scene, i, br);
+            thobjects[i] = new RayTracerRunner(scene, i);
         
         // Start Threads
+        JGFInstrumentor.startTimer("Section3:RayTracer:Run");
         final Thread th[] = new Thread[nthreads];
         for(int i = 1; i < nthreads; i++) {
             th[i] = new Thread(thobjects[i]);
@@ -67,6 +67,7 @@ public class JGFRayTracerBench {
                 th[i].join();
             } catch(final InterruptedException e) {}
         }
+        JGFInstrumentor.stopTimer("Section3:RayTracer:Run");
     }
     
     public void JGFvalidate() {
@@ -102,38 +103,22 @@ public class JGFRayTracerBench {
     
     private class RayTracerRunner extends RayTracer implements Runnable {
         
-        int id;
-        Barrier br;
+        private final int id;
         
-        public RayTracerRunner(final Scene scene, final int id, final Barrier br) {
+        public RayTracerRunner(final Scene scene, final int id) {
             super(scene);
             this.id = id;
-            this.br = br;
         }
         
         public void run() {
-            // synchronise threads and start timer
-            
-            br.doBarrier(id);
-            if(id == 0)
-                JGFInstrumentor.startTimer("Section3:RayTracer:Run");
-            
             final long check = render(
                     new Interval(width, height, 0, height, id), nthreads);
-            
-            // Signal this thread has done iteration
             
             synchronized(JGFRayTracerBench.this) {
                 for(int i = 0; i < nthreads; i++)
                     if(id == i)
                         checksum += check;
             }
-            
-            // synchronise threads and stop timer
-            
-            br.doBarrier(id);
-            if(id == 0)
-                JGFInstrumentor.stopTimer("Section3:RayTracer:Run");
         }
     }
 }
