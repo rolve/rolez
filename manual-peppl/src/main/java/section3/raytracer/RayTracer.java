@@ -25,22 +25,17 @@ package section3.raytracer;
 
 public class RayTracer {
     
-    protected final Scene scene;
+    private final Scene scene;
     
     /**
      * Alpha channel
      */
-    static final int alpha = 255 << 24;
+    private static final int ALPHA = 255 << 24;
     
     /**
      * Null vector (for speedup, instead of <code>new Vec(0,0,0)</code>
      */
     static final Vec voidVec = new Vec();
-    
-    /**
-     * Temporary vect
-     */
-    private final Vec temp = new Vec();
     
     /**
      * Temporary ray
@@ -124,7 +119,7 @@ public class RayTracer {
                 // RGB values for .ppm file
                 // System.out.println(red + " " + green + " " + blue);
                 // Sets the pixels
-                row[pixCounter++] = alpha | (red << 16) | (green << 8) | (blue);
+                row[pixCounter++] = ALPHA | (red << 16) | (green << 8) | (blue);
             } // end for (x)
         } // end for (y)
         return checksum;
@@ -157,10 +152,9 @@ public class RayTracer {
      * 
      * @return The specular direction
      */
-    private static Vec specularDirection(final Vec I,
-            final Vec N) {
+    private static Vec specularDirection(final Vec dir, final Vec normal) {
         Vec r;
-        r = Vec.comb(1.0 / Math.abs(Vec.dot(I, N)), I, 2.0, N);
+        r = Vec.comb(1.0 / Math.abs(Vec.dot(dir, normal)), dir, 2.0, normal);
         r.normalize();
         return r;
     }
@@ -189,87 +183,77 @@ public class RayTracer {
      * 
      * @return The color in Vec form (rgb)
      */
-    private Vec shade(final int level, final double weight,
-            final Vec P, final Vec N, final Vec I,
-            final Intersection hit) {
-        Vec tcol;
-        Vec r;
-        double diff, spec;
-        Material mat;
-        Vec col;
-        int l;
-        
-        col = new Vec();
-        mat = hit.mat;
-        r = new Vec();
-        if(mat.shine > 1e-6) {
-            r = specularDirection(I, N);
-        }
+    private Vec shade(final int level, final double weight, final Vec p,
+            final Vec normal, final Vec dir, final Intersection hit) {
+        final Material mat = hit.mat;
+        Vec r = new Vec();
+        if(mat.shine > 1e-6)
+            r = specularDirection(dir, normal);
         
         // Computes the effectof each light
-        for(l = 0; l < scene.lights.length; l++) {
-            temp.sub2(scene.lights[l].pos, P);
-            if(Vec.dot(N, temp) >= 0.0) {
+        final Vec color = new Vec();
+        final Vec temp = new Vec();
+        for(int l = 0; l < scene.lights.length; l++) {
+            temp.sub2(scene.lights[l].pos, p);
+            if(Vec.dot(normal, temp) >= 0.0) {
                 temp.normalize();
                 
-                tRay.origin = P;
+                tRay.origin = p;
                 tRay.dir = temp;
                 
                 // Checks if there is a shadow
                 if(shadow(tRay)) {
-                    diff = Vec.dot(N, temp) * mat.kd
+                    final double diff = Vec.dot(normal, temp) * mat.kd
                             * scene.lights[l].brightness;
-                    
-                    col.adds(diff, mat.color);
+                    color.adds(diff, mat.color);
                     if(mat.shine > 1e-6) {
-                        spec = Vec.dot(r, temp);
+                        double spec = Vec.dot(r, temp);
                         if(spec > 1e-6) {
                             spec = Math.pow(spec, mat.shine);
-                            col.x += spec;
-                            col.y += spec;
-                            col.z += spec;
+                            color.x += spec;
+                            color.y += spec;
+                            color.z += spec;
                         }
                     }
                 }
             } // if
         } // for
         
-        tRay.origin = P;
+        Vec tcol;
+        tRay.origin = p;
         if(mat.ks * weight > 1e-3) {
-            tRay.dir = specularDirection(I, N);
+            tRay.dir = specularDirection(dir, normal);
             tcol = trace(level + 1, mat.ks * weight, tRay);
-            col.adds(mat.ks, tcol);
+            color.adds(mat.ks, tcol);
         }
         if(mat.kt * weight > 1e-3) {
             if(hit.enter > 0)
-                tRay.dir = transDir(null, mat, I, N);
+                tRay.dir = transDir(null, mat, dir, normal);
             else
-                tRay.dir = transDir(mat, null, I, N);
+                tRay.dir = transDir(mat, null, dir, normal);
             tcol = trace(level + 1, mat.kt * weight, tRay);
-            col.adds(mat.kt, tcol);
+            color.adds(mat.kt, tcol);
         }
-        return col;
+        return color;
     }
     
     /**
      * Launches a ray
      */
     private Vec trace(final int level, final double weight, final Ray r) {
-        Vec P, N;
-        
         // Checks the recursion level
-        if(level > 6) {
+        if(level > 6)
             return new Vec();
-        }
         
+        Vec p, n;
         final Intersection isect = intersect(r);
         if(isect != null) {
-            P = r.point(isect.t);
-            N = isect.prim.normal(P);
-            if(Vec.dot(r.dir, N) >= 0.0) {
-                N.negate();
+            p = r.point(isect.t);
+            n = isect.prim.normal(p);
+            if(Vec.dot(r.dir, n) >= 0.0) {
+                n.negate();
             }
-            return shade(level, weight, P, N, r.dir, isect);
+            return shade(level, weight, p, n, r.dir, isect);
         }
         // no intersection --> col = 0,0,0
         return voidVec;
