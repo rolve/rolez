@@ -45,14 +45,14 @@ public class JGFRayTracerBench {
         final Runnable thobjects[] = new Runnable[nthreads];
         final Barrier br = new TournamentBarrier(nthreads);
         
+        JGFInstrumentor.startTimer("Section3:RayTracer:Init");
+        final Scene scene = Scene.createScene();
+        JGFInstrumentor.stopTimer("Section3:RayTracer:Init");
+        objectCount += scene.objects.length;
+        
         // Create tasks
-        for(int i = 0; i < nthreads; i++) {
-            JGFInstrumentor.startTimer("Section3:RayTracer:Init");
-            final Scene scene = Scene.createScene();
+        for(int i = 0; i < nthreads; i++)
             thobjects[i] = new RayTracerRunner(scene, i, br);
-            JGFInstrumentor.stopTimer("Section3:RayTracer:Init");
-            objectCount += scene.objects.length;
-        }
         
         // Start Threads
         final Thread th[] = new Thread[nthreads];
@@ -67,7 +67,6 @@ public class JGFRayTracerBench {
                 th[i].join();
             } catch(final InterruptedException e) {}
         }
-        
     }
     
     public void JGFvalidate() {
@@ -137,5 +136,4 @@ public class JGFRayTracerBench {
                 JGFInstrumentor.stopTimer("Section3:RayTracer:Run");
         }
     }
-    
 }
