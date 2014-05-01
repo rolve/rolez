@@ -65,6 +65,12 @@ public class Vec {
         z = a.z;
     }
     
+    public Vec(final ImmutableVec a) {
+        x = a.x;
+        y = a.y;
+        z = a.z;
+    }
+    
     /**
      * Default (0,0,0) constructor
      */
@@ -94,20 +100,6 @@ public class Vec {
      * @param b
      *            The vector to be added
      */
-    public final void adds(final double s, final Vec b) {
-        x += s * b.x;
-        y += s * b.y;
-        z += s * b.z;
-    }
-    
-    /**
-     * Adds vector such as: this+=sB
-     * 
-     * @param s
-     *            The multiplier
-     * @param b
-     *            The vector to be added
-     */
     public final void adds(final double s, final ImmutableVec b) {
         x += s * b.x;
         y += s * b.y;
@@ -117,14 +109,27 @@ public class Vec {
     /**
      * Substracs two vectors
      * 
-     * @param a
+     * @param at
      *            first vector
-     * @param b
+     * @param from
      *            second vector
      * @return resulting vector
      */
-    public static Vec sub(final Vec a, final Vec b) {
-        return new Vec(a.x - b.x, a.y - b.y, a.z - b.z);
+    public static Vec sub(final ImmutableVec at, final ImmutableVec from) {
+        return new Vec(at.x - from.x, at.y - from.y, at.z - from.z);
+    }
+    
+    /**
+     * Substracs two vectors
+     * 
+     * @param at
+     *            first vector
+     * @param from
+     *            second vector
+     * @return resulting vector
+     */
+    public static Vec sub(final ImmutableVec at, final Vec from) {
+        return new Vec(at.x - from.x, at.y - from.y, at.z - from.z);
     }
     
     /**
@@ -161,13 +166,17 @@ public class Vec {
         return new ImmutableVec(x, y, z);
     }
     
-    public static Vec cross(final Vec a, final Vec b) {
+    public static Vec cross(final ImmutableVec a, final Vec b) {
         return new Vec(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y
                 - a.y * b.x);
     }
     
     public static double dot(final Vec a, final Vec b) {
         return a.x * b.x + a.y * b.y + a.z * b.z;
+    }
+    
+    public static double dot(final ImmutableVec up, final Vec b) {
+        return up.x * b.x + up.y * b.y + up.z * b.z;
     }
     
     public static Vec comb(final double a, final Vec A, final double b,

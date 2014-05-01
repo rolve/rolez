@@ -59,7 +59,7 @@ public class RayTracer {
         upVec.scale(-frustrumwidth);
         leftVec.scale(scene.view.aspect * frustrumwidth);
         
-        final Ray r = new Ray(scene.view.from, new Vec());
+        final Ray r = new Ray(new Vec(scene.view.from), new Vec());
         
         // Header for .ppm file
         // System.out.println("P3");

@@ -26,15 +26,16 @@ package section3.raytracer;
 public class View implements java.io.Serializable {
     /* public Vec from; public Vec at; public Vec up; public double dist; public
      * double angle; public double aspect; */
-    public final Vec from;
-    public final Vec at;
-    public final Vec up;
+    public final ImmutableVec from;
+    public final ImmutableVec at;
+    public final ImmutableVec up;
     public final double dist;
     public final double angle;
     public final double aspect;
     
-    public View(final Vec from, final Vec at, final Vec up, final double dist,
-            final double angle, final double aspect) {
+    public View(final ImmutableVec from, final ImmutableVec at,
+            final ImmutableVec up, final double dist, final double angle,
+            final double aspect) {
         this.from = from;
         this.at = at;
         this.up = up;
