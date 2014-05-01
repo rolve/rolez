@@ -2,9 +2,12 @@ package ch.trick17.peppl.lib.guard;
 
 import java.util.Set;
 
+import ch.trick17.peppl.lib.immutable.Immutable;
+
 abstract class Guarded {
     
-    private volatile Guard guard;
+    private volatile Guard guard; // IMPROVE: volatile necessary? Task system
+                                  // should guarantee happens-before.
     
     public Guarded() {
         super();
@@ -18,7 +21,7 @@ abstract class Guarded {
         getGuard().pass(this);
     }
     
-    protected final Guard getGuard() {
+    final Guard getGuard() {
         if(guard == null)
             guard = GuardFactory.getDefault().newGuard();
         return guard;
@@ -55,11 +58,20 @@ abstract class Guarded {
             op.process(getGuard());
             
             /* Process references */
-            for(final Guarded ref : allRefs())
+            for(final Guarded ref : guardedRefs())
                 if(ref != null)
                     ref.processRecursively(op, processed);
         }
     }
     
-    abstract Iterable<? extends Guarded> allRefs();
+    /**
+     * Returns all references to {@linkplain Immutable#isImmutable(Class)
+     * mutable} and therefore guarded objects that are reachable from this. This
+     * may exclude internal objects of the PEPPL library.
+     * 
+     * @return All references to mutable objects reachable from this. To
+     *         simplify the implementation of this method, the {@link Iterable}
+     *         may return <code>null</code> references.
+     */
+    abstract Iterable<? extends Guarded> guardedRefs();
 }

@@ -66,7 +66,7 @@ public class AbstractSliceTest {
         }
         
         @Override
-        Iterable<? extends Guarded> allRefs() {
+        Iterable<? extends Guarded> guardedRefs() {
             return emptyList();
         }
     }

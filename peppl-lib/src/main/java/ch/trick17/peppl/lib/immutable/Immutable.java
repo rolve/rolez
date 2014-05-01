@@ -2,6 +2,7 @@ package ch.trick17.peppl.lib.immutable;
 
 import static java.lang.reflect.Modifier.isFinal;
 import static java.util.Collections.newSetFromMap;
+import static java.util.Collections.unmodifiableSet;
 
 import java.lang.reflect.Field;
 import java.util.HashSet;
@@ -10,11 +11,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class Immutable {
     
-    private static final Set<Class<?>> knownImmutable = new HashSet<Class<?>>() {
+    private static final Set<Class<?>> knownImmutable = unmodifiableSet(new HashSet<Class<?>>() {
         {
             add(String.class);
         }
-    };
+    });
     
     private static final Set<Class<?>> checkedClasses = newSetFromMap(new ConcurrentHashMap<Class<?>, Boolean>());
     
@@ -46,6 +47,12 @@ public abstract class Immutable {
      * Indicates whether the given type is <em>immutable</em>, i.e., is either
      * primitive, or an enum, or an known immutable JDK class, or a subclass of
      * {@link Immutable}.
+     * <p>
+     * Note that primitive types are considered immutable because they behave
+     * like immutable reference types, e.g. {@link Integer} or {@link String}.
+     * In particular, a final field with a primitive type or an immutable
+     * reference type can be considered an immutable part of the class defining
+     * the field.
      * 
      * @param type
      *            the type to check

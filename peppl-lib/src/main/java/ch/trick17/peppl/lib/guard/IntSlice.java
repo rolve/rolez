@@ -18,7 +18,7 @@ public class IntSlice extends AbstractSlice<IntSlice> {
     }
     
     @Override
-    final Iterable<? extends Guarded> allRefs() {
+    final Iterable<? extends Guarded> guardedRefs() {
         return Collections.unmodifiableSet(subslices);
     }
 }

@@ -18,7 +18,7 @@ public class DoubleSlice extends AbstractSlice<DoubleSlice> {
     }
     
     @Override
-    final Iterable<? extends Guarded> allRefs() {
+    final Iterable<? extends Guarded> guardedRefs() {
         return Collections.unmodifiableSet(subslices);
     }
 }

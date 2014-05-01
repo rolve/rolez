@@ -1,7 +1,8 @@
 package ch.trick17.peppl.lib.guard;
 
+import static java.util.Collections.newSetFromMap;
+
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.WeakHashMap;
@@ -10,8 +11,7 @@ abstract class AbstractSlice<S extends AbstractSlice<?>> extends Guarded {
     
     public final int begin;
     public final int end;
-    final Set<S> subslices = Collections
-            .newSetFromMap(new WeakHashMap<S, Boolean>());
+    final Set<S> subslices = newSetFromMap(new WeakHashMap<S, Boolean>());
     
     public AbstractSlice(final int beginIndex, final int endIndex) {
         assert beginIndex >= 0;
