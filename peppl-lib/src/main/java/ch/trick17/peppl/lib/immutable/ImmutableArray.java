@@ -15,8 +15,7 @@ import java.util.Arrays;
  * @see ImmutableLongArray
  * @see ImmutableDoubleArray
  */
-public final class ImmutableArray<E extends Immutable> extends
-        ImmutableSlice<E> {
+public final class ImmutableArray<E> extends ImmutableSlice<E> {
     
     @SafeVarargs
     public ImmutableArray(final E... data) {
