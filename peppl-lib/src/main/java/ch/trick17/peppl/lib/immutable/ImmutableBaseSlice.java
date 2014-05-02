@@ -38,6 +38,9 @@ abstract class ImmutableBaseSlice<S extends ImmutableBaseSlice<S>> extends
         return end - begin;
     }
     
+    // IMPROVE: Refactor so that this and BaseSlice use the same code for
+    // slicing and partitioning. Could use Java 8 default methods.
+    
     public final S slice(final int beginIndex, final int endIndex) {
         assert beginIndex >= begin;
         assert endIndex <= end;

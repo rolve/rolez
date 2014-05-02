@@ -8,7 +8,8 @@ import java.util.Iterator;
 
 import org.junit.Test;
 
-import ch.trick17.peppl.lib.immutable.ImmutableObject;
+import ch.trick17.peppl.lib.SomeClasses.SomeEnum;
+import ch.trick17.peppl.lib.SomeClasses.SomeImmutable;
 
 public class GuardedObjectTest extends GuardedObject {
     
@@ -55,17 +56,9 @@ public class GuardedObjectTest extends GuardedObject {
     }
     
     static class ImmutableReferenceFields extends GuardedObject {
-        Abc abc = Abc.A;
+        SomeEnum abc = SomeEnum.A;
         String s = "I'm so immutable...";
-        ImmutableThing i = new ImmutableThing();
-        
-        private enum Abc {
-            A,
-            B,
-            C;
-        }
-        
-        public static class ImmutableThing extends ImmutableObject {}
+        SomeImmutable i = new SomeImmutable();
     }
     
     private static int count(final Iterable<?> iterable) {

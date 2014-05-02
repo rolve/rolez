@@ -24,7 +24,7 @@ public class ImmutableSlice<E> extends ImmutableBaseSlice<ImmutableSlice<E>>
         implements List<E>, RandomAccess {
     
     public final E[] data;
-    private final SliceList listImpl = new SliceList();
+    private final ImmutableSliceList listImpl = new ImmutableSliceList();
     
     ImmutableSlice(final E[] data, final int beginIndex, final int endIndex) {
         super(beginIndex, endIndex);
@@ -148,7 +148,7 @@ public class ImmutableSlice<E> extends ImmutableBaseSlice<ImmutableSlice<E>>
         return listImpl.toString();
     }
     
-    private final class SliceList extends AbstractList<E> implements
+    private final class ImmutableSliceList extends AbstractList<E> implements
             RandomAccess {
         @Override
         public E get(final int index) {

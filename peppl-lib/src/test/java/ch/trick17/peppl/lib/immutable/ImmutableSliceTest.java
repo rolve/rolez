@@ -1,0 +1,36 @@
+package ch.trick17.peppl.lib.immutable;
+
+import org.junit.Test;
+
+import ch.trick17.peppl.lib.SomeClasses.SomeEnum;
+import ch.trick17.peppl.lib.SomeClasses.SomeImmutable;
+import ch.trick17.peppl.lib.guard.GuardedObject;
+
+public class ImmutableSliceTest {
+    
+    @Test
+    public void testConstructorImmutableClass() {
+        new ImmutableSlice<>(new SomeImmutable[10], 0, 10).toString();
+        new ImmutableSlice<>(new ImmutableSlice[10], 0, 10).toString();
+    }
+    
+    @Test
+    public void testConstructorEnum() {
+        new ImmutableSlice<>(new SomeEnum[10], 0, 10).toString();
+    }
+    
+    @Test
+    public void testConstructorKnownImmutable() {
+        new ImmutableSlice<>(new String[10], 0, 10).toString();
+    }
+    
+    @Test(expected = AssertionError.class)
+    public void testConstructorMutable() {
+        new ImmutableSlice<>(new StringBuilder[10], 0, 10).toString();
+    }
+    
+    @Test(expected = AssertionError.class)
+    public void testConstructorGuarded() {
+        new ImmutableSlice<>(new GuardedObject[10], 0, 10).toString();
+    }
+}
