@@ -8,7 +8,7 @@ import java.util.Iterator;
 
 import org.junit.Test;
 
-import ch.trick17.peppl.lib.immutable.Immutable;
+import ch.trick17.peppl.lib.immutable.ImmutableObject;
 
 public class GuardedObjectTest extends GuardedObject {
     
@@ -65,7 +65,7 @@ public class GuardedObjectTest extends GuardedObject {
             C;
         }
         
-        public static class ImmutableThing extends Immutable {}
+        public static class ImmutableThing extends ImmutableObject {}
     }
     
     private static int count(final Iterable<?> iterable) {
