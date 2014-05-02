@@ -7,6 +7,18 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.RandomAccess;
 
+/**
+ * A slice of a {@link Guarded} array with reference type elements (i.e. an
+ * {@link Array}). See {@link BaseSlice} for more information.
+ * 
+ * @author Michael Faes
+ * @param <E>
+ *            The type of elements in this array slice. Must be a subtype of
+ *            {@link Guarded}.
+ * @see IntSlice
+ * @see LongSlice
+ * @see DoubleSlice
+ */
 public class Slice<E extends Guarded> extends BaseSlice<Slice<E>> implements
         List<E>, RandomAccess {
     

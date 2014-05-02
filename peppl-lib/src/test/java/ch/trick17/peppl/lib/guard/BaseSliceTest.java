@@ -8,7 +8,7 @@ import java.util.List;
 
 import org.junit.Test;
 
-public class AbstractSliceTest {
+public class BaseSliceTest {
     
     @Test
     public void testPartition() {

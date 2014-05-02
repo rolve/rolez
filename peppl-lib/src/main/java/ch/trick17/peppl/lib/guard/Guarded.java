@@ -4,14 +4,12 @@ import java.util.Set;
 
 import ch.trick17.peppl.lib.immutable.Immutable;
 
-abstract class Guarded {
+public abstract class Guarded {
     
     private volatile Guard guard; // IMPROVE: volatile necessary? Task system
                                   // should guarantee happens-before.
     
-    public Guarded() {
-        super();
-    }
+    Guarded() {}
     
     public void share() {
         getGuard().share(this);
