@@ -7,13 +7,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.WeakHashMap;
 
-abstract class AbstractSlice<S extends AbstractSlice<?>> extends Guarded {
+abstract class BaseSlice<S extends BaseSlice<?>> extends Guarded {
     
     public final int begin;
     public final int end;
     final Set<S> subslices = newSetFromMap(new WeakHashMap<S, Boolean>());
     
-    public AbstractSlice(final int beginIndex, final int endIndex) {
+    public BaseSlice(final int beginIndex, final int endIndex) {
         assert beginIndex >= 0;
         assert endIndex >= beginIndex;
         begin = beginIndex;

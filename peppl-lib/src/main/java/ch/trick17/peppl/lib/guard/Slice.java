@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.RandomAccess;
 
-public class Slice<E extends Guarded> extends AbstractSlice<Slice<E>> implements
+public class Slice<E extends Guarded> extends BaseSlice<Slice<E>> implements
         List<E>, RandomAccess {
     
     public final E[] data;

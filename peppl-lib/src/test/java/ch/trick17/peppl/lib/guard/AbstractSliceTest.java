@@ -31,8 +31,8 @@ public class AbstractSliceTest {
         assertBalanced(slices);
     }
     
-    private static void assertCover(final AbstractSlice<?> original,
-            final List<? extends AbstractSlice<?>> slices) {
+    private static void assertCover(final BaseSlice<?> original,
+            final List<? extends BaseSlice<?>> slices) {
         assertEquals(original.begin, slices.get(0).begin);
         
         for(int i = 1; i < slices.size(); i++)
@@ -54,7 +54,7 @@ public class AbstractSliceTest {
         assertTrue(max - min <= 1);
     }
     
-    static class TestSlice extends AbstractSlice<TestSlice> {
+    static class TestSlice extends BaseSlice<TestSlice> {
         
         public TestSlice(final int beginIndex, final int endIndex) {
             super(beginIndex, endIndex);

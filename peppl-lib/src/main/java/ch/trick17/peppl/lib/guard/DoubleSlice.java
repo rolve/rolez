@@ -2,7 +2,7 @@ package ch.trick17.peppl.lib.guard;
 
 import java.util.Collections;
 
-public class DoubleSlice extends AbstractSlice<DoubleSlice> {
+public class DoubleSlice extends BaseSlice<DoubleSlice> {
     
     public final double[] data;
     
