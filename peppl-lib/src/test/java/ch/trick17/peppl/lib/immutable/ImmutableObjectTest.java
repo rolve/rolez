@@ -3,18 +3,18 @@ package ch.trick17.peppl.lib.immutable;
 import org.junit.Test;
 
 @SuppressWarnings("unused")
-public class ImmutableTest extends Immutable {
-    /* Need to extend Immutable because anonymous classes have a link to this
-     * class */
+public class ImmutableObjectTest extends ImmutableObject {
+    /* Need to extend ImmutableObject because anonymous classes have a link to
+     * this class */
     
     @Test
     public void testCheckClassNoFields() {
-        new Immutable() {}.toString();
+        new ImmutableObject() {}.toString();
     }
     
     @Test
     public void testCheckClassPrimitiveField() {
-        new Immutable() {
+        new ImmutableObject() {
             final int i = 0;
             final double d = 0;
             final char c = 'c';
@@ -23,7 +23,7 @@ public class ImmutableTest extends Immutable {
     
     @Test
     public void testCheckClassEnumField() {
-        new Immutable() {
+        new ImmutableObject() {
             final Abc abc = Abc.A;
         }.toString();
     }
@@ -36,14 +36,14 @@ public class ImmutableTest extends Immutable {
     
     @Test
     public void testCheckClassKnownImmutableField() {
-        new Immutable() {
+        new ImmutableObject() {
             final String s = "Hello World!";
         }.toString();
     }
     
     @Test
     public void testCheckClassImmutableField() {
-        new Immutable() {
+        new ImmutableObject() {
             final SuperImmutable si = null;
         }.toString();
     }
@@ -57,14 +57,14 @@ public class ImmutableTest extends Immutable {
     
     @Test(expected = AssertionError.class)
     public void testCheckClassNonFinalField() {
-        new Immutable() {
+        new ImmutableObject() {
             int i = 0;
         }.toString();
     }
     
     @Test(expected = AssertionError.class)
     public void testCheckClassNonImmutableField() {
-        new Immutable() {
+        new ImmutableObject() {
             final StringBuilder b = new StringBuilder();
         }.toString();
     }
@@ -74,11 +74,11 @@ public class ImmutableTest extends Immutable {
         new BadImmutable() {}.toString();
     }
     
-    private static class BadImmutable extends Immutable {
+    private static class BadImmutable extends ImmutableObject {
         int i = 0;
     }
     
-    private static class SuperImmutable extends Immutable {
+    private static class SuperImmutable extends ImmutableObject {
         final int i = 0;
         final String s = "Bla";
         final SuperImmutable si = null;
