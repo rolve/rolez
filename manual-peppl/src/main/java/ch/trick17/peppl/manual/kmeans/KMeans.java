@@ -1,5 +1,6 @@
 package ch.trick17.peppl.manual.kmeans;
 
+import static ch.trick17.peppl.lib.Partitioners.CONTIGUOUS;
 import static java.lang.Math.sqrt;
 
 import java.util.ArrayList;
@@ -64,8 +65,8 @@ public class KMeans implements Runnable {
         boolean changed;
         do {
             /* Assignment step */
-            final List<Slice<DoubleArray>> dataParts = dataSet.partition(PARTS);
-            final List<IntSlice> assignParts = assignments.partition(PARTS);
+            final List<Slice<DoubleArray>> dataParts = dataSet.partition(CONTIGUOUS, PARTS);
+            final List<IntSlice> assignParts = assignments.partition(CONTIGUOUS, PARTS);
             final List<Task<Boolean>> tasks = new ArrayList<>(PARTS);
             
             for(int i = 0; i < PARTS; i++) {
@@ -149,7 +150,7 @@ public class KMeans implements Runnable {
         for(int v = dataSet.begin; v < dataSet.end; v++) {
             double min = Double.POSITIVE_INFINITY;
             int minIndex = -1;
-            for(int c = 0; c < centroids.length(); c++) {
+            for(int c = 0; c < centroids.size(); c++) {
                 final double distance = distance(dataSet.data[v],
                         centroids.data[c]);
                 if(distance < min) {
@@ -185,8 +186,8 @@ public class KMeans implements Runnable {
     }
     
     private static double distance(final DoubleArray v1, final DoubleArray v2) {
-        final int dim = v1.length();
-        assert v2.length() == dim;
+        final int dim = v1.size();
+        assert v2.size() == dim;
         double sum = 0;
         for(int d = 0; d < dim; d++) {
             final double diff = v1.data[d] - v2.data[d];

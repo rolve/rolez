@@ -12,15 +12,17 @@ public class LongSlice extends BaseSlice<LongSlice> {
     
     public final long[] data;
     
-    LongSlice(final long[] data, final int beginIndex, final int endIndex) {
-        super(beginIndex, endIndex);
+    LongSlice(final long[] data, final int beginIndex, final int endIndex,
+            final int stepSize) {
+        super(beginIndex, endIndex, stepSize);
         assert endIndex <= data.length;
         this.data = data;
     }
     
     @Override
-    final LongSlice createSlice(final int beginIndex, final int endIndex) {
-        return new LongSlice(data, beginIndex, endIndex);
+    final LongSlice createSlice(final int beginIndex, final int endIndex,
+            final int stepSize) {
+        return new LongSlice(data, beginIndex, endIndex, stepSize);
     }
     
     @Override

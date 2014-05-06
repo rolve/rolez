@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.WeakHashMap;
 
+import ch.trick17.peppl.lib.Partitioner;
+import ch.trick17.peppl.lib.Partitioner.SliceDef;
 import ch.trick17.peppl.lib.task.Task;
 
 /**
@@ -36,46 +38,50 @@ abstract class BaseSlice<S extends BaseSlice<S>> extends Guarded {
     
     public final int begin;
     public final int end;
+    public final int step;
+    
     final Set<S> subslices = newSetFromMap(new WeakHashMap<S, Boolean>());
     
-    public BaseSlice(final int beginIndex, final int endIndex) {
+    public BaseSlice(final int beginIndex, final int endIndex,
+            final int stepSize) {
         assert beginIndex >= 0;
         assert endIndex >= beginIndex;
+        assert stepSize > 0;
         begin = beginIndex;
         end = endIndex;
+        step = stepSize;
     }
     
-    public final int length() {
-        return end - begin;
+    public final int size() {
+        final int length = end - begin;
+        return (length - 1) / step + 1;
     }
     
     public final S slice(final int beginIndex, final int endIndex) {
+        return slice(beginIndex, endIndex, 1);
+    }
+    
+    public final S slice(final int beginIndex, final int endIndex,
+            final int stepSize) {
         assert beginIndex >= begin;
         assert endIndex <= end;
+        assert stepSize >= step;
         
-        final S slice = createSlice(beginIndex, endIndex);
+        final S slice = createSlice(beginIndex, endIndex, stepSize);
         subslices.add(slice);
         return slice;
     }
     
-    public final List<S> partition(final int n) {
-        final int baseSize = length() / n;
-        final int largeSlices = length() % n;
-        
-        final ArrayList<S> slices = new ArrayList<>(n);
-        int beginIndex = begin;
-        for(int i = 0; i < n; i++) {
-            final int endIndex = beginIndex + baseSize
-                    + (i < largeSlices ? 1 : 0);
-            slices.add(slice(beginIndex, endIndex));
-            beginIndex = endIndex;
-        }
-        assert slices.size() == n;
-        assert beginIndex == end;
+    public final List<S> partition(final Partitioner p, final int n) {
+        final List<SliceDef> defs =
+                p.partition(new SliceDef(begin, end, step), n);
+        final List<S> slices = new ArrayList<>(n);
+        for(final SliceDef def : defs)
+            slices.add(slice(def.begin, def.end, def.step));
         return slices;
     }
     
-    abstract S createSlice(int beginIndex, int endIndex);
+    abstract S createSlice(int beginIndex, int endIndex, int stepSize);
     
     @Override
     public void guardRead() {

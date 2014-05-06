@@ -12,11 +12,7 @@ public class IntArray extends IntSlice {
     
     @SafeVarargs
     public IntArray(final int... data) {
-        super(data, 0, data.length);
-    }
-    
-    public IntArray(final int length) {
-        super(new int[length], 0, length);
+        super(data, 0, data.length, 1);
     }
     
     @Override

@@ -12,11 +12,11 @@ public class DoubleArray extends DoubleSlice {
     
     @SafeVarargs
     public DoubleArray(final double... data) {
-        super(data, 0, data.length);
+        super(data, 0, data.length, 1);
     }
     
     public DoubleArray(final int length) {
-        super(new double[length], 0, length);
+        super(new double[length], 0, length, 1);
     }
     
     @Override

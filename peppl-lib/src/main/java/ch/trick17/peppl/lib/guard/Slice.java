@@ -25,15 +25,17 @@ public class Slice<E extends Guarded> extends BaseSlice<Slice<E>> implements
     public final E[] data;
     private final SliceList listImpl = new SliceList();
     
-    Slice(final E[] data, final int beginIndex, final int endIndex) {
-        super(beginIndex, endIndex);
+    Slice(final E[] data, final int beginIndex, final int endIndex,
+            final int step) {
+        super(beginIndex, endIndex, step);
         assert endIndex <= data.length;
         this.data = data;
     }
     
     @Override
-    final Slice<E> createSlice(final int beginIndex, final int endIndex) {
-        return new Slice<>(data, beginIndex, endIndex);
+    final Slice<E> createSlice(final int beginIndex, final int endIndex,
+            final int stepSize) {
+        return new Slice<>(data, beginIndex, endIndex, stepSize);
     }
     
     @Override
@@ -61,10 +63,6 @@ public class Slice<E extends Guarded> extends BaseSlice<Slice<E>> implements
                 };
             }
         };
-    }
-    
-    public int size() {
-        return listImpl.size();
     }
     
     public boolean isEmpty() {
@@ -174,12 +172,12 @@ public class Slice<E extends Guarded> extends BaseSlice<Slice<E>> implements
             RandomAccess {
         @Override
         public E get(final int index) {
-            return data[begin + index];
+            return data[begin + index * step];
         }
         
         @Override
         public E set(final int index, final E element) {
-            final int i = begin + index;
+            final int i = begin + index * step;
             final E previous = data[i];
             data[i] = element;
             return previous;
@@ -187,7 +185,7 @@ public class Slice<E extends Guarded> extends BaseSlice<Slice<E>> implements
         
         @Override
         public int size() {
-            return end - begin;
+            return (end - begin) / step;
         }
     }
 }

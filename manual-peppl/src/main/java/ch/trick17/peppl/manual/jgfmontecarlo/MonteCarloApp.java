@@ -21,6 +21,8 @@
 
 package ch.trick17.peppl.manual.jgfmontecarlo;
 
+import static ch.trick17.peppl.lib.Partitioners.CONTIGUOUS;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -71,7 +73,7 @@ public class MonteCarloApp {
     }
     
     public void runTasks() {
-        final List<LongSlice> seedParts = seeds.partition(nthreads);
+        final List<LongSlice> seedParts = seeds.partition(CONTIGUOUS, nthreads);
         final ArrayList<Task<List<Double>>> tasks = new ArrayList<>(nthreads);
         for(int i = 0; i < nthreads; i++) {
             pathParams.share();
@@ -93,7 +95,7 @@ public class MonteCarloApp {
     }
     
     public void processResults() {
-        final List<DoubleSlice> resultParts = results.partition(nthreads);
+        final List<DoubleSlice> resultParts = results.partition(CONTIGUOUS, nthreads);
         final ArrayList<Task<Double>> tasks = new ArrayList<>(nthreads);
         for(final DoubleSlice part : resultParts) {
             part.share();

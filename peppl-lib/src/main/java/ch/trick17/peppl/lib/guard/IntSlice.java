@@ -12,15 +12,17 @@ public class IntSlice extends BaseSlice<IntSlice> {
     
     public final int[] data;
     
-    IntSlice(final int[] data, final int beginIndex, final int endIndex) {
-        super(beginIndex, endIndex);
+    IntSlice(final int[] data, final int beginIndex, final int endIndex,
+            final int stepSize) {
+        super(beginIndex, endIndex, stepSize);
         assert endIndex <= data.length;
         this.data = data;
     }
     
     @Override
-    final IntSlice createSlice(final int beginIndex, final int endIndex) {
-        return new IntSlice(data, beginIndex, endIndex);
+    final IntSlice createSlice(final int beginIndex, final int endIndex,
+            final int stepSize) {
+        return new IntSlice(data, beginIndex, endIndex, stepSize);
     }
     
     @Override

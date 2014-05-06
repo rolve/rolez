@@ -12,15 +12,17 @@ public class DoubleSlice extends BaseSlice<DoubleSlice> {
     
     public final double[] data;
     
-    DoubleSlice(final double[] data, final int beginIndex, final int endIndex) {
-        super(beginIndex, endIndex);
+    DoubleSlice(final double[] data, final int beginIndex, final int endIndex,
+            final int stepSize) {
+        super(beginIndex, endIndex, stepSize);
         assert endIndex <= data.length;
         this.data = data;
     }
     
     @Override
-    final DoubleSlice createSlice(final int beginIndex, final int endIndex) {
-        return new DoubleSlice(data, beginIndex, endIndex);
+    final DoubleSlice createSlice(final int beginIndex, final int endIndex,
+            final int stepSize) {
+        return new DoubleSlice(data, beginIndex, endIndex, stepSize);
     }
     
     @Override

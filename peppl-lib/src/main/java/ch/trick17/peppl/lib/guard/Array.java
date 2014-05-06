@@ -18,7 +18,7 @@ public final class Array<E extends Guarded> extends Slice<E> {
     
     @SafeVarargs
     public Array(final E... data) {
-        super(data, 0, data.length);
+        super(data, 0, data.length, 1);
     }
     
     @Override

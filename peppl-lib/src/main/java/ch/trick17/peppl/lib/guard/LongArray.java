@@ -12,11 +12,11 @@ public class LongArray extends LongSlice {
     
     @SafeVarargs
     public LongArray(final long... data) {
-        super(data, 0, data.length);
+        super(data, 0, data.length, 1);
     }
     
     public LongArray(final int length) {
-        super(new long[length], 0, length);
+        super(new long[length], 0, length, 1);
     }
     
     @Override
