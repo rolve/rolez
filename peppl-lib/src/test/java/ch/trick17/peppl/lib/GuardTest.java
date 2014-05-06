@@ -1077,6 +1077,9 @@ public class GuardTest extends JpfParallelismTest {
         }
     }
     
+    // FIXME: Test (and probably fix) guarding of overlapping slices
+    // FIXME: Test and fix guarding of striped slices
+    
     @Test
     public void testSharePrimitiveSlice() {
         assumeVerifyCorrectness();
