@@ -23,6 +23,7 @@
 
 package ch.trick17.peppl.manual.raytracer;
 
+import ch.trick17.peppl.lib.Mutable;
 import ch.trick17.peppl.lib.guard.IntArray;
 import ch.trick17.peppl.lib.guard.Slice;
 
@@ -39,10 +40,10 @@ public class RayTracer {
         this.scene = scene;
     }
     
-    public void render(final Slice<IntArray> image) {
+    public void render(@Mutable final Slice<IntArray> image) {
         final long startTime = System.nanoTime();
         
-        final int width = image.data[0].length();
+        final int width = image.data[0].size();
         
         final Vec viewVec = Vec.sub(scene.view.at, scene.view.from);
         viewVec.normalize();
@@ -72,7 +73,7 @@ public class RayTracer {
         // All loops are reversed for 'speedup' (cf. thinking in java p331)
         // For each line
         image.guardReadWrite();
-        for(int y = image.begin; y < image.end; y++) {
+        for(int y = image.begin; y < image.end; y += image.step) {
             final double ylen = 2.0 * y / width - 1.0;
             
             image.data[y].guardReadWrite();

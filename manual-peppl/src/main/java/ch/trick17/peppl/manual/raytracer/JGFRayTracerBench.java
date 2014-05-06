@@ -20,9 +20,13 @@
 
 package ch.trick17.peppl.manual.raytracer;
 
+import static ch.trick17.peppl.lib.Partitioners.STRIPED;
+
 import java.util.List;
 
 import jgfutil.JGFInstrumentor;
+import ch.trick17.peppl.lib.Mutable;
+import ch.trick17.peppl.lib._Mutable;
 import ch.trick17.peppl.lib.guard.Array;
 import ch.trick17.peppl.lib.guard.IntArray;
 import ch.trick17.peppl.lib.guard.Slice;
@@ -46,7 +50,7 @@ public class JGFRayTracerBench {
         this.size = size;
         image = new Array<IntArray>(new IntArray[datasizes[size]]);
         for(int i = 0; i < datasizes[size]; i++)
-            image.data[i] = new IntArray(datasizes[size]);
+            image.data[i] = new IntArray(new int[datasizes[size]]);
     }
     
     public void JGFapplication() {
@@ -58,7 +62,7 @@ public class JGFRayTracerBench {
         JGFInstrumentor.startTimer("Section3:RayTracer:Run");
         final TaskSystem taskSystem = new NewThreadTaskSystem();
         
-        final List<Slice<IntArray>> imageParts = image.partition(nthreads);
+        final List<Slice<IntArray>> imageParts = image.partition(STRIPED, nthreads);
         final Task<?>[] tasks = new Task<?>[nthreads];
         for(int i = 1; i < nthreads; i++) {
             final Slice<IntArray> part = imageParts.get(i);
@@ -78,9 +82,9 @@ public class JGFRayTracerBench {
     public void JGFvalidate() {
         long checksum = 0;
         image.guardRead();
-        for(int y = 0; y < image.length(); y++) {
+        for(int y = 0; y < image.size(); y++) {
             image.data[y].guardRead();
-            for(int x = 0; x < image.data[0].length(); x++) {
+            for(int x = 0; x < image.data[0].size(); x++) {
                 final int color = image.data[y].data[x];
                 final int r = (color & 0xffffff) >> 16;
                 final int g = (color & 0xffff) >> 8;
@@ -111,8 +115,8 @@ public class JGFRayTracerBench {
         JGFInstrumentor.stopTimer("Section3:RayTracer:Total");
         
         JGFInstrumentor.addOpsToTimer("Section3:RayTracer:Init", objectCount);
-        JGFInstrumentor.addOpsToTimer("Section3:RayTracer:Run", image.length()
-                * image.data[0].length());
+        JGFInstrumentor.addOpsToTimer("Section3:RayTracer:Run", image.size()
+                * image.data[0].size());
         JGFInstrumentor.addOpsToTimer("Section3:RayTracer:Total", 1);
         
         JGFInstrumentor.printTimer("Section3:RayTracer:Init");
@@ -122,18 +126,21 @@ public class JGFRayTracerBench {
     
     private static class RayTracerTask implements Runnable {
         
-        private final Slice<IntArray> imagePart;
+        @_Mutable private final Slice<IntArray> imagePart;
         private final Scene scene;
         
-        public RayTracerTask(final Slice<IntArray> image, final Scene scene) {
+        public RayTracerTask(@Mutable final Slice<IntArray> image,
+                final Scene scene) {
             this.imagePart = image;
             this.scene = scene;
         }
         
         public void run() {
             imagePart.registerNewOwner();
+            
             final RayTracer tracer = new RayTracer(scene);
             tracer.render(imagePart);
+            
             imagePart.releasePassed();
         }
     }
