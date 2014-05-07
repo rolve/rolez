@@ -2,6 +2,8 @@ package ch.trick17.peppl.lib.immutable;
 
 import java.util.Arrays;
 
+import ch.trick17.peppl.lib.SliceRange;
+
 /**
  * An {@link Immutable} array with <code>long</code> elements. See
  * {@link ImmutableBaseSlice} for more information.
@@ -13,11 +15,11 @@ public class ImmutableLongArray extends ImmutableLongSlice {
     
     @SafeVarargs
     public ImmutableLongArray(final long... data) {
-        super(data, 0, data.length);
+        super(SliceRange.forArray(data), data);
     }
     
     public ImmutableLongArray(final int length) {
-        super(new long[length], 0, length);
+        this(new long[length]);
     }
     
     @Override

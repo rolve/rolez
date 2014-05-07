@@ -2,6 +2,8 @@ package ch.trick17.peppl.lib.immutable;
 
 import java.util.Arrays;
 
+import ch.trick17.peppl.lib.SliceRange;
+
 /**
  * An {@link Immutable} array with <code>double</code> elements. See
  * {@link ImmutableBaseSlice} for more information.
@@ -13,11 +15,11 @@ public class ImmutableDoubleArray extends ImmutableDoubleSlice {
     
     @SafeVarargs
     public ImmutableDoubleArray(final double... data) {
-        super(data, 0, data.length);
+        super(SliceRange.forArray(data), data);
     }
     
     public ImmutableDoubleArray(final int length) {
-        super(new double[length], 0, length);
+        this(new double[length]);
     }
     
     @Override

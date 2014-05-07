@@ -1060,7 +1060,7 @@ public class GuardTest extends JpfParallelismTest {
             for(int i = 0; i < a.data.length; i++)
                 a.data[i] = new Int(i);
             
-            final Slice<Int> slice = a.slice(0, 2);
+            final Slice<Int> slice = a.slice(0, 2, 1);
             slice.share();
             final Task<Void> task = s.run(new Runnable() {
                 public void run() {
@@ -1086,7 +1086,7 @@ public class GuardTest extends JpfParallelismTest {
         if(verifyNoPropertyViolation()) {
             final IntArray a = new IntArray(0, 1);
             
-            final IntSlice slice = a.slice(0, 1);
+            final IntSlice slice = a.slice(0, 1, 1);
             slice.share();
             final Task<Void> task = s.run(new Runnable() {
                 public void run() {
@@ -1109,7 +1109,7 @@ public class GuardTest extends JpfParallelismTest {
             for(int i = 0; i < a.data.length; i++)
                 a.data[i] = new Int(i);
             
-            final Slice<Int> slice = a.slice(0, 5);
+            final Slice<Int> slice = a.slice(0, 5, 1);
             slice.pass();
             final Task<Void> task = s.run(new Runnable() {
                 public void run() {
@@ -1139,7 +1139,7 @@ public class GuardTest extends JpfParallelismTest {
         if(verifyNoPropertyViolation()) {
             final IntArray a = new IntArray(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
             
-            final IntSlice slice = a.slice(0, 5);
+            final IntSlice slice = a.slice(0, 5, 1);
             slice.pass();
             final Task<Void> task = s.run(new Runnable() {
                 public void run() {
@@ -1165,7 +1165,7 @@ public class GuardTest extends JpfParallelismTest {
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
             final Array<Int> a = new Array<>(i);
-            final Slice<Int> slice = a.slice(0, 1);
+            final Slice<Int> slice = a.slice(0, 1, 1);
             
             slice.share();
             final Task<Void> task1 = s.run(new Runnable() {
@@ -1206,7 +1206,7 @@ public class GuardTest extends JpfParallelismTest {
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
             final Array<Int> a = new Array<>(i);
-            final Slice<Int> slice = a.slice(0, 1);
+            final Slice<Int> slice = a.slice(0, 1, 1);
             
             slice.pass();
             final Task<Void> task1 = s.run(new Runnable() {
@@ -1250,8 +1250,8 @@ public class GuardTest extends JpfParallelismTest {
             for(int i = 0; i < a.data.length; i++)
                 a.data[i] = new Int(i);
             
-            final Slice<Int> slice1 = a.slice(0, 5);
-            final Slice<Int> slice2 = a.slice(slice1.range.end, a.data.length);
+            final Slice<Int> slice1 = a.slice(0, 5, 1);
+            final Slice<Int> slice2 = a.slice(slice1.range.end, a.data.length, 1);
             
             slice1.pass();
             final Task<Void> task1 = s.run(new Runnable() {
@@ -1295,13 +1295,13 @@ public class GuardTest extends JpfParallelismTest {
             for(int i = 0; i < a.data.length; i++)
                 a.data[i] = new Int(i);
             
-            final Slice<Int> slice1 = a.slice(0, 2);
+            final Slice<Int> slice1 = a.slice(0, 2, 1);
             slice1.pass();
             final Task<Void> task = s.run(new Runnable() {
                 public void run() {
                     slice1.registerNewOwner();
                     
-                    final Slice<Int> slice2 = slice1.slice(0, 1);
+                    final Slice<Int> slice2 = slice1.slice(0, 1, 1);
                     slice2.pass();
                     final Task<Void> task2 = s.run(new Runnable() {
                         public void run() {
@@ -1340,13 +1340,13 @@ public class GuardTest extends JpfParallelismTest {
         if(verify(mode, new int[][]{{1, 2}, {0, 2}})) {
             final IntArray a = new IntArray(0, 1, 2);
             
-            final IntSlice slice1 = a.slice(0, 2);
+            final IntSlice slice1 = a.slice(0, 2, 1);
             slice1.pass();
             final Task<Void> task = s.run(new Runnable() {
                 public void run() {
                     slice1.registerNewOwner();
                     
-                    final IntSlice slice2 = slice1.slice(0, 1);
+                    final IntSlice slice2 = slice1.slice(0, 1, 1);
                     slice2.pass();
                     final Task<Void> task2 = s.run(new Runnable() {
                         public void run() {

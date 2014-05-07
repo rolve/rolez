@@ -2,6 +2,8 @@ package ch.trick17.peppl.lib.immutable;
 
 import java.util.Arrays;
 
+import ch.trick17.peppl.lib.SliceRange;
+
 /**
  * An {@link Immutable} array with reference type elements. See
  * {@link ImmutableBaseSlice} for more information.
@@ -19,7 +21,7 @@ public final class ImmutableArray<E> extends ImmutableSlice<E> {
     
     @SafeVarargs
     public ImmutableArray(final E... data) {
-        super(data, 0, data.length);
+        super(SliceRange.forArray(data), data);
     }
     
     @Override

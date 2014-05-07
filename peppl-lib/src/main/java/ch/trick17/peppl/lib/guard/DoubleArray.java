@@ -17,10 +17,6 @@ public class DoubleArray extends DoubleSlice {
         super(SliceRange.forArray(data), data);
     }
     
-    public DoubleArray(final int length) {
-        this(new double[length]);
-    }
-    
     @Override
     public String toString() {
         return Arrays.toString(data);

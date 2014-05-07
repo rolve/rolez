@@ -61,6 +61,11 @@ public class Slice<E extends Guarded> extends BaseSlice<Slice<E>> {
         };
     }
     
+    @Override
+    public final String toString() {
+        return listImpl.toString();
+    }
+    
     private final class SliceList extends AbstractList<E> implements
             RandomAccess {
         @Override

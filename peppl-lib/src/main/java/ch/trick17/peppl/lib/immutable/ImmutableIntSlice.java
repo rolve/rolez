@@ -1,5 +1,7 @@
 package ch.trick17.peppl.lib.immutable;
 
+import ch.trick17.peppl.lib.SliceRange;
+
 /**
  * A slice of an {@link ImmutableIntArray}. See {@link ImmutableBaseSlice} for
  * more information.
@@ -11,14 +13,14 @@ public class ImmutableIntSlice extends ImmutableBaseSlice<ImmutableIntSlice> {
     
     public final int[] data;
     
-    ImmutableIntSlice(final int[] data, final int beginIndex, final int endIndex) {
-        super(beginIndex, endIndex);
-        assert endIndex <= data.length;
+    ImmutableIntSlice(final SliceRange range, final int[] data) {
+        super(range);
+        assert range.end <= data.length;
         this.data = data;
     }
     
     @Override
-    final ImmutableIntSlice createSlice(final int beginIndex, final int endIndex) {
-        return new ImmutableIntSlice(data, beginIndex, endIndex);
+    final ImmutableIntSlice createSlice(final SliceRange sliceRange) {
+        return new ImmutableIntSlice(sliceRange, data);
     }
 }

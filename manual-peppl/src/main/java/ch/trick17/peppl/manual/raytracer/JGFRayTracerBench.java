@@ -56,13 +56,14 @@ public class JGFRayTracerBench {
     public void JGFapplication() {
         JGFInstrumentor.startTimer("Section3:RayTracer:Init");
         final Scene scene = Scene.createScene();
-        objectCount = scene.objects.length();
+        objectCount = scene.objects.size();
         JGFInstrumentor.stopTimer("Section3:RayTracer:Init");
         
         JGFInstrumentor.startTimer("Section3:RayTracer:Run");
         final TaskSystem taskSystem = new NewThreadTaskSystem();
         
-        final List<Slice<IntArray>> imageParts = image.partition(STRIPED, nthreads);
+        final List<Slice<IntArray>> imageParts =
+                image.partition(STRIPED, nthreads);
         final Task<?>[] tasks = new Task<?>[nthreads];
         for(int i = 1; i < nthreads; i++) {
             final Slice<IntArray> part = imageParts.get(i);

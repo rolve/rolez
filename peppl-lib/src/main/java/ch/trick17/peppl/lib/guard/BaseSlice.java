@@ -47,10 +47,6 @@ abstract class BaseSlice<S extends BaseSlice<S>> extends Guarded {
         return range.size();
     }
     
-    public final S slice(final int begin, final int end) {
-        return slice(begin, end, 1);
-    }
-    
     public final S slice(final int begin, final int end, final int step) {
         return slice(new SliceRange(begin, end, step));
     }

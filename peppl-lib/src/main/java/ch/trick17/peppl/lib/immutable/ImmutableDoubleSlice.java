@@ -1,5 +1,7 @@
 package ch.trick17.peppl.lib.immutable;
 
+import ch.trick17.peppl.lib.SliceRange;
+
 /**
  * A slice of an {@link ImmutableDoubleArray}. See {@link ImmutableBaseSlice}
  * for more information.
@@ -12,16 +14,14 @@ public class ImmutableDoubleSlice extends
     
     public final double[] data;
     
-    ImmutableDoubleSlice(final double[] data, final int beginIndex,
-            final int endIndex) {
-        super(beginIndex, endIndex);
-        assert endIndex <= data.length;
+    ImmutableDoubleSlice(final SliceRange range, final double[] data) {
+        super(range);
+        assert range.end <= data.length;
         this.data = data;
     }
     
     @Override
-    final ImmutableDoubleSlice createSlice(final int beginIndex,
-            final int endIndex) {
-        return new ImmutableDoubleSlice(data, beginIndex, endIndex);
+    final ImmutableDoubleSlice createSlice(final SliceRange sliceRange) {
+        return new ImmutableDoubleSlice(sliceRange, data);
     }
 }

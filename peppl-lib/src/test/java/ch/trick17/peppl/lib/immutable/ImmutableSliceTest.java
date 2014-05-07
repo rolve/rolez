@@ -10,27 +10,28 @@ public class ImmutableSliceTest {
     
     @Test
     public void testConstructorImmutableClass() {
-        new ImmutableSlice<>(new SomeImmutable[10], 0, 10).toString();
-        new ImmutableSlice<>(new ImmutableSlice[10], 0, 10).toString();
+        // Using arrays for their simpler constructor
+        new ImmutableArray<>(new SomeImmutable[10]).toString();
+        new ImmutableArray<>(new ImmutableSlice[10]).toString();
     }
     
     @Test
     public void testConstructorEnum() {
-        new ImmutableSlice<>(new SomeEnum[10], 0, 10).toString();
+        new ImmutableArray<>(new SomeEnum[10]).toString();
     }
     
     @Test
     public void testConstructorKnownImmutable() {
-        new ImmutableSlice<>(new String[10], 0, 10).toString();
+        new ImmutableArray<>(new String[10]).toString();
     }
     
     @Test(expected = AssertionError.class)
     public void testConstructorMutable() {
-        new ImmutableSlice<>(new StringBuilder[10], 0, 10).toString();
+        new ImmutableArray<>(new StringBuilder[10]).toString();
     }
     
     @Test(expected = AssertionError.class)
     public void testConstructorGuarded() {
-        new ImmutableSlice<>(new GuardedObject[10], 0, 10).toString();
+        new ImmutableArray<>(new GuardedObject[10]).toString();
     }
 }

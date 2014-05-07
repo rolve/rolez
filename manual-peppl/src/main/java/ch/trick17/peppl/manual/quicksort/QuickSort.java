@@ -77,7 +77,7 @@ public class QuickSort implements Runnable {
                 }
                 
                 if(s.range.begin < r) {
-                    final IntSlice left = s.slice(s.range.begin, r + 1);
+                    final IntSlice left = s.slice(s.range.begin, r + 1, 1);
                     final SortTask task = new SortTask(left);
                     if(left.size() >= MIN_TASK_SIZE) {
                         left.pass();
@@ -87,7 +87,8 @@ public class QuickSort implements Runnable {
                         task.sort();
                 }
                 if(l < s.range.end - 1) {
-                    final IntSlice right = s.slice(l, s.range.end);
+                    final int begin = l;
+                    final IntSlice right = s.slice(begin, s.range.end, 1);
                     final SortTask task = new SortTask(right);
                     if(right.size() >= MIN_TASK_SIZE) {
                         right.pass();

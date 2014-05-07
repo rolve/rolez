@@ -73,7 +73,8 @@ public class RayTracer {
         // All loops are reversed for 'speedup' (cf. thinking in java p331)
         // For each line
         image.guardReadWrite();
-        for(int y = image.range.begin; y < image.range.end; y += image.range.step) {
+        for(int y = image.range.begin; y < image.range.end; y +=
+                image.range.step) {
             final double ylen = 2.0 * y / width - 1.0;
             
             image.data[y].guardReadWrite();
@@ -111,7 +112,7 @@ public class RayTracer {
     private Intersection intersect(final Ray r) {
         Intersection closest = null;
         final Vec t = new Vec();
-        for(final Primitive object : scene.objects) {
+        for(final Primitive object : scene.objects.data) {
             final Intersection isect = object.intersect(r, t);
             if(isect != null && (closest == null || isect.t < closest.t))
                 closest = isect;
@@ -176,7 +177,7 @@ public class RayTracer {
         // Computes the effectof each light
         final Vec color = new Vec();
         final Vec temp = new Vec();
-        for(int l = 0; l < scene.lights.length(); l++) {
+        for(int l = 0; l < scene.lights.size(); l++) {
             temp.sub2(scene.lights.data[l].pos, p);
             if(Vec.dot(normal, temp) >= 0.0) {
                 temp.normalize();

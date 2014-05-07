@@ -3,6 +3,8 @@ package ch.trick17.peppl.lib.immutable;
 import java.util.ArrayList;
 import java.util.List;
 
+import ch.trick17.peppl.lib.Partitioner;
+import ch.trick17.peppl.lib.SliceRange;
 import ch.trick17.peppl.lib.task.Task;
 
 /**
@@ -26,43 +28,35 @@ import ch.trick17.peppl.lib.task.Task;
 abstract class ImmutableBaseSlice<S extends ImmutableBaseSlice<S>> extends
         Immutable {
     
-    public final int begin;
-    public final int end;
+    public final SliceRange range;
     
-    public ImmutableBaseSlice(final int beginIndex, final int endIndex) {
-        begin = beginIndex;
-        end = endIndex;
+    ImmutableBaseSlice(final SliceRange range) {
+        this.range = range;
     }
     
-    public final int length() {
-        return end - begin;
+    public final int size() {
+        return range.size();
     }
     
-    // IMPROVE: Refactor so that this and BaseSlice use the same code for
-    // slicing and partitioning. Could use Java 8 default methods.
-    
-    public final S slice(final int beginIndex, final int endIndex) {
-        assert beginIndex >= begin;
-        assert endIndex <= end;
-        return createSlice(beginIndex, endIndex);
+    public final S slice(final int begin, final int end, final int step) {
+        return slice(new SliceRange(begin, end, step));
     }
     
-    public final List<S> partition(final int n) {
-        final int baseSize = length() / n;
-        final int largeSlices = length() % n;
+    public final S slice(final SliceRange sliceRange) {
+        assert sliceRange.begin >= range.begin;
+        assert sliceRange.end <= range.end;
+        assert sliceRange.step >= range.step;
         
-        final ArrayList<S> slices = new ArrayList<>(n);
-        int beginIndex = begin;
-        for(int i = 0; i < n; i++) {
-            final int endIndex = beginIndex + baseSize
-                    + (i < largeSlices ? 1 : 0);
-            slices.add(slice(beginIndex, endIndex));
-            beginIndex = endIndex;
-        }
-        assert slices.size() == n;
-        assert beginIndex == end;
+        return createSlice(sliceRange);
+    }
+    
+    public final List<S> partition(final Partitioner p, final int n) {
+        final List<SliceRange> ranges = p.partition(range, n);
+        final List<S> slices = new ArrayList<>(n);
+        for(final SliceRange r : ranges)
+            slices.add(slice(r));
         return slices;
     }
     
-    abstract S createSlice(int beginIndex, int endIndex);
+    abstract S createSlice(SliceRange sliceRange);
 }
