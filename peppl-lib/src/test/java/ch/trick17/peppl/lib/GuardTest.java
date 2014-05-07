@@ -1114,18 +1114,18 @@ public class GuardTest extends JpfParallelismTest {
             final Task<Void> task = s.run(new Runnable() {
                 public void run() {
                     slice.registerNewOwner();
-                    for(int i = slice.begin; i < slice.end; i++)
+                    for(int i = slice.range.begin; i < slice.range.end; i++)
                         slice.data[i].value++;
                     slice.releasePassed();
                 }
             });
             
             a.guardRead();
-            for(int i = 0; i < slice.end; i++) {
+            for(int i = 0; i < slice.range.end; i++) {
                 a.data[i].guardRead();
                 assertEquals(i + 1, a.data[i].value);
             }
-            for(int i = slice.end; i < a.data.length; i++) {
+            for(int i = slice.range.end; i < a.data.length; i++) {
                 a.data[i].guardRead();
                 assertEquals(i, a.data[i].value);
             }
@@ -1144,16 +1144,16 @@ public class GuardTest extends JpfParallelismTest {
             final Task<Void> task = s.run(new Runnable() {
                 public void run() {
                     slice.registerNewOwner();
-                    for(int i = slice.begin; i < slice.end; i++)
+                    for(int i = slice.range.begin; i < slice.range.end; i++)
                         slice.data[i]++;
                     slice.releasePassed();
                 }
             });
             
             a.guardRead();
-            for(int i = 0; i < slice.end; i++)
+            for(int i = 0; i < slice.range.end; i++)
                 assertEquals(i + 1, a.data[i]);
-            for(int i = slice.end; i < a.data.length; i++)
+            for(int i = slice.range.end; i < a.data.length; i++)
                 assertEquals(i, a.data[i]);
             task.get();
         }
@@ -1251,13 +1251,13 @@ public class GuardTest extends JpfParallelismTest {
                 a.data[i] = new Int(i);
             
             final Slice<Int> slice1 = a.slice(0, 5);
-            final Slice<Int> slice2 = a.slice(slice1.end, a.data.length);
+            final Slice<Int> slice2 = a.slice(slice1.range.end, a.data.length);
             
             slice1.pass();
             final Task<Void> task1 = s.run(new Runnable() {
                 public void run() {
                     slice1.registerNewOwner();
-                    for(int i = slice1.begin; i < slice1.end; i++)
+                    for(int i = slice1.range.begin; i < slice1.range.end; i++)
                         slice1.data[i].value++;
                     region(0);
                     slice1.releasePassed();
@@ -1268,7 +1268,7 @@ public class GuardTest extends JpfParallelismTest {
             final Task<Void> task2 = s.run(new Runnable() {
                 public void run() {
                     slice2.registerNewOwner();
-                    for(int i = slice2.begin; i < slice2.end; i++)
+                    for(int i = slice2.range.begin; i < slice2.range.end; i++)
                         slice2.data[i].value++;
                     region(1);
                     slice2.releasePassed();

@@ -2,6 +2,8 @@ package ch.trick17.peppl.lib.guard;
 
 import java.util.Collections;
 
+import ch.trick17.peppl.lib.SliceRange;
+
 /**
  * A slice of a {@link DoubleArray}. See {@link BaseSlice} for more information.
  * 
@@ -12,17 +14,15 @@ public class DoubleSlice extends BaseSlice<DoubleSlice> {
     
     public final double[] data;
     
-    DoubleSlice(final double[] data, final int beginIndex, final int endIndex,
-            final int stepSize) {
-        super(beginIndex, endIndex, stepSize);
-        assert endIndex <= data.length;
+    DoubleSlice(final SliceRange range, final double[] data) {
+        super(range);
+        assert range.end <= data.length;
         this.data = data;
     }
     
     @Override
-    final DoubleSlice createSlice(final int beginIndex, final int endIndex,
-            final int stepSize) {
-        return new DoubleSlice(data, beginIndex, endIndex, stepSize);
+    final DoubleSlice createSlice(final SliceRange sliceRange) {
+        return new DoubleSlice(sliceRange, data);
     }
     
     @Override

@@ -2,6 +2,8 @@ package ch.trick17.peppl.lib.guard;
 
 import java.util.Arrays;
 
+import ch.trick17.peppl.lib.SliceRange;
+
 /**
  * A {@link Guarded} array with <code>double</code> elements. See
  * {@link BaseSlice} for more information.
@@ -12,11 +14,11 @@ public class DoubleArray extends DoubleSlice {
     
     @SafeVarargs
     public DoubleArray(final double... data) {
-        super(data, 0, data.length, 1);
+        super(SliceRange.forArray(data), data);
     }
     
     public DoubleArray(final int length) {
-        super(new double[length], 0, length, 1);
+        this(new double[length]);
     }
     
     @Override

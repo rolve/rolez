@@ -2,6 +2,8 @@ package ch.trick17.peppl.lib.guard;
 
 import java.util.Arrays;
 
+import ch.trick17.peppl.lib.SliceRange;
+
 /**
  * A {@link Guarded} array with <code>long</code> elements. See
  * {@link BaseSlice} for more information.
@@ -12,11 +14,11 @@ public class LongArray extends LongSlice {
     
     @SafeVarargs
     public LongArray(final long... data) {
-        super(data, 0, data.length, 1);
+        super(SliceRange.forArray(data), data);
     }
     
     public LongArray(final int length) {
-        super(new long[length], 0, length, 1);
+        this(new long[length]);
     }
     
     @Override

@@ -54,8 +54,8 @@ public class KMeans implements Runnable {
     private Array<DoubleArray> kMeans(final Array<DoubleArray> dataSet) {
         
         /* Initialization */
-        final Array<DoubleArray> centroids = new Array<>(
-                new DoubleArray[clusters]);
+        final Array<DoubleArray> centroids =
+                new Array<>(new DoubleArray[clusters]);
         for(int i = 0; i < clusters; i++)
             centroids.data[i] = randomVector();
         
@@ -65,8 +65,10 @@ public class KMeans implements Runnable {
         boolean changed;
         do {
             /* Assignment step */
-            final List<Slice<DoubleArray>> dataParts = dataSet.partition(CONTIGUOUS, PARTS);
-            final List<IntSlice> assignParts = assignments.partition(CONTIGUOUS, PARTS);
+            final List<Slice<DoubleArray>> dataParts =
+                    dataSet.partition(CONTIGUOUS, PARTS);
+            final List<IntSlice> assignParts =
+                    assignments.partition(CONTIGUOUS, PARTS);
             final List<Task<Boolean>> tasks = new ArrayList<>(PARTS);
             
             for(int i = 0; i < PARTS; i++) {
@@ -137,7 +139,6 @@ public class KMeans implements Runnable {
                 assignments.releasePassed();
             }
         }
-        
     }
     
     private static boolean assignmentStep(final Slice<DoubleArray> dataSet,
@@ -147,12 +148,12 @@ public class KMeans implements Runnable {
         dataSet.guardRead();
         centroids.guardRead();
         assignments.guardReadWrite();
-        for(int v = dataSet.begin; v < dataSet.end; v++) {
+        for(int v = dataSet.range.begin; v < dataSet.range.end; v++) {
             double min = Double.POSITIVE_INFINITY;
             int minIndex = -1;
             for(int c = 0; c < centroids.size(); c++) {
-                final double distance = distance(dataSet.data[v],
-                        centroids.data[c]);
+                final double distance =
+                        distance(dataSet.data[v], centroids.data[c]);
                 if(distance < min) {
                     min = distance;
                     minIndex = c;
@@ -197,8 +198,8 @@ public class KMeans implements Runnable {
     }
     
     private CharSequence tabbed(final DoubleArray vector) {
-        final StringBuilder builder = new StringBuilder(Double
-                .toString(vector.data[0]));
+        final StringBuilder builder =
+                new StringBuilder(Double.toString(vector.data[0]));
         for(int d = 1; d < dim; d++)
             builder.append('\t').append(vector.data[d]);
         return builder;

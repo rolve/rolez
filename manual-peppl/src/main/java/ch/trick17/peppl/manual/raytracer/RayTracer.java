@@ -57,8 +57,8 @@ public class RayTracer {
         final Vec leftVec = Vec.cross(scene.view.up, viewVec);
         leftVec.normalize();
         
-        final double frustrumwidth = scene.view.dist
-                * Math.tan(scene.view.angle);
+        final double frustrumwidth =
+                scene.view.dist * Math.tan(scene.view.angle);
         
         upVec.scale(-frustrumwidth);
         leftVec.scale(scene.view.aspect * frustrumwidth);
@@ -73,7 +73,7 @@ public class RayTracer {
         // All loops are reversed for 'speedup' (cf. thinking in java p331)
         // For each line
         image.guardReadWrite();
-        for(int y = image.begin; y < image.end; y += image.step) {
+        for(int y = image.range.begin; y < image.range.end; y += image.range.step) {
             final double ylen = 2.0 * y / width - 1.0;
             
             image.data[y].guardReadWrite();
@@ -99,8 +99,8 @@ public class RayTracer {
                 // RGB values for .ppm file
                 // System.out.println(red + " " + green + " " + blue);
                 // Sets the pixels
-                image.data[y].data[x] = 255 << 24 | red << 16 | green << 8
-                        | blue;
+                image.data[y].data[x] =
+                        255 << 24 | red << 16 | green << 8 | blue;
             } // end for (x)
         } // end for (y)
         
@@ -186,8 +186,9 @@ public class RayTracer {
                 
                 // Checks if there is a shadow
                 if(shadow(tRay)) {
-                    final double diff = Vec.dot(normal, temp) * mat.kd
-                            * scene.lights.data[l].brightness;
+                    final double diff =
+                            Vec.dot(normal, temp) * mat.kd
+                                    * scene.lights.data[l].brightness;
                     color.adds(diff, mat.color);
                     if(mat.shine > 1e-6) {
                         double spec = Vec.dot(r, temp);

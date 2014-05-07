@@ -59,8 +59,8 @@ public class MonteCarloApp {
         results = new DoubleArray(runs);
         
         // Measure the requested path rate.
-        final RatePath rateP = RatePath
-                .readRatesFile(dataDirname, dataFilename);
+        final RatePath rateP =
+                RatePath.readRatesFile(dataDirname, dataFilename);
         final ReturnPath returnP = rateP.getReturnCompounded();
         returnP.estimatePath();
         
@@ -95,7 +95,8 @@ public class MonteCarloApp {
     }
     
     public void processResults() {
-        final List<DoubleSlice> resultParts = results.partition(CONTIGUOUS, nthreads);
+        final List<DoubleSlice> resultParts =
+                results.partition(CONTIGUOUS, nthreads);
         final ArrayList<Task<Double>> tasks = new ArrayList<>(nthreads);
         for(final DoubleSlice part : resultParts) {
             part.share();
@@ -122,14 +123,15 @@ public class MonteCarloApp {
         }
         
         public List<Double> call() {
-            for(int i = seeds.begin; i < seeds.end; i++) {
+            for(int i = seeds.range.begin; i < seeds.range.end; i++) {
                 // pathParams.guardRead(); Compiler would optimize this
                 final MonteCarloPath mcPath = new MonteCarloPath(pathParams);
                 mcPath.computeFluctuationsGaussian(seeds.data[i]);
                 mcPath.computePathValue(pathStartValue);
-                final RatePath rateP = new RatePath(mcPath.get_name(), mcPath
-                        .get_startDate(), mcPath.get_endDate(), mcPath
-                        .get_dTime(), mcPath.get_pathValue());
+                final RatePath rateP =
+                        new RatePath(mcPath.get_name(), mcPath.get_startDate(),
+                                mcPath.get_endDate(), mcPath.get_dTime(),
+                                mcPath.get_pathValue());
                 final ReturnPath returnP = rateP.getReturnCompounded();
                 returnP.estimatePath();
                 
@@ -150,7 +152,7 @@ public class MonteCarloApp {
         
         public Double call() {
             double sum = 0;
-            for(int i = data.begin; i < data.end; i++) {
+            for(int i = data.range.begin; i < data.range.end; i++) {
                 sum += data.data[i];
             }
             data.releaseShared();

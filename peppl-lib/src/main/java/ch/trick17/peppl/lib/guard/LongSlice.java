@@ -2,6 +2,8 @@ package ch.trick17.peppl.lib.guard;
 
 import java.util.Collections;
 
+import ch.trick17.peppl.lib.SliceRange;
+
 /**
  * A slice of a {@link LongArray}. See {@link BaseSlice} for more information.
  * 
@@ -12,17 +14,15 @@ public class LongSlice extends BaseSlice<LongSlice> {
     
     public final long[] data;
     
-    LongSlice(final long[] data, final int beginIndex, final int endIndex,
-            final int stepSize) {
-        super(beginIndex, endIndex, stepSize);
-        assert endIndex <= data.length;
+    LongSlice(final SliceRange range, final long[] data) {
+        super(range);
+        assert range.end <= data.length;
         this.data = data;
     }
     
     @Override
-    final LongSlice createSlice(final int beginIndex, final int endIndex,
-            final int stepSize) {
-        return new LongSlice(data, beginIndex, endIndex, stepSize);
+    final LongSlice createSlice(final SliceRange sliceRange) {
+        return new LongSlice(sliceRange, data);
     }
     
     @Override

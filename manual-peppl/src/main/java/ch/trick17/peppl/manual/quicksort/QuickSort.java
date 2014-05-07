@@ -58,8 +58,8 @@ public class QuickSort implements Runnable {
         }
         
         public void sort() {
-            int l = s.begin;
-            int r = s.end - 1;
+            int l = s.range.begin;
+            int r = s.range.end - 1;
             if(s.size() > 2) {
                 final int pivot = pivot(s);
                 while(l <= r) {
@@ -76,8 +76,8 @@ public class QuickSort implements Runnable {
                     }
                 }
                 
-                if(s.begin < r) {
-                    final IntSlice left = s.slice(s.begin, r + 1);
+                if(s.range.begin < r) {
+                    final IntSlice left = s.slice(s.range.begin, r + 1);
                     final SortTask task = new SortTask(left);
                     if(left.size() >= MIN_TASK_SIZE) {
                         left.pass();
@@ -86,8 +86,8 @@ public class QuickSort implements Runnable {
                     else
                         task.sort();
                 }
-                if(l < s.end - 1) {
-                    final IntSlice right = s.slice(l, s.end);
+                if(l < s.range.end - 1) {
+                    final IntSlice right = s.slice(l, s.range.end);
                     final SortTask task = new SortTask(right);
                     if(right.size() >= MIN_TASK_SIZE) {
                         right.pass();
@@ -111,9 +111,9 @@ public class QuickSort implements Runnable {
         private int pivot(final @_UnguardedRead IntSlice slice) {
             // IMPROVE: Random pivot
             assert slice.size() > 0;
-            final int l = slice.data[slice.begin];
-            final int m = slice.data[slice.begin + slice.size() / 2];
-            final int r = slice.data[slice.end - 1];
+            final int l = slice.data[slice.range.begin];
+            final int m = slice.data[slice.range.begin + slice.size() / 2];
+            final int r = slice.data[slice.range.end - 1];
             if(l < m) {
                 if(m < r)
                     return m;

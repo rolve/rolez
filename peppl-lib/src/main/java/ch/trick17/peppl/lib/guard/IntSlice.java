@@ -2,6 +2,8 @@ package ch.trick17.peppl.lib.guard;
 
 import java.util.Collections;
 
+import ch.trick17.peppl.lib.SliceRange;
+
 /**
  * A slice of an {@link IntArray}. See {@link BaseSlice} for more information.
  * 
@@ -12,17 +14,15 @@ public class IntSlice extends BaseSlice<IntSlice> {
     
     public final int[] data;
     
-    IntSlice(final int[] data, final int beginIndex, final int endIndex,
-            final int stepSize) {
-        super(beginIndex, endIndex, stepSize);
-        assert endIndex <= data.length;
+    IntSlice(final SliceRange range, final int[] data) {
+        super(range);
+        assert range.end <= data.length;
         this.data = data;
     }
     
     @Override
-    final IntSlice createSlice(final int beginIndex, final int endIndex,
-            final int stepSize) {
-        return new IntSlice(data, beginIndex, endIndex, stepSize);
+    final IntSlice createSlice(final SliceRange sliceRange) {
+        return new IntSlice(sliceRange, data);
     }
     
     @Override

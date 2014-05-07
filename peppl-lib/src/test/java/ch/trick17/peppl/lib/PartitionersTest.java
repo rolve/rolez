@@ -17,8 +17,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-import ch.trick17.peppl.lib.Partitioner.SliceDef;
-
 @RunWith(Parameterized.class)
 public class PartitionersTest {
     
@@ -72,26 +70,26 @@ public class PartitionersTest {
     
     @Test
     public void testPartition() {
-        final SliceDef orig = new SliceDef(0, size, 1);
+        final SliceRange orig = new SliceRange(0, size, 1);
         
-        final Collection<SliceDef> slices1 = modes.get(0).partition(orig, n1);
+        final Collection<SliceRange> slices1 = modes.get(0).partition(orig, n1);
         assertEquals(n1, slices1.size());
         assertCover(orig, slices1);
         assertBalanced(slices1);
         
-        final List<SliceDef> slices2 = new ArrayList<>(n1 * n2);
-        for(final SliceDef s1 : slices1)
+        final List<SliceRange> slices2 = new ArrayList<>(n1 * n2);
+        for(final SliceRange s1 : slices1)
             slices2.addAll(modes.get(1).partition(s1, n2));
         assertEquals(n1 * n2, slices2.size());
         assertCover(orig, slices2);
         assertBalanced(slices2);
     }
     
-    private static void assertCover(final SliceDef original,
-            final Collection<SliceDef> slices) {
+    private static void assertCover(final SliceRange original,
+            final Collection<SliceRange> slices) {
         final Set<Integer> indices = new HashSet<Integer>();
         
-        for(final SliceDef slice : slices)
+        for(final SliceRange slice : slices)
             for(int i = slice.begin; i < slice.end; i += slice.step)
                 assertTrue(indices.add(i));
         
@@ -99,10 +97,10 @@ public class PartitionersTest {
             assertTrue(indices.contains(i));
     }
     
-    private static void assertBalanced(final Collection<SliceDef> slices) {
+    private static void assertBalanced(final Collection<SliceRange> slices) {
         int min = Integer.MAX_VALUE;
         int max = 0;
-        for(final SliceDef slice : slices) {
+        for(final SliceRange slice : slices) {
             final int length = slice.size();
             if(length < min)
                 min = length;

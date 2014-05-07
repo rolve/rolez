@@ -1,11 +1,10 @@
 package ch.trick17.peppl.lib.guard;
 
 import java.util.AbstractList;
-import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
 import java.util.RandomAccess;
+
+import ch.trick17.peppl.lib.SliceRange;
 
 /**
  * A slice of a {@link Guarded} array with reference type elements (i.e. an
@@ -19,23 +18,20 @@ import java.util.RandomAccess;
  * @see LongSlice
  * @see DoubleSlice
  */
-public class Slice<E extends Guarded> extends BaseSlice<Slice<E>> implements
-        List<E>, RandomAccess {
+public class Slice<E extends Guarded> extends BaseSlice<Slice<E>> {
     
     public final E[] data;
     private final SliceList listImpl = new SliceList();
     
-    Slice(final E[] data, final int beginIndex, final int endIndex,
-            final int step) {
-        super(beginIndex, endIndex, step);
-        assert endIndex <= data.length;
+    Slice(final SliceRange range, final E[] data) {
+        super(range);
+        assert range.end <= data.length;
         this.data = data;
     }
     
     @Override
-    final Slice<E> createSlice(final int beginIndex, final int endIndex,
-            final int stepSize) {
-        return new Slice<>(data, beginIndex, endIndex, stepSize);
+    final Slice<E> createSlice(final SliceRange sliceRange) {
+        return new Slice<>(sliceRange, data);
     }
     
     @Override
@@ -65,119 +61,16 @@ public class Slice<E extends Guarded> extends BaseSlice<Slice<E>> implements
         };
     }
     
-    public boolean isEmpty() {
-        return listImpl.isEmpty();
-    }
-    
-    public boolean contains(final Object o) {
-        return listImpl.contains(o);
-    }
-    
-    public Iterator<E> iterator() {
-        return listImpl.iterator();
-    }
-    
-    public Object[] toArray() {
-        return listImpl.toArray();
-    }
-    
-    public <T> T[] toArray(final T[] a) {
-        return listImpl.toArray(a);
-    }
-    
-    public boolean add(final E e) {
-        return listImpl.add(e);
-    }
-    
-    public boolean remove(final Object o) {
-        return listImpl.remove(o);
-    }
-    
-    public boolean containsAll(final Collection<?> c) {
-        return listImpl.containsAll(c);
-    }
-    
-    public boolean addAll(final Collection<? extends E> c) {
-        return listImpl.addAll(c);
-    }
-    
-    public boolean addAll(final int index, final Collection<? extends E> c) {
-        return listImpl.addAll(index, c);
-    }
-    
-    public boolean removeAll(final Collection<?> c) {
-        return listImpl.removeAll(c);
-    }
-    
-    public boolean retainAll(final Collection<?> c) {
-        return listImpl.retainAll(c);
-    }
-    
-    public void clear() {
-        listImpl.clear();
-    }
-    
-    @Override
-    public boolean equals(final Object o) {
-        return listImpl.equals(o);
-    }
-    
-    @Override
-    public int hashCode() {
-        return listImpl.hashCode();
-    }
-    
-    public E get(final int index) {
-        return listImpl.get(index);
-    }
-    
-    public E set(final int index, final E element) {
-        return listImpl.set(index, element);
-    }
-    
-    public void add(final int index, final E element) {
-        listImpl.add(index, element);
-    }
-    
-    public E remove(final int index) {
-        return listImpl.remove(index);
-    }
-    
-    public int indexOf(final Object o) {
-        return listImpl.indexOf(o);
-    }
-    
-    public int lastIndexOf(final Object o) {
-        return listImpl.lastIndexOf(o);
-    }
-    
-    public ListIterator<E> listIterator() {
-        return listImpl.listIterator();
-    }
-    
-    public ListIterator<E> listIterator(final int index) {
-        return listImpl.listIterator(index);
-    }
-    
-    public List<E> subList(final int fromIndex, final int toIndex) {
-        return listImpl.subList(fromIndex, toIndex);
-    }
-    
-    @Override
-    public String toString() {
-        return listImpl.toString();
-    }
-    
     private final class SliceList extends AbstractList<E> implements
             RandomAccess {
         @Override
         public E get(final int index) {
-            return data[begin + index * step];
+            return data[range.begin + index * range.step];
         }
         
         @Override
         public E set(final int index, final E element) {
-            final int i = begin + index * step;
+            final int i = range.begin + index * range.step;
             final E previous = data[i];
             data[i] = element;
             return previous;
@@ -185,7 +78,7 @@ public class Slice<E extends Guarded> extends BaseSlice<Slice<E>> implements
         
         @Override
         public int size() {
-            return (end - begin) / step;
+            return range.size();
         }
     }
 }
