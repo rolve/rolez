@@ -1101,7 +1101,33 @@ public class GuardTest extends JpfParallelismTest {
         }
     }
     
-    // FIXME: Test (and probably fix) guarding of overlapping slices
+    // FIXME: Fix guarding of overlapping slices:
+    
+    @Test
+    public void testShareOverlappingSliceModify() {
+        assumeVerifyCorrectness();
+        if(verifyNoPropertyViolation()) {
+            final Array<Int> a = new Array<>(new Int[4]);
+            for(int i = 0; i < a.data.length; i++)
+                a.data[i] = new Int(i);
+            
+            final Slice<Int> slice1 = a.slice(0, 3, 1);
+            final Slice<Int> slice2 = a.slice(1, 4, 1);
+            slice1.share();
+            final Task<Void> task = s.run(new Runnable() {
+                public void run() {
+                    assertEquals(1, slice1.data[1].value);
+                    slice1.releaseShared();
+                }
+            });
+            
+            slice2.guardReadWrite();
+            slice2.data[1] = new Int(100);
+            
+            task.get();
+        }
+    }
+    
     // FIXME: Test and fix guarding of striped slices
     
     @Test
