@@ -1,8 +1,9 @@
 package ch.trick17.peppl.lib.guard;
 
+import static java.util.Collections.unmodifiableList;
+
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Collections;
 
 import ch.trick17.peppl.lib.immutable.Immutable;
 
@@ -25,6 +26,6 @@ public class GuardedObject extends Guarded {
                 }
             currentClass = currentClass.getSuperclass();
         }
-        return Collections.unmodifiableList(refs);
+        return unmodifiableList(refs);
     }
 }

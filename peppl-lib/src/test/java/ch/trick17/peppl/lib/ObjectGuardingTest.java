@@ -10,6 +10,9 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
+import ch.trick17.peppl.lib.SomeClasses.Int;
+import ch.trick17.peppl.lib.SomeClasses.IntContainer;
+import ch.trick17.peppl.lib.SomeClasses.Node;
 import ch.trick17.peppl.lib.task.NewThreadTaskSystem;
 import ch.trick17.peppl.lib.task.SingleThreadTaskSystem;
 import ch.trick17.peppl.lib.task.Task;
@@ -414,7 +417,8 @@ public class ObjectGuardingTest extends GuardingTest {
     @Test
     public void testShareGroup() {
         if(verify(mode, new int[][]{{0, 1}, {2, 3}, {0, 3}})) {
-            final IntContainer c = new IntContainer();
+            final Int i = new Int();
+            final IntContainer c = new IntContainer(i);
             
             c.share();
             final Task<Void> task = s.run(new Runnable() {
@@ -427,9 +431,8 @@ public class ObjectGuardingTest extends GuardingTest {
             });
             region(2);
             
-            c.guardRead(); // To read i
-            c.i.guardReadWrite();
-            c.i.value = 1;
+            i.guardReadWrite();
+            i.value = 1;
             region(3);
             
             task.get();
@@ -753,6 +756,28 @@ public class ObjectGuardingTest extends GuardingTest {
     }
     
     @Test
+    public void testShareGroupModify() {
+        assumeVerifyCorrectness();
+        if(verifyNoPropertyViolation()) {
+            final Int i = new Int();
+            final IntContainer c = new IntContainer(i);
+            
+            c.share();
+            final Task<Void> task = s.run(new Runnable() {
+                public void run() {
+                    assertEquals(0, i.value);
+                    c.releaseShared();
+                }
+            });
+            
+            c.guardReadWrite();
+            c.i = new Int(10);
+            
+            task.get();
+        }
+    }
+    
+    @Test
     public void testPassGroupModify() {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
@@ -811,6 +836,29 @@ public class ObjectGuardingTest extends GuardingTest {
             c.guardRead();
             c.i.guardRead();
             assertEquals(2, c.i.value);
+            task.get();
+        }
+    }
+    
+    @Test
+    public void testShareCycleModify() {
+        assumeVerifyCorrectness();
+        if(verifyNoPropertyViolation()) {
+            final Node n1 = new Node();
+            final Node n2 = new Node(n1);
+            n1.next = n2;
+            
+            n1.share();
+            final Task<Void> task = s.run(new Runnable() {
+                public void run() {
+                    assertEquals(0, n1.next.data);
+                    n1.releaseShared();
+                }
+            });
+            
+            n1.guardReadWrite();
+            n1.next = new Node(10);
+            
             task.get();
         }
     }

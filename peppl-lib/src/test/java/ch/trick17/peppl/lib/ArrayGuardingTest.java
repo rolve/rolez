@@ -10,6 +10,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
+import ch.trick17.peppl.lib.SomeClasses.Int;
 import ch.trick17.peppl.lib.guard.Array;
 import ch.trick17.peppl.lib.guard.IntArray;
 import ch.trick17.peppl.lib.guard.IntSlice;
