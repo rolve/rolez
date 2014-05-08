@@ -18,7 +18,7 @@ import ch.trick17.peppl.lib.SliceRange;
  * @see LongSlice
  * @see DoubleSlice
  */
-public class Slice<E extends Guarded> extends BaseSlice<Slice<E>> {
+public class Slice<E extends Guarded> extends NonFinalSlice<Slice<E>> {
     
     public final E[] data;
     private final SliceList listImpl = new SliceList();

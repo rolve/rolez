@@ -1,11 +1,7 @@
 package ch.trick17.peppl.lib.guard;
 
-import static java.util.Collections.newSetFromMap;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.WeakHashMap;
 
 import ch.trick17.peppl.lib.Partitioner;
 import ch.trick17.peppl.lib.SliceRange;
@@ -26,20 +22,19 @@ import ch.trick17.peppl.lib.task.Task;
  * That is why slices expose the underlying array directly as a public field.
  * <p>
  * A slice can be created from existing slices (and therefore from arrays) using
- * the {@link #slice(int, int)} method. Slices created that way "belong" to the
- * slice they were created from, in terms of {@linkplain #share() sharing},
+ * the {@link #slice(int, int, int)} method. Slices created that way "belong" to
+ * the slice they were created from, in terms of {@linkplain #share() sharing},
  * {@linkplain #pass() passing} and of course reading and writing.
  * 
  * @author Michael Faes
  * @param <S>
  *            The concrete slice type.
  */
-abstract class BaseSlice<S extends BaseSlice<S>> extends Guarded {
+public abstract class BaseSlice<S extends BaseSlice<S>> extends Guarded {
     
     public final SliceRange range;
-    final Set<S> subslices = newSetFromMap(new WeakHashMap<S, Boolean>());
     
-    BaseSlice(final SliceRange range) {
+    public BaseSlice(final SliceRange range) {
         this.range = range;
     }
     
@@ -47,18 +42,10 @@ abstract class BaseSlice<S extends BaseSlice<S>> extends Guarded {
         return range.size();
     }
     
+    public abstract S slice(final SliceRange sliceRange);
+    
     public final S slice(final int begin, final int end, final int step) {
         return slice(new SliceRange(begin, end, step));
-    }
-    
-    public final S slice(final SliceRange sliceRange) {
-        assert sliceRange.begin >= range.begin;
-        assert sliceRange.end <= range.end;
-        assert sliceRange.step >= range.step;
-        
-        final S slice = createSlice(sliceRange);
-        subslices.add(slice);
-        return slice;
     }
     
     public final List<S> partition(final Partitioner p, final int n) {
@@ -71,17 +58,4 @@ abstract class BaseSlice<S extends BaseSlice<S>> extends Guarded {
     
     abstract S createSlice(SliceRange sliceRange);
     
-    @Override
-    public void guardRead() {
-        super.guardRead();
-        for(final S slice : subslices)
-            slice.guardRead();
-    }
-    
-    @Override
-    public void guardReadWrite() {
-        super.guardReadWrite();
-        for(final S slice : subslices)
-            slice.guardReadWrite();
-    }
 }

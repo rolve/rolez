@@ -1,7 +1,6 @@
 package ch.trick17.peppl.lib.guard;
 
-import java.util.Collections;
-
+import static java.util.Collections.unmodifiableSet;
 import ch.trick17.peppl.lib.SliceRange;
 
 /**
@@ -10,7 +9,7 @@ import ch.trick17.peppl.lib.SliceRange;
  * @author Michael Faes
  * @see Slice
  */
-public class LongSlice extends BaseSlice<LongSlice> {
+public class LongSlice extends NonFinalSlice<LongSlice> {
     
     public final long[] data;
     
@@ -27,6 +26,6 @@ public class LongSlice extends BaseSlice<LongSlice> {
     
     @Override
     final Iterable<? extends Guarded> guardedRefs() {
-        return Collections.unmodifiableSet(subslices);
+        return unmodifiableSet(subslices);
     }
 }

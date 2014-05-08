@@ -12,6 +12,8 @@ import org.junit.runners.Parameterized.Parameters;
 
 import ch.trick17.peppl.lib.SomeClasses.Int;
 import ch.trick17.peppl.lib.guard.Array;
+import ch.trick17.peppl.lib.guard.FinalArray;
+import ch.trick17.peppl.lib.guard.FinalSlice;
 import ch.trick17.peppl.lib.guard.IntArray;
 import ch.trick17.peppl.lib.guard.IntSlice;
 import ch.trick17.peppl.lib.guard.Slice;
@@ -55,6 +57,31 @@ public class ArrayGuardingTest extends GuardingTest {
             });
             
             a.guardRead();
+            a.data[2].guardReadWrite();
+            a.data[2].value = 1;
+            
+            task.get();
+        }
+    }
+    
+    @Test
+    public void testShareFinalArray() {
+        assumeVerifyCorrectness();
+        if(verifyNoPropertyViolation()) {
+            final FinalArray<Int> a = new FinalArray<>(new Int[3]);
+            // Initialization may be done right after array creation
+            for(int i = 0; i < a.data.length; i++)
+                a.data[i] = new Int(i);
+            
+            a.share();
+            final Task<Void> task = s.run(new Runnable() {
+                public void run() {
+                    assertEquals(2, a.data[2].value);
+                    a.releaseShared();
+                }
+            });
+            
+            // No guard required for reading element
             a.data[2].guardReadWrite();
             a.data[2].value = 1;
             
@@ -334,6 +361,32 @@ public class ArrayGuardingTest extends GuardingTest {
     // FIXME: Test and fix guarding of striped slices
     
     @Test
+    public void testShareFinalSlice() {
+        assumeVerifyCorrectness();
+        if(verifyNoPropertyViolation()) {
+            final FinalArray<Int> a = new FinalArray<>(new Int[3]);
+            // Initialization may be done right after array creation
+            for(int i = 0; i < a.data.length; i++)
+                a.data[i] = new Int(i);
+            
+            final FinalSlice<Int> slice = a.slice(0, 2, 1);
+            slice.share();
+            final Task<Void> task = s.run(new Runnable() {
+                public void run() {
+                    assertEquals(1, slice.data[1].value);
+                    slice.releaseShared();
+                }
+            });
+            
+            // No read required for reading element
+            a.data[1].guardReadWrite();
+            a.data[1].value = 0;
+            
+            task.get();
+        }
+    }
+    
+    @Test
     public void testSharePrimitiveSlice() {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
@@ -374,6 +427,37 @@ public class ArrayGuardingTest extends GuardingTest {
             });
             
             a.guardRead();
+            for(int i = 0; i < slice.range.end; i++) {
+                a.data[i].guardRead();
+                assertEquals(i + 1, a.data[i].value);
+            }
+            for(int i = slice.range.end; i < a.data.length; i++) {
+                a.data[i].guardRead();
+                assertEquals(i, a.data[i].value);
+            }
+            task.get();
+        }
+    }
+    
+    @Test
+    public void testPassFinalSlice() {
+        assumeVerifyCorrectness();
+        if(verifyNoPropertyViolation()) {
+            final FinalArray<Int> a = new FinalArray<>(new Int[10]);
+            for(int i = 0; i < a.data.length; i++)
+                a.data[i] = new Int(i);
+            
+            final FinalSlice<Int> slice = a.slice(0, 5, 1);
+            slice.pass();
+            final Task<Void> task = s.run(new Runnable() {
+                public void run() {
+                    slice.registerNewOwner();
+                    for(int i = slice.range.begin; i < slice.range.end; i++)
+                        slice.data[i].value++;
+                    slice.releasePassed();
+                }
+            });
+            
             for(int i = 0; i < slice.range.end; i++) {
                 a.data[i].guardRead();
                 assertEquals(i + 1, a.data[i].value);
