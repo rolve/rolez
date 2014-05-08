@@ -52,13 +52,13 @@ public abstract class Guarded {
     
     final void processRecursively(final GuardOp op, final Set<Guarded> processed) {
         if(processed.add(this)) {
-            /* Process current object */
-            op.process(getGuard());
-            
-            /* Process references */
+            /* FIRST process references */
             for(final Guarded ref : guardedRefs())
                 if(ref != null)
                     ref.processRecursively(op, processed);
+            
+            /* Process current object */
+            op.process(getGuard());
         }
     }
     

@@ -31,9 +31,9 @@ public class GuardTest extends JpfParallelismTest {
     @Parameters(name = "{0}, {1}")
     public static List<?> taskSystems() {
         return Arrays.asList(new Object[][]{
-                {new SingleThreadTaskSystem(), VerifyMode.CORRECTNESS},
                 {new NewThreadTaskSystem(), VerifyMode.CORRECTNESS},
                 {new ThreadPoolTaskSystem(), VerifyMode.CORRECTNESS},
+                {new SingleThreadTaskSystem(), VerifyMode.CORRECTNESS},
                 {new NewThreadTaskSystem(), VerifyMode.PARALLELISM},
                 {new ThreadPoolTaskSystem(3), VerifyMode.PARALLELISM}});
     }
@@ -1077,6 +1077,30 @@ public class GuardTest extends JpfParallelismTest {
         }
     }
     
+    @Test
+    public void testShareSliceModify() {
+        assumeVerifyCorrectness();
+        if(verifyNoPropertyViolation()) {
+            final Array<Int> a = new Array<>(new Int[4]);
+            for(int i = 0; i < a.data.length; i++)
+                a.data[i] = new Int(i);
+            
+            final Slice<Int> slice = a.slice(0, 2, 1);
+            slice.share();
+            final Task<Void> task = s.run(new Runnable() {
+                public void run() {
+                    assertEquals(1, slice.data[1].value);
+                    slice.releaseShared();
+                }
+            });
+            
+            a.guardReadWrite();
+            a.data[1] = new Int(100);
+            
+            task.get();
+        }
+    }
+    
     // FIXME: Test (and probably fix) guarding of overlapping slices
     // FIXME: Test and fix guarding of striped slices
     
@@ -1251,7 +1275,8 @@ public class GuardTest extends JpfParallelismTest {
                 a.data[i] = new Int(i);
             
             final Slice<Int> slice1 = a.slice(0, 5, 1);
-            final Slice<Int> slice2 = a.slice(slice1.range.end, a.data.length, 1);
+            final Slice<Int> slice2 =
+                    a.slice(slice1.range.end, a.data.length, 1);
             
             slice1.pass();
             final Task<Void> task1 = s.run(new Runnable() {
