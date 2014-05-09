@@ -443,17 +443,19 @@ public class ArrayGuardingTest extends GuardingTest {
     public void testPassFinalSlice() {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
-            final FinalArray<Int> a = new FinalArray<>(new Int[10]);
+            final FinalArray<Int> a = new FinalArray<>(new Int[6]);
             for(int i = 0; i < a.data.length; i++)
                 a.data[i] = new Int(i);
             
-            final FinalSlice<Int> slice = a.slice(0, 5, 1);
+            final FinalSlice<Int> slice = a.slice(0, a.size() / 2, 1);
             slice.pass();
             final Task<Void> task = s.run(new Runnable() {
                 public void run() {
                     slice.registerNewOwner();
                     for(int i = slice.range.begin; i < slice.range.end; i++)
                         slice.data[i].value++;
+                    // IMPROVE: Find a way to release array elements separately
+                    // and earlier to allow more parallelism
                     slice.releasePassed();
                 }
             });

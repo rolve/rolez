@@ -64,8 +64,9 @@ class Guard {
     private static final GuardOp RELEASE_SHARED = new GuardOp() {
         public void process(final Guard guard) {
             assert guard.isShared();
-            guard.sharedCount.decrementAndGet();
-            LockSupport.unpark(guard.owner);
+            final int count = guard.sharedCount.decrementAndGet();
+            if(count == 0)
+                LockSupport.unpark(guard.owner);
         }
     };
     
