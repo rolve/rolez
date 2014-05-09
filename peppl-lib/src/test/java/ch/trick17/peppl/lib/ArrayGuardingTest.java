@@ -408,6 +408,55 @@ public class ArrayGuardingTest extends GuardingTest {
     }
     
     @Test
+    public void testShareOverlappingPrimitiveSlice() {
+        assumeVerifyCorrectness();
+        if(verifyNoPropertyViolation()) {
+            final IntArray a = new IntArray(0, 1, 2);
+            
+            final IntSlice slice1 = a.slice(0, 2, 1);
+            final IntSlice slice2 = a.slice(1, 3, 1);
+            slice1.share();
+            final Task<Void> task = s.run(new Runnable() {
+                public void run() {
+                    assertEquals(1, slice1.data[1]);
+                    slice1.releaseShared();
+                }
+            });
+            
+            slice2.guardReadWrite();
+            slice2.data[1] = 2;
+            task.get();
+        }
+    }
+    
+    @Test
+    public void testShareSubslice() {
+        assumeVerifyCorrectness();
+        if(verifyNoPropertyViolation()) {
+            final Array<Int> a = new Array<>(new Int[4]);
+            for(int i = 0; i < a.data.length; i++)
+                a.data[i] = new Int(i);
+            
+            Slice<Int> slice = a.slice(0, 3, 1);
+            final Slice<Int> subslice = slice.slice(0, 2, 1);
+            slice = null; // slice can be garbage-collected!
+            
+            subslice.share();
+            final Task<Void> task = s.run(new Runnable() {
+                public void run() {
+                    assertEquals(0, subslice.data[0].value);
+                    subslice.releaseShared();
+                }
+            });
+            
+            a.guardReadWrite();
+            a.data[0] = new Int(1);
+            
+            task.get();
+        }
+    }
+    
+    @Test
     public void testPassSlice() {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
