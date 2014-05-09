@@ -439,7 +439,9 @@ public class ArrayGuardingTest extends GuardingTest {
             
             Slice<Int> slice = a.slice(0, 3, 1);
             final Slice<Int> subslice = slice.slice(0, 2, 1);
-            slice = null; // slice can be garbage-collected!
+            
+            slice = null; // slice is not referenced anymore!
+            System.gc();
             
             subslice.share();
             final Task<Void> task = s.run(new Runnable() {
