@@ -349,7 +349,8 @@ public class ArrayGuardingTest extends GuardingTest {
             
             /* Simplest solution for slicing shared or passed arrays for now:
              * guard before slicing. The kind of guard (read or read-write)
-             * corresponds to the operations that the current task may do. */
+             * corresponds to the operations that the current task may do (based
+             * on the static state of the slice). */
             a.guardReadWrite();
             final Slice<Int> slice = a.slice(0, 2, 1);
             slice.guardReadWrite();
