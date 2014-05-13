@@ -331,6 +331,34 @@ public class ArrayGuardingTest extends GuardingTest {
         }
     }
     
+    @Test
+    public void testSliceModifySharedArray() {
+        assumeVerifyCorrectness();
+        if(verifyNoPropertyViolation()) {
+            final Array<Int> a = new Array<>(new Int[4]);
+            for(int i = 0; i < a.data.length; i++)
+                a.data[i] = new Int(i);
+            
+            a.share();
+            final Task<Void> task = s.run(new Runnable() {
+                public void run() {
+                    assertEquals(1, a.data[1].value);
+                    a.releaseShared();
+                }
+            });
+            
+            /* Simplest solution for slicing shared or passed arrays for now:
+             * guard before slicing. The kind of guard (read or read-write)
+             * corresponds to the operations that the current task may do. */
+            a.guardReadWrite();
+            final Slice<Int> slice = a.slice(0, 2, 1);
+            slice.guardReadWrite();
+            slice.data[1] = new Int(0);
+            
+            task.get();
+        }
+    }
+    
     // FIXME: Fix guarding of overlapping slices:
     
     @Test
