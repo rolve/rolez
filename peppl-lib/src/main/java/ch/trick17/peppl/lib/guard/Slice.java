@@ -14,6 +14,7 @@ import ch.trick17.peppl.lib.SliceRange;
  * @param <E>
  *            The type of elements in this array slice. Must be a subtype of
  *            {@link Guarded}.
+ * @see FinalSlice
  * @see IntSlice
  * @see LongSlice
  * @see DoubleSlice

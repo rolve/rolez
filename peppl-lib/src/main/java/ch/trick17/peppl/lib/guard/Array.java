@@ -10,6 +10,7 @@ import ch.trick17.peppl.lib.SliceRange;
  * @param <E>
  *            The type of elements in this array. Must be a subtype of
  *            {@link Guarded}.
+ * @see FinalArray
  * @see IntArray
  * @see LongArray
  * @see DoubleArray

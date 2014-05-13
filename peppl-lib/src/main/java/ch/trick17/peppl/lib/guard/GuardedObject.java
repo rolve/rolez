@@ -10,7 +10,9 @@ import ch.trick17.peppl.lib.immutable.Immutable;
 public class GuardedObject extends Guarded {
     
     @Override
-    final Iterable<? extends Guarded> guardedRefs() {
+    Iterable<? extends Guarded> guardedRefs() {
+        /* Compiler may generate more efficient (i.e. reflection-less)
+         * implementations of this method for each class. */
         final ArrayList<Guarded> refs = new ArrayList<>();
         Class<?> currentClass = getClass();
         while(currentClass != GuardedObject.class) {
