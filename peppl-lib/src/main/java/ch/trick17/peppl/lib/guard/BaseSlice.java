@@ -55,7 +55,4 @@ public abstract class BaseSlice<S extends BaseSlice<S>> extends Guarded {
             slices.add(slice(r));
         return slices;
     }
-    
-    abstract S createSlice(SliceRange sliceRange);
-    
 }

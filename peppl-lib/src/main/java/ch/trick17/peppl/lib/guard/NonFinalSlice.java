@@ -35,6 +35,8 @@ abstract class NonFinalSlice<S extends NonFinalSlice<S>> extends BaseSlice<S> {
         return slice;
     }
     
+    abstract S createSlice(SliceRange sliceRange);
+    
     @Override
     public void guardRead() {
         super.guardRead();

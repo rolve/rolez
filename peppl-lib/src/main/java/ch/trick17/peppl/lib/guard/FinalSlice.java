@@ -33,11 +33,6 @@ public class FinalSlice<E extends Guarded> extends BaseSlice<FinalSlice<E>> {
         assert sliceRange.begin >= range.begin;
         assert sliceRange.end <= range.end;
         assert sliceRange.step >= range.step;
-        return createSlice(sliceRange);
-    }
-    
-    @Override
-    final FinalSlice<E> createSlice(final SliceRange sliceRange) {
         return new FinalSlice<>(sliceRange, data);
     }
     
