@@ -44,14 +44,14 @@ abstract class NonFinalSlice<S extends NonFinalSlice<S>> extends BaseSlice<S> {
     @Override
     public void guardRead() {
         super.guardRead();
-        for(final BaseSlice<S> slice : subslices)
+        for(final S slice : subslices)
             slice.guardRead();
     }
     
     @Override
     public void guardReadWrite() {
         super.guardReadWrite();
-        for(final BaseSlice<S> slice : subslices)
+        for(final S slice : subslices)
             slice.guardReadWrite();
     }
 }

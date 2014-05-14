@@ -332,6 +332,29 @@ public class ArrayGuardingTest extends GuardingTest {
     }
     
     @Test
+    public void testSliceSharedArray() {
+        assumeVerifyCorrectness();
+        if(verifyNoPropertyViolation()) {
+            final Array<Int> a = new Array<>(new Int[4]);
+            for(int i = 0; i < a.data.length; i++)
+                a.data[i] = new Int(i);
+            
+            a.share();
+            final Task<Void> task = s.run(new Runnable() {
+                public void run() {
+                    final Slice<Int> slice = a.slice(0, 2, 1);
+                    a.releaseShared();
+                    /* Use slice again to prevent incidental correct behavior
+                     * due to garbage collection */
+                    slice.toString();
+                }
+            });
+            
+            task.get();
+        }
+    }
+    
+    @Test
     public void testSliceModifySharedArray() {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
@@ -347,11 +370,6 @@ public class ArrayGuardingTest extends GuardingTest {
                 }
             });
             
-            /* Simplest solution for slicing shared or passed arrays for now:
-             * guard before slicing. The kind of guard (read or read-write)
-             * corresponds to the operations that the current task may do (based
-             * on the static state of the slice). */
-            a.guardReadWrite();
             final Slice<Int> slice = a.slice(0, 2, 1);
             slice.guardReadWrite();
             slice.data[1] = new Int(0);

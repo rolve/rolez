@@ -12,9 +12,9 @@ class Guard {
     
     private volatile Thread owner = Thread.currentThread();
     private final Deque<Thread> prevOwners = new ArrayDeque<>();
-    private final Deque<Set<Guarded>> reachables = new ArrayDeque<>();
-    
     private final AtomicInteger sharedCount = new AtomicInteger(0);
+    
+    private final Deque<Set<Guarded>> prevReachables = new ArrayDeque<>();
     
     /* Object state operations */
     
@@ -30,9 +30,9 @@ class Guard {
     };
     
     void pass(final Guarded guarded) {
-        final Set<Guarded> reachable = newIdentitySet();
-        guarded.processRecursively(PASS, reachable);
-        reachables.addFirst(reachable);
+        final Set<Guarded> reachables = newIdentitySet();
+        guarded.processRecursively(PASS, reachables);
+        prevReachables.addFirst(reachables);
     }
     
     private static final GuardOp PASS = new GuardOp() {
@@ -85,7 +85,7 @@ class Guard {
         
         /* Second, release originally reachable objects */
         processReachables(RELEASE_PASSED);
-        reachables.removeFirst();
+        prevReachables.removeFirst();
     }
     
     private static final GuardOp RELEASE_PASSED = new GuardOp() {
@@ -130,10 +130,10 @@ class Guard {
     }
     
     private void processReachables(final GuardOp op) {
-        final Set<Guarded> reachable = reachables.peekFirst();
-        assert reachable != null;
+        final Set<Guarded> reachables = prevReachables.peekFirst();
+        assert reachables != null;
         
-        for(final Guarded guarded : reachable)
+        for(final Guarded guarded : reachables)
             op.process(guarded.getGuard());
     }
     
