@@ -1,6 +1,6 @@
 package ch.trick17.peppl.lib.guard;
 
-import static java.util.Collections.unmodifiableSet;
+import static java.util.Collections.emptySet;
 import ch.trick17.peppl.lib.SliceRange;
 
 /**
@@ -26,6 +26,6 @@ public class LongSlice extends NonFinalSlice<LongSlice> {
     
     @Override
     final Iterable<? extends Guarded> guardedRefs() {
-        return unmodifiableSet(subslices);
+        return emptySet();
     }
 }

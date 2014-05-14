@@ -1,7 +1,6 @@
 package ch.trick17.peppl.lib.guard;
 
 import java.util.AbstractList;
-import java.util.Iterator;
 import java.util.RandomAccess;
 
 import ch.trick17.peppl.lib.SliceRange;
@@ -37,29 +36,7 @@ public class Slice<E extends Guarded> extends NonFinalSlice<Slice<E>> {
     
     @Override
     final Iterable<? extends Guarded> guardedRefs() {
-        return new Iterable<Guarded>() {
-            public Iterator<Guarded> iterator() {
-                final Iterator<E> dataIter = listImpl.iterator();
-                final Iterator<Slice<E>> sliceIter = subslices.iterator();
-                return new Iterator<Guarded>() {
-                    
-                    public boolean hasNext() {
-                        return dataIter.hasNext() || sliceIter.hasNext();
-                    }
-                    
-                    public Guarded next() {
-                        if(dataIter.hasNext())
-                            return dataIter.next();
-                        else
-                            return sliceIter.next();
-                    }
-                    
-                    public void remove() {
-                        throw new UnsupportedOperationException();
-                    }
-                };
-            }
-        };
+        return listImpl;
     }
     
     @Override

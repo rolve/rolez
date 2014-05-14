@@ -7,7 +7,8 @@ import ch.trick17.peppl.lib.immutable.Immutable;
 public abstract class Guarded {
     
     private volatile Guard guard; // IMPROVE: volatile necessary? Task system
-                                  // should guarantee happens-before.
+    
+    // should guarantee happens-before.
     
     Guarded() {}
     
@@ -42,23 +43,41 @@ public abstract class Guarded {
     
     public void guardRead() {
         if(guard != null)
-            guard.guardRead();
+            guard.guardRead(this);
     }
     
     public void guardReadWrite() {
         if(guard != null)
-            guard.guardReadWrite();
+            guard.guardReadWrite(this);
     }
     
-    final void processRecursively(final GuardOp op, final Set<Guarded> processed) {
+    final void processGuardedRefs(final GuardOp op, final Set<Guarded> processed) {
         if(processed.add(this)) {
             /* FIRST process references */
             for(final Guarded ref : guardedRefs())
                 if(ref != null)
-                    ref.processRecursively(op, processed);
+                    ref.processGuardedRefs(op, processed);
             
-            /* Process current object */
-            op.process(getGuard());
+            /* Process "this" */
+            op.process(this);
+        }
+    }
+    
+    final void processViews(final GuardOp op, final Set<Guarded> processed) {
+        // Same as processViewsRecursive, except "this" is not processed
+        for(final Guarded view : views())
+            if(view != null)
+                view.processViewsRecursive(op, processed);
+    }
+    
+    private void processViewsRecursive(final GuardOp op,
+            final Set<Guarded> processed) {
+        if(processed.add(this)) {
+            for(final Guarded view : views())
+                if(view != null)
+                    view.processViewsRecursive(op, processed);
+            
+            op.process(this);
         }
     }
     
@@ -72,4 +91,14 @@ public abstract class Guarded {
      *         may return <code>null</code> references.
      */
     abstract Iterable<? extends Guarded> guardedRefs();
+    
+    /**
+     * Returns all views of this object. Views are (guarded) objects that
+     * provide access to a subset of the data of the object they belong to.
+     * 
+     * @return All views of this object. To simplify the implementation of this
+     *         method, the {@link Iterable} may return <code>null</code>
+     *         references.
+     */
+    abstract Iterable<? extends Guarded> views();
 }

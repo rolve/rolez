@@ -1,5 +1,6 @@
 package ch.trick17.peppl.lib.guard;
 
+import static java.util.Collections.emptySet;
 import static java.util.Collections.unmodifiableList;
 
 import java.lang.reflect.Field;
@@ -29,5 +30,10 @@ public class GuardedObject extends Guarded {
             currentClass = currentClass.getSuperclass();
         }
         return unmodifiableList(refs);
+    }
+    
+    @Override
+    Iterable<? extends Guarded> views() {
+        return emptySet();
     }
 }

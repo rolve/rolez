@@ -1,5 +1,7 @@
 package ch.trick17.peppl.lib.guard;
 
+import static java.util.Collections.emptySet;
+
 import java.util.AbstractList;
 import java.util.RandomAccess;
 
@@ -39,6 +41,11 @@ public class FinalSlice<E extends Guarded> extends BaseSlice<FinalSlice<E>> {
     @Override
     final Iterable<? extends Guarded> guardedRefs() {
         return listImpl;
+    }
+    
+    @Override
+    Iterable<? extends Guarded> views() {
+        return emptySet();
     }
     
     @Override
