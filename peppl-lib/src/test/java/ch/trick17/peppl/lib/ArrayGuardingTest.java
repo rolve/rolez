@@ -11,6 +11,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 import ch.trick17.peppl.lib.SomeClasses.Int;
+import ch.trick17.peppl.lib.SomeClasses.Ref;
 import ch.trick17.peppl.lib.guard.Array;
 import ch.trick17.peppl.lib.guard.FinalArray;
 import ch.trick17.peppl.lib.guard.FinalSlice;
@@ -455,6 +456,31 @@ public class ArrayGuardingTest extends GuardingTest {
     }
     
     @Test
+    public void testShareReferencedPrimitiveSlice() {
+        assumeVerifyCorrectness();
+        if(verifyNoPropertyViolation()) {
+            final IntArray a = new IntArray(0, 1, 2, 3);
+            
+            final IntSlice slice = a.slice(0, 2, 1);
+            final Ref<IntSlice> ref = new Ref<>(slice);
+            ref.share();
+            final Task<Void> task = s.run(new Runnable() {
+                public void run() {
+                    final IntSlice slice2 = ref.o.slice(1, 2, 1);
+                    assertEquals(1, slice2.data[1]);
+                    ref.releaseShared();
+                    slice2.toString();
+                }
+            });
+            
+            a.guardReadWrite();
+            a.data[1] = 0;
+            
+            task.get();
+        }
+    }
+    
+    @Test
     public void testShareOverlappingPrimitiveSlice() {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
@@ -584,6 +610,35 @@ public class ArrayGuardingTest extends GuardingTest {
                     for(int i = slice.range.begin; i < slice.range.end; i++)
                         slice.data[i]++;
                     slice.releasePassed();
+                }
+            });
+            
+            a.guardRead();
+            for(int i = 0; i < slice.range.end; i++)
+                assertEquals(i + 1, a.data[i]);
+            for(int i = slice.range.end; i < a.data.length; i++)
+                assertEquals(i, a.data[i]);
+            task.get();
+        }
+    }
+    
+    @Test
+    public void testPassReferencedPrimitiveSlice() {
+        assumeVerifyCorrectness();
+        if(verifyNoPropertyViolation()) {
+            final IntArray a = new IntArray(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+            
+            final IntSlice slice = a.slice(0, 5, 1);
+            final Ref<IntSlice> ref = new Ref<>(slice);
+            ref.pass();
+            final Task<Void> task = s.run(new Runnable() {
+                public void run() {
+                    ref.registerNewOwner();
+                    final IntSlice slice2 = ref.o.slice(0, 5, 1);
+                    for(int i = slice2.range.begin; i < slice2.range.end; i++)
+                        slice2.data[i]++;
+                    ref.releasePassed();
+                    slice2.toString();
                 }
             });
             

@@ -1,5 +1,6 @@
 package ch.trick17.peppl.lib;
 
+import ch.trick17.peppl.lib.guard.Guarded;
 import ch.trick17.peppl.lib.guard.GuardedObject;
 import ch.trick17.peppl.lib.immutable.ImmutableObject;
 
@@ -16,16 +17,14 @@ public abstract class SomeClasses {
         }
     }
     
-    public static class IntContainer extends GuardedObject {
+    public static class Ref<T extends Guarded> extends GuardedObject {
         
-        public Int i;
+        public T o;
         
-        public IntContainer() {
-            i = new Int();
-        }
+        public Ref() {}
         
-        public IntContainer(final Int i) {
-            this.i = i;
+        public Ref(final T o) {
+            this.o = o;
         }
     }
     

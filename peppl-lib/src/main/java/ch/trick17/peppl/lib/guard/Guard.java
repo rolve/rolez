@@ -33,6 +33,7 @@ class Guard {
     
     private static final GuardOp SHARE = new GuardOp() {
         public void process(final Guarded guarded) {
+            jpfWorkaround();
             guarded.getGuard().guardRead(guarded);
             guarded.getGuard().sharedCount.incrementAndGet();
         }
@@ -52,6 +53,7 @@ class Guard {
     
     private static final GuardOp PASS = new GuardOp() {
         public void process(final Guarded guarded) {
+            jpfWorkaround();
             GUARD_READ_WRITE.process(guarded);
             /* First step of passing */
             final Guard guard = guarded.getGuard();
@@ -68,6 +70,7 @@ class Guard {
     
     private static final GuardOp REGISTER_OWNER = new GuardOp() {
         public void process(final Guarded guarded) {
+            jpfWorkaround();
             final Guard guard = guarded.getGuard();
             assert guard.owner == null;
             assert !guard.amOriginalOwner();
@@ -86,6 +89,7 @@ class Guard {
     
     private static final GuardOp RELEASE_SHARED = new GuardOp() {
         public void process(final Guarded guarded) {
+            jpfWorkaround();
             final Guard guard = guarded.getGuard();
             assert guard.isShared();
             final int count = guard.sharedCount.decrementAndGet();
@@ -100,6 +104,7 @@ class Guard {
         assert parent != null;
         final GuardOp transferOwner = new GuardOp() {
             public void process(final Guarded g) {
+                jpfWorkaround();
                 final Guard guard = g.getGuard();
                 guard.guardReadWrite(g);
                 if(guard.amOriginalOwner())
@@ -116,6 +121,7 @@ class Guard {
     
     private static final GuardOp RELEASE_PASSED = new GuardOp() {
         public void process(final Guarded guarded) {
+            jpfWorkaround();
             GUARD_READ_WRITE.process(guarded);
             
             final Guard guard = guarded.getGuard();
@@ -134,6 +140,7 @@ class Guard {
     
     private static final GuardOp GUARD_READ = new GuardOp() {
         public void process(final Guarded guarded) {
+            jpfWorkaround();
             /* isMutable() and isShared() read volatile (atomic) fields written
              * by releasePassed and releaseShared. Therefore, there is a
              * happens-before relationship between
@@ -151,6 +158,7 @@ class Guard {
     
     private static final GuardOp GUARD_READ_WRITE = new GuardOp() {
         public void process(final Guarded guarded) {
+            jpfWorkaround();
             /* isMutable() reads the volatile owner field written by
              * releasePassed. Therefore, there is a happens-before relationship
              * between releasePassed() and guardReadWrite(). */
@@ -184,5 +192,15 @@ class Guard {
     private static Set<Guarded> newIdentitySet() {
         return Collections
                 .newSetFromMap(new IdentityHashMap<Guarded, Boolean>());
+    }
+    
+    /**
+     * JPF seems to miss some scheduling relevant points in the program, so this
+     * method makes sure that all guarding operations trigger a scheduling
+     * choice.
+     */
+    private static void jpfWorkaround() {
+        // IMPROVE: Push JPF developers to fix this!
+        synchronized(Guard.class) {}
     }
 }

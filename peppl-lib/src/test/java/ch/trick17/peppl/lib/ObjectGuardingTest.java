@@ -11,8 +11,8 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 import ch.trick17.peppl.lib.SomeClasses.Int;
-import ch.trick17.peppl.lib.SomeClasses.IntContainer;
 import ch.trick17.peppl.lib.SomeClasses.Node;
+import ch.trick17.peppl.lib.SomeClasses.Ref;
 import ch.trick17.peppl.lib.task.NewThreadTaskSystem;
 import ch.trick17.peppl.lib.task.SingleThreadTaskSystem;
 import ch.trick17.peppl.lib.task.Task;
@@ -418,14 +418,14 @@ public class ObjectGuardingTest extends GuardingTest {
     public void testShareGroup() {
         if(verify(mode, new int[][]{{0, 1}, {2, 3}, {0, 3}})) {
             final Int i = new Int();
-            final IntContainer c = new IntContainer(i);
+            final Ref<Int> r = new Ref<>(i);
             
-            c.share();
+            r.share();
             final Task<Void> task = s.run(new Runnable() {
                 public void run() {
-                    assertEquals(0, c.i.value);
+                    assertEquals(0, r.o.value);
                     region(0);
-                    c.releaseShared();
+                    r.releaseShared();
                     region(1);
                 }
             });
@@ -443,16 +443,16 @@ public class ObjectGuardingTest extends GuardingTest {
     public void testShareGroupMultiple() {
         if(verify(mode)) {
             final Int i = new Int();
-            final IntContainer c = new IntContainer(i);
+            final Ref<Int> r = new Ref<>(i);
             
             final Task<?>[] tasks = new Task<?>[2];
             for(int k = 0; k < 2; k++) {
                 final int theK = k;
-                c.share();
+                r.share();
                 tasks[k] = s.run(new Runnable() {
                     public void run() {
-                        assertEquals(0, c.i.value);
-                        c.releaseShared();
+                        assertEquals(0, r.o.value);
+                        r.releaseShared();
                         region(theK);
                     }
                 });
@@ -471,15 +471,15 @@ public class ObjectGuardingTest extends GuardingTest {
     public void testPassGroup() {
         if(verify(mode, new int[][]{{0, 1}, {2, 3}, {0, 3}})) {
             final Int i = new Int();
-            final IntContainer c = new IntContainer(i);
+            final Ref<Int> r = new Ref<>(i);
             
-            c.pass();
+            r.pass();
             final Task<Void> task = s.run(new Runnable() {
                 public void run() {
-                    c.registerNewOwner();
-                    c.i.value++;
+                    r.registerNewOwner();
+                    r.o.value++;
                     region(0);
-                    c.releasePassed();
+                    r.releasePassed();
                     region(1);
                 }
             });
@@ -498,16 +498,16 @@ public class ObjectGuardingTest extends GuardingTest {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
-            final IntContainer c = new IntContainer(i);
+            final Ref<Int> r = new Ref<>(i);
             
             final Task<?>[] tasks = new Task<?>[2];
             for(int k = 0; k < 2; k++) {
-                c.pass();
+                r.pass();
                 tasks[k] = s.run(new Runnable() {
                     public void run() {
-                        c.registerNewOwner();
-                        c.i.value++;
-                        c.releasePassed();
+                        r.registerNewOwner();
+                        r.o.value++;
+                        r.releasePassed();
                     }
                 });
             }
@@ -524,21 +524,21 @@ public class ObjectGuardingTest extends GuardingTest {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
-            final IntContainer c = new IntContainer(i);
+            final Ref<Int> r = new Ref<>(i);
             
-            c.pass();
+            r.pass();
             final Task<Void> task = s.run(new Runnable() {
                 public void run() {
-                    c.registerNewOwner();
-                    final Int i2 = c.i;
+                    r.registerNewOwner();
+                    final Int i2 = r.o;
                     i2.value++;
                     
-                    c.pass();
+                    r.pass();
                     final Task<Void> task2 = s.run(new Runnable() {
                         public void run() {
-                            c.registerNewOwner();
-                            c.i.value++;
-                            c.releasePassed();
+                            r.registerNewOwner();
+                            r.o.value++;
+                            r.releasePassed();
                         }
                     });
                     
@@ -546,7 +546,7 @@ public class ObjectGuardingTest extends GuardingTest {
                     assertEquals(2, i2.value);
                     i2.value++;
                     
-                    c.releasePassed();
+                    r.releasePassed();
                     task2.get();
                 }
             });
@@ -561,24 +561,24 @@ public class ObjectGuardingTest extends GuardingTest {
     public void testPassShareGroup() {
         if(verify(mode)) {
             final Int i = new Int();
-            final IntContainer c = new IntContainer(i);
+            final Ref<Int> r = new Ref<>(i);
             
-            c.pass();
+            r.pass();
             final Task<Void> task = s.run(new Runnable() {
                 public void run() {
-                    c.registerNewOwner();
-                    c.i.value++;
-                    c.releasePassed();
+                    r.registerNewOwner();
+                    r.o.value++;
+                    r.releasePassed();
                     region(0);
                 }
             });
             
-            c.share();
+            r.share();
             final Task<Void> task2 = s.run(new Runnable() {
                 public void run() {
-                    assertEquals(1, c.i.value);
+                    assertEquals(1, r.o.value);
                     region(1);
-                    c.releaseShared();
+                    r.releaseShared();
                 }
             });
             region(2);
@@ -594,7 +594,7 @@ public class ObjectGuardingTest extends GuardingTest {
     public void testShareSubgroupMultiple() {
         if(verify(mode, new int[][]{{0, 4}, {1, 4}, {2, 4}, {3, 4}})) {
             final Int i = new Int();
-            final IntContainer c = new IntContainer(i);
+            final Ref<Int> r = new Ref<>(i);
             
             i.share();
             final Task<Void> task1 = s.run(new Runnable() {
@@ -605,12 +605,12 @@ public class ObjectGuardingTest extends GuardingTest {
                 }
             });
             
-            c.share();
+            r.share();
             final Task<Void> task2 = s.run(new Runnable() {
                 public void run() {
-                    assertEquals(0, c.i.value);
+                    assertEquals(0, r.o.value);
                     region(1);
-                    c.releaseShared();
+                    r.releaseShared();
                 }
             });
             
@@ -639,7 +639,7 @@ public class ObjectGuardingTest extends GuardingTest {
         /* IMPROVE: Allow all regions by passing not-yet-available data */
         if(verify(mode, new int[][]{{0, 1, 2}, {0, 3}, {1, 3}})) {
             final Int i = new Int();
-            final IntContainer c = new IntContainer(i);
+            final Ref<Int> r = new Ref<>(i);
             
             i.pass();
             final Task<Void> task1 = s.run(new Runnable() {
@@ -651,13 +651,13 @@ public class ObjectGuardingTest extends GuardingTest {
                 }
             });
             
-            c.pass();
+            r.pass();
             final Task<Void> task2 = s.run(new Runnable() {
                 public void run() {
-                    c.registerNewOwner();
+                    r.registerNewOwner();
                     region(1);
-                    c.i.value++;
-                    c.releasePassed();
+                    r.o.value++;
+                    r.releasePassed();
                 }
             });
             
@@ -686,13 +686,13 @@ public class ObjectGuardingTest extends GuardingTest {
          * objects that are still owned by other threads. */
         if(verify(mode, new int[][]{{0, 1}, {2, 3}, {0, 3}})) {
             final Int i = new Int();
-            final IntContainer c = new IntContainer(i);
+            final Ref<Int> r = new Ref<>(i);
             
-            c.pass();
+            r.pass();
             final Task<Void> task = s.run(new Runnable() {
                 public void run() {
-                    c.registerNewOwner();
-                    final Int i2 = c.i;
+                    r.registerNewOwner();
+                    final Int i2 = r.o;
                     i2.value++;
                     
                     i2.pass();
@@ -707,7 +707,7 @@ public class ObjectGuardingTest extends GuardingTest {
                     });
                     region(2);
                     
-                    c.releasePassed();
+                    r.releasePassed();
                     region(3);
                     task2.get();
                 }
@@ -725,15 +725,15 @@ public class ObjectGuardingTest extends GuardingTest {
         /* IMPROVE: Allow {0, 2, 3} by sharing not-yet-available data? */
         if(verify(mode, new int[][]{{0, 1}, {0, 2}, {0, 3}})) {
             final Int i = new Int();
-            final IntContainer c = new IntContainer(i);
+            final Ref<Int> r = new Ref<>(i);
             
-            c.pass();
+            r.pass();
             final Task<Void> task = s.run(new Runnable() {
                 public void run() {
-                    c.registerNewOwner();
-                    c.i.value++;
+                    r.registerNewOwner();
+                    r.o.value++;
                     region(0);
-                    c.releasePassed();
+                    r.releasePassed();
                     region(1);
                 }
             });
@@ -760,18 +760,18 @@ public class ObjectGuardingTest extends GuardingTest {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
-            final IntContainer c = new IntContainer(i);
+            final Ref<Int> r = new Ref<>(i);
             
-            c.share();
+            r.share();
             final Task<Void> task = s.run(new Runnable() {
                 public void run() {
                     assertEquals(0, i.value);
-                    c.releaseShared();
+                    r.releaseShared();
                 }
             });
             
-            c.guardReadWrite();
-            c.i = new Int(10);
+            r.guardReadWrite();
+            r.o = new Int(10);
             
             task.get();
         }
@@ -782,24 +782,24 @@ public class ObjectGuardingTest extends GuardingTest {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
-            final IntContainer c = new IntContainer(i);
+            final Ref<Int> r = new Ref<>(i);
             
-            c.pass();
+            r.pass();
             final Task<Void> task = s.run(new Runnable() {
                 public void run() {
-                    c.registerNewOwner();
-                    c.i = new Int();
-                    c.i.value = 10;
-                    c.releasePassed();
+                    r.registerNewOwner();
+                    r.o = new Int();
+                    r.o.value = 10;
+                    r.releasePassed();
                 }
             });
             
             i.guardRead();
             assertEquals(0, i.value);
             
-            c.guardRead();
-            c.i.guardRead();
-            assertEquals(10, c.i.value);
+            r.guardRead();
+            r.o.guardRead();
+            assertEquals(10, r.o.value);
             task.get();
         }
     }
@@ -809,15 +809,15 @@ public class ObjectGuardingTest extends GuardingTest {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
-            final IntContainer c = new IntContainer(i);
+            final Ref<Int> r = new Ref<>(i);
             
-            c.pass();
+            r.pass();
             final Task<Void> task = s.run(new Runnable() {
                 public void run() {
-                    c.registerNewOwner();
-                    c.i = new Int();
+                    r.registerNewOwner();
+                    r.o = new Int();
                     
-                    final Int i2 = c.i;
+                    final Int i2 = r.o;
                     i2.value++;
                     i2.pass();
                     final Task<Void> task2 = s.run(new Runnable() {
@@ -828,14 +828,14 @@ public class ObjectGuardingTest extends GuardingTest {
                         }
                     });
                     
-                    c.releasePassed();
+                    r.releasePassed();
                     task2.get();
                 }
             });
             
-            c.guardRead();
-            c.i.guardRead();
-            assertEquals(2, c.i.value);
+            r.guardRead();
+            r.o.guardRead();
+            assertEquals(2, r.o.value);
             task.get();
         }
     }

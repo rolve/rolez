@@ -7,8 +7,7 @@ import ch.trick17.peppl.lib.immutable.Immutable;
 public abstract class Guarded {
     
     private volatile Guard guard; // IMPROVE: volatile necessary? Task system
-    
-    // should guarantee happens-before.
+                                  // should guarantee happens-before.
     
     Guarded() {}
     
