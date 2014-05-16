@@ -35,10 +35,14 @@ abstract class NonFinalSlice<S extends NonFinalSlice<S>> extends BaseSlice<S> {
         assert sliceRange.step >= range.step;
         
         final S slice = createSlice(sliceRange);
-        getGuard().initializeViewGuard(slice.getGuard());
         
-        subslices.add(slice);
-        ((NonFinalSlice<S>) slice).superslices.add(this);
+        /* Make sure the new slice is not added while existing slices are being
+         * processed. */
+        synchronized(viewLock) {
+            getGuard().initializeViewGuard(slice.getGuard());
+            subslices.add(slice);
+            ((NonFinalSlice<S>) slice).superslices.add(this);
+        }
         return slice;
     }
     

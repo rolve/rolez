@@ -8,6 +8,7 @@ public abstract class Guarded {
     
     private volatile Guard guard; // IMPROVE: volatile necessary? Task system
                                   // should guarantee happens-before.
+    final Object viewLock = new Object();
     
     Guarded() {}
     
@@ -50,15 +51,27 @@ public abstract class Guarded {
             guard.guardReadWrite(this);
     }
     
-    final void processGuardedRefs(final GuardOp op, final Set<Guarded> processed) {
+    final void processAll(final GuardOp op, final Set<Guarded> processed,
+            final boolean lockViews) {
         if(processed.add(this)) {
-            /* FIRST process references */
+            /* First, process references, otherwise "parent" task may replace
+             * them through a view that has already been released. */
             for(final Guarded ref : guardedRefs())
                 if(ref != null)
-                    ref.processGuardedRefs(op, processed);
+                    ref.processAll(op, processed, lockViews);
             
-            /* Process "this" */
-            op.process(this);
+            /* Then, process views and finally "this". If necessary, make sure
+             * that no new views are added during this phase using the viewLock. */
+            if(lockViews) {
+                synchronized(viewLock) {
+                    processViews(op, processed);
+                    op.process(this);
+                }
+            }
+            else {
+                processViews(op, processed);
+                op.process(this);
+            }
         }
     }
     

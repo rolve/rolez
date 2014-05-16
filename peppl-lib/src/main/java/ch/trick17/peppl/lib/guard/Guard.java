@@ -26,9 +26,7 @@ class Guard {
     /* Object state operations */
     
     void share(final Guarded guarded) {
-        final Set<Guarded> processed = newIdentitySet();
-        guarded.processViews(SHARE, processed);
-        guarded.processGuardedRefs(SHARE, processed);
+        guarded.processAll(SHARE, newIdentitySet(), false);
     }
     
     private static final GuardOp SHARE = new GuardOp() {
@@ -40,14 +38,8 @@ class Guard {
     };
     
     void pass(final Guarded guarded) {
-        final Set<Guarded> views = newIdentitySet();
-        guarded.processViews(PASS, views);
-        
         final Set<Guarded> processed = newIdentitySet();
-        processed.addAll(views);
-        guarded.processGuardedRefs(PASS, processed);
-        
-        processed.removeAll(views);
+        guarded.processAll(PASS, processed, false);
         prevReachables.addFirst(processed);
     }
     
@@ -63,9 +55,7 @@ class Guard {
     };
     
     void registerNewOwner(final Guarded guarded) {
-        final Set<Guarded> processed = newIdentitySet();
-        guarded.processViews(REGISTER_OWNER, processed);
-        guarded.processGuardedRefs(REGISTER_OWNER, processed);
+        guarded.processAll(REGISTER_OWNER, newIdentitySet(), false);
     }
     
     private static final GuardOp REGISTER_OWNER = new GuardOp() {
@@ -80,11 +70,7 @@ class Guard {
     };
     
     void releaseShared(final Guarded guarded) {
-        final Set<Guarded> processed = newIdentitySet();
-        /* Process references first, otherwise "parent" task may replace them
-         * through a view that has already been released. */
-        guarded.processGuardedRefs(RELEASE_SHARED, processed);
-        guarded.processViews(RELEASE_SHARED, processed);
+        guarded.processAll(RELEASE_SHARED, newIdentitySet(), true);
     }
     
     private static final GuardOp RELEASE_SHARED = new GuardOp() {
@@ -99,31 +85,37 @@ class Guard {
     };
     
     void releasePassed(final Guarded guarded) {
-        /* First, make "parent" task the owner of newly reachable objects */
+        /* First, make sure all reachable and previously reachable objects are
+         * mutable */
+        final Set<Guarded> guardProcessed = newIdentitySet();
+        guarded.processAll(GUARD_READ_WRITE, guardProcessed, false);
+        processReachables(GUARD_READ_WRITE, guardProcessed);
+        
+        /* Then, release still reachable objects and make "parent" task the
+         * owner of newly reachable objects */
         final Thread parent = prevOwners.peekFirst();
         assert parent != null;
         final GuardOp transferOwner = new GuardOp() {
             public void process(final Guarded g) {
                 jpfWorkaround();
                 final Guard guard = g.getGuard();
-                guard.guardReadWrite(g);
                 if(guard.amOriginalOwner())
                     guard.owner = parent;
+                else
+                    RELEASE_PASSED.process(g);
             }
         };
-        guarded.processGuardedRefs(transferOwner, newIdentitySet());
+        final Set<Guarded> processed = newIdentitySet();
+        guarded.processAll(transferOwner, processed, true);
         
-        /* Second, release originally reachable objects and views */
-        guarded.processViews(RELEASE_PASSED, newIdentitySet());
-        processReachables(RELEASE_PASSED);
+        /* Finally, release rest of the originally reachable objects and views */
+        processReachables(RELEASE_PASSED, processed);
         prevReachables.removeFirst();
     }
     
     private static final GuardOp RELEASE_PASSED = new GuardOp() {
         public void process(final Guarded guarded) {
             jpfWorkaround();
-            GUARD_READ_WRITE.process(guarded);
-            
             final Guard guard = guarded.getGuard();
             assert !guard.amOriginalOwner();
             guard.owner = guard.prevOwners.removeFirst();
@@ -181,12 +173,14 @@ class Guard {
         return prevOwners.isEmpty();
     }
     
-    private void processReachables(final GuardOp op) {
+    private void processReachables(final GuardOp op,
+            final Set<Guarded> processed) {
         final Set<Guarded> reachables = prevReachables.peekFirst();
         assert reachables != null;
         
         for(final Guarded guarded : reachables)
-            op.process(guarded);
+            if(!processed.contains(guarded))
+                op.process(guarded);
     }
     
     private static Set<Guarded> newIdentitySet() {
