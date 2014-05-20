@@ -32,9 +32,10 @@ public class FinalSlice<E extends Guarded> extends BaseSlice<FinalSlice<E>> {
     
     @Override
     public final FinalSlice<E> slice(final SliceRange sliceRange) {
-        assert sliceRange.begin >= range.begin;
-        assert sliceRange.end <= range.end;
-        assert sliceRange.step >= range.step;
+        if(!range.covers(sliceRange))
+            throw new IllegalArgumentException("Given range: " + sliceRange
+                    + " is not covered by this slice's range: " + range);
+        
         return new FinalSlice<>(sliceRange, data);
     }
     

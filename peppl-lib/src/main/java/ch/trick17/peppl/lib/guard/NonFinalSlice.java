@@ -30,9 +30,9 @@ abstract class NonFinalSlice<S extends NonFinalSlice<S>> extends BaseSlice<S> {
     
     @Override
     public final S slice(final SliceRange sliceRange) {
-        assert sliceRange.begin >= range.begin;
-        assert sliceRange.end <= range.end;
-        assert sliceRange.step >= range.step;
+        if(!range.covers(sliceRange))
+            throw new IllegalArgumentException("Given range: " + sliceRange
+                    + " is not covered by this slice's range: " + range);
         
         final S slice = createSlice(sliceRange);
         
@@ -40,10 +40,22 @@ abstract class NonFinalSlice<S extends NonFinalSlice<S>> extends BaseSlice<S> {
          * processed. */
         synchronized(viewLock) {
             getGuard().initializeViewGuard(slice.getGuard());
-            subslices.add(slice);
-            ((NonFinalSlice<S>) slice).superslices.add(this);
+            registerSlice(slice);
         }
         return slice;
+    }
+    
+    private void registerSlice(final S slice) {
+        // TODO: How to handle empty slice best?
+        for(final NonFinalSlice<S> subslice : subslices) {
+            if(subslice.range.covers(slice.range)) {
+                subslice.registerSlice(slice);
+                return;
+            }
+        }
+        
+        subslices.add(slice);
+        ((NonFinalSlice<S>) slice).superslices.add(this);
     }
     
     abstract S createSlice(SliceRange sliceRange);

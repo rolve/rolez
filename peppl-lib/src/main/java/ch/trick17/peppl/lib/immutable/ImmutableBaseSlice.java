@@ -38,16 +38,16 @@ abstract class ImmutableBaseSlice<S extends ImmutableBaseSlice<S>> extends
         return range.size();
     }
     
-    public final S slice(final int begin, final int end, final int step) {
-        return slice(new SliceRange(begin, end, step));
-    }
-    
     public final S slice(final SliceRange sliceRange) {
-        assert sliceRange.begin >= range.begin;
-        assert sliceRange.end <= range.end;
-        assert sliceRange.step >= range.step;
+        if(!range.covers(sliceRange))
+            throw new IllegalArgumentException("Given range: " + sliceRange
+                    + " is not covered by this slice's range: " + range);
         
         return createSlice(sliceRange);
+    }
+    
+    public final S slice(final int begin, final int end, final int step) {
+        return slice(new SliceRange(begin, end, step));
     }
     
     public final List<S> partition(final Partitioner p, final int n) {
