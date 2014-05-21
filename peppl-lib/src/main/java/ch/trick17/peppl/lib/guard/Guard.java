@@ -119,6 +119,8 @@ class Guard {
             final Guard guard = guarded.getGuard();
             assert !guard.amOriginalOwner();
             guard.owner = guard.prevOwners.removeFirst();
+            /* IMPROVE: Unpark only once, not for every reachable object. May
+             * even save the stack of owners for reachable objects... */
             LockSupport.unpark(guard.owner);
         }
     };
