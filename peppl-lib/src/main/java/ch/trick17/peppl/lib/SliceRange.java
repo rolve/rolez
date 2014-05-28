@@ -1,6 +1,10 @@
 package ch.trick17.peppl.lib;
 
+import static java.lang.Math.*;
+
 import java.lang.reflect.Array;
+
+import ch.trick17.peppl.lib.util.Math;
 
 public final class SliceRange {
     
@@ -9,6 +13,8 @@ public final class SliceRange {
         final int length = Array.getLength(array);
         return new SliceRange(0, length, 1);
     }
+    
+    public static final SliceRange EMPTY = new SliceRange(0, 0, 1);
     
     public final int begin;
     public final int end;
@@ -26,6 +32,10 @@ public final class SliceRange {
     public int size() {
         final int length = end - begin;
         return (length + step - 1) / step;
+    }
+    
+    public boolean isEmpty() {
+        return size() == 0;
     }
     
     /**
@@ -62,6 +72,44 @@ public final class SliceRange {
                 * (otherSize - 1))
             return false;
         return true;
+    }
+    
+    public SliceRange intersectWith(final SliceRange other) {
+        if(this.covers(other))
+            return other;
+        if(other.covers(this))
+            return this;
+        
+        final int minEnd = min(end, other.end);
+        if(minEnd <= max(begin, other.begin))
+            return EMPTY;
+        
+        /* A non-empty intersection requires the difference between first begin
+         * and second begin to be a multiple of the GCD (greatest common
+         * divisor) of the two step sizes. Reason: GCD divides all multiples of
+         * either step size and therefore also all differences between
+         * multiples. Any such difference between the two begins makes it
+         * possible for the two slices to have common elements. */
+        final int gcdStep = Math.gcd(step, other.step);
+        if(abs(begin - other.begin) % gcdStep != 0)
+            return EMPTY;
+        
+        /* Common indices (possibly) exist, so try to find first */
+        int i = begin;
+        int j = other.begin;
+        while(i != j) {
+            if(i < j)
+                i += step;
+            else
+                j += other.step;
+            if(max(i, j) >= minEnd)
+                return EMPTY;
+        }
+        
+        /* The step size of the intersection is the LCM (least common multiple)
+         * of the two step sizes, for rather obvious reasons. */
+        final int lcmStep = (step / gcdStep) * other.step;
+        return new SliceRange(i, minEnd, lcmStep);
     }
     
     @Override
