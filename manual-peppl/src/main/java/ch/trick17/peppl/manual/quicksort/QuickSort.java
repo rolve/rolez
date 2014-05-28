@@ -60,7 +60,7 @@ public class QuickSort implements Runnable {
         public void sort() {
             int l = s.range.begin;
             int r = s.range.end - 1;
-            if(s.size() > 2) {
+            if(s.range.size() > 2) {
                 final int pivot = pivot(s);
                 while(l <= r) {
                     while(s.data[l] < pivot)
@@ -79,7 +79,7 @@ public class QuickSort implements Runnable {
                 if(s.range.begin < r) {
                     final IntSlice left = s.slice(s.range.begin, r + 1, 1);
                     final SortTask task = new SortTask(left);
-                    if(left.size() >= MIN_TASK_SIZE) {
+                    if(left.range.size() >= MIN_TASK_SIZE) {
                         left.pass();
                         SYSTEM.run(task);
                     }
@@ -89,7 +89,7 @@ public class QuickSort implements Runnable {
                 if(l < s.range.end - 1) {
                     final IntSlice right = s.slice(l, s.range.end, 1);
                     final SortTask task = new SortTask(right);
-                    if(right.size() >= MIN_TASK_SIZE) {
+                    if(right.range.size() >= MIN_TASK_SIZE) {
                         right.pass();
                         SYSTEM.run(task);
                     }
@@ -97,7 +97,7 @@ public class QuickSort implements Runnable {
                         task.sort();
                 }
             }
-            else if(s.size() == 2) {
+            else if(s.range.size() == 2) {
                 /* Small optimization */
                 if(s.data[l] > s.data[r]) {
                     final int temp = s.data[l];
@@ -110,9 +110,10 @@ public class QuickSort implements Runnable {
         
         private int pivot(final @_UnguardedRead IntSlice slice) {
             // IMPROVE: Random pivot
-            assert slice.size() > 0;
+            assert !slice.range.isEmpty();
             final int l = slice.data[slice.range.begin];
-            final int m = slice.data[slice.range.begin + slice.size() / 2];
+            final int m =
+                    slice.data[slice.range.begin + slice.range.size() / 2];
             final int r = slice.data[slice.range.end - 1];
             if(l < m) {
                 if(m < r)

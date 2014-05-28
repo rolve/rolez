@@ -46,7 +46,12 @@ abstract class NonFinalSlice<S extends NonFinalSlice<S>> extends BaseSlice<S> {
     }
     
     private void registerSlice(final S slice) {
-        // TODO: How to handle empty slice best?
+        // IMPROVE: Better way to handle empty slices?
+        if(slice.range.isEmpty()) {
+            subslices.add(slice);
+            ((NonFinalSlice<S>) slice).superslices.add(this);
+        }
+        
         for(final NonFinalSlice<S> subslice : subslices) {
             if(subslice.range.covers(slice.range)) {
                 subslice.registerSlice(slice);

@@ -151,7 +151,7 @@ public class KMeans implements Runnable {
         for(int v = dataSet.range.begin; v < dataSet.range.end; v++) {
             double min = Double.POSITIVE_INFINITY;
             int minIndex = -1;
-            for(int c = 0; c < centroids.size(); c++) {
+            for(int c = 0; c < centroids.range.size(); c++) {
                 final double distance =
                         distance(dataSet.data[v], centroids.data[c]);
                 if(distance < min) {
@@ -187,8 +187,8 @@ public class KMeans implements Runnable {
     }
     
     private static double distance(final DoubleArray v1, final DoubleArray v2) {
-        final int dim = v1.size();
-        assert v2.size() == dim;
+        final int dim = v1.range.size();
+        assert v2.range.size() == dim;
         double sum = 0;
         for(int d = 0; d < dim; d++) {
             final double diff = v1.data[d] - v2.data[d];

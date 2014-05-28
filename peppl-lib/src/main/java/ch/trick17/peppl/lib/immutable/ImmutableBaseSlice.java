@@ -34,10 +34,6 @@ abstract class ImmutableBaseSlice<S extends ImmutableBaseSlice<S>> extends
         this.range = range;
     }
     
-    public final int size() {
-        return range.size();
-    }
-    
     public final S slice(final SliceRange sliceRange) {
         if(!range.covers(sliceRange))
             throw new IllegalArgumentException("Given range: " + sliceRange

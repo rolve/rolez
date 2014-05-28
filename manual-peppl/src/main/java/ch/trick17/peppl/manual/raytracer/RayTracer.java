@@ -43,7 +43,7 @@ public class RayTracer {
     public void render(@Mutable final Slice<IntArray> image) {
         final long startTime = System.nanoTime();
         
-        final int width = image.data[0].size();
+        final int width = image.data[0].range.size();
         
         final Vec viewVec = Vec.sub(scene.view.at, scene.view.from);
         viewVec.normalize();
@@ -177,7 +177,7 @@ public class RayTracer {
         // Computes the effectof each light
         final Vec color = new Vec();
         final Vec temp = new Vec();
-        for(int l = 0; l < scene.lights.size(); l++) {
+        for(int l = 0; l < scene.lights.range.size(); l++) {
             temp.sub2(scene.lights.data[l].pos, p);
             if(Vec.dot(normal, temp) >= 0.0) {
                 temp.normalize();

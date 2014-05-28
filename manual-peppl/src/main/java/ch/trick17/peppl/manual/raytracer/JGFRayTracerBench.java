@@ -56,7 +56,7 @@ public class JGFRayTracerBench {
     public void JGFapplication() {
         JGFInstrumentor.startTimer("Section3:RayTracer:Init");
         final Scene scene = Scene.createScene();
-        objectCount = scene.objects.size();
+        objectCount = scene.objects.range.size();
         JGFInstrumentor.stopTimer("Section3:RayTracer:Init");
         
         JGFInstrumentor.startTimer("Section3:RayTracer:Run");
@@ -83,9 +83,9 @@ public class JGFRayTracerBench {
     public void JGFvalidate() {
         long checksum = 0;
         image.guardRead();
-        for(int y = 0; y < image.size(); y++) {
+        for(int y = 0; y < image.range.size(); y++) {
             image.data[y].guardRead();
-            for(int x = 0; x < image.data[0].size(); x++) {
+            for(int x = 0; x < image.data[0].range.size(); x++) {
                 final int color = image.data[y].data[x];
                 final int r = (color & 0xffffff) >> 16;
                 final int g = (color & 0xffff) >> 8;
@@ -116,8 +116,9 @@ public class JGFRayTracerBench {
         JGFInstrumentor.stopTimer("Section3:RayTracer:Total");
         
         JGFInstrumentor.addOpsToTimer("Section3:RayTracer:Init", objectCount);
-        JGFInstrumentor.addOpsToTimer("Section3:RayTracer:Run", image.size()
-                * image.data[0].size());
+        JGFInstrumentor.addOpsToTimer("Section3:RayTracer:Run", image.range
+                .size()
+                * image.data[0].range.size());
         JGFInstrumentor.addOpsToTimer("Section3:RayTracer:Total", 1);
         
         JGFInstrumentor.printTimer("Section3:RayTracer:Init");

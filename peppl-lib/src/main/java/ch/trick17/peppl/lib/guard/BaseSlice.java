@@ -38,10 +38,6 @@ public abstract class BaseSlice<S extends BaseSlice<S>> extends Guarded {
         this.range = range;
     }
     
-    public final int size() {
-        return range.size();
-    }
-    
     public abstract S slice(final SliceRange sliceRange);
     
     public final S slice(final int begin, final int end, final int step) {

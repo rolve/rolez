@@ -571,7 +571,7 @@ public class ArrayGuardingTest extends GuardingTest {
             for(int i = 0; i < a.data.length; i++)
                 a.data[i] = new Int(i);
             
-            final FinalSlice<Int> slice = a.slice(0, a.size() / 2, 1);
+            final FinalSlice<Int> slice = a.slice(0, a.range.size() / 2, 1);
             slice.pass();
             final Task<Void> task = s.run(new Runnable() {
                 public void run() {
