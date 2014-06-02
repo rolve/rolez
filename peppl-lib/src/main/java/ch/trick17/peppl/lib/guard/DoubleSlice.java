@@ -15,7 +15,6 @@ public class DoubleSlice extends NonFinalSlice<DoubleSlice> {
     
     DoubleSlice(final SliceRange range, final double[] data) {
         super(range);
-        assert range.end <= data.length;
         this.data = data;
     }
     

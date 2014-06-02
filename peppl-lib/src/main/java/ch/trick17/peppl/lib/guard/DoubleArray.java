@@ -1,7 +1,5 @@
 package ch.trick17.peppl.lib.guard;
 
-import java.util.Arrays;
-
 import ch.trick17.peppl.lib.SliceRange;
 
 /**
@@ -15,10 +13,5 @@ public class DoubleArray extends DoubleSlice {
     @SafeVarargs
     public DoubleArray(final double... data) {
         super(SliceRange.forArray(data), data);
-    }
-    
-    @Override
-    public String toString() {
-        return Arrays.toString(data);
     }
 }

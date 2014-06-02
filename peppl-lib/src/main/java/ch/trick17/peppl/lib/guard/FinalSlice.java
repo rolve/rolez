@@ -26,7 +26,6 @@ public class FinalSlice<E extends Guarded> extends BaseSlice<FinalSlice<E>> {
     
     FinalSlice(final SliceRange range, final E[] data) {
         super(range);
-        assert range.end <= data.length;
         this.data = data;
     }
     
@@ -47,11 +46,6 @@ public class FinalSlice<E extends Guarded> extends BaseSlice<FinalSlice<E>> {
     @Override
     Iterable<? extends Guarded> views() {
         return emptySet();
-    }
-    
-    @Override
-    public final String toString() {
-        return listImpl.toString();
     }
     
     private final class SliceList extends AbstractList<E> implements

@@ -3,6 +3,7 @@ package ch.trick17.peppl.lib.guard;
 import static java.util.Collections.newSetFromMap;
 
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.WeakHashMap;
 
@@ -14,15 +15,14 @@ abstract class NonFinalSlice<S extends NonFinalSlice<S>> extends BaseSlice<S> {
      * subslices, which may currently be "owned" by a different task. References
      * to subslices are weak, i.e., they don't prevent subslices to be
      * garbage-collected if they are not used anymore. However, see below. */
-    private final Set<S> subslices =
-            newSetFromMap(new WeakHashMap<S, Boolean>());
+    final Set<S> subslices = newSetFromMap(new WeakHashMap<S, Boolean>());
     
     /* References to superslices are kept to prevent them from being
      * garbage-collected as long as they have referenced subslices. This
      * prevents slices from getting disconnected from their parents's parents,
      * which would prevent proper guarding. */
-    private final Set<NonFinalSlice<?>> superslices =
-            newSetFromMap(new IdentityHashMap<NonFinalSlice<?>, Boolean>());
+    final Set<NonFinalSlice<S>> superslices =
+            newSetFromMap(new IdentityHashMap<NonFinalSlice<S>, Boolean>());
     
     NonFinalSlice(final SliceRange range) {
         super(range);
@@ -40,33 +40,62 @@ abstract class NonFinalSlice<S extends NonFinalSlice<S>> extends BaseSlice<S> {
          * processed. */
         synchronized(viewLock) {
             getGuard().initializeViewGuard(slice.getGuard());
-            registerSlice(slice);
+            addSubslice(slice);
         }
         return slice;
     }
     
-    private void registerSlice(final S slice) {
+    void addSubslice(final S slice) {
         // IMPROVE: Better way to handle empty slices?
         if(slice.range.isEmpty()) {
             subslices.add(slice);
-            ((NonFinalSlice<S>) slice).superslices.add(this);
+            slice.superslices.add(this);
+            return;
         }
         
-        for(final NonFinalSlice<S> subslice : subslices) {
-            if(subslice.range.covers(slice.range)) {
-                subslice.registerSlice(slice);
+        /* If an existing subslice covers the new one completely, delegate all
+         * the work to this one and be done. */
+        for(final NonFinalSlice<S> s : subslices) {
+            if(s.range.covers(slice.range)) {
+                s.addSubslice(slice);
                 return;
             }
         }
         
+        /* Otherwise, check which existing subslices intersect with (and
+         * specifically, are covered by) the new one. */
+        final Iterator<S> i = subslices.iterator();
+        while(i.hasNext()) {
+            final S subslice = i.next();
+            if(slice.range.covers(subslice.range)) {
+                /* Put the new slice between "this" and the subslice. First,
+                 * remove old links */
+                i.remove();
+                subslice.superslices.remove(this);
+                /* Add new links */
+                slice.subslices.add(subslice);
+                subslice.superslices.add(slice);
+            }
+            else {
+                final SliceRange overlap =
+                        subslice.range.intersectWith(slice.range);
+                if(!overlap.isEmpty()) {
+                    final S overlapSlice = createSlice(overlap);
+                    slice.subslices.add(overlapSlice);
+                    overlapSlice.superslices.add(slice);
+                    subslice.addSubslice(overlapSlice);
+                }
+            }
+        }
+        
         subslices.add(slice);
-        ((NonFinalSlice<S>) slice).superslices.add(this);
+        slice.superslices.add(this);
     }
     
     abstract S createSlice(SliceRange sliceRange);
     
     @Override
-    Iterable<? extends Guarded> views() {
+    Iterable<S> views() {
         return subslices;
     }
 }

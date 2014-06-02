@@ -15,7 +15,6 @@ public class LongSlice extends NonFinalSlice<LongSlice> {
     
     LongSlice(final SliceRange range, final long[] data) {
         super(range);
-        assert range.end <= data.length;
         this.data = data;
     }
     

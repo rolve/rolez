@@ -51,4 +51,13 @@ public abstract class BaseSlice<S extends BaseSlice<S>> extends Guarded {
             slices.add(slice(r));
         return slices;
     }
+    
+    @Override
+    public final String toString() {
+        final String result =
+                "(" + range.begin + ":" + range.end + "%" + range.step + ")";
+        // TODO: Append content
+        return result;
+    }
+    
 }

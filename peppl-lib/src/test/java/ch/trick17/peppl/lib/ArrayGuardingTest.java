@@ -406,7 +406,7 @@ public class ArrayGuardingTest extends GuardingTest {
         }
     }
     
-    // FIXME: Test and fix guarding of striped slices
+    // FIXME: Test guarding of striped slices
     
     @Test
     public void testShareFinalSlice() {

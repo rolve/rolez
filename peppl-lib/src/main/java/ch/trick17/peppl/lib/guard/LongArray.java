@@ -1,7 +1,5 @@
 package ch.trick17.peppl.lib.guard;
 
-import java.util.Arrays;
-
 import ch.trick17.peppl.lib.SliceRange;
 
 /**
@@ -19,10 +17,5 @@ public class LongArray extends LongSlice {
     
     public LongArray(final int length) {
         this(new long[length]);
-    }
-    
-    @Override
-    public String toString() {
-        return Arrays.toString(data);
     }
 }

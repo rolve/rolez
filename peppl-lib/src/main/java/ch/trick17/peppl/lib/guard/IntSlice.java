@@ -15,7 +15,6 @@ public class IntSlice extends NonFinalSlice<IntSlice> {
     
     IntSlice(final SliceRange range, final int[] data) {
         super(range);
-        assert range.end <= data.length;
         this.data = data;
     }
     

@@ -25,7 +25,6 @@ public class Slice<E extends Guarded> extends NonFinalSlice<Slice<E>> {
     
     Slice(final SliceRange range, final E[] data) {
         super(range);
-        assert range.end <= data.length;
         this.data = data;
     }
     
@@ -37,11 +36,6 @@ public class Slice<E extends Guarded> extends NonFinalSlice<Slice<E>> {
     @Override
     final Iterable<? extends Guarded> guardedRefs() {
         return listImpl;
-    }
-    
-    @Override
-    public final String toString() {
-        return listImpl.toString();
     }
     
     private final class SliceList extends AbstractList<E> implements
