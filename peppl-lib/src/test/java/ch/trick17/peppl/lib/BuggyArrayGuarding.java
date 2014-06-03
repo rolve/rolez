@@ -1,18 +1,19 @@
 package ch.trick17.peppl.lib;
 
+import static java.util.Collections.newSetFromMap;
 import static org.junit.Assert.assertEquals;
 import gov.nasa.jpf.Config;
 import gov.nasa.jpf.JPF;
 
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.locks.LockSupport;
 
-import ch.trick17.peppl.lib.SomeClasses.Int;
-import ch.trick17.peppl.lib.guard.Array;
-import ch.trick17.peppl.lib.guard.IntArray;
-import ch.trick17.peppl.lib.guard.IntSlice;
-import ch.trick17.peppl.lib.guard.Slice;
+import ch.trick17.peppl.lib.SliceRange;
+import ch.trick17.peppl.lib.TestSlice.Op;
 import ch.trick17.simplejpf.SimpleJpf;
 
 public class BuggyArrayGuarding {
@@ -24,7 +25,7 @@ public class BuggyArrayGuarding {
     public static void main(final String[] args) {
         Config.enableLogging(true);
         final Config config = SimpleJpf.createConfig();
-        config.setTarget(Test2.class.getName());
+        config.setTarget(Test.class.getName());
         
         final Map<String, String> results = new LinkedHashMap<>();
         for(final String search : new String[]{DFSEARCH /* , INTERLEAVING */}) {
@@ -44,45 +45,44 @@ public class BuggyArrayGuarding {
             System.out.println(result.getKey() + ": " + result.getValue());
     }
     
-    public static class Test1 {
-        public static void main(final String[] args) {
-            final Array<Int> a = new Array<>(new Int[3]);
-            for(int i = 0; i < a.data.length; i++)
-                a.data[i] = new Int(i);
-            
-            final Slice<Int> slice1 = a.slice(0, 2, 1);
-            final Slice<Int> slice2 = a.slice(1, 3, 1);
-            slice1.share();
-            new Thread() {
-                @Override
-                public void run() {
-                    assertEquals(1, slice1.data[1].value);
-                    slice1.releaseShared();
-                }
-            }.start();
-            
-            slice2.guardReadWrite();
-            slice2.data[1] = new Int(100);
-        }
-    }
+    /* Test class */
     
-    public static class Test2 {
+    public static class Test {
         public static void main(final String[] args) {
-            final IntArray a = new IntArray(0, 1, 2);
+            final Thread main = Thread.currentThread();
             
-            final IntSlice slice1 = a.slice(0, 2, 1);
-            final IntSlice slice2 = a.slice(1, 3, 1);
-            slice1.share();
+            final int[] data = new int[]{0, 1, 2};
+            final TestSlice a = new TestSlice(SliceRange.forArray(data), data);
+            final TestSlice slice1 = a.slice(0, 2, 1);
+            final TestSlice slice2 = a.slice(1, 3, 1);
+            
+            final TestSlice.Op share = new TestSlice.Op() {
+                public void process(final TestSlice slice) {
+                    slice.sharedCount.incrementAndGet();
+                }
+            };
+            slice1.processViews(share, newIdentitySet());
+            
             new Thread() {
                 @Override
                 public void run() {
                     assertEquals(1, slice1.data[1]);
-                    slice1.releaseShared();
+                    
+                    for(final TestSlice s : slice1.subslices)
+                        s.sharedCount.decrementAndGet();
+                    LockSupport.unpark(main);
                 }
             }.start();
             
-            slice2.guardReadWrite();
+            for(final TestSlice s : slice2.subslices)
+                while(s.sharedCount.get() > 0)
+                    LockSupport.park();
+            
             slice2.data[1] = 2;
         }
+    }
+    
+    private static Set<TestSlice> newIdentitySet() {
+        return newSetFromMap(new IdentityHashMap<TestSlice, Boolean>());
     }
 }
