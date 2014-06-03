@@ -5,24 +5,16 @@ import static java.util.Collections.newSetFromMap;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.WeakHashMap;
 
 import ch.trick17.peppl.lib.SliceRange;
 
 abstract class NonFinalSlice<S extends NonFinalSlice<S>> extends BaseSlice<S> {
     
     /* References to all (direct) subslices. Guarding a slice must also consider
-     * subslices, which may currently be "owned" by a different task. References
-     * to subslices are weak, i.e., they don't prevent subslices to be
-     * garbage-collected if they are not used anymore. However, see below. */
-    final Set<S> subslices = newSetFromMap(new WeakHashMap<S, Boolean>());
+     * subslices, which may currently be "owned" by a different task. */
+    final Set<S> subslices = newSetFromMap(new IdentityHashMap<S, Boolean>());
     
-    /* References to superslices are kept to prevent them from being
-     * garbage-collected as long as they have referenced subslices. This
-     * prevents slices from getting disconnected from their parents's parents,
-     * which would prevent proper guarding. */
-    final Set<NonFinalSlice<S>> superslices =
-            newSetFromMap(new IdentityHashMap<NonFinalSlice<S>, Boolean>());
+    // TODO: Find a way to "free" unused subslices again
     
     NonFinalSlice(final SliceRange range) {
         super(range);
@@ -49,7 +41,6 @@ abstract class NonFinalSlice<S extends NonFinalSlice<S>> extends BaseSlice<S> {
         // IMPROVE: Better way to handle empty slices?
         if(slice.range.isEmpty()) {
             subslices.add(slice);
-            slice.superslices.add(this);
             return;
         }
         
@@ -71,10 +62,8 @@ abstract class NonFinalSlice<S extends NonFinalSlice<S>> extends BaseSlice<S> {
                 /* Put the new slice between "this" and the subslice. First,
                  * remove old links */
                 i.remove();
-                subslice.superslices.remove(this);
                 /* Add new links */
                 slice.subslices.add(subslice);
-                subslice.superslices.add(slice);
             }
             else {
                 final SliceRange overlap =
@@ -82,14 +71,12 @@ abstract class NonFinalSlice<S extends NonFinalSlice<S>> extends BaseSlice<S> {
                 if(!overlap.isEmpty()) {
                     final S overlapSlice = createSlice(overlap);
                     slice.subslices.add(overlapSlice);
-                    overlapSlice.superslices.add(slice);
                     subslice.addSubslice(overlapSlice);
                 }
             }
         }
         
         subslices.add(slice);
-        slice.superslices.add(this);
     }
     
     abstract S createSlice(SliceRange sliceRange);

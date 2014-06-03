@@ -3,7 +3,8 @@ package ch.trick17.peppl.lib.guard;
 import static java.lang.Math.min;
 import static java.util.Arrays.asList;
 import static java.util.Collections.newSetFromMap;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
@@ -80,18 +81,7 @@ public class NonFinalSliceTest {
             slices.add(slice);
         }
         
-        assertSoundSliceLinks(array);
         assertSoundSlicesCondition(array);
-    }
-    
-    private static void assertSoundSliceLinks(final Slice<?> slice) {
-        for(final NonFinalSlice<?> superslice : slice.superslices)
-            assertTrue(superslice.subslices.contains(slice));
-        
-        for(final Slice<?> subslice : slice.subslices) {
-            assertTrue(subslice.superslices.contains(slice));
-            assertSoundSliceLinks(subslice);
-        }
     }
     
     private static void assertSoundSlicesCondition(final Slice<?> slice) {
