@@ -6,7 +6,11 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 
+import javax.tools.Diagnostic;
 import javax.tools.DiagnosticCollector;
 import javax.tools.JavaCompiler;
 import javax.tools.JavaCompiler.CompilationTask;
@@ -25,6 +29,8 @@ public abstract class PepplCheckerTest {
     
     private static final File TEMP_DIR = new File("target/test-temp");
     
+    private final Class<?> myClass = getClass();
+    
     @Before
     public void initializeRepoDir() throws IOException {
         if(TEMP_DIR.exists() && !TEMP_DIR.isDirectory())
@@ -41,25 +47,41 @@ public abstract class PepplCheckerTest {
     public void testChecker() throws IOException {
         final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         
-        final DiagnosticCollector<JavaFileObject> collector = new DiagnosticCollector<>();
-        final StandardJavaFileManager fileMgr = compiler
-                .getStandardFileManager(collector, null, null);
+        DiagnosticCollector<JavaFileObject> collector = new DiagnosticCollector<>();
+        StandardJavaFileManager fileMgr = compiler.getStandardFileManager(
+                collector, null, null);
         fileMgr.setLocation(StandardLocation.SOURCE_PATH, asList(new File(
                 "src/test/java")));
         fileMgr.setLocation(StandardLocation.CLASS_OUTPUT, asList(TEMP_DIR));
-        final JavaFileObject file = fileMgr
-                .getJavaFileForInput(StandardLocation.SOURCE_PATH, getClass()
-                        .getName(), Kind.SOURCE);
         
-        final CompilationTask task = compiler.getTask(null, fileMgr, collector,
-                asList("-source", "1.8"), null, asList(file));
+        JavaFileObject file = fileMgr.getJavaFileForInput(
+                StandardLocation.SOURCE_PATH, myClass.getName(), Kind.SOURCE);
+        CompilationTask task = compiler.getTask(null, fileMgr, collector,
+                asList("-source", "1.8", "-AprintErrorStack"), null,
+                asList(file));
         task.setProcessors(asList(new PepplChecker()));
         
-        final Boolean success = task.call();
+        Boolean success = task.call();
         
-        assertEquals(asList(), collector.getDiagnostics());
-        assertTrue(success);
+        if(hasDeclaredTypeErrors()) {
+            Set<Long> lines = collector.getDiagnostics().stream().map(
+                    Diagnostic::getLineNumber).collect(Collectors.toSet());
+            assertEquals(typeErrorLines(), lines);
+        }
+        else {
+            assertEquals(asList(), collector.getDiagnostics());
+            assertTrue(success);
+        }
         fileMgr.close();
+    }
+    
+    private boolean hasDeclaredTypeErrors() {
+        return myClass.getAnnotation(TypeErrors.class) != null;
+    }
+    
+    private Set<Long> typeErrorLines() {
+        long[] lines = myClass.getAnnotation(TypeErrors.class).lines();
+        return LongStream.of(lines).boxed().collect(Collectors.toSet());
     }
     
     @After

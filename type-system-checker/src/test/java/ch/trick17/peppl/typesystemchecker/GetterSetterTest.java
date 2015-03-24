@@ -1,10 +1,10 @@
 package ch.trick17.peppl.typesystemchecker;
 
+@SuppressWarnings("cast")
 public class GetterSetterTest extends PepplCheckerTest {
     
-    @SuppressWarnings("cast")
     public void foo() {
-        final Int i = new Int();
+        Int i = new Int();
         i.set(3);
         
         Int roi = (@ReadOnly Int) i;
@@ -16,11 +16,10 @@ public class GetterSetterTest extends PepplCheckerTest {
         private int i;
         
         private int get(@ReadOnly Int this) {
-            final Int i2 = this;
-            return i2.i;
+            return this.i;
         }
         
-        private void set(@ReadWrite Int this, int value) {
+        private void set(Int this, int value) {
             i = value;
         }
     }
