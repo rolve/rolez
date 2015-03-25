@@ -63,6 +63,7 @@ public abstract class PepplCheckerTest {
         
         Boolean success = task.call();
         
+        collector.getDiagnostics().stream().forEach(System.out::println);
         if(hasDeclaredTypeErrors()) {
             Set<Long> lines = collector.getDiagnostics().stream().map(
                     Diagnostic::getLineNumber).collect(Collectors.toSet());

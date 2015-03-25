@@ -16,7 +16,7 @@ public class GetterSetterTest extends PepplCheckerTest {
         private int i;
         
         private int get(@ReadOnly Int this) {
-            return this.i;
+            return i;
         }
         
         private void set(Int this, int value) {
