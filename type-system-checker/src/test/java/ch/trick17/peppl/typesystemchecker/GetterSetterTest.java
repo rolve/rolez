@@ -1,5 +1,7 @@
 package ch.trick17.peppl.typesystemchecker;
 
+import ch.trick17.peppl.typesystemchecker.qual.ReadOnly;
+
 @SuppressWarnings("cast")
 public class GetterSetterTest extends PepplCheckerTest {
     

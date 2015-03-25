@@ -1,6 +1,9 @@
 package ch.trick17.peppl.typesystemchecker;
 
-@TypeErrors(lines = {9, 12})
+import ch.trick17.peppl.typesystemchecker.qual.Inaccessible;
+import ch.trick17.peppl.typesystemchecker.qual.ReadOnly;
+
+@TypeErrors(lines = {12, 15})
 public class GetterSetterTestFail extends PepplCheckerTest {
     
     @SuppressWarnings("cast")
@@ -15,7 +18,7 @@ public class GetterSetterTestFail extends PepplCheckerTest {
     public static class Int {
         
         private int i;
-         
+        
         private int get(@ReadOnly Int this) {
             return i;
         }

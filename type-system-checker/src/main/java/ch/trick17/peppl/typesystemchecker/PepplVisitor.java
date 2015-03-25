@@ -10,9 +10,13 @@ import org.checkerframework.common.basetype.BaseAnnotatedTypeFactory;
 import org.checkerframework.common.basetype.BaseTypeChecker;
 import org.checkerframework.common.basetype.BaseTypeVisitor;
 import org.checkerframework.framework.source.Result;
+import org.checkerframework.framework.type.AnnotatedTypeMirror;
 import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedDeclaredType;
 import org.checkerframework.javacutil.AnnotationUtils;
 import org.checkerframework.javacutil.TreeUtils;
+
+import ch.trick17.peppl.typesystemchecker.qual.ReadOnly;
+import ch.trick17.peppl.typesystemchecker.qual.ReadWrite;
 
 import com.sun.source.tree.AssignmentTree;
 import com.sun.source.tree.ExpressionTree;
@@ -22,12 +26,11 @@ import com.sun.source.tree.Tree;
 
 public class PepplVisitor extends BaseTypeVisitor<BaseAnnotatedTypeFactory> {
     
-    private final AnnotationMirror INACCESSIBLE, READONLY, READWRITE;
+    private final AnnotationMirror READONLY, READWRITE;
     
     public PepplVisitor(BaseTypeChecker checker) {
         super(checker);
         
-        INACCESSIBLE = AnnotationUtils.fromClass(elements, Inaccessible.class);
         READONLY = AnnotationUtils.fromClass(elements, ReadOnly.class);
         READWRITE = AnnotationUtils.fromClass(elements, ReadWrite.class);
     }
@@ -45,12 +48,13 @@ public class PepplVisitor extends BaseTypeVisitor<BaseAnnotatedTypeFactory> {
     @Override
     public Void visitAssignment(AssignmentTree node, Void p) {
         ExpressionTree lhs = node.getVariable();
-        if(TreeUtils.isFieldAccess(lhs))
+        if(TreeUtils.isFieldAccess(lhs)) {
+            AnnotatedTypeMirror recType = atypeFactory.getReceiverType(lhs);
             if(!atypeFactory.getQualifierHierarchy().isSubtype(
-                    atypeFactory.getReceiverType(lhs).getAnnotations(),
-                    asList(READWRITE))) {
-                checker.report(Result.failure(ILLEGAL_WRITE, node), node);
+                    recType.getAnnotations(), asList(READWRITE))) {
+                checker.report(Result.failure(ILLEGAL_WRITE, recType), node);
             }
+        }
         return super.visitAssignment(node, p);
     }
     
@@ -67,11 +71,12 @@ public class PepplVisitor extends BaseTypeVisitor<BaseAnnotatedTypeFactory> {
     }
     
     private void checkFieldRead(ExpressionTree node) {
-        if(TreeUtils.isFieldAccess(node))
+        if(TreeUtils.isFieldAccess(node)) {
+            AnnotatedTypeMirror recType = atypeFactory.getReceiverType(node);
             if(!atypeFactory.getQualifierHierarchy().isSubtype(
-                    atypeFactory.getReceiverType(node).getAnnotations(),
-                    asList(READONLY))) {
-                checker.report(Result.failure(ILLEGAL_READ, node), node);
+                    recType.getAnnotations(), asList(READONLY))) {
+                checker.report(Result.failure(ILLEGAL_READ, recType), node);
             }
+        }
     }
 }

@@ -1,6 +1,9 @@
 package ch.trick17.peppl.typesystemchecker;
 
-@TypeErrors(lines = {9, 12, 19, 23})
+import ch.trick17.peppl.typesystemchecker.qual.Inaccessible;
+import ch.trick17.peppl.typesystemchecker.qual.ReadOnly;
+
+@TypeErrors(lines = {12, 15, 22, 26})
 public class FieldAccessFail extends PepplCheckerTest {
     
     @SuppressWarnings("cast")

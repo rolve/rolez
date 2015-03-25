@@ -1,4 +1,4 @@
-package ch.trick17.peppl.typesystemchecker;
+package ch.trick17.peppl.typesystemchecker.qual;
 
 import static com.sun.source.tree.Tree.Kind.*;
 import static java.lang.annotation.ElementType.TYPE_PARAMETER;
