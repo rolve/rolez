@@ -17,11 +17,11 @@ public class GetterSetterTest extends PepplCheckerTest {
         
         private int i;
         
-        private int get(@ReadOnly Int this) {
+        public int get(@ReadOnly Int this) {
             return i;
         }
         
-        private void set(Int this, int value) {
+        public void set(Int this, int value) {
             i = value;
         }
     }
