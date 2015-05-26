@@ -1,0 +1,46 @@
+grammar ch.trick17.peppl.lang.Peppl with org.eclipse.xtext.common.Terminals
+
+generate peppl "http://trick17.ch/peppl/lang/Peppl"
+
+Model:
+	classes+=Class*;
+
+Class:
+	'class' name=ID ('{' members+=Member+ '}')?;
+
+Member:
+    Field | Method;
+
+Field:
+    ('var' | 'val') name=ID ':' type=Type;
+
+Method:
+    'def' name=ID
+    ('(' parameters+=Parameter (',' parameters+=Parameter)* ')')?
+    (':' returnType=Type)?
+    '{' body=SequenceExpression '}';
+
+Parameter:
+    name=ID ':' type=Type;
+
+SequenceExpression:
+    elements+=Expression (';' elements+=Expression)*;
+
+Expression:
+    AccessExpression | BasicExpression;
+
+AccessExpression:
+    =>(                                 // The => resolves the ambiguity in the Expression rule
+        (target=BasicExpression '.')?
+        member+=[Member] ('(' arguments+=Expression (',' arguments+=Expression)* ')')?
+    )
+    ('.' member+=[Member] ('(' arguments+=Expression (',' arguments+=Expression)* ')')? )*;
+
+BasicExpression:
+    '(' seq=SequenceExpression ')' | {StringLiteral} STRING | {IntLiteral} INT;
+
+Type:
+    (role=Role)? base=[Class];
+
+enum Role:
+    READWRITE='readwrite' | READONLY='readonly' | INACCESSIBLE='inaccessible';

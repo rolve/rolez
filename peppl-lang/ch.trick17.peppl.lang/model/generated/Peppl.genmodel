@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<genmodel:GenModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    xmlns:genmodel="http://www.eclipse.org/emf/2002/GenModel" modelDirectory="/ch.trick17.peppl.lang/src-gen" editDirectory="/ch.trick17.peppl.lang.edit/src"
+    editorDirectory="/ch.trick17.peppl.lang.editor/src" modelPluginID="ch.trick17.peppl.lang"
+    forceOverwrite="true" modelName="Peppl" updateClasspath="false" rootExtendsClass="org.eclipse.emf.ecore.impl.MinimalEObjectImpl$Container"
+    complianceLevel="6.0" copyrightFields="false" editPluginID="ch.trick17.peppl.lang.edit"
+    editorPluginID="ch.trick17.peppl.lang.editor" runtimeVersion="2.10">
+  <genPackages prefix="Peppl" basePackage="ch.trick17.peppl.lang" disposableProviderFactory="true"
+      fileExtensions="peppl" ecorePackage="Peppl.ecore#/">
+    <genEnums typeSafeEnumCompatible="false" ecoreEnum="Peppl.ecore#//Role">
+      <genEnumLiterals ecoreEnumLiteral="Peppl.ecore#//Role/READWRITE"/>
+      <genEnumLiterals ecoreEnumLiteral="Peppl.ecore#//Role/READONLY"/>
+      <genEnumLiterals ecoreEnumLiteral="Peppl.ecore#//Role/INACCESSIBLE"/>
+    </genEnums>
+    <genClasses ecoreClass="Peppl.ecore#//Model">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference Peppl.ecore#//Model/classes"/>
+    </genClasses>
+    <genClasses ecoreClass="Peppl.ecore#//Class">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute Peppl.ecore#//Class/name"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference Peppl.ecore#//Class/members"/>
+    </genClasses>
+    <genClasses ecoreClass="Peppl.ecore#//Member">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute Peppl.ecore#//Member/name"/>
+    </genClasses>
+    <genClasses ecoreClass="Peppl.ecore#//Field">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference Peppl.ecore#//Field/type"/>
+    </genClasses>
+    <genClasses ecoreClass="Peppl.ecore#//Method">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference Peppl.ecore#//Method/parameters"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference Peppl.ecore#//Method/returnType"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference Peppl.ecore#//Method/body"/>
+    </genClasses>
+    <genClasses ecoreClass="Peppl.ecore#//Parameter">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute Peppl.ecore#//Parameter/name"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference Peppl.ecore#//Parameter/type"/>
+    </genClasses>
+    <genClasses ecoreClass="Peppl.ecore#//SequenceExpression">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference Peppl.ecore#//SequenceExpression/elements"/>
+    </genClasses>
+    <genClasses ecoreClass="Peppl.ecore#//Expression"/>
+    <genClasses ecoreClass="Peppl.ecore#//AccessExpression">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference Peppl.ecore#//AccessExpression/target"/>
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference Peppl.ecore#//AccessExpression/member"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference Peppl.ecore#//AccessExpression/arguments"/>
+    </genClasses>
+    <genClasses ecoreClass="Peppl.ecore#//BasicExpression">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference Peppl.ecore#//BasicExpression/seq"/>
+    </genClasses>
+    <genClasses ecoreClass="Peppl.ecore#//Type">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute Peppl.ecore#//Type/role"/>
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference Peppl.ecore#//Type/base"/>
+    </genClasses>
+    <genClasses ecoreClass="Peppl.ecore#//StringLiteral"/>
+    <genClasses ecoreClass="Peppl.ecore#//IntLiteral"/>
+  </genPackages>
+</genmodel:GenModel>
