@@ -20,7 +20,7 @@ public class GetterSetterTestFail extends PepplCheckerTest {
             return i;
         }
         
-        public void set(Int this, int value) {
+        public void set(int value) {
             i = value;
         }
     }

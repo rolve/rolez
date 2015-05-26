@@ -21,7 +21,7 @@ public class GetterSetterTest extends PepplCheckerTest {
             return i;
         }
         
-        public void set(Int this, int value) {
+        public void set(int value) {
             i = value;
         }
     }

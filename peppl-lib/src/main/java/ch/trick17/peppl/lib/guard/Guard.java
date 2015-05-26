@@ -12,6 +12,7 @@ class Guard {
     
     private volatile Thread owner = Thread.currentThread();
     private final Deque<Thread> prevOwners = new ArrayDeque<>();
+    // IMPROVE: *Extend* AtomicInteger instead to save a pointer
     private final AtomicInteger sharedCount = new AtomicInteger(0);
     
     private final Deque<Set<Guarded>> prevReachables = new ArrayDeque<>();
