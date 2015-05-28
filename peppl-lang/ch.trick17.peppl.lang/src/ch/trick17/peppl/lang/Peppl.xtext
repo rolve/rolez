@@ -2,8 +2,8 @@ grammar ch.trick17.peppl.lang.Peppl with org.eclipse.xtext.common.Terminals
 
 generate peppl "http://trick17.ch/peppl/lang/Peppl"
 
-Model:
-	classes+=Class*;
+Program:
+	classes+=Class* 'main' mainBlock=Block & classes+=Class*;
 
 Class:
 	'class' name=ID ('{' members+=Member+ '}')?;
@@ -12,35 +12,67 @@ Member:
     Field | Method;
 
 Field:
-    ('var' | 'val') name=ID ':' type=Type;
+    kind=VarKind name=ID ':' type=Type;
+
+enum VarKind:
+    VAL='val' | VAR='var';
 
 Method:
     'def' name=ID
     ('(' parameters+=Parameter (',' parameters+=Parameter)* ')')?
-    (':' returnType=Type)?
-    '{' body=SequenceExpression '}';
+    ':' returnType=Type
+    body=Block;
 
 Parameter:
     name=ID ':' type=Type;
 
-SequenceExpression:
-    elements+=Expression (';' elements+=Expression)*;
+Block:
+    {Block} '{' (statements+=Statement)* '}';
+
+Statement:
+    Block | LocalVariable | ExpressionStatement;
+
+LocalVariable:
+    kind=VarKind name=ID ':' type=Type ';';
+
+ExpressionStatement:
+    expr=Expression ';';
 
 Expression:
-    AccessExpression | BasicExpression;
+    NonAssignment ({Assignment.left=current} '=' right=Expression)?; 
 
-AccessExpression:
-    =>(                                 // The => resolves the ambiguity in the Expression rule
-        (target=BasicExpression '.')?
-        member+=[Member] ('(' arguments+=Expression (',' arguments+=Expression)* ')')?
-    )
-    ('.' member+=[Member] ('(' arguments+=Expression (',' arguments+=Expression)* ')')? )*;
+NonAssignment returns Expression:
+    NonMemberAccess ('.' {MemberAccess.target=current} selection=Selection)*;
 
-BasicExpression:
-    '(' seq=SequenceExpression ')' | {StringLiteral} STRING | {IntLiteral} INT;
+Selection:
+    member+=[Member] ('(' arguments+=Expression (',' arguments+=Expression)* ')')?;
+
+NonMemberAccess returns Expression:
+    {This} 'this' | VariableRef | New | Literal | Parenthesized;
+
+New:
+    'new' class=[Class] ('(' arguments+=Expression (',' arguments+=Expression)* ')')?;
+
+Literal:
+    StringLiteral | IntLiteral | BooleanLiteral;
+
+StringLiteral: value=STRING;
+
+IntLiteral: value=INT;
+
+BooleanLiteral: value=('true' | 'false');
+
+VariableRef: var=[Variable];
+
+Variable: LocalVariable | Parameter;
+
+Parenthesized: '(' expr=Expression ')';
 
 Type:
-    (role=Role)? base=[Class];
+    (role=Role)? base=[Class] | PrimitiveType;
+
+PrimitiveType:
+    {Void} 'void' | {Int} 'int' | {Boolean} 'boolean' | {Char} 'char';
 
 enum Role:
     READWRITE='readwrite' | READONLY='readonly' | INACCESSIBLE='inaccessible';

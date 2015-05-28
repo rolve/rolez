@@ -1,0 +1,34 @@
+import ch.trick17.peppl.lang.peppl.Assignment
+import ch.trick17.peppl.lang.peppl.MemberAccess
+import ch.trick17.peppl.lang.peppl.VariableRef
+import ch.trick17.peppl.lang.peppl.Expression
+import ch.trick17.peppl.lang.validation.AbstractPepplValidator
+
+system ch.trick17.peppl.lang.typesystem.PepplSystem
+
+validatorExtends AbstractPepplValidator
+
+judgments {
+    assignable ||= Expression expr
+        error expr + " is not assignable"
+}
+
+rule AExpression
+    G ||= Expression e
+from { false }
+
+axiom AVariableRef
+    G ||= VariableRef v
+
+rule AMemberAccess
+    G ||= MemberAccess a
+from {
+    a.selection.arguments.^empty
+}
+
+
+checkrule ValidAssignment for
+    Assignment a
+from {
+    empty ||= a.left
+}

@@ -3,23 +3,25 @@
  */
 package ch.trick17.peppl.lang.validation
 
-//import org.eclipse.xtext.validation.Check
+import org.eclipse.xtext.validation.Check
+import ch.trick17.peppl.lang.peppl.PepplPackage
+import ch.trick17.peppl.lang.typesystem.validation.PepplSystemValidator
 
 /**
  * This class contains custom validation rules. 
  *
  * See https://www.eclipse.org/Xtext/documentation/303_runtime_concepts.html#validation
  */
-class PepplValidator extends AbstractPepplValidator {
+class PepplValidator extends PepplSystemValidator {
 
-//  public static val INVALID_NAME = 'invalidName'
-//
-//	@Check
-//	def checkGreetingStartsWithCapital(Greeting greeting) {
-//		if (!Character.isUpperCase(greeting.name.charAt(0))) {
-//			warning('Name should start with a capital', 
-//					MyDslPackage.Literals.GREETING__NAME,
-//					INVALID_NAME)
-//		}
-//	}
+  public static val INVALID_NAME = 'invalidName'
+
+	@Check
+	def checkGreetingStartsWithCapital(ch.trick17.peppl.lang.peppl.Class cls) {
+		if (!Character.isUpperCase(cls.name.charAt(0))) {
+			warning('Name should start with a capital', 
+					PepplPackage.Literals.CLASS__NAME,
+					INVALID_NAME)
+		}
+	}
 }
