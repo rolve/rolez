@@ -1,5 +1,7 @@
 grammar ch.trick17.peppl.lang.Peppl with org.eclipse.xtext.common.Terminals
 
+import "http://www.eclipse.org/emf/2002/Ecore"
+
 generate peppl "http://trick17.ch/peppl/lang/Peppl"
 
 Program:
@@ -30,28 +32,78 @@ Block:
     {Block} '{' (statements+=Statement)* '}';
 
 Statement:
-    Block | LocalVariable | ExpressionStatement;
+    Block | LocalVariable | IfElse | WhileLoop | ForLoop | ExpressionStatement;
 
 LocalVariable:
-    kind=VarKind name=ID ':' type=Type ';';
+    kind=VarKind name=ID ':' type=Type ('=' initializer=Expression)? ';';
+
+IfElse:
+    'if' '(' condition=Expression ')' then=Statement
+    (=>'else' else=Statement)?;
+
+WhileLoop:
+    'while' '(' condition=Expression ')' body=Statement;
+
+ForLoop:
+    'for' '(' loopVar=LoopVariable ')' body=Statement;
+
+LoopVariable returns LocalVariable:
+    {LoopVariable} name=ID ':' type=Type '<-' range=Expression;
 
 ExpressionStatement:
     expr=Expression ';';
 
 Expression:
-    NonAssignment ({Assignment.left=current} '=' right=Expression)?; 
+    OrExpression ({Assignment.left=current} '=' right=Expression)?;
 
-NonAssignment returns Expression:
-    NonMemberAccess ('.' {MemberAccess.target=current} selection=Selection)*;
+OrExpression returns Expression:
+    AndExpression ({OrExpression.left=current} '||' right=AndExpression)?;
+
+AndExpression returns Expression:
+    EqualityExpression ({AndExpression.left=current} '&&' right=EqualityExpression)?;
+
+EqualityExpression returns Expression:
+    RelationalExpression ({EqualExpression.left=current} op=OpEquality right=RelationalExpression)?;
+
+enum OpEquality: EQUALS='==' | NOT_EQUALS='!=';
+
+RelationalExpression returns Expression:
+    AdditiveExpression ({RelationalExpression.left=current} op=OpRelational right=AdditiveExpression)?;
+
+enum OpRelational: SMALLER='<' | GREATER='>' | SMALLER_EQUALS='<=' | GREATER_EQUALS='>=';
+
+AdditiveExpression returns Expression:
+    MultiplicativeExpression ({AdditiveExpression.left=current} op=OpAdditive right=MultiplicativeExpression)?;
+
+enum OpAdditive: PLUS='+' | MINUS='-';
+
+MultiplicativeExpression returns Expression:
+    UnaryExpression ({MultiplicativeExpression.left=current} op=OpMultiplicative right=UnaryExpression)?;
+
+enum OpMultiplicative: TIMES='*' | DIVIDED_BY='/' | MODULO='%';
+
+UnaryExpression returns Expression:
+    MemberAccess | {UnaryExpression} op=OpUnary right=MemberAccess;
+
+enum OpUnary: MINUS='-' | NOT='!';
+
+MemberAccess returns Expression:
+    SimpleExpression ('.' {MemberAccess.target=current} selection=Selection)*;
 
 Selection:
-    member+=[Member] ('(' arguments+=Expression (',' arguments+=Expression)* ')')?;
+    member+=[Member]
+    ('(' arguments+=Expression (',' arguments+=Expression)* ')')?;
 
-NonMemberAccess returns Expression:
+SimpleExpression returns Expression:
     {This} 'this' | VariableRef | New | Literal | Parenthesized;
 
+VariableRef: var=[Variable];
+
+Variable: LocalVariable | Parameter;
+
 New:
-    'new' class=[Class] ('(' arguments+=Expression (',' arguments+=Expression)* ')')?;
+    'new' class=[Class]
+    ('(' arguments+=Expression (',' arguments+=Expression)* ')')?;
 
 Literal:
     StringLiteral | IntLiteral | BooleanLiteral;
@@ -60,11 +112,9 @@ StringLiteral: value=STRING;
 
 IntLiteral: value=INT;
 
-BooleanLiteral: value=('true' | 'false');
+BooleanLiteral: value=Bool;
 
-VariableRef: var=[Variable];
-
-Variable: LocalVariable | Parameter;
+Bool returns EBoolean: 'true' | 'false';
 
 Parenthesized: '(' expr=Expression ')';
 
