@@ -5,10 +5,10 @@ import "http://www.eclipse.org/emf/2002/Ecore"
 generate peppl "http://trick17.ch/peppl/lang/Peppl"
 
 Program:
-	classes+=Class* 'main' mainBlock=Block & classes+=Class*;
+    classes+=Class* 'main' mainBlock=Block & classes+=Class*;
 
 Class:
-	'class' name=ID ('{' members+=Member+ '}')?;
+    'class' name=ID ('{' members+=Member+ '}')?;
 
 Member:
     Field | Method;
@@ -21,7 +21,7 @@ enum VarKind:
 
 Method:
     'def' name=ID
-    ('(' parameters+=Parameter (',' parameters+=Parameter)* ')')?
+    ('(' params+=Parameter (',' params+=Parameter)* ')')?
     ':' returnType=Type
     body=Block;
 
@@ -32,7 +32,7 @@ Block:
     {Block} '{' (statements+=Statement)* '}';
 
 Statement:
-    Block | LocalVariable | IfElse | WhileLoop | ForLoop | ExpressionStatement;
+    Block | LocalVariable | IfElse | WhileLoop | ForLoop | Return | ExpressionStatement;
 
 LocalVariable:
     kind=VarKind name=ID ':' type=Type ('=' initializer=Expression)? ';';
@@ -50,6 +50,9 @@ ForLoop:
 LoopVariable returns LocalVariable:
     {LoopVariable} name=ID ':' type=Type '<-' range=Expression;
 
+Return:
+    'return' expr=Expression ';';
+
 ExpressionStatement:
     expr=Expression ';';
 
@@ -57,10 +60,14 @@ Expression:
     OrExpression ({Assignment.left=current} '=' right=Expression)?;
 
 OrExpression returns Expression:
-    AndExpression ({OrExpression.left=current} '||' right=AndExpression)?;
+    AndExpression ({BooleanExpression.left=current} op=OpOr right=AndExpression)?;
+
+enum OpOr returns OpBoolean: OR='||';
 
 AndExpression returns Expression:
-    EqualityExpression ({AndExpression.left=current} '&&' right=EqualityExpression)?;
+    EqualityExpression ({BooleanExpression.left=current} op=OpAnd right=EqualityExpression)?;
+
+enum OpAnd returns OpBoolean: AND='&&';
 
 EqualityExpression returns Expression:
     RelationalExpression ({EqualExpression.left=current} op=OpEquality right=RelationalExpression)?;
@@ -73,14 +80,14 @@ RelationalExpression returns Expression:
 enum OpRelational: SMALLER='<' | GREATER='>' | SMALLER_EQUALS='<=' | GREATER_EQUALS='>=';
 
 AdditiveExpression returns Expression:
-    MultiplicativeExpression ({AdditiveExpression.left=current} op=OpAdditive right=MultiplicativeExpression)?;
+    MultiplicativeExpression ({ArithmeticExpression.left=current} op=OpAdditive right=MultiplicativeExpression)?;
 
-enum OpAdditive: PLUS='+' | MINUS='-';
+enum OpAdditive returns OpArithmetic: PLUS='+' | MINUS='-';
 
 MultiplicativeExpression returns Expression:
-    UnaryExpression ({MultiplicativeExpression.left=current} op=OpMultiplicative right=UnaryExpression)?;
+    UnaryExpression ({ArithmeticExpression.left=current} op=OpMultiplicative right=UnaryExpression)?;
 
-enum OpMultiplicative: TIMES='*' | DIVIDED_BY='/' | MODULO='%';
+enum OpMultiplicative returns OpArithmetic: TIMES='*' | DIVIDED_BY='/' | MODULO='%';
 
 UnaryExpression returns Expression:
     MemberAccess | {UnaryExpression} op=OpUnary right=MemberAccess;
@@ -88,11 +95,11 @@ UnaryExpression returns Expression:
 enum OpUnary: MINUS='-' | NOT='!';
 
 MemberAccess returns Expression:
-    SimpleExpression ('.' {MemberAccess.target=current} selection=Selection)*;
-
-Selection:
-    member+=[Member]
-    ('(' arguments+=Expression (',' arguments+=Expression)* ')')?;
+    SimpleExpression
+    (
+        {FieldAccess.target=current} '.' member+=[Member]
+        | {MethodInvoke.target=current} '.' member+=[Member] '(' (args+=Expression (',' args+=Expression)*)? ')'
+    )*;
 
 SimpleExpression returns Expression:
     {This} 'this' | VariableRef | New | Literal | Parenthesized;
@@ -106,7 +113,7 @@ New:
     ('(' arguments+=Expression (',' arguments+=Expression)* ')')?;
 
 Literal:
-    StringLiteral | IntLiteral | BooleanLiteral;
+    StringLiteral | IntLiteral | BooleanLiteral | {NullLiteral} 'null';
 
 StringLiteral: value=STRING;
 
@@ -119,10 +126,12 @@ Bool returns EBoolean: 'true' | 'false';
 Parenthesized: '(' expr=Expression ')';
 
 Type:
-    (role=Role)? base=[Class] | PrimitiveType;
+    (role=Role)? base=[Class] | PrimitiveType | {String} STRING_TYPE;
+
+terminal STRING_TYPE: 'String';
 
 PrimitiveType:
-    {Void} 'void' | {Int} 'int' | {Boolean} 'boolean' | {Char} 'char';
+    {Int} 'int' | {Boolean} 'boolean' | {Char} 'char' | {Void} 'void';
 
 enum Role:
     READWRITE='readwrite' | READONLY='readonly' | INACCESSIBLE='inaccessible';

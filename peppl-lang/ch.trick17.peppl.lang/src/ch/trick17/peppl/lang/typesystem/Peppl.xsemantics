@@ -1,34 +1,47 @@
 import ch.trick17.peppl.lang.peppl.Assignment
-import ch.trick17.peppl.lang.peppl.MemberAccess
 import ch.trick17.peppl.lang.peppl.VariableRef
 import ch.trick17.peppl.lang.peppl.Expression
 import ch.trick17.peppl.lang.validation.AbstractPepplValidator
+import ch.trick17.peppl.lang.peppl.FieldAccess
+import ch.trick17.peppl.lang.peppl.Type
+import ch.trick17.peppl.lang.peppl.StringLiteral
+import ch.trick17.peppl.lang.peppl.PepplFactory
+import ch.trick17.peppl.lang.peppl.IntLiteral
+import ch.trick17.peppl.lang.peppl.BooleanLiteral
+import ch.trick17.peppl.lang.peppl.NullLiteral
 
 system ch.trick17.peppl.lang.typesystem.PepplSystem
 
 validatorExtends AbstractPepplValidator
 
+auxiliary {
+    assignable(Expression expr)
+        error "Cannot assign to " + expr.stringRep
+}
+
 judgments {
-    assignable ||= Expression expr
-        error expr + " is not assignable"
+    type |- Expression expr : output Type
+        error "cannot type " + expr.stringRep
 }
 
-rule AExpression
-    G ||= Expression e
-from { false }
+auxiliary assignable(Expression  _) { fail }
+auxiliary assignable(VariableRef _) {}
+auxiliary assignable(FieldAccess _) {}
 
-axiom AVariableRef
-    G ||= VariableRef v
+axiom TStringLiteral
+    G |- StringLiteral _ : PepplFactory::eINSTANCE.createString
 
-rule AMemberAccess
-    G ||= MemberAccess a
-from {
-    a.selection.arguments.^empty
-}
+axiom TIntLiteral
+    G |- IntLiteral _ : PepplFactory::eINSTANCE.createInt
 
+axiom TBooleanLiteral
+    G |- BooleanLiteral _ : PepplFactory::eINSTANCE.createBoolean
+
+axiom TNullLiteral
+    G |- NullLiteral _ : PepplFactory::eINSTANCE.createBoolean
 
 checkrule ValidAssignment for
     Assignment a
 from {
-    empty ||= a.left
+    assignable(a.left)
 }
