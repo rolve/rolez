@@ -5,13 +5,24 @@ import "http://www.eclipse.org/emf/2002/Ecore"
 generate peppl "http://trick17.ch/peppl/lang/Peppl"
 
 Program:
-    classes+=Class* 'main' mainBlock=Block & classes+=Class*;
+    elements+=TopLevelElement+;
+
+TopLevelElement:
+    Class | Main;
 
 Class:
-    'class' name=ID ('{' members+=Member+ '}')?;
+    'class' name=ID
+    ('extends' superclass=[Class])?
+    ('{' (constructors+=Constructor | members+=Member)+ '}')?;
+
+Main: 
+    'main' block=Block;
 
 Member:
     Field | Method;
+
+Constructor:
+    'new' ('(' params+=Parameter (',' params+=Parameter)* ')')? body=Block;
 
 Field:
     kind=VarKind name=ID ':' type=Type;
@@ -22,11 +33,13 @@ enum VarKind:
 Method:
     'def' name=ID
     ('(' params+=Parameter (',' params+=Parameter)* ')')?
-    ':' returnType=Type
+    ':' type=Type
     body=Block;
 
 Parameter:
-    name=ID ':' type=Type;
+    kind=Val name=ID ':' type=Type;
+
+enum Val returns VarKind: VAL='val';
 
 Block:
     {Block} '{' (statements+=Statement)* '}';
@@ -48,7 +61,7 @@ ForLoop:
     'for' '(' loopVar=LoopVariable ')' body=Statement;
 
 LoopVariable returns LocalVariable:
-    {LoopVariable} name=ID ':' type=Type '<-' range=Expression;
+    {LoopVariable} kind=Val name=ID ':' type=Type '<-' range=Expression;
 
 Return:
     'return' expr=Expression ';';
@@ -57,6 +70,9 @@ ExpressionStatement:
     expr=Expression ';';
 
 Expression:
+    Assignment;
+
+Assignment returns Expression:
     OrExpression ({Assignment.left=current} '=' right=Expression)?;
 
 OrExpression returns Expression:
@@ -70,7 +86,7 @@ AndExpression returns Expression:
 enum OpAnd returns OpBoolean: AND='&&';
 
 EqualityExpression returns Expression:
-    RelationalExpression ({EqualExpression.left=current} op=OpEquality right=RelationalExpression)?;
+    RelationalExpression ({EqualityExpression.left=current} op=OpEquality right=RelationalExpression)?;
 
 enum OpEquality: EQUALS='==' | NOT_EQUALS='!=';
 
@@ -85,53 +101,68 @@ AdditiveExpression returns Expression:
 enum OpAdditive returns OpArithmetic: PLUS='+' | MINUS='-';
 
 MultiplicativeExpression returns Expression:
-    UnaryExpression ({ArithmeticExpression.left=current} op=OpMultiplicative right=UnaryExpression)?;
+    UnaryMinus ({ArithmeticExpression.left=current} op=OpMultiplicative right=UnaryMinus)?;
 
 enum OpMultiplicative returns OpArithmetic: TIMES='*' | DIVIDED_BY='/' | MODULO='%';
 
-UnaryExpression returns Expression:
-    MemberAccess | {UnaryExpression} op=OpUnary right=MemberAccess;
+UnaryMinus returns Expression:
+    UnaryNot | {UnaryMinus} '-' expr=MemberAccess;
 
-enum OpUnary: MINUS='-' | NOT='!';
+UnaryNot returns Expression:
+    MemberAccess | {UnaryNot} '!' expr=MemberAccess;
 
 MemberAccess returns Expression:
     SimpleExpression
     (
-        {FieldAccess.target=current} '.' member+=[Member]
-        | {MethodInvoke.target=current} '.' member+=[Member] '(' (args+=Expression (',' args+=Expression)*)? ')'
+        {FieldAccess.target=current} '.' field=[Field]
+        | {MethodInvoke.target=current} '.' method=[Method] '(' (args+=Expression (',' args+=Expression)*)? ')'
     )*;
 
 SimpleExpression returns Expression:
-    {This} 'this' | VariableRef | New | Literal | Parenthesized;
+    {This} 'this' | VariableRef | New | Parenthesized | Literal;
 
-VariableRef: var=[Variable];
+VariableRef: variable=[Variable];
 
 Variable: LocalVariable | Parameter;
 
 New:
-    'new' class=[Class]
-    ('(' arguments+=Expression (',' arguments+=Expression)* ')')?;
+    'new' clazz=[Class]
+    ('(' args+=Expression (',' args+=Expression)* ')')?;
+
+Parenthesized: '(' expr=Expression ')';
 
 Literal:
-    StringLiteral | IntLiteral | BooleanLiteral | {NullLiteral} 'null';
+    StringLiteral | {NullLiteral} 'null' | IntLiteral | BooleanLiteral | CharLiteral;
 
 StringLiteral: value=STRING;
+
+terminal STRING: '"' ( '\\' . /* 'b'|'t'|'n'|'f'|'r'|'u'|'"'|"'"|'\\' */ | !('\\'|'"') )* '"';
 
 IntLiteral: value=INT;
 
 BooleanLiteral: value=Bool;
 
+CharLiteral: value=CHAR;
+
+terminal CHAR returns EChar: "'" ( '\\' . /* 'b'|'t'|'n'|'f'|'r'|'u'|'"'|"'"|'\\' */ | !('\\'|"'") ) "'";
+
 Bool returns EBoolean: 'true' | 'false';
 
-Parenthesized: '(' expr=Expression ')';
-
 Type:
-    (role=Role)? base=[Class] | PrimitiveType | {String} STRING_TYPE;
+    RoleType | PrimitiveType | SpecialType;
 
-terminal STRING_TYPE: 'String';
+RoleType:
+    role=Role base=[Class];
 
 PrimitiveType:
     {Int} 'int' | {Boolean} 'boolean' | {Char} 'char' | {Void} 'void';
 
+SpecialType: {Null} NULL_TYPE;
+
+terminal NULL_TYPE: 'Null';
+
 enum Role:
     READWRITE='readwrite' | READONLY='readonly' | INACCESSIBLE='inaccessible';
+
+TypedElement:
+    Member | Variable;

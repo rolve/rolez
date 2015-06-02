@@ -6,6 +6,7 @@ package ch.trick17.peppl.lang.validation
 import org.eclipse.xtext.validation.Check
 import ch.trick17.peppl.lang.peppl.PepplPackage
 import ch.trick17.peppl.lang.typesystem.validation.PepplSystemValidator
+import ch.trick17.peppl.lang.peppl.Class
 
 /**
  * This class contains custom validation rules. 
@@ -17,8 +18,8 @@ class PepplValidator extends PepplSystemValidator {
   public static val INVALID_NAME = 'invalidName'
 
 	@Check
-	def checkGreetingStartsWithCapital(ch.trick17.peppl.lang.peppl.Class cls) {
-		if (!Character.isUpperCase(cls.name.charAt(0))) {
+	def checkGreetingStartsWithCapital(Class clazz) {
+		if (!Character.isUpperCase(clazz.name.charAt(0))) {
 			warning('Name should start with a capital', 
 					PepplPackage.Literals.CLASS__NAME,
 					INVALID_NAME)

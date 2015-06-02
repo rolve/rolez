@@ -1,47 +1,251 @@
+import ch.trick17.peppl.lang.peppl.ArithmeticExpression
 import ch.trick17.peppl.lang.peppl.Assignment
-import ch.trick17.peppl.lang.peppl.VariableRef
-import ch.trick17.peppl.lang.peppl.Expression
-import ch.trick17.peppl.lang.validation.AbstractPepplValidator
-import ch.trick17.peppl.lang.peppl.FieldAccess
-import ch.trick17.peppl.lang.peppl.Type
-import ch.trick17.peppl.lang.peppl.StringLiteral
-import ch.trick17.peppl.lang.peppl.PepplFactory
-import ch.trick17.peppl.lang.peppl.IntLiteral
+import ch.trick17.peppl.lang.peppl.BooleanExpression
 import ch.trick17.peppl.lang.peppl.BooleanLiteral
+import ch.trick17.peppl.lang.peppl.CharLiteral
+import ch.trick17.peppl.lang.peppl.Class
+import ch.trick17.peppl.lang.peppl.EqualityExpression
+import ch.trick17.peppl.lang.peppl.Expression
+import ch.trick17.peppl.lang.peppl.FieldAccess
+import ch.trick17.peppl.lang.peppl.IntLiteral
+import ch.trick17.peppl.lang.peppl.MethodInvoke
+import ch.trick17.peppl.lang.peppl.New
 import ch.trick17.peppl.lang.peppl.NullLiteral
+import ch.trick17.peppl.lang.peppl.OpArithmetic
+import ch.trick17.peppl.lang.peppl.Parenthesized
+import ch.trick17.peppl.lang.peppl.RelationalExpression
+import ch.trick17.peppl.lang.peppl.Role
+import ch.trick17.peppl.lang.peppl.RoleType
+import ch.trick17.peppl.lang.peppl.StringLiteral
+import ch.trick17.peppl.lang.peppl.This
+import ch.trick17.peppl.lang.peppl.Type
+import ch.trick17.peppl.lang.peppl.UnaryMinus
+import ch.trick17.peppl.lang.peppl.UnaryNot
+import ch.trick17.peppl.lang.peppl.VarKind
+import ch.trick17.peppl.lang.peppl.VariableRef
+import ch.trick17.peppl.lang.validation.AbstractPepplValidator
+import java.util.List
+import javax.lang.model.type.PrimitiveType
+import ch.trick17.peppl.lang.peppl.PepplPackage
+import java.util.Set
 
 system ch.trick17.peppl.lang.typesystem.PepplSystem
 
 validatorExtends AbstractPepplValidator
 
+inject extension PepplTypeUtils typeUtils 
+
 auxiliary {
-    assignable(Expression expr)
-        error "Cannot assign to " + expr.stringRep
+    leastCommonSuperrole(Role r1, Role r2): Role
+    strictSuperclasses(Class clazz): Set<Class> cached
 }
 
 judgments {
-    type |- Expression expr : output Type
-        error "cannot type " + expr.stringRep
+    type |- Expression expr : output Type cached
+        error "Cannot type " + expr.stringRep
+    subtype |- Type left <: Type right
+        error "Type mismatch: " + left.stringRep + " is not a subtype of " + right.stringRep
+    subrole |- Role left <! Role right
+        error "Type mismatch: " + left.stringRep + " is not a subrole of " + right.stringRep
+    subclass |- Class left <| Class right
+        error "Type mismatch: " + left.stringRep + " is not a subclass of " + right.stringRep
+    subtypeSequence |- List<Expression> expressions << List<Type> types
+        error "invalid arguments for expected parameters"
+    assignable |= Expression expr
+        error "Cannot assign to " + expr.stringRep
 }
 
-auxiliary assignable(Expression  _) { fail }
-auxiliary assignable(VariableRef _) {}
-auxiliary assignable(FieldAccess _) {}
+auxiliary leastCommonSuperrole(Role r1, Role r2) {
+    if(r1.value > r2.value) r1 else r2 // Very simple so far
+}
+
+auxiliary strictSuperclasses(Class clazz) {
+    var result = getAll(
+        clazz,
+        PepplPackage.eINSTANCE.class_Superclass,
+        PepplPackage.eINSTANCE.class_Superclass,
+        Class
+    ).toSet
+    if(clazz != objectClass)
+        result.add(objectClass)
+    result
+}
+
+rule TAssignment
+    G |- Assignment a : Type t
+from {
+    G |- a.left  : var Type leftType
+    G |- a.right : var Type rightType
+    G |- rightType <: leftType
+    t = leftType
+}
+
+rule TBooleanExpression
+    G |- BooleanExpression e : booleanType
+from {
+    G |- e.left  : booleanType
+    G |- e.right : booleanType
+}
+
+rule TEqualityExpression
+    G |- EqualityExpression e : booleanType
+from {
+    G |- e.left  : var Type leftType
+    G |- e.right : var Type rightType
+    
+    G |- leftType <: rightType
+    or
+    G |- rightType <: leftType // is this remotely correct?
+}
+
+rule TRelationalExpression
+    G |- RelationalExpression e : booleanType
+from {
+    G |- e.left  : intType
+    G |- e.right : intType
+}
+
+rule TArithmeticExpression
+    G |- ArithmeticExpression e : Type t
+from {
+    G |- e.left  : var Type leftType
+    G |- e.right : var Type rightType
+    
+    {
+        e.op == OpArithmetic.PLUS;
+        (leftType as RoleType).base == stringClass
+        t = stringType
+    }
+    or
+    {
+        leftType == intType
+        rightType == intType
+        t = intType
+    }
+}
+
+rule TUnaryMinus
+    G |- UnaryMinus m : intType
+from {
+    G |- m.expr : intType
+}
+
+rule TUnaryNot
+    G |- UnaryNot n : booleanType
+from {
+    G |- n.expr : booleanType
+}
+
+rule TFieldAccess
+    G |- FieldAccess a : Type t
+from {
+    G |- a.target : var RoleType targetType // Can I do this?..
+    var fieldType = a.field.type
+    switch(fieldType) {
+        PrimitiveType: { t = fieldType }
+        RoleType: {
+            var role = leastCommonSuperrole(targetType.role, fieldType.role)
+            t = roleType(role, fieldType.base)
+        }
+    }
+}
+
+rule TMethodInvoke
+    G |- MethodInvoke i : i.method.type
+from {
+    G |- i.target : var RoleType targetType
+    G |- i.args << i.method.params.map[type]
+}
+
+axiom TThis
+    G |- This t : env(G, "this", RoleType)
+
+axiom TVariableRef
+    G |- VariableRef r : r.variable.type
+
+rule TNew
+    G |- New n : roleType(Role.READWRITE, n.clazz)
+from {
+    n.clazz.constructors.filter[
+        G |- n.args << params.map[type]
+    ].size == 1
+}
+
+rule TParenthesized
+    G |- Parenthesized p : Type t
+from {
+    G |- p.expr : t
+}
 
 axiom TStringLiteral
-    G |- StringLiteral _ : PepplFactory::eINSTANCE.createString
-
-axiom TIntLiteral
-    G |- IntLiteral _ : PepplFactory::eINSTANCE.createInt
-
-axiom TBooleanLiteral
-    G |- BooleanLiteral _ : PepplFactory::eINSTANCE.createBoolean
+    G |- StringLiteral __ : stringType
 
 axiom TNullLiteral
-    G |- NullLiteral _ : PepplFactory::eINSTANCE.createBoolean
+    G |- NullLiteral __ : nullType
+
+axiom TIntLiteral
+    G |- IntLiteral __ : intType
+
+axiom TBooleanLiteral
+    G |- BooleanLiteral __ : booleanType
+
+axiom TCharLiteral
+    G |- CharLiteral __ : charType
+
+rule SubtypeRoleTypes
+    G |- RoleType left <: RoleType right
+from {
+    G |- left.role <! right.role
+    G |- left.base <| right.base
+}
+
+rule Subrole
+    G |- Role left <! Role right
+from {
+    left.value <= right.value
+}
+
+rule Subclass
+    G |- Class left <| Class right
+from {
+    left == right
+    or
+    left.strictSuperclasses.contains(right)
+}
+
+rule SubtypeSequence
+    G |- List<Expression> expressions << List<Type> types
+from {
+    expressions.size == types.size
+    
+    var i = expressions.iterator
+    for(t : types) {
+        G |- i.next : var Type exprType
+        G |- exprType <: t
+    }
+}
+
+rule AVariableRef
+    G |= VariableRef r
+from {
+    r.variable.kind == VarKind.VAR
+}
+
+rule AFieldAccess
+    G |= FieldAccess a
+from {
+    G |- a.target : var RoleType type
+    G |- type.role <! Role.READWRITE
+    a.field.kind == VarKind.VAR
+}
+
+rule AExpression
+    G |= Expression __
+from { false }
+
 
 checkrule ValidAssignment for
     Assignment a
 from {
-    assignable(a.left)
+    empty |= a.left
 }
