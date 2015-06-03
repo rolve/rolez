@@ -24,26 +24,6 @@ public class PepplTypeUtils {
         return result;
     }
     
-    public Class objectClass() {
-        Class result = PepplFactory.eINSTANCE.createClass();
-        result.setName("Object");
-        return result;
-    }
-    
-    public RoleType objectType() {
-        return roleType(Role.READWRITE, objectClass());
-    }
-    
-    public Class stringClass() {
-        Class result = PepplFactory.eINSTANCE.createClass();
-        result.setName("String");
-        return result;
-    }
-    
-    public RoleType stringType() {
-        return roleType(Role.READWRITE, stringClass());
-    }
-    
     public Int intType() {
         return PepplFactory.eINSTANCE.createInt();
     }

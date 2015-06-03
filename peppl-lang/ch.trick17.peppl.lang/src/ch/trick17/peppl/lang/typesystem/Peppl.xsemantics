@@ -1,33 +1,45 @@
 import ch.trick17.peppl.lang.peppl.ArithmeticExpression
 import ch.trick17.peppl.lang.peppl.Assignment
+import ch.trick17.peppl.lang.peppl.Block
 import ch.trick17.peppl.lang.peppl.BooleanExpression
 import ch.trick17.peppl.lang.peppl.BooleanLiteral
 import ch.trick17.peppl.lang.peppl.CharLiteral
 import ch.trick17.peppl.lang.peppl.Class
 import ch.trick17.peppl.lang.peppl.EqualityExpression
 import ch.trick17.peppl.lang.peppl.Expression
+import ch.trick17.peppl.lang.peppl.ExpressionStatement
 import ch.trick17.peppl.lang.peppl.FieldAccess
+import ch.trick17.peppl.lang.peppl.IfElse
 import ch.trick17.peppl.lang.peppl.IntLiteral
+import ch.trick17.peppl.lang.peppl.LocalVariable
+import ch.trick17.peppl.lang.peppl.Method
 import ch.trick17.peppl.lang.peppl.MethodInvoke
 import ch.trick17.peppl.lang.peppl.New
 import ch.trick17.peppl.lang.peppl.NullLiteral
 import ch.trick17.peppl.lang.peppl.OpArithmetic
 import ch.trick17.peppl.lang.peppl.Parenthesized
+import ch.trick17.peppl.lang.peppl.PepplPackage
+import ch.trick17.peppl.lang.peppl.PrimitiveType
+import ch.trick17.peppl.lang.peppl.Program
 import ch.trick17.peppl.lang.peppl.RelationalExpression
+import ch.trick17.peppl.lang.peppl.Return
 import ch.trick17.peppl.lang.peppl.Role
 import ch.trick17.peppl.lang.peppl.RoleType
+import ch.trick17.peppl.lang.peppl.Statement
 import ch.trick17.peppl.lang.peppl.StringLiteral
 import ch.trick17.peppl.lang.peppl.This
 import ch.trick17.peppl.lang.peppl.Type
 import ch.trick17.peppl.lang.peppl.UnaryMinus
 import ch.trick17.peppl.lang.peppl.UnaryNot
-import ch.trick17.peppl.lang.peppl.VarKind
 import ch.trick17.peppl.lang.peppl.VariableRef
+import ch.trick17.peppl.lang.peppl.WhileLoop
 import ch.trick17.peppl.lang.validation.AbstractPepplValidator
 import java.util.List
-import javax.lang.model.type.PrimitiveType
-import ch.trick17.peppl.lang.peppl.PepplPackage
 import java.util.Set
+import org.eclipse.emf.ecore.EObject
+
+import static ch.trick17.peppl.lang.peppl.Role.*
+import static ch.trick17.peppl.lang.peppl.VarKind.*
 
 system ch.trick17.peppl.lang.typesystem.PepplSystem
 
@@ -38,21 +50,26 @@ inject extension PepplTypeUtils typeUtils
 auxiliary {
     leastCommonSuperrole(Role r1, Role r2): Role
     strictSuperclasses(Class clazz): Set<Class> cached
+    getEnclosingMethod(EObject object): Method
+    getEnclosingClass(EObject object): Class
+    getEnclosingProgram(EObject object): Program
+    findClass(String name, Program program): Class
 }
 
 judgments {
-    type |- Expression expr : output Type cached
-        error "Cannot type " + expr.stringRep
+    type |- Expression expr : output Type
+    wellTyped |- Statement s
+    subtypeExpression |- Expression left <| Type right
+        error "Type mismatch: " + left.type.value.stringRep + " is not a subtype of " + right.stringRep
+        source left
     subtype |- Type left <: Type right
         error "Type mismatch: " + left.stringRep + " is not a subtype of " + right.stringRep
+        source left
     subrole |- Role left <! Role right
-        error "Type mismatch: " + left.stringRep + " is not a subrole of " + right.stringRep
-    subclass |- Class left <| Class right
-        error "Type mismatch: " + left.stringRep + " is not a subclass of " + right.stringRep
     subtypeSequence |- List<Expression> expressions << List<Type> types
-        error "invalid arguments for expected parameters"
     assignable |= Expression expr
         error "Cannot assign to " + expr.stringRep
+        source expr
 }
 
 auxiliary leastCommonSuperrole(Role r1, Role r2) {
@@ -60,23 +77,53 @@ auxiliary leastCommonSuperrole(Role r1, Role r2) {
 }
 
 auxiliary strictSuperclasses(Class clazz) {
-    var result = getAll(
+    val result = getAll(
         clazz,
         PepplPackage.eINSTANCE.class_Superclass,
         PepplPackage.eINSTANCE.class_Superclass,
         Class
     ).toSet
-    if(clazz != objectClass)
-        result.add(objectClass)
+    
+    val object = findClass("Object", clazz.enclosingProgram)
+    if(clazz != object && object != null)
+        result.add(object)
     result
+}
+
+auxiliary getEnclosingMethod(Method method) {
+    method
+}
+
+auxiliary getEnclosingMethod(EObject object) {
+    object?.eContainer?.enclosingMethod
+}
+
+auxiliary getEnclosingClass(Class clazz) {
+    clazz
+}
+
+auxiliary getEnclosingClass(EObject object) {
+    object?.eContainer?.enclosingClass
+}
+
+auxiliary getEnclosingProgram(Program program) {
+    program
+}
+
+auxiliary getEnclosingProgram(EObject object) {
+    object?.eContainer?.enclosingProgram
+}
+
+auxiliary findClass(String className, Program program) {
+    program.elements.filter(Class).findFirst[name==className]
 }
 
 rule TAssignment
     G |- Assignment a : Type t
 from {
-    G |- a.left  : var Type leftType
-    G |- a.right : var Type rightType
-    G |- rightType <: leftType
+    G |= a.left
+    G |- a.left : var Type leftType
+    G |- a.right <| leftType
     t = leftType
 }
 
@@ -89,6 +136,7 @@ from {
 
 rule TEqualityExpression
     G |- EqualityExpression e : booleanType
+    error "Cannot compare " + e.left + " to " + e.right
 from {
     G |- e.left  : var Type leftType
     G |- e.right : var Type rightType
@@ -113,8 +161,10 @@ from {
     
     {
         e.op == OpArithmetic.PLUS;
-        (leftType as RoleType).base == stringClass
-        t = stringType
+        
+        val string = findClass("String", e.enclosingProgram)
+        (leftType as RoleType).base == string
+        t = roleType(READWRITE, string)
     }
     or
     {
@@ -139,7 +189,7 @@ from {
 rule TFieldAccess
     G |- FieldAccess a : Type t
 from {
-    G |- a.target : var RoleType targetType // Can I do this?..
+    G |- a.target : var RoleType targetType
     var fieldType = a.field.type
     switch(fieldType) {
         PrimitiveType: { t = fieldType }
@@ -157,14 +207,19 @@ from {
     G |- i.args << i.method.params.map[type]
 }
 
-axiom TThis
-    G |- This t : env(G, "this", RoleType)
+rule TThis
+    G |- This t : Type type
+    error "Cannot refer to \"this\" in this context"
+    source t
+from {
+    type = env(G, "this", RoleType)
+}
 
 axiom TVariableRef
     G |- VariableRef r : r.variable.type
 
 rule TNew
-    G |- New n : roleType(Role.READWRITE, n.clazz)
+    G |- New n : roleType(READWRITE, n.clazz)
 from {
     n.clazz.constructors.filter[
         G |- n.args << params.map[type]
@@ -177,8 +232,15 @@ from {
     G |- p.expr : t
 }
 
-axiom TStringLiteral
-    G |- StringLiteral __ : stringType
+rule TStringLiteral
+    G |- StringLiteral s : Type t
+    error "String class is not defined"
+    source s
+from {
+    val stringClass = findClass("String", s.enclosingProgram)
+    stringClass != null
+    t = roleType(READWRITE, stringClass)
+}
 
 axiom TNullLiteral
     G |- NullLiteral __ : nullType
@@ -192,12 +254,80 @@ axiom TBooleanLiteral
 axiom TCharLiteral
     G |- CharLiteral __ : charType
 
+
+rule WBlock
+    G |- Block b
+from {
+    for(s : b.statements) {
+        G |- s
+    }
+}
+
+rule WLocalVariable
+    G |- LocalVariable v
+from {
+    v.initializer == null
+    or
+    G |- v.initializer <| v.type
+}
+
+rule WIfElse
+    G |- IfElse ifElse
+from {
+    G |- ifElse.^condition : booleanType
+    G |- ifElse.thenPart
+    
+    ifElse.elsePart == null
+    or
+    G |- ifElse.elsePart
+}
+
+rule WWhileLoop
+    G |- WhileLoop l
+from {
+    G |- l.^condition : booleanType
+    G |- l.body
+}
+
+rule WReturn
+    G |- Return r
+from {
+    G |- r.expr <| r.enclosingMethod.type
+}
+
+rule WExpressionStatement
+    G |- ExpressionStatement s
+from {
+    G |- s.expr : var Type t
+}
+
+rule SubtypeExpression
+    G |- Expression left <| Type right
+from {
+    G |- left : var Type leftType
+    G |- leftType <: right
+}
+
 rule SubtypeRoleTypes
     G |- RoleType left <: RoleType right
 from {
     G |- left.role <! right.role
-    G |- left.base <| right.base
+
+    left.base == right.base
+    or
+    strictSuperclasses(left.base).contains(right.base)
 }
+
+rule SubtypePrimitiveTypes
+    G |- PrimitiveType left <: PrimitiveType right
+from {
+    left == right
+}
+
+rule SubtypeGeneral
+    G |- Type left <: Type right
+from { fail }
+
 
 rule Subrole
     G |- Role left <! Role right
@@ -205,47 +335,64 @@ from {
     left.value <= right.value
 }
 
-rule Subclass
-    G |- Class left <| Class right
-from {
-    left == right
-    or
-    left.strictSuperclasses.contains(right)
-}
-
 rule SubtypeSequence
     G |- List<Expression> expressions << List<Type> types
 from {
-    expressions.size == types.size
+    expressions.size >= types.size or fail
+        error "Too few arguments"
+    expressions.size == types.size or fail
+        error "Too many arguments"
     
     var i = expressions.iterator
     for(t : types) {
-        G |- i.next : var Type exprType
-        G |- exprType <: t
+        G |- i.next <| t
     }
 }
 
 rule AVariableRef
     G |= VariableRef r
+    error "Cannot assign to a value"
+    source r
 from {
-    r.variable.kind == VarKind.VAR
+    r.variable.kind == VAR
 }
 
 rule AFieldAccess
     G |= FieldAccess a
 from {
+    a.field.kind == VAR or fail
+        error "Cannot assign to a value field" source a
+    
     G |- a.target : var RoleType type
-    G |- type.role <! Role.READWRITE
-    a.field.kind == VarKind.VAR
+    G |- type.role <! READWRITE or fail
+        error "Cannot assign to field of " + type.role + " object" source a
 }
 
 rule AExpression
     G |= Expression __
-from { false }
+from { fail }
 
 
-checkrule ValidAssignment for
-    Assignment a
+checkrule CheckStatements for
+    Statement s
 from {
-    empty |= a.left
+    val class = s.enclosingClass
+    if(class == null) {
+        // Main block
+        empty |- s
+    }
+    else {
+        // Method
+        val thisType = roleType(READWRITE, class)
+        "this" <- thisType |- s
+    }
+}
+
+checkrule CheckObjectExists for
+    Class c
+from {
+    c.superclass == null && findClass("Object", c.enclosingProgram) == null or fail
+        error "Object class is not defined"
+        source c
+        feature PepplPackage.eINSTANCE.class_Name
 }

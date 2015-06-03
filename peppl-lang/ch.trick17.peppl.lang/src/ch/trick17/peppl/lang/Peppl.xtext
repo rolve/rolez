@@ -15,8 +15,8 @@ Class:
     ('extends' superclass=[Class])?
     ('{' (constructors+=Constructor | members+=Member)+ '}')?;
 
-Main: 
-    'main' block=Block;
+Main:
+    'main' body=Block;
 
 Member:
     Field | Method;
@@ -45,23 +45,17 @@ Block:
     {Block} '{' (statements+=Statement)* '}';
 
 Statement:
-    Block | LocalVariable | IfElse | WhileLoop | ForLoop | Return | ExpressionStatement;
+    Block | LocalVariable | IfElse | WhileLoop | Return | ExpressionStatement;
 
 LocalVariable:
     kind=VarKind name=ID ':' type=Type ('=' initializer=Expression)? ';';
 
 IfElse:
-    'if' '(' condition=Expression ')' then=Statement
-    (=>'else' else=Statement)?;
+    'if' '(' condition=Expression ')' thenPart=Statement
+    (=>'else' elsePart=Statement)?;
 
 WhileLoop:
     'while' '(' condition=Expression ')' body=Statement;
-
-ForLoop:
-    'for' '(' loopVar=LoopVariable ')' body=Statement;
-
-LoopVariable returns LocalVariable:
-    {LoopVariable} kind=Val name=ID ':' type=Type '<-' range=Expression;
 
 Return:
     'return' expr=Expression ';';
