@@ -1,0 +1,7 @@
+class SomeImportantClass {
+	val foo: readwrite Account
+	
+	def bar: readonly Account {
+		
+	}
+}

@@ -1,0 +1,62 @@
+class Object
+class String
+
+class Person {
+	val name: readonly String
+	val surname: readonly String
+	var address: readwrite Address
+	
+	def fullName: readonly String {
+		return "Hi";
+	}
+
+	def setAddress(val address: readwrite Address): void {
+		this.address = address;
+	}
+	
+	def bar(val k: int): void {
+		i.setAddress(k = k);
+		
+		var i: int = -555555555;
+		val j: int = i = "Hi";
+		
+		this.surname = i.fullName(j, new Person(k)).name = "";
+		k = true;
+		
+		this.address = 4;
+		new Account = 3;
+		
+		while(i < j)
+			if(i || j)
+				k = 2*i + 2;
+			else
+				index = k;
+				
+		this.name.address = 4;
+		
+		"Hi" = 5;
+	}
+}
+
+class Account {
+	val owner: readonly Person
+	val description: readonly String
+}
+
+class Address {
+	val street: readonly String
+	val number: readonly String
+	val city: readonly String
+	val zipCode: readonly String
+	
+	def foo(val a: readonly Account, val b: readonly Account): void {
+		"Hi".city;
+		this.city;
+		this.foo(a, 5);
+	}
+}
+
+main {
+	var o: readwrite Object = "Hello";
+	this.name;
+}
