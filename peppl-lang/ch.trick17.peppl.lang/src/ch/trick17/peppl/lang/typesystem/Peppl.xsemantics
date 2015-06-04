@@ -391,7 +391,7 @@ from {
 checkrule CheckObjectExists for
     Class c
 from {
-    c.superclass == null && findClass("Object", c.enclosingProgram) == null or fail
+    c.superclass != null || findClass("Object", c.enclosingProgram) != null or fail
         error "Object class is not defined"
         source c
         feature PepplPackage.eINSTANCE.class_Name
