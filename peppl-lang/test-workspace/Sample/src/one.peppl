@@ -21,6 +21,7 @@ class Person {
 		
 		var i: int = -555555555;
 		val j: int = i = "Hi";
+		var i: int;
 		
 		this.surname = i.fullName(j, new Person(k)).name = "";
 		k = true;

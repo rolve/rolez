@@ -1,5 +1,7 @@
 package ch.trick17.peppl.lang.typesystem;
 
+import org.eclipse.xtext.naming.QualifiedName;
+
 import ch.trick17.peppl.lang.peppl.Boolean;
 import ch.trick17.peppl.lang.peppl.Char;
 import ch.trick17.peppl.lang.peppl.Class;
@@ -42,5 +44,13 @@ public class PepplTypeUtils {
     
     public Null nullType() {
         return PepplFactory.eINSTANCE.createNull();
+    }
+    
+    public QualifiedName objectClassName() {
+        return QualifiedName.create("Object");
+    }
+    
+    public QualifiedName stringClassName() {
+        return QualifiedName.create("String");
     }
 }

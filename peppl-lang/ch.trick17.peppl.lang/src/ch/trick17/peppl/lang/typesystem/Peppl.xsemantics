@@ -5,6 +5,7 @@ import ch.trick17.peppl.lang.peppl.BooleanExpression
 import ch.trick17.peppl.lang.peppl.BooleanLiteral
 import ch.trick17.peppl.lang.peppl.CharLiteral
 import ch.trick17.peppl.lang.peppl.Class
+import ch.trick17.peppl.lang.peppl.Constructor
 import ch.trick17.peppl.lang.peppl.EqualityExpression
 import ch.trick17.peppl.lang.peppl.Expression
 import ch.trick17.peppl.lang.peppl.ExpressionStatement
@@ -19,6 +20,7 @@ import ch.trick17.peppl.lang.peppl.Null
 import ch.trick17.peppl.lang.peppl.NullLiteral
 import ch.trick17.peppl.lang.peppl.OpArithmetic
 import ch.trick17.peppl.lang.peppl.Parenthesized
+import ch.trick17.peppl.lang.peppl.PepplFactory
 import ch.trick17.peppl.lang.peppl.PepplPackage
 import ch.trick17.peppl.lang.peppl.PrimitiveType
 import ch.trick17.peppl.lang.peppl.Program
@@ -36,21 +38,24 @@ import ch.trick17.peppl.lang.peppl.UnaryNot
 import ch.trick17.peppl.lang.peppl.VariableRef
 import ch.trick17.peppl.lang.peppl.WhileLoop
 import ch.trick17.peppl.lang.validation.AbstractPepplValidator
+import java.util.HashSet
 import java.util.List
 import java.util.Set
 import org.eclipse.emf.ecore.EObject
+import org.eclipse.xtext.naming.QualifiedName
+import org.eclipse.xtext.scoping.IGlobalScopeProvider
 
 import static ch.trick17.peppl.lang.peppl.Role.*
 import static ch.trick17.peppl.lang.peppl.VarKind.*
-import ch.trick17.peppl.lang.peppl.Constructor
-import java.util.HashSet
-import ch.trick17.peppl.lang.peppl.PepplFactory
+import org.eclipse.xtext.scoping.IScopeProvider
 
 system ch.trick17.peppl.lang.typesystem.PepplSystem
 
 validatorExtends AbstractPepplValidator
 
-inject extension PepplTypeUtils typeUtils 
+inject extension PepplTypeUtils __
+inject IScopeProvider scopeProv
+inject IGlobalScopeProvider globalScopeProv
 
 auxiliary {
     leastCommonSuperrole(Role r1, Role r2): Role
@@ -59,7 +64,7 @@ auxiliary {
     enclosingMethod(EObject object): Method
     enclosingClass(EObject object): Class
     enclosingProgram(EObject object): Program
-    findClass(String name, Program program): Class
+    findClass(QualifiedName name, EObject context): Class
 }
 
 judgments {
@@ -92,7 +97,7 @@ auxiliary strictSuperclasses(Class clazz) {
         Class
     ).toSet
     
-    val object = findClass("Object", clazz.enclosingProgram)
+    val object = findClass(objectClassName, clazz)
     if(clazz != object && object != null)
         result.add(object)
     result
@@ -129,8 +134,14 @@ auxiliary enclosingProgram(EObject object) {
     object?.eContainer?.enclosingProgram
 }
 
-auxiliary findClass(String className, Program program) {
-    program.elements.filter(Class).findFirst[name==className]
+auxiliary findClass(QualifiedName name, EObject context) {
+    var result = scopeProv.getScope(context, PepplPackage.eINSTANCE.class_Superclass)
+        .getSingleElement(name)?.EObjectOrProxy as Class
+    if(result != null)
+        result
+    else
+        globalScopeProv.getScope(context.eResource, PepplPackage.eINSTANCE.class_Superclass, [true])
+            .getSingleElement(name)?.EObjectOrProxy as Class
 }
 
 
@@ -241,7 +252,7 @@ from {
     
     {
         e.op == OpArithmetic.PLUS;
-        val stringType = roleType(READONLY, findClass("String", e.enclosingProgram))
+        val stringType = roleType(READONLY, findClass(stringClassName, e))
         
         G |- leftType <: stringType or G |- rightType <: stringType     
         t = stringType
@@ -329,7 +340,7 @@ rule TStringLiteral
     error "String class is not defined"
     source s
 from {
-    val stringClass = findClass("String", s.enclosingProgram)
+    val stringClass = findClass(stringClassName, s)
     stringClass != null
     t = roleType(READWRITE, stringClass)
 }
@@ -443,7 +454,7 @@ from {
 checkrule CheckObjectExists for
     Class c
 from {
-    c.superclass != null || findClass("Object", c.enclosingProgram) != null or fail
+    c.superclass != null || findClass(objectClassName, c) != null or fail
         error "Object class is not defined"
         source c
         feature PepplPackage.eINSTANCE.class_Name
