@@ -43,6 +43,15 @@ class Person {
 	}
 }
 
+class Student extends Person {
+	val university: readonly String
+	
+	def bla: void {
+		this.name;
+		this.setAddress();
+	}
+}
+
 class Account {
 	val owner: readonly Person
 	val description: readonly String
@@ -58,6 +67,12 @@ class Address {
 		"Hi".city;
 		this.city;
 		this.foo(a, 5);
+		
+		val p: readwrite Person = new Person;
+		p.name;
+		p.fullName();
+		
+		this.city.city;
 	}
 }
 

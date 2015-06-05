@@ -59,6 +59,7 @@ inject IGlobalScopeProvider globalScopeProv
 
 auxiliary {
     leastCommonSuperrole(Role r1, Role r2): Role
+    actualSuperclass(Class clazz): Class cached
     strictSuperclasses(Class clazz): Set<Class> cached
     allConstructors(Class clazz): Set<Constructor> cached
     enclosingMethod(EObject object): Method
@@ -87,6 +88,17 @@ judgments {
 
 auxiliary leastCommonSuperrole(Role r1, Role r2) {
     if(r1.value > r2.value) r1 else r2 // Very simple so far
+}
+
+auxiliary actualSuperclass(Class clazz) {
+    val objectClass = findClass(objectClassName, clazz)
+    if(clazz == objectClass)
+        null
+    else if(clazz.superclass == null)
+        objectClass
+    else
+        clazz.superclass
+        
 }
 
 auxiliary strictSuperclasses(Class clazz) {
