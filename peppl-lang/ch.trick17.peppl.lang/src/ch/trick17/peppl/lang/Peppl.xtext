@@ -90,12 +90,12 @@ RelationalExpression returns Expression:
 enum OpRelational: SMALLER='<' | GREATER='>' | SMALLER_EQUALS='<=' | GREATER_EQUALS='>=';
 
 AdditiveExpression returns Expression:
-    MultiplicativeExpression ({ArithmeticExpression.left=current} op=OpAdditive right=MultiplicativeExpression)?;
+    MultiplicativeExpression ({ArithmeticExpression.left=current} op=OpAdditive right=MultiplicativeExpression)*;
 
 enum OpAdditive returns OpArithmetic: PLUS='+' | MINUS='-';
 
 MultiplicativeExpression returns Expression:
-    UnaryMinus ({ArithmeticExpression.left=current} op=OpMultiplicative right=UnaryMinus)?;
+    UnaryMinus ({ArithmeticExpression.left=current} op=OpMultiplicative right=UnaryMinus)*;
 
 enum OpMultiplicative returns OpArithmetic: TIMES='*' | DIVIDED_BY='/' | MODULO='%';
 
