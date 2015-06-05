@@ -57,16 +57,18 @@ auxiliary {
 }
 
 judgments {
-    type |- Expression expr : output Type
+    type      |- Expression expr : output Type
     wellTyped |- Statement s
-    subtypeExpression |- Expression left <| Type right
+    
+    subtypeSequence   |- List<Expression> expressions << List<Type> types
+    subtypeExpression |- Expression left              <| Type right
         error "Type mismatch: " + left.type.value.stringRep + " is not a subtype of " + right.stringRep
         source left
-    subtype |- Type left <: Type right
-        error "Type mismatch: " + left.stringRep + " is not a subtype of " + right.stringRep
-        source left
-    subrole |- Role left <! Role right
-    subtypeSequence |- List<Expression> expressions << List<Type> types
+    
+    subtype  |- Type  left <: Type  right error "subtype" // Apparently, when no error message is specified, some "source" is taken, which can be very wrong...
+    subrole  |- Role  left <! Role  right error "subrole"
+    subclass |- Class left <~ Class right error "subclass"
+    
     assignable |= Expression expr
         error "Cannot assign to " + expr.stringRep
         source expr
@@ -118,6 +120,54 @@ auxiliary findClass(String className, Program program) {
     program.elements.filter(Class).findFirst[name==className]
 }
 
+
+rule WBlock
+    G |- Block b
+from {
+    for(s : b.statements) {
+        G |- s
+    }
+}
+
+rule WLocalVariable
+    G |- LocalVariable v
+from {
+    v.initializer == null
+    or
+    G |- v.initializer <| v.type
+}
+
+rule WIfElse
+    G |- IfElse ifElse
+from {
+    G |- ifElse.^condition : booleanType
+    G |- ifElse.thenPart
+    
+    ifElse.elsePart == null
+    or
+    G |- ifElse.elsePart
+}
+
+rule WWhileLoop
+    G |- WhileLoop l
+from {
+    G |- l.^condition : booleanType
+    G |- l.body
+}
+
+rule WReturn
+    G |- Return r
+from {
+    G |- r.expr <| r.enclosingMethod.type
+}
+
+rule WExpressionStatement
+    G |- ExpressionStatement s
+from {
+    G |- s.expr : var Type t
+}
+
+
 rule TAssignment
     G |- Assignment a : Type t
 from {
@@ -130,27 +180,44 @@ from {
 rule TBooleanExpression
     G |- BooleanExpression e : booleanType
 from {
-    G |- e.left  : booleanType
-    G |- e.right : booleanType
+    G |- e.left  <| booleanType
+    G |- e.right <| booleanType
 }
 
 rule TEqualityExpression
     G |- EqualityExpression e : booleanType
-    error "Cannot compare " + e.left + " to " + e.right
 from {
     G |- e.left  : var Type leftType
     G |- e.right : var Type rightType
     
     G |- leftType <: rightType
     or
-    G |- rightType <: leftType // is this remotely correct?
+    G |- rightType <: leftType
+    or
+    fail
+        error "Cannot compare " + leftType.stringRep + " to " + rightType.stringRep
+        source e
 }
 
 rule TRelationalExpression
     G |- RelationalExpression e : booleanType
 from {
-    G |- e.left  : intType
-    G |- e.right : intType
+    G |- e.left  : var Type leftType
+    G |- e.right : var Type rightType
+    
+    {
+        G |- leftType  <: intType
+        G |- rightType <: intType
+    }
+    or
+    {
+        G |- leftType  <: charType
+        G |- rightType <: charType
+    }
+    or
+    fail
+        error "Cannot compare " + leftType.stringRep + " to " + rightType.stringRep
+        source e
 }
 
 rule TArithmeticExpression
@@ -161,29 +228,33 @@ from {
     
     {
         e.op == OpArithmetic.PLUS;
+        val stringType = roleType(READONLY, findClass("String", e.enclosingProgram))
         
-        val string = findClass("String", e.enclosingProgram)
-        (leftType as RoleType).base == string
-        t = roleType(READWRITE, string)
+        G |- leftType <: stringType or G |- rightType <: stringType     
+        t = stringType
     }
     or
     {
-        leftType == intType
-        rightType == intType
+        G |- leftType  <: intType
+        G |- rightType <: intType
         t = intType
     }
+    or fail
+        error "The operator + is undefined for the argument types "
+            + leftType.stringRep + ", " + rightType.stringRep
+        source e
 }
 
 rule TUnaryMinus
     G |- UnaryMinus m : intType
 from {
-    G |- m.expr : intType
+    G |- m.expr <| intType
 }
 
 rule TUnaryNot
     G |- UnaryNot n : booleanType
 from {
-    G |- n.expr : booleanType
+    G |- n.expr <| booleanType
 }
 
 rule TFieldAccess
@@ -255,52 +326,6 @@ axiom TCharLiteral
     G |- CharLiteral __ : charType
 
 
-rule WBlock
-    G |- Block b
-from {
-    for(s : b.statements) {
-        G |- s
-    }
-}
-
-rule WLocalVariable
-    G |- LocalVariable v
-from {
-    v.initializer == null
-    or
-    G |- v.initializer <| v.type
-}
-
-rule WIfElse
-    G |- IfElse ifElse
-from {
-    G |- ifElse.^condition : booleanType
-    G |- ifElse.thenPart
-    
-    ifElse.elsePart == null
-    or
-    G |- ifElse.elsePart
-}
-
-rule WWhileLoop
-    G |- WhileLoop l
-from {
-    G |- l.^condition : booleanType
-    G |- l.body
-}
-
-rule WReturn
-    G |- Return r
-from {
-    G |- r.expr <| r.enclosingMethod.type
-}
-
-rule WExpressionStatement
-    G |- ExpressionStatement s
-from {
-    G |- s.expr : var Type t
-}
-
 rule SubtypeExpression
     G |- Expression left <| Type right
 from {
@@ -311,17 +336,14 @@ from {
 rule SubtypeRoleTypes
     G |- RoleType left <: RoleType right
 from {
-    G |- left.role <! right.role
-
-    left.base == right.base
-    or
-    strictSuperclasses(left.base).contains(right.base)
+    G |- left.role <! right.role // Subrole
+    G |- left.base <~ right.base // Subclass
 }
 
 rule SubtypePrimitiveTypes
     G |- PrimitiveType left <: PrimitiveType right
 from {
-    left == right
+    left.class == right.class
 }
 
 rule SubtypeGeneral
@@ -333,6 +355,12 @@ rule Subrole
     G |- Role left <! Role right
 from {
     left.value <= right.value
+}
+
+rule Subclass
+    G |- Class left <~ Class right
+from {
+    left == right || strictSuperclasses(left).contains(right)
 }
 
 rule SubtypeSequence

@@ -26,11 +26,13 @@ class Person {
 		this.address = 4;
 		new Account = 3;
 		
+		val s: readonly String = "Hi" + -'c' + null + 5 + null + this.surname;
+		
 		while(i < j)
-			if(i || j)
+			if((false && !true) || 5 < 0 + 7)
 				k = 2*i + 2;
 			else
-				index = k;
+				(i) = k;
 				
 		this.name.address = 4;
 		
