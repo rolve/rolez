@@ -15,7 +15,9 @@ class Person {
 	}
 	
 	def bar(val k: int): void {
-		i.setAddress(k = k);
+		i.setAddress(null);
+		i.address = "No";
+		
 		
 		var i: int = -555555555;
 		val j: int = i = "Hi";
@@ -36,7 +38,7 @@ class Person {
 				
 		this.name.address = 4;
 		
-		"Hi" = 5;
+		"Hi" = new Account;
 	}
 }
 

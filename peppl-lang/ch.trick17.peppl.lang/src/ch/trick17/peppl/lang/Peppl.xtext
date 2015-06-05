@@ -142,16 +142,18 @@ terminal CHAR returns EChar: "'" ( '\\' . /* 'b'|'t'|'n'|'f'|'r'|'u'|'"'|"'"|'\\
 
 Bool returns EBoolean: 'true' | 'false';
 
-Type:
-    RoleType | PrimitiveType | SpecialType;
 
-RoleType:
-    role=Role base=[Class];
+Type:
+    ReferenceType | PrimitiveType;
+
+ReferenceType:
+    RoleType | {Null} NULL_TYPE;
 
 PrimitiveType:
     {Int} 'int' | {Boolean} 'boolean' | {Char} 'char' | {Void} 'void';
 
-SpecialType: {Null} NULL_TYPE;
+RoleType:
+    role=Role base=[Class];
 
 terminal NULL_TYPE: 'Null';
 

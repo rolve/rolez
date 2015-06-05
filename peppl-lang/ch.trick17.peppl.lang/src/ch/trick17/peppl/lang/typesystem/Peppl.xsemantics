@@ -15,12 +15,14 @@ import ch.trick17.peppl.lang.peppl.LocalVariable
 import ch.trick17.peppl.lang.peppl.Method
 import ch.trick17.peppl.lang.peppl.MethodInvoke
 import ch.trick17.peppl.lang.peppl.New
+import ch.trick17.peppl.lang.peppl.Null
 import ch.trick17.peppl.lang.peppl.NullLiteral
 import ch.trick17.peppl.lang.peppl.OpArithmetic
 import ch.trick17.peppl.lang.peppl.Parenthesized
 import ch.trick17.peppl.lang.peppl.PepplPackage
 import ch.trick17.peppl.lang.peppl.PrimitiveType
 import ch.trick17.peppl.lang.peppl.Program
+import ch.trick17.peppl.lang.peppl.ReferenceType
 import ch.trick17.peppl.lang.peppl.RelationalExpression
 import ch.trick17.peppl.lang.peppl.Return
 import ch.trick17.peppl.lang.peppl.Role
@@ -40,6 +42,9 @@ import org.eclipse.emf.ecore.EObject
 
 import static ch.trick17.peppl.lang.peppl.Role.*
 import static ch.trick17.peppl.lang.peppl.VarKind.*
+import ch.trick17.peppl.lang.peppl.Constructor
+import java.util.HashSet
+import ch.trick17.peppl.lang.peppl.PepplFactory
 
 system ch.trick17.peppl.lang.typesystem.PepplSystem
 
@@ -50,9 +55,10 @@ inject extension PepplTypeUtils typeUtils
 auxiliary {
     leastCommonSuperrole(Role r1, Role r2): Role
     strictSuperclasses(Class clazz): Set<Class> cached
-    getEnclosingMethod(EObject object): Method
-    getEnclosingClass(EObject object): Class
-    getEnclosingProgram(EObject object): Program
+    allConstructors(Class clazz): Set<Constructor> cached
+    enclosingMethod(EObject object): Method
+    enclosingClass(EObject object): Class
+    enclosingProgram(EObject object): Program
     findClass(String name, Program program): Class
 }
 
@@ -92,27 +98,34 @@ auxiliary strictSuperclasses(Class clazz) {
     result
 }
 
-auxiliary getEnclosingMethod(Method method) {
+auxiliary allConstructors(Class clazz) {
+    val result = new HashSet(clazz.constructors)
+    if(result.isEmpty)
+        result.add(PepplFactory.eINSTANCE.createConstructor)
+    result
+}
+
+auxiliary enclosingMethod(Method method) {
     method
 }
 
-auxiliary getEnclosingMethod(EObject object) {
+auxiliary enclosingMethod(EObject object) {
     object?.eContainer?.enclosingMethod
 }
 
-auxiliary getEnclosingClass(Class clazz) {
+auxiliary enclosingClass(Class clazz) {
     clazz
 }
 
-auxiliary getEnclosingClass(EObject object) {
+auxiliary enclosingClass(EObject object) {
     object?.eContainer?.enclosingClass
 }
 
-auxiliary getEnclosingProgram(Program program) {
+auxiliary enclosingProgram(Program program) {
     program
 }
 
-auxiliary getEnclosingProgram(EObject object) {
+auxiliary enclosingProgram(EObject object) {
     object?.eContainer?.enclosingProgram
 }
 
@@ -171,8 +184,8 @@ from {
 rule TAssignment
     G |- Assignment a : Type t
 from {
-    G |= a.left
     G |- a.left : var Type leftType
+    G |= a.left
     G |- a.right <| leftType
     t = leftType
 }
@@ -260,12 +273,16 @@ from {
 rule TFieldAccess
     G |- FieldAccess a : Type t
 from {
-    G |- a.target : var RoleType targetType
+    G |- a.target : var Type targetType
+    {targetType instanceof RoleType} or fail
+        error "Illegal target type for field access: " + targetType.stringRep
+        source a.target
+    
     var fieldType = a.field.type
     switch(fieldType) {
         PrimitiveType: { t = fieldType }
         RoleType: {
-            var role = leastCommonSuperrole(targetType.role, fieldType.role)
+            val role = leastCommonSuperrole((targetType as RoleType).role, fieldType.role)
             t = roleType(role, fieldType.base)
         }
     }
@@ -274,7 +291,11 @@ from {
 rule TMethodInvoke
     G |- MethodInvoke i : i.method.type
 from {
-    G |- i.target : var RoleType targetType
+    G |- i.target : var Type targetType 
+    {targetType instanceof RoleType} or fail
+        error "Illegal target type for method invoke: " + targetType.stringRep
+        source i.target
+    
     G |- i.args << i.method.params.map[type]
 }
 
@@ -292,7 +313,7 @@ axiom TVariableRef
 rule TNew
     G |- New n : roleType(READWRITE, n.clazz)
 from {
-    n.clazz.constructors.filter[
+    n.clazz.allConstructors.filter[
         G |- n.args << params.map[type]
     ].size == 1
 }
@@ -346,6 +367,9 @@ from {
     left.class == right.class
 }
 
+axiom SubtypeNull
+    G |- Null __ <: ReferenceType ___
+
 rule SubtypeGeneral
     G |- Type left <: Type right
 from { fail }
@@ -387,7 +411,7 @@ from {
 
 rule AFieldAccess
     G |= FieldAccess a
-from {
+from {    
     a.field.kind == VAR or fail
         error "Cannot assign to a value field" source a
     
