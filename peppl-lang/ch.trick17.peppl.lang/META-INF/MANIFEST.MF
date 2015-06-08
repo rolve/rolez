@@ -18,14 +18,15 @@ Require-Bundle: org.eclipse.xtext;visibility:=reexport,
 Import-Package: org.apache.log4j
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: ch.trick17.peppl.lang,
- ch.trick17.peppl.lang.services,
+ ch.trick17.peppl.lang.formatting,
+ ch.trick17.peppl.lang.generator,
+ ch.trick17.peppl.lang.parser.antlr,
+ ch.trick17.peppl.lang.parser.antlr.internal,
  ch.trick17.peppl.lang.peppl,
  ch.trick17.peppl.lang.peppl.impl,
  ch.trick17.peppl.lang.peppl.util,
- ch.trick17.peppl.lang.serializer,
- ch.trick17.peppl.lang.parser.antlr,
- ch.trick17.peppl.lang.parser.antlr.internal,
- ch.trick17.peppl.lang.validation,
  ch.trick17.peppl.lang.scoping,
- ch.trick17.peppl.lang.generator,
- ch.trick17.peppl.lang.formatting
+ ch.trick17.peppl.lang.serializer,
+ ch.trick17.peppl.lang.services,
+ ch.trick17.peppl.lang.typesystem,
+ ch.trick17.peppl.lang.validation

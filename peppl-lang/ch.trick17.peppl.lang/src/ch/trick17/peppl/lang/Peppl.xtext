@@ -108,9 +108,14 @@ UnaryNot returns Expression:
 MemberAccess returns Expression:
     SimpleExpression
     (
-        {FieldAccess.target=current} '.' field=[Field]
-        | {MethodInvoke.target=current} '.' method=[Method] '(' (args+=Expression (',' args+=Expression)*)? ')'
+        '.' {MemberAccess.target=current} selector=Selector
     )*;
+
+Selector: FieldSelector | MethodSelector;
+
+FieldSelector: field=[Field];
+
+MethodSelector: method=[Method] '(' (args+=Expression (',' args+=Expression)*)? ')';
 
 SimpleExpression returns Expression:
     {This} 'this' | VariableRef | New | Parenthesized | Literal;

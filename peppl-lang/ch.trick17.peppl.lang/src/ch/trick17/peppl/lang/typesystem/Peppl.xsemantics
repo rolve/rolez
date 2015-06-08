@@ -5,22 +5,21 @@ import ch.trick17.peppl.lang.peppl.BooleanExpression
 import ch.trick17.peppl.lang.peppl.BooleanLiteral
 import ch.trick17.peppl.lang.peppl.CharLiteral
 import ch.trick17.peppl.lang.peppl.Class
-import ch.trick17.peppl.lang.peppl.Constructor
 import ch.trick17.peppl.lang.peppl.EqualityExpression
 import ch.trick17.peppl.lang.peppl.Expression
 import ch.trick17.peppl.lang.peppl.ExpressionStatement
-import ch.trick17.peppl.lang.peppl.FieldAccess
+import ch.trick17.peppl.lang.peppl.FieldSelector
 import ch.trick17.peppl.lang.peppl.IfElse
 import ch.trick17.peppl.lang.peppl.IntLiteral
 import ch.trick17.peppl.lang.peppl.LocalVariable
+import ch.trick17.peppl.lang.peppl.MemberAccess
 import ch.trick17.peppl.lang.peppl.Method
-import ch.trick17.peppl.lang.peppl.MethodInvoke
+import ch.trick17.peppl.lang.peppl.MethodSelector
 import ch.trick17.peppl.lang.peppl.New
 import ch.trick17.peppl.lang.peppl.Null
 import ch.trick17.peppl.lang.peppl.NullLiteral
 import ch.trick17.peppl.lang.peppl.OpArithmetic
 import ch.trick17.peppl.lang.peppl.Parenthesized
-import ch.trick17.peppl.lang.peppl.PepplFactory
 import ch.trick17.peppl.lang.peppl.PepplPackage
 import ch.trick17.peppl.lang.peppl.PrimitiveType
 import ch.trick17.peppl.lang.peppl.Program
@@ -38,16 +37,15 @@ import ch.trick17.peppl.lang.peppl.UnaryNot
 import ch.trick17.peppl.lang.peppl.VariableRef
 import ch.trick17.peppl.lang.peppl.WhileLoop
 import ch.trick17.peppl.lang.validation.AbstractPepplValidator
-import java.util.HashSet
 import java.util.List
 import java.util.Set
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.naming.QualifiedName
 import org.eclipse.xtext.scoping.IGlobalScopeProvider
+import org.eclipse.xtext.scoping.IScopeProvider
 
 import static ch.trick17.peppl.lang.peppl.Role.*
 import static ch.trick17.peppl.lang.peppl.VarKind.*
-import org.eclipse.xtext.scoping.IScopeProvider
 
 system ch.trick17.peppl.lang.typesystem.PepplSystem
 
@@ -61,7 +59,6 @@ auxiliary {
     leastCommonSuperrole(Role r1, Role r2): Role
     actualSuperclass(Class clazz): Class cached
     strictSuperclasses(Class clazz): Set<Class> cached
-    allConstructors(Class clazz): Set<Constructor> cached
     enclosingMethod(EObject object): Method
     enclosingClass(EObject object): Class
     enclosingProgram(EObject object): Program
@@ -112,13 +109,6 @@ auxiliary strictSuperclasses(Class clazz) {
     val object = findClass(objectClassName, clazz)
     if(clazz != object && object != null)
         result.add(object)
-    result
-}
-
-auxiliary allConstructors(Class clazz) {
-    val result = new HashSet(clazz.constructors)
-    if(result.isEmpty)
-        result.add(PepplFactory.eINSTANCE.createConstructor)
     result
 }
 
@@ -293,33 +283,30 @@ from {
     G |- n.expr <| booleanType
 }
 
-rule TFieldAccess
-    G |- FieldAccess a : Type t
+rule TMemberAccess
+    G |- MemberAccess a : Type t
 from {
     G |- a.target : var Type targetType
     {targetType instanceof RoleType} or fail
         error "Illegal target type for field access: " + targetType.stringRep
         source a.target
     
-    var fieldType = a.field.type
-    switch(fieldType) {
-        PrimitiveType: { t = fieldType }
-        RoleType: {
-            val role = leastCommonSuperrole((targetType as RoleType).role, fieldType.role)
-            t = roleType(role, fieldType.base)
+    val selector = a.selector
+    switch(selector) {
+        FieldSelector: {
+            var fieldType = selector.field.type
+            switch(fieldType) {
+                PrimitiveType: { t = fieldType }
+                RoleType: {
+                    val role = leastCommonSuperrole((targetType as RoleType).role, fieldType.role)
+                    t = roleType(role, fieldType.base)
+                }
+            }
+        }
+        MethodSelector: {
+            G |- selector.args << selector.method.params.map[type]
         }
     }
-}
-
-rule TMethodInvoke
-    G |- MethodInvoke i : i.method.type
-from {
-    G |- i.target : var Type targetType 
-    {targetType instanceof RoleType} or fail
-        error "Illegal target type for method invoke: " + targetType.stringRep
-        source i.target
-    
-    G |- i.args << i.method.params.map[type]
 }
 
 rule TThis
@@ -432,10 +419,11 @@ from {
     r.variable.kind == VAR
 }
 
-rule AFieldAccess
-    G |= FieldAccess a
-from {    
-    a.field.kind == VAR or fail
+rule AMemberAccess
+    G |= MemberAccess a
+from {
+    a.selector instanceof FieldSelector
+    (a.selector as FieldSelector).field.kind == VAR or fail
         error "Cannot assign to a value field" source a
     
     G |- a.target : var RoleType type

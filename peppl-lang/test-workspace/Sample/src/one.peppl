@@ -72,11 +72,11 @@ class Address {
 		p.name;
 		p.fullName();
 		
-		this.city.city;
+		this.city;
 	}
 }
 
 main {
 	var o: readwrite Object = "Hello";
-	this.name;
+	//this.name;
 }
