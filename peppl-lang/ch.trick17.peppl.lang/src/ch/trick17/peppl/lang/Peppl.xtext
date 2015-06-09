@@ -31,7 +31,7 @@ enum VarKind:
     VAL='val' | VAR='var';
 
 Method:
-    'def' name=ID
+    'def' thisRole=Role name=ID
     ('(' params+=Parameter (',' params+=Parameter)* ')')?
     ':' type=Type
     body=Block;

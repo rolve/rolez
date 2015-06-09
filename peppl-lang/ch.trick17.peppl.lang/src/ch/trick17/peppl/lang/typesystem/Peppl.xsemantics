@@ -287,25 +287,36 @@ rule TMemberAccess
     G |- MemberAccess a : Type t
 from {
     G |- a.target : var Type targetType
-    {targetType instanceof RoleType} or fail
-        error "Illegal target type for field access: " + targetType.stringRep
-        source a.target
-    
-    val selector = a.selector
-    switch(selector) {
-        FieldSelector: {
-            var fieldType = selector.field.type
-            switch(fieldType) {
-                PrimitiveType: { t = fieldType }
-                RoleType: {
-                    val role = leastCommonSuperrole((targetType as RoleType).role, fieldType.role)
-                    t = roleType(role, fieldType.base)
+    if(targetType instanceof RoleType) {
+        val selector = a.selector
+        switch(selector) {
+            FieldSelector: {
+                G |- targetType.role <! READONLY or fail
+                    error "Role mismatch: Cannot access field of a "
+                        + targetType.role.stringRep + " target"
+                    source a.target
+                var fieldType = selector.field.type
+                switch(fieldType) {
+                    PrimitiveType: { t = fieldType }
+                    RoleType: {
+                        val role = leastCommonSuperrole(targetType.role, fieldType.role)
+                        t = roleType(role, fieldType.base)
+                    }
                 }
             }
+            MethodSelector: {
+                G |- targetType.role <! selector.method.thisRole or fail
+                    error "Role mismatch: Cannot call method " + selector.method.stringRep
+                        +" on a " + targetType.role.stringRep + " target"
+                    source a.target
+                G |- selector.args << selector.method.params.map[type]
+            }
         }
-        MethodSelector: {
-            G |- selector.args << selector.method.params.map[type]
-        }
+    }
+    else {
+        fail
+        error "Illegal target type for member access: " + targetType.stringRep
+        source a.target
     }
 }
 

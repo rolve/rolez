@@ -1,20 +1,22 @@
 class Object
-class String
+class String {
+	def length: int {}
+}
 
 class Person {
 	val name: readonly String
 	val surname: readonly String
 	var address: readwrite Address
 	
-	def fullName: readonly String {
+	def readonly fullName: readonly String {
 		return "Hi";
 	}
 
-	def setAddress(val address: readwrite Address): void {
+	def readwrite setAddress(val address: readwrite Address): void {
 		this.address = address;
 	}
 	
-	def bar(val k: int): void {
+	def readonly bar(val k: int): void {
 		i.setAddress(null);
 		i.address = "No";
 		
@@ -46,7 +48,7 @@ class Person {
 class Student extends Person {
 	val university: readonly String
 	
-	def bla: void {
+	def inaccessible bla: void {
 		this.name;
 		this.setAddress();
 	}
@@ -63,20 +65,22 @@ class Address {
 	val city: readonly String
 	val zipCode: readonly String
 	
-	def foo(val a: readonly Account, val b: readonly Account): void {
+	def readonly foo(val a: readonly Account, val b: readonly Account): void {
 		"Hi".city;
 		this.city;
 		this.foo(a, 5);
 		
-		val p: readwrite Person = new Person;
+		val p: readonly Person = new Person;
 		p.name;
 		p.fullName();
-		
-		this.city;
+		p.setAddress();
 	}
 }
 
 main {
-	var o: readwrite Object = "Hello";
-	//this.name;
+	var o: inaccessible Object = "Hello";
+	var a: inaccessible Address = new Address;
+	a.city;
+	this;
+	
 }
