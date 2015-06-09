@@ -17,7 +17,7 @@ import ch.trick17.peppl.lang.peppl.MethodSelector
 class PepplScopeProvider extends AbstractDeclarativeScopeProvider {
     
     @Inject private extension PepplSystem system
-    @Inject private extension PepplTypeUtils __
+    @Inject private extension PepplTypeUtils
     
     def IScope scope_FieldSelector_field(FieldSelector s, EReference ref) {
         val targetType = system.type(envFor(s), (s.eContainer as MemberAccess).target).value

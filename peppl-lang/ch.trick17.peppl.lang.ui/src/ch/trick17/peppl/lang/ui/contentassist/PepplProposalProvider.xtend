@@ -22,7 +22,7 @@ import ch.trick17.peppl.lang.peppl.Expression
 class PepplProposalProvider extends AbstractPepplProposalProvider {
 
     @Inject private extension PepplSystem system
-    @Inject private extension PepplTypeUtils __
+    @Inject private extension PepplTypeUtils
 
     override completeFieldSelector_Field(EObject model, Assignment a, ContentAssistContext context,
         ICompletionProposalAcceptor acceptor) {
