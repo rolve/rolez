@@ -81,6 +81,6 @@ main {
 	var o: inaccessible Object = "Hello";
 	var a: inaccessible Address = new Address;
 	a.city;
-	this;
+	b = 5;
 	
 }

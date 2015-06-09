@@ -20,6 +20,8 @@ import java.util.ArrayList
 import java.util.Set
 import ch.trick17.peppl.lang.peppl.Constructor
 import java.util.HashSet
+import ch.trick17.peppl.lang.peppl.Program
+import ch.trick17.peppl.lang.peppl.Main
 
 /** 
  * Utility functions for types
@@ -72,6 +74,14 @@ class PepplTypeUtils {
             val thisType = roleType(Role.READWRITE, enclosingClass)
             new RuleEnvironment(new RuleEnvironmentEntry("this", thisType))
         }
+    }
+    
+    def Iterable<Class> classes(Program program) {
+        program.elements.filter(Class)
+    }
+    
+    def Main main(Program program) {
+        program.elements.filter(Main).head
     }
     
     def Set<Constructor> allConstructors(Class clazz) {

@@ -193,7 +193,6 @@ from {
     G |- s.expr : var Type t
 }
 
-
 rule TAssignment
     G |- Assignment a : Type t
 from {
@@ -427,7 +426,7 @@ rule AVariableRef
     error "Cannot assign to a value"
     source r
 from {
-    r.variable.kind == VAR
+    //r.variable.kind == VAR
 }
 
 rule AMemberAccess
