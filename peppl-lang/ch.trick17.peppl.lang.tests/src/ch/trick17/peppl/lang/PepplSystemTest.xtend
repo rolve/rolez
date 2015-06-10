@@ -9,6 +9,7 @@ import ch.trick17.peppl.lang.peppl.RoleType
 import ch.trick17.peppl.lang.peppl.Type
 import ch.trick17.peppl.lang.typesystem.PepplSystem
 import ch.trick17.peppl.lang.typesystem.PepplTypeUtils
+import ch.trick17.peppl.lang.peppl.Boolean
 import it.xsemantics.runtime.TraceUtils
 import javax.inject.Inject
 import org.eclipse.xtext.junit4.InjectWith
@@ -52,12 +53,96 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTAssignmentInvalidLeft() {
+    def void testTAssignmentErrorInOp() {
+        "main { !5 = 5; }".parse
+            .assertError(peppl.intLiteral, SUBTYPEEXPRESSION, "int", "boolean")
+        
         '''
             main {
-                !5 = 5;
+                var x: int;
+                x = !5;
             }
         '''.parse.assertError(peppl.intLiteral, SUBTYPEEXPRESSION, "int", "boolean")
+    }
+    
+    @Test
+    def void testTAssignmentNotAssignable() {
+        '''
+            main {
+                val x: int;
+                x = 5;
+            }
+        '''.parse.assertError(peppl.variableRef, AVARIABLEREF, "assign", "value")
+    }
+    
+    @Test
+    def void testTAssignmentTypeMismatch() {
+        '''
+            main {
+                var x: int;
+                x = true;
+            }
+        '''.parse.assertError(peppl.booleanLiteral, SUBTYPEEXPRESSION, "int", "boolean")
+    }
+    
+    @Test
+    def testTBooleanExpression() {
+        assertTrue("main { true || false; }".parse.mainExpr.type instanceof Boolean)
+        assertTrue("main { true && false; }".parse.mainExpr.type instanceof Boolean)
+    }
+    
+    @Test
+    def void testTBooleanExpressionErrorInOp() {
+        "main { !5 || false; }".parse
+            .assertError(peppl.intLiteral, SUBTYPEEXPRESSION, "int", "boolean")
+        "main { true || !5; }".parse
+            .assertError(peppl.intLiteral, SUBTYPEEXPRESSION, "int", "boolean")
+    }
+    
+    @Test
+    def void testTBooleanExpressionInvalidOp() {
+        "main { 5 || false; }".parse
+            .assertError(peppl.intLiteral, SUBTYPEEXPRESSION, "int", "boolean")
+        "main { true || 5; }".parse
+            .assertError(peppl.intLiteral, SUBTYPEEXPRESSION, "int", "boolean")
+    }
+    
+    @Test
+    def testTEqualityExpression() {
+        assertTrue("main { true == false; }".parse.mainExpr.type instanceof Boolean)
+        assertTrue("main { 5 != 3; }".parse.mainExpr.type instanceof Boolean)
+
+        '''
+            class Object
+            class A
+            main {
+                new Object == new A;
+                new A == new Object;
+                new A == new A;
+            }
+        '''.parse.assertNoErrors
+    }
+    
+    @Test
+    def void testTEqualityExpressionErrorInOp() {
+        "main { !5 == false; }".parse
+            .assertError(peppl.intLiteral, SUBTYPEEXPRESSION, "int", "boolean")
+        "main { true != !5; }".parse
+            .assertError(peppl.intLiteral, SUBTYPEEXPRESSION, "int", "boolean")
+    }
+    
+    @Test
+    def testTEqualityExpressionIncompatibleTypes() {
+        '''
+            class Object
+            class A
+            class B
+            main { new A == new B; }
+        '''.parse.assertError(peppl.equalityExpression, null, "compare", "A", "B")
+        // IMPROVE: Find a way to include an issue code for explicit failures?
+        
+        "main { 42 != false; }".parse
+            .assertError(peppl.equalityExpression, null, "compare", "int", "boolean")
     }
     
     @Test
