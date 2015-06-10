@@ -29,4 +29,5 @@ Export-Package: ch.trick17.peppl.lang,
  ch.trick17.peppl.lang.serializer,
  ch.trick17.peppl.lang.services,
  ch.trick17.peppl.lang.typesystem,
+ ch.trick17.peppl.lang.typesystem.validation,
  ch.trick17.peppl.lang.validation

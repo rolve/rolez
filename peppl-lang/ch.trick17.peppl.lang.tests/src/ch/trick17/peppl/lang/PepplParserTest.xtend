@@ -13,7 +13,7 @@ import ch.trick17.peppl.lang.typesystem.PepplTypeUtils
 
 @RunWith(XtextRunner)
 @InjectWith(PepplInjectorProvider)
-class ParserTest {
+class PepplParserTest {
     
     @Inject extension ParseHelper<Program>
     @Inject extension PepplTypeUtils

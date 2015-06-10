@@ -15,12 +15,12 @@ import ch.trick17.peppl.lang.peppl.Class
  */
 class PepplValidator extends PepplSystemValidator {
 
-  public static val INVALID_NAME = 'invalidName'
+  public static val INVALID_NAME = "invalid Name"
 
 	@Check
 	def checkGreetingStartsWithCapital(Class clazz) {
 		if (!Character.isUpperCase(clazz.name.charAt(0))) {
-			warning('Name should start with a capital', 
+			warning("Name should start with a capital", 
 					PepplPackage.Literals.CLASS__NAME,
 					INVALID_NAME)
 		}

@@ -95,7 +95,6 @@ auxiliary actualSuperclass(Class clazz) {
         objectClass
     else
         clazz.superclass
-        
 }
 
 auxiliary strictSuperclasses(Class clazz) {

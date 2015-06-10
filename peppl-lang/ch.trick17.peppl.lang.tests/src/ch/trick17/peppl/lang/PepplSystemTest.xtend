@@ -2,30 +2,38 @@ package ch.trick17.peppl.lang
 
 import ch.trick17.peppl.lang.peppl.Expression
 import ch.trick17.peppl.lang.peppl.ExpressionStatement
+import ch.trick17.peppl.lang.peppl.PepplPackage
 import ch.trick17.peppl.lang.peppl.Program
 import ch.trick17.peppl.lang.peppl.Role
 import ch.trick17.peppl.lang.peppl.RoleType
+import ch.trick17.peppl.lang.peppl.Type
 import ch.trick17.peppl.lang.typesystem.PepplSystem
 import ch.trick17.peppl.lang.typesystem.PepplTypeUtils
+import it.xsemantics.runtime.TraceUtils
 import javax.inject.Inject
 import org.eclipse.xtext.junit4.InjectWith
 import org.eclipse.xtext.junit4.XtextRunner
 import org.eclipse.xtext.junit4.util.ParseHelper
+import org.eclipse.xtext.junit4.validation.ValidationTestHelper
 import org.junit.Test
 import org.junit.runner.RunWith
 
 import static org.junit.Assert.*
-import it.xsemantics.runtime.RuleFailedException
-import ch.trick17.peppl.lang.peppl.Type
-import java.util.ArrayList
+import static ch.trick17.peppl.lang.typesystem.PepplSystem.*
 
 @RunWith(XtextRunner)
 @InjectWith(PepplInjectorProvider)
-class TypeSystemTest {
+class PepplSystemTest {
+    
+    val PepplPackage peppl = PepplPackage.eINSTANCE
     
     @Inject extension ParseHelper<Program>
+    @Inject extension ValidationTestHelper
     @Inject extension PepplSystem system
     @Inject extension PepplTypeUtils
+    
+    @Inject
+    TraceUtils traceUtils;
     
     @Test
     def testTAssignment() {
@@ -43,15 +51,13 @@ class TypeSystemTest {
         assertEquals(program.classes.findFirst[name=="A"], type.base)
     }
     
-    @Test(expected=RuleFailedException)
+    @Test
     def void testTAssignmentInvalidLeft() {
-        val program = '''
+        '''
             main {
                 !5 = 5;
             }
-        '''.parse
-        
-        program.mainExpr.type
+        '''.parse.assertError(peppl.intLiteral, SUBTYPEEXPRESSION, "int", "boolean")
     }
     
     @Test
@@ -72,15 +78,10 @@ class TypeSystemTest {
     
     def type(Expression expr) {
         val result = system.type(expr)
-        if(result.failed) {
-            val exceptions = new ArrayList<RuleFailedException>
-            var Throwable current = result.ruleFailedException
-            while(current instanceof RuleFailedException) {
-                exceptions.add(current)
-                current = current.cause
-            }
-            throw exceptions.findLast[errorInformations.exists[source != null]]
-        }
+        if(result.failed)
+            throw traceUtils.innermostRuleFailedExceptionWithNodeModelSources(
+                result.ruleFailedException
+            )
         result.value
     }
     
