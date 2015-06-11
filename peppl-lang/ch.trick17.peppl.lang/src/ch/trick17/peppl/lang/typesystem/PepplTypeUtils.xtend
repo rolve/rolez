@@ -69,11 +69,11 @@ class PepplTypeUtils {
     }
     
     def envFor(EObject e) {
-        val enclosingClass = e.enclosingClass
-        if(enclosingClass == null)
+        val method = e.enclosingMethod
+        if(method == null)
             new RuleEnvironment
         else {
-            val thisType = roleType(Role.READWRITE, enclosingClass)
+            val thisType = roleType(method.thisRole, method.enclosingClass)
             new RuleEnvironment(new RuleEnvironmentEntry("this", thisType))
         }
     }

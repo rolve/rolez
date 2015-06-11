@@ -538,19 +538,28 @@ class PepplSystemTest {
     
     @Test 
     def void testTThis() {
-        val program = parse('''
-            class Object
-            class A {
-                def readwrite foo: void { this; }
-            }
-        ''')
-        program.findClass("A").findMethod("foo").lastExpr.type.asRoleType => [
-            role.assertThat(is(READWRITE))
-            base.assertThat(is(program.findClass("A")))
-        ]
+        for(expected : Role.values) {
+            val program = parse('''
+                class Object
+                class A {
+                    def «expected» foo: void { this; }
+                }
+            ''')
+            program.findClass("A").findMethod("foo").lastExpr.type.asRoleType => [
+                role.assertThat(is(expected))
+                base.assertThat(is(program.findClass("A")))
+            ]
+        }
     }
     
-    // TODO: More TThis tests
+    @Test
+    def void testTThisMain() {
+        parse('''
+            main {
+                this;
+            }
+        ''').assertError(peppl.this, TTHIS)
+    }
     
     
     @Test
