@@ -165,5 +165,14 @@ terminal NULL_TYPE: 'Null';
 enum Role:
     READWRITE='readwrite' | READONLY='readonly' | INACCESSIBLE='inaccessible';
 
-TypedElement:
+WithType:
     Member | Variable;
+
+WithBlock:
+    Main | WithParameters;
+
+WithParameters:
+    Constructor | Method;
+
+WithArguments:
+    New | MethodSelector;

@@ -46,7 +46,8 @@ import org.eclipse.xtext.scoping.IScopeProvider
 
 import static ch.trick17.peppl.lang.peppl.Role.*
 import static ch.trick17.peppl.lang.peppl.VarKind.*
-import org.eclipse.emf.common.util.EList
+import ch.trick17.peppl.lang.peppl.WithArguments
+import ch.trick17.peppl.lang.peppl.WithParameters
 
 system ch.trick17.peppl.lang.typesystem.PepplSystem
 
@@ -70,7 +71,7 @@ judgments {
     type      |- Expression expr : output Type
     wellTyped |- Statement s
     
-    subtypeSequence   |- List<Expression> expressions << List<Type> types ~~ EObject src
+    validArguments |- WithArguments a << WithParameters p
     subtypeExpression |- Expression left              <| Type right
         error "Type mismatch: " + left.type.value.stringRep + " is not a subtype of " + right.stringRep
         source left
@@ -308,8 +309,9 @@ from {
                     error "Role mismatch: Cannot call method " + selector.method.stringRep
                         +" on a " + targetType.role.stringRep + " target"
                     source a.target
-                G |- selector.args << selector.method.params.map[type] ~~ selector
+                G |- selector << selector.method
                 t = selector.method.type
+                // TODO: What about overloading?
             }
         }
     }
@@ -334,9 +336,7 @@ axiom TVariableRef
 rule TNew
     G |- New n : roleType(READWRITE, n.clazz)
 from {
-    n.clazz.allConstructors.filter[
-        G |- n.args << params.map[type] ~~ n.clazz
-    ].size == 1
+    n.clazz.allConstructors.filter[G |- n << it].size == 1
 }
 
 rule TParenthesized
@@ -408,18 +408,18 @@ from {
     left == right || strictSuperclasses(left).contains(right)
 }
 
-rule SubtypeSequence
-    G |- List<Expression> expressions << List<Type> types ~~ EObject src
+rule ValidArguments
+    G |- WithArguments a << WithParameters p
 from {
-    expressions.size >= types.size or fail
+    a.args.size >= p.params.size or fail
         error "Too few arguments"
-        source src
-    expressions.size == types.size or fail
+        source a
+    a.args.size == p.params.size or fail
         error "Too many arguments"
-        source src
+        source a
     
-    var i = expressions.iterator
-    for(t : types) {
+    var i = a.args.iterator
+    for(t : p.params.map[type]) {
         G |- i.next <| t
     }
 }

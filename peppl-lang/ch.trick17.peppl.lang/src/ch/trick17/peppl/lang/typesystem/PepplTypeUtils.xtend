@@ -22,6 +22,8 @@ import ch.trick17.peppl.lang.peppl.Constructor
 import java.util.HashSet
 import ch.trick17.peppl.lang.peppl.Program
 import ch.trick17.peppl.lang.peppl.Main
+import ch.trick17.peppl.lang.peppl.Method
+import ch.trick17.peppl.lang.peppl.Field
 
 /** 
  * Utility functions for types
@@ -76,12 +78,20 @@ class PepplTypeUtils {
         }
     }
     
+    def Main main(Program program) {
+        program.elements.filter(Main).head
+    }
+    
     def Iterable<Class> classes(Program program) {
         program.elements.filter(Class)
     }
     
-    def Main main(Program program) {
-        program.elements.filter(Main).head
+    def Iterable<Method> methods(Class clazz) {
+        clazz.members.filter(Method)
+    }
+    
+    def Iterable<Field> fields(Class clazz) {
+        clazz.members.filter(Field)
     }
     
     def Set<Constructor> allConstructors(Class clazz) {
