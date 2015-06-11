@@ -3,6 +3,7 @@ package ch.trick17.peppl.lang
 import ch.trick17.peppl.lang.peppl.Boolean
 import ch.trick17.peppl.lang.peppl.Expression
 import ch.trick17.peppl.lang.peppl.ExpressionStatement
+import ch.trick17.peppl.lang.peppl.Int
 import ch.trick17.peppl.lang.peppl.PepplPackage
 import ch.trick17.peppl.lang.peppl.Program
 import ch.trick17.peppl.lang.peppl.Role
@@ -19,9 +20,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 import static ch.trick17.peppl.lang.typesystem.PepplSystem.*
-import static extension org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import ch.trick17.peppl.lang.peppl.Int
+import static org.hamcrest.Matchers.*
+
+import static extension org.hamcrest.MatcherAssert.assertThat
 
 @RunWith(XtextRunner)
 @InjectWith(PepplInjectorProvider)

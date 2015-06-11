@@ -21,6 +21,6 @@ class PepplSystemValidatorTest {
     
     @Test
     def testObjectExists() {
-        "class A".parse.assertError(peppl.class_, null, "object", "class", "not defined")
+        parse("class A").assertError(peppl.class_, null, "object", "class", "not defined")
     }
 }
