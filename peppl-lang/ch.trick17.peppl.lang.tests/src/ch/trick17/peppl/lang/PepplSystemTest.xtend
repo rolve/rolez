@@ -6,7 +6,6 @@ import ch.trick17.peppl.lang.peppl.ExpressionStatement
 import ch.trick17.peppl.lang.peppl.Int
 import ch.trick17.peppl.lang.peppl.PepplPackage
 import ch.trick17.peppl.lang.peppl.Program
-import ch.trick17.peppl.lang.peppl.Role
 import ch.trick17.peppl.lang.peppl.RoleType
 import ch.trick17.peppl.lang.peppl.Type
 import ch.trick17.peppl.lang.typesystem.PepplSystem
@@ -19,10 +18,12 @@ import org.eclipse.xtext.junit4.validation.ValidationTestHelper
 import org.junit.Test
 import org.junit.runner.RunWith
 
+import static ch.trick17.peppl.lang.peppl.Role.*
 import static ch.trick17.peppl.lang.typesystem.PepplSystem.*
 import static org.hamcrest.Matchers.*
 
 import static extension org.hamcrest.MatcherAssert.assertThat
+import ch.trick17.peppl.lang.peppl.Role
 
 @RunWith(XtextRunner)
 @InjectWith(PepplInjectorProvider)
@@ -36,7 +37,7 @@ class PepplSystemTest {
     @Inject extension PepplTypeUtils
     
     @Test
-    def testTAssignment() {
+    def void testTAssignment() {
         val program = parse('''
             class Object
             class A
@@ -46,10 +47,10 @@ class PepplSystemTest {
                 a = new B;
             }
         ''')
-        
-        val type = program.mainExpr.type.asRoleType
-        type.role.assertThat(is(Role.READWRITE))
-        type.base.assertThat(is(program.classes.findFirst[name=="A"]))
+        program.mainExpr.type.asRoleType => [
+            role.assertThat(is(READWRITE))
+            base.assertThat(sameInstance(program.classes.findFirst[name=="A"]))
+        ]
     }
     
     @Test
@@ -86,7 +87,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def testTBooleanExpression() {
+    def void testTBooleanExpression() {
         parse("main { true || false; }").mainExpr.type.assertThat(instanceOf(Boolean))
         parse("main { true && false; }").mainExpr.type.assertThat(instanceOf(Boolean))
     }
@@ -108,7 +109,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def testTEqualityExpression() {
+    def void testTEqualityExpression() {
         parse("main { true == false; }").mainExpr.type.assertThat(instanceOf(Boolean))
         parse("main { 5 != 3; }").mainExpr.type.assertThat(instanceOf(Boolean))
 
@@ -132,7 +133,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def testTEqualityExpressionIncompatibleTypes() {
+    def void testTEqualityExpressionIncompatibleTypes() {
         parse('''
             class Object
             class A
@@ -146,7 +147,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def testTRelationalExpression() {
+    def void testTRelationalExpression() {
         parse("main {   5 <    6; }").mainExpr.type.assertThat(instanceOf(Boolean))
         parse("main {  -1 <= -10; }").mainExpr.type.assertThat(instanceOf(Boolean))
         parse("main { 'a' >  ' '; }").mainExpr.type.assertThat(instanceOf(Boolean))
@@ -166,7 +167,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def testTRelationalExpressionIncompatibleTypes() {
+    def void testTRelationalExpressionIncompatibleTypes() {
         parse('''
             class Object
             main { new Object < new Object; }
@@ -183,7 +184,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def testTArithmeticExpression() {
+    def void testTArithmeticExpression() {
         parse("main {   4 +  4; }").mainExpr.type.assertThat(instanceOf(Int))
         parse("main {   0 -  0; }").mainExpr.type.assertThat(instanceOf(Int))
         parse("main {   3 *  2; }").mainExpr.type.assertThat(instanceOf(Int))
@@ -222,7 +223,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def testTArtithmeticExpressionInvalidType() {
+    def void testTArtithmeticExpressionInvalidType() {
         parse('''
             class Object
             main { new Object + new Object; }
@@ -266,7 +267,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def testTUnaryMinus() {
+    def void testTUnaryMinus() {
         parse("main { -2; }").mainExpr.type.assertThat(instanceOf(Int))
         parse("main { val a: int = 5; -a; }").mainExpr.type.assertThat(instanceOf(Int))
         parse("main { -(4-4); }").mainExpr.type.assertThat(instanceOf(Int))
@@ -281,7 +282,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def testTUnaryMinusInvalidType() {
+    def void testTUnaryMinusInvalidType() {
         parse('''
             class Object
             main { -new Object; }
@@ -301,10 +302,13 @@ class PepplSystemTest {
     }
     
     @Test
-    def testTUnaryNot() {
-        parse("main { !true; }").mainExpr.type.assertThat(instanceOf(Boolean))
-        parse("main { val a: boolean = false; !a; }").mainExpr.type.assertThat(instanceOf(Boolean))
-        parse("main { !(true || false); }").mainExpr.type.assertThat(instanceOf(Boolean))
+    def void testTUnaryNot() {
+        parse("main { !true; }").mainExpr.type
+            .assertThat(instanceOf(Boolean))
+        parse("main { val a: boolean = false; !a; }").mainExpr.type
+            .assertThat(instanceOf(Boolean))
+        parse("main { !(true || false); }").mainExpr.type
+            .assertThat(instanceOf(Boolean))
     }
     
     @Test
@@ -316,7 +320,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def testTUnaryNotInvalidType() {
+    def void testTUnaryNotInvalidType() {
         parse('''
             class Object
             main { !new Object; }
@@ -336,6 +340,144 @@ class PepplSystemTest {
     }
     
     @Test
+    def void testTMemberAccessField() {
+        parse('''
+            class Object
+            class A { var x: int }
+            main { new A.x; }
+        ''').mainExpr.type.assertThat(instanceOf(Int))
+        parse('''
+            class Object
+            class A { var x: int }
+            main {
+                val a: readonly A = new A;
+                a.x;
+            }
+        ''').mainExpr.type.assertThat(instanceOf(Int))
+        
+        val program = parse('''
+            class Object
+            class A { var a: readwrite A }
+            main {
+                val a: readwrite A = new A;
+                a.a;
+            }
+        ''')
+        program.mainExpr.type.asRoleType => [
+            role.assertThat(is(READWRITE))
+            base.assertThat(sameInstance(program.classes.findFirst[name=="A"]))
+        ]
+        
+        parse('''
+            class Object
+            class A { var a: readwrite A }
+            main {
+                val a: readonly A = new A;
+                a.a;
+            }
+        ''').mainExpr.type.asRoleType.role.assertThat(is(READONLY))
+        parse('''
+            class Object
+            class A { var a: readonly A }
+            main {
+                val a: readwrite A = new A;
+                a.a;
+            }
+        ''').mainExpr.type.asRoleType.role.assertThat(is(READONLY))
+        parse('''
+            class Object
+            class A { var a: inaccessible A }
+            main {
+                val a: readwrite A = new A;
+                a.a;
+            }
+        ''').mainExpr.type.asRoleType.role.assertThat(is(INACCESSIBLE))
+        parse('''
+            class Object
+            class A { var a: inaccessible A }
+            main {
+                val a: readonly A = new A;
+                a.a;
+            }
+        ''').mainExpr.type.asRoleType.role.assertThat(is(INACCESSIBLE))
+    }
+    
+    @Test
+    def void testTMemberAccessMethod() {
+        for(expected : Role.values) {
+            for(actual : Role.values.filter[subroleSucceeded(expected)]) {
+                parse('''
+                    class Object
+                    class A {
+                        def «expected» x: int { return 42; }
+                    }
+                    main {
+                        val a: «actual» A = new A;
+                        a.x();
+                    }
+                ''').mainExpr.type.assertThat(instanceOf(Int))
+            }
+        }
+        
+        val program = parse('''
+            class Object
+            class A {
+                def readwrite a: readonly A { return null; }
+            }
+            main { new A.a(); }
+        ''')
+        program.mainExpr.type.asRoleType => [
+            role.assertThat(is(READONLY))
+            base.assertThat(is(program.classes.findFirst[name=="A"]))
+        ]
+    }
+    
+    @Test
+    def void testTMemberAccessErrorInTarget() {
+        parse("main { (!5).a; }")
+            .assertError(peppl.intLiteral, SUBTYPEEXPRESSION, "int", "boolean")
+        parse("main { (!5).foo(); }")
+            .assertError(peppl.intLiteral, SUBTYPEEXPRESSION, "int", "boolean")
+    }
+    
+    @Test
+    def void testTMemberAccessFieldInvalidRole() {
+        parse('''
+            class Object
+            class A { var x: int }
+            main {
+                val a: inaccessible A = new A;
+                a.x;
+            }
+        ''').assertError(peppl.variableRef, null,
+                "Role", "mismatch", "field", "inaccessible")
+    }
+    
+    @Test
+    def void testTMemberAccessMethodInvalidRole() {
+        for(expected : Role.values) {
+            for(actual : Role.values.filter[!subroleSucceeded(expected)]) {
+                parse('''
+                    class Object
+                    class A {
+                        def «expected» x: int { return 42; }
+                    }
+                    main {
+                        val a: «actual» A = new A;
+                        a.x();
+                    }
+                ''').assertError(peppl.variableRef, null,
+                        "Role", "mismatch", "method", actual.toString)
+            }
+        }
+    }
+    
+    // TODO: testTMemberAccessMethodInvalidArgs
+    
+    
+    
+    
+    @Test
     def testTNew() {
         val program = parse('''
             class Object
@@ -344,7 +486,7 @@ class PepplSystemTest {
         ''')
         
         val type = program.mainExpr.type.asRoleType
-        type.role.assertThat(is(Role.READWRITE))
+        type.role.assertThat(is(READWRITE))
         type.base.assertThat(is(program.classes.findFirst[name=="A"]))
     }
     

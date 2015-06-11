@@ -308,6 +308,7 @@ from {
                         +" on a " + targetType.role.stringRep + " target"
                     source a.target
                 G |- selector.args << selector.method.params.map[type]
+                t = selector.method.type
             }
         }
     }
