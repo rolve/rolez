@@ -78,6 +78,7 @@ class Address {
 }
 
 main {
+	5.a;
 	var o: inaccessible Object = "Hello";
 	var a: inaccessible Address = new Address;
 	a.city;

@@ -101,7 +101,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTBooleanExpressionInvalidType() {
+    def void testTBooleanExpressionTypeMismatch() {
         parse("main { 5 || false; }")
             .assertError(peppl.intLiteral, SUBTYPEEXPRESSION, "int", "boolean")
         parse("main { true || 5; }")
@@ -223,7 +223,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTArtithmeticExpressionInvalidType() {
+    def void testTArtithmeticExpressionTypeMismatch() {
         parse('''
             class Object
             main { new Object + new Object; }
@@ -282,7 +282,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTUnaryMinusInvalidType() {
+    def void testTUnaryMinusTypeMismatch() {
         parse('''
             class Object
             main { -new Object; }
@@ -320,7 +320,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTUnaryNotInvalidType() {
+    def void testTUnaryNotTypeMismatch() {
         parse('''
             class Object
             main { !new Object; }
@@ -430,6 +430,17 @@ class PepplSystemTest {
             role.assertThat(is(READONLY))
             base.assertThat(is(program.classes.findFirst[name=="A"]))
         ]
+        
+        parse('''
+            class Object
+            class A
+            class B {
+                def readwrite foo(val a: readonly A, val b: readwrite B,
+                        val c: readwrite C, val d: int): void {}
+            }
+            class C extends B
+            main { new C.foo(new A, new C, null, 5); }
+        ''').assertNoErrors
     }
     
     @Test
@@ -441,7 +452,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTMemberAccessFieldInvalidRole() {
+    def void testTMemberAccessFieldRoleMismatch() {
         parse('''
             class Object
             class A { var x: int }
@@ -454,7 +465,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTMemberAccessMethodInvalidRole() {
+    def void testTMemberAccessMethodRoleMismatch() {
         for(expected : Role.values) {
             for(actual : Role.values.filter[!subroleSucceeded(expected)]) {
                 parse('''
@@ -472,7 +483,56 @@ class PepplSystemTest {
         }
     }
     
-    // TODO: testTMemberAccessMethodInvalidArgs
+    @Test
+    def void testTMemberAccessMethodTypeMismatch() {
+        parse('''
+            class Object
+            class A { def readwrite foo: void {} }
+            main { new A.foo(5); }
+        ''').assertError(peppl.methodSelector, null, "too many arguments")
+        parse('''
+            class Object
+            class A { def readwrite foo(val c: char): void {} }
+            main { new A.foo(5, false); }
+        ''').assertError(peppl.methodSelector, null, "too many arguments")
+        parse('''
+            class Object
+            class A { def readwrite foo(val i: int): void {} }
+            main { new A.foo(); }
+        ''').assertError(peppl.methodSelector, null, "too few arguments")
+        parse('''
+            class Object
+            class A { def readwrite foo(val i: int, val a: readwrite A): void {} }
+            main { new A.foo(false); }
+        ''').assertError(peppl.methodSelector, null, "too few arguments")
+        
+        parse('''
+            class Object
+            class A { def readwrite foo(val i: int): void {} }
+            main { new A.foo(false); }
+        ''').assertError(peppl.booleanLiteral, SUBTYPEEXPRESSION, "boolean", "int")
+        parse('''
+            class Object
+            class A { def readwrite foo(val a: readwrite A): void {} }
+            main { new A.foo(new Object); }
+        ''').assertError(peppl.^new, SUBTYPEEXPRESSION, "A", "Object")
+        parse('''
+            class Object
+            class A { def readwrite foo(val a: readwrite A): void {} }
+            main {
+                val a: readonly A = new A
+                new A.foo(a);
+            }
+        ''').assertError(peppl.variableRef, SUBTYPEEXPRESSION, "readonly", "A", "readwrite")
+    }
+    
+    @Test
+    def void testTMemberAccessIllegalTarget() {
+        parse('''main { 5.a; }''')
+            .assertError(peppl.intLiteral, null, "Illegal", "target", "access")
+        parse('''main { false.foo(); }''')
+            .assertError(peppl.booleanLiteral, null, "Illegal", "target", "access")
+    }
     
     
     
