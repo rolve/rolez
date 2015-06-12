@@ -36,8 +36,9 @@ import ch.trick17.peppl.lang.peppl.UnaryMinus
 import ch.trick17.peppl.lang.peppl.UnaryNot
 import ch.trick17.peppl.lang.peppl.VariableRef
 import ch.trick17.peppl.lang.peppl.WhileLoop
+import ch.trick17.peppl.lang.peppl.WithArguments
+import ch.trick17.peppl.lang.peppl.WithParameters
 import ch.trick17.peppl.lang.validation.AbstractPepplValidator
-import java.util.List
 import java.util.Set
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.naming.QualifiedName
@@ -46,8 +47,6 @@ import org.eclipse.xtext.scoping.IScopeProvider
 
 import static ch.trick17.peppl.lang.peppl.Role.*
 import static ch.trick17.peppl.lang.peppl.VarKind.*
-import ch.trick17.peppl.lang.peppl.WithArguments
-import ch.trick17.peppl.lang.peppl.WithParameters
 
 system ch.trick17.peppl.lang.typesystem.PepplSystem
 
@@ -470,5 +469,5 @@ from {
     c.superclass != null || findClass(objectClassName, c) != null or fail
         error "Object class is not defined"
         source c
-        feature PepplPackage.eINSTANCE.class_Name
+        feature PepplPackage.eINSTANCE.named_Name
 }

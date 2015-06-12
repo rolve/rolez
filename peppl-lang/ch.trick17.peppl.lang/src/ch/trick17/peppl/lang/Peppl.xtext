@@ -165,8 +165,11 @@ terminal NULL_TYPE: 'Null';
 enum Role:
     READWRITE='readwrite' | READONLY='readonly' | INACCESSIBLE='inaccessible';
 
-WithType:
-    Member | Variable;
+Named:
+    Class | Typed;
+
+Typed:
+    Member | => Variable; // => only needed to avoid warnings. Rule is not used anyway.
 
 WithBlock:
     Main | WithParameters;

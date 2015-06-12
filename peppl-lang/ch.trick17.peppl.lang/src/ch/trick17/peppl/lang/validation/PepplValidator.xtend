@@ -21,7 +21,7 @@ class PepplValidator extends PepplSystemValidator {
 	def checkGreetingStartsWithCapital(Class clazz) {
 		if (!Character.isUpperCase(clazz.name.charAt(0))) {
 			warning("Name should start with a capital", 
-					PepplPackage.Literals.CLASS__NAME,
+					PepplPackage.Literals.NAMED__NAME,
 					INVALID_NAME)
 		}
 	}
