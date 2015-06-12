@@ -18,6 +18,9 @@ import org.eclipse.xtext.junit4.InjectWith
 import org.eclipse.xtext.junit4.XtextRunner
 import org.eclipse.xtext.junit4.util.ParseHelper
 import org.eclipse.xtext.junit4.validation.ValidationTestHelper
+import org.hamcrest.BaseMatcher
+import org.hamcrest.Description
+import org.hamcrest.Matcher
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -49,10 +52,8 @@ class PepplSystemTest {
                 a = new B;
             }
         ''')
-        program.main.lastExpr.type.asRoleType => [
-            role.assertThat(is(READWRITE))
-            base.assertThat(sameInstance(program.findClass("A")))
-        ]
+        program.main.lastExpr.type
+            .assertThat(roleType(READWRITE,program.findClass("A")))
     }
     
     @Test
@@ -365,10 +366,8 @@ class PepplSystemTest {
                 a.a;
             }
         ''')
-        program.main.lastExpr.type.asRoleType => [
-            role.assertThat(is(READWRITE))
-            base.assertThat(sameInstance(program.findClass("A")))
-        ]
+        program.main.lastExpr.type
+            .assertThat(roleType(READWRITE, program.findClass("A")))
         
         parse('''
             class Object
@@ -428,10 +427,8 @@ class PepplSystemTest {
             }
             main { new A.a(); }
         ''')
-        program.main.lastExpr.type.asRoleType => [
-            role.assertThat(is(READONLY))
-            base.assertThat(is(program.findClass("A")))
-        ]
+        program.main.lastExpr.type
+            .assertThat(roleType(READONLY, program.findClass("A")))
         
         parse('''
             class Object
@@ -545,10 +542,8 @@ class PepplSystemTest {
                     def «expected» foo: void { this; }
                 }
             ''')
-            program.findClass("A").findMethod("foo").lastExpr.type.asRoleType => [
-                role.assertThat(is(expected))
-                base.assertThat(is(program.findClass("A")))
-            ]
+            program.findClass("A").findMethod("foo").lastExpr.type
+                .assertThat(roleType(expected, program.findClass("A")))
         }
     }
     
@@ -560,7 +555,6 @@ class PepplSystemTest {
             }
         ''').assertError(peppl.this, TTHIS)
     }
-    
     
     @Test
     def testTNew() {
@@ -577,11 +571,15 @@ class PepplSystemTest {
     
     def findClass(Program program, String name) {
         program.assertNoErrors
-        program.classes.findFirst[it.name == name]
+        val result = program.classes.findFirst[it.name == name]
+        result.assertThat(notNullValue)
+        result
     }
     
     def findMethod(Class clazz, String name) {
-        clazz.methods.findFirst[it.name == name]
+        val result = clazz.methods.findFirst[it.name == name]
+        result.assertThat(notNullValue)
+        result
     }
     
     def lastExpr(WithBlock b) {
@@ -598,5 +596,31 @@ class PepplSystemTest {
     def asRoleType(Type type) {
         type.assertThat(instanceOf(RoleType))
         type as RoleType
+    }
+    
+    def Matcher<Type> roleType(Role role, Class clazz) {
+        new RoleTypeMatcher(role, clazz)
+    }
+    
+    static class RoleTypeMatcher extends BaseMatcher<Type> {
+        
+        val Role role
+        val Class clazz
+    
+        new(Role role, Class clazz) {
+            this.role = role
+            this.clazz = clazz
+        }
+        
+        override matches(Object item) {
+            if(item instanceof RoleType)
+                item.role.equals(role) && item.base.equals(clazz)
+            else
+                false
+        }
+        
+        override describeTo(Description description) {
+            throw new UnsupportedOperationException
+        }
     }
 }
