@@ -343,6 +343,22 @@ class PepplSystemTest {
     }
     
     @Test
+    def void testTMemberAccessErrorInTarget() {
+        parse("main { (!5).a; }")
+            .assertError(peppl.intLiteral, SUBTYPEEXPRESSION, "int", "boolean")
+        parse("main { (!5).foo(); }")
+            .assertError(peppl.intLiteral, SUBTYPEEXPRESSION, "int", "boolean")
+    }
+    
+    @Test
+    def void testTMemberAccessIllegalTarget() {
+        parse('''main { 5.a; }''')
+            .assertError(peppl.intLiteral, null, "Illegal", "target", "access")
+        parse('''main { false.foo(); }''')
+            .assertError(peppl.booleanLiteral, null, "Illegal", "target", "access")
+    }
+    
+    @Test
     def void testTMemberAccessField() {
         parse('''
             class Object
@@ -404,6 +420,19 @@ class PepplSystemTest {
     }
     
     @Test
+    def void testTMemberAccessFieldRoleMismatch() {
+        parse('''
+            class Object
+            class A { var x: int }
+            main {
+                val a: inaccessible A = new A;
+                a.x;
+            }
+        ''').assertError(peppl.variableRef, null,
+                "Role", "mismatch", "field", "inaccessible")
+    }
+    
+    @Test
     def void testTMemberAccessMethod() {
         for(expected : Role.values) {
             for(actual : Role.values.filter[subroleSucceeded(expected)]) {
@@ -440,27 +469,6 @@ class PepplSystemTest {
             class C extends B
             main { new C.foo(new A, new C, null, 5); }
         ''').assertNoErrors
-    }
-    
-    @Test
-    def void testTMemberAccessErrorInTarget() {
-        parse("main { (!5).a; }")
-            .assertError(peppl.intLiteral, SUBTYPEEXPRESSION, "int", "boolean")
-        parse("main { (!5).foo(); }")
-            .assertError(peppl.intLiteral, SUBTYPEEXPRESSION, "int", "boolean")
-    }
-    
-    @Test
-    def void testTMemberAccessFieldRoleMismatch() {
-        parse('''
-            class Object
-            class A { var x: int }
-            main {
-                val a: inaccessible A = new A;
-                a.x;
-            }
-        ''').assertError(peppl.variableRef, null,
-                "Role", "mismatch", "field", "inaccessible")
     }
     
     @Test
@@ -523,14 +531,6 @@ class PepplSystemTest {
                 new A.foo(a);
             }
         ''').assertError(peppl.variableRef, SUBTYPEEXPRESSION, "readonly", "A", "readwrite")
-    }
-    
-    @Test
-    def void testTMemberAccessIllegalTarget() {
-        parse('''main { 5.a; }''')
-            .assertError(peppl.intLiteral, null, "Illegal", "target", "access")
-        parse('''main { false.foo(); }''')
-            .assertError(peppl.booleanLiteral, null, "Illegal", "target", "access")
     }
     
     @Test 
