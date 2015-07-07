@@ -79,6 +79,8 @@ judgments {
     subrole  |- Role  left <! Role  right error "subrole"
     subclass |- Class left <~ Class right error "subclass"
     
+    equalType |- Type left ~~ Type right
+    
     assignable |= Expression expr
         error "Cannot assign to " + expr.stringRep
         source expr
@@ -426,6 +428,27 @@ rule Subclass
 from {
     left == right || strictSuperclasses(left).contains(right)
 }
+
+
+rule EqualTypePrimitiveTypes
+    G |- PrimitiveType left ~~ PrimitiveType right
+from {
+    left.class == right.class
+}
+
+axiom EqualTypeNull
+    G |- Null left ~~ Null right
+
+rule EqualTypeRoleTypes
+    G |- RoleType left ~~ RoleType right
+from {
+    left.role == right.role
+    left.base == right.base // Is this correct or should we compare fully qualified name?
+}
+
+rule EqualTypeGeneral
+    G |- Type left ~~ Type right
+from { fail }
 
 
 rule AVariableRef
