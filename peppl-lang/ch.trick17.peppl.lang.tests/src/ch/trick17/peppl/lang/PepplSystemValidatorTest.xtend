@@ -43,6 +43,35 @@ class PepplSystemValidatorTest {
                 def readwrite foo(val a: readwrite A, val b: readwrite A): void {}
             }
         ''').assertNoErrors
+        
+        parse('''
+            class Object
+            class A {
+                def readwrite foo: void {}
+                def readonly  bar: void {}
+                
+                def readwrite foo(val a: readwrite A): void {}
+                def readwrite bar(val a: readonly  A): void {}
+            }
+            class B extends A {
+                def readonly  foo: void {}
+                def readwrite bar: void {}
+                
+                def readwrite foo(val a: readonly  A): void {}
+                def readwrite foo(val a: readwrite B): void {}
+                def readwrite foo(val a: readwrite Object): void {}
+                def readwrite bar(val a: readwrite A): void {}
+            }
+            class C extends B {
+                def readwrite foo(val i: int): void {}
+            }
+            class D extends C {
+                def readwrite foo(val i: char): int {}
+            }
+            class E extends D {
+                def readwrite foo(val i: int, val j: int): readonly A {}
+            }
+        ''').assertNoErrors
     }
     
     @Test
@@ -53,41 +82,150 @@ class PepplSystemValidatorTest {
                 def readwrite foo: void {}
                 def readwrite foo: void {}
             }
-        ''').assertError(peppl.method, DUPLICATE_METHOD, "foo")
+        ''').assertError(peppl.method, DUPLICATE_METHOD)
         parse('''
             class Object
             class A {
                 def readwrite foo: int {}
                 def readwrite foo: void {}
             }
-        ''').assertError(peppl.method, DUPLICATE_METHOD, "foo")
+        ''').assertError(peppl.method, DUPLICATE_METHOD)
         parse('''
             class Object
             class A {
                 def readwrite foo(val i: int): void {}
                 def readwrite foo(val i: int): void {}
             }
-        ''').assertError(peppl.method, DUPLICATE_METHOD, "foo")
+        ''').assertError(peppl.method, DUPLICATE_METHOD)
         parse('''
             class Object
             class A {
                 def readwrite foo(val i: int): void {}
                 def readwrite foo(val j: int): void {}
             }
-        ''').assertError(peppl.method, DUPLICATE_METHOD, "foo")
+        ''').assertError(peppl.method, DUPLICATE_METHOD)
         parse('''
             class Object
             class A {
                 def readwrite foo(val a: readwrite A): void {}
                 def readwrite foo(val a: readwrite A): void {}
             }
-        ''').assertError(peppl.method, DUPLICATE_METHOD, "foo")
+        ''').assertError(peppl.method, DUPLICATE_METHOD)
         parse('''
             class Object
             class A {
                 def readwrite foo(val a: readwrite A): void {}
                 def readwrite foo(val b: readwrite A): void {}
             }
-        ''').assertError(peppl.method, DUPLICATE_METHOD, "foo")
+        ''').assertError(peppl.method, DUPLICATE_METHOD)
     }
+    
+    @Test
+    def testOverride() {
+        parse('''
+            class Object
+            class A {                def readwrite foo: void {} }
+            class B extends A { override readwrite foo: void {} }
+        ''').assertNoErrors
+        parse('''
+            class Object
+            class A {                def readwrite foo(val i: int): void {} }
+            class B extends A { override readwrite foo(val i: int): void {} }
+        ''').assertNoErrors
+        parse('''
+            class Object
+            class A {                def readwrite foo(val i: int): int {} }
+            class B extends A { override readwrite foo(val j: int): int {} }
+        ''').assertNoErrors
+        parse('''
+            class Object
+            class A {                def readwrite foo: readwrite A {} }
+            class B extends A { override readwrite foo: readwrite B {} }
+        ''').assertNoErrors
+        parse('''
+            class Object
+            class A {                def readwrite foo: readonly  A {} }
+            class B extends A { override readwrite foo: readwrite A {} }
+        ''').assertNoErrors
+    }
+    
+    @Test
+    def testMissingOverride() {
+        parse('''
+            class Object
+            class A {           def readwrite foo: void {} }
+            class B extends A { def readwrite foo: void {} }
+        ''').assertError(peppl.method, MISSING_OVERRIDE)
+        parse('''
+            class Object
+            class A {           def readwrite foo: int  {} }
+            class B extends A { def readwrite foo: void {} }
+        ''').assertError(peppl.method, MISSING_OVERRIDE)
+        parse('''
+            class Object
+            class A {           def readwrite foo(val i: int): void {} }
+            class B extends A { def readwrite foo(val i: int): void {} }
+        ''').assertError(peppl.method, MISSING_OVERRIDE)
+        parse('''
+            class Object
+            class A {           def readwrite foo(val i: int): void {} }
+            class B extends A { def readwrite foo(val j: int): void {} }
+        ''').assertError(peppl.method, MISSING_OVERRIDE)
+        parse('''
+            class Object
+            class A {           def readwrite foo(val a: readwrite A): void {} }
+            class B extends A { def readwrite foo(val a: readwrite A): void {} }
+        ''').assertError(peppl.method, MISSING_OVERRIDE)
+        parse('''
+            class Object
+            class A {           def readwrite foo(val a: readwrite A): void {} }
+            class B extends A { def readwrite foo(val b: readwrite A): void {} }
+        ''').assertError(peppl.method, MISSING_OVERRIDE)
+    }
+    
+    @Test
+    def testIncorrectOverride() {
+        parse('''
+            class Object
+            class A {                def readwrite foo: void {} }
+            class B extends A { override readonly  foo: void {} }
+        ''').assertError(peppl.method, INCORRECT_OVERRIDE)
+        parse('''
+            class Object
+            class A {                def readonly  foo: void {} }
+            class B extends A { override readwrite foo: void {} }
+        ''').assertError(peppl.method, INCORRECT_OVERRIDE)
+        parse('''
+            class Object
+            class A {                def readwrite foo: void {} }
+            class B extends A { override readwrite foo(val i: int): void {} }
+        ''').assertError(peppl.method, INCORRECT_OVERRIDE)
+        parse('''
+            class Object
+            class A {                def readwrite foo(val i: int): void {} }
+            class B extends A { override readwrite foo(val c: char): void {} }
+        ''').assertError(peppl.method, INCORRECT_OVERRIDE)
+        parse('''
+            class Object
+            class A {                def readwrite foo(val a: readonly  A): void {} }
+            class B extends A { override readwrite foo(val a: readwrite A): void {} }
+        ''').assertError(peppl.method, INCORRECT_OVERRIDE)
+        parse('''
+            class Object
+            class A {                def readwrite foo(val a: readwrite A): void {} }
+            class B extends A { override readwrite foo(val a: readonly  A): void {} }
+        ''').assertError(peppl.method, INCORRECT_OVERRIDE)
+        parse('''
+            class Object
+            class A {                def readwrite foo(val a: readwrite A): void {} }
+            class B extends A { override readwrite foo(val a: readwrite B): void {} }
+        ''').assertError(peppl.method, INCORRECT_OVERRIDE)
+        parse('''
+            class Object
+            class A {                def readwrite foo(val a: readwrite B): void {} }
+            class B extends A { override readwrite foo(val a: readwrite A): void {} }
+        ''').assertError(peppl.method, INCORRECT_OVERRIDE)
+    }
+    
+    // TODO: Test return type compatibility
 }

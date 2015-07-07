@@ -110,4 +110,14 @@ class PepplTypeUtils {
             result
         }
     }
+    
+    def equalSignature(Method left, Method right) {
+        val i = right.params.map[type].iterator
+        left.name.equals(right.name)
+            && left.thisRole.equals(right.thisRole)
+            && left.params.size == right.params.size
+            && left.params.map[type].forall[
+                !equalType(envFor(left), it, i.next).failed
+            ]
+    }
 }

@@ -3,16 +3,14 @@
  */
 package ch.trick17.peppl.lang.validation
 
-import org.eclipse.xtext.validation.Check
-import ch.trick17.peppl.lang.peppl.PepplPackage
-import ch.trick17.peppl.lang.typesystem.validation.PepplSystemValidator
 import ch.trick17.peppl.lang.peppl.Class
-import javax.inject.Inject
+import ch.trick17.peppl.lang.peppl.Method
+import ch.trick17.peppl.lang.peppl.PepplPackage.Literals
 import ch.trick17.peppl.lang.typesystem.PepplSystem
 import ch.trick17.peppl.lang.typesystem.PepplTypeUtils
-import ch.trick17.peppl.lang.peppl.Method
-import java.util.List
-import ch.trick17.peppl.lang.peppl.Type
+import ch.trick17.peppl.lang.typesystem.validation.PepplSystemValidator
+import javax.inject.Inject
+import org.eclipse.xtext.validation.Check
 
 /**
  * This class contains custom validation rules. 
@@ -24,6 +22,9 @@ class PepplValidator extends PepplSystemValidator {
     public static val INVALID_NAME = "invalid name"
     public static val OBJECT_CLASS_NOT_DEFINED = "object class not defined"
     public static val DUPLICATE_METHOD = "duplicate method"
+    public static val MISSING_OVERRIDE = "missing override"
+    public static val INCORRECT_OVERRIDE = "incorrect override"
+    public static val INCOMPATIBLE_RETURN_TYPE = "incompatible return type"
 
     @Inject private extension PepplSystem system
     @Inject private extension PepplTypeUtils
@@ -32,40 +33,48 @@ class PepplValidator extends PepplSystemValidator {
     def checkClassNameStartsWithCapital(Class clazz) {
         if(!Character.isUpperCase(clazz.name.charAt(0)))
             warning("Name should start with a capital",
-                PepplPackage.Literals.NAMED__NAME,
-                INVALID_NAME
-            )
+                Literals.NAMED__NAME, INVALID_NAME)
     }
 	
 	@Check
 	def checkObjectExists(Class clazz) {
 	    if(clazz.superclass == null && findClass(objectClassName, clazz) == null)
-	        error("Object class is not defined",
-	               PepplPackage.Literals.NAMED__NAME,
-	               OBJECT_CLASS_NOT_DEFINED
-	        )
+	       error("Object class is not defined",
+	           Literals.NAMED__NAME,  OBJECT_CLASS_NOT_DEFINED)
 	}
 	
 	@Check
 	def checkNoDuplicateMethods(Method method) {
-	    val paramTypes = method.params.map[type]
-	    val matching = method.enclosingClass.methods.filter[
-	        name.equals(method.name)
-	           && thisRole.equals(method.thisRole)
-	           && equalTypes(params.map[type], paramTypes)
-	    ]
+	    val matching = method.enclosingClass.methods.filter[equalSignature(method)]
 	    if(matching.size < 1)
 	       throw new AssertionError
 	    if(matching.size > 1)
 	       error("Duplicate method " + method.name + "("+ method.params.join(",") + ")",
-	           PepplPackage.Literals.NAMED__NAME,
-	           DUPLICATE_METHOD
-	       )
+	           Literals.NAMED__NAME, DUPLICATE_METHOD)
 	}
 	
-	private def equalTypes(List<Type> left, List<Type> right) {
-        val i = right.iterator
-        left.size == right.size
-            && left.forall[system.equalType(emptyEnvironment, it, i.next).value]
-    }
+	@Check
+	def checkOverrides(Method method) {
+	    val allMembers = method.enclosingClass.actualSuperclass.allMembers
+        val allMethods = allMembers.filter(Method)
+        val matching = allMethods.filter[
+	               equalSignature(method)
+	           ]
+	    
+	    if(matching.size > 0) {
+	        if(method.overriding) {
+                for(m : matching)
+                    if(subtype(envFor(method), method.type, m.type).failed)
+                        error("The return type is incompatible with " + m,
+                            Literals.TYPED__TYPE, INCOMPATIBLE_RETURN_TYPE)
+            }
+            else
+                error("Method must be declared with \"override\" since it
+                        actually overrides a superclass method",
+                    Literals.NAMED__NAME, MISSING_OVERRIDE)
+        }
+        else if(method.overriding)
+           error("Method must override a superclass method",
+               Literals.NAMED__NAME, INCORRECT_OVERRIDE)
+	}
 }

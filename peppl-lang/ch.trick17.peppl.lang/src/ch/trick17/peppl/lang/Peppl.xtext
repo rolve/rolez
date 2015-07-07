@@ -31,7 +31,8 @@ enum VarKind:
     VAL='val' | VAR='var';
 
 Method:
-    'def' thisRole=Role name=ID
+    overriding?='override' | 'def'
+    thisRole=Role name=ID
     ('(' params+=Parameter (',' params+=Parameter)* ')')?
     ':' type=Type
     body=Block;
