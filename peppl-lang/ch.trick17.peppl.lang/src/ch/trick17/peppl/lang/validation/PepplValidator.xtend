@@ -7,6 +7,9 @@ import org.eclipse.xtext.validation.Check
 import ch.trick17.peppl.lang.peppl.PepplPackage
 import ch.trick17.peppl.lang.typesystem.validation.PepplSystemValidator
 import ch.trick17.peppl.lang.peppl.Class
+import javax.inject.Inject
+import ch.trick17.peppl.lang.typesystem.PepplSystem
+import ch.trick17.peppl.lang.typesystem.PepplTypeUtils
 
 /**
  * This class contains custom validation rules. 
@@ -15,14 +18,27 @@ import ch.trick17.peppl.lang.peppl.Class
  */
 class PepplValidator extends PepplSystemValidator {
 
-  public static val INVALID_NAME = "invalid Name"
+    public static val INVALID_NAME = "invalid name"
+    public static val OBJECT_CLASS_NOT_DEFINED = "object class not defined"
+
+    @Inject private extension PepplSystem system
+    @Inject private extension PepplTypeUtils
 
 	@Check
-	def checkGreetingStartsWithCapital(Class clazz) {
-		if (!Character.isUpperCase(clazz.name.charAt(0))) {
-			warning("Name should start with a capital", 
-					PepplPackage.Literals.NAMED__NAME,
-					INVALID_NAME)
-		}
+    def checkClassNameStartsWithCapital(Class clazz) {
+        if(!Character.isUpperCase(clazz.name.charAt(0)))
+            warning("Name should start with a capital",
+                PepplPackage.Literals.NAMED__NAME,
+                INVALID_NAME
+            )
+    }
+	
+	@Check
+	def checkObjectExists(Class clazz) {
+	    if(clazz.superclass == null && findClass(objectClassName, clazz) == null)
+	        error("Object class is not defined",
+	               PepplPackage.Literals.NAMED__NAME,
+	               OBJECT_CLASS_NOT_DEFINED
+	        )
 	}
 }

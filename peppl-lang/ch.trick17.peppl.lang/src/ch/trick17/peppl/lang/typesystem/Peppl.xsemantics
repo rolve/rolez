@@ -147,52 +147,6 @@ auxiliary findClass(QualifiedName name, EObject context) {
 }
 
 
-rule WBlock
-    G |- Block b
-from {
-    for(s : b.statements) {
-        G |- s
-    }
-}
-
-rule WLocalVariable
-    G |- LocalVariable v
-from {
-    v.initializer == null
-    or
-    G |- v.initializer <| v.type
-}
-
-rule WIfElse
-    G |- IfElse ifElse
-from {
-    G |- ifElse.^condition : booleanType
-    G |- ifElse.thenPart
-    
-    ifElse.elsePart == null
-    or
-    G |- ifElse.elsePart
-}
-
-rule WWhileLoop
-    G |- WhileLoop l
-from {
-    G |- l.^condition : booleanType
-    G |- l.body
-}
-
-rule WReturn
-    G |- Return r
-from {
-    G |- r.expr <| r.enclosingMethod.type
-}
-
-rule WExpressionStatement
-    G |- ExpressionStatement s
-from {
-    G |- s.expr : var Type t
-}
-
 rule TAssignment
     G |- Assignment a : Type t
 from {
@@ -367,12 +321,77 @@ axiom TCharLiteral
     G |- CharLiteral __ : charType
 
 
+rule WBlock
+    G |- Block b
+from {
+    for(s : b.statements) {
+        G |- s
+    }
+}
+
+rule WLocalVariable
+    G |- LocalVariable v
+from {
+    v.initializer == null
+    or
+    G |- v.initializer <| v.type
+}
+
+rule WIfElse
+    G |- IfElse ifElse
+from {
+    G |- ifElse.^condition : booleanType
+    G |- ifElse.thenPart
+    
+    ifElse.elsePart == null
+    or
+    G |- ifElse.elsePart
+}
+
+rule WWhileLoop
+    G |- WhileLoop l
+from {
+    G |- l.^condition : booleanType
+    G |- l.body
+}
+
+rule WReturn
+    G |- Return r
+from {
+    G |- r.expr <| r.enclosingMethod.type
+}
+
+rule WExpressionStatement
+    G |- ExpressionStatement s
+from {
+    G |- s.expr : var Type t
+}
+
+
+rule ValidArguments
+    G |- WithArguments a << WithParameters p
+from {
+    a.args.size >= p.params.size or fail
+        error "Too few arguments"
+        source a
+    a.args.size == p.params.size or fail
+        error "Too many arguments"
+        source a
+    
+    val i = a.args.iterator
+    for(t : p.params.map[type]) {
+        G |- i.next <| t
+    }
+}
+
+
 rule SubtypeExpression
     G |- Expression left <| Type right
 from {
     G |- left : var Type leftType
     G |- leftType <: right
 }
+
 
 rule SubtypeRoleTypes
     G |- RoleType left <: RoleType right
@@ -401,27 +420,13 @@ from {
     left.value <= right.value
 }
 
+
 rule Subclass
     G |- Class left <~ Class right
 from {
     left == right || strictSuperclasses(left).contains(right)
 }
 
-rule ValidArguments
-    G |- WithArguments a << WithParameters p
-from {
-    a.args.size >= p.params.size or fail
-        error "Too few arguments"
-        source a
-    a.args.size == p.params.size or fail
-        error "Too many arguments"
-        source a
-    
-    var i = a.args.iterator
-    for(t : p.params.map[type]) {
-        G |- i.next <| t
-    }
-}
 
 rule AVariableRef
     G |= VariableRef r
@@ -461,13 +466,4 @@ from {
         val thisType = roleType(READWRITE, class)
         "this" <- thisType |- s
     }
-}
-
-checkrule CheckObjectExists for
-    Class c
-from {
-    c.superclass != null || findClass(objectClassName, c) != null or fail
-        error "Object class is not defined"
-        source c
-        feature PepplPackage.eINSTANCE.named_Name
 }
