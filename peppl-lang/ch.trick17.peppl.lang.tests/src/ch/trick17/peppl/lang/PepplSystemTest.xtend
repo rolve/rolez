@@ -557,6 +557,26 @@ class PepplSystemTest {
     }
     
     @Test
+    def void testTVariableRef() {
+        parse('''
+            main {
+                val i: int = 5;
+                i;
+            }
+        ''').main.lastExpr.type.assertThat(instanceOf(Int))
+        val program = parse('''
+            class Object
+            class A
+            main {
+                val a: readonly A = new A;
+                a;
+            }
+        ''')
+        program.main.lastExpr.type
+            .assertThat(roleType(READONLY, program.findClass("A")))
+    }
+    
+    @Test
     def testTNew() {
         val program = parse('''
             class Object
