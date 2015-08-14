@@ -11,9 +11,10 @@ TopLevelElement:
     Class | Main;
 
 Class:
-    'class' name=ID
-    ('extends' superclass=[Class])?
-    ('{' (constructors+=Constructor | members+=Member)+ '}')?;
+    'class' name=ID ('extends' superclass=[Class])?
+    ('{'
+        (constructors+=Constructor | members+=Member)+
+    '}')?;
 
 Main:
     'main' body=Block;
@@ -31,7 +32,7 @@ enum VarKind:
     VAL='val' | VAR='var';
 
 Method:
-    overriding?='override' | 'def'
+    (overriding?='override' | 'def')
     thisRole=Role name=ID
     ('(' params+=Parameter (',' params+=Parameter)* ')')?
     ':' type=Type
@@ -46,10 +47,13 @@ Block:
     {Block} '{' (statements+=Statement)* '}';
 
 Statement:
-    Block | LocalVariable | IfElse | WhileLoop | Return | ExpressionStatement;
+    Block | LocalVariableDecl | IfElse | WhileLoop | Return | ExpressionStatement;
+
+LocalVariableDecl:
+    variable=LocalVariable ('=' initializer=Expression)? ';';
 
 LocalVariable:
-    kind=VarKind name=ID ':' type=Type ('=' initializer=Expression)? ';';
+    kind=VarKind name=ID ':' type=Type;
 
 IfElse:
     'if' '(' condition=Expression ')' thenPart=Statement
@@ -123,8 +127,6 @@ SimpleExpression returns Expression:
 
 VariableRef: variable=[Variable];
 
-Variable: LocalVariable | Parameter;
-
 New:
     'new' clazz=[Class]
     ('(' args+=Expression (',' args+=Expression)* ')')?;
@@ -165,6 +167,9 @@ terminal NULL_TYPE: 'Null';
 
 enum Role:
     READWRITE='readwrite' | READONLY='readonly' | INACCESSIBLE='inaccessible';
+
+Variable:
+    LocalVariable | => Parameter; // => only needed to avoid warnings. Rule is not used anyway.
 
 Named:
     Class | Typed;

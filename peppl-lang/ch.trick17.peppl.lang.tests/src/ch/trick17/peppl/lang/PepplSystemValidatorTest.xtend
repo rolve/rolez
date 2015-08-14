@@ -82,42 +82,42 @@ class PepplSystemValidatorTest {
                 def readwrite foo: void {}
                 def readwrite foo: void {}
             }
-        ''').assertError(peppl.method, DUPLICATE_METHOD)
+        ''').assertError(peppl.method, null, "duplicate", "foo")
         parse('''
             class Object
             class A {
                 def readwrite foo: int {}
                 def readwrite foo: void {}
             }
-        ''').assertError(peppl.method, DUPLICATE_METHOD)
+        ''').assertError(peppl.method, null, "duplicate", "foo")
         parse('''
             class Object
             class A {
                 def readwrite foo(val i: int): void {}
                 def readwrite foo(val i: int): void {}
             }
-        ''').assertError(peppl.method, DUPLICATE_METHOD)
+        ''').assertError(peppl.method, null, "duplicate", "foo")
         parse('''
             class Object
             class A {
                 def readwrite foo(val i: int): void {}
                 def readwrite foo(val j: int): void {}
             }
-        ''').assertError(peppl.method, DUPLICATE_METHOD)
+        ''').assertError(peppl.method, null, "duplicate", "foo")
         parse('''
             class Object
             class A {
                 def readwrite foo(val a: readwrite A): void {}
                 def readwrite foo(val a: readwrite A): void {}
             }
-        ''').assertError(peppl.method, DUPLICATE_METHOD)
+        ''').assertError(peppl.method, null, "duplicate", "foo")
         parse('''
             class Object
             class A {
                 def readwrite foo(val a: readwrite A): void {}
                 def readwrite foo(val b: readwrite A): void {}
             }
-        ''').assertError(peppl.method, DUPLICATE_METHOD)
+        ''').assertError(peppl.method, null, "duplicate", "foo")
     }
     
     @Test
@@ -228,4 +228,45 @@ class PepplSystemValidatorTest {
     }
     
     // TODO: Test return type compatibility
+    
+    
+    @Test
+    def testDuplicateFields() {
+        parse('''
+            class Object
+            class A {
+                var a: int
+                val a: boolean
+            }
+        ''').assertError(peppl.field, null)
+    }
+    
+    @Test
+    def testDuplicateLocalVar() {
+        parse('''
+            class Object
+            class A {
+                def readwrite foo(val a: int, val a: boolean): void {}
+            }
+        ''').assertError(peppl.parameter, null)
+        
+        parse('''
+            class Object
+            class A {
+                def readwrite foo: void {
+                    var a: int;
+                    val a: boolean;
+                }
+            }
+        ''').assertError(peppl.localVariable, null)
+        
+        parse('''
+            class Object
+            class A {
+                def readwrite foo(val a: int): void {
+                    var a: boolean;
+                }
+            }
+        ''').assertError(peppl.parameter, null)
+    }
 }

@@ -27,6 +27,7 @@ import org.junit.runner.RunWith
 import static ch.trick17.peppl.lang.peppl.Role.*
 import static ch.trick17.peppl.lang.typesystem.PepplSystem.*
 import static org.hamcrest.Matchers.*
+import static org.eclipse.xtext.diagnostics.Diagnostic.*
 
 import static extension org.hamcrest.MatcherAssert.assertThat
 
@@ -435,7 +436,7 @@ class PepplSystemTest {
     @Test
     def void testTMemberAccessMethod() {
         for(expected : Role.values) {
-            for(actual : Role.values.filter[subroleSucceeded(expected)]) {
+            for(actual : Role.values.filter[subroleSucceeded(it, expected)]) {
                 parse('''
                     class Object
                     class A {
@@ -474,7 +475,7 @@ class PepplSystemTest {
     @Test
     def void testTMemberAccessMethodRoleMismatch() {
         for(expected : Role.values) {
-            for(actual : Role.values.filter[!subroleSucceeded(expected)]) {
+            for(actual : Role.values.filter[!subroleSucceeded(it, expected)]) {
                 parse('''
                     class Object
                     class A {
@@ -496,41 +497,68 @@ class PepplSystemTest {
             class Object
             class A { def readwrite foo: void {} }
             main { new A.foo(5); }
-        ''').assertError(peppl.methodSelector, null, "too many arguments")
+        ''').assertError(peppl.methodSelector, LINKING_DIAGNOSTIC, "method", "foo")
         parse('''
             class Object
             class A { def readwrite foo(val c: char): void {} }
             main { new A.foo(5, false); }
-        ''').assertError(peppl.methodSelector, null, "too many arguments")
+        ''').assertError(peppl.methodSelector, LINKING_DIAGNOSTIC, "method", "foo")
         parse('''
             class Object
             class A { def readwrite foo(val i: int): void {} }
             main { new A.foo(); }
-        ''').assertError(peppl.methodSelector, null, "too few arguments")
+        ''').assertError(peppl.methodSelector, LINKING_DIAGNOSTIC, "method", "foo")
         parse('''
             class Object
             class A { def readwrite foo(val i: int, val a: readwrite A): void {} }
             main { new A.foo(false); }
-        ''').assertError(peppl.methodSelector, null, "too few arguments")
+        ''').assertError(peppl.methodSelector, LINKING_DIAGNOSTIC, "method", "foo")
         
         parse('''
             class Object
             class A { def readwrite foo(val i: int): void {} }
             main { new A.foo(false); }
-        ''').assertError(peppl.booleanLiteral, SUBTYPEEXPRESSION, "boolean", "int")
+        ''').assertError(peppl.methodSelector, LINKING_DIAGNOSTIC, "method", "foo")
         parse('''
             class Object
             class A { def readwrite foo(val a: readwrite A): void {} }
             main { new A.foo(new Object); }
-        ''').assertError(peppl.^new, SUBTYPEEXPRESSION, "A", "Object")
+        ''').assertError(peppl.methodSelector, LINKING_DIAGNOSTIC, "method", "foo")
         parse('''
             class Object
             class A { def readwrite foo(val a: readwrite A): void {} }
             main {
-                val a: readonly A = new A
+                val a: readonly A = new A;
                 new A.foo(a);
             }
-        ''').assertError(peppl.variableRef, SUBTYPEEXPRESSION, "readonly", "A", "readwrite")
+        ''').assertError(peppl.methodSelector, LINKING_DIAGNOSTIC, "method", "foo")
+    }
+    
+    @Test
+    def void testTMemberAccessMethodOverloading() {
+        parse('''
+            class Object
+            class A {
+                def readwrite foo(val a: readonly  A): boolean {}
+                def readwrite foo(val a: readwrite A): int {}
+            }
+            main {
+                val a: readwrite A = new A;
+                new A.foo(a);
+            }
+        ''').main.lastExpr.type.assertThat(instanceOf(Int))
+        
+        parse('''
+            class Object
+            class A {
+                def readwrite foo(val a: readwrite A): int {}
+                def readwrite foo(val a: readonly  A): boolean {}
+            }
+            main {
+                val a: readonly A = new A;
+                new A.foo(a);
+            }
+        ''').main.lastExpr.type.assertThat(instanceOf(Boolean))
     }
     
     @Test 

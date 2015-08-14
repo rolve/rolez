@@ -11,7 +11,6 @@ import ch.trick17.peppl.lang.peppl.ExpressionStatement
 import ch.trick17.peppl.lang.peppl.FieldSelector
 import ch.trick17.peppl.lang.peppl.IfElse
 import ch.trick17.peppl.lang.peppl.IntLiteral
-import ch.trick17.peppl.lang.peppl.LocalVariable
 import ch.trick17.peppl.lang.peppl.MemberAccess
 import ch.trick17.peppl.lang.peppl.Method
 import ch.trick17.peppl.lang.peppl.MethodSelector
@@ -47,6 +46,7 @@ import org.eclipse.xtext.scoping.IScopeProvider
 
 import static ch.trick17.peppl.lang.peppl.Role.*
 import static ch.trick17.peppl.lang.peppl.VarKind.*
+import ch.trick17.peppl.lang.peppl.LocalVariableDecl
 
 system ch.trick17.peppl.lang.typesystem.PepplSystem
 
@@ -331,12 +331,12 @@ from {
     }
 }
 
-rule WLocalVariable
-    G |- LocalVariable v
+rule WLocalVariableDecl
+    G |- LocalVariableDecl d
 from {
-    v.initializer == null
+    d.initializer == null
     or
-    G |- v.initializer <| v.type
+    G |- d.initializer <| d.variable.type
 }
 
 rule WIfElse

@@ -1,7 +1,13 @@
 class SomeImportantClass {
 	val foo: readwrite Account
 	
-	def bar: readonly Account {
-		
+	def inaccessible bar: readonly Account {
+		val a: int;
 	}
+	
+	def readonly bar(val a: int): void {
+		
+		this.bar();
+	}
+	
 }

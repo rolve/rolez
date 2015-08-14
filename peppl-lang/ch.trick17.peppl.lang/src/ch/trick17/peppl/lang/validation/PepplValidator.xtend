@@ -26,7 +26,7 @@ class PepplValidator extends PepplSystemValidator {
     public static val INCORRECT_OVERRIDE = "incorrect override"
     public static val INCOMPATIBLE_RETURN_TYPE = "incompatible return type"
 
-    @Inject private extension PepplSystem system
+    @Inject private extension PepplSystem
     @Inject private extension PepplTypeUtils
 
 	@Check
@@ -44,22 +44,10 @@ class PepplValidator extends PepplSystemValidator {
 	}
 	
 	@Check
-	def checkNoDuplicateMethods(Method method) {
-	    val matching = method.enclosingClass.methods.filter[equalSignature(method)]
-	    if(matching.size < 1)
-	       throw new AssertionError
-	    if(matching.size > 1)
-	       error("Duplicate method " + method.name + "("+ method.params.join(",") + ")",
-	           Literals.NAMED__NAME, DUPLICATE_METHOD)
-	}
-	
-	@Check
 	def checkOverrides(Method method) {
-	    val allMembers = method.enclosingClass.actualSuperclass.allMembers
-        val allMethods = allMembers.filter(Method)
-        val matching = allMethods.filter[
-	               equalSignature(method)
-	           ]
+	    val superMethods = method.enclosingClass.actualSuperclass
+	           .allMembers.filter(Method)
+        val matching = superMethods.filter[equalSignature(method)]
 	    
 	    if(matching.size > 0) {
 	        if(method.overriding) {

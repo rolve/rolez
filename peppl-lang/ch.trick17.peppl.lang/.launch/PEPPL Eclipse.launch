@@ -11,7 +11,7 @@
 <booleanAttribute key="clearConfig" value="false"/>
 <booleanAttribute key="clearws" value="false"/>
 <booleanAttribute key="clearwslog" value="false"/>
-<stringAttribute key="configLocation" value="${workspace_loc}/.metadata/.plugins/org.eclipse.pde.core/Launch PEPPL Eclipse"/>
+<stringAttribute key="configLocation" value="${workspace_loc}/.metadata/.plugins/org.eclipse.pde.core/PEPPL Eclipse"/>
 <booleanAttribute key="default" value="false"/>
 <stringAttribute key="featureDefaultLocation" value="workspace"/>
 <stringAttribute key="featurePluginResolution" value="workspace"/>
@@ -25,16 +25,10 @@
 <stringAttribute key="product" value="org.eclipse.platform.ide"/>
 <setAttribute key="selected_features">
 <setEntry value="ch.trick17.peppl.lang.sdk:default"/>
-<setEntry value="it.xsemantics.doc.feature.source:default"/>
 <setEntry value="it.xsemantics.doc.feature:default"/>
-<setEntry value="it.xsemantics.examples.feature.source:default"/>
 <setEntry value="it.xsemantics.examples.feature:default"/>
-<setEntry value="it.xsemantics.feature.source:default"/>
 <setEntry value="it.xsemantics.feature:default"/>
-<setEntry value="it.xsemantics.implemented.examples.feature:default"/>
-<setEntry value="it.xsemantics.runtime.feature.source:default"/>
 <setEntry value="it.xsemantics.runtime.feature:default"/>
-<setEntry value="it.xsemantics.sdk.source:default"/>
 <setEntry value="it.xsemantics.sdk:default"/>
 <setEntry value="org.eclipse.e4.rcp:default"/>
 <setEntry value="org.eclipse.ecf.core.feature:default"/>
@@ -45,29 +39,13 @@
 <setEntry value="org.eclipse.ecf.filetransfer.ssl.feature:default"/>
 <setEntry value="org.eclipse.emf.common:default"/>
 <setEntry value="org.eclipse.emf.ecore:default"/>
-<setEntry value="org.eclipse.epp.mpc:default"/>
-<setEntry value="org.eclipse.epp.package.common.feature:default"/>
-<setEntry value="org.eclipse.epp.package.java.feature:default"/>
 <setEntry value="org.eclipse.equinox.p2.core.feature:default"/>
-<setEntry value="org.eclipse.equinox.p2.discovery.feature:default"/>
 <setEntry value="org.eclipse.equinox.p2.extras.feature:default"/>
 <setEntry value="org.eclipse.equinox.p2.rcp.feature:default"/>
 <setEntry value="org.eclipse.equinox.p2.user.ui:default"/>
 <setEntry value="org.eclipse.jdt:default"/>
 <setEntry value="org.eclipse.platform:default"/>
-<setEntry value="org.eclipse.rcp.configuration:default"/>
 <setEntry value="org.eclipse.rcp:default"/>
-<setEntry value="org.eclipse.recommenders.rcp.feature:default"/>
-<setEntry value="org.eclipse.wb.core.feature:default"/>
-<setEntry value="org.eclipse.wb.core.java.feature:default"/>
-<setEntry value="org.eclipse.wb.core.ui.feature:default"/>
-<setEntry value="org.eclipse.wb.layout.group.feature:default"/>
-<setEntry value="org.eclipse.wb.swing.feature:default"/>
-<setEntry value="org.eclipse.wst.common_core.feature:default"/>
-<setEntry value="org.eclipse.wst.common_ui.feature:default"/>
-<setEntry value="org.eclipse.wst.xml_core.feature:default"/>
-<setEntry value="org.eclipse.wst.xml_ui.feature:default"/>
-<setEntry value="org.eclipse.wst.xml_userdoc.feature:default"/>
 <setEntry value="org.eclipse.xtend.sdk:default"/>
 <setEntry value="org.eclipse.xtext.docs:default"/>
 <setEntry value="org.eclipse.xtext.examples.source:default"/>
