@@ -12,6 +12,7 @@ import org.junit.runner.RunWith
 import static org.hamcrest.Matchers.*
 
 import static extension org.hamcrest.MatcherAssert.assertThat
+import org.eclipse.xtext.junit4.validation.ValidationTestHelper
 
 @RunWith(XtextRunner)
 @InjectWith(PepplInjectorProvider)
@@ -19,17 +20,32 @@ class PepplParserTest {
     
     @Inject extension ParseHelper<Program>
     @Inject extension PepplTypeUtils
+    @Inject extension ValidationTestHelper
     
     @Test
     def testEmptyClass() {
-        val program = parse("class A")
+        val program = parse("class Object")
         program.elements.size.assertThat(is(1))
         program.classes.size.assertThat(is(1))
         
         val clazz = program.classes.head
-        clazz.name.assertThat(is("A"))
+        clazz.name.assertThat(is("Object"))
         clazz.superclass.assertThat(is(nullValue))
         clazz.members.assertThat(empty)
         clazz.constructors.assertThat(empty) // Why can't I use is(empty) here?
     }
+    
+    @Test
+    def testCast() {
+        parse('''
+            main {
+                (int) 5;
+                (int) (int) 5;
+                ((int) 5);
+                (int) (5);
+                (int) ((int) 5);
+            }
+        ''').assertNoErrors
+    }
+    
 }

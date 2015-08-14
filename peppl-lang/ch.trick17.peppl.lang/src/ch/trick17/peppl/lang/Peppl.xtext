@@ -100,9 +100,12 @@ AdditiveExpression returns Expression:
 enum OpAdditive returns OpArithmetic: PLUS='+' | MINUS='-';
 
 MultiplicativeExpression returns Expression:
-    UnaryMinus ({ArithmeticExpression.left=current} op=OpMultiplicative right=UnaryMinus)*;
+    Cast ({ArithmeticExpression.left=current} op=OpMultiplicative right=Cast)*;
 
 enum OpMultiplicative returns OpArithmetic: TIMES='*' | DIVIDED_BY='/' | MODULO='%';
+
+Cast returns Expression:
+    UnaryMinus | {Cast} '(' type=Type ')' expr=Cast;
 
 UnaryMinus returns Expression:
     UnaryNot | {UnaryMinus} '-' expr=MemberAccess;
