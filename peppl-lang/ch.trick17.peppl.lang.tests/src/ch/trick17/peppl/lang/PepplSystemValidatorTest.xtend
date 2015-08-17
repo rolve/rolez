@@ -82,42 +82,42 @@ class PepplSystemValidatorTest {
                 def readwrite foo: void {}
                 def readwrite foo: void {}
             }
-        ''').assertError(peppl.method, null, "duplicate", "foo")
+        ''').assertError(peppl.method, DUPLICATE_METHOD)
         parse('''
             class Object
             class A {
                 def readwrite foo: int {}
                 def readwrite foo: void {}
             }
-        ''').assertError(peppl.method, null, "duplicate", "foo")
+        ''').assertError(peppl.method, DUPLICATE_METHOD)
         parse('''
             class Object
             class A {
                 def readwrite foo(val i: int): void {}
                 def readwrite foo(val i: int): void {}
             }
-        ''').assertError(peppl.method, null, "duplicate", "foo")
+        ''').assertError(peppl.method, DUPLICATE_METHOD)
         parse('''
             class Object
             class A {
                 def readwrite foo(val i: int): void {}
                 def readwrite foo(val j: int): void {}
             }
-        ''').assertError(peppl.method, null, "duplicate", "foo")
+        ''').assertError(peppl.method, DUPLICATE_METHOD)
         parse('''
             class Object
             class A {
                 def readwrite foo(val a: readwrite A): void {}
                 def readwrite foo(val a: readwrite A): void {}
             }
-        ''').assertError(peppl.method, null, "duplicate", "foo")
+        ''').assertError(peppl.method, DUPLICATE_METHOD)
         parse('''
             class Object
             class A {
                 def readwrite foo(val a: readwrite A): void {}
                 def readwrite foo(val b: readwrite A): void {}
             }
-        ''').assertError(peppl.method, null, "duplicate", "foo")
+        ''').assertError(peppl.method, DUPLICATE_METHOD)
     }
     
     @Test
@@ -238,7 +238,7 @@ class PepplSystemValidatorTest {
                 var a: int
                 val a: boolean
             }
-        ''').assertError(peppl.field, null)
+        ''').assertError(peppl.field, DUPLICATE_FIELD)
     }
     
     @Test
@@ -248,7 +248,7 @@ class PepplSystemValidatorTest {
             class A {
                 def readwrite foo(val a: int, val a: boolean): void {}
             }
-        ''').assertError(peppl.parameter, null)
+        ''').assertError(peppl.parameter, DUPLICATE_VARIABLE)
         
         parse('''
             class Object
@@ -258,7 +258,7 @@ class PepplSystemValidatorTest {
                     val a: boolean;
                 }
             }
-        ''').assertError(peppl.localVariable, null)
+        ''').assertError(peppl.localVariable, DUPLICATE_VARIABLE)
         
         parse('''
             class Object
@@ -267,6 +267,6 @@ class PepplSystemValidatorTest {
                     var a: boolean;
                 }
             }
-        ''').assertError(peppl.parameter, null)
+        ''').assertError(peppl.parameter, DUPLICATE_VARIABLE)
     }
 }

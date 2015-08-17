@@ -3,27 +3,29 @@ package ch.trick17.peppl.lang.typesystem
 import ch.trick17.peppl.lang.peppl.Boolean
 import ch.trick17.peppl.lang.peppl.Char
 import ch.trick17.peppl.lang.peppl.Class
+import ch.trick17.peppl.lang.peppl.Constructor
+import ch.trick17.peppl.lang.peppl.Field
 import ch.trick17.peppl.lang.peppl.Int
+import ch.trick17.peppl.lang.peppl.LocalVariable
+import ch.trick17.peppl.lang.peppl.Main
+import ch.trick17.peppl.lang.peppl.Member
+import ch.trick17.peppl.lang.peppl.Method
 import ch.trick17.peppl.lang.peppl.Null
 import ch.trick17.peppl.lang.peppl.PepplFactory
+import ch.trick17.peppl.lang.peppl.Program
 import ch.trick17.peppl.lang.peppl.Role
 import ch.trick17.peppl.lang.peppl.RoleType
+import ch.trick17.peppl.lang.peppl.Variable
 import ch.trick17.peppl.lang.peppl.Void
 import it.xsemantics.runtime.RuleEnvironment
 import it.xsemantics.runtime.RuleEnvironmentEntry
+import java.util.ArrayList
+import java.util.HashSet
+import java.util.List
+import java.util.Set
 import javax.inject.Inject
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.naming.QualifiedName
-import java.util.List
-import ch.trick17.peppl.lang.peppl.Member
-import java.util.ArrayList
-import java.util.Set
-import ch.trick17.peppl.lang.peppl.Constructor
-import java.util.HashSet
-import ch.trick17.peppl.lang.peppl.Program
-import ch.trick17.peppl.lang.peppl.Main
-import ch.trick17.peppl.lang.peppl.Method
-import ch.trick17.peppl.lang.peppl.Field
 
 /** 
  * Utility functions for types
@@ -99,6 +101,12 @@ class PepplTypeUtils {
         if(result.isEmpty)
             result.add(PepplFactory.eINSTANCE.createConstructor)
         result
+    }
+    
+    def Iterable<Variable> variables(Method m) {
+        val List<Variable> vars = new ArrayList(m.params)
+        vars.addAll(m.body.eAllContents.filter(LocalVariable).toList)
+        vars
     }
     
     def List<Member> allMembers(Class clazz) {
