@@ -7,17 +7,17 @@ import ch.trick17.peppl.lang.peppl.Class
 import ch.trick17.peppl.lang.peppl.Field
 import ch.trick17.peppl.lang.peppl.Method
 import ch.trick17.peppl.lang.peppl.PepplPackage.Literals
-import ch.trick17.peppl.lang.peppl.Variable
+import ch.trick17.peppl.lang.peppl.Program
+import ch.trick17.peppl.lang.peppl.Var
 import ch.trick17.peppl.lang.typesystem.PepplSystem
 import ch.trick17.peppl.lang.typesystem.PepplTypeUtils
 import ch.trick17.peppl.lang.typesystem.validation.PepplSystemValidator
+import java.util.HashSet
+import java.util.Set
 import javax.inject.Inject
-import org.eclipse.xtext.validation.Check
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.EStructuralFeature
-import java.util.Set
-import java.util.HashSet
-import ch.trick17.peppl.lang.peppl.Program
+import org.eclipse.xtext.validation.Check
 
 /**
  * This class contains custom validation rules. 
@@ -42,8 +42,8 @@ class PepplValidator extends PepplSystemValidator {
     @Inject private extension PepplTypeUtils
 
 	@Check
-    def checkClassNameStartsWithCapital(Class clazz) {
-        if(!Character.isUpperCase(clazz.name.charAt(0)))
+    def checkClassNameStartsWithCapital(Class c) {
+        if(!Character.isUpperCase(c.name.charAt(0)))
             warning("Name should start with a capital",
                 Literals.NAMED__NAME, INVALID_NAME)
     }
@@ -93,7 +93,7 @@ class PepplValidator extends PepplSystemValidator {
     }
     
     @Check
-    def checkNoDuplicateVars(Variable v) {
+    def checkNoDuplicateVars(Var v) {
         val matching = v.enclosingMethod.variables.filter[name.equals(v.name)]
         if(matching.size < 1)
            throw new AssertionError

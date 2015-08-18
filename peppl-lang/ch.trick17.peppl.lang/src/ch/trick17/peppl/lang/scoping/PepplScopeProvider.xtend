@@ -6,7 +6,7 @@ import ch.trick17.peppl.lang.peppl.MemberAccess
 import ch.trick17.peppl.lang.peppl.Method
 import ch.trick17.peppl.lang.peppl.MethodSelector
 import ch.trick17.peppl.lang.peppl.RoleType
-import ch.trick17.peppl.lang.peppl.WithParameters
+import ch.trick17.peppl.lang.peppl.WithParams
 import ch.trick17.peppl.lang.typesystem.PepplSystem
 import ch.trick17.peppl.lang.typesystem.PepplTypeUtils
 import ch.trick17.peppl.lang.validation.PepplValidator
@@ -38,7 +38,7 @@ class PepplScopeProvider extends AbstractDeclarativeScopeProvider {
             // Find most specific method, following
             // http://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.12.2
             val applicable = targetType.base.allMembers.filter(Method).filter[
-                name.equals(s.methodName) && system.validArgumentsSucceeded(envFor(s), s, it)
+                name.equals(s.methodName) && system.validArgsSucceeded(envFor(s), s, it)
             ].toList
             
             val maximallySpecific = applicable.filter[m |
@@ -58,11 +58,11 @@ class PepplScopeProvider extends AbstractDeclarativeScopeProvider {
             IScope.NULLSCOPE;
     }
     
-    private def strictlyMoreSpecificThan(WithParameters target, WithParameters other) {
+    private def strictlyMoreSpecificThan(WithParams target, WithParams other) {
         target.moreSpecificThan(other) && !other.moreSpecificThan(target)
     }
     
-    private def moreSpecificThan(WithParameters target, WithParameters other) {
+    private def moreSpecificThan(WithParams target, WithParams other) {
         // Assume both targets have the same number of parameters
         val i = other.params.iterator
         target.params.forall[system.subtypeSucceeded(envFor(target), it.type, i.next.type)]

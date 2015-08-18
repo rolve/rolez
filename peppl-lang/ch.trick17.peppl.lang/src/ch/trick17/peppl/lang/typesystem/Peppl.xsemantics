@@ -1,15 +1,15 @@
-import ch.trick17.peppl.lang.peppl.ArithmeticExpression
+import ch.trick17.peppl.lang.peppl.ArithmeticExpr
 import ch.trick17.peppl.lang.peppl.Assignment
 import ch.trick17.peppl.lang.peppl.Block
-import ch.trick17.peppl.lang.peppl.BooleanExpression
+import ch.trick17.peppl.lang.peppl.BooleanExpr
 import ch.trick17.peppl.lang.peppl.BooleanLiteral
 import ch.trick17.peppl.lang.peppl.CharLiteral
 import ch.trick17.peppl.lang.peppl.Class
-import ch.trick17.peppl.lang.peppl.EqualityExpression
-import ch.trick17.peppl.lang.peppl.Expression
-import ch.trick17.peppl.lang.peppl.ExpressionStatement
+import ch.trick17.peppl.lang.peppl.EqualityExpr
+import ch.trick17.peppl.lang.peppl.Expr
+import ch.trick17.peppl.lang.peppl.ExprStmt
 import ch.trick17.peppl.lang.peppl.FieldSelector
-import ch.trick17.peppl.lang.peppl.IfElse
+import ch.trick17.peppl.lang.peppl.IfStmt
 import ch.trick17.peppl.lang.peppl.IntLiteral
 import ch.trick17.peppl.lang.peppl.MemberAccess
 import ch.trick17.peppl.lang.peppl.Method
@@ -23,20 +23,20 @@ import ch.trick17.peppl.lang.peppl.PepplPackage
 import ch.trick17.peppl.lang.peppl.PrimitiveType
 import ch.trick17.peppl.lang.peppl.Program
 import ch.trick17.peppl.lang.peppl.ReferenceType
-import ch.trick17.peppl.lang.peppl.RelationalExpression
+import ch.trick17.peppl.lang.peppl.RelationalExpr
 import ch.trick17.peppl.lang.peppl.Return
 import ch.trick17.peppl.lang.peppl.Role
 import ch.trick17.peppl.lang.peppl.RoleType
-import ch.trick17.peppl.lang.peppl.Statement
+import ch.trick17.peppl.lang.peppl.Stmt
 import ch.trick17.peppl.lang.peppl.StringLiteral
 import ch.trick17.peppl.lang.peppl.This
 import ch.trick17.peppl.lang.peppl.Type
 import ch.trick17.peppl.lang.peppl.UnaryMinus
 import ch.trick17.peppl.lang.peppl.UnaryNot
-import ch.trick17.peppl.lang.peppl.VariableRef
+import ch.trick17.peppl.lang.peppl.VarRef
 import ch.trick17.peppl.lang.peppl.WhileLoop
-import ch.trick17.peppl.lang.peppl.WithArguments
-import ch.trick17.peppl.lang.peppl.WithParameters
+import ch.trick17.peppl.lang.peppl.WithArgs
+import ch.trick17.peppl.lang.peppl.WithParams
 import ch.trick17.peppl.lang.validation.AbstractPepplValidator
 import java.util.Set
 import org.eclipse.emf.ecore.EObject
@@ -45,7 +45,7 @@ import org.eclipse.xtext.scoping.IGlobalScopeProvider
 
 import static ch.trick17.peppl.lang.peppl.Role.*
 import static ch.trick17.peppl.lang.peppl.VarKind.*
-import ch.trick17.peppl.lang.peppl.LocalVariableDecl
+import ch.trick17.peppl.lang.peppl.LocalVarDecl
 import ch.trick17.peppl.lang.peppl.Cast
 
 system ch.trick17.peppl.lang.typesystem.PepplSystem
@@ -66,11 +66,12 @@ auxiliary {
 }
 
 judgments {
-    type      |- Expression expr : output Type
-    wellTyped |- Statement s
+    type      |- Expr e : output Type
+    wellTyped |- Stmt s
     
-    validArguments |- WithArguments a << WithParameters p
-    subtypeExpression |- Expression left              <| Type right
+    validArgs |- WithArgs a << WithParams p
+    
+    subtypeExpr |- Expr left <| Type right
         error "Type mismatch: " + left.type.value.stringRep + " is not a subtype of " + right.stringRep
         source left
     
@@ -80,9 +81,9 @@ judgments {
     
     equalType |- Type left ~~ Type right
     
-    assignable |= Expression expr
-        error "Cannot assign to " + expr.stringRep
-        source expr
+    assignable |= Expr e
+        error "Cannot assign to " + e.stringRep
+        source e
 }
 
 auxiliary leastCommonSuperrole(Role r1, Role r2) {
@@ -113,28 +114,22 @@ auxiliary strictSuperclasses(Class c) {
     result
 }
 
-auxiliary enclosingMethod(Method method) {
-    method
-}
+auxiliary enclosingMethod(Method m) { m }
 
 auxiliary enclosingMethod(EObject object) {
     object?.eContainer?.enclosingMethod
 }
 
-auxiliary enclosingClass(Class clazz) {
-    clazz
+auxiliary enclosingClass(Class c) { c }
+
+auxiliary enclosingClass(EObject o) {
+    o?.eContainer?.enclosingClass
 }
 
-auxiliary enclosingClass(EObject object) {
-    object?.eContainer?.enclosingClass
-}
+auxiliary enclosingProgram(Program p) { p }
 
-auxiliary enclosingProgram(Program program) {
-    program
-}
-
-auxiliary enclosingProgram(EObject object) {
-    object?.eContainer?.enclosingProgram
+auxiliary enclosingProgram(EObject o) {
+    o?.eContainer?.enclosingProgram
 }
 
 auxiliary findClass(QualifiedName name, EObject context) {
@@ -152,15 +147,15 @@ from {
     t = leftType
 }
 
-rule TBooleanExpression
-    G |- BooleanExpression e : booleanType
+rule TBooleanExpr
+    G |- BooleanExpr e : booleanType
 from {
     G |- e.left  <| booleanType
     G |- e.right <| booleanType
 }
 
-rule TEqualityExpression
-    G |- EqualityExpression e : booleanType
+rule TEqualityExpr
+    G |- EqualityExpr e : booleanType
 from {
     G |- e.left  : var Type leftType
     G |- e.right : var Type rightType
@@ -174,8 +169,8 @@ from {
         source e
 }
 
-rule TRelationalExpression
-    G |- RelationalExpression e : booleanType
+rule TRelationalExpr
+    G |- RelationalExpr e : booleanType
 from {
     G |- e.left  : var Type leftType
     G |- e.right : var Type rightType
@@ -195,8 +190,8 @@ from {
         source e
 }
 
-rule TArithmeticExpression
-    G |- ArithmeticExpression e : Type t
+rule TArithmeticExpr
+    G |- ArithmeticExpr e : Type t
 from {
     G |- e.left  : var Type leftType
     G |- e.right : var Type rightType
@@ -298,8 +293,8 @@ from {
     type = env(G, "this", RoleType)
 }
 
-axiom TVariableRef
-    G |- VariableRef r : r.variable.type
+axiom TVarRef
+    G |- VarRef r : r.variable.type
 
 rule TNew
     G |- New n : roleType(READWRITE, n.clazz)
@@ -339,13 +334,13 @@ axiom TCharLiteral
 rule WBlock
     G |- Block b
 from {
-    for(s : b.statements) {
+    for(s : b.stmts) {
         G |- s
     }
 }
 
-rule WLocalVariableDecl
-    G |- LocalVariableDecl d
+rule WLocalVarDecl
+    G |- LocalVarDecl d
 from {
     d.initializer == null
     or
@@ -353,14 +348,14 @@ from {
 }
 
 rule WIfElse
-    G |- IfElse ifElse
+    G |- IfStmt ifStmt
 from {
-    G |- ifElse.^condition : booleanType
-    G |- ifElse.thenPart
+    G |- ifStmt.^condition : booleanType
+    G |- ifStmt.thenPart
     
-    ifElse.elsePart == null
+    ifStmt.elsePart == null
     or
-    G |- ifElse.elsePart
+    G |- ifStmt.elsePart
 }
 
 rule WWhileLoop
@@ -376,15 +371,15 @@ from {
     G |- r.expr <| r.enclosingMethod.type
 }
 
-rule WExpressionStatement
-    G |- ExpressionStatement s
+rule WExprStmt
+    G |- ExprStmt s
 from {
     G |- s.expr : var Type t
 }
 
 
-rule ValidArguments
-    G |- WithArguments a << WithParameters p
+rule ValidArgs
+    G |- WithArgs a << WithParams p
 from {
     a.args.size >= p.params.size or fail
         error "Too few arguments"
@@ -400,8 +395,8 @@ from {
 }
 
 
-rule SubtypeExpression
-    G |- Expression left <| Type right
+rule SubtypeExpr
+    G |- Expr left <| Type right
 from {
     G |- left : var Type leftType
     G |- leftType <: right
@@ -464,8 +459,8 @@ rule EqualTypeGeneral
 from { fail }
 
 
-rule AVariableRef
-    G |= VariableRef r
+rule AVarRef
+    G |= VarRef r
     error "Cannot assign to a value"
     source r
 from {
@@ -484,13 +479,13 @@ from {
         error "Cannot assign to field of " + type.role + " object" source a
 }
 
-rule AExpression
-    G |= Expression __
+rule AExpr
+    G |= Expr __
 from { fail }
 
 
-checkrule CheckStatements for
-    Statement s
+checkrule CheckStmts for
+    Stmt s
 from {
     val class = s.enclosingClass
     if(class == null) {

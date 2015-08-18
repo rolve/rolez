@@ -23,7 +23,7 @@ Member:
     Field | Method;
 
 Constructor:
-    'new' ('(' params+=Parameter (',' params+=Parameter)* ')')? body=Block;
+    'new' ('(' params+=Param (',' params+=Param)* ')')? body=Block;
 
 Field:
     kind=VarKind name=ID ':' type=Type;
@@ -34,87 +34,87 @@ enum VarKind:
 Method:
     (overriding?='override' | 'def')
     thisRole=Role name=ID
-    ('(' params+=Parameter (',' params+=Parameter)* ')')?
+    ('(' params+=Param (',' params+=Param)* ')')?
     ':' type=Type
     body=Block;
 
-Parameter:
+Param:
     kind=Val name=ID ':' type=Type;
 
 enum Val returns VarKind: VAL='val';
 
 Block:
-    {Block} '{' (statements+=Statement)* '}';
+    {Block} '{' (stmts+=Stmt)* '}';
 
-Statement:
-    Block | LocalVariableDecl | IfElse | WhileLoop | Return | ExpressionStatement;
+Stmt:
+    Block | LocalVarDecl | IfStmt | WhileLoop | Return | ExprStmt;
 
-LocalVariableDecl:
-    variable=LocalVariable ('=' initializer=Expression)? ';';
+LocalVarDecl:
+    variable=LocalVar ('=' initializer=Expr)? ';';
 
-LocalVariable:
+LocalVar:
     kind=VarKind name=ID ':' type=Type;
 
-IfElse:
-    'if' '(' condition=Expression ')' thenPart=Statement
-    (=>'else' elsePart=Statement)?;
+IfStmt:
+    'if' '(' condition=Expr ')' thenPart=Stmt
+    (=>'else' elsePart=Stmt)?;
 
 WhileLoop:
-    'while' '(' condition=Expression ')' body=Statement;
+    'while' '(' condition=Expr ')' body=Stmt;
 
 Return:
-    'return' expr=Expression ';';
+    'return' expr=Expr ';';
 
-ExpressionStatement:
-    expr=Expression ';';
+ExprStmt:
+    expr=Expr ';';
 
-Expression:
+Expr:
     Assignment;
 
-Assignment returns Expression:
-    OrExpression ({Assignment.left=current} '=' right=Expression)?;
+Assignment returns Expr:
+    OrExpr ({Assignment.left=current} '=' right=Expr)?;
 
-OrExpression returns Expression:
-    AndExpression ({BooleanExpression.left=current} op=OpOr right=AndExpression)?;
+OrExpr returns Expr:
+    AndExpr ({BooleanExpr.left=current} op=OpOr right=AndExpr)?;
 
 enum OpOr returns OpBoolean: OR='||';
 
-AndExpression returns Expression:
-    EqualityExpression ({BooleanExpression.left=current} op=OpAnd right=EqualityExpression)?;
+AndExpr returns Expr:
+    EqualityExpr ({BooleanExpr.left=current} op=OpAnd right=EqualityExpr)?;
 
 enum OpAnd returns OpBoolean: AND='&&';
 
-EqualityExpression returns Expression:
-    RelationalExpression ({EqualityExpression.left=current} op=OpEquality right=RelationalExpression)?;
+EqualityExpr returns Expr:
+    RelationalExpr ({EqualityExpr.left=current} op=OpEquality right=RelationalExpr)?;
 
 enum OpEquality: EQUALS='==' | NOT_EQUALS='!=';
 
-RelationalExpression returns Expression:
-    AdditiveExpression ({RelationalExpression.left=current} op=OpRelational right=AdditiveExpression)?;
+RelationalExpr returns Expr:
+    AdditiveExpr ({RelationalExpr.left=current} op=OpRelational right=AdditiveExpr)?;
 
 enum OpRelational: SMALLER='<' | GREATER='>' | SMALLER_EQUALS='<=' | GREATER_EQUALS='>=';
 
-AdditiveExpression returns Expression:
-    MultiplicativeExpression ({ArithmeticExpression.left=current} op=OpAdditive right=MultiplicativeExpression)*;
+AdditiveExpr returns Expr:
+    MultiplicativeExpr ({ArithmeticExpr.left=current} op=OpAdditive right=MultiplicativeExpr)*;
 
 enum OpAdditive returns OpArithmetic: PLUS='+' | MINUS='-';
 
-MultiplicativeExpression returns Expression:
-    Cast ({ArithmeticExpression.left=current} op=OpMultiplicative right=Cast)*;
+MultiplicativeExpr returns Expr:
+    Cast ({ArithmeticExpr.left=current} op=OpMultiplicative right=Cast)*;
 
 enum OpMultiplicative returns OpArithmetic: TIMES='*' | DIVIDED_BY='/' | MODULO='%';
 
-Cast returns Expression:
+Cast returns Expr:
     UnaryMinus | {Cast} '(' type=Type ')' expr=Cast;
 
-UnaryMinus returns Expression:
+UnaryMinus returns Expr:
     UnaryNot | {UnaryMinus} '-' expr=MemberAccess;
 
-UnaryNot returns Expression:
+UnaryNot returns Expr:
     MemberAccess | {UnaryNot} '!' expr=MemberAccess;
 
-MemberAccess returns Expression:
-    SimpleExpression
+MemberAccess returns Expr:
+    SimpleExpr
     (
         '.' {MemberAccess.target=current} selector=Selector
     )*;
@@ -123,18 +123,18 @@ Selector: FieldSelector | MethodSelector;
 
 FieldSelector: field=[Field];
 
-MethodSelector: method=[Method] '(' (args+=Expression (',' args+=Expression)*)? ')';
+MethodSelector: method=[Method] '(' (args+=Expr (',' args+=Expr)*)? ')';
 
-SimpleExpression returns Expression:
-    {This} 'this' | VariableRef | New | Parenthesized | Literal;
+SimpleExpr returns Expr:
+    {This} 'this' | VarRef | New | Parenthesized | Literal;
 
-VariableRef: variable=[Variable];
+VarRef: variable=[Var];
 
 New:
     'new' clazz=[Class]
-    ('(' args+=Expression (',' args+=Expression)* ')')?;
+    ('(' args+=Expr (',' args+=Expr)* ')')?;
 
-Parenthesized: '(' expr=Expression ')';
+Parenthesized: '(' expr=Expr ')';
 
 Literal:
     StringLiteral | {NullLiteral} 'null' | IntLiteral | BooleanLiteral | CharLiteral;
@@ -171,20 +171,20 @@ terminal NULL_TYPE: 'Null';
 enum Role:
     READWRITE='readwrite' | READONLY='readonly' | INACCESSIBLE='inaccessible';
 
-Variable:
-    LocalVariable | => Parameter; // => only needed to avoid warnings. Rule is not used anyway.
+Var:
+    LocalVar | => Param; // => only needed to avoid warnings. Rule is not used anyway.
 
 Named:
     Class | Typed;
 
 Typed:
-    Member | => Variable; // => only needed to avoid warnings. Rule is not used anyway.
+    Member | => Var; // => only needed to avoid warnings. Rule is not used anyway.
 
 WithBlock:
-    Main | WithParameters;
+    Main | WithParams;
 
-WithParameters:
+WithParams:
     Constructor | Method;
 
-WithArguments:
+WithArgs:
     New | MethodSelector;

@@ -248,7 +248,7 @@ class PepplSystemValidatorTest {
             class A {
                 def readwrite foo(val a: int, val a: boolean): void {}
             }
-        ''').assertError(peppl.parameter, DUPLICATE_VARIABLE)
+        ''').assertError(peppl.param, DUPLICATE_VARIABLE)
         
         parse('''
             class Object
@@ -258,7 +258,7 @@ class PepplSystemValidatorTest {
                     val a: boolean;
                 }
             }
-        ''').assertError(peppl.localVariable, DUPLICATE_VARIABLE)
+        ''').assertError(peppl.localVar, DUPLICATE_VARIABLE)
         
         parse('''
             class Object
@@ -267,6 +267,6 @@ class PepplSystemValidatorTest {
                     var a: boolean;
                 }
             }
-        ''').assertError(peppl.parameter, DUPLICATE_VARIABLE)
+        ''').assertError(peppl.param, DUPLICATE_VARIABLE)
     }
 }

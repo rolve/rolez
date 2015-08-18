@@ -6,7 +6,7 @@ import ch.trick17.peppl.lang.peppl.Class
 import ch.trick17.peppl.lang.peppl.Constructor
 import ch.trick17.peppl.lang.peppl.Field
 import ch.trick17.peppl.lang.peppl.Int
-import ch.trick17.peppl.lang.peppl.LocalVariable
+import ch.trick17.peppl.lang.peppl.LocalVar
 import ch.trick17.peppl.lang.peppl.Main
 import ch.trick17.peppl.lang.peppl.Member
 import ch.trick17.peppl.lang.peppl.Method
@@ -17,7 +17,7 @@ import ch.trick17.peppl.lang.peppl.PepplPackage
 import ch.trick17.peppl.lang.peppl.Program
 import ch.trick17.peppl.lang.peppl.Role
 import ch.trick17.peppl.lang.peppl.RoleType
-import ch.trick17.peppl.lang.peppl.Variable
+import ch.trick17.peppl.lang.peppl.Var
 import ch.trick17.peppl.lang.peppl.Void
 import it.xsemantics.runtime.RuleEnvironment
 import it.xsemantics.runtime.RuleEnvironmentEntry
@@ -74,8 +74,8 @@ class PepplTypeUtils {
         QualifiedName.create("String")
     }
     
-    def envFor(EObject e) {
-        val method = e.enclosingMethod
+    def envFor(EObject o) {
+        val method = o.enclosingMethod
         if(method == null)
             new RuleEnvironment
         else {
@@ -84,32 +84,32 @@ class PepplTypeUtils {
         }
     }
     
-    def Main main(Program program) {
-        program.elements.filter(Main).head
+    def Main main(Program p) {
+        p.elements.filter(Main).head
     }
     
-    def Iterable<Class> classes(Program program) {
-        program.elements.filter(Class)
+    def Iterable<Class> classes(Program p) {
+        p.elements.filter(Class)
     }
     
-    def Iterable<Method> methods(Class clazz) {
-        clazz.members.filter(Method)
+    def Iterable<Method> methods(Class c) {
+        c.members.filter(Method)
     }
     
-    def Iterable<Field> fields(Class clazz) {
-        clazz.members.filter(Field)
+    def Iterable<Field> fields(Class c) {
+        c.members.filter(Field)
     }
     
-    def Set<Constructor> allConstructors(Class clazz) {
-        val result = new HashSet(clazz.constructors)
+    def Set<Constructor> allConstructors(Class c) {
+        val result = new HashSet(c.constructors)
         if(result.isEmpty)
             result.add(PepplFactory.eINSTANCE.createConstructor)
         result
     }
     
-    def Iterable<Variable> variables(Method m) {
-        val List<Variable> vars = new ArrayList(m.params)
-        vars.addAll(m.body.eAllContents.filter(LocalVariable).toList)
+    def Iterable<Var> variables(Method m) {
+        val List<Var> vars = new ArrayList(m.params)
+        vars.addAll(m.body.eAllContents.filter(LocalVar).toList)
         vars
     }
     
@@ -139,7 +139,7 @@ class PepplTypeUtils {
         result
     }
     
-    def refText(EObject object, EReference ref, int index) {
-        NodeModelUtils.findNodesForFeature(object, ref).get(index).text
+    def refText(EObject o, EReference ref, int index) {
+        NodeModelUtils.findNodesForFeature(o, ref).get(index).text
     }
 }
