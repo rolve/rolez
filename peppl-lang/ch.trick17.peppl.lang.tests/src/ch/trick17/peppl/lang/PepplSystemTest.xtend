@@ -26,8 +26,9 @@ import org.junit.runner.RunWith
 
 import static ch.trick17.peppl.lang.peppl.Role.*
 import static ch.trick17.peppl.lang.typesystem.PepplSystem.*
-import static org.hamcrest.Matchers.*
+import static ch.trick17.peppl.lang.validation.PepplValidator.*
 import static org.eclipse.xtext.diagnostics.Diagnostic.*
+import static org.hamcrest.Matchers.*
 
 import static extension org.hamcrest.MatcherAssert.assertThat
 
@@ -47,7 +48,7 @@ class PepplSystemTest {
         val program = parse('''
             class Object
             class A
-            class B extends A
+            class B extends A 
             main {
                 var a: readwrite A;
                 a = new B;
@@ -268,6 +269,71 @@ class PepplSystemTest {
             .assertError(peppl.arithmeticExpression, null, "operator", "undefined", "int", "char")
         parse("main { true % '5'; }")
             .assertError(peppl.arithmeticExpression, null, "operator", "undefined", "boolean", "char")
+    }
+    
+    @Test
+    def void testCast() {
+        // Redundant casts
+        parse("main { (int) 5; }").main.lastExpr.type.assertThat(instanceOf(Int))
+        parse("main { (boolean) true; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
+        
+        var program = parse('''
+            class Object
+            main { (readwrite Object) new Object; }
+        ''')
+        program.main.lastExpr.type.assertThat(roleType(READWRITE, program.findClass("Object")))
+        
+        // Upcasts
+        program = parse('''
+            class Object
+            class A
+            main {
+                (readwrite Object) new A;
+                (readonly A) new A;
+                (readwrite A) null;
+            }
+        ''')
+        program.main.expr(0).type.assertThat(roleType(READWRITE, program.findClass("Object")))
+        program.main.expr(1).type.assertThat(roleType(READONLY,  program.findClass("A")))
+        program.main.expr(2).type.assertThat(roleType(READWRITE, program.findClass("A")))
+        
+        // Downcasts
+        program = parse('''
+            class Object
+            class A
+            main { (readwrite A) new Object; }
+        ''')
+        program.main.lastExpr.type.assertThat(roleType(READWRITE, program.findClass("A")))
+    }
+    
+    @Test
+    def void testTCastErrorInOp() {
+        parse("main { (boolean) !5; }")
+            .assertError(peppl.intLiteral, SUBTYPEEXPRESSION, "int", "boolean")
+    }
+    
+    @Test
+    def void testTCastIllegal() {
+        parse("main { (boolean) 5; }")
+            .assertError(peppl.cast, null, "cast", "int", "boolean")
+        parse("main { (int) false; }")
+            .assertError(peppl.cast, null, "cast", "int", "boolean")
+        parse("main { (int) null; }")
+            .assertError(peppl.cast, null, "cast", "int", "null")
+        
+        parse('''
+            class Object
+            main { (readwrite Object) 5; }
+        ''').assertError(peppl.cast, null, "cast", "readwrite Object", "int")
+        parse('''
+            class Object
+            main { (int) new Object; }
+        ''').assertError(peppl.cast, null, "cast", "readwrite Object", "int")
+        parse('''
+            class Object
+            class A
+            main { (readwrite A) (readonly A) new A; }
+        ''').assertError(peppl.cast, null, "cast", "readwrite A", "readonly A")
     }
     
     @Test
@@ -536,29 +602,109 @@ class PepplSystemTest {
     
     @Test
     def void testTMemberAccessMethodOverloading() {
-        parse('''
+        var program = parse('''
+            class Object
+            class A {
+                def readwrite foo(val a: int): int {}
+                def readwrite foo(val a: boolean): boolean {}
+            }
+            main {
+                new A.foo(4);
+                new A.foo(true);
+            }
+        ''')
+        program.main.expr(0).type.assertThat(instanceOf(Int))
+        program.main.expr(1).type.assertThat(instanceOf(Boolean))
+        
+        program = parse('''
+            class Object
+            class A {
+                def readwrite foo(val a: readwrite A): int {}
+                def readwrite foo(val a: readonly  A): boolean {}
+            }
+            main {
+                new A.foo(new A);
+                new A.foo((readonly A) new A);
+            }
+        ''')
+        program.main.expr(0).type.assertThat(instanceOf(Int))
+        program.main.expr(1).type.assertThat(instanceOf(Boolean))
+        
+        // (Switch order of declaration to rule out accidental selection of the correct one)
+        program = parse('''
             class Object
             class A {
                 def readwrite foo(val a: readonly  A): boolean {}
                 def readwrite foo(val a: readwrite A): int {}
             }
             main {
-                val a: readwrite A = new A;
-                new A.foo(a);
+                new A.foo(new A);
+                new A.foo((readonly A) new A);
             }
-        ''').main.lastExpr.type.assertThat(instanceOf(Int))
+        ''')
+        program.main.expr(0).type.assertThat(instanceOf(Int))
+        program.main.expr(1).type.assertThat(instanceOf(Boolean))
+        
+        program = parse('''
+            class Object
+            class A {
+                def readwrite foo(val a: readonly  A, val b: readonly  A): boolean {}
+                def readwrite foo(val a: readwrite A, val b: readwrite A): int {}
+            }
+            main {
+                new A.foo(new A, new A);
+                new A.foo((readonly A) new A, new A);
+                new A.foo(new A, (readonly A) new A);
+                new A.foo((readonly A) new A, (readonly A) new A);
+            }
+        ''')
+        program.main.expr(0).type.assertThat(instanceOf(Int))
+        program.main.expr(1).type.assertThat(instanceOf(Boolean))
+        program.main.expr(1).type.assertThat(instanceOf(Boolean))
+        program.main.expr(1).type.assertThat(instanceOf(Boolean))
+        
+        program = parse('''
+            class Object
+            class A {
+                def readwrite foo(val a: readwrite A, val b: readwrite A): int {}
+                def readwrite foo(val a: readonly  A, val b: readonly  A): boolean {}
+            }
+            main {
+                new A.foo(new A, new A);
+                new A.foo((readonly A) new A, new A);
+                new A.foo(new A, (readonly A) new A);
+                new A.foo((readonly A) new A, (readonly A) new A);
+            }
+        ''')
+        program.main.expr(0).type.assertThat(instanceOf(Int))
+        program.main.expr(1).type.assertThat(instanceOf(Boolean))
+        program.main.expr(1).type.assertThat(instanceOf(Boolean))
+        program.main.expr(1).type.assertThat(instanceOf(Boolean))
+    }
+    
+    @Test
+    def void testTMemberAccessMethodAmbiguous() {
+        parse('''
+            class Object
+            class A {
+                def readwrite foo(val a: readonly  A, val b: readwrite A): void {}
+                def readwrite foo(val a: readwrite A, val b: readonly  A): void {}
+            }
+            main {
+                new A.foo(new A, new A);
+            }
+        ''').assertError(peppl.methodSelector, AMBIGUOUS_CALL)
         
         parse('''
             class Object
             class A {
-                def readwrite foo(val a: readwrite A): int {}
-                def readwrite foo(val a: readonly  A): boolean {}
+                def readwrite foo(val a: readwrite Object, val b: readwrite A): void {}
+                def readwrite foo(val a: readwrite A, val b: readwrite Object): void {}
             }
             main {
-                val a: readonly A = new A;
-                new A.foo(a);
+                new A.foo(new A, new A);
             }
-        ''').main.lastExpr.type.assertThat(instanceOf(Boolean))
+        ''').assertError(peppl.methodSelector, AMBIGUOUS_CALL)
     }
     
     @Test 
@@ -630,9 +776,14 @@ class PepplSystemTest {
         result
     }
     
+    def expr(WithBlock b, int i) {
+        b.assertNoErrors;
+        b.body.statements.filter(ExpressionStatement).get(i).expr
+    }
+    
     def lastExpr(WithBlock b) {
         b.assertNoErrors;
-        (b.body.statements.last as ExpressionStatement).expr
+        b.body.statements.filter(ExpressionStatement).last.expr
     }
     
     def type(Expression expr) {
@@ -647,15 +798,17 @@ class PepplSystemTest {
     }
     
     def Matcher<Type> roleType(Role role, Class clazz) {
-        new RoleTypeMatcher(role, clazz)
+        new RoleTypeMatcher(system, role, clazz)
     }
     
     static class RoleTypeMatcher extends BaseMatcher<Type> {
         
+        extension PepplSystem system
         val Role role
         val Class clazz
     
-        new(Role role, Class clazz) {
+        new(PepplSystem system, Role role, Class clazz) {
+            this.system = system;
             this.role = role
             this.clazz = clazz
         }
@@ -668,7 +821,12 @@ class PepplSystemTest {
         }
         
         override describeTo(Description description) {
-            throw new UnsupportedOperationException
+            description.appendText(role.literal + " " + clazz.name)
         }
+        
+        override describeMismatch(Object item, Description description) {
+            description.appendText(item.stringRep)
+        }
+        
     }
 }

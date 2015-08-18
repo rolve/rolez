@@ -10,8 +10,10 @@ import ch.trick17.peppl.lang.peppl.LocalVariable
 import ch.trick17.peppl.lang.peppl.Main
 import ch.trick17.peppl.lang.peppl.Member
 import ch.trick17.peppl.lang.peppl.Method
+import ch.trick17.peppl.lang.peppl.MethodSelector
 import ch.trick17.peppl.lang.peppl.Null
 import ch.trick17.peppl.lang.peppl.PepplFactory
+import ch.trick17.peppl.lang.peppl.PepplPackage
 import ch.trick17.peppl.lang.peppl.Program
 import ch.trick17.peppl.lang.peppl.Role
 import ch.trick17.peppl.lang.peppl.RoleType
@@ -25,7 +27,9 @@ import java.util.List
 import java.util.Set
 import javax.inject.Inject
 import org.eclipse.emf.ecore.EObject
+import org.eclipse.emf.ecore.EReference
 import org.eclipse.xtext.naming.QualifiedName
+import org.eclipse.xtext.nodemodel.util.NodeModelUtils
 
 /** 
  * Utility functions for types
@@ -109,23 +113,33 @@ class PepplTypeUtils {
         vars
     }
     
-    def List<Member> allMembers(Class clazz) {
-        if(clazz.actualSuperclass == null)
-            emptyList
-        else {
-            val result = new ArrayList(clazz.members)
-            result.addAll(clazz.actualSuperclass.allMembers)
-            result
-        }
+    def List<Member> allMembers(Class c) {
+        val result = new ArrayList(c.members)
+        if(c.actualSuperclass != null)
+            result.addAll(c.actualSuperclass.allMembers)
+        result
     }
     
+    /**
+     * Returns <code>true</code> if the name and the types of the parameters of
+     * the two given methods are the same. Note that the "this role" is ignored,
+     * just as is the containing class.
+     */
     def equalSignature(Method left, Method right) {
         val i = right.params.map[type].iterator
         left.name.equals(right.name)
-            && left.thisRole.equals(right.thisRole)
             && left.params.size == right.params.size
             && left.params.map[type].forall[
                 !equalType(envFor(left), it, i.next).failed
             ]
+    }
+    
+    def methodName(MethodSelector s) {
+        val result = refText(s, PepplPackage.Literals.METHOD_SELECTOR__METHOD, 0)
+        result
+    }
+    
+    def refText(EObject object, EReference ref, int index) {
+        NodeModelUtils.findNodesForFeature(object, ref).get(index).text
     }
 }

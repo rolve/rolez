@@ -42,23 +42,22 @@ import java.util.Set
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.naming.QualifiedName
 import org.eclipse.xtext.scoping.IGlobalScopeProvider
-import org.eclipse.xtext.scoping.IScopeProvider
 
 import static ch.trick17.peppl.lang.peppl.Role.*
 import static ch.trick17.peppl.lang.peppl.VarKind.*
 import ch.trick17.peppl.lang.peppl.LocalVariableDecl
+import ch.trick17.peppl.lang.peppl.Cast
 
 system ch.trick17.peppl.lang.typesystem.PepplSystem
 
 validatorExtends AbstractPepplValidator
 
 inject extension PepplTypeUtils __
-inject IScopeProvider scopeProv
 inject IGlobalScopeProvider globalScopeProv
 
 auxiliary {
     leastCommonSuperrole(Role r1, Role r2): Role
-    actualSuperclass(Class clazz): Class cached
+    actualSuperclass(Class clazz): Class
     strictSuperclasses(Class clazz): Set<Class> cached
     enclosingMethod(EObject object): Method
     enclosingClass(EObject object): Class
@@ -90,26 +89,26 @@ auxiliary leastCommonSuperrole(Role r1, Role r2) {
     if(r1.value > r2.value) r1 else r2 // Very simple so far
 }
 
-auxiliary actualSuperclass(Class clazz) {
-    val objectClass = findClass(objectClassName, clazz)
-    if(clazz == objectClass)
+auxiliary actualSuperclass(Class c) {
+    val objectClass = findClass(objectClassName, c)
+    if(c == objectClass)
         null
-    else if(clazz.superclass == null)
+    else if(c.superclass == null)
         objectClass
     else
-        clazz.superclass
+        c.superclass
 }
 
-auxiliary strictSuperclasses(Class clazz) {
+auxiliary strictSuperclasses(Class c) {
     val result = getAll(
-        clazz,
+        c,
         PepplPackage.eINSTANCE.class_Superclass,
         PepplPackage.eINSTANCE.class_Superclass,
         Class
     ).toSet
     
-    val object = findClass(objectClassName, clazz)
-    if(clazz != object && object != null)
+    val object = findClass(objectClassName, c)
+    if(c != object && object != null)
         result.add(object)
     result
 }
@@ -139,13 +138,8 @@ auxiliary enclosingProgram(EObject object) {
 }
 
 auxiliary findClass(QualifiedName name, EObject context) {
-    var result = scopeProv.getScope(context, PepplPackage.eINSTANCE.class_Superclass)
+    globalScopeProv.getScope(context.eResource, PepplPackage.eINSTANCE.class_Superclass, [true])
         .getSingleElement(name)?.EObjectOrProxy as Class
-    if(result != null)
-        result
-    else
-        globalScopeProv.getScope(context.eResource, PepplPackage.eINSTANCE.class_Superclass, [true])
-            .getSingleElement(name)?.EObjectOrProxy as Class
 }
 
 
@@ -226,6 +220,26 @@ from {
         source e
 }
 
+rule TCast
+    G |- Cast c : Type t
+from {
+    G |- c.expr : var Type exprType
+    
+    G |- exprType <: c.type // Upcasts are always fine
+    or
+    {
+        c.type instanceof RoleType && exprType instanceof RoleType
+        (exprType as RoleType).role == (c.type as RoleType).role
+        G |- (c.type as RoleType).base <~ (exprType as RoleType).base
+    }
+    or fail
+        error "Cannot cast " + exprType.stringRep + " to " + c.type.stringRep
+        source c
+    
+    t = c.type
+    // TODO: Allow coercion of primitive types?
+}
+
 rule TUnaryMinus
     G |- UnaryMinus m : intType
 from {
@@ -266,7 +280,6 @@ from {
                     source a.target
                 G |- selector << selector.method
                 t = selector.method.type
-                // TODO: What about overloading?
             }
         }
     }

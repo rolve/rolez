@@ -31,8 +31,6 @@ class PepplSystemValidatorTest {
         parse('''
             class Object
             class A {
-                def inaccessible foo: void {}
-                def readonly foo: void {}
                 def readwrite foo: void {}
                 def readwrite foo(val i: int): void {}
                 def readwrite foo(val c: char): void {}
@@ -47,16 +45,10 @@ class PepplSystemValidatorTest {
         parse('''
             class Object
             class A {
-                def readwrite foo: void {}
-                def readonly  bar: void {}
-                
                 def readwrite foo(val a: readwrite A): void {}
                 def readwrite bar(val a: readonly  A): void {}
             }
             class B extends A {
-                def readonly  foo: void {}
-                def readwrite bar: void {}
-                
                 def readwrite foo(val a: readonly  A): void {}
                 def readwrite foo(val a: readwrite B): void {}
                 def readwrite foo(val a: readwrite Object): void {}
@@ -87,6 +79,13 @@ class PepplSystemValidatorTest {
             class Object
             class A {
                 def readwrite foo: int {}
+                def readwrite foo: void {}
+            }
+        ''').assertError(peppl.method, DUPLICATE_METHOD)
+        parse('''
+            class Object
+            class A {
+                def readonly  foo: int {}
                 def readwrite foo: void {}
             }
         ''').assertError(peppl.method, DUPLICATE_METHOD)
@@ -147,6 +146,12 @@ class PepplSystemValidatorTest {
             class A {                def readwrite foo: readonly  A {} }
             class B extends A { override readwrite foo: readwrite A {} }
         ''').assertNoErrors
+        
+        parse('''
+            class Object
+            class A {                def readwrite foo: void {} }
+            class B extends A { override readonly  foo: void {} }
+        ''').assertNoErrors
     }
     
     @Test
@@ -187,14 +192,9 @@ class PepplSystemValidatorTest {
     def testIncorrectOverride() {
         parse('''
             class Object
-            class A {                def readwrite foo: void {} }
-            class B extends A { override readonly  foo: void {} }
-        ''').assertError(peppl.method, INCORRECT_OVERRIDE)
-        parse('''
-            class Object
             class A {                def readonly  foo: void {} }
             class B extends A { override readwrite foo: void {} }
-        ''').assertError(peppl.method, INCORRECT_OVERRIDE)
+        ''').assertError(peppl.method, INCOMPATIBLE_THIS_ROLE)
         parse('''
             class Object
             class A {                def readwrite foo: void {} }

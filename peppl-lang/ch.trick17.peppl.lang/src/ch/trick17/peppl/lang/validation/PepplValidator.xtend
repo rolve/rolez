@@ -4,15 +4,20 @@
 package ch.trick17.peppl.lang.validation
 
 import ch.trick17.peppl.lang.peppl.Class
+import ch.trick17.peppl.lang.peppl.Field
 import ch.trick17.peppl.lang.peppl.Method
 import ch.trick17.peppl.lang.peppl.PepplPackage.Literals
+import ch.trick17.peppl.lang.peppl.Variable
 import ch.trick17.peppl.lang.typesystem.PepplSystem
 import ch.trick17.peppl.lang.typesystem.PepplTypeUtils
 import ch.trick17.peppl.lang.typesystem.validation.PepplSystemValidator
 import javax.inject.Inject
 import org.eclipse.xtext.validation.Check
-import ch.trick17.peppl.lang.peppl.Field
-import ch.trick17.peppl.lang.peppl.Variable
+import org.eclipse.emf.ecore.EObject
+import org.eclipse.emf.ecore.EStructuralFeature
+import java.util.Set
+import java.util.HashSet
+import ch.trick17.peppl.lang.peppl.Program
 
 /**
  * This class contains custom validation rules. 
@@ -30,6 +35,8 @@ class PepplValidator extends PepplSystemValidator {
     public static val MISSING_OVERRIDE = "missing override"
     public static val INCORRECT_OVERRIDE = "incorrect override"
     public static val INCOMPATIBLE_RETURN_TYPE = "incompatible return type"
+    public static val INCOMPATIBLE_THIS_ROLE = "incompatible \"this\" role"
+    public static val AMBIGUOUS_CALL = "ambiguous call"
 
     @Inject private extension PepplSystem
     @Inject private extension PepplTypeUtils
@@ -57,6 +64,15 @@ class PepplValidator extends PepplSystemValidator {
            error("Duplicate class " + c.name, Literals.NAMED__NAME, DUPLICATE_CLASS)
 	}
 	
+	/**
+	 * Checks that there are no other methods in the same class with the same
+	 * signature. The signature does not comprise the role of <code>this</code>,
+	 * therefore <code>this</code>-role-based overloading is not possible.
+	 * <p>
+	 * The reason for this is that it might be surprising to programmers if
+	 * methods are virtually dispatched based on the class of the target, but
+	 * statically dispatched based on its role.
+	 */
     @Check
     def checkNoDuplicateMethods(Method m) {
         val matching = m.enclosingClass.methods.filter[equalSignature(it, m)]
@@ -85,6 +101,12 @@ class PepplValidator extends PepplSystemValidator {
            error("Duplicate variable " + v.name, Literals.NAMED__NAME, DUPLICATE_VARIABLE)
     }
 	
+	/**
+	 * Checks that overriding methods actually override a method in a super
+	 * class and that the return type is co- and the <code>this</code> role is
+	 * contravariant. Note that covariance for the <code>this</code> role would
+	 * be unsafe.
+	 */
 	@Check
 	def checkOverrides(Method m) {
 	    val superMethods = m.enclosingClass.actualSuperclass
@@ -93,10 +115,14 @@ class PepplValidator extends PepplSystemValidator {
 	    
 	    if(matching.size > 0) {
 	        if(m.overriding) {
-                for(match : matching)
+                for(match : matching) {
                     if(subtype(envFor(m), m.type, match.type).failed)
-                        error("The return type is incompatible with " + match,
+                        error("The return type is incompatible with overridden method" + match,
                             Literals.TYPED__TYPE, INCOMPATIBLE_RETURN_TYPE)
+                    if(subrole(match.thisRole, m.thisRole).failed)
+                        error("This role of \"this\" is incompatible with overridden method" + match,
+                            Literals.TYPED__TYPE, INCOMPATIBLE_THIS_ROLE)
+                }
             }
             else
                 error("Method must be declared with \"override\" since it
@@ -107,4 +133,42 @@ class PepplValidator extends PepplSystemValidator {
            error("Method must override a superclass method",
                Literals.NAMED__NAME, INCORRECT_OVERRIDE)
 	}
+	
+	/*
+	 * Delayed errors
+	 */
+	
+	private val Set<Error> delayedErrors = new HashSet
+	
+	/**
+	 * Can be called by other classes (e.g. the scope provider) to create
+	 * errors before the actual validation phase. The validator will later
+	 * report these errors.
+	 */
+    def delayedError(String message, EObject source, EStructuralFeature feature, String code, String... issueData) {
+        delayedErrors.add(new Error(message, source, feature, code, issueData))
+    }
+    
+    private static class Error {
+        val String message
+        val EObject source
+        val EStructuralFeature feature
+        val String code
+        val String[] issueData
+        
+        new(String message, EObject source, EStructuralFeature feature, String code, String... issueData) {
+            this.message = message
+            this.source = source
+            this.feature = feature
+            this.code = code
+            this.issueData = issueData
+        }
+    }
+    
+    @Check
+    def reportDelayedErrors(Program p) {
+        delayedErrors.filter[source.enclosingProgram == p].forEach[
+            error(message, source, feature, code, issueData)
+        ]
+    }
 }
