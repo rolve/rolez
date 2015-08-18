@@ -470,20 +470,20 @@ class PepplSystemTest {
         ''').main.lastExpr.type.asRoleType.role.assertThat(is(READONLY))
         parse('''
             class Object
-            class A { var a: inaccessible A }
+            class A { var a: pure A }
             main {
                 val a: readwrite A = new A;
                 a.a;
             }
-        ''').main.lastExpr.type.asRoleType.role.assertThat(is(INACCESSIBLE))
+        ''').main.lastExpr.type.asRoleType.role.assertThat(is(PURE))
         parse('''
             class Object
-            class A { var a: inaccessible A }
+            class A { var a: pure A }
             main {
                 val a: readonly A = new A;
                 a.a;
             }
-        ''').main.lastExpr.type.asRoleType.role.assertThat(is(INACCESSIBLE))
+        ''').main.lastExpr.type.asRoleType.role.assertThat(is(PURE))
     }
     
     @Test
@@ -492,11 +492,11 @@ class PepplSystemTest {
             class Object
             class A { var x: int }
             main {
-                val a: inaccessible A = new A;
+                val a: pure A = new A;
                 a.x;
             }
         ''').assertError(peppl.varRef, null,
-                "Role", "mismatch", "field", "inaccessible")
+                "Role", "mismatch", "field", "pure")
     }
     
     @Test

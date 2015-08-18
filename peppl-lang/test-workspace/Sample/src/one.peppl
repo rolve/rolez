@@ -48,7 +48,7 @@ class Person {
 class Student extends Person {
 	val university: readonly String
 	
-	def inaccessible bla: void {
+	def pure bla: void {
 		this.name;
 		this.setAddress();
 	}
@@ -79,8 +79,8 @@ class Address {
 
 main {
 	5.a;
-	var o: inaccessible Object = "Hello";
-	var a: inaccessible Address = new Address;
+	var o: pure Object = "Hello";
+	var a: pure Address = new Address;
 	a.city;
 	b = 5;
 	

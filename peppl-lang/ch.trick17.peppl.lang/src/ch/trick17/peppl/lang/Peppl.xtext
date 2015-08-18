@@ -169,7 +169,7 @@ RoleType:
 terminal NULL_TYPE: 'Null';
 
 enum Role:
-    READWRITE='readwrite' | READONLY='readonly' | INACCESSIBLE='inaccessible';
+    READWRITE='readwrite' | READONLY='readonly' | PURE='pure';
 
 Var:
     LocalVar | => Param; // => only needed to avoid warnings. Rule is not used anyway.

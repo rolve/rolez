@@ -1,7 +1,7 @@
 class SomeImportantClass {
 	val foo: readwrite Account
 	
-	def inaccessible bar: readonly Account {
+	def pure bar: readonly Account {
 		val a: int;
 	}
 	
