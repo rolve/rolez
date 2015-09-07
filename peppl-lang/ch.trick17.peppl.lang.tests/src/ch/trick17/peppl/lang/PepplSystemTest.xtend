@@ -8,7 +8,6 @@ import ch.trick17.peppl.lang.peppl.Program
 import ch.trick17.peppl.lang.peppl.Role
 import ch.trick17.peppl.lang.peppl.RoleType
 import ch.trick17.peppl.lang.peppl.Type
-import ch.trick17.peppl.lang.peppl.WithBlock
 import ch.trick17.peppl.lang.typesystem.PepplSystem
 import ch.trick17.peppl.lang.typesystem.PepplTypeUtils
 import javax.inject.Inject
@@ -31,6 +30,7 @@ import static org.hamcrest.Matchers.*
 import static extension org.hamcrest.MatcherAssert.assertThat
 import ch.trick17.peppl.lang.peppl.Expr
 import ch.trick17.peppl.lang.peppl.ExprStmt
+import ch.trick17.peppl.lang.peppl.WithBody
 
 @RunWith(XtextRunner)
 @InjectWith(PepplInjectorProvider)
@@ -763,21 +763,173 @@ class PepplSystemTest {
     }
     
     @Test
+    def void testWBlock() {
+        parse('''
+            class Object
+            main {
+                new Object;
+                {
+                    {
+                        new Object;
+                        new Object;
+                    }
+                    new Object;
+                    {
+                        new Object;
+                        {}
+                        {{{}}}
+                    }
+                    new Object;
+                }
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            main {
+                (int) false;
+            }
+        ''').assertError(peppl.cast, null, "cannot cast", "boolean", "int")
+        parse('''
+            main {
+                {
+                    new Object;
+                    {
+                        new Object;
+                        (int) false;
+                        new Object;
+                        {}
+                    }
+                }
+            }
+        ''').assertError(peppl.cast, null, "cannot cast", "boolean", "int")
+    }
+    
+    @Test
+    def void testWLocalVarDecl() {
+        parse('''
+            class Object
+            class A
+            main {
+                val i: int = 1;
+                val a: readwrite A = new A;
+                val b: pure Object = new A;
+                val c: readwrite Object = null;
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            main {
+                val i: int = false;
+            }
+        ''').assertError(peppl.booleanLiteral, SUBTYPEEXPR, "boolean", "int")
+        parse('''
+            class Object
+            main {
+                val o: readwrite Object = (pure Object) new Object;
+            }
+        ''').assertError(peppl.cast, SUBTYPEEXPR, "pure Object", "readwrite Object")
+        parse('''
+            class Object
+            class A
+            main {
+                val o: pure A = (pure Object) new A;
+            }
+        ''').assertError(peppl.cast, SUBTYPEEXPR, "pure Object", "pure A")
+    }
+    
+    @Test
+    def void testWIfStmt() {
+        parse('''
+            class Object
+            main {
+                if(true)
+                    new Object;
+                else
+                    new Object;
+                
+                if(false) {
+                    new Object;
+                    new Object;
+                }
+                else
+                    new Object;
+                
+                if(1 == 1)
+                    new Object;
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            class Object
+            main {
+                if(5)
+                    new Object;
+            }
+        ''').assertError(peppl.intLiteral, SUBTYPEEXPR, "int", "boolean")
+        parse('''
+            main {
+                if(true)
+                    (int) false;
+            }
+        ''').assertError(peppl.cast, null, "cannot cast", "boolean", "int")
+        parse('''
+            main {
+                if(true) {}
+                else
+                    (int) false;
+            }
+        ''').assertError(peppl.cast, null, "cannot cast", "boolean", "int")
+    }
+    
+    @Test
+    def void testWWhileLoop() {
+        parse('''
+            class Object
+            main {
+                while(true)
+                    new Object;
+                
+                while(3 == 2) {
+                    new Object;
+                    new Object;
+                }
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            class Object
+            main {
+                while(5)
+                    new Object;
+            }
+        ''').assertError(peppl.intLiteral, SUBTYPEEXPR, "int", "boolean")
+        parse('''
+            main {
+                while(true)
+                    (int) false;
+            }
+        ''').assertError(peppl.cast, null, "cannot cast", "boolean", "int")
+    }
+    
+    @Test
     def void testWReturn() {
         parse('''
             class Object
             class A {
                 def pure a: void {}
-                def pure b: int {
+                def pure b: void {
+                    return;
+                }
+                def pure c: int {
                     return 5;
                 }
-                def pure c: readwrite Object {
+                def pure d: readwrite Object {
                     return new Object;
                 }
-                def pure d: pure Object {
+                def pure e: pure Object {
                     return new A;
                 }
-                def pure e: readonly A {
+                def pure f: readonly A {
                     return (readonly A) new A;
                 }
             }
@@ -809,8 +961,6 @@ class PepplSystemTest {
         ''').assertError(peppl.cast, SUBTYPEEXPR, "pure A", "readwrite A")
     }
     
-    // TODO: More W tests
-    
     def findClass(Program program, String name) {
         program.assertNoErrors
         val result = program.classes.findFirst[it.name == name]
@@ -824,12 +974,12 @@ class PepplSystemTest {
         result
     }
     
-    def expr(WithBlock b, int i) {
+    def expr(WithBody b, int i) {
         b.assertNoErrors;
         b.body.stmts.filter(ExprStmt).get(i).expr
     }
     
-    def lastExpr(WithBlock b) {
+    def lastExpr(WithBody b) {
         b.assertNoErrors;
         b.body.stmts.filter(ExprStmt).last.expr
     }

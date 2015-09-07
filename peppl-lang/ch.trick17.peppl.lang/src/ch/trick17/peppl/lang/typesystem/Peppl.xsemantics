@@ -348,10 +348,10 @@ from {
     G |- d.initializer <| d.variable.type
 }
 
-rule WIfElse
+rule WIfStmt
     G |- IfStmt ifStmt
 from {
-    G |- ifStmt.^condition : booleanType
+    G |- ifStmt.^condition <| booleanType
     G |- ifStmt.thenPart
     
     ifStmt.elsePart == null
@@ -362,7 +362,7 @@ from {
 rule WWhileLoop
     G |- WhileLoop l
 from {
-    G |- l.^condition : booleanType
+    G |- l.^condition <| booleanType
     G |- l.body
 }
 
@@ -489,7 +489,7 @@ from { fail }
 
 
 checkrule CheckStmts for
-    Stmt s
+    Stmt s // Checked for all stmts individually, to enable multiple error markers
 from {
     val class = s.enclosingClass
     if(class == null) {
@@ -497,7 +497,7 @@ from {
         empty |- s
     }
     else {
-        // Method
+        // Method or constructor
         val thisType = roleType(READWRITE, class)
         "this" <- thisType |- s
     }

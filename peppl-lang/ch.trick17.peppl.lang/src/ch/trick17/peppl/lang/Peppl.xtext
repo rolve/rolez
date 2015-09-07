@@ -114,7 +114,7 @@ Cast returns Expr:
     UnaryMinus | {Cast} '(' type=Type ')' expr=Cast;
 
 UnaryMinus returns Expr:
-    UnaryNot | {UnaryMinus} '-' expr=MemberAccess;
+    UnaryNot | {UnaryMinus} '-' expr=UnaryNot;
 
 UnaryNot returns Expr:
     MemberAccess | {UnaryNot} '!' expr=MemberAccess;
@@ -187,7 +187,7 @@ Named:
 Typed:
     Member | => Var; // => only needed to avoid warnings. Rule is not used anyway.
 
-WithBlock:
+WithBody:
     Main | WithParams;
 
 WithParams:
