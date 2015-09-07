@@ -3,6 +3,7 @@
  */
 package ch.trick17.peppl.lang.ui.contentassist
 
+import ch.trick17.peppl.lang.peppl.Expr
 import ch.trick17.peppl.lang.peppl.Field
 import ch.trick17.peppl.lang.peppl.Member
 import ch.trick17.peppl.lang.peppl.MemberAccess
@@ -12,12 +13,10 @@ import ch.trick17.peppl.lang.typesystem.PepplSystem
 import ch.trick17.peppl.lang.typesystem.PepplTypeUtils
 import javax.inject.Inject
 import org.eclipse.emf.ecore.EObject
-import org.eclipse.xtext.RuleCall
+import org.eclipse.xtext.Assignment
 import org.eclipse.xtext.scoping.Scopes
 import org.eclipse.xtext.ui.editor.contentassist.ContentAssistContext
 import org.eclipse.xtext.ui.editor.contentassist.ICompletionProposalAcceptor
-import org.eclipse.xtext.Assignment
-import ch.trick17.peppl.lang.peppl.Expression
 
 class PepplProposalProvider extends AbstractPepplProposalProvider {
 
@@ -36,10 +35,10 @@ class PepplProposalProvider extends AbstractPepplProposalProvider {
 
     private def completeMemberAccess(EObject model, ContentAssistContext context, ICompletionProposalAcceptor acceptor,
         Class<? extends Member> kind) {
-        var Expression target
+        var Expr target
 
         // Find target. Why the heck is this so complicated???
-        if (model instanceof Expression) {
+        if (model instanceof Expr) {
             target = model;
             if (model instanceof MemberAccess) {
                 target = model.target
@@ -47,7 +46,7 @@ class PepplProposalProvider extends AbstractPepplProposalProvider {
                     target = (model.eContainer as MemberAccess).target as MemberAccess
             }
         }
-
+        
         if (target != null) {
             val targetType = system.type(envFor(model), target).value
             if (targetType instanceof RoleType) {
