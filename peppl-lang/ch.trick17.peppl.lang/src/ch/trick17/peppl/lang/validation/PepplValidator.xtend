@@ -9,6 +9,7 @@ import ch.trick17.peppl.lang.peppl.Method
 import ch.trick17.peppl.lang.peppl.PepplPackage.Literals
 import ch.trick17.peppl.lang.peppl.Program
 import ch.trick17.peppl.lang.peppl.Var
+import ch.trick17.peppl.lang.peppl.Void
 import ch.trick17.peppl.lang.typesystem.PepplSystem
 import ch.trick17.peppl.lang.typesystem.PepplTypeUtils
 import ch.trick17.peppl.lang.typesystem.validation.PepplSystemValidator
@@ -18,6 +19,10 @@ import javax.inject.Inject
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.EStructuralFeature
 import org.eclipse.xtext.validation.Check
+import ch.trick17.peppl.lang.peppl.Stmt
+import ch.trick17.peppl.lang.peppl.ReturnExpr
+import ch.trick17.peppl.lang.peppl.IfStmt
+import ch.trick17.peppl.lang.peppl.Block
 
 /**
  * This class contains custom validation rules. 
@@ -36,11 +41,13 @@ class PepplValidator extends PepplSystemValidator {
     public static val INCORRECT_OVERRIDE = "incorrect override"
     public static val INCOMPATIBLE_RETURN_TYPE = "incompatible return type"
     public static val INCOMPATIBLE_THIS_ROLE = "incompatible \"this\" role"
+    public static val INCORRECT_RETURN = "incorrect return statement"
+    public static val MISSING_RETURN = "missing return statement"
     public static val AMBIGUOUS_CALL = "ambiguous call"
 
     @Inject private extension PepplSystem
     @Inject private extension PepplTypeUtils
-
+    
 	@Check
     def checkClassNameStartsWithCapital(Class c) {
         if(!Character.isUpperCase(c.name.charAt(0)))
@@ -133,6 +140,43 @@ class PepplValidator extends PepplSystemValidator {
            error("Method must override a superclass method",
                Literals.NAMED__NAME, INCORRECT_OVERRIDE)
 	}
+	
+	@Check
+	def checkReturn(Method m) {
+	    if(!(m.type instanceof Void)) {
+	        checkReturnExpr(m.body)
+	    }
+	}
+	
+	/**
+	 * Checks if the given statement is guaranteed to return an expression,
+	 * reports an error otherwise.
+	 */
+	private def void checkReturnExpr(Stmt s) {
+	    switch (s) {
+            ReturnExpr: { /* Found it! */ }
+            Block: {
+                if(s.stmts.empty)
+                    error("Method must return a value of type " + s.enclosingMethod.type.stringRep,
+                        s, null, MISSING_RETURN)
+                else
+                    checkReturnExpr(s.stmts.last)
+            }
+            IfStmt: {
+                checkReturnExpr(s.thenPart)
+                if(s.elsePart == null)
+                    error("Method must return a value of type " + s.enclosingMethod.type.stringRep,
+                        s, null, MISSING_RETURN)
+                else
+                    checkReturnExpr(s.elsePart)
+            }
+            default:
+                if(s != null)
+                    error("Method must return a value of type " + s.enclosingMethod.type.stringRep,
+                        s, null, MISSING_RETURN)
+        }
+        // IMPROVE: Better handling of dead code
+    }
 	
 	/*
 	 * Delayed errors

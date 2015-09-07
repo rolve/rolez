@@ -63,6 +63,12 @@ WhileLoop:
     'while' '(' condition=Expr ')' body=Stmt;
 
 Return:
+    ReturnNothing | ReturnExpr;
+
+ReturnNothing:
+    {ReturnNothing} 'return;';
+
+ReturnExpr:
     'return' expr=Expr ';';
 
 ExprStmt:
@@ -124,6 +130,7 @@ Selector: FieldSelector | MethodSelector;
 FieldSelector: field=[Field];
 
 MethodSelector: method=[Method] '(' (args+=Expr (',' args+=Expr)*)? ')';
+// TODO: Allow method calls without parentheses
 
 SimpleExpr returns Expr:
     {This} 'this' | VarRef | New | Parenthesized | Literal;

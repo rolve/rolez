@@ -605,8 +605,8 @@ class PepplSystemTest {
         var program = parse('''
             class Object
             class A {
-                def readwrite foo(val a: int): int {}
-                def readwrite foo(val a: boolean): boolean {}
+                def readwrite foo(val a: int): int { return 0; }
+                def readwrite foo(val a: boolean): boolean { return false; }
             }
             main {
                 new A.foo(4);
@@ -619,8 +619,8 @@ class PepplSystemTest {
         program = parse('''
             class Object
             class A {
-                def readwrite foo(val a: readwrite A): int {}
-                def readwrite foo(val a: readonly  A): boolean {}
+                def readwrite foo(val a: readwrite A): int { return 0; }
+                def readwrite foo(val a: readonly  A): boolean { return false; }
             }
             main {
                 new A.foo(new A);
@@ -634,8 +634,8 @@ class PepplSystemTest {
         program = parse('''
             class Object
             class A {
-                def readwrite foo(val a: readonly  A): boolean {}
-                def readwrite foo(val a: readwrite A): int {}
+                def readwrite foo(val a: readonly  A): boolean { return false; }
+                def readwrite foo(val a: readwrite A): int { return 0; }
             }
             main {
                 new A.foo(new A);
@@ -648,8 +648,8 @@ class PepplSystemTest {
         program = parse('''
             class Object
             class A {
-                def readwrite foo(val a: readonly  A, val b: readonly  A): boolean {}
-                def readwrite foo(val a: readwrite A, val b: readwrite A): int {}
+                def readwrite foo(val a: readonly  A, val b: readonly  A): boolean { return false; }
+                def readwrite foo(val a: readwrite A, val b: readwrite A): int { return 0; }
             }
             main {
                 new A.foo(new A, new A);
@@ -666,8 +666,8 @@ class PepplSystemTest {
         program = parse('''
             class Object
             class A {
-                def readwrite foo(val a: readwrite A, val b: readwrite A): int {}
-                def readwrite foo(val a: readonly  A, val b: readonly  A): boolean {}
+                def readwrite foo(val a: readwrite A, val b: readwrite A): int { return 0; }
+                def readwrite foo(val a: readonly  A, val b: readonly  A): boolean { return false; }
             }
             main {
                 new A.foo(new A, new A);
@@ -738,6 +738,7 @@ class PepplSystemTest {
                 i;
             }
         ''').main.lastExpr.type.assertThat(instanceOf(Int))
+        
         val program = parse('''
             class Object
             class A
@@ -751,17 +752,64 @@ class PepplSystemTest {
     }
     
     @Test
-    def testTNew() {
+    def void testTNew() {
         val program = parse('''
             class Object
             class A
             main { new A; }
         ''')
-        
-        val type = program.main.lastExpr.type.asRoleType
-        type.role.assertThat(is(READWRITE))
-        type.base.assertThat(is(program.findClass("A")))
+        program.main.lastExpr.type
+            .assertThat(roleType(READWRITE, program.findClass("A")))
     }
+    
+    @Test
+    def void testWReturn() {
+        parse('''
+            class Object
+            class A {
+                def pure a: void {}
+                def pure b: int {
+                    return 5;
+                }
+                def pure c: readwrite Object {
+                    return new Object;
+                }
+                def pure d: pure Object {
+                    return new A;
+                }
+                def pure e: readonly A {
+                    return (readonly A) new A;
+                }
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            class Object
+            class A {
+                def pure a: void {
+                    return 1;
+                }
+            }
+        ''').assertError(peppl.intLiteral, SUBTYPEEXPR, "int", "void")
+        parse('''
+            class Object
+            class A {
+                def pure a: int {
+                    return false;
+                }
+            }
+        ''').assertError(peppl.booleanLiteral, SUBTYPEEXPR, "boolean", "int")
+        parse('''
+            class Object
+            class A {
+                def pure a: readwrite A {
+                    return (pure A) new A;
+                }
+            }
+        ''').assertError(peppl.cast, SUBTYPEEXPR, "pure A", "readwrite A")
+    }
+    
+    // TODO: More W tests
     
     def findClass(Program program, String name) {
         program.assertNoErrors

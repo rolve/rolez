@@ -3,6 +3,9 @@ class SomeImportantClass {
 	
 	def pure bar: readonly Account {
 		val a: int;
+		return null;
+		if(true) {}
+		
 	}
 	
 	def readonly bar(val a: int): void {
@@ -11,3 +14,4 @@ class SomeImportantClass {
 	}
 	
 }
+class Object

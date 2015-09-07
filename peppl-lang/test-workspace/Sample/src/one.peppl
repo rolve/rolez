@@ -1,6 +1,7 @@
 class Object
+
 class String {
-	def length: int {}
+	def pure length: int {}
 }
 
 class Person {

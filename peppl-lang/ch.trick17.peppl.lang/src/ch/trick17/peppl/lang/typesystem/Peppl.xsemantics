@@ -24,7 +24,6 @@ import ch.trick17.peppl.lang.peppl.PrimitiveType
 import ch.trick17.peppl.lang.peppl.Program
 import ch.trick17.peppl.lang.peppl.ReferenceType
 import ch.trick17.peppl.lang.peppl.RelationalExpr
-import ch.trick17.peppl.lang.peppl.Return
 import ch.trick17.peppl.lang.peppl.Role
 import ch.trick17.peppl.lang.peppl.RoleType
 import ch.trick17.peppl.lang.peppl.Stmt
@@ -47,6 +46,8 @@ import static ch.trick17.peppl.lang.peppl.Role.*
 import static ch.trick17.peppl.lang.peppl.VarKind.*
 import ch.trick17.peppl.lang.peppl.LocalVarDecl
 import ch.trick17.peppl.lang.peppl.Cast
+import ch.trick17.peppl.lang.peppl.ReturnExpr
+import ch.trick17.peppl.lang.peppl.ReturnNothing
 
 system ch.trick17.peppl.lang.typesystem.PepplSystem
 
@@ -365,8 +366,11 @@ from {
     G |- l.body
 }
 
-rule WReturn
-    G |- Return r
+axiom WReturnNothing
+    G |- ReturnNothing _
+
+rule WReturnExpr
+    G |- ReturnExpr r
 from {
     G |- r.expr <| r.enclosingMethod.type
 }

@@ -14,7 +14,7 @@ import static ch.trick17.peppl.lang.validation.PepplValidator.*
 
 @RunWith(XtextRunner)
 @InjectWith(PepplInjectorProvider)
-class PepplSystemValidatorTest {
+class PepplValidatorTest {
     
     val PepplPackage peppl = PepplPackage.eINSTANCE
     
@@ -58,10 +58,12 @@ class PepplSystemValidatorTest {
                 def readwrite foo(val i: int): void {}
             }
             class D extends C {
-                def readwrite foo(val i: char): int {}
+                def readwrite foo(val i: char): int { return 0; }
             }
             class E extends D {
-                def readwrite foo(val i: int, val j: int): readonly A {}
+                def readwrite foo(val i: int, val j: int): readonly A {
+                    return new A;
+                }
             }
         ''').assertNoErrors
     }
@@ -133,18 +135,18 @@ class PepplSystemValidatorTest {
         ''').assertNoErrors
         parse('''
             class Object
-            class A {                def readwrite foo(val i: int): int {} }
-            class B extends A { override readwrite foo(val j: int): int {} }
+            class A {                def readwrite foo(val i: int): int { return 0; } }
+            class B extends A { override readwrite foo(val j: int): int { return 0; } }
         ''').assertNoErrors
         parse('''
             class Object
-            class A {                def readwrite foo: readwrite A {} }
-            class B extends A { override readwrite foo: readwrite B {} }
+            class A {                def readwrite foo: readwrite A { return new A; } }
+            class B extends A { override readwrite foo: readwrite B { return new B; } }
         ''').assertNoErrors
         parse('''
             class Object
-            class A {                def readwrite foo: readonly  A {} }
-            class B extends A { override readwrite foo: readwrite A {} }
+            class A {                def readwrite foo: readonly  A { return new A; } }
+            class B extends A { override readwrite foo: readwrite A { return new A; } }
         ''').assertNoErrors
         
         parse('''
@@ -227,8 +229,85 @@ class PepplSystemValidatorTest {
         ''').assertError(peppl.method, INCORRECT_OVERRIDE)
     }
     
-    // TODO: Test return type compatibility
+    @Test
+    def void testReturn() {
+        parse('''
+            class Object
+            class A {
+                def pure a: void {}
+                def pure b: void {
+                    return;
+                }
+                def pure c(val i: int): void {
+                    if(i == 0)
+                        return;
+                    else
+                        return;
+                }
+                def pure d(val i: int): void {
+                    if(i == 0)
+                        return;
+                    return;
+                }
+                def pure e(val i: int): void {
+                    if(i == 0) {}
+                    else
+                        return;
+                    return;
+                }
+                
+                def pure f: int {
+                    return 0;
+                }
+                def pure g(val i: int): int {
+                    if(i == 0)
+                        return 0;
+                    else
+                        return 1;
+                }
+                def pure h(val i: int): int {
+                    if(i == 0)
+                        return 0;
+                    return 1;
+                }
+                def pure i(val i: int): int {
+                    if(i == 0) {}
+                    else
+                        return 0;
+                    return 1;
+                }
+            }
+        ''').assertNoErrors
+    }
     
+    @Test
+    def testMissingReturn() {
+        parse('''
+            class Object
+            class A {
+                def pure a: int {}
+            }
+        ''').assertError(peppl.block, MISSING_RETURN)
+        parse('''
+            class Object
+            class A {
+                def pure a(val i: int): int {
+                    if(i == 0)
+                        return 0;
+                }
+            }
+        ''').assertError(peppl.ifStmt, MISSING_RETURN)
+        parse('''
+            class Object
+            class A {
+                def pure a(val i: int): int {
+                    if(i == 0) {}
+                    else
+                        return 0;
+                }
+            }
+        ''').assertError(peppl.block, MISSING_RETURN)
+    }
     
     @Test
     def testDuplicateFields() {
