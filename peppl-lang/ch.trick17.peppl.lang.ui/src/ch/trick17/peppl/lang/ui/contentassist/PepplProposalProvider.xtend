@@ -10,18 +10,18 @@ import ch.trick17.peppl.lang.peppl.MemberAccess
 import ch.trick17.peppl.lang.peppl.Method
 import ch.trick17.peppl.lang.peppl.RoleType
 import ch.trick17.peppl.lang.typesystem.PepplSystem
-import ch.trick17.peppl.lang.typesystem.PepplTypeUtils
 import javax.inject.Inject
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.Assignment
 import org.eclipse.xtext.scoping.Scopes
 import org.eclipse.xtext.ui.editor.contentassist.ContentAssistContext
 import org.eclipse.xtext.ui.editor.contentassist.ICompletionProposalAcceptor
+import ch.trick17.peppl.lang.typesystem.PepplUtils
 
 class PepplProposalProvider extends AbstractPepplProposalProvider {
 
     @Inject private extension PepplSystem system
-    @Inject private extension PepplTypeUtils
+    @Inject private extension PepplUtils
 
     override completeFieldSelector_Field(EObject model, Assignment a, ContentAssistContext context,
         ICompletionProposalAcceptor acceptor) {

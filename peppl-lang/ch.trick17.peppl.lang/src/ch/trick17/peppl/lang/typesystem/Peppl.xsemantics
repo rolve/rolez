@@ -3,6 +3,7 @@ import ch.trick17.peppl.lang.peppl.Assignment
 import ch.trick17.peppl.lang.peppl.Block
 import ch.trick17.peppl.lang.peppl.BooleanExpr
 import ch.trick17.peppl.lang.peppl.BooleanLiteral
+import ch.trick17.peppl.lang.peppl.Cast
 import ch.trick17.peppl.lang.peppl.CharLiteral
 import ch.trick17.peppl.lang.peppl.Class
 import ch.trick17.peppl.lang.peppl.EqualityExpr
@@ -11,8 +12,8 @@ import ch.trick17.peppl.lang.peppl.ExprStmt
 import ch.trick17.peppl.lang.peppl.FieldSelector
 import ch.trick17.peppl.lang.peppl.IfStmt
 import ch.trick17.peppl.lang.peppl.IntLiteral
+import ch.trick17.peppl.lang.peppl.LocalVarDecl
 import ch.trick17.peppl.lang.peppl.MemberAccess
-import ch.trick17.peppl.lang.peppl.Method
 import ch.trick17.peppl.lang.peppl.MethodSelector
 import ch.trick17.peppl.lang.peppl.New
 import ch.trick17.peppl.lang.peppl.Null
@@ -21,9 +22,10 @@ import ch.trick17.peppl.lang.peppl.OpArithmetic
 import ch.trick17.peppl.lang.peppl.Parenthesized
 import ch.trick17.peppl.lang.peppl.PepplPackage
 import ch.trick17.peppl.lang.peppl.PrimitiveType
-import ch.trick17.peppl.lang.peppl.Program
 import ch.trick17.peppl.lang.peppl.ReferenceType
 import ch.trick17.peppl.lang.peppl.RelationalExpr
+import ch.trick17.peppl.lang.peppl.ReturnExpr
+import ch.trick17.peppl.lang.peppl.ReturnNothing
 import ch.trick17.peppl.lang.peppl.Role
 import ch.trick17.peppl.lang.peppl.RoleType
 import ch.trick17.peppl.lang.peppl.Stmt
@@ -34,8 +36,6 @@ import ch.trick17.peppl.lang.peppl.UnaryMinus
 import ch.trick17.peppl.lang.peppl.UnaryNot
 import ch.trick17.peppl.lang.peppl.VarRef
 import ch.trick17.peppl.lang.peppl.WhileLoop
-import ch.trick17.peppl.lang.peppl.WithArgs
-import ch.trick17.peppl.lang.peppl.WithParams
 import ch.trick17.peppl.lang.validation.AbstractPepplValidator
 import java.util.Set
 import org.eclipse.emf.ecore.EObject
@@ -44,25 +44,20 @@ import org.eclipse.xtext.scoping.IGlobalScopeProvider
 
 import static ch.trick17.peppl.lang.peppl.Role.*
 import static ch.trick17.peppl.lang.peppl.VarKind.*
-import ch.trick17.peppl.lang.peppl.LocalVarDecl
-import ch.trick17.peppl.lang.peppl.Cast
-import ch.trick17.peppl.lang.peppl.ReturnExpr
-import ch.trick17.peppl.lang.peppl.ReturnNothing
+import ch.trick17.peppl.lang.peppl.Parameterized
+import ch.trick17.peppl.lang.peppl.ElemWithArgs
 
 system ch.trick17.peppl.lang.typesystem.PepplSystem
 
 validatorExtends AbstractPepplValidator
 
-inject extension PepplTypeUtils __
+inject extension PepplUtils __
 inject IGlobalScopeProvider globalScopeProv
 
 auxiliary {
     leastCommonSuperrole(Role r1, Role r2): Role
     actualSuperclass(Class clazz): Class
     strictSuperclasses(Class clazz): Set<Class> cached
-    enclosingMethod(EObject object): Method
-    enclosingClass(EObject object): Class
-    enclosingProgram(EObject object): Program
     findClass(QualifiedName name, EObject context): Class
 }
 
@@ -70,7 +65,7 @@ judgments {
     type      |- Expr e : output Type
     wellTyped |- Stmt s
     
-    validArgs |- WithArgs a << WithParams p
+    validArgs |- ElemWithArgs a << Parameterized p
     
     subtypeExpr |- Expr left <| Type right
         error "Type mismatch: " + left.type.value.stringRep + " is not a subtype of " + right.stringRep
@@ -113,24 +108,6 @@ auxiliary strictSuperclasses(Class c) {
     if(c != object && object != null)
         result.add(object)
     result
-}
-
-auxiliary enclosingMethod(Method m) { m }
-
-auxiliary enclosingMethod(EObject object) {
-    object?.eContainer?.enclosingMethod
-}
-
-auxiliary enclosingClass(Class c) { c }
-
-auxiliary enclosingClass(EObject o) {
-    o?.eContainer?.enclosingClass
-}
-
-auxiliary enclosingProgram(Program p) { p }
-
-auxiliary enclosingProgram(EObject o) {
-    o?.eContainer?.enclosingProgram
 }
 
 auxiliary findClass(QualifiedName name, EObject context) {
@@ -383,7 +360,7 @@ from {
 
 
 rule ValidArgs
-    G |- WithArgs a << WithParams p
+    G |- ElemWithArgs a << Parameterized p
 from {
     a.args.size >= p.params.size or fail
         error "Too few arguments"

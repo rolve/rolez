@@ -187,11 +187,11 @@ Named:
 Typed:
     Member | => Var; // => only needed to avoid warnings. Rule is not used anyway.
 
-WithBody:
-    Main | WithParams;
+ElemWithBody:             // TODO: better name...
+    Main | Parameterized;
 
-WithParams:
+Parameterized:
     Constructor | Method;
 
-WithArgs:
+ElemWithArgs:             // TODO: better name...
     New | MethodSelector;

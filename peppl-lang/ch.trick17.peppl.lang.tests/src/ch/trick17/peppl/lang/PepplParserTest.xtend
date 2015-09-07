@@ -1,7 +1,6 @@
 package ch.trick17.peppl.lang
 
 import ch.trick17.peppl.lang.peppl.Program
-import ch.trick17.peppl.lang.typesystem.PepplTypeUtils
 import javax.inject.Inject
 import org.eclipse.xtext.junit4.InjectWith
 import org.eclipse.xtext.junit4.XtextRunner
@@ -13,13 +12,14 @@ import static org.hamcrest.Matchers.*
 
 import static extension org.hamcrest.MatcherAssert.assertThat
 import org.eclipse.xtext.junit4.validation.ValidationTestHelper
+import ch.trick17.peppl.lang.typesystem.PepplUtils
 
 @RunWith(XtextRunner)
 @InjectWith(PepplInjectorProvider)
 class PepplParserTest {
     
     @Inject extension ParseHelper<Program>
-    @Inject extension PepplTypeUtils
+    @Inject extension PepplUtils
     @Inject extension ValidationTestHelper
     
     @Test

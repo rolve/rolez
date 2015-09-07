@@ -11,7 +11,6 @@ import ch.trick17.peppl.lang.peppl.Program
 import ch.trick17.peppl.lang.peppl.Var
 import ch.trick17.peppl.lang.peppl.Void
 import ch.trick17.peppl.lang.typesystem.PepplSystem
-import ch.trick17.peppl.lang.typesystem.PepplTypeUtils
 import ch.trick17.peppl.lang.typesystem.validation.PepplSystemValidator
 import java.util.HashSet
 import java.util.Set
@@ -23,6 +22,7 @@ import ch.trick17.peppl.lang.peppl.Stmt
 import ch.trick17.peppl.lang.peppl.ReturnExpr
 import ch.trick17.peppl.lang.peppl.IfStmt
 import ch.trick17.peppl.lang.peppl.Block
+import ch.trick17.peppl.lang.typesystem.PepplUtils
 
 /**
  * This class contains custom validation rules. 
@@ -46,7 +46,7 @@ class PepplValidator extends PepplSystemValidator {
     public static val AMBIGUOUS_CALL = "ambiguous call"
 
     @Inject private extension PepplSystem
-    @Inject private extension PepplTypeUtils
+    @Inject private extension PepplUtils
     
 	@Check
     def checkClassNameStartsWithCapital(Class c) {
@@ -101,7 +101,7 @@ class PepplValidator extends PepplSystemValidator {
     
     @Check
     def checkNoDuplicateVars(Var v) {
-        val matching = v.enclosingMethod.variables.filter[name.equals(v.name)]
+        val matching = v.enclosingElemWithBody.variables.filter[name.equals(v.name)]
         if(matching.size < 1)
            throw new AssertionError
         if(matching.size > 1)

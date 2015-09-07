@@ -1,9 +1,11 @@
 package ch.trick17.peppl.lang.typesystem
 
+import ch.trick17.peppl.lang.peppl.Block
 import ch.trick17.peppl.lang.peppl.Boolean
 import ch.trick17.peppl.lang.peppl.Char
 import ch.trick17.peppl.lang.peppl.Class
 import ch.trick17.peppl.lang.peppl.Constructor
+import ch.trick17.peppl.lang.peppl.ElemWithBody
 import ch.trick17.peppl.lang.peppl.Field
 import ch.trick17.peppl.lang.peppl.Int
 import ch.trick17.peppl.lang.peppl.LocalVar
@@ -12,11 +14,13 @@ import ch.trick17.peppl.lang.peppl.Member
 import ch.trick17.peppl.lang.peppl.Method
 import ch.trick17.peppl.lang.peppl.MethodSelector
 import ch.trick17.peppl.lang.peppl.Null
+import ch.trick17.peppl.lang.peppl.Parameterized
 import ch.trick17.peppl.lang.peppl.PepplFactory
 import ch.trick17.peppl.lang.peppl.PepplPackage
 import ch.trick17.peppl.lang.peppl.Program
 import ch.trick17.peppl.lang.peppl.Role
 import ch.trick17.peppl.lang.peppl.RoleType
+import ch.trick17.peppl.lang.peppl.Stmt
 import ch.trick17.peppl.lang.peppl.Var
 import ch.trick17.peppl.lang.peppl.Void
 import it.xsemantics.runtime.RuleEnvironment
@@ -32,10 +36,10 @@ import org.eclipse.xtext.naming.QualifiedName
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils
 
 /** 
- * Utility functions for types
+ * Utility functions for PEPPL language constructs
  * @author Michael Faes
  */
-class PepplTypeUtils {
+class PepplUtils {
     
     @Inject private extension PepplSystem __
     
@@ -107,10 +111,9 @@ class PepplTypeUtils {
         result
     }
     
-    def Iterable<Var> variables(Method m) {
-        val List<Var> vars = new ArrayList(m.params)
-        vars.addAll(m.body.eAllContents.filter(LocalVar).toList)
-        vars
+    def Iterable<Var> variables(ElemWithBody b) {
+        b.body.eAllContents.filter(LocalVar).toList
+            + if(b instanceof Parameterized) b.params else emptyList
     }
     
     def List<Member> allMembers(Class c) {
@@ -118,6 +121,46 @@ class PepplTypeUtils {
         if(c.actualSuperclass != null)
             result.addAll(c.actualSuperclass.allMembers)
         result
+    }
+    
+    def Stmt enclosingStmt(EObject o) {
+        val container = o?.eContainer
+        switch(container) {
+            Stmt: container
+            default: container?.enclosingStmt
+        }
+    }
+    
+    def Method enclosingMethod(EObject o) {
+        val container = o?.eContainer
+        switch(container) {
+            Method: container
+            default: container?.enclosingMethod
+        }
+    }
+    
+    def Class enclosingClass(EObject o) {
+        val container = o?.eContainer
+        switch(container) {
+            Class: container
+            default: container?.enclosingClass
+        }
+    }
+    
+    def Program enclosingProgram(EObject o) {
+        val container = o?.eContainer
+        switch(container) {
+            Program: container
+            default: container?.enclosingProgram
+        }
+    }
+    
+    def ElemWithBody enclosingElemWithBody(EObject o) {
+        val container = o?.eContainer
+        switch(container) {
+            ElemWithBody: container
+            default: container?.enclosingElemWithBody
+        }
     }
     
     /**

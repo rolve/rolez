@@ -1,7 +1,11 @@
 package ch.trick17.peppl.lang
 
+import ch.trick17.peppl.lang.peppl.Block
 import ch.trick17.peppl.lang.peppl.Boolean
 import ch.trick17.peppl.lang.peppl.Class
+import ch.trick17.peppl.lang.peppl.ElemWithBody
+import ch.trick17.peppl.lang.peppl.Expr
+import ch.trick17.peppl.lang.peppl.ExprStmt
 import ch.trick17.peppl.lang.peppl.Int
 import ch.trick17.peppl.lang.peppl.PepplPackage
 import ch.trick17.peppl.lang.peppl.Program
@@ -9,7 +13,7 @@ import ch.trick17.peppl.lang.peppl.Role
 import ch.trick17.peppl.lang.peppl.RoleType
 import ch.trick17.peppl.lang.peppl.Type
 import ch.trick17.peppl.lang.typesystem.PepplSystem
-import ch.trick17.peppl.lang.typesystem.PepplTypeUtils
+import ch.trick17.peppl.lang.typesystem.PepplUtils
 import javax.inject.Inject
 import org.eclipse.xtext.junit4.InjectWith
 import org.eclipse.xtext.junit4.XtextRunner
@@ -28,9 +32,6 @@ import static org.eclipse.xtext.diagnostics.Diagnostic.*
 import static org.hamcrest.Matchers.*
 
 import static extension org.hamcrest.MatcherAssert.assertThat
-import ch.trick17.peppl.lang.peppl.Expr
-import ch.trick17.peppl.lang.peppl.ExprStmt
-import ch.trick17.peppl.lang.peppl.WithBody
 
 @RunWith(XtextRunner)
 @InjectWith(PepplInjectorProvider)
@@ -41,10 +42,10 @@ class PepplSystemTest {
     @Inject extension ParseHelper<Program>
     @Inject extension ValidationTestHelper
     @Inject extension PepplSystem system
-    @Inject extension PepplTypeUtils
+    @Inject extension PepplUtils
     
     @Test
-    def void testTAssignment() {
+    def testTAssignment() {
         val program = parse('''
             class Object
             class A
@@ -59,7 +60,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTAssignmentErrorInOp() {
+    def testTAssignmentErrorInOp() {
         parse("main { !5 = 5; }")
             .assertError(peppl.intLiteral, SUBTYPEEXPR, "int", "boolean")
         
@@ -72,7 +73,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTAssignmentNotAssignable() {
+    def testTAssignmentNotAssignable() {
         parse('''
             main {
                 val x: int;
@@ -82,7 +83,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTAssignmentTypeMismatch() {
+    def testTAssignmentTypeMismatch() {
         parse('''
             main {
                 var x: int;
@@ -92,13 +93,13 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTBooleanExpr() {
+    def testTBooleanExpr() {
         parse("main { true || false; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
         parse("main { true && false; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
     }
     
     @Test
-    def void testTBooleanExprErrorInOp() {
+    def testTBooleanExprErrorInOp() {
         parse("main { !5 || false; }")
             .assertError(peppl.intLiteral, SUBTYPEEXPR, "int", "boolean")
         parse("main { true || !5; }")
@@ -106,7 +107,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTBooleanExprTypeMismatch() {
+    def testTBooleanExprTypeMismatch() {
         parse("main { 5 || false; }")
             .assertError(peppl.intLiteral, SUBTYPEEXPR, "int", "boolean")
         parse("main { true || 5; }")
@@ -114,7 +115,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTEqualityExpr() {
+    def testTEqualityExpr() {
         parse("main { true == false; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
         parse("main { 5 != 3; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
 
@@ -130,7 +131,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTEqualityExprErrorInOp() {
+    def testTEqualityExprErrorInOp() {
         parse("main { !5 == false; }")
             .assertError(peppl.intLiteral, SUBTYPEEXPR, "int", "boolean")
         parse("main { true != !5; }")
@@ -138,7 +139,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTEqualityExprIncompatibleTypes() {
+    def testTEqualityExprIncompatibleTypes() {
         parse('''
             class Object
             class A
@@ -152,7 +153,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTRelationalExpr() {
+    def testTRelationalExpr() {
         parse("main {   5 <    6; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
         parse("main {  -1 <= -10; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
         parse("main { 'a' >  ' '; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
@@ -160,7 +161,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTRelationalExprErrorInOp() {
+    def testTRelationalExprErrorInOp() {
         parse("main { -true < 0; }")
             .assertError(peppl.booleanLiteral, SUBTYPEEXPR, "int", "boolean")
         parse("main { 100 <= -false; }")
@@ -172,7 +173,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTRelationalExprIncompatibleTypes() {
+    def testTRelationalExprIncompatibleTypes() {
         parse('''
             class Object
             main { new Object < new Object; }
@@ -189,7 +190,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTArithmeticExpr() {
+    def testTArithmeticExpr() {
         parse("main {   4 +  4; }").main.lastExpr.type.assertThat(instanceOf(Int))
         parse("main {   0 -  0; }").main.lastExpr.type.assertThat(instanceOf(Int))
         parse("main {   3 *  2; }").main.lastExpr.type.assertThat(instanceOf(Int))
@@ -214,7 +215,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTArithmeticExprErrorInOp() {
+    def testTArithmeticExprErrorInOp() {
         parse("main { !'a' + 0; }")
             .assertError(peppl.charLiteral, SUBTYPEEXPR, "char", "boolean")
         parse("main { 100 - -false; }")
@@ -228,7 +229,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTArtithmeticExprTypeMismatch() {
+    def testTArtithmeticExprTypeMismatch() {
         parse('''
             class Object
             main { new Object + new Object; }
@@ -272,7 +273,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testCast() {
+    def testCast() {
         // Redundant casts
         parse("main { (int) 5; }").main.lastExpr.type.assertThat(instanceOf(Int))
         parse("main { (boolean) true; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
@@ -307,13 +308,13 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTCastErrorInOp() {
+    def testTCastErrorInOp() {
         parse("main { (boolean) !5; }")
             .assertError(peppl.intLiteral, SUBTYPEEXPR, "int", "boolean")
     }
     
     @Test
-    def void testTCastIllegal() {
+    def testTCastIllegal() {
         parse("main { (boolean) 5; }")
             .assertError(peppl.cast, null, "cast", "int", "boolean")
         parse("main { (int) false; }")
@@ -337,14 +338,14 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTUnaryMinus() {
+    def testTUnaryMinus() {
         parse("main { -2; }").main.lastExpr.type.assertThat(instanceOf(Int))
         parse("main { val a: int = 5; -a; }").main.lastExpr.type.assertThat(instanceOf(Int))
         parse("main { -(4-4); }").main.lastExpr.type.assertThat(instanceOf(Int))
     }
     
     @Test
-    def void testTUnaryMinusErrorInOp() {
+    def testTUnaryMinusErrorInOp() {
         parse("main { -!5; }")
             .assertError(peppl.intLiteral, SUBTYPEEXPR, "int", "boolean")
         parse("main { -(-'a'); }")
@@ -352,7 +353,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTUnaryMinusTypeMismatch() {
+    def testTUnaryMinusTypeMismatch() {
         parse('''
             class Object
             main { -new Object; }
@@ -372,7 +373,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTUnaryNot() {
+    def testTUnaryNot() {
         parse("main { !true; }").main.lastExpr.type
             .assertThat(instanceOf(Boolean))
         parse("main { val a: boolean = false; !a; }").main.lastExpr.type
@@ -382,7 +383,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTUnaryNotErrorInOp() {
+    def testTUnaryNotErrorInOp() {
         parse("main { !(-'a'); }")
             .assertError(peppl.charLiteral, SUBTYPEEXPR, "char", "int")
         parse("main { !(!5); }")
@@ -390,7 +391,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTUnaryNotTypeMismatch() {
+    def testTUnaryNotTypeMismatch() {
         parse('''
             class Object
             main { !new Object; }
@@ -410,7 +411,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTMemberAccessErrorInTarget() {
+    def testTMemberAccessErrorInTarget() {
         parse("main { (!5).a; }")
             .assertError(peppl.intLiteral, SUBTYPEEXPR, "int", "boolean")
         parse("main { (!5).foo(); }")
@@ -418,7 +419,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTMemberAccessIllegalTarget() {
+    def testTMemberAccessIllegalTarget() {
         parse('''main { 5.a; }''')
             .assertError(peppl.intLiteral, null, "Illegal", "target", "access")
         parse('''main { false.foo(); }''')
@@ -426,7 +427,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTMemberAccessField() {
+    def testTMemberAccessField() {
         parse('''
             class Object
             class A { var x: int }
@@ -487,7 +488,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTMemberAccessFieldRoleMismatch() {
+    def testTMemberAccessFieldRoleMismatch() {
         parse('''
             class Object
             class A { var x: int }
@@ -500,7 +501,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTMemberAccessMethod() {
+    def testTMemberAccessMethod() {
         for(expected : Role.values) {
             for(actual : Role.values.filter[subroleSucceeded(it, expected)]) {
                 parse('''
@@ -539,7 +540,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTMemberAccessMethodRoleMismatch() {
+    def testTMemberAccessMethodRoleMismatch() {
         for(expected : Role.values) {
             for(actual : Role.values.filter[!subroleSucceeded(it, expected)]) {
                 parse('''
@@ -558,7 +559,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTMemberAccessMethodTypeMismatch() {
+    def testTMemberAccessMethodTypeMismatch() {
         parse('''
             class Object
             class A { def readwrite foo: void {} }
@@ -601,7 +602,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTMemberAccessMethodOverloading() {
+    def testTMemberAccessMethodOverloading() {
         var program = parse('''
             class Object
             class A {
@@ -683,7 +684,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTMemberAccessMethodAmbiguous() {
+    def testTMemberAccessMethodAmbiguous() {
         parse('''
             class Object
             class A {
@@ -708,7 +709,7 @@ class PepplSystemTest {
     }
     
     @Test 
-    def void testTThis() {
+    def testTThis() {
         for(expected : Role.values) {
             val program = parse('''
                 class Object
@@ -722,7 +723,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTThisMain() {
+    def testTThisMain() {
         parse('''
             main {
                 this;
@@ -731,15 +732,24 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testTVariableRef() {
+    def testTVariableRef() {
         parse('''
             main {
                 val i: int = 5;
                 i;
             }
         ''').main.lastExpr.type.assertThat(instanceOf(Int))
+        parse('''
+            class Object
+            class A {
+                def pure foo(val i: int): void {
+                    i;
+                }
+            }
+            main {}
+        ''').findClass("A").methods.head.lastExpr.type.assertThat(instanceOf(Int))
         
-        val program = parse('''
+        var program = parse('''
             class Object
             class A
             main {
@@ -749,10 +759,25 @@ class PepplSystemTest {
         ''')
         program.main.lastExpr.type
             .assertThat(roleType(READONLY, program.findClass("A")))
+        
+        parse('''
+            main {
+                i;
+                val i: int = 0;
+            }
+        ''').assertError(peppl.varRef, LINKING_DIAGNOSTIC, "var", "i")
+        parse('''
+            main {
+                {
+                    val i: int = 0;
+                }
+                i;
+            }
+        ''').assertError(peppl.varRef, LINKING_DIAGNOSTIC, "var", "i")
     }
     
     @Test
-    def void testTNew() {
+    def testTNew() {
         val program = parse('''
             class Object
             class A
@@ -763,7 +788,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testWBlock() {
+    def testWBlock() {
         parse('''
             class Object
             main {
@@ -805,7 +830,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testWLocalVarDecl() {
+    def testWLocalVarDecl() {
         parse('''
             class Object
             class A
@@ -838,7 +863,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testWIfStmt() {
+    def testWIfStmt() {
         parse('''
             class Object
             main {
@@ -882,7 +907,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testWWhileLoop() {
+    def testWWhileLoop() {
         parse('''
             class Object
             main {
@@ -912,7 +937,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def void testWReturn() {
+    def testWReturn() {
         parse('''
             class Object
             class A {
@@ -974,14 +999,18 @@ class PepplSystemTest {
         result
     }
     
-    def expr(WithBody b, int i) {
+    def expr(ElemWithBody b, int i) { expr(b.body, i) }
+    
+    def expr(Block b, int i) {
         b.assertNoErrors;
-        b.body.stmts.filter(ExprStmt).get(i).expr
+        b.stmts.filter(ExprStmt).get(i).expr
     }
     
-    def lastExpr(WithBody b) {
+    def lastExpr(ElemWithBody b) { lastExpr(b.body) }
+    
+    def lastExpr(Block b) {
         b.assertNoErrors;
-        b.body.stmts.filter(ExprStmt).last.expr
+        b.stmts.filter(ExprStmt).last.expr
     }
     
     def type(Expr expr) {

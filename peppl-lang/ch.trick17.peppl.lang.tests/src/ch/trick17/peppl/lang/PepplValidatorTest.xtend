@@ -328,6 +328,12 @@ class PepplValidatorTest {
                 def readwrite foo(val a: int, val a: boolean): void {}
             }
         ''').assertError(peppl.param, DUPLICATE_VARIABLE)
+        parse('''
+            class Object
+            class A {
+                new(val a: int, val a: boolean) {}
+            }
+        ''').assertError(peppl.param, DUPLICATE_VARIABLE)
         
         parse('''
             class Object
@@ -338,11 +344,38 @@ class PepplValidatorTest {
                 }
             }
         ''').assertError(peppl.localVar, DUPLICATE_VARIABLE)
+        parse('''
+            class Object
+            class A {
+                new {
+                    var a: int;
+                    val a: boolean;
+                }
+            }
+        ''').assertError(peppl.localVar, DUPLICATE_VARIABLE)
+        parse('''
+            main {
+                val i: int = 5;
+                {
+                    val i: boolean = true;
+                    i;
+                }
+                i;
+            }
+        ''').assertError(peppl.localVar, DUPLICATE_VARIABLE)
         
         parse('''
             class Object
             class A {
                 def readwrite foo(val a: int): void {
+                    var a: boolean;
+                }
+            }
+        ''').assertError(peppl.param, DUPLICATE_VARIABLE)
+        parse('''
+            class Object
+            class A {
+                new(val a: int) {
                     var a: boolean;
                 }
             }
