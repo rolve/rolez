@@ -51,7 +51,7 @@ class PepplProposalProvider extends AbstractPepplProposalProvider {
             val targetType = system.type(envFor(model), target).value
             if (targetType instanceof RoleType) {
                 val factory = getProposalFactory("MemberAccess", context)
-                val scope = Scopes.scopeFor(targetType.base.allMembers.filter(kind))
+                val scope = Scopes.scopeFor(targetType.base.clazz.allMembers.filter(kind))
                 for (e : scope.allElements) {
                     if (!acceptor.canAcceptMoreProposals)
                         return;

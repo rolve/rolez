@@ -3,14 +3,17 @@ package ch.trick17.peppl.lang
 import ch.trick17.peppl.lang.peppl.Block
 import ch.trick17.peppl.lang.peppl.Boolean
 import ch.trick17.peppl.lang.peppl.Class
+import ch.trick17.peppl.lang.peppl.ClassRef
 import ch.trick17.peppl.lang.peppl.ElemWithBody
 import ch.trick17.peppl.lang.peppl.Expr
 import ch.trick17.peppl.lang.peppl.ExprStmt
+import ch.trick17.peppl.lang.peppl.GenericClassRef
 import ch.trick17.peppl.lang.peppl.Int
 import ch.trick17.peppl.lang.peppl.PepplPackage
 import ch.trick17.peppl.lang.peppl.Program
 import ch.trick17.peppl.lang.peppl.Role
 import ch.trick17.peppl.lang.peppl.RoleType
+import ch.trick17.peppl.lang.peppl.SimpleClassRef
 import ch.trick17.peppl.lang.peppl.Type
 import ch.trick17.peppl.lang.typesystem.PepplSystem
 import ch.trick17.peppl.lang.typesystem.PepplUtils
@@ -32,6 +35,7 @@ import static org.eclipse.xtext.diagnostics.Diagnostic.*
 import static org.hamcrest.Matchers.*
 
 import static extension org.hamcrest.MatcherAssert.assertThat
+import ch.trick17.peppl.lang.peppl.PrimitiveType
 
 @RunWith(XtextRunner)
 @InjectWith(PepplInjectorProvider)
@@ -41,8 +45,8 @@ class PepplSystemTest {
     
     @Inject extension ParseHelper<Program>
     @Inject extension ValidationTestHelper
-    @Inject extension PepplSystem system
     @Inject extension PepplUtils
+    @Inject extension PepplSystem system
     
     @Test
     def testTAssignment() {
@@ -56,7 +60,7 @@ class PepplSystemTest {
             }
         ''')
         program.main.lastExpr.type
-            .assertThat(roleType(READWRITE,program.findClass("A")))
+            .assertThat(isRoleType(READWRITE, classRef(program.findClass("A"))))
     }
     
     @Test
@@ -201,17 +205,18 @@ class PepplSystemTest {
             class Object
             class String
             main { "Hi" + " World"; }
-        ''').main.lastExpr.type.asRoleType.base.name.assertThat(is("String"))
+        ''').main.lastExpr.type.asRoleType.base.clazz.name.assertThat(is("String"))
         parse('''
             class Object
             class String
             main { "" + '5'; }
-        ''').main.lastExpr.type.asRoleType.base.name.assertThat(is("String"))
+        ''').main.lastExpr.type.asRoleType.base.clazz.name.assertThat(is("String"))
         parse('''
             class Object
             class String
             main { null + " "; }
-        ''').main.lastExpr.type.asRoleType.base.name.assertThat(is("String"))
+        ''').main.lastExpr.type.asRoleType.base.clazz.name.assertThat(is("String"))
+        // IMPROVE: check rest of the type as well
     }
     
     @Test
@@ -282,7 +287,7 @@ class PepplSystemTest {
             class Object
             main { (readwrite Object) new Object; }
         ''')
-        program.main.lastExpr.type.assertThat(roleType(READWRITE, program.findClass("Object")))
+        program.main.lastExpr.type.assertThat(isRoleType(READWRITE, classRef(program.findClass("Object"))))
         
         // Upcasts
         program = parse('''
@@ -294,9 +299,9 @@ class PepplSystemTest {
                 (readwrite A) null;
             }
         ''')
-        program.main.expr(0).type.assertThat(roleType(READWRITE, program.findClass("Object")))
-        program.main.expr(1).type.assertThat(roleType(READONLY,  program.findClass("A")))
-        program.main.expr(2).type.assertThat(roleType(READWRITE, program.findClass("A")))
+        program.main.expr(0).type.assertThat(isRoleType(READWRITE, classRef(program.findClass("Object"))))
+        program.main.expr(1).type.assertThat(isRoleType(READONLY,  classRef(program.findClass("A"))))
+        program.main.expr(2).type.assertThat(isRoleType(READWRITE, classRef(program.findClass("A"))))
         
         // Downcasts
         program = parse('''
@@ -304,7 +309,7 @@ class PepplSystemTest {
             class A
             main { (readwrite A) new Object; }
         ''')
-        program.main.lastExpr.type.assertThat(roleType(READWRITE, program.findClass("A")))
+        program.main.lastExpr.type.assertThat(isRoleType(READWRITE, classRef(program.findClass("A"))))
     }
     
     @Test
@@ -451,7 +456,7 @@ class PepplSystemTest {
             }
         ''')
         program.main.lastExpr.type
-            .assertThat(roleType(READWRITE, program.findClass("A")))
+            .assertThat(isRoleType(READWRITE, classRef(program.findClass("A"))))
         
         parse('''
             class Object
@@ -525,7 +530,7 @@ class PepplSystemTest {
             main { new A.a(); }
         ''')
         program.main.lastExpr.type
-            .assertThat(roleType(READONLY, program.findClass("A")))
+            .assertThat(isRoleType(READONLY, classRef(program.findClass("A"))))
         
         parse('''
             class Object
@@ -718,7 +723,7 @@ class PepplSystemTest {
                 }
             ''')
             program.findClass("A").findMethod("foo").lastExpr.type
-                .assertThat(roleType(expected, program.findClass("A")))
+                .assertThat(isRoleType(expected, classRef(program.findClass("A"))))
         }
     }
     
@@ -758,7 +763,7 @@ class PepplSystemTest {
             }
         ''')
         program.main.lastExpr.type
-            .assertThat(roleType(READONLY, program.findClass("A")))
+            .assertThat(isRoleType(READONLY, classRef(program.findClass("A"))))
         
         parse('''
             main {
@@ -778,13 +783,43 @@ class PepplSystemTest {
     
     @Test
     def testTNew() {
-        val program = parse('''
+        var program = parse('''
             class Object
             class A
             main { new A; }
         ''')
         program.main.lastExpr.type
-            .assertThat(roleType(READWRITE, program.findClass("A")))
+            .assertThat(isRoleType(READWRITE, classRef(program.findClass("A"))))
+        
+        program = parse('''
+            class Object
+            class Array
+            main { new Array[int]; }
+        ''')
+        program.main.lastExpr.type
+            .assertThat(isRoleType(READWRITE, classRef(program.findClass("Array"), intType)))
+        
+        program = parse('''
+            class Object
+            class A
+            class Array
+            main { new Array[readonly A]; }
+        ''')
+        program.main.lastExpr.type
+            .assertThat(isRoleType(READWRITE, classRef(program.findClass("Array"),
+                roleType(READONLY, classRef(program.findClass("A"))))))
+        
+        program = parse('''
+            class Object
+            class A
+            class Array
+            main { new Array[pure Array[readwrite A]]; }
+        ''')
+        val array = program.findClass("Array")
+        program.main.lastExpr.type
+            .assertThat(isRoleType(READWRITE, classRef(array,
+                roleType(PURE, classRef(array,
+                    roleType(READWRITE, classRef(program.findClass("A"))))))))
     }
     
     @Test
@@ -1024,35 +1059,52 @@ class PepplSystemTest {
         type as RoleType
     }
     
-    def Matcher<Type> roleType(Role role, Class clazz) {
-        new RoleTypeMatcher(system, role, clazz)
+    def Matcher<Type> isRoleType(Role role, ClassRef base) {
+        new RoleTypeMatcher(system, roleType(role, base))
     }
     
     static class RoleTypeMatcher extends BaseMatcher<Type> {
         
         extension PepplSystem system
-        val Role role
-        val Class clazz
+        val RoleType expected
     
-        new(PepplSystem system, Role role, Class clazz) {
-            this.system = system;
-            this.role = role
-            this.clazz = clazz
+        new(PepplSystem system, RoleType expected) {
+            this.system = system
+            this.expected = expected
         }
         
-        override matches(Object item) {
-            if(item instanceof RoleType)
-                item.role.equals(role) && item.base.equals(clazz)
-            else
-                false
+        override matches(Object actual) {
+            expected.equalTo(actual)
+        }
+        
+        private def dispatch boolean equalTo(RoleType _, Object __) { false }
+        
+        private def dispatch boolean equalTo(RoleType it, RoleType other) {
+            role.equals(other.role)
+            base.equalTo(other.base)
+        }
+        
+        private def dispatch boolean equalTo(PrimitiveType it, PrimitiveType other) {
+            class == other.class
+        }
+        
+        private def dispatch boolean equalTo(ClassRef _, Object __) { false }
+        
+        private def dispatch boolean equalTo(SimpleClassRef it, SimpleClassRef other) {
+            clazz.equals(other.clazz)
+        }
+        
+        private def dispatch boolean equalTo(GenericClassRef it, GenericClassRef other) {
+            clazz.equals(other.clazz)
+            typeArg.equalTo(other.typeArg)
         }
         
         override describeTo(Description description) {
-            description.appendText(role.literal + " " + clazz.name)
+            description.appendText(expected.stringRep)
         }
         
-        override describeMismatch(Object item, Description description) {
-            description.appendText(item.stringRep)
+        override describeMismatch(Object actual, Description description) {
+            description.appendText(actual.stringRep)
         }
         
     }

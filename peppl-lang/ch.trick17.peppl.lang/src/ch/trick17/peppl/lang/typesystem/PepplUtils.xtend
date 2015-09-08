@@ -1,6 +1,5 @@
 package ch.trick17.peppl.lang.typesystem
 
-import ch.trick17.peppl.lang.peppl.Block
 import ch.trick17.peppl.lang.peppl.Boolean
 import ch.trick17.peppl.lang.peppl.Char
 import ch.trick17.peppl.lang.peppl.Class
@@ -34,6 +33,13 @@ import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.EReference
 import org.eclipse.xtext.naming.QualifiedName
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils
+import ch.trick17.peppl.lang.peppl.Type
+import ch.trick17.peppl.lang.peppl.ClassRef
+import ch.trick17.peppl.lang.peppl.SimpleClassRef
+import ch.trick17.peppl.lang.peppl.GenericClassRef
+import org.eclipse.emf.ecore.util.EcoreUtil
+
+import static extension org.eclipse.emf.ecore.util.EcoreUtil.copy
 
 /** 
  * Utility functions for PEPPL language constructs
@@ -43,10 +49,23 @@ class PepplUtils {
     
     @Inject private extension PepplSystem __
     
-    def RoleType roleType(Role role, Class base) {
-        var result = PepplFactory.eINSTANCE.createRoleType()
-        result.setRole(role)
-        result.setBase(base)
+    def RoleType roleType(Role r, ClassRef base) {
+        val result = PepplFactory.eINSTANCE.createRoleType()
+        result.setRole(r)
+        result.setBase(base.copy) // TODO: So... when is copy necessary?..
+        result
+    }
+    
+    def SimpleClassRef classRef(Class c) {
+        val result = PepplFactory.eINSTANCE.createSimpleClassRef
+        result.clazz = c
+        result
+    }
+    
+    def GenericClassRef classRef(Class c, Type arg) {
+        val result = PepplFactory.eINSTANCE.createGenericClassRef
+        result.clazz = c
+        result.typeArg = arg.copy
         result
     }
 
@@ -83,7 +102,7 @@ class PepplUtils {
         if(method == null)
             new RuleEnvironment
         else {
-            val thisType = roleType(method.thisRole, method.enclosingClass)
+            val thisType = roleType(method.thisRole, classRef(method.enclosingClass))
             new RuleEnvironment(new RuleEnvironmentEntry("this", thisType))
         }
     }
@@ -173,7 +192,7 @@ class PepplUtils {
         left.name.equals(right.name)
             && left.params.size == right.params.size
             && left.params.map[type].forall[
-                !equalType(envFor(left), it, i.next).failed
+                EcoreUtil.equals(it, i.next)
             ]
     }
     

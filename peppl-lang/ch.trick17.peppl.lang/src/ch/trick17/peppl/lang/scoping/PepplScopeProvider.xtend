@@ -33,7 +33,7 @@ class PepplScopeProvider extends AbstractDeclarativeScopeProvider {
     def IScope scope_FieldSelector_field(FieldSelector s, EReference ref) {
         val targetType = system.type(envFor(s), (s.eContainer as MemberAccess).target).value
         if(targetType instanceof RoleType)
-            Scopes.scopeFor(targetType.base.allMembers.filter(Field))
+            Scopes.scopeFor(targetType.base.clazz.allMembers.filter(Field))
         else
             IScope.NULLSCOPE;
     }
@@ -43,7 +43,7 @@ class PepplScopeProvider extends AbstractDeclarativeScopeProvider {
         if(targetType instanceof RoleType) {
             // Find most specific method, following
             // http://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.12.2
-            val applicable = targetType.base.allMembers.filter(Method).filter[
+            val applicable = targetType.base.clazz.allMembers.filter(Method).filter[
                 name.equals(s.methodName) && system.validArgsSucceeded(envFor(s), s, it)
             ].toList
             

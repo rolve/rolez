@@ -46,6 +46,9 @@ import static ch.trick17.peppl.lang.peppl.Role.*
 import static ch.trick17.peppl.lang.peppl.VarKind.*
 import ch.trick17.peppl.lang.peppl.Parameterized
 import ch.trick17.peppl.lang.peppl.ElemWithArgs
+import ch.trick17.peppl.lang.peppl.ClassRef
+import ch.trick17.peppl.lang.peppl.SimpleClassRef
+import ch.trick17.peppl.lang.peppl.GenericClassRef
 
 system ch.trick17.peppl.lang.typesystem.PepplSystem
 
@@ -73,7 +76,7 @@ judgments {
     
     subtype  |- Type  left <: Type  right error "subtype" // Apparently, when no error message is specified, some "source" is taken, which can be very wrong...
     subrole  |- Role  left <! Role  right error "subrole"
-    subclass |- Class left <~ Class right error "subclass"
+    subclass |- ClassRef left <~ ClassRef right error "subclass"
     
     equalType |- Type left ~~ Type right
     
@@ -176,7 +179,7 @@ from {
     
     {
         e.op == OpArithmetic.PLUS;
-        val stringType = roleType(READONLY, findClass(stringClassName, e))
+        val stringType = roleType(READONLY, classRef(findClass(stringClassName, e)))
         
         G |- leftType <: stringType or G |- rightType <: stringType     
         t = stringType
@@ -275,9 +278,10 @@ axiom TVarRef
     G |- VarRef r : r.variable.type
 
 rule TNew
-    G |- New n : roleType(READWRITE, n.clazz)
+    G |- New n : roleType(READWRITE, n.classRef)
 from {
-    n.clazz.allConstructors.filter[G |- n << it].size == 1
+    n.classRef.clazz.allConstructors.filter[G |- n << it].size == 1
+    // TODO: use same rules as for methods
 }
 
 rule TParenthesized
@@ -293,7 +297,7 @@ rule TStringLiteral
 from {
     val stringClass = findClass(stringClassName, s)
     stringClass != null
-    t = roleType(READWRITE, stringClass)
+    t = roleType(READWRITE, classRef(stringClass))
 }
 
 axiom TNullLiteral
@@ -412,12 +416,22 @@ from {
 }
 
 
-rule Subclass
-    G |- Class left <~ Class right
+rule SubclassSimple
+    G |- SimpleClassRef left <~ SimpleClassRef right
 from {
-    left == right || strictSuperclasses(left).contains(right)
+    left.clazz == right.clazz || strictSuperclasses(left.clazz).contains(right.clazz)
 }
 
+rule SubclassGeneric
+    G |- GenericClassRef left <~ GenericClassRef right
+from {
+    left.clazz == right.clazz || strictSuperclasses(left.clazz).contains(right.clazz)
+    G |- left.typeArg ~~ right.typeArg
+}
+
+rule SubclassGeneral
+    G |- ClassRef left <~ ClassRef right
+from { fail }
 
 rule EqualTypePrimitiveTypes
     G |- PrimitiveType left ~~ PrimitiveType right
@@ -432,7 +446,12 @@ rule EqualTypeRoleTypes
     G |- RoleType left ~~ RoleType right
 from {
     left.role == right.role
-    left.base == right.base // Is this correct or should we compare fully qualified name?
+    left.base.clazz == right.base.clazz // Is this correct?
+    left.base instanceof GenericClassRef == right.base instanceof GenericClassRef
+    
+    left.base instanceof SimpleClassRef
+    or
+    G |- (left.base as GenericClassRef).typeArg ~~ (right.base as GenericClassRef).typeArg
 }
 
 rule EqualTypeGeneral
@@ -466,7 +485,7 @@ from { fail }
 
 
 checkrule CheckStmts for
-    Stmt s // Checked for all stmts individually, to enable multiple error markers
+    Stmt s // Checked for all stmts individually, to get multiple error markers
 from {
     val class = s.enclosingClass
     if(class == null) {
@@ -475,7 +494,7 @@ from {
     }
     else {
         // Method or constructor
-        val thisType = roleType(READWRITE, class)
+        val thisType = roleType(READWRITE, classRef(class))
         "this" <- thisType |- s
     }
 }

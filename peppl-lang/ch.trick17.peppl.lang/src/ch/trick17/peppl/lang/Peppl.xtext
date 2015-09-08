@@ -138,8 +138,10 @@ SimpleExpr returns Expr:
 VarRef: variable=[Var];
 
 New:
-    'new' clazz=[Class]
+    'new' classRef=ClassRef
     ('(' args+=Expr (',' args+=Expr)* ')')?;
+
+// TODO: instantiation of generic classes
 
 Parenthesized: '(' expr=Expr ')';
 
@@ -171,12 +173,21 @@ PrimitiveType:
     {Int} 'int' | {Boolean} 'boolean' | {Char} 'char' | {Void} 'void';
 
 RoleType:
-    role=Role base=[Class];
+    role=Role base=ClassRef;
 
 terminal NULL_TYPE: 'Null';
 
 enum Role:
     READWRITE='readwrite' | READONLY='readonly' | PURE='pure';
+
+ClassRef:
+    SimpleClassRef | GenericClassRef;
+
+SimpleClassRef:
+    clazz=[Class];
+
+GenericClassRef:
+    clazz=[Class] '[' typeArg=Type ']';
 
 Var:
     LocalVar | => Param; // => only needed to avoid warnings. Rule is not used anyway.
