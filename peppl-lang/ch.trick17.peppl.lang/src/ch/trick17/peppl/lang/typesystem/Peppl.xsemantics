@@ -43,9 +43,6 @@ import ch.trick17.peppl.lang.peppl.VarRef
 import ch.trick17.peppl.lang.peppl.WhileLoop
 import ch.trick17.peppl.lang.validation.AbstractPepplValidator
 import java.util.Set
-import org.eclipse.emf.ecore.EObject
-import org.eclipse.xtext.naming.QualifiedName
-import org.eclipse.xtext.scoping.IGlobalScopeProvider
 
 import static ch.trick17.peppl.lang.peppl.PepplPackage.Literals.*
 import static ch.trick17.peppl.lang.peppl.Role.*
@@ -54,14 +51,11 @@ system ch.trick17.peppl.lang.typesystem.PepplSystem
 
 validatorExtends AbstractPepplValidator
 
-inject extension PepplUtils __
-inject IGlobalScopeProvider globalScopeProv
+inject extension PepplUtils _
 
 auxiliary {
     leastCommonSuperrole(Role r1, Role r2): Role
-    actualSuperclass(Class clazz): Class
     strictSuperclasses(Class clazz): Set<Class> cached
-    findClass(QualifiedName name, EObject context): Class
 }
 
 judgments {
@@ -89,16 +83,6 @@ auxiliary leastCommonSuperrole(Role r1, Role r2) {
     if(r1.value > r2.value) r1 else r2 // Very simple so far
 }
 
-auxiliary actualSuperclass(Class c) {
-    val objectClass = findClass(objectClassName, c)
-    if(c == objectClass)
-        null
-    else if(c.superclass == null)
-        objectClass
-    else
-        c.superclass
-}
-
 auxiliary strictSuperclasses(Class c) {
     val result = getAll(
         c,
@@ -111,12 +95,6 @@ auxiliary strictSuperclasses(Class c) {
     if(c != object && object != null)
         result.add(object)
     result
-}
-
-auxiliary findClass(QualifiedName name, EObject context) {
-    globalScopeProv.getScope(context.eResource, CLASS__SUPERCLASS, [true])
-        .getSingleElement(name)?.EObjectOrProxy as Class
-    // TODO: This still doesn't seem to work right! Reproduce in a test and fix!
 }
 
 
@@ -255,7 +233,6 @@ from {
                     error "Role mismatch: Cannot call method " + selector.method.stringRep
                         +" on a " + targetType.role.stringRep + " target"
                     source a.target
-                G |- selector << selector.method
                 t = selector.method.type
             }
         }
@@ -281,8 +258,13 @@ axiom TVarRef
 rule TNew
     G |- New n : roleType(READWRITE, n.classRef)
 from {
-    n.classRef.clazz.allConstructors.filter[G |- n << it].size == 1
-    // TODO: use same rules as for methods
+    val maxSpecific = n.classRef.clazz.allConstructors.maximallySpecific(n)
+    maxSpecific.size == 1 or fail
+        error
+            if(maxSpecific.size == 0) "No suitable constructor for given argument types"
+            else "Constructor call is ambiguous"
+        source n
+    // TODO: Can constructors somehow be linked?
 }
 
 rule TParenthesized

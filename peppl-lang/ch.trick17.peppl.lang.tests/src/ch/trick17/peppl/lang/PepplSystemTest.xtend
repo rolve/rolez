@@ -597,10 +597,7 @@ class PepplSystemTest {
         parse('''
             class Object
             class A { def readwrite foo(val a: readwrite A): void {} }
-            main {
-                val a: readonly A = new A;
-                new A.foo(a);
-            }
+            main { new A.foo((readonly A) new A); }
         ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "foo")
     }
     
@@ -818,6 +815,112 @@ class PepplSystemTest {
             .assertThat(isRoleType(READWRITE, classRef(array,
                 roleType(PURE, classRef(array,
                     roleType(READWRITE, classRef(program.findClass("A"))))))))
+    }
+    
+    @Test
+    def testTNewTypeMismatch() {
+        parse('''
+            class Object
+            class A
+            main { new A(5); }
+        ''').assertError(NEW, null, "no suitable constructor")
+        parse('''
+            class Object
+            class A { new {} }
+            main { new A(5); }
+        ''').assertError(NEW, null, "no suitable constructor")
+        parse('''
+            class Object
+            class A { new(val c: char) {} }
+            main { new A(5, false); }
+        ''').assertError(NEW, null, "no suitable constructor")
+        parse('''
+            class Object
+            class A { new(val i: int) {} }
+            main { new A; }
+        ''').assertError(NEW, null, "no suitable constructor")
+        
+        parse('''
+            class Object
+            class A { new(val i: int) {} }
+            main { new A(false); }
+        ''').assertError(NEW, null, "no suitable constructor")
+        parse('''
+            class Object
+            class A { new(val a: readwrite A) {} }
+            main { new A(new Object); }
+        ''').assertError(NEW, null, "no suitable constructor")
+    }
+    
+    @Test
+    def testTNewOverloading() {
+        parse('''
+            class Object
+            class A {
+                new(val a: int) {}
+                new(val a: boolean) {}
+            }
+            main {
+                new A(4);
+                new A(true);
+            }
+        ''').assertNoErrors
+        
+        // TODO: For the following, test that the right constructor is chosen,
+        // either by linking something or after code generation.
+        parse('''
+            class Object
+            class A
+            class B {
+                new(val a: readwrite A) {}
+                new(val a: readonly  A) {}
+            }
+            main {
+                new B(new A);
+                new B((readonly A) new A);
+            }
+        ''').assertNoErrors
+        
+        // (Switch order of declaration to rule out accidental selection of the correct one)
+        parse('''
+            class Object
+            class A
+            class B {
+                new(val a: readonly  A) {}
+                new(val a: readwrite A) {}
+            }
+            main {
+                new B(new A);
+                new B((readonly A) new A);
+            }
+        ''').assertNoErrors
+    }
+    
+    @Test
+    def testTNewAmbiguous() {
+        parse('''
+            class Object
+            class A
+            class B {
+                new(val a: readonly  A, val b: readwrite A) {}
+                new(val a: readwrite A, val b: readonly  A) {}
+            }
+            main {
+                new B(new A, new A);
+            }
+        ''').assertError(NEW, null, "constructor", "ambiguous")
+        
+        parse('''
+            class Object
+            class A
+            class B {
+                new(val a: readwrite Object, val b: readwrite A) {}
+                new(val a: readwrite A, val b: readwrite Object) {}
+            }
+            main {
+                new B(new A, new A);
+            }
+        ''').assertError(NEW, null, "constructor", "ambiguous")
     }
     
     @Test

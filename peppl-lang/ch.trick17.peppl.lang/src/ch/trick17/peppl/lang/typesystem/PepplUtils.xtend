@@ -5,6 +5,7 @@ import ch.trick17.peppl.lang.peppl.Char
 import ch.trick17.peppl.lang.peppl.Class
 import ch.trick17.peppl.lang.peppl.ClassRef
 import ch.trick17.peppl.lang.peppl.Constructor
+import ch.trick17.peppl.lang.peppl.ElemWithArgs
 import ch.trick17.peppl.lang.peppl.ElemWithBody
 import ch.trick17.peppl.lang.peppl.Field
 import ch.trick17.peppl.lang.peppl.GenericClassRef
@@ -37,6 +38,7 @@ import org.eclipse.emf.ecore.EReference
 import org.eclipse.emf.ecore.util.EcoreUtil
 import org.eclipse.xtext.naming.QualifiedName
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils
+import org.eclipse.xtext.scoping.IGlobalScopeProvider
 
 import static ch.trick17.peppl.lang.peppl.PepplPackage.Literals.*
 
@@ -48,7 +50,8 @@ import static extension org.eclipse.emf.ecore.util.EcoreUtil.copy
  */
 class PepplUtils {
     
-    @Inject private extension PepplSystem
+    @Inject private PepplSystem system
+    @Inject private IGlobalScopeProvider globalScopeProv
     private val factory = PepplFactory.eINSTANCE
     
     def RoleType roleType(Role r, ClassRef base) {
@@ -143,6 +146,22 @@ class PepplUtils {
         result
     }
     
+    def actualSuperclass(Class c) {
+        val objectClass = findClass(objectClassName, c)
+        if(c == objectClass)
+            null
+        else if(c.superclass == null)
+            objectClass
+        else
+            c.superclass
+    }
+
+    def findClass(QualifiedName name, EObject context) {
+        globalScopeProv.getScope(context.eResource, CLASS__SUPERCLASS, [true])
+            .getSingleElement(name)?.EObjectOrProxy as Class
+        // FIXME: This still doesn't seem to work right! Reproduce in a test and fix!
+    }
+    
     def Iterable<Var> variables(ElemWithBody b) {
         b.body.eAllContents.filter(LocalVar).toList
             + if(b instanceof Parameterized) b.params else emptyList
@@ -200,6 +219,35 @@ class PepplUtils {
             && left.params.map[type].forall[
                 EcoreUtil.equals(it, i.next)
             ]
+    }
+    
+    /**
+     * Finds the maximally specific methods/constructors for the given argument
+     * list, following
+     * <a href="http://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.12.2">
+     * http://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.12.2
+     * </a>.
+     */
+    def maximallySpecific(Iterable<? extends Parameterized> candidates, ElemWithArgs args) {
+        val applicable = candidates.filter[
+            system.validArgsSucceeded(envFor(args), args, it)
+        ].toList
+        
+        applicable.filter[p |
+            applicable.forall[
+                p == it || !it.strictlyMoreSpecificThan(p)
+            ]
+        ]
+    }
+    
+    private def strictlyMoreSpecificThan(Parameterized target, Parameterized other) {
+        target.moreSpecificThan(other) && !other.moreSpecificThan(target)
+    }
+    
+    private def moreSpecificThan(Parameterized target, Parameterized other) {
+        // Assume both targets have the same number of parameters
+        val i = other.params.iterator
+        target.params.forall[system.subtypeSucceeded(envFor(target), it.type, i.next.type)]
     }
     
     def methodName(MethodSelector s) {

@@ -41,38 +41,20 @@ class PepplScopeProvider extends AbstractDeclarativeScopeProvider {
     def IScope scope_MethodSelector_method(MethodSelector s, EReference ref) {
         val targetType = system.type(envFor(s), (s.eContainer as MemberAccess).target).value
         if(targetType instanceof RoleType) {
-            // Find most specific method, following
-            // http://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.12.2
-            val applicable = targetType.base.clazz.allMembers.filter(Method).filter[
-                name.equals(s.methodName) && system.validArgsSucceeded(envFor(s), s, it)
-            ].toList
+            val maxSpecific = targetType.base.clazz.allMembers.filter(Method)
+                .filter[name.equals(s.methodName)].maximallySpecific(s)
             
-            val maximallySpecific = applicable.filter[m |
-                applicable.forall[
-                    m == it || !it.strictlyMoreSpecificThan(m)
-                ]
-            ]
-            
-            if(maximallySpecific.size <= 1)
-                Scopes.scopeFor(maximallySpecific)
+            if(maxSpecific.size <= 1)
+                Scopes.scopeFor(maxSpecific)
             else {
                 validator.delayedError("Method call is ambiguous", s, ref, AMBIGUOUS_CALL)
-                Scopes.scopeFor(maximallySpecific)
+                Scopes.scopeFor(maxSpecific)
             }
         }
         else
             IScope.NULLSCOPE;
     }
     
-    private def strictlyMoreSpecificThan(Parameterized target, Parameterized other) {
-        target.moreSpecificThan(other) && !other.moreSpecificThan(target)
-    }
-    
-    private def moreSpecificThan(Parameterized target, Parameterized other) {
-        // Assume both targets have the same number of parameters
-        val i = other.params.iterator
-        target.params.forall[system.subtypeSucceeded(envFor(target), it.type, i.next.type)]
-    }
     
     def IScope scope_VarRef_variable(VarRef varRef, EReference eRef) {
         val stmt = varRef.enclosingStmt
