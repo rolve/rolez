@@ -3,28 +3,30 @@
  */
 package ch.trick17.peppl.lang.validation
 
+import ch.trick17.peppl.lang.peppl.Block
 import ch.trick17.peppl.lang.peppl.Class
 import ch.trick17.peppl.lang.peppl.Field
+import ch.trick17.peppl.lang.peppl.GenericClassRef
+import ch.trick17.peppl.lang.peppl.IfStmt
 import ch.trick17.peppl.lang.peppl.Method
 import ch.trick17.peppl.lang.peppl.PepplPackage.Literals
 import ch.trick17.peppl.lang.peppl.Program
+import ch.trick17.peppl.lang.peppl.ReturnExpr
+import ch.trick17.peppl.lang.peppl.SimpleClassRef
+import ch.trick17.peppl.lang.peppl.Stmt
 import ch.trick17.peppl.lang.peppl.Var
 import ch.trick17.peppl.lang.peppl.Void
 import ch.trick17.peppl.lang.typesystem.PepplSystem
+import ch.trick17.peppl.lang.typesystem.PepplUtils
 import ch.trick17.peppl.lang.typesystem.validation.PepplSystemValidator
 import java.util.HashSet
 import java.util.Set
 import javax.inject.Inject
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.EStructuralFeature
+import org.eclipse.emf.mwe2.language.scoping.QualifiedNameProvider
 import org.eclipse.xtext.validation.Check
-import ch.trick17.peppl.lang.peppl.Stmt
-import ch.trick17.peppl.lang.peppl.ReturnExpr
-import ch.trick17.peppl.lang.peppl.IfStmt
-import ch.trick17.peppl.lang.peppl.Block
-import ch.trick17.peppl.lang.typesystem.PepplUtils
-import ch.trick17.peppl.lang.peppl.SimpleClassRef
-import ch.trick17.peppl.lang.peppl.GenericClassRef
+import ch.trick17.peppl.lang.peppl.PepplPackage
 
 /**
  * This class contains custom validation rules. 
@@ -48,9 +50,13 @@ class PepplValidator extends PepplSystemValidator {
     public static val AMBIGUOUS_CALL = "ambiguous call"
     public static val MISSING_TYPE_ARGS = "missing type arguments"
     public static val INCORRECT_TYPE_ARGS = "incorrect type arguments"
+    public static val INCORRECT_OBJECT_SUPERCLASS = "incorrect object superclass"
+    public static val INCORRECT_ARRAY_SUPERCLASS = "incorrect array superclass"
+    public static val CIRCULAR_INHERITANCE = "circular inheritance"
 
     @Inject private extension PepplSystem
     @Inject private extension PepplUtils
+    @Inject private extension QualifiedNameProvider
     
 	@Check
     def checkClassNameStartsWithCapital(Class c) {
@@ -74,6 +80,41 @@ class PepplValidator extends PepplSystemValidator {
         if(matching.size > 1)
            error("Duplicate class " + c.name, Literals.NAMED__NAME, DUPLICATE_CLASS)
 	}
+	
+    @Check
+    def checkObjectClass(Class c) {
+        if(c.fullyQualifiedName == objectClassName) {
+            if(c.superclass != null)
+               error(c.fullyQualifiedName + " must not have a superclass",
+                   c, Literals.CLASS__SUPERCLASS, INCORRECT_OBJECT_SUPERCLASS)
+        }
+    }
+    
+    @Check
+    def checkArrayClass(Class c) {
+        if(c.fullyQualifiedName == arrayClassName) {
+            if(c.actualSuperclass != findClass(objectClassName, c))
+               error("The superclass of " + c.fullyQualifiedName + " must be "+ objectClassName,
+                   c, Literals.CLASS__SUPERCLASS, INCORRECT_ARRAY_SUPERCLASS)
+        }
+    }
+    
+    // TODO: Check string class
+    
+    @Check
+    def checkCircularInheritance(Class c) {
+        if(c.findSuperclass(c))
+            error("Circular inheritance", c, Literals.CLASS__SUPERCLASS, CIRCULAR_INHERITANCE)
+    }
+    
+    private def boolean findSuperclass(Class c, Class toFind) {
+        switch(c.actualSuperclass) {
+            case null: false
+            case toFind: true
+            default:
+                findSuperclass(c.actualSuperclass, toFind)
+        }
+    }
 	
 	/**
 	 * Checks that there are no other methods in the same class with the same
@@ -185,17 +226,17 @@ class PepplValidator extends PepplSystemValidator {
     @Check
     def checkSimpleClassRef(SimpleClassRef ref) {
         if(ref.clazz == findClass(arrayClassName, ref))
-            error("Class " + ref.clazz.name + " takes type arguments", ref, Literals.CLASS_REF__CLAZZ, MISSING_TYPE_ARGS)
+            error("Class " + ref.clazz.name + " takes type arguments",
+                ref, Literals.CLASS_REF__CLAZZ, MISSING_TYPE_ARGS)
     }
     
     @Check
     def checkGenericClassRef(GenericClassRef ref) {
         if(ref.clazz != findClass(arrayClassName, ref))
-            error("Class " + ref.clazz.name + " does not take type arguments", ref, Literals.GENERIC_CLASS_REF__TYPE_ARG, INCORRECT_TYPE_ARGS)
+            error("Class " + ref.clazz.name + " does not take type arguments",
+                ref, Literals.GENERIC_CLASS_REF__TYPE_ARG, INCORRECT_TYPE_ARGS)
     }
-	
-	// TODO: Check array class (e.g. superclass)
-	
+    
 	/*
 	 * Delayed errors
 	 */

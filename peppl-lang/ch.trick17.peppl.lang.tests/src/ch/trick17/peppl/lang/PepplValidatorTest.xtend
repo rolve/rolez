@@ -424,4 +424,47 @@ class PepplValidatorTest {
             }
         ''').assertError(peppl.genericClassRef, INCORRECT_TYPE_ARGS, "class A")
     }
+    
+    @Test
+    def testObjectClass() {
+        parse('''
+            class A
+            class Object extends A
+        ''').assertError(peppl.class_, INCORRECT_OBJECT_SUPERCLASS)
+    }
+    
+    @Test
+    def testArrayClass() {
+        parse('''
+            class Object
+            class Array
+        ''').assertNoErrors
+        parse('''
+            class Object
+            class Array extends Object
+        ''').assertNoErrors
+        
+        parse('''
+            class Object
+            class A
+            class Array extends A
+        ''').assertError(peppl.class_, INCORRECT_ARRAY_SUPERCLASS)
+    }
+    
+    @Test
+    def testCircularInheritance() {
+        parse('''
+            class A extends A
+        ''').assertError(peppl.class_, CIRCULAR_INHERITANCE)
+        parse('''
+            class A extends B
+            class B extends A
+        ''').assertError(peppl.class_, CIRCULAR_INHERITANCE)
+        parse('''
+            class A extends B
+            class B extends C
+            class C extends D
+            class D extends A
+        ''').assertError(peppl.class_, CIRCULAR_INHERITANCE)
+    }
 }

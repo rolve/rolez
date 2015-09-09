@@ -47,7 +47,7 @@ import static extension org.eclipse.emf.ecore.util.EcoreUtil.copy
  */
 class PepplUtils {
     
-    @Inject private extension PepplSystem __
+    @Inject private extension PepplSystem
     
     def RoleType roleType(Role r, ClassRef base) {
         val result = PepplFactory.eINSTANCE.createRoleType()
@@ -134,16 +134,16 @@ class PepplUtils {
         result
     }
     
-    def Iterable<Var> variables(ElemWithBody b) {
-        b.body.eAllContents.filter(LocalVar).toList
-            + if(b instanceof Parameterized) b.params else emptyList
-    }
-    
     def List<Member> allMembers(Class c) {
         val result = new ArrayList(c.members)
         if(c.actualSuperclass != null)
             result.addAll(c.actualSuperclass.allMembers)
         result
+    }
+    
+    def Iterable<Var> variables(ElemWithBody b) {
+        b.body.eAllContents.filter(LocalVar).toList
+            + if(b instanceof Parameterized) b.params else emptyList
     }
     
     def Stmt enclosingStmt(EObject o) {
