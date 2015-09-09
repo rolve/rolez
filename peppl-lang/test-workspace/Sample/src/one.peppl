@@ -10,6 +10,7 @@ class Person {
 	var address: readwrite Address
 	
 	def readonly fullName: readonly String {
+		val n: Null = null;
 		return "Hi";
 	}
 

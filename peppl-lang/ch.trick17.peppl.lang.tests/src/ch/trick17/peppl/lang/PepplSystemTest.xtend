@@ -290,16 +290,27 @@ class PepplSystemTest {
         // Upcasts
         program = parse('''
             class Object
+            class Array
             class A
             main {
                 (readwrite Object) new A;
                 (readonly A) new A;
+                (pure A) new A;
                 (readwrite A) null;
+                (readonly A) null;
+                (readonly Array[int]) new Array[int];
+                (readonly Array[pure A]) new Array[pure A];
             }
         ''')
         program.main.expr(0).type.assertThat(isRoleType(READWRITE, classRef(program.findClass("Object"))))
         program.main.expr(1).type.assertThat(isRoleType(READONLY,  classRef(program.findClass("A"))))
-        program.main.expr(2).type.assertThat(isRoleType(READWRITE, classRef(program.findClass("A"))))
+        program.main.expr(2).type.assertThat(isRoleType(PURE,      classRef(program.findClass("A"))))
+        program.main.expr(3).type.assertThat(isRoleType(READWRITE, classRef(program.findClass("A"))))
+        program.main.expr(4).type.assertThat(isRoleType(READONLY,  classRef(program.findClass("A"))))
+        program.main.expr(5).type.assertThat(isRoleType(READONLY,
+                classRef(program.findClass("Array"), intType)))
+        program.main.expr(6).type.assertThat(isRoleType(READONLY,
+            classRef(program.findClass("Array"), roleType(PURE, classRef(program.findClass("A"))))))
         
         // Downcasts
         program = parse('''
@@ -338,6 +349,30 @@ class PepplSystemTest {
             class A
             main { (readwrite A) (readonly A) new A; }
         ''').assertError(CAST, null, "cast", "readwrite A", "readonly A")
+        
+        parse('''
+            class Object
+            class Array
+            main { (readwrite Array[int]) new Array[boolean]; }
+        ''').assertError(CAST, null, "cast", "readwrite Array[boolean]", "readwrite Array[int]")
+        parse('''
+            class Object
+            class Array
+            class A
+            main { (readwrite Array[pure A]) new Array[pure Object]; }
+        ''').assertError(CAST, null, "cast", "readwrite Array[pure Object]", "readwrite Array[pure A]")
+        parse('''
+            class Object
+            class Array
+            class A
+            main { (readwrite Array[pure A]) new Array[readwrite A]; }
+        ''').assertError(CAST, null, "cast", "readwrite Array[readwrite A]", "readwrite Array[pure A]")
+        parse('''
+            class Object
+            class Array
+            class A
+            main { (readwrite Array[readwrite A]) new Array[pure A]; }
+        ''').assertError(CAST, null, "cast", "readwrite Array[pure A]", "readwrite Array[readwrite A]")
     }
     
     @Test
@@ -1120,6 +1155,156 @@ class PepplSystemTest {
                 }
             }
         ''').assertError(CAST, SUBTYPEEXPR, "pure A", "readwrite A")
+    }
+    
+    @Test
+    def testSubtype() {
+        parse('''
+            class Object
+            class Array
+            class A
+            main {
+                val i: int = 5;
+                val j: boolean = false;
+                val k: char = 'c';
+                
+                var a: readwrite A = new A;
+                a = null;
+                var b: readonly A = new A;
+                b = (readonly A) new A;
+                b = null;
+                var c: pure A = new A;
+                c = (readonly A) new A;
+                c = (pure A) new A;
+                c = null;
+                var o: pure Object = new A;
+                o = (pure A) new A;
+                o = (readwrite Object) new A;
+                
+                var ia: pure Array[int] = new Array[int];
+                ia = null;
+                var oa: readwrite Array[pure Object] = new Array[pure Object];
+                oa = null;
+            }
+        ''').assertNoErrors
+    }
+    
+    @Test
+    def testSubtypePrimitiveMismatch() {
+        parse('''
+            main {
+                val i: int = false;
+            }
+        ''').assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "boolean", "int")
+        parse('''
+            main {
+                val i: int = 'c';
+            }
+        ''').assertError(CHAR_LITERAL, SUBTYPEEXPR, "char", "int")
+        parse('''
+            main {
+                val b: boolean = 1;
+            }
+        ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
+        parse('''
+            main {
+                val b: boolean = 'c';
+            }
+        ''').assertError(CHAR_LITERAL, SUBTYPEEXPR, "char", "boolean")
+        // I think we get the picture...
+    }
+    
+    @Test
+    def testSubtypeSimpleClassMismatch() {
+        parse('''
+            class Object
+            class A
+            main {
+                val a: readwrite A = new Object;
+            }
+        ''').assertError(NEW, SUBTYPEEXPR, "readwrite Object", "readwrite A")
+    }
+    
+    @Test
+    def testSubtypeGenericClassMismatch() {
+        parse('''
+            class Object
+            class Array
+            main {
+                val a: pure Array[int] = new Array[boolean];
+            }
+        ''').assertError(NEW, SUBTYPEEXPR, "readwrite Array[boolean]", "pure Array[int]")
+        parse('''
+            class Object
+            class Array
+            main {
+                val a: pure Array[int] = new Array[pure Object];
+            }
+        ''').assertError(NEW, SUBTYPEEXPR, "readwrite Array[pure Object]", "pure Array[int]")
+        parse('''
+            class Object
+            class Array
+            main {
+                val a: pure Array[pure Object] = new Array[int];
+            }
+        ''').assertError(NEW, SUBTYPEEXPR, "readwrite Array[int]", "pure Array[pure Object]")
+        parse('''
+            class Object
+            class Array
+            class A
+            main {
+                val a: pure Array[pure Object] = new Array[pure A];
+            }
+        ''').assertError(NEW, SUBTYPEEXPR, "readwrite Array[pure A]", "pure Array[pure Object]")
+        parse('''
+            class Object
+            class Array
+            class A
+            main {
+                val a: pure Array[pure A] = new Array[pure Object];
+            }
+        ''').assertError(NEW, SUBTYPEEXPR, "readwrite Array[pure Object]", "pure Array[pure A]")
+        parse('''
+            class Object
+            class Array
+            class A
+            main {
+                val a: pure Array[pure A] = new Array[readwrite A];
+            }
+        ''').assertError(NEW, SUBTYPEEXPR, "readwrite Array[readwrite A]", "pure Array[pure A]")
+        parse('''
+            class Object
+            class Array
+            class A
+            main {
+                val a: pure Array[readwrite A] = new Array[pure A];
+            }
+        ''').assertError(NEW, SUBTYPEEXPR, "readwrite Array[pure A]", "pure Array[readwrite A]")
+    }
+    
+    @Test
+    def testSubtypeRoleMismatch() {
+        parse('''
+            class Object
+            class A
+            main {
+                val a: readwrite A = (readonly A) new A;
+            }
+        ''').assertError(CAST, SUBTYPEEXPR, "readonly A", "readwrite A")
+        parse('''
+            class Object
+            class A
+            main {
+                val a: readwrite A = (pure A) new A;
+            }
+        ''').assertError(CAST, SUBTYPEEXPR, "pure A", "readwrite A")
+        parse('''
+            class Object
+            class A
+            main {
+                val a: readonly A = (pure A) new A;
+            }
+        ''').assertError(CAST, SUBTYPEEXPR, "pure A", "readonly A")
     }
     
     def findClass(Program program, String name) {

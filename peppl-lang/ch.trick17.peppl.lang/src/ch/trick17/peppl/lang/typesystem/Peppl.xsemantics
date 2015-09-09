@@ -68,11 +68,11 @@ judgments {
         error "Type mismatch: " + left.type.value.stringRep + " is not a subtype of " + right.stringRep
         source left
     
-    subtype  |- Type  left <: Type  right error "subtype" // Apparently, when no error message is specified, some "source" is taken, which can be very wrong...
+    subtype  |- Type  left <: Type  right error "subtype" // Apparently, an error message is necessary for sensible error message selection
     subrole  |- Role  left <! Role  right error "subrole"
     subclass |- ClassRef left <~ ClassRef right error "subclass"
     
-    equalType |- Type left ~~ Type right
+    equalType |- Type left ~~ Type right error "equal type"
     
     assignable |= Expr e
         error "Cannot assign to " + e.stringRep
@@ -183,6 +183,7 @@ from {
     G |- exprType <: c.type // Upcasts are always fine
     or
     {
+        // Downcasts only allowed if role stays the same and of there is a subclass relation
         c.type instanceof RoleType && exprType instanceof RoleType
         (exprType as RoleType).role == (c.type as RoleType).role
         G |- (c.type as RoleType).base <~ (exprType as RoleType).base

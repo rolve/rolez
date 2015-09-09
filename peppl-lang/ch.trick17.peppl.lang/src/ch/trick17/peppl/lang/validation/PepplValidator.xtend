@@ -23,7 +23,7 @@ import java.util.Set
 import javax.inject.Inject
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.EStructuralFeature
-import org.eclipse.emf.mwe2.language.scoping.QualifiedNameProvider
+import org.eclipse.xtext.naming.IQualifiedNameProvider
 import org.eclipse.xtext.validation.Check
 
 import static ch.trick17.peppl.lang.peppl.PepplPackage.Literals.*
@@ -56,7 +56,7 @@ class PepplValidator extends PepplSystemValidator {
 
     @Inject private extension PepplSystem
     @Inject private extension PepplUtils
-    @Inject private extension QualifiedNameProvider
+    @Inject private extension IQualifiedNameProvider
     
 	@Check
     def checkClassNameStartsWithCapital(Class c) {
