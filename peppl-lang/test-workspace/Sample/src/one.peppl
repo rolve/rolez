@@ -1,7 +1,7 @@
 class Object
 
 class String {
-	def pure length: int {}
+	def pure length: int { return 0; }
 }
 
 class Person {
@@ -17,32 +17,20 @@ class Person {
 		this.address = address;
 	}
 	
-	def readonly bar(val k: int): void {
-		i.setAddress(null);
-		i.address = "No";
-		
-		
+	def readonly bar(val k: int): void {		
 		var i: int = -555555555;
-		val j: int = i = "Hi";
-		var i: int;
+		val j: pure String = "Hi";
 		
-		this.surname = i.fullName(j, new Person(k)).name = "";
-		k = true;
-		
-		this.address = 4;
-		new Account = 3;
+		this.address = null;
+		new Account;
 		
 		val s: readonly String = "Hi" + -'c' + null + 5 + null + this.surname;
 		
-		while(i < j)
+		while(i < j.length())
 			if((false && !true) || 5 < 0 + 7)
-				k = 2*i + 2;
+				i = 2*i + 2;
 			else
-				(i) = k;
-				
-		this.name.address = 4;
-		
-		"Hi" = new Account;
+				i = k;
 	}
 }
 
@@ -51,7 +39,7 @@ class Student extends Person {
 	
 	def pure bla: void {
 		this.name;
-		this.setAddress();
+		this.setAddress(new Address);
 	}
 }
 
@@ -67,22 +55,18 @@ class Address {
 	val zipCode: readonly String
 	
 	def readonly foo(val a: readonly Account, val b: readonly Account): void {
-		"Hi".city;
 		this.city;
-		this.foo(a, 5);
+		this.foo(a, new Account);
 		
 		val p: readonly Person = new Person;
 		p.name;
 		p.fullName();
-		p.setAddress();
+		new Person.setAddress(null);
 	}
 }
 
 main {
-	5.a;
 	var o: pure Object = "Hello";
-	var a: pure Address = new Address;
+	var a: readonly Address = new Address;
 	a.city;
-	b = 5;
-	
 }

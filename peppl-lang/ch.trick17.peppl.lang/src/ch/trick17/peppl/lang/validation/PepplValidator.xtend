@@ -23,6 +23,8 @@ import ch.trick17.peppl.lang.peppl.ReturnExpr
 import ch.trick17.peppl.lang.peppl.IfStmt
 import ch.trick17.peppl.lang.peppl.Block
 import ch.trick17.peppl.lang.typesystem.PepplUtils
+import ch.trick17.peppl.lang.peppl.SimpleClassRef
+import ch.trick17.peppl.lang.peppl.GenericClassRef
 
 /**
  * This class contains custom validation rules. 
@@ -44,6 +46,8 @@ class PepplValidator extends PepplSystemValidator {
     public static val INCORRECT_RETURN = "incorrect return statement"
     public static val MISSING_RETURN = "missing return statement"
     public static val AMBIGUOUS_CALL = "ambiguous call"
+    public static val MISSING_TYPE_ARGS = "missing type arguments"
+    public static val INCORRECT_TYPE_ARGS = "incorrect type arguments"
 
     @Inject private extension PepplSystem
     @Inject private extension PepplUtils
@@ -177,6 +181,20 @@ class PepplValidator extends PepplSystemValidator {
         }
         // IMPROVE: Better handling of dead code
     }
+    
+    @Check
+    def checkSimpleClassRef(SimpleClassRef ref) {
+        if(ref.clazz == findClass(arrayClassName, ref))
+            error("Class " + ref.clazz.name + " takes type arguments", ref, Literals.CLASS_REF__CLAZZ, MISSING_TYPE_ARGS)
+    }
+    
+    @Check
+    def checkGenericClassRef(GenericClassRef ref) {
+        if(ref.clazz != findClass(arrayClassName, ref))
+            error("Class " + ref.clazz.name + " does not take type arguments", ref, Literals.GENERIC_CLASS_REF__TYPE_ARG, INCORRECT_TYPE_ARGS)
+    }
+	
+	// TODO: Check array class (e.g. superclass)
 	
 	/*
 	 * Delayed errors

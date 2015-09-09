@@ -381,4 +381,47 @@ class PepplValidatorTest {
             }
         ''').assertError(peppl.param, DUPLICATE_VARIABLE)
     }
+    
+    @Test
+    def testTypeArgs() {
+        parse('''
+            class Object
+            class Array
+            class A
+            main {
+                val a: pure Array[int] = new Array[int];
+                var b: readonly Array[readwrite Array[pure A]];
+                val c: readwrite A;
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            class Object
+            class Array
+            main {
+                val a: pure Array;
+            }
+        ''').assertError(peppl.simpleClassRef, MISSING_TYPE_ARGS, "class Array")
+        parse('''
+            class Object
+            class A
+            main {
+                val a: pure A[int];
+            }
+        ''').assertError(peppl.genericClassRef, INCORRECT_TYPE_ARGS, "class A")
+        parse('''
+            class Object
+            class A
+            main {
+                val a: pure A = new A[int];
+            }
+        ''').assertError(peppl.genericClassRef, INCORRECT_TYPE_ARGS, "class A")
+        parse('''
+            class Object
+            class A
+            main {
+                val a: pure A[readwrite A];
+            }
+        ''').assertError(peppl.genericClassRef, INCORRECT_TYPE_ARGS, "class A")
+    }
 }

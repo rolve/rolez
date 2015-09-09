@@ -116,6 +116,7 @@ auxiliary strictSuperclasses(Class c) {
 auxiliary findClass(QualifiedName name, EObject context) {
     globalScopeProv.getScope(context.eResource, PepplPackage.eINSTANCE.class_Superclass, [true])
         .getSingleElement(name)?.EObjectOrProxy as Class
+    // TODO: This still doesn't seem to work right! Reproduce in a test and fix!
 }
 
 
@@ -484,7 +485,7 @@ rule AExpr
 from { fail }
 
 
-checkrule CheckStmts for
+checkrule CheckStmt for
     Stmt s // Checked for all stmts individually, to get multiple error markers
 from {
     val class = s.enclosingClass

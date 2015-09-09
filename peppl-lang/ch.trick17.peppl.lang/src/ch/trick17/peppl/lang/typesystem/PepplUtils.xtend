@@ -96,6 +96,10 @@ class PepplUtils {
     def QualifiedName stringClassName() {
         QualifiedName.create("String")
     }
+
+    def QualifiedName arrayClassName() {
+        QualifiedName.create("Array")
+    }
     
     def envFor(EObject o) {
         val method = o.enclosingMethod
