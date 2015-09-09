@@ -9,7 +9,6 @@ import ch.trick17.peppl.lang.peppl.Field
 import ch.trick17.peppl.lang.peppl.GenericClassRef
 import ch.trick17.peppl.lang.peppl.IfStmt
 import ch.trick17.peppl.lang.peppl.Method
-import ch.trick17.peppl.lang.peppl.PepplPackage.Literals
 import ch.trick17.peppl.lang.peppl.Program
 import ch.trick17.peppl.lang.peppl.ReturnExpr
 import ch.trick17.peppl.lang.peppl.SimpleClassRef
@@ -26,7 +25,8 @@ import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.EStructuralFeature
 import org.eclipse.emf.mwe2.language.scoping.QualifiedNameProvider
 import org.eclipse.xtext.validation.Check
-import ch.trick17.peppl.lang.peppl.PepplPackage
+
+import static ch.trick17.peppl.lang.peppl.PepplPackage.Literals.*
 
 /**
  * This class contains custom validation rules. 
@@ -62,14 +62,14 @@ class PepplValidator extends PepplSystemValidator {
     def checkClassNameStartsWithCapital(Class c) {
         if(!Character.isUpperCase(c.name.charAt(0)))
             warning("Name should start with a capital",
-                Literals.NAMED__NAME, INVALID_NAME)
+                NAMED__NAME, INVALID_NAME)
     }
 	
 	@Check
 	def checkObjectExists(Class c) {
 	    if(c.superclass == null && findClass(objectClassName, c) == null)
 	       error("Object class is not defined",
-	           Literals.NAMED__NAME,  OBJECT_CLASS_NOT_DEFINED)
+	           NAMED__NAME,  OBJECT_CLASS_NOT_DEFINED)
 	}
 	
 	@Check
@@ -78,7 +78,7 @@ class PepplValidator extends PepplSystemValidator {
         if(matching.size < 1)
            throw new AssertionError
         if(matching.size > 1)
-           error("Duplicate class " + c.name, Literals.NAMED__NAME, DUPLICATE_CLASS)
+           error("Duplicate class " + c.name, NAMED__NAME, DUPLICATE_CLASS)
 	}
 	
     @Check
@@ -86,7 +86,7 @@ class PepplValidator extends PepplSystemValidator {
         if(c.fullyQualifiedName == objectClassName) {
             if(c.superclass != null)
                error(c.fullyQualifiedName + " must not have a superclass",
-                   c, Literals.CLASS__SUPERCLASS, INCORRECT_OBJECT_SUPERCLASS)
+                   c, CLASS__SUPERCLASS, INCORRECT_OBJECT_SUPERCLASS)
         }
     }
     
@@ -95,7 +95,7 @@ class PepplValidator extends PepplSystemValidator {
         if(c.fullyQualifiedName == arrayClassName) {
             if(c.actualSuperclass != findClass(objectClassName, c))
                error("The superclass of " + c.fullyQualifiedName + " must be "+ objectClassName,
-                   c, Literals.CLASS__SUPERCLASS, INCORRECT_ARRAY_SUPERCLASS)
+                   c, CLASS__SUPERCLASS, INCORRECT_ARRAY_SUPERCLASS)
         }
     }
     
@@ -104,7 +104,7 @@ class PepplValidator extends PepplSystemValidator {
     @Check
     def checkCircularInheritance(Class c) {
         if(c.findSuperclass(c))
-            error("Circular inheritance", c, Literals.CLASS__SUPERCLASS, CIRCULAR_INHERITANCE)
+            error("Circular inheritance", c, CLASS__SUPERCLASS, CIRCULAR_INHERITANCE)
     }
     
     private def boolean findSuperclass(Class c, Class toFind) {
@@ -132,7 +132,7 @@ class PepplValidator extends PepplSystemValidator {
            throw new AssertionError
         if(matching.size > 1)
            error("Duplicate method " + m.name + "("+ m.params.join(",") + ")",
-               Literals.NAMED__NAME, DUPLICATE_METHOD)
+               NAMED__NAME, DUPLICATE_METHOD)
     }
     
     @Check
@@ -141,7 +141,7 @@ class PepplValidator extends PepplSystemValidator {
         if(matching.size < 1)
            throw new AssertionError
         if(matching.size > 1)
-           error("Duplicate field " + f.name, Literals.NAMED__NAME, DUPLICATE_FIELD)
+           error("Duplicate field " + f.name, NAMED__NAME, DUPLICATE_FIELD)
     }
     
     @Check
@@ -150,7 +150,7 @@ class PepplValidator extends PepplSystemValidator {
         if(matching.size < 1)
            throw new AssertionError
         if(matching.size > 1)
-           error("Duplicate variable " + v.name, Literals.NAMED__NAME, DUPLICATE_VARIABLE)
+           error("Duplicate variable " + v.name, NAMED__NAME, DUPLICATE_VARIABLE)
     }
 	
 	/**
@@ -170,20 +170,20 @@ class PepplValidator extends PepplSystemValidator {
                 for(match : matching) {
                     if(subtype(envFor(m), m.type, match.type).failed)
                         error("The return type is incompatible with overridden method" + match,
-                            Literals.TYPED__TYPE, INCOMPATIBLE_RETURN_TYPE)
+                            TYPED__TYPE, INCOMPATIBLE_RETURN_TYPE)
                     if(subrole(match.thisRole, m.thisRole).failed)
                         error("This role of \"this\" is incompatible with overridden method" + match,
-                            Literals.TYPED__TYPE, INCOMPATIBLE_THIS_ROLE)
+                            TYPED__TYPE, INCOMPATIBLE_THIS_ROLE)
                 }
             }
             else
                 error("Method must be declared with \"override\" since it
                         actually overrides a superclass method",
-                    Literals.NAMED__NAME, MISSING_OVERRIDE)
+                    NAMED__NAME, MISSING_OVERRIDE)
         }
         else if(m.overriding)
            error("Method must override a superclass method",
-               Literals.NAMED__NAME, INCORRECT_OVERRIDE)
+               NAMED__NAME, INCORRECT_OVERRIDE)
 	}
 	
 	@Check
@@ -227,14 +227,14 @@ class PepplValidator extends PepplSystemValidator {
     def checkSimpleClassRef(SimpleClassRef ref) {
         if(ref.clazz == findClass(arrayClassName, ref))
             error("Class " + ref.clazz.name + " takes type arguments",
-                ref, Literals.CLASS_REF__CLAZZ, MISSING_TYPE_ARGS)
+                ref, CLASS_REF__CLAZZ, MISSING_TYPE_ARGS)
     }
     
     @Check
     def checkGenericClassRef(GenericClassRef ref) {
         if(ref.clazz != findClass(arrayClassName, ref))
             error("Class " + ref.clazz.name + " does not take type arguments",
-                ref, Literals.GENERIC_CLASS_REF__TYPE_ARG, INCORRECT_TYPE_ARGS)
+                ref, GENERIC_CLASS_REF__TYPE_ARG, INCORRECT_TYPE_ARGS)
     }
     
 	/*

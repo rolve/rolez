@@ -6,10 +6,13 @@ import ch.trick17.peppl.lang.peppl.BooleanLiteral
 import ch.trick17.peppl.lang.peppl.Cast
 import ch.trick17.peppl.lang.peppl.CharLiteral
 import ch.trick17.peppl.lang.peppl.Class
+import ch.trick17.peppl.lang.peppl.ClassRef
+import ch.trick17.peppl.lang.peppl.ElemWithArgs
 import ch.trick17.peppl.lang.peppl.EqualityExpr
 import ch.trick17.peppl.lang.peppl.Expr
 import ch.trick17.peppl.lang.peppl.ExprStmt
 import ch.trick17.peppl.lang.peppl.FieldSelector
+import ch.trick17.peppl.lang.peppl.GenericClassRef
 import ch.trick17.peppl.lang.peppl.IfStmt
 import ch.trick17.peppl.lang.peppl.IntLiteral
 import ch.trick17.peppl.lang.peppl.LocalVarDecl
@@ -19,8 +22,8 @@ import ch.trick17.peppl.lang.peppl.New
 import ch.trick17.peppl.lang.peppl.Null
 import ch.trick17.peppl.lang.peppl.NullLiteral
 import ch.trick17.peppl.lang.peppl.OpArithmetic
+import ch.trick17.peppl.lang.peppl.Parameterized
 import ch.trick17.peppl.lang.peppl.Parenthesized
-import ch.trick17.peppl.lang.peppl.PepplPackage
 import ch.trick17.peppl.lang.peppl.PrimitiveType
 import ch.trick17.peppl.lang.peppl.ReferenceType
 import ch.trick17.peppl.lang.peppl.RelationalExpr
@@ -28,12 +31,14 @@ import ch.trick17.peppl.lang.peppl.ReturnExpr
 import ch.trick17.peppl.lang.peppl.ReturnNothing
 import ch.trick17.peppl.lang.peppl.Role
 import ch.trick17.peppl.lang.peppl.RoleType
+import ch.trick17.peppl.lang.peppl.SimpleClassRef
 import ch.trick17.peppl.lang.peppl.Stmt
 import ch.trick17.peppl.lang.peppl.StringLiteral
 import ch.trick17.peppl.lang.peppl.This
 import ch.trick17.peppl.lang.peppl.Type
 import ch.trick17.peppl.lang.peppl.UnaryMinus
 import ch.trick17.peppl.lang.peppl.UnaryNot
+import ch.trick17.peppl.lang.peppl.VarKind
 import ch.trick17.peppl.lang.peppl.VarRef
 import ch.trick17.peppl.lang.peppl.WhileLoop
 import ch.trick17.peppl.lang.validation.AbstractPepplValidator
@@ -42,13 +47,8 @@ import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.naming.QualifiedName
 import org.eclipse.xtext.scoping.IGlobalScopeProvider
 
+import static ch.trick17.peppl.lang.peppl.PepplPackage.Literals.*
 import static ch.trick17.peppl.lang.peppl.Role.*
-import static ch.trick17.peppl.lang.peppl.VarKind.*
-import ch.trick17.peppl.lang.peppl.Parameterized
-import ch.trick17.peppl.lang.peppl.ElemWithArgs
-import ch.trick17.peppl.lang.peppl.ClassRef
-import ch.trick17.peppl.lang.peppl.SimpleClassRef
-import ch.trick17.peppl.lang.peppl.GenericClassRef
 
 system ch.trick17.peppl.lang.typesystem.PepplSystem
 
@@ -102,8 +102,8 @@ auxiliary actualSuperclass(Class c) {
 auxiliary strictSuperclasses(Class c) {
     val result = getAll(
         c,
-        PepplPackage.eINSTANCE.class_Superclass,
-        PepplPackage.eINSTANCE.class_Superclass,
+        CLASS__SUPERCLASS,
+        CLASS__SUPERCLASS,
         Class
     ).toSet
     
@@ -114,7 +114,7 @@ auxiliary strictSuperclasses(Class c) {
 }
 
 auxiliary findClass(QualifiedName name, EObject context) {
-    globalScopeProv.getScope(context.eResource, PepplPackage.eINSTANCE.class_Superclass, [true])
+    globalScopeProv.getScope(context.eResource, CLASS__SUPERCLASS, [true])
         .getSingleElement(name)?.EObjectOrProxy as Class
     // TODO: This still doesn't seem to work right! Reproduce in a test and fix!
 }
@@ -465,14 +465,14 @@ rule AVarRef
     error "Cannot assign to a value"
     source r
 from {
-    r.variable.kind == VAR
+    r.variable.kind == VarKind.VAR
 }
 
 rule AMemberAccess
     G |= MemberAccess a
 from {
     a.selector instanceof FieldSelector
-    (a.selector as FieldSelector).field.kind == VAR or fail
+    (a.selector as FieldSelector).field.kind == VarKind.VAR or fail
         error "Cannot assign to a value field" source a
     
     G |- a.target : var RoleType type

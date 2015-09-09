@@ -141,8 +141,6 @@ New:
     'new' classRef=ClassRef
     ('(' args+=Expr (',' args+=Expr)* ')')?;
 
-// TODO: instantiation of generic classes
-
 Parenthesized: '(' expr=Expr ')';
 
 Literal:

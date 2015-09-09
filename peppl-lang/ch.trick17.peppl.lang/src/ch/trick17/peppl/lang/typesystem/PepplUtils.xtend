@@ -3,9 +3,11 @@ package ch.trick17.peppl.lang.typesystem
 import ch.trick17.peppl.lang.peppl.Boolean
 import ch.trick17.peppl.lang.peppl.Char
 import ch.trick17.peppl.lang.peppl.Class
+import ch.trick17.peppl.lang.peppl.ClassRef
 import ch.trick17.peppl.lang.peppl.Constructor
 import ch.trick17.peppl.lang.peppl.ElemWithBody
 import ch.trick17.peppl.lang.peppl.Field
+import ch.trick17.peppl.lang.peppl.GenericClassRef
 import ch.trick17.peppl.lang.peppl.Int
 import ch.trick17.peppl.lang.peppl.LocalVar
 import ch.trick17.peppl.lang.peppl.Main
@@ -15,11 +17,12 @@ import ch.trick17.peppl.lang.peppl.MethodSelector
 import ch.trick17.peppl.lang.peppl.Null
 import ch.trick17.peppl.lang.peppl.Parameterized
 import ch.trick17.peppl.lang.peppl.PepplFactory
-import ch.trick17.peppl.lang.peppl.PepplPackage
 import ch.trick17.peppl.lang.peppl.Program
 import ch.trick17.peppl.lang.peppl.Role
 import ch.trick17.peppl.lang.peppl.RoleType
+import ch.trick17.peppl.lang.peppl.SimpleClassRef
 import ch.trick17.peppl.lang.peppl.Stmt
+import ch.trick17.peppl.lang.peppl.Type
 import ch.trick17.peppl.lang.peppl.Var
 import ch.trick17.peppl.lang.peppl.Void
 import it.xsemantics.runtime.RuleEnvironment
@@ -31,13 +34,11 @@ import java.util.Set
 import javax.inject.Inject
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.EReference
+import org.eclipse.emf.ecore.util.EcoreUtil
 import org.eclipse.xtext.naming.QualifiedName
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils
-import ch.trick17.peppl.lang.peppl.Type
-import ch.trick17.peppl.lang.peppl.ClassRef
-import ch.trick17.peppl.lang.peppl.SimpleClassRef
-import ch.trick17.peppl.lang.peppl.GenericClassRef
-import org.eclipse.emf.ecore.util.EcoreUtil
+
+import static ch.trick17.peppl.lang.peppl.PepplPackage.Literals.*
 
 import static extension org.eclipse.emf.ecore.util.EcoreUtil.copy
 
@@ -48,45 +49,46 @@ import static extension org.eclipse.emf.ecore.util.EcoreUtil.copy
 class PepplUtils {
     
     @Inject private extension PepplSystem
+    private val factory = PepplFactory.eINSTANCE
     
     def RoleType roleType(Role r, ClassRef base) {
-        val result = PepplFactory.eINSTANCE.createRoleType()
+        val result = factory.createRoleType()
         result.setRole(r)
         result.setBase(base.copy) // TODO: So... when is copy necessary?..
         result
     }
     
     def SimpleClassRef classRef(Class c) {
-        val result = PepplFactory.eINSTANCE.createSimpleClassRef
+        val result = factory.createSimpleClassRef
         result.clazz = c
         result
     }
     
     def GenericClassRef classRef(Class c, Type arg) {
-        val result = PepplFactory.eINSTANCE.createGenericClassRef
+        val result = factory.createGenericClassRef
         result.clazz = c
         result.typeArg = arg.copy
         result
     }
 
     def Int intType() {
-        PepplFactory.eINSTANCE.createInt
+        factory.createInt
     }
 
     def Boolean booleanType() {
-        PepplFactory.eINSTANCE.createBoolean
+        factory.createBoolean
     }
 
     def Char charType() {
-        PepplFactory.eINSTANCE.createChar
+        factory.createChar
     }
 
     def Void voidType() {
-        PepplFactory.eINSTANCE.createVoid
+        factory.createVoid
     }
 
     def Null nullType() {
-        PepplFactory.eINSTANCE.createNull
+        factory.createNull
     }
 
     def QualifiedName objectClassName() {
@@ -130,7 +132,7 @@ class PepplUtils {
     def Set<Constructor> allConstructors(Class c) {
         val result = new HashSet(c.constructors)
         if(result.isEmpty)
-            result.add(PepplFactory.eINSTANCE.createConstructor)
+            result.add(factory.createConstructor)
         result
     }
     
@@ -201,7 +203,7 @@ class PepplUtils {
     }
     
     def methodName(MethodSelector s) {
-        val result = refText(s, PepplPackage.Literals.METHOD_SELECTOR__METHOD, 0)
+        val result = refText(s, METHOD_SELECTOR__METHOD, 0)
         result
     }
     

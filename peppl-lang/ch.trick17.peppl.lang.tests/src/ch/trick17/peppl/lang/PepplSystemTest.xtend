@@ -9,7 +9,7 @@ import ch.trick17.peppl.lang.peppl.Expr
 import ch.trick17.peppl.lang.peppl.ExprStmt
 import ch.trick17.peppl.lang.peppl.GenericClassRef
 import ch.trick17.peppl.lang.peppl.Int
-import ch.trick17.peppl.lang.peppl.PepplPackage
+import ch.trick17.peppl.lang.peppl.PrimitiveType
 import ch.trick17.peppl.lang.peppl.Program
 import ch.trick17.peppl.lang.peppl.Role
 import ch.trick17.peppl.lang.peppl.RoleType
@@ -28,6 +28,7 @@ import org.hamcrest.Matcher
 import org.junit.Test
 import org.junit.runner.RunWith
 
+import static ch.trick17.peppl.lang.peppl.PepplPackage.Literals.*
 import static ch.trick17.peppl.lang.peppl.Role.*
 import static ch.trick17.peppl.lang.typesystem.PepplSystem.*
 import static ch.trick17.peppl.lang.validation.PepplValidator.*
@@ -35,13 +36,10 @@ import static org.eclipse.xtext.diagnostics.Diagnostic.*
 import static org.hamcrest.Matchers.*
 
 import static extension org.hamcrest.MatcherAssert.assertThat
-import ch.trick17.peppl.lang.peppl.PrimitiveType
 
 @RunWith(XtextRunner)
 @InjectWith(PepplInjectorProvider)
 class PepplSystemTest {
-    
-    val PepplPackage peppl = PepplPackage.eINSTANCE
     
     @Inject extension ParseHelper<Program>
     @Inject extension ValidationTestHelper
@@ -66,14 +64,14 @@ class PepplSystemTest {
     @Test
     def testTAssignmentErrorInOp() {
         parse("main { !5 = 5; }")
-            .assertError(peppl.intLiteral, SUBTYPEEXPR, "int", "boolean")
+            .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
         
         parse('''
             main {
                 var x: int;
                 x = !5;
             }
-        ''').assertError(peppl.intLiteral, SUBTYPEEXPR, "int", "boolean")
+        ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
     @Test
@@ -83,7 +81,7 @@ class PepplSystemTest {
                 val x: int;
                 x = 5;
             }
-        ''').assertError(peppl.varRef, AVARREF, "assign", "value")
+        ''').assertError(VAR_REF, AVARREF, "assign", "value")
     }
     
     @Test
@@ -93,7 +91,7 @@ class PepplSystemTest {
                 var x: int;
                 x = true;
             }
-        ''').assertError(peppl.booleanLiteral, SUBTYPEEXPR, "int", "boolean")
+        ''').assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
     @Test
@@ -105,17 +103,17 @@ class PepplSystemTest {
     @Test
     def testTBooleanExprErrorInOp() {
         parse("main { !5 || false; }")
-            .assertError(peppl.intLiteral, SUBTYPEEXPR, "int", "boolean")
+            .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
         parse("main { true || !5; }")
-            .assertError(peppl.intLiteral, SUBTYPEEXPR, "int", "boolean")
+            .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
     @Test
     def testTBooleanExprTypeMismatch() {
         parse("main { 5 || false; }")
-            .assertError(peppl.intLiteral, SUBTYPEEXPR, "int", "boolean")
+            .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
         parse("main { true || 5; }")
-            .assertError(peppl.intLiteral, SUBTYPEEXPR, "int", "boolean")
+            .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
     @Test
@@ -137,9 +135,9 @@ class PepplSystemTest {
     @Test
     def testTEqualityExprErrorInOp() {
         parse("main { !5 == false; }")
-            .assertError(peppl.intLiteral, SUBTYPEEXPR, "int", "boolean")
+            .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
         parse("main { true != !5; }")
-            .assertError(peppl.intLiteral, SUBTYPEEXPR, "int", "boolean")
+            .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
     @Test
@@ -149,11 +147,11 @@ class PepplSystemTest {
             class A
             class B
             main { new A == new B; }
-        ''').assertError(peppl.equalityExpr, null, "compare", "A", "B")
+        ''').assertError(EQUALITY_EXPR, null, "compare", "A", "B")
         // IMPROVE: Find a way to include an issue code for explicit failures?
         
         parse("main { 42 != false; }")
-            .assertError(peppl.equalityExpr, null, "compare", "int", "boolean")
+            .assertError(EQUALITY_EXPR, null, "compare", "int", "boolean")
     }
     
     @Test
@@ -167,13 +165,13 @@ class PepplSystemTest {
     @Test
     def testTRelationalExprErrorInOp() {
         parse("main { -true < 0; }")
-            .assertError(peppl.booleanLiteral, SUBTYPEEXPR, "int", "boolean")
+            .assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "int", "boolean")
         parse("main { 100 <= -false; }")
-            .assertError(peppl.booleanLiteral, SUBTYPEEXPR, "int", "boolean")
+            .assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "int", "boolean")
         parse("main { -'a' > 0; }")
-            .assertError(peppl.charLiteral, SUBTYPEEXPR, "int", "char")
+            .assertError(CHAR_LITERAL, SUBTYPEEXPR, "int", "char")
         parse("main { 100 >= -false; }")
-            .assertError(peppl.booleanLiteral, SUBTYPEEXPR, "int", "boolean")
+            .assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
     @Test
@@ -181,16 +179,16 @@ class PepplSystemTest {
         parse('''
             class Object
             main { new Object < new Object; }
-        ''').assertError(peppl.relationalExpr, null, "compare", "Object")
+        ''').assertError(RELATIONAL_EXPR, null, "compare", "Object")
         
         parse("main { true <= false; }")
-            .assertError(peppl.relationalExpr, null, "compare", "boolean")
+            .assertError(RELATIONAL_EXPR, null, "compare", "boolean")
         parse("main { null > null; }")
-            .assertError(peppl.relationalExpr, null, "compare", "null")
+            .assertError(RELATIONAL_EXPR, null, "compare", "null")
         parse("main { 5 > '5'; }")
-            .assertError(peppl.relationalExpr, null, "compare", "int", "char")
+            .assertError(RELATIONAL_EXPR, null, "compare", "int", "char")
         parse("main { true > '5'; }")
-            .assertError(peppl.relationalExpr, null, "compare", "boolean", "char")
+            .assertError(RELATIONAL_EXPR, null, "compare", "boolean", "char")
     }
     
     @Test
@@ -222,15 +220,15 @@ class PepplSystemTest {
     @Test
     def testTArithmeticExprErrorInOp() {
         parse("main { !'a' + 0; }")
-            .assertError(peppl.charLiteral, SUBTYPEEXPR, "char", "boolean")
+            .assertError(CHAR_LITERAL, SUBTYPEEXPR, "char", "boolean")
         parse("main { 100 - -false; }")
-            .assertError(peppl.booleanLiteral, SUBTYPEEXPR, "int", "boolean")
+            .assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "int", "boolean")
         parse("main { -'a' * 0; }")
-            .assertError(peppl.charLiteral, SUBTYPEEXPR, "int", "char")
+            .assertError(CHAR_LITERAL, SUBTYPEEXPR, "int", "char")
         parse("main { 100 / -true; }")
-            .assertError(peppl.booleanLiteral, SUBTYPEEXPR, "int", "boolean")
+            .assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "int", "boolean")
         parse("main { (3*3) % !42; }")
-            .assertError(peppl.intLiteral, SUBTYPEEXPR, "int", "boolean")
+            .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
     @Test
@@ -238,43 +236,43 @@ class PepplSystemTest {
         parse('''
             class Object
             main { new Object + new Object; }
-        ''').assertError(peppl.arithmeticExpr, null, "operator", "undefined", "object")
+        ''').assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "object")
         parse('''
             class Object
             class A
             class B
             main { new A - new B; }
-        ''').assertError(peppl.arithmeticExpr, null, "operator", "undefined", "A", "B")
+        ''').assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "A", "B")
         
         parse('''
             class Object
             class String
             main { "Hello" - "World"; }
-        ''').assertError(peppl.arithmeticExpr, null, "operator", "undefined", "String")
+        ''').assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "String")
         parse('''
             class Object
             class String
             main { "Hello" * new Object; }
-        ''').assertError(peppl.arithmeticExpr, null, "operator", "undefined", "String", "Object")
+        ''').assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "String", "Object")
         parse('''
             class Object
             class String
             main { 5 / "World"; }
-        ''').assertError(peppl.arithmeticExpr, null, "operator", "undefined", "int", "String")
+        ''').assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "int", "String")
         parse('''
             class Object
             class String
             main { null % "World"; }
-        ''').assertError(peppl.arithmeticExpr, null, "operator", "undefined", "null", "String")
+        ''').assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "null", "String")
         
         parse("main { 'a' * 'b'; }")
-            .assertError(peppl.arithmeticExpr, null, "operator", "undefined", "char")
+            .assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "char")
         parse("main { null / null; }")
-            .assertError(peppl.arithmeticExpr, null, "operator", "undefined", "null")
+            .assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "null")
         parse("main { 5 % '5'; }")
-            .assertError(peppl.arithmeticExpr, null, "operator", "undefined", "int", "char")
+            .assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "int", "char")
         parse("main { true % '5'; }")
-            .assertError(peppl.arithmeticExpr, null, "operator", "undefined", "boolean", "char")
+            .assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "boolean", "char")
     }
     
     @Test
@@ -315,31 +313,31 @@ class PepplSystemTest {
     @Test
     def testTCastErrorInOp() {
         parse("main { (boolean) !5; }")
-            .assertError(peppl.intLiteral, SUBTYPEEXPR, "int", "boolean")
+            .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
     @Test
     def testTCastIllegal() {
         parse("main { (boolean) 5; }")
-            .assertError(peppl.cast, null, "cast", "int", "boolean")
+            .assertError(CAST, null, "cast", "int", "boolean")
         parse("main { (int) false; }")
-            .assertError(peppl.cast, null, "cast", "int", "boolean")
+            .assertError(CAST, null, "cast", "int", "boolean")
         parse("main { (int) null; }")
-            .assertError(peppl.cast, null, "cast", "int", "null")
+            .assertError(CAST, null, "cast", "int", "null")
         
         parse('''
             class Object
             main { (readwrite Object) 5; }
-        ''').assertError(peppl.cast, null, "cast", "readwrite Object", "int")
+        ''').assertError(CAST, null, "cast", "readwrite Object", "int")
         parse('''
             class Object
             main { (int) new Object; }
-        ''').assertError(peppl.cast, null, "cast", "readwrite Object", "int")
+        ''').assertError(CAST, null, "cast", "readwrite Object", "int")
         parse('''
             class Object
             class A
             main { (readwrite A) (readonly A) new A; }
-        ''').assertError(peppl.cast, null, "cast", "readwrite A", "readonly A")
+        ''').assertError(CAST, null, "cast", "readwrite A", "readonly A")
     }
     
     @Test
@@ -352,9 +350,9 @@ class PepplSystemTest {
     @Test
     def testTUnaryMinusErrorInOp() {
         parse("main { -!5; }")
-            .assertError(peppl.intLiteral, SUBTYPEEXPR, "int", "boolean")
+            .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
         parse("main { -(-'a'); }")
-            .assertError(peppl.charLiteral, SUBTYPEEXPR, "char", "int")
+            .assertError(CHAR_LITERAL, SUBTYPEEXPR, "char", "int")
     }
     
     @Test
@@ -362,19 +360,19 @@ class PepplSystemTest {
         parse('''
             class Object
             main { -new Object; }
-        ''').assertError(peppl.^new, SUBTYPEEXPR, "Object", "int")
+        ''').assertError(NEW, SUBTYPEEXPR, "Object", "int")
         parse('''
             class Object
             class String
             main { -"Hello"; }
-        ''').assertError(peppl.stringLiteral, SUBTYPEEXPR, "String", "int")
+        ''').assertError(STRING_LITERAL, SUBTYPEEXPR, "String", "int")
         
         parse("main { -'a'; }")
-            .assertError(peppl.charLiteral, SUBTYPEEXPR, "char", "int")
+            .assertError(CHAR_LITERAL, SUBTYPEEXPR, "char", "int")
         parse("main { -true; }")
-            .assertError(peppl.booleanLiteral, SUBTYPEEXPR, "boolean", "int")
+            .assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "boolean", "int")
         parse("main { -null; }")
-            .assertError(peppl.nullLiteral, SUBTYPEEXPR, "null", "int")
+            .assertError(NULL_LITERAL, SUBTYPEEXPR, "null", "int")
     }
     
     @Test
@@ -390,9 +388,9 @@ class PepplSystemTest {
     @Test
     def testTUnaryNotErrorInOp() {
         parse("main { !(-'a'); }")
-            .assertError(peppl.charLiteral, SUBTYPEEXPR, "char", "int")
+            .assertError(CHAR_LITERAL, SUBTYPEEXPR, "char", "int")
         parse("main { !(!5); }")
-            .assertError(peppl.intLiteral, SUBTYPEEXPR, "int", "boolean")
+            .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
     @Test
@@ -400,35 +398,35 @@ class PepplSystemTest {
         parse('''
             class Object
             main { !new Object; }
-        ''').assertError(peppl.^new, SUBTYPEEXPR, "Object", "boolean")
+        ''').assertError(NEW, SUBTYPEEXPR, "Object", "boolean")
         parse('''
             class Object
             class String
             main { !"Hello"; }
-        ''').assertError(peppl.stringLiteral, SUBTYPEEXPR, "String", "boolean")
+        ''').assertError(STRING_LITERAL, SUBTYPEEXPR, "String", "boolean")
         
         parse("main { !'a'; }")
-            .assertError(peppl.charLiteral, SUBTYPEEXPR, "char", "boolean")
+            .assertError(CHAR_LITERAL, SUBTYPEEXPR, "char", "boolean")
         parse("main { !5; }")
-            .assertError(peppl.intLiteral, SUBTYPEEXPR, "int", "boolean")
+            .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
         parse("main { !null; }")
-            .assertError(peppl.nullLiteral, SUBTYPEEXPR, "null", "boolean")
+            .assertError(NULL_LITERAL, SUBTYPEEXPR, "null", "boolean")
     }
     
     @Test
     def testTMemberAccessErrorInTarget() {
         parse("main { (!5).a; }")
-            .assertError(peppl.intLiteral, SUBTYPEEXPR, "int", "boolean")
+            .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
         parse("main { (!5).foo(); }")
-            .assertError(peppl.intLiteral, SUBTYPEEXPR, "int", "boolean")
+            .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
     @Test
     def testTMemberAccessIllegalTarget() {
         parse('''main { 5.a; }''')
-            .assertError(peppl.intLiteral, null, "Illegal", "target", "access")
+            .assertError(INT_LITERAL, null, "Illegal", "target", "access")
         parse('''main { false.foo(); }''')
-            .assertError(peppl.booleanLiteral, null, "Illegal", "target", "access")
+            .assertError(BOOLEAN_LITERAL, null, "Illegal", "target", "access")
     }
     
     @Test
@@ -501,7 +499,7 @@ class PepplSystemTest {
                 val a: pure A = new A;
                 a.x;
             }
-        ''').assertError(peppl.varRef, null,
+        ''').assertError(VAR_REF, null,
                 "Role", "mismatch", "field", "pure")
     }
     
@@ -557,7 +555,7 @@ class PepplSystemTest {
                         val a: «actual» A = new A;
                         a.x();
                     }
-                ''').assertError(peppl.varRef, null,
+                ''').assertError(VAR_REF, null,
                         "Role", "mismatch", "method", actual.toString)
             }
         }
@@ -569,33 +567,33 @@ class PepplSystemTest {
             class Object
             class A { def readwrite foo: void {} }
             main { new A.foo(5); }
-        ''').assertError(peppl.methodSelector, LINKING_DIAGNOSTIC, "method", "foo")
+        ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "foo")
         parse('''
             class Object
             class A { def readwrite foo(val c: char): void {} }
             main { new A.foo(5, false); }
-        ''').assertError(peppl.methodSelector, LINKING_DIAGNOSTIC, "method", "foo")
+        ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "foo")
         parse('''
             class Object
             class A { def readwrite foo(val i: int): void {} }
             main { new A.foo(); }
-        ''').assertError(peppl.methodSelector, LINKING_DIAGNOSTIC, "method", "foo")
+        ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "foo")
         parse('''
             class Object
             class A { def readwrite foo(val i: int, val a: readwrite A): void {} }
             main { new A.foo(false); }
-        ''').assertError(peppl.methodSelector, LINKING_DIAGNOSTIC, "method", "foo")
+        ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "foo")
         
         parse('''
             class Object
             class A { def readwrite foo(val i: int): void {} }
             main { new A.foo(false); }
-        ''').assertError(peppl.methodSelector, LINKING_DIAGNOSTIC, "method", "foo")
+        ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "foo")
         parse('''
             class Object
             class A { def readwrite foo(val a: readwrite A): void {} }
             main { new A.foo(new Object); }
-        ''').assertError(peppl.methodSelector, LINKING_DIAGNOSTIC, "method", "foo")
+        ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "foo")
         parse('''
             class Object
             class A { def readwrite foo(val a: readwrite A): void {} }
@@ -603,7 +601,7 @@ class PepplSystemTest {
                 val a: readonly A = new A;
                 new A.foo(a);
             }
-        ''').assertError(peppl.methodSelector, LINKING_DIAGNOSTIC, "method", "foo")
+        ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "foo")
     }
     
     @Test
@@ -699,7 +697,7 @@ class PepplSystemTest {
             main {
                 new A.foo(new A, new A);
             }
-        ''').assertError(peppl.methodSelector, AMBIGUOUS_CALL)
+        ''').assertError(METHOD_SELECTOR, AMBIGUOUS_CALL)
         
         parse('''
             class Object
@@ -710,7 +708,7 @@ class PepplSystemTest {
             main {
                 new A.foo(new A, new A);
             }
-        ''').assertError(peppl.methodSelector, AMBIGUOUS_CALL)
+        ''').assertError(METHOD_SELECTOR, AMBIGUOUS_CALL)
     }
     
     @Test 
@@ -733,7 +731,7 @@ class PepplSystemTest {
             main {
                 this;
             }
-        ''').assertError(peppl.this, TTHIS)
+        ''').assertError(THIS, TTHIS)
     }
     
     @Test
@@ -770,7 +768,7 @@ class PepplSystemTest {
                 i;
                 val i: int = 0;
             }
-        ''').assertError(peppl.varRef, LINKING_DIAGNOSTIC, "var", "i")
+        ''').assertError(VAR_REF, LINKING_DIAGNOSTIC, "var", "i")
         parse('''
             main {
                 {
@@ -778,7 +776,7 @@ class PepplSystemTest {
                 }
                 i;
             }
-        ''').assertError(peppl.varRef, LINKING_DIAGNOSTIC, "var", "i")
+        ''').assertError(VAR_REF, LINKING_DIAGNOSTIC, "var", "i")
     }
     
     @Test
@@ -848,7 +846,7 @@ class PepplSystemTest {
             main {
                 (int) false;
             }
-        ''').assertError(peppl.cast, null, "cannot cast", "boolean", "int")
+        ''').assertError(CAST, null, "cannot cast", "boolean", "int")
         parse('''
             main {
                 {
@@ -861,7 +859,7 @@ class PepplSystemTest {
                     }
                 }
             }
-        ''').assertError(peppl.cast, null, "cannot cast", "boolean", "int")
+        ''').assertError(CAST, null, "cannot cast", "boolean", "int")
     }
     
     @Test
@@ -881,20 +879,20 @@ class PepplSystemTest {
             main {
                 val i: int = false;
             }
-        ''').assertError(peppl.booleanLiteral, SUBTYPEEXPR, "boolean", "int")
+        ''').assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "boolean", "int")
         parse('''
             class Object
             main {
                 val o: readwrite Object = (pure Object) new Object;
             }
-        ''').assertError(peppl.cast, SUBTYPEEXPR, "pure Object", "readwrite Object")
+        ''').assertError(CAST, SUBTYPEEXPR, "pure Object", "readwrite Object")
         parse('''
             class Object
             class A
             main {
                 val o: pure A = (pure Object) new A;
             }
-        ''').assertError(peppl.cast, SUBTYPEEXPR, "pure Object", "pure A")
+        ''').assertError(CAST, SUBTYPEEXPR, "pure Object", "pure A")
     }
     
     @Test
@@ -925,20 +923,20 @@ class PepplSystemTest {
                 if(5)
                     new Object;
             }
-        ''').assertError(peppl.intLiteral, SUBTYPEEXPR, "int", "boolean")
+        ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
         parse('''
             main {
                 if(true)
                     (int) false;
             }
-        ''').assertError(peppl.cast, null, "cannot cast", "boolean", "int")
+        ''').assertError(CAST, null, "cannot cast", "boolean", "int")
         parse('''
             main {
                 if(true) {}
                 else
                     (int) false;
             }
-        ''').assertError(peppl.cast, null, "cannot cast", "boolean", "int")
+        ''').assertError(CAST, null, "cannot cast", "boolean", "int")
     }
     
     @Test
@@ -962,13 +960,13 @@ class PepplSystemTest {
                 while(5)
                     new Object;
             }
-        ''').assertError(peppl.intLiteral, SUBTYPEEXPR, "int", "boolean")
+        ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
         parse('''
             main {
                 while(true)
                     (int) false;
             }
-        ''').assertError(peppl.cast, null, "cannot cast", "boolean", "int")
+        ''').assertError(CAST, null, "cannot cast", "boolean", "int")
     }
     
     @Test
@@ -1002,7 +1000,7 @@ class PepplSystemTest {
                     return 1;
                 }
             }
-        ''').assertError(peppl.intLiteral, SUBTYPEEXPR, "int", "void")
+        ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "void")
         parse('''
             class Object
             class A {
@@ -1010,7 +1008,7 @@ class PepplSystemTest {
                     return false;
                 }
             }
-        ''').assertError(peppl.booleanLiteral, SUBTYPEEXPR, "boolean", "int")
+        ''').assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "boolean", "int")
         parse('''
             class Object
             class A {
@@ -1018,7 +1016,7 @@ class PepplSystemTest {
                     return (pure A) new A;
                 }
             }
-        ''').assertError(peppl.cast, SUBTYPEEXPR, "pure A", "readwrite A")
+        ''').assertError(CAST, SUBTYPEEXPR, "pure A", "readwrite A")
     }
     
     def findClass(Program program, String name) {
