@@ -5,10 +5,10 @@ import "http://www.eclipse.org/emf/2002/Ecore"
 generate peppl "http://trick17.ch/peppl/lang/Peppl"
 
 Program:
-    elements+=TopLevelElement+;
+    elements+=TopLevelElem+;
 
-TopLevelElement:
-    Class | Main;
+TopLevelElem:
+    Class | Task;
 
 Class:
     'class' name=ID ('extends' superclass=[Class])?
@@ -16,8 +16,9 @@ Class:
         (constructors+=Constructor | members+=Member)+
     '}')?;
 
-Main:
-    'main' body=Block;
+Task:
+    'task' name=ID ('(' params+=Param (',' params+=Param)* ')')?
+    ':' type=Type body=Block;
 
 Member:
     Field | Method;
@@ -35,8 +36,7 @@ Method:
     (overriding?='override' | 'def')
     thisRole=Role name=ID
     ('(' params+=Param (',' params+=Param)* ')')?
-    ':' type=Type
-    body=Block;
+    ':' type=Type body=Block;
 
 Param:
     kind=Val name=ID ':' type=Type;
@@ -191,16 +191,13 @@ Var:
     LocalVar | => Param; // => only needed to avoid warnings. Rule is not used anyway.
 
 Named:
-    Class | Typed;
+    TopLevelElem | Typed;
 
 Typed:
-    Member | => Var; // => only needed to avoid warnings. Rule is not used anyway.
+    Member | Task | => Var; // => only needed to avoid warnings. Rule is not used anyway.
 
-ElemWithBody:             // TODO: better name...
-    Main | Parameterized;
+ParameterizedBody:
+    Constructor | Method | Task;
 
-Parameterized:
-    Constructor | Method;
-
-ElemWithArgs:             // TODO: better name...
+Argumented:
     New | MethodSelector;

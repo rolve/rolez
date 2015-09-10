@@ -5,18 +5,15 @@ import ch.trick17.peppl.lang.peppl.Char
 import ch.trick17.peppl.lang.peppl.Class
 import ch.trick17.peppl.lang.peppl.ClassRef
 import ch.trick17.peppl.lang.peppl.Constructor
-import ch.trick17.peppl.lang.peppl.ElemWithArgs
-import ch.trick17.peppl.lang.peppl.ElemWithBody
 import ch.trick17.peppl.lang.peppl.Field
 import ch.trick17.peppl.lang.peppl.GenericClassRef
 import ch.trick17.peppl.lang.peppl.Int
 import ch.trick17.peppl.lang.peppl.LocalVar
-import ch.trick17.peppl.lang.peppl.Main
 import ch.trick17.peppl.lang.peppl.Member
 import ch.trick17.peppl.lang.peppl.Method
 import ch.trick17.peppl.lang.peppl.MethodSelector
 import ch.trick17.peppl.lang.peppl.Null
-import ch.trick17.peppl.lang.peppl.Parameterized
+import ch.trick17.peppl.lang.peppl.ParameterizedBody
 import ch.trick17.peppl.lang.peppl.PepplFactory
 import ch.trick17.peppl.lang.peppl.Program
 import ch.trick17.peppl.lang.peppl.Role
@@ -43,6 +40,7 @@ import org.eclipse.xtext.scoping.IGlobalScopeProvider
 import static ch.trick17.peppl.lang.peppl.PepplPackage.Literals.*
 
 import static extension org.eclipse.emf.ecore.util.EcoreUtil.copy
+import ch.trick17.peppl.lang.peppl.Argumented
 
 /** 
  * Utility functions for PEPPL language constructs
@@ -116,10 +114,6 @@ class PepplUtils {
         }
     }
     
-    def Main main(Program p) {
-        p.elements.filter(Main).head
-    }
-    
     def Iterable<Class> classes(Program p) {
         p.elements.filter(Class)
     }
@@ -162,9 +156,8 @@ class PepplUtils {
         // FIXME: This still doesn't seem to work right! Reproduce in a test and fix!
     }
     
-    def Iterable<Var> variables(ElemWithBody b) {
-        b.body.eAllContents.filter(LocalVar).toList
-            + if(b instanceof Parameterized) b.params else emptyList
+    def Iterable<Var> variables(ParameterizedBody b) {
+        b.body.eAllContents.filter(LocalVar).toList + b.params
     }
     
     def Stmt enclosingStmt(EObject o) {
@@ -199,11 +192,11 @@ class PepplUtils {
         }
     }
     
-    def ElemWithBody enclosingElemWithBody(EObject o) {
+    def ParameterizedBody enclosingBody(EObject o) {
         val container = o?.eContainer
         switch(container) {
-            ElemWithBody: container
-            default: container?.enclosingElemWithBody
+            ParameterizedBody: container
+            default: container?.enclosingBody
         }
     }
     
@@ -228,7 +221,7 @@ class PepplUtils {
      * http://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.12.2
      * </a>.
      */
-    def maximallySpecific(Iterable<? extends Parameterized> candidates, ElemWithArgs args) {
+    def maximallySpecific(Iterable<? extends ParameterizedBody> candidates, Argumented args) {
         val applicable = candidates.filter[
             system.validArgsSucceeded(envFor(args), args, it)
         ].toList
@@ -240,11 +233,11 @@ class PepplUtils {
         ]
     }
     
-    private def strictlyMoreSpecificThan(Parameterized target, Parameterized other) {
+    private def strictlyMoreSpecificThan(ParameterizedBody target, ParameterizedBody other) {
         target.moreSpecificThan(other) && !other.moreSpecificThan(target)
     }
     
-    private def moreSpecificThan(Parameterized target, Parameterized other) {
+    private def moreSpecificThan(ParameterizedBody target, ParameterizedBody other) {
         // Assume both targets have the same number of parameters
         val i = other.params.iterator
         target.params.forall[system.subtypeSucceeded(envFor(target), it.type, i.next.type)]

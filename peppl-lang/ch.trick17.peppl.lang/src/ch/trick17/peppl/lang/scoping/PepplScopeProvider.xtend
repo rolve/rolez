@@ -1,14 +1,13 @@
 package ch.trick17.peppl.lang.scoping
 
 import ch.trick17.peppl.lang.peppl.Block
-import ch.trick17.peppl.lang.peppl.ElemWithBody
 import ch.trick17.peppl.lang.peppl.Field
 import ch.trick17.peppl.lang.peppl.FieldSelector
 import ch.trick17.peppl.lang.peppl.LocalVarDecl
 import ch.trick17.peppl.lang.peppl.MemberAccess
 import ch.trick17.peppl.lang.peppl.Method
 import ch.trick17.peppl.lang.peppl.MethodSelector
-import ch.trick17.peppl.lang.peppl.Parameterized
+import ch.trick17.peppl.lang.peppl.ParameterizedBody
 import ch.trick17.peppl.lang.peppl.RoleType
 import ch.trick17.peppl.lang.peppl.Stmt
 import ch.trick17.peppl.lang.peppl.Var
@@ -58,23 +57,19 @@ class PepplScopeProvider extends AbstractDeclarativeScopeProvider {
     
     def IScope scope_VarRef_variable(VarRef varRef, EReference eRef) {
         val stmt = varRef.enclosingStmt
-        Scopes.scopeFor(collectVars(stmt.eContainer, stmt))
+        Scopes.scopeFor(varsAbove(stmt.eContainer, stmt))
     }
     
-    private def dispatch Iterable<? extends Var> collectVars(Stmt container, Stmt s) {
-        collectVars(container.eContainer, container)
+    private def dispatch Iterable<? extends Var> varsAbove(Stmt container, Stmt s) {
+        varsAbove(container.eContainer, container)
     }
     
-    private def dispatch Iterable<? extends Var> collectVars(Block b, Stmt s) {
+    private def dispatch Iterable<? extends Var> varsAbove(Block b, Stmt s) {
         b.stmts.takeWhile[it != s].filter(LocalVarDecl).map[variable]
-            + collectVars(b.eContainer, s)
+            + varsAbove(b.eContainer, s)
     }
     
-    private def dispatch Iterable<? extends Var> collectVars(Parameterized p, Stmt s) {
+    private def dispatch Iterable<? extends Var> varsAbove(ParameterizedBody p, Stmt s) {
         p.params
-    }
-    
-    private def dispatch Iterable<? extends Var> collectVars(ElemWithBody p, Stmt s) {
-        emptyList
     }
 }

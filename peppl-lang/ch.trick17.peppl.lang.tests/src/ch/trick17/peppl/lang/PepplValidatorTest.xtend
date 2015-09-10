@@ -10,7 +10,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 import static ch.trick17.peppl.lang.peppl.PepplPackage.Literals.*
-
 import static ch.trick17.peppl.lang.validation.PepplValidator.*
 
 @RunWith(XtextRunner)
@@ -23,6 +22,27 @@ class PepplValidatorTest {
     @Test
     def testObjectExists() {
         parse("class A").assertError(CLASS, OBJECT_CLASS_NOT_DEFINED)
+    }
+    
+    @Test
+    def testDuplicateTopLevelElems() {
+        parse('''
+            class Object
+            class A
+            class A
+        ''').assertError(CLASS, DUPLICATE_TOP_LEVEL_ELEMENT)
+        parse('''
+            class Object
+            task A: void {}
+            task A: void {}
+        ''').assertError(TASK, DUPLICATE_TOP_LEVEL_ELEMENT)
+        val program = parse('''
+            class Object
+            class A
+            task A: void {}
+        ''')
+        program.assertError(CLASS, DUPLICATE_TOP_LEVEL_ELEMENT)
+        program.assertError(TASK, DUPLICATE_TOP_LEVEL_ELEMENT)
     }
     
     @Test
@@ -353,7 +373,7 @@ class PepplValidatorTest {
             }
         ''').assertError(LOCAL_VAR, DUPLICATE_VARIABLE)
         parse('''
-            main {
+            task Main: void {
                 val i: int = 5;
                 {
                     val i: boolean = true;
@@ -387,7 +407,7 @@ class PepplValidatorTest {
             class Object
             class Array
             class A
-            main {
+            task Main: void {
                 val a: pure Array[int] = new Array[int];
                 var b: readonly Array[readwrite Array[pure A]];
                 val c: readwrite A;
@@ -397,28 +417,28 @@ class PepplValidatorTest {
         parse('''
             class Object
             class Array
-            main {
+            task Main: void {
                 val a: pure Array;
             }
         ''').assertError(SIMPLE_CLASS_REF, MISSING_TYPE_ARGS, "class Array")
         parse('''
             class Object
             class A
-            main {
+            task Main: void {
                 val a: pure A[int];
             }
         ''').assertError(GENERIC_CLASS_REF, INCORRECT_TYPE_ARGS, "class A")
         parse('''
             class Object
             class A
-            main {
+            task Main: void {
                 val a: pure A = new A[int];
             }
         ''').assertError(GENERIC_CLASS_REF, INCORRECT_TYPE_ARGS, "class A")
         parse('''
             class Object
             class A
-            main {
+            task Main: void {
                 val a: pure A[readwrite A];
             }
         ''').assertError(GENERIC_CLASS_REF, INCORRECT_TYPE_ARGS, "class A")

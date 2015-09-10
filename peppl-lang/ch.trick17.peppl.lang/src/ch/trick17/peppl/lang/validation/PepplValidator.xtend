@@ -13,6 +13,7 @@ import ch.trick17.peppl.lang.peppl.Program
 import ch.trick17.peppl.lang.peppl.ReturnExpr
 import ch.trick17.peppl.lang.peppl.SimpleClassRef
 import ch.trick17.peppl.lang.peppl.Stmt
+import ch.trick17.peppl.lang.peppl.TopLevelElem
 import ch.trick17.peppl.lang.peppl.Var
 import ch.trick17.peppl.lang.peppl.Void
 import ch.trick17.peppl.lang.typesystem.PepplSystem
@@ -37,7 +38,7 @@ class PepplValidator extends PepplSystemValidator {
 
     public static val INVALID_NAME = "invalid name"
     public static val OBJECT_CLASS_NOT_DEFINED = "object class not defined"
-    public static val DUPLICATE_CLASS = "duplicate class"
+    public static val DUPLICATE_TOP_LEVEL_ELEMENT = "duplicate top-level element"
     public static val DUPLICATE_METHOD = "duplicate method"
     public static val DUPLICATE_FIELD = "duplicate field"
     public static val DUPLICATE_VARIABLE = "duplicate variable"
@@ -73,12 +74,12 @@ class PepplValidator extends PepplSystemValidator {
 	}
 	
 	@Check
-	def checkNoDuplicateClasses(Class c) {
-	    val matching = c.enclosingProgram.classes.filter[name.equals(c.name)]
+	def checkNoDuplicateTopLevelElem(TopLevelElem c) {
+	    val matching = c.enclosingProgram.elements.filter[name.equals(c.name)]
         if(matching.size < 1)
            throw new AssertionError
         if(matching.size > 1)
-           error("Duplicate class " + c.name, NAMED__NAME, DUPLICATE_CLASS)
+           error("Duplicate top-level element " + c.name, NAMED__NAME, DUPLICATE_TOP_LEVEL_ELEMENT)
 	}
 	
     @Check
@@ -146,7 +147,7 @@ class PepplValidator extends PepplSystemValidator {
     
     @Check
     def checkNoDuplicateVars(Var v) {
-        val matching = v.enclosingElemWithBody.variables.filter[name.equals(v.name)]
+        val matching = v.enclosingBody.variables.filter[name.equals(v.name)]
         if(matching.size < 1)
            throw new AssertionError
         if(matching.size > 1)

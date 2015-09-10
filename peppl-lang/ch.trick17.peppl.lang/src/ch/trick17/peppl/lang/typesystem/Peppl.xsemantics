@@ -7,7 +7,7 @@ import ch.trick17.peppl.lang.peppl.Cast
 import ch.trick17.peppl.lang.peppl.CharLiteral
 import ch.trick17.peppl.lang.peppl.Class
 import ch.trick17.peppl.lang.peppl.ClassRef
-import ch.trick17.peppl.lang.peppl.ElemWithArgs
+import ch.trick17.peppl.lang.peppl.Argumented
 import ch.trick17.peppl.lang.peppl.EqualityExpr
 import ch.trick17.peppl.lang.peppl.Expr
 import ch.trick17.peppl.lang.peppl.ExprStmt
@@ -22,7 +22,7 @@ import ch.trick17.peppl.lang.peppl.New
 import ch.trick17.peppl.lang.peppl.Null
 import ch.trick17.peppl.lang.peppl.NullLiteral
 import ch.trick17.peppl.lang.peppl.OpArithmetic
-import ch.trick17.peppl.lang.peppl.Parameterized
+import ch.trick17.peppl.lang.peppl.ParameterizedBody
 import ch.trick17.peppl.lang.peppl.Parenthesized
 import ch.trick17.peppl.lang.peppl.PrimitiveType
 import ch.trick17.peppl.lang.peppl.ReferenceType
@@ -62,7 +62,7 @@ judgments {
     type      |- Expr e : output Type
     wellTyped |- Stmt s
     
-    validArgs |- ElemWithArgs a << Parameterized p
+    validArgs |- Argumented a << ParameterizedBody p
     
     subtypeExpr |- Expr left <| Type right
         error "Type mismatch: " + left.type.value.stringRep + " is not a subtype of " + right.stringRep
@@ -348,7 +348,7 @@ from {
 
 
 rule ValidArgs
-    G |- ElemWithArgs a << Parameterized p
+    G |- Argumented a << ParameterizedBody p
 from {
     a.args.size >= p.params.size or fail
         error "Too few arguments"

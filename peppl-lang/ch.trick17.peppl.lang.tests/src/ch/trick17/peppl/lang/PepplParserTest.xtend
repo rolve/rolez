@@ -1,18 +1,18 @@
 package ch.trick17.peppl.lang
 
 import ch.trick17.peppl.lang.peppl.Program
+import ch.trick17.peppl.lang.typesystem.PepplUtils
 import javax.inject.Inject
 import org.eclipse.xtext.junit4.InjectWith
 import org.eclipse.xtext.junit4.XtextRunner
 import org.eclipse.xtext.junit4.util.ParseHelper
+import org.eclipse.xtext.junit4.validation.ValidationTestHelper
 import org.junit.Test
 import org.junit.runner.RunWith
 
 import static org.hamcrest.Matchers.*
 
 import static extension org.hamcrest.MatcherAssert.assertThat
-import org.eclipse.xtext.junit4.validation.ValidationTestHelper
-import ch.trick17.peppl.lang.typesystem.PepplUtils
 
 @RunWith(XtextRunner)
 @InjectWith(PepplInjectorProvider)
@@ -38,7 +38,7 @@ class PepplParserTest {
     @Test
     def testCast() {
         parse('''
-            main {
+            task Main: void {
                 (int) 5;
                 (int) (int) 5;
                 ((int) 5);
