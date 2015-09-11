@@ -2,19 +2,18 @@ package ch.trick17.peppl.lang
 
 import ch.trick17.peppl.lang.peppl.Program
 import javax.inject.Inject
-import org.eclipse.emf.ecore.resource.ResourceSet
+import org.eclipse.emf.common.util.URI
 import org.eclipse.xtext.junit4.InjectWith
 import org.eclipse.xtext.junit4.XtextRunner
 import org.eclipse.xtext.junit4.util.ParseHelper
 import org.eclipse.xtext.junit4.validation.ValidationTestHelper
+import org.eclipse.xtext.resource.XtextResourceSet
+import org.eclipse.xtext.util.StringInputStream
 import org.junit.Test
 import org.junit.runner.RunWith
 
 import static ch.trick17.peppl.lang.peppl.PepplPackage.Literals.*
 import static ch.trick17.peppl.lang.validation.PepplValidator.*
-import org.eclipse.xtext.resource.XtextResourceSet
-import org.eclipse.emf.common.util.URI
-import org.eclipse.xtext.util.StringInputStream
 
 @RunWith(XtextRunner)
 @InjectWith(PepplInjectorProvider)
@@ -35,9 +34,16 @@ class PepplValidatorTest {
         val objectRes = set.createResource(URI.createURI("object.peppl"))
         objectRes.load(new StringInputStream("class Object"), emptyMap)
         parse("class A", set).assertNoErrors
+        val p = parse('''
+            package foo.bar
+            class A
+        ''', set)
+        p.assertNoErrors
         
         parse("class A").assertError(CLASS, OBJECT_CLASS_NOT_DEFINED)
     }
+    
+    // TODO: Test imports and stuff. In another file...
     
     @Test
     def testDuplicateTopLevelElems() {

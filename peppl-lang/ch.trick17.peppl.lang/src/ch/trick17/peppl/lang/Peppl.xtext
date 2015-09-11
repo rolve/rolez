@@ -5,9 +5,20 @@ import "http://www.eclipse.org/emf/2002/Ecore"
 generate peppl "http://trick17.ch/peppl/lang/Peppl"
 
 Program:
-    elements+=TopLevelElem+;
+    ('package' name=QualifiedName)?
+    imports+=Import*
+    elements+=ClassLike+;
 
-TopLevelElem:
+Import:
+    'import' importedNamespace=QualifiedNameWithWildCard;
+
+QualifiedName:
+    ID ('.' ID)*;
+
+QualifiedNameWithWildCard:
+    QualifiedName '.*'?;
+
+ClassLike:
     Class | Task;
 
 Class:
@@ -139,7 +150,7 @@ New:
     ('(' args+=Expr (',' args+=Expr)* ')')?;
 
 Start:
-    'start' task=[Task]
+    'start' (task=[Task] | '(' task=[Task|QualifiedName] ')')
     ('(' args+=Expr (',' args+=Expr)* ')')?;
 
 Parenthesized: '(' expr=Expr ')';
@@ -185,16 +196,17 @@ ClassRef:
     SimpleClassRef | GenericClassRef;
 
 SimpleClassRef:
-    clazz=[Class];
+    clazz=[Class] | '(' clazz=[Class|QualifiedName] ')';
+    // To avoid ambiguity with field reads, qualified names must be in parentheses
 
 GenericClassRef:
-    clazz=[Class] '[' typeArg=Type ']';
+    clazz=[Class|QualifiedName] '[' typeArg=Type ']';
 
 Var:
     LocalVar | => Param; // => only needed to avoid warnings. Rule is not used anyway.
 
 Named:
-    TopLevelElem | Typed;
+    ClassLike | Typed;
 
 Typed:
     Member | Task | => Var; // => only needed to avoid warnings. Rule is not used anyway.

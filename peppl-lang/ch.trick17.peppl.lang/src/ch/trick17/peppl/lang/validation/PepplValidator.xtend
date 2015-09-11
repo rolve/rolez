@@ -5,6 +5,7 @@ package ch.trick17.peppl.lang.validation
 
 import ch.trick17.peppl.lang.peppl.Block
 import ch.trick17.peppl.lang.peppl.Class
+import ch.trick17.peppl.lang.peppl.ClassLike
 import ch.trick17.peppl.lang.peppl.Field
 import ch.trick17.peppl.lang.peppl.GenericClassRef
 import ch.trick17.peppl.lang.peppl.IfStmt
@@ -13,9 +14,8 @@ import ch.trick17.peppl.lang.peppl.Program
 import ch.trick17.peppl.lang.peppl.ReturnExpr
 import ch.trick17.peppl.lang.peppl.SimpleClassRef
 import ch.trick17.peppl.lang.peppl.Stmt
-import ch.trick17.peppl.lang.peppl.TopLevelElem
-import ch.trick17.peppl.lang.peppl.Var
 import ch.trick17.peppl.lang.peppl.Unit
+import ch.trick17.peppl.lang.peppl.Var
 import ch.trick17.peppl.lang.typesystem.PepplSystem
 import ch.trick17.peppl.lang.typesystem.PepplUtils
 import ch.trick17.peppl.lang.typesystem.validation.PepplSystemValidator
@@ -75,7 +75,7 @@ class PepplValidator extends PepplSystemValidator {
 	}
 	
 	@Check
-	def checkNoDuplicateTopLevelElem(TopLevelElem c) {
+	def checkNoDuplicateTopLevelElem(ClassLike c) {
 	    val matching = c.enclosingProgram.elements.filter[name.equals(c.name)]
         if(matching.size < 1)
            throw new AssertionError
