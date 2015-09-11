@@ -1,5 +1,6 @@
 package ch.trick17.peppl.lang.typesystem
 
+import ch.trick17.peppl.lang.peppl.Argumented
 import ch.trick17.peppl.lang.peppl.Boolean
 import ch.trick17.peppl.lang.peppl.Char
 import ch.trick17.peppl.lang.peppl.Class
@@ -21,8 +22,8 @@ import ch.trick17.peppl.lang.peppl.RoleType
 import ch.trick17.peppl.lang.peppl.SimpleClassRef
 import ch.trick17.peppl.lang.peppl.Stmt
 import ch.trick17.peppl.lang.peppl.Type
+import ch.trick17.peppl.lang.peppl.Unit
 import ch.trick17.peppl.lang.peppl.Var
-import ch.trick17.peppl.lang.peppl.Void
 import it.xsemantics.runtime.RuleEnvironment
 import it.xsemantics.runtime.RuleEnvironmentEntry
 import java.util.ArrayList
@@ -40,7 +41,6 @@ import org.eclipse.xtext.scoping.IGlobalScopeProvider
 import static ch.trick17.peppl.lang.peppl.PepplPackage.Literals.*
 
 import static extension org.eclipse.emf.ecore.util.EcoreUtil.copy
-import ch.trick17.peppl.lang.peppl.Argumented
 
 /** 
  * Utility functions for PEPPL language constructs
@@ -84,8 +84,8 @@ class PepplUtils {
         factory.createChar
     }
 
-    def Void voidType() {
-        factory.createVoid
+    def Unit unitType() {
+        factory.createUnit
     }
 
     def Null nullType() {

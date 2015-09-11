@@ -55,7 +55,7 @@ class PepplSystemTest {
             class Object
             class A
             class B extends A 
-            task Main: void {
+            task Main: {
                 var a: readwrite A;
                 a = new B;
             }
@@ -66,11 +66,11 @@ class PepplSystemTest {
     
     @Test
     def testTAssignmentErrorInOp() {
-        parse("task Main: void { !5 = 5; }")
+        parse("task Main: { !5 = 5; }")
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
         
         parse('''
-            task Main: void {
+            task Main: {
                 var x: int;
                 x = !5;
             }
@@ -80,7 +80,7 @@ class PepplSystemTest {
     @Test
     def testTAssignmentNotAssignable() {
         parse('''
-            task Main: void {
+            task Main: {
                 val x: int;
                 x = 5;
             }
@@ -90,7 +90,7 @@ class PepplSystemTest {
     @Test
     def testTAssignmentTypeMismatch() {
         parse('''
-            task Main: void {
+            task Main: {
                 var x: int;
                 x = true;
             }
@@ -99,35 +99,35 @@ class PepplSystemTest {
     
     @Test
     def testTBooleanExpr() {
-        parse("task Main: void { true || false; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
-        parse("task Main: void { true && false; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
+        parse("task Main: { true || false; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
+        parse("task Main: { true && false; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
     }
     
     @Test
     def testTBooleanExprErrorInOp() {
-        parse("task Main: void { !5 || false; }")
+        parse("task Main: { !5 || false; }")
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
-        parse("task Main: void { true || !5; }")
+        parse("task Main: { true || !5; }")
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
     @Test
     def testTBooleanExprTypeMismatch() {
-        parse("task Main: void { 5 || false; }")
+        parse("task Main: { 5 || false; }")
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
-        parse("task Main: void { true || 5; }")
+        parse("task Main: { true || 5; }")
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
     @Test
     def testTEqualityExpr() {
-        parse("task Main: void { true == false; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
-        parse("task Main: void { 5 != 3; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
+        parse("task Main: { true == false; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
+        parse("task Main: { 5 != 3; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
 
         parse('''
             class Object
             class A
-            task Main: void {
+            task Main: {
                 new Object == new A;
                 new A == new Object;
                 new A == new A;
@@ -137,9 +137,9 @@ class PepplSystemTest {
     
     @Test
     def testTEqualityExprErrorInOp() {
-        parse("task Main: void { !5 == false; }")
+        parse("task Main: { !5 == false; }")
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
-        parse("task Main: void { true != !5; }")
+        parse("task Main: { true != !5; }")
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
@@ -149,31 +149,31 @@ class PepplSystemTest {
             class Object
             class A
             class B
-            task Main: void { new A == new B; }
+            task Main: { new A == new B; }
         ''').assertError(EQUALITY_EXPR, null, "compare", "A", "B")
         // IMPROVE: Find a way to include an issue code for explicit failures?
         
-        parse("task Main: void { 42 != false; }")
+        parse("task Main: { 42 != false; }")
             .assertError(EQUALITY_EXPR, null, "compare", "int", "boolean")
     }
     
     @Test
     def testTRelationalExpr() {
-        parse("task Main: void {   5 <    6; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
-        parse("task Main: void {  -1 <= -10; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
-        parse("task Main: void { 'a' >  ' '; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
-        parse("task Main: void { 3+4 >=   0; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
+        parse("task Main: {   5 <    6; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
+        parse("task Main: {  -1 <= -10; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
+        parse("task Main: { 'a' >  ' '; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
+        parse("task Main: { 3+4 >=   0; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
     }
     
     @Test
     def testTRelationalExprErrorInOp() {
-        parse("task Main: void { -true < 0; }")
+        parse("task Main: { -true < 0; }")
             .assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "int", "boolean")
-        parse("task Main: void { 100 <= -false; }")
+        parse("task Main: { 100 <= -false; }")
             .assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "int", "boolean")
-        parse("task Main: void { -'a' > 0; }")
+        parse("task Main: { -'a' > 0; }")
             .assertError(CHAR_LITERAL, SUBTYPEEXPR, "int", "char")
-        parse("task Main: void { 100 >= -false; }")
+        parse("task Main: { 100 >= -false; }")
             .assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
@@ -181,56 +181,56 @@ class PepplSystemTest {
     def testTRelationalExprIncompatibleTypes() {
         parse('''
             class Object
-            task Main: void { new Object < new Object; }
+            task Main: { new Object < new Object; }
         ''').assertError(RELATIONAL_EXPR, null, "compare", "Object")
         
-        parse("task Main: void { true <= false; }")
+        parse("task Main: { true <= false; }")
             .assertError(RELATIONAL_EXPR, null, "compare", "boolean")
-        parse("task Main: void { null > null; }")
+        parse("task Main: { null > null; }")
             .assertError(RELATIONAL_EXPR, null, "compare", "null")
-        parse("task Main: void { 5 > '5'; }")
+        parse("task Main: { 5 > '5'; }")
             .assertError(RELATIONAL_EXPR, null, "compare", "int", "char")
-        parse("task Main: void { true > '5'; }")
+        parse("task Main: { true > '5'; }")
             .assertError(RELATIONAL_EXPR, null, "compare", "boolean", "char")
     }
     
     @Test
     def testTArithmeticExpr() {
-        parse("task Main: void {   4 +  4; }").main.lastExpr.type.assertThat(instanceOf(Int))
-        parse("task Main: void {   0 -  0; }").main.lastExpr.type.assertThat(instanceOf(Int))
-        parse("task Main: void {   3 *  2; }").main.lastExpr.type.assertThat(instanceOf(Int))
-        parse("task Main: void { 100 / -1; }").main.lastExpr.type.assertThat(instanceOf(Int))
-        parse("task Main: void { -99 %  3; }").main.lastExpr.type.assertThat(instanceOf(Int))
+        parse("task Main: {   4 +  4; }").main.lastExpr.type.assertThat(instanceOf(Int))
+        parse("task Main: {   0 -  0; }").main.lastExpr.type.assertThat(instanceOf(Int))
+        parse("task Main: {   3 *  2; }").main.lastExpr.type.assertThat(instanceOf(Int))
+        parse("task Main: { 100 / -1; }").main.lastExpr.type.assertThat(instanceOf(Int))
+        parse("task Main: { -99 %  3; }").main.lastExpr.type.assertThat(instanceOf(Int))
         
         parse('''
             class Object
             class String
-            task Main: void { "Hi" + " World"; }
+            task Main: { "Hi" + " World"; }
         ''').main.lastExpr.type.asRoleType.base.clazz.name.assertThat(is("String"))
         parse('''
             class Object
             class String
-            task Main: void { "" + '5'; }
+            task Main: { "" + '5'; }
         ''').main.lastExpr.type.asRoleType.base.clazz.name.assertThat(is("String"))
         parse('''
             class Object
             class String
-            task Main: void { null + " "; }
+            task Main: { null + " "; }
         ''').main.lastExpr.type.asRoleType.base.clazz.name.assertThat(is("String"))
         // IMPROVE: check rest of the type as well
     }
     
     @Test
     def testTArithmeticExprErrorInOp() {
-        parse("task Main: void { !'a' + 0; }")
+        parse("task Main: { !'a' + 0; }")
             .assertError(CHAR_LITERAL, SUBTYPEEXPR, "char", "boolean")
-        parse("task Main: void { 100 - -false; }")
+        parse("task Main: { 100 - -false; }")
             .assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "int", "boolean")
-        parse("task Main: void { -'a' * 0; }")
+        parse("task Main: { -'a' * 0; }")
             .assertError(CHAR_LITERAL, SUBTYPEEXPR, "int", "char")
-        parse("task Main: void { 100 / -true; }")
+        parse("task Main: { 100 / -true; }")
             .assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "int", "boolean")
-        parse("task Main: void { (3*3) % !42; }")
+        parse("task Main: { (3*3) % !42; }")
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
@@ -238,55 +238,55 @@ class PepplSystemTest {
     def testTArtithmeticExprTypeMismatch() {
         parse('''
             class Object
-            task Main: void { new Object + new Object; }
+            task Main: { new Object + new Object; }
         ''').assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "object")
         parse('''
             class Object
             class A
             class B
-            task Main: void { new A - new B; }
+            task Main: { new A - new B; }
         ''').assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "A", "B")
         
         parse('''
             class Object
             class String
-            task Main: void { "Hello" - "World"; }
+            task Main: { "Hello" - "World"; }
         ''').assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "String")
         parse('''
             class Object
             class String
-            task Main: void { "Hello" * new Object; }
+            task Main: { "Hello" * new Object; }
         ''').assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "String", "Object")
         parse('''
             class Object
             class String
-            task Main: void { 5 / "World"; }
+            task Main: { 5 / "World"; }
         ''').assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "int", "String")
         parse('''
             class Object
             class String
-            task Main: void { null % "World"; }
+            task Main: { null % "World"; }
         ''').assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "null", "String")
         
-        parse("task Main: void { 'a' * 'b'; }")
+        parse("task Main: { 'a' * 'b'; }")
             .assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "char")
-        parse("task Main: void { null / null; }")
+        parse("task Main: { null / null; }")
             .assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "null")
-        parse("task Main: void { 5 % '5'; }")
+        parse("task Main: { 5 % '5'; }")
             .assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "int", "char")
-        parse("task Main: void { true % '5'; }")
+        parse("task Main: { true % '5'; }")
             .assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "boolean", "char")
     }
     
     @Test
     def testCast() {
         // Redundant casts
-        parse("task Main: void { (int) 5; }").main.lastExpr.type.assertThat(instanceOf(Int))
-        parse("task Main: void { (boolean) true; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
+        parse("task Main: { 5 as int; }").main.lastExpr.type.assertThat(instanceOf(Int))
+        parse("task Main: { true as boolean; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
         
         var program = parse('''
             class Object
-            task Main: void { (readwrite Object) new Object; }
+            task Main: { new Object as readwrite Object; }
         ''')
         program.main.lastExpr.type.assertThat(isRoleType(READWRITE, classRef(program.findClass("Object"))))
         
@@ -295,14 +295,14 @@ class PepplSystemTest {
             class Object
             class Array
             class A
-            task Main: void {
-                (readwrite Object) new A;
-                (readonly A) new A;
-                (pure A) new A;
-                (readwrite A) null;
-                (readonly A) null;
-                (readonly Array[int]) new Array[int];
-                (readonly Array[pure A]) new Array[pure A];
+            task Main: {
+                new A as readwrite Object;
+                new A as readonly A;
+                new A as pure A;
+                null as readwrite A;
+                null as readonly A;
+                new Array[int] as readonly Array[int];
+                new Array[pure A] as readonly Array[pure A];
             }
         ''')
         program.main.expr(0).type.assertThat(isRoleType(READWRITE, classRef(program.findClass("Object"))))
@@ -319,77 +319,79 @@ class PepplSystemTest {
         program = parse('''
             class Object
             class A
-            task Main: void { (readwrite A) new Object; }
+            task Main: { new Object as readwrite A; }
         ''')
         program.main.lastExpr.type.assertThat(isRoleType(READWRITE, classRef(program.findClass("A"))))
     }
     
     @Test
     def testTCastErrorInOp() {
-        parse("task Main: void { (boolean) !5; }")
+        parse("task Main: { !5 as boolean; }")
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
     @Test
     def testTCastIllegal() {
-        parse("task Main: void { (boolean) 5; }")
+        parse("task Main: { 5 as boolean; }")
             .assertError(CAST, null, "cast", "int", "boolean")
-        parse("task Main: void { (int) false; }")
-            .assertError(CAST, null, "cast", "int", "boolean")
-        parse("task Main: void { (int) null; }")
-            .assertError(CAST, null, "cast", "int", "null")
+        parse("task Main: { false as int; }")
+            .assertError(CAST, null, "cast", "boolean", "int")
+        parse("task Main: { null as int; }")
+            .assertError(CAST, null, "cast", "null", "int")
+        parse("task Main: { 5 as ; }")
+            .assertError(CAST, null, "cast", "int", "unit")
         
         parse('''
             class Object
-            task Main: void { (readwrite Object) 5; }
+            task Main: { 5 as readwrite Object; }
         ''').assertError(CAST, null, "cast", "readwrite Object", "int")
         parse('''
             class Object
-            task Main: void { (int) new Object; }
+            task Main: { new Object as int; }
         ''').assertError(CAST, null, "cast", "readwrite Object", "int")
         parse('''
             class Object
             class A
-            task Main: void { (readwrite A) (readonly A) new A; }
+            task Main: { new A as readonly A as readwrite A; }
         ''').assertError(CAST, null, "cast", "readwrite A", "readonly A")
         
         parse('''
             class Object
             class Array
-            task Main: void { (readwrite Array[int]) new Array[boolean]; }
+            task Main: { new Array[boolean] as readwrite Array[int]; }
         ''').assertError(CAST, null, "cast", "readwrite Array[boolean]", "readwrite Array[int]")
         parse('''
             class Object
             class Array
             class A
-            task Main: void { (readwrite Array[pure A]) new Array[pure Object]; }
+            task Main: { new Array[pure Object] as readwrite Array[pure A]; }
         ''').assertError(CAST, null, "cast", "readwrite Array[pure Object]", "readwrite Array[pure A]")
         parse('''
             class Object
             class Array
             class A
-            task Main: void { (readwrite Array[pure A]) new Array[readwrite A]; }
+            task Main: { new Array[readwrite A] as readwrite Array[pure A]; }
         ''').assertError(CAST, null, "cast", "readwrite Array[readwrite A]", "readwrite Array[pure A]")
         parse('''
             class Object
             class Array
             class A
-            task Main: void { (readwrite Array[readwrite A]) new Array[pure A]; }
+            task Main: { new Array[pure A] as readwrite Array[readwrite A]; }
         ''').assertError(CAST, null, "cast", "readwrite Array[pure A]", "readwrite Array[readwrite A]")
     }
     
     @Test
     def testTUnaryMinus() {
-        parse("task Main: void { -2; }").main.lastExpr.type.assertThat(instanceOf(Int))
-        parse("task Main: void { val a: int = 5; -a; }").main.lastExpr.type.assertThat(instanceOf(Int))
-        parse("task Main: void { -(4-4); }").main.lastExpr.type.assertThat(instanceOf(Int))
+        parse("task Main: { -2; }").main.lastExpr.type.assertThat(instanceOf(Int))
+        parse("task Main: { val a: int = 5; -a; }").main.lastExpr.type.assertThat(instanceOf(Int))
+        parse("task Main: { -(4-4); }").main.lastExpr.type.assertThat(instanceOf(Int))
     }
     
     @Test
     def testTUnaryMinusErrorInOp() {
-        parse("task Main: void { -!5; }")
+        parse("task Main: { -!5; }")
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
-        parse("task Main: void { -(-'a'); }")
+        parse("task Main: { -(-'a'); }")
             .assertError(CHAR_LITERAL, SUBTYPEEXPR, "char", "int")
     }
     
@@ -397,37 +399,37 @@ class PepplSystemTest {
     def testTUnaryMinusTypeMismatch() {
         parse('''
             class Object
-            task Main: void { -new Object; }
+            task Main: { -new Object; }
         ''').assertError(NEW, SUBTYPEEXPR, "Object", "int")
         parse('''
             class Object
             class String
-            task Main: void { -"Hello"; }
+            task Main: { -"Hello"; }
         ''').assertError(STRING_LITERAL, SUBTYPEEXPR, "String", "int")
         
-        parse("task Main: void { -'a'; }")
+        parse("task Main: { -'a'; }")
             .assertError(CHAR_LITERAL, SUBTYPEEXPR, "char", "int")
-        parse("task Main: void { -true; }")
+        parse("task Main: { -true; }")
             .assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "boolean", "int")
-        parse("task Main: void { -null; }")
+        parse("task Main: { -null; }")
             .assertError(NULL_LITERAL, SUBTYPEEXPR, "null", "int")
     }
     
     @Test
     def testTUnaryNot() {
-        parse("task Main: void { !true; }").main.lastExpr.type
+        parse("task Main: { !true; }").main.lastExpr.type
             .assertThat(instanceOf(Boolean))
-        parse("task Main: void { val a: boolean = false; !a; }").main.lastExpr.type
+        parse("task Main: { val a: boolean = false; !a; }").main.lastExpr.type
             .assertThat(instanceOf(Boolean))
-        parse("task Main: void { !(true || false); }").main.lastExpr.type
+        parse("task Main: { !(true || false); }").main.lastExpr.type
             .assertThat(instanceOf(Boolean))
     }
     
     @Test
     def testTUnaryNotErrorInOp() {
-        parse("task Main: void { !(-'a'); }")
+        parse("task Main: { !(-'a'); }")
             .assertError(CHAR_LITERAL, SUBTYPEEXPR, "char", "int")
-        parse("task Main: void { !(!5); }")
+        parse("task Main: { !(!5); }")
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
@@ -435,35 +437,35 @@ class PepplSystemTest {
     def testTUnaryNotTypeMismatch() {
         parse('''
             class Object
-            task Main: void { !new Object; }
+            task Main: { !new Object; }
         ''').assertError(NEW, SUBTYPEEXPR, "Object", "boolean")
         parse('''
             class Object
             class String
-            task Main: void { !"Hello"; }
+            task Main: { !"Hello"; }
         ''').assertError(STRING_LITERAL, SUBTYPEEXPR, "String", "boolean")
         
-        parse("task Main: void { !'a'; }")
+        parse("task Main: { !'a'; }")
             .assertError(CHAR_LITERAL, SUBTYPEEXPR, "char", "boolean")
-        parse("task Main: void { !5; }")
+        parse("task Main: { !5; }")
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
-        parse("task Main: void { !null; }")
+        parse("task Main: { !null; }")
             .assertError(NULL_LITERAL, SUBTYPEEXPR, "null", "boolean")
     }
     
     @Test
     def testTMemberAccessErrorInTarget() {
-        parse("task Main: void { (!5).a; }")
+        parse("task Main: { (!5).a; }")
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
-        parse("task Main: void { (!5).foo(); }")
+        parse("task Main: { (!5).foo(); }")
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
     @Test
     def testTMemberAccessIllegalTarget() {
-        parse('''task Main: void { 5.a; }''')
+        parse('''task Main: { 5.a; }''')
             .assertError(INT_LITERAL, null, "Illegal", "target", "access")
-        parse('''task Main: void { false.foo(); }''')
+        parse('''task Main: { false.foo(); }''')
             .assertError(BOOLEAN_LITERAL, null, "Illegal", "target", "access")
     }
     
@@ -472,12 +474,12 @@ class PepplSystemTest {
         parse('''
             class Object
             class A { var x: int }
-            task Main: void { new A.x; }
+            task Main: { new A.x; }
         ''').main.lastExpr.type.assertThat(instanceOf(Int))
         parse('''
             class Object
             class A { var x: int }
-            task Main: void {
+            task Main: {
                 val a: readonly A = new A;
                 a.x;
             }
@@ -486,7 +488,7 @@ class PepplSystemTest {
         val program = parse('''
             class Object
             class A { var a: readwrite A }
-            task Main: void {
+            task Main: {
                 val a: readwrite A = new A;
                 a.a;
             }
@@ -497,7 +499,7 @@ class PepplSystemTest {
         parse('''
             class Object
             class A { var a: readwrite A }
-            task Main: void {
+            task Main: {
                 val a: readonly A = new A;
                 a.a;
             }
@@ -505,7 +507,7 @@ class PepplSystemTest {
         parse('''
             class Object
             class A { var a: readonly A }
-            task Main: void {
+            task Main: {
                 val a: readwrite A = new A;
                 a.a;
             }
@@ -513,7 +515,7 @@ class PepplSystemTest {
         parse('''
             class Object
             class A { var a: pure A }
-            task Main: void {
+            task Main: {
                 val a: readwrite A = new A;
                 a.a;
             }
@@ -521,7 +523,7 @@ class PepplSystemTest {
         parse('''
             class Object
             class A { var a: pure A }
-            task Main: void {
+            task Main: {
                 val a: readonly A = new A;
                 a.a;
             }
@@ -533,7 +535,7 @@ class PepplSystemTest {
         parse('''
             class Object
             class A { var x: int }
-            task Main: void {
+            task Main: {
                 val a: pure A = new A;
                 a.x;
             }
@@ -550,7 +552,7 @@ class PepplSystemTest {
                     class A {
                         def «expected» x: int { return 42; }
                     }
-                    task Main: void {
+                    task Main: {
                         val a: «actual» A = new A;
                         a.x();
                     }
@@ -563,7 +565,7 @@ class PepplSystemTest {
             class A {
                 def readwrite a: readonly A { return null; }
             }
-            task Main: void { new A.a(); }
+            task Main: { new A.a(); }
         ''')
         program.main.lastExpr.type
             .assertThat(isRoleType(READONLY, classRef(program.findClass("A"))))
@@ -573,10 +575,10 @@ class PepplSystemTest {
             class A
             class B {
                 def readwrite foo(val a: readonly A, val b: readwrite B,
-                        val c: readwrite C, val d: int): void {}
+                        val c: readwrite C, val d: int): {}
             }
             class C extends B
-            task Main: void { new C.foo(new A, new C, null, 5); }
+            task Main: { new C.foo(new A, new C, null, 5); }
         ''').assertNoErrors
     }
     
@@ -589,7 +591,7 @@ class PepplSystemTest {
                     class A {
                         def «expected» x: int { return 42; }
                     }
-                    task Main: void {
+                    task Main: {
                         val a: «actual» A = new A;
                         a.x();
                     }
@@ -603,39 +605,39 @@ class PepplSystemTest {
     def testTMemberAccessMethodTypeMismatch() {
         parse('''
             class Object
-            class A { def readwrite foo: void {} }
-            task Main: void { new A.foo(5); }
+            class A { def readwrite foo: {} }
+            task Main: { new A.foo(5); }
         ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "foo")
         parse('''
             class Object
-            class A { def readwrite foo(val c: char): void {} }
-            task Main: void { new A.foo(5, false); }
+            class A { def readwrite foo(val c: char): {} }
+            task Main: { new A.foo(5, false); }
         ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "foo")
         parse('''
             class Object
-            class A { def readwrite foo(val i: int): void {} }
-            task Main: void { new A.foo(); }
+            class A { def readwrite foo(val i: int): {} }
+            task Main: { new A.foo(); }
         ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "foo")
         parse('''
             class Object
-            class A { def readwrite foo(val i: int, val a: readwrite A): void {} }
-            task Main: void { new A.foo(false); }
+            class A { def readwrite foo(val i: int, val a: readwrite A): {} }
+            task Main: { new A.foo(false); }
         ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "foo")
         
         parse('''
             class Object
-            class A { def readwrite foo(val i: int): void {} }
-            task Main: void { new A.foo(false); }
+            class A { def readwrite foo(val i: int): {} }
+            task Main: { new A.foo(false); }
         ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "foo")
         parse('''
             class Object
-            class A { def readwrite foo(val a: readwrite A): void {} }
-            task Main: void { new A.foo(new Object); }
+            class A { def readwrite foo(val a: readwrite A): {} }
+            task Main: { new A.foo(new Object); }
         ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "foo")
         parse('''
             class Object
-            class A { def readwrite foo(val a: readwrite A): void {} }
-            task Main: void { new A.foo((readonly A) new A); }
+            class A { def readwrite foo(val a: readwrite A): {} }
+            task Main: { new A.foo(new A as readonly A); }
         ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "foo")
     }
     
@@ -647,7 +649,7 @@ class PepplSystemTest {
                 def readwrite foo(val a: int): int { return 0; }
                 def readwrite foo(val a: boolean): boolean { return false; }
             }
-            task Main: void {
+            task Main: {
                 new A.foo(4);
                 new A.foo(true);
             }
@@ -661,9 +663,9 @@ class PepplSystemTest {
                 def readwrite foo(val a: readwrite A): int { return 0; }
                 def readwrite foo(val a: readonly  A): boolean { return false; }
             }
-            task Main: void {
+            task Main: {
                 new A.foo(new A);
-                new A.foo((readonly A) new A);
+                new A.foo(new A as readonly A);
             }
         ''')
         program.main.expr(0).type.assertThat(instanceOf(Int))
@@ -676,9 +678,9 @@ class PepplSystemTest {
                 def readwrite foo(val a: readonly  A): boolean { return false; }
                 def readwrite foo(val a: readwrite A): int { return 0; }
             }
-            task Main: void {
+            task Main: {
                 new A.foo(new A);
-                new A.foo((readonly A) new A);
+                new A.foo(new A as readonly A);
             }
         ''')
         program.main.expr(0).type.assertThat(instanceOf(Int))
@@ -690,11 +692,11 @@ class PepplSystemTest {
                 def readwrite foo(val a: readonly  A, val b: readonly  A): boolean { return false; }
                 def readwrite foo(val a: readwrite A, val b: readwrite A): int { return 0; }
             }
-            task Main: void {
+            task Main: {
                 new A.foo(new A, new A);
-                new A.foo((readonly A) new A, new A);
-                new A.foo(new A, (readonly A) new A);
-                new A.foo((readonly A) new A, (readonly A) new A);
+                new A.foo(new A, new A as readonly A);
+                new A.foo(new A, new A as readonly A);
+                new A.foo(new A as readonly A, new A as readonly A);
             }
         ''')
         program.main.expr(0).type.assertThat(instanceOf(Int))
@@ -708,11 +710,11 @@ class PepplSystemTest {
                 def readwrite foo(val a: readwrite A, val b: readwrite A): int { return 0; }
                 def readwrite foo(val a: readonly  A, val b: readonly  A): boolean { return false; }
             }
-            task Main: void {
+            task Main: {
                 new A.foo(new A, new A);
-                new A.foo((readonly A) new A, new A);
-                new A.foo(new A, (readonly A) new A);
-                new A.foo((readonly A) new A, (readonly A) new A);
+                new A.foo(new A as readonly A, new A);
+                new A.foo(new A, new A as readonly A);
+                new A.foo(new A as readonly A, new A as readonly A);
             }
         ''')
         program.main.expr(0).type.assertThat(instanceOf(Int))
@@ -726,10 +728,10 @@ class PepplSystemTest {
         parse('''
             class Object
             class A {
-                def readwrite foo(val a: readonly  A, val b: readwrite A): void {}
-                def readwrite foo(val a: readwrite A, val b: readonly  A): void {}
+                def readwrite foo(val a: readonly  A, val b: readwrite A): {}
+                def readwrite foo(val a: readwrite A, val b: readonly  A): {}
             }
-            task Main: void {
+            task Main: {
                 new A.foo(new A, new A);
             }
         ''').assertError(METHOD_SELECTOR, AMBIGUOUS_CALL)
@@ -737,10 +739,10 @@ class PepplSystemTest {
         parse('''
             class Object
             class A {
-                def readwrite foo(val a: readwrite Object, val b: readwrite A): void {}
-                def readwrite foo(val a: readwrite A, val b: readwrite Object): void {}
+                def readwrite foo(val a: readwrite Object, val b: readwrite A): {}
+                def readwrite foo(val a: readwrite A, val b: readwrite Object): {}
             }
-            task Main: void {
+            task Main: {
                 new A.foo(new A, new A);
             }
         ''').assertError(METHOD_SELECTOR, AMBIGUOUS_CALL)
@@ -752,7 +754,7 @@ class PepplSystemTest {
             val program = parse('''
                 class Object
                 class A {
-                    def «expected» foo: void { this; }
+                    def «expected» foo: { this; }
                 }
             ''')
             program.findClass("A").findMethod("foo").lastExpr.type
@@ -763,7 +765,7 @@ class PepplSystemTest {
     @Test
     def testTThisTask() {
         parse('''
-            task Main: void {
+            task Main: {
                 this;
             }
         ''').assertError(THIS, TTHIS)
@@ -772,7 +774,7 @@ class PepplSystemTest {
     @Test
     def testTVarRef() {
         parse('''
-            task Main: void {
+            task Main: {
                 val i: int = 5;
                 i;
             }
@@ -780,17 +782,17 @@ class PepplSystemTest {
         parse('''
             class Object
             class A {
-                def pure foo(val i: int): void {
+                def pure foo(val i: int): {
                     i;
                 }
             }
-            task Main: void {}
+            task Main: {}
         ''').findClass("A").methods.head.lastExpr.type.assertThat(instanceOf(Int))
         
         var program = parse('''
             class Object
             class A
-            task Main: void {
+            task Main: {
                 val a: readonly A = new A;
                 a;
             }
@@ -799,13 +801,13 @@ class PepplSystemTest {
             .assertThat(isRoleType(READONLY, classRef(program.findClass("A"))))
         
         parse('''
-            task Main: void {
+            task Main: {
                 i;
                 val i: int = 0;
             }
         ''').assertError(VAR_REF, LINKING_DIAGNOSTIC, "var", "i")
         parse('''
-            task Main: void {
+            task Main: {
                 {
                     val i: int = 0;
                 }
@@ -819,7 +821,7 @@ class PepplSystemTest {
         var program = parse('''
             class Object
             class A
-            task Main: void { new A; }
+            task Main: { new A; }
         ''')
         program.main.lastExpr.type
             .assertThat(isRoleType(READWRITE, classRef(program.findClass("A"))))
@@ -827,7 +829,7 @@ class PepplSystemTest {
         program = parse('''
             class Object
             class Array
-            task Main: void { new Array[int]; }
+            task Main: { new Array[int]; }
         ''')
         program.main.lastExpr.type
             .assertThat(isRoleType(READWRITE, classRef(program.findClass("Array"), intType)))
@@ -836,7 +838,7 @@ class PepplSystemTest {
             class Object
             class A
             class Array
-            task Main: void { new Array[readonly A]; }
+            task Main: { new Array[readonly A]; }
         ''')
         program.main.lastExpr.type
             .assertThat(isRoleType(READWRITE, classRef(program.findClass("Array"),
@@ -846,7 +848,7 @@ class PepplSystemTest {
             class Object
             class A
             class Array
-            task Main: void { new Array[pure Array[readwrite A]]; }
+            task Main: { new Array[pure Array[readwrite A]]; }
         ''')
         val array = program.findClass("Array")
         program.main.lastExpr.type
@@ -860,33 +862,33 @@ class PepplSystemTest {
         parse('''
             class Object
             class A
-            task Main: void { new A(5); }
+            task Main: { new A(5); }
         ''').assertError(NEW, null, "no suitable constructor")
         parse('''
             class Object
             class A { new {} }
-            task Main: void { new A(5); }
+            task Main: { new A(5); }
         ''').assertError(NEW, null, "no suitable constructor")
         parse('''
             class Object
             class A { new(val c: char) {} }
-            task Main: void { new A(5, false); }
+            task Main: { new A(5, false); }
         ''').assertError(NEW, null, "no suitable constructor")
         parse('''
             class Object
             class A { new(val i: int) {} }
-            task Main: void { new A; }
+            task Main: { new A; }
         ''').assertError(NEW, null, "no suitable constructor")
         
         parse('''
             class Object
             class A { new(val i: int) {} }
-            task Main: void { new A(false); }
+            task Main: { new A(false); }
         ''').assertError(NEW, null, "no suitable constructor")
         parse('''
             class Object
             class A { new(val a: readwrite A) {} }
-            task Main: void { new A(new Object); }
+            task Main: { new A(new Object); }
         ''').assertError(NEW, null, "no suitable constructor")
     }
     
@@ -898,7 +900,7 @@ class PepplSystemTest {
                 new(val a: int) {}
                 new(val a: boolean) {}
             }
-            task Main: void {
+            task Main: {
                 new A(4);
                 new A(true);
             }
@@ -913,9 +915,9 @@ class PepplSystemTest {
                 new(val a: readwrite A) {}
                 new(val a: readonly  A) {}
             }
-            task Main: void {
+            task Main: {
                 new B(new A);
-                new B((readonly A) new A);
+                new B(new A as readonly A);
             }
         ''').assertNoErrors
         
@@ -927,9 +929,9 @@ class PepplSystemTest {
                 new(val a: readonly  A) {}
                 new(val a: readwrite A) {}
             }
-            task Main: void {
+            task Main: {
                 new B(new A);
-                new B((readonly A) new A);
+                new B(new A as readonly A);
             }
         ''').assertNoErrors
     }
@@ -943,7 +945,7 @@ class PepplSystemTest {
                 new(val a: readonly  A, val b: readwrite A) {}
                 new(val a: readwrite A, val b: readonly  A) {}
             }
-            task Main: void {
+            task Main: {
                 new B(new A, new A);
             }
         ''').assertError(NEW, null, "constructor", "ambiguous")
@@ -955,7 +957,7 @@ class PepplSystemTest {
                 new(val a: readwrite Object, val b: readwrite A) {}
                 new(val a: readwrite A, val b: readwrite Object) {}
             }
-            task Main: void {
+            task Main: {
                 new B(new A, new A);
             }
         ''').assertError(NEW, null, "constructor", "ambiguous")
@@ -967,7 +969,7 @@ class PepplSystemTest {
             class Object
             class Task
             task T: int {}
-            task Main: void { start T; }
+            task Main: { start T; }
         ''')
         program.main.lastExpr.type
             .assertThat(isRoleType(PURE, classRef(program.findClass("Task"), intType)))
@@ -975,18 +977,18 @@ class PepplSystemTest {
         program = parse('''
             class Object
             class Task
-            task T: void {}
-            task Main: void { start T; }
+            task T: {}
+            task Main: { start T; }
         ''')
         program.main.lastExpr.type
-            .assertThat(isRoleType(PURE, classRef(program.findClass("Task"), voidType)))
+            .assertThat(isRoleType(PURE, classRef(program.findClass("Task"), unitType)))
         
         program = parse('''
             class Object
             class Task
             class A
             task T: readwrite A {}
-            task Main: void { start T; }
+            task Main: { start T; }
         ''')
         program.main.lastExpr.type
             .assertThat(isRoleType(PURE, classRef(program.findClass("Task"),
@@ -995,18 +997,18 @@ class PepplSystemTest {
         parse('''
             class Object
             class Task
-            task T(val i: int): void {}
-            task Main: void { start T(5); }
+            task T(val i: int): {}
+            task Main: { start T(5); }
         ''').assertNoErrors
         parse('''
             class Object
             class Task
             class A
-            task T(val a: pure A): void {}
-            task Main: void {
+            task T(val a: pure A): {}
+            task Main: {
                 start T(new A);
-                start T((readonly A) new A);
-                start T((pure A) new A);
+                start T(new A as readonly A);
+                start T(new A as pure A);
                 start T(null);
             }
         ''').assertNoErrors
@@ -1014,8 +1016,8 @@ class PepplSystemTest {
             class Object
             class Task
             class A
-            task T(val i: int, val c: char, val a: readwrite A): void {}
-            task Main: void {
+            task T(val i: int, val c: char, val a: readwrite A): {}
+            task Main: {
                 start T(0, 'c', new A);
             }
         ''').assertNoErrors
@@ -1025,8 +1027,8 @@ class PepplSystemTest {
     def testTStartTaskClassNotDefined() {
         parse('''
             class Object
-            task T: void {}
-            task Main: void { start T; }
+            task T: {}
+            task Main: { start T; }
         ''').assertError(START, TSTART, "task class", "not defined")
     }
     
@@ -1035,8 +1037,8 @@ class PepplSystemTest {
         parse('''
             class Object
             class Task
-            task T(val i: int): void {}
-            task Main: void { start T(!5); }
+            task T(val i: int): {}
+            task Main: { start T(!5); }
         ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
@@ -1046,20 +1048,20 @@ class PepplSystemTest {
             class Object
             class Task
             task T: int {}
-            task Main: void { start T(5); }
+            task Main: { start T(5); }
         ''').assertError(START, null, "too many arguments")
         parse('''
             class Object
             class Task
             task T(val i: int): int {}
-            task Main: void { start T; }
+            task Main: { start T; }
         ''').assertError(START, null, "too few arguments")
         
         parse('''
             class Object
             class Task
             task T(val i: int): int {}
-            task Main: void { start T(true); }
+            task Main: { start T(true); }
         ''').assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "boolean", "int")
     }
     
@@ -1068,11 +1070,11 @@ class PepplSystemTest {
         val program = parse('''
             class Object
             class A
-            task Main: void {
+            task Main: {
                 (5);
                 ('c');
                 (new A);
-                ((pure A) new A);
+                (new A as pure A);
             }
         ''')
         program.main.expr(0).type.assertThat(instanceOf(Int))
@@ -1086,7 +1088,7 @@ class PepplSystemTest {
     @Test
     def testTStartErrorInExpr() {
         parse('''
-            task Main: void { (!5); }
+            task Main: { (!5); }
         ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
@@ -1095,7 +1097,7 @@ class PepplSystemTest {
         val program = parse('''
             class Object
             class String
-            task Main: void { "Hi"; }
+            task Main: { "Hi"; }
         ''')
         program.main.lastExpr.type.assertThat(
             isRoleType(READWRITE, classRef(program.findClass("String"))))
@@ -1105,35 +1107,35 @@ class PepplSystemTest {
     def testTStringLiteralStringClassNotDefined() {
         parse('''
             class Object
-            task Main: void { "Hi"; }
+            task Main: { "Hi"; }
         ''').assertError(STRING_LITERAL, TSTRINGLITERAL, "String class", "not defined")
     }
     
     @Test
     def testTNullLiteral() {
         parse('''
-            task Main: void { null; }
+            task Main: { null; }
         ''').main.lastExpr.type.assertThat(instanceOf(Null))
     }
     
     @Test
     def testTIntLiteral() {
         parse('''
-            task Main: void { 5; }
+            task Main: { 5; }
         ''').main.lastExpr.type.assertThat(instanceOf(Int))
     }
     
     @Test
     def testTBooleanLiteral() {
         parse('''
-            task Main: void { true; }
+            task Main: { true; }
         ''').main.lastExpr.type.assertThat(instanceOf(Boolean))
     }
     
     @Test
     def testTCharLiteral() {
         parse('''
-            task Main: void { 'c'; }
+            task Main: { 'c'; }
         ''').main.lastExpr.type.assertThat(instanceOf(Char))
     }
     
@@ -1141,7 +1143,7 @@ class PepplSystemTest {
     def testWBlock() {
         parse('''
             class Object
-            task Main: void {
+            task Main: {
                 new Object;
                 {
                     {
@@ -1160,17 +1162,17 @@ class PepplSystemTest {
         ''').assertNoErrors
         
         parse('''
-            task Main: void {
-                (int) false;
+            task Main: {
+                false as int;
             }
         ''').assertError(CAST, null, "cannot cast", "boolean", "int")
         parse('''
-            task Main: void {
+            task Main: {
                 {
                     new Object;
                     {
                         new Object;
-                        (int) false;
+                        false as int;
                         new Object;
                         {}
                     }
@@ -1184,7 +1186,7 @@ class PepplSystemTest {
         parse('''
             class Object
             class A
-            task Main: void {
+            task Main: {
                 val i: int = 1;
                 val a: readwrite A = new A;
                 val b: pure Object = new A;
@@ -1193,21 +1195,21 @@ class PepplSystemTest {
         ''').assertNoErrors
         
         parse('''
-            task Main: void {
+            task Main: {
                 val i: int = false;
             }
         ''').assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "boolean", "int")
         parse('''
             class Object
-            task Main: void {
-                val o: readwrite Object = (pure Object) new Object;
+            task Main: {
+                val o: readwrite Object = new Object as pure Object;
             }
         ''').assertError(CAST, SUBTYPEEXPR, "pure Object", "readwrite Object")
         parse('''
             class Object
             class A
-            task Main: void {
-                val o: pure A = (pure Object) new A;
+            task Main: {
+                val o: pure A = new A as pure Object;
             }
         ''').assertError(CAST, SUBTYPEEXPR, "pure Object", "pure A")
     }
@@ -1216,7 +1218,7 @@ class PepplSystemTest {
     def testWIfStmt() {
         parse('''
             class Object
-            task Main: void {
+            task Main: {
                 if(true)
                     new Object;
                 else
@@ -1236,22 +1238,22 @@ class PepplSystemTest {
         
         parse('''
             class Object
-            task Main: void {
+            task Main: {
                 if(5)
                     new Object;
             }
         ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
         parse('''
-            task Main: void {
+            task Main: {
                 if(true)
-                    (int) false;
+                    false as int;
             }
         ''').assertError(CAST, null, "cannot cast", "boolean", "int")
         parse('''
-            task Main: void {
+            task Main: {
                 if(true) {}
                 else
-                    (int) false;
+                    false as int;
             }
         ''').assertError(CAST, null, "cannot cast", "boolean", "int")
     }
@@ -1260,7 +1262,7 @@ class PepplSystemTest {
     def testWWhileLoop() {
         parse('''
             class Object
-            task Main: void {
+            task Main: {
                 while(true)
                     new Object;
                 
@@ -1273,15 +1275,15 @@ class PepplSystemTest {
         
         parse('''
             class Object
-            task Main: void {
+            task Main: {
                 while(5)
                     new Object;
             }
         ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
         parse('''
-            task Main: void {
+            task Main: {
                 while(true)
-                    (int) false;
+                    false as int;
             }
         ''').assertError(CAST, null, "cannot cast", "boolean", "int")
     }
@@ -1291,8 +1293,8 @@ class PepplSystemTest {
         parse('''
             class Object
             class A {
-                def pure a: void {}
-                def pure b: void {
+                def pure a: {}
+                def pure b: {
                     return;
                 }
                 def pure c: int {
@@ -1305,7 +1307,7 @@ class PepplSystemTest {
                     return new A;
                 }
                 def pure f: readonly A {
-                    return (readonly A) new A;
+                    return new A as readonly A;
                 }
             }
         ''').assertNoErrors
@@ -1313,11 +1315,11 @@ class PepplSystemTest {
         parse('''
             class Object
             class A {
-                def pure a: void {
+                def pure a: {
                     return 1;
                 }
             }
-        ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "void")
+        ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "unit")
         parse('''
             class Object
             class A {
@@ -1330,7 +1332,7 @@ class PepplSystemTest {
             class Object
             class A {
                 def pure a: readwrite A {
-                    return (pure A) new A;
+                    return new A as pure A;
                 }
             }
         ''').assertError(CAST, SUBTYPEEXPR, "pure A", "readwrite A")
@@ -1342,7 +1344,7 @@ class PepplSystemTest {
             class Object
             class Array
             class A
-            task Main: void {
+            task Main: {
                 val i: int = 5;
                 val j: boolean = false;
                 val k: char = 'c';
@@ -1350,15 +1352,15 @@ class PepplSystemTest {
                 var a: readwrite A = new A;
                 a = null;
                 var b: readonly A = new A;
-                b = (readonly A) new A;
+                b = new A as readonly A;
                 b = null;
                 var c: pure A = new A;
-                c = (readonly A) new A;
-                c = (pure A) new A;
+                c = new A as readonly A;
+                c = new A as pure A;
                 c = null;
                 var o: pure Object = new A;
-                o = (pure A) new A;
-                o = (readwrite Object) new A;
+                o = new A as pure A;
+                o = new A as readwrite Object;
                 
                 var ia: pure Array[int] = new Array[int];
                 ia = null;
@@ -1371,22 +1373,22 @@ class PepplSystemTest {
     @Test
     def testSubtypePrimitiveMismatch() {
         parse('''
-            task Main: void {
+            task Main: {
                 val i: int = false;
             }
         ''').assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "boolean", "int")
         parse('''
-            task Main: void {
+            task Main: {
                 val i: int = 'c';
             }
         ''').assertError(CHAR_LITERAL, SUBTYPEEXPR, "char", "int")
         parse('''
-            task Main: void {
+            task Main: {
                 val b: boolean = 1;
             }
         ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
         parse('''
-            task Main: void {
+            task Main: {
                 val b: boolean = 'c';
             }
         ''').assertError(CHAR_LITERAL, SUBTYPEEXPR, "char", "boolean")
@@ -1398,7 +1400,7 @@ class PepplSystemTest {
         parse('''
             class Object
             class A
-            task Main: void {
+            task Main: {
                 val a: readwrite A = new Object;
             }
         ''').assertError(NEW, SUBTYPEEXPR, "readwrite Object", "readwrite A")
@@ -1409,21 +1411,21 @@ class PepplSystemTest {
         parse('''
             class Object
             class Array
-            task Main: void {
+            task Main: {
                 val a: pure Array[int] = new Array[boolean];
             }
         ''').assertError(NEW, SUBTYPEEXPR, "readwrite Array[boolean]", "pure Array[int]")
         parse('''
             class Object
             class Array
-            task Main: void {
+            task Main: {
                 val a: pure Array[int] = new Array[pure Object];
             }
         ''').assertError(NEW, SUBTYPEEXPR, "readwrite Array[pure Object]", "pure Array[int]")
         parse('''
             class Object
             class Array
-            task Main: void {
+            task Main: {
                 val a: pure Array[pure Object] = new Array[int];
             }
         ''').assertError(NEW, SUBTYPEEXPR, "readwrite Array[int]", "pure Array[pure Object]")
@@ -1431,7 +1433,7 @@ class PepplSystemTest {
             class Object
             class Array
             class A
-            task Main: void {
+            task Main: {
                 val a: pure Array[pure Object] = new Array[pure A];
             }
         ''').assertError(NEW, SUBTYPEEXPR, "readwrite Array[pure A]", "pure Array[pure Object]")
@@ -1439,7 +1441,7 @@ class PepplSystemTest {
             class Object
             class Array
             class A
-            task Main: void {
+            task Main: {
                 val a: pure Array[pure A] = new Array[pure Object];
             }
         ''').assertError(NEW, SUBTYPEEXPR, "readwrite Array[pure Object]", "pure Array[pure A]")
@@ -1447,7 +1449,7 @@ class PepplSystemTest {
             class Object
             class Array
             class A
-            task Main: void {
+            task Main: {
                 val a: pure Array[pure A] = new Array[readwrite A];
             }
         ''').assertError(NEW, SUBTYPEEXPR, "readwrite Array[readwrite A]", "pure Array[pure A]")
@@ -1455,7 +1457,7 @@ class PepplSystemTest {
             class Object
             class Array
             class A
-            task Main: void {
+            task Main: {
                 val a: pure Array[readwrite A] = new Array[pure A];
             }
         ''').assertError(NEW, SUBTYPEEXPR, "readwrite Array[pure A]", "pure Array[readwrite A]")
@@ -1466,22 +1468,22 @@ class PepplSystemTest {
         parse('''
             class Object
             class A
-            task Main: void {
-                val a: readwrite A = (readonly A) new A;
+            task Main: {
+                val a: readwrite A = new A as readonly A;
             }
         ''').assertError(CAST, SUBTYPEEXPR, "readonly A", "readwrite A")
         parse('''
             class Object
             class A
-            task Main: void {
-                val a: readwrite A = (pure A) new A;
+            task Main: {
+                val a: readwrite A = new A as pure A;
             }
         ''').assertError(CAST, SUBTYPEEXPR, "pure A", "readwrite A")
         parse('''
             class Object
             class A
-            task Main: void {
-                val a: readonly A = (pure A) new A;
+            task Main: {
+                val a: readonly A = new A as pure A;
             }
         ''').assertError(CAST, SUBTYPEEXPR, "pure A", "readonly A")
     }

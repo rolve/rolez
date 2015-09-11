@@ -33,13 +33,13 @@ class PepplValidatorTest {
         ''').assertError(CLASS, DUPLICATE_TOP_LEVEL_ELEMENT)
         parse('''
             class Object
-            task A: void {}
-            task A: void {}
+            task A: {}
+            task A: {}
         ''').assertError(TASK, DUPLICATE_TOP_LEVEL_ELEMENT)
         val program = parse('''
             class Object
             class A
-            task A: void {}
+            task A: {}
         ''')
         program.assertError(CLASS, DUPLICATE_TOP_LEVEL_ELEMENT)
         program.assertError(TASK, DUPLICATE_TOP_LEVEL_ELEMENT)
@@ -50,31 +50,31 @@ class PepplValidatorTest {
         parse('''
             class Object
             class A {
-                def readwrite foo: void {}
-                def readwrite foo(val i: int): void {}
-                def readwrite foo(val c: char): void {}
-                def readwrite foo(val o: readonly Object): void {}
-                def readwrite foo(val o: readwrite Object): void {}
-                def readwrite foo(val a: readonly A): void {}
-                def readwrite foo(val a: readwrite A): void {}
-                def readwrite foo(val a: readwrite A, val b: readwrite A): void {}
+                def readwrite foo: {}
+                def readwrite foo(val i: int): {}
+                def readwrite foo(val c: char): {}
+                def readwrite foo(val o: readonly Object): {}
+                def readwrite foo(val o: readwrite Object): {}
+                def readwrite foo(val a: readonly A): {}
+                def readwrite foo(val a: readwrite A): {}
+                def readwrite foo(val a: readwrite A, val b: readwrite A): {}
             }
         ''').assertNoErrors
         
         parse('''
             class Object
             class A {
-                def readwrite foo(val a: readwrite A): void {}
-                def readwrite bar(val a: readonly  A): void {}
+                def readwrite foo(val a: readwrite A): {}
+                def readwrite bar(val a: readonly  A): {}
             }
             class B extends A {
-                def readwrite foo(val a: readonly  A): void {}
-                def readwrite foo(val a: readwrite B): void {}
-                def readwrite foo(val a: readwrite Object): void {}
-                def readwrite bar(val a: readwrite A): void {}
+                def readwrite foo(val a: readonly  A): {}
+                def readwrite foo(val a: readwrite B): {}
+                def readwrite foo(val a: readwrite Object): {}
+                def readwrite bar(val a: readwrite A): {}
             }
             class C extends B {
-                def readwrite foo(val i: int): void {}
+                def readwrite foo(val i: int): {}
             }
             class D extends C {
                 def readwrite foo(val i: char): int { return 0; }
@@ -92,50 +92,50 @@ class PepplValidatorTest {
         parse('''
             class Object
             class A {
-                def readwrite foo: void {}
-                def readwrite foo: void {}
+                def readwrite foo: {}
+                def readwrite foo: {}
             }
         ''').assertError(METHOD, DUPLICATE_METHOD)
         parse('''
             class Object
             class A {
                 def readwrite foo: int {}
-                def readwrite foo: void {}
+                def readwrite foo: {}
             }
         ''').assertError(METHOD, DUPLICATE_METHOD)
         parse('''
             class Object
             class A {
                 def readonly  foo: int {}
-                def readwrite foo: void {}
+                def readwrite foo: {}
             }
         ''').assertError(METHOD, DUPLICATE_METHOD)
         parse('''
             class Object
             class A {
-                def readwrite foo(val i: int): void {}
-                def readwrite foo(val i: int): void {}
+                def readwrite foo(val i: int): {}
+                def readwrite foo(val i: int): {}
             }
         ''').assertError(METHOD, DUPLICATE_METHOD)
         parse('''
             class Object
             class A {
-                def readwrite foo(val i: int): void {}
-                def readwrite foo(val j: int): void {}
+                def readwrite foo(val i: int): {}
+                def readwrite foo(val j: int): {}
             }
         ''').assertError(METHOD, DUPLICATE_METHOD)
         parse('''
             class Object
             class A {
-                def readwrite foo(val a: readwrite A): void {}
-                def readwrite foo(val a: readwrite A): void {}
+                def readwrite foo(val a: readwrite A): {}
+                def readwrite foo(val a: readwrite A): {}
             }
         ''').assertError(METHOD, DUPLICATE_METHOD)
         parse('''
             class Object
             class A {
-                def readwrite foo(val a: readwrite A): void {}
-                def readwrite foo(val b: readwrite A): void {}
+                def readwrite foo(val a: readwrite A): {}
+                def readwrite foo(val b: readwrite A): {}
             }
         ''').assertError(METHOD, DUPLICATE_METHOD)
     }
@@ -144,13 +144,13 @@ class PepplValidatorTest {
     def testOverride() {
         parse('''
             class Object
-            class A {                def readwrite foo: void {} }
-            class B extends A { override readwrite foo: void {} }
+            class A {                def readwrite foo: {} }
+            class B extends A { override readwrite foo: {} }
         ''').assertNoErrors
         parse('''
             class Object
-            class A {                def readwrite foo(val i: int): void {} }
-            class B extends A { override readwrite foo(val i: int): void {} }
+            class A {                def readwrite foo(val i: int): {} }
+            class B extends A { override readwrite foo(val i: int): {} }
         ''').assertNoErrors
         parse('''
             class Object
@@ -170,8 +170,8 @@ class PepplValidatorTest {
         
         parse('''
             class Object
-            class A {                def readwrite foo: void {} }
-            class B extends A { override readonly  foo: void {} }
+            class A {                def readwrite foo: {} }
+            class B extends A { override readonly  foo: {} }
         ''').assertNoErrors
     }
     
@@ -179,33 +179,33 @@ class PepplValidatorTest {
     def testMissingOverride() {
         parse('''
             class Object
-            class A {           def readwrite foo: void {} }
-            class B extends A { def readwrite foo: void {} }
+            class A {           def readwrite foo: {} }
+            class B extends A { def readwrite foo: {} }
         ''').assertError(METHOD, MISSING_OVERRIDE)
         parse('''
             class Object
             class A {           def readwrite foo: int  {} }
-            class B extends A { def readwrite foo: void {} }
+            class B extends A { def readwrite foo: {} }
         ''').assertError(METHOD, MISSING_OVERRIDE)
         parse('''
             class Object
-            class A {           def readwrite foo(val i: int): void {} }
-            class B extends A { def readwrite foo(val i: int): void {} }
+            class A {           def readwrite foo(val i: int): {} }
+            class B extends A { def readwrite foo(val i: int): {} }
         ''').assertError(METHOD, MISSING_OVERRIDE)
         parse('''
             class Object
-            class A {           def readwrite foo(val i: int): void {} }
-            class B extends A { def readwrite foo(val j: int): void {} }
+            class A {           def readwrite foo(val i: int): {} }
+            class B extends A { def readwrite foo(val j: int): {} }
         ''').assertError(METHOD, MISSING_OVERRIDE)
         parse('''
             class Object
-            class A {           def readwrite foo(val a: readwrite A): void {} }
-            class B extends A { def readwrite foo(val a: readwrite A): void {} }
+            class A {           def readwrite foo(val a: readwrite A): {} }
+            class B extends A { def readwrite foo(val a: readwrite A): {} }
         ''').assertError(METHOD, MISSING_OVERRIDE)
         parse('''
             class Object
-            class A {           def readwrite foo(val a: readwrite A): void {} }
-            class B extends A { def readwrite foo(val b: readwrite A): void {} }
+            class A {           def readwrite foo(val a: readwrite A): {} }
+            class B extends A { def readwrite foo(val b: readwrite A): {} }
         ''').assertError(METHOD, MISSING_OVERRIDE)
     }
     
@@ -213,62 +213,62 @@ class PepplValidatorTest {
     def testIncorrectOverride() {
         parse('''
             class Object
-            class A {                def readonly  foo: void {} }
-            class B extends A { override readwrite foo: void {} }
+            class A {                def readonly  foo: {} }
+            class B extends A { override readwrite foo: {} }
         ''').assertError(METHOD, INCOMPATIBLE_THIS_ROLE)
         parse('''
             class Object
-            class A {                def readwrite foo: void {} }
-            class B extends A { override readwrite foo(val i: int): void {} }
+            class A {                def readwrite foo: {} }
+            class B extends A { override readwrite foo(val i: int): {} }
         ''').assertError(METHOD, INCORRECT_OVERRIDE)
         parse('''
             class Object
-            class A {                def readwrite foo(val i: int): void {} }
-            class B extends A { override readwrite foo(val c: char): void {} }
+            class A {                def readwrite foo(val i: int): {} }
+            class B extends A { override readwrite foo(val c: char): {} }
         ''').assertError(METHOD, INCORRECT_OVERRIDE)
         parse('''
             class Object
-            class A {                def readwrite foo(val a: readonly  A): void {} }
-            class B extends A { override readwrite foo(val a: readwrite A): void {} }
+            class A {                def readwrite foo(val a: readonly  A): {} }
+            class B extends A { override readwrite foo(val a: readwrite A): {} }
         ''').assertError(METHOD, INCORRECT_OVERRIDE)
         parse('''
             class Object
-            class A {                def readwrite foo(val a: readwrite A): void {} }
-            class B extends A { override readwrite foo(val a: readonly  A): void {} }
+            class A {                def readwrite foo(val a: readwrite A): {} }
+            class B extends A { override readwrite foo(val a: readonly  A): {} }
         ''').assertError(METHOD, INCORRECT_OVERRIDE)
         parse('''
             class Object
-            class A {                def readwrite foo(val a: readwrite A): void {} }
-            class B extends A { override readwrite foo(val a: readwrite B): void {} }
+            class A {                def readwrite foo(val a: readwrite A): {} }
+            class B extends A { override readwrite foo(val a: readwrite B): {} }
         ''').assertError(METHOD, INCORRECT_OVERRIDE)
         parse('''
             class Object
-            class A {                def readwrite foo(val a: readwrite B): void {} }
-            class B extends A { override readwrite foo(val a: readwrite A): void {} }
+            class A {                def readwrite foo(val a: readwrite B): {} }
+            class B extends A { override readwrite foo(val a: readwrite A): {} }
         ''').assertError(METHOD, INCORRECT_OVERRIDE)
     }
     
     @Test
-    def void testReturn() {
+    def testReturn() {
         parse('''
             class Object
             class A {
-                def pure a: void {}
-                def pure b: void {
+                def pure a: {}
+                def pure b: {
                     return;
                 }
-                def pure c(val i: int): void {
+                def pure c(val i: int): {
                     if(i == 0)
                         return;
                     else
                         return;
                 }
-                def pure d(val i: int): void {
+                def pure d(val i: int): {
                     if(i == 0)
                         return;
                     return;
                 }
-                def pure e(val i: int): void {
+                def pure e(val i: int): {
                     if(i == 0) {}
                     else
                         return;
@@ -344,7 +344,7 @@ class PepplValidatorTest {
         parse('''
             class Object
             class A {
-                def readwrite foo(val a: int, val a: boolean): void {}
+                def readwrite foo(val a: int, val a: boolean): {}
             }
         ''').assertError(PARAM, DUPLICATE_VARIABLE)
         parse('''
@@ -357,7 +357,7 @@ class PepplValidatorTest {
         parse('''
             class Object
             class A {
-                def readwrite foo: void {
+                def readwrite foo: {
                     var a: int;
                     val a: boolean;
                 }
@@ -373,7 +373,7 @@ class PepplValidatorTest {
             }
         ''').assertError(LOCAL_VAR, DUPLICATE_VARIABLE)
         parse('''
-            task Main: void {
+            task Main: {
                 val i: int = 5;
                 {
                     val i: boolean = true;
@@ -386,7 +386,7 @@ class PepplValidatorTest {
         parse('''
             class Object
             class A {
-                def readwrite foo(val a: int): void {
+                def readwrite foo(val a: int): {
                     var a: boolean;
                 }
             }
@@ -407,7 +407,7 @@ class PepplValidatorTest {
             class Object
             class Array
             class A
-            task Main: void {
+            task Main: {
                 val a: pure Array[int] = new Array[int];
                 var b: readonly Array[readwrite Array[pure A]];
                 val c: readwrite A;
@@ -417,28 +417,28 @@ class PepplValidatorTest {
         parse('''
             class Object
             class Array
-            task Main: void {
+            task Main: {
                 val a: pure Array;
             }
         ''').assertError(SIMPLE_CLASS_REF, MISSING_TYPE_ARGS, "class Array")
         parse('''
             class Object
             class A
-            task Main: void {
+            task Main: {
                 val a: pure A[int];
             }
         ''').assertError(GENERIC_CLASS_REF, INCORRECT_TYPE_ARGS, "class A")
         parse('''
             class Object
             class A
-            task Main: void {
+            task Main: {
                 val a: pure A = new A[int];
             }
         ''').assertError(GENERIC_CLASS_REF, INCORRECT_TYPE_ARGS, "class A")
         parse('''
             class Object
             class A
-            task Main: void {
+            task Main: {
                 val a: pure A[readwrite A];
             }
         ''').assertError(GENERIC_CLASS_REF, INCORRECT_TYPE_ARGS, "class A")

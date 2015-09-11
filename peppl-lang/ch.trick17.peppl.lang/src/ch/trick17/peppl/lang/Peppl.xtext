@@ -111,7 +111,7 @@ MultiplicativeExpr returns Expr:
 enum OpMultiplicative returns OpArithmetic: TIMES='*' | DIVIDED_BY='/' | MODULO='%';
 
 Cast returns Expr:
-    UnaryMinus | {Cast} '(' type=Type ')' expr=Cast;
+    UnaryMinus ({Cast.expr=current} 'as' type=Type)*;
 
 UnaryMinus returns Expr:
     UnaryNot | {UnaryMinus} '-' expr=UnaryNot;
@@ -120,10 +120,7 @@ UnaryNot returns Expr:
     MemberAccess | {UnaryNot} '!' expr=MemberAccess;
 
 MemberAccess returns Expr:
-    SimpleExpr
-    (
-        '.' {MemberAccess.target=current} selector=Selector
-    )*;
+    SimpleExpr ({MemberAccess.target=current} '.' selector=Selector)*;
 
 Selector: FieldSelector | MethodSelector;
 
@@ -148,7 +145,7 @@ Start:
 Parenthesized: '(' expr=Expr ')';
 
 Literal:
-    StringLiteral | {NullLiteral} 'null' | IntLiteral | BooleanLiteral | CharLiteral;
+    StringLiteral | {NullLiteral} 'null' | IntLiteral | BooleanLiteral | CharLiteral | UnitLiteral;
 
 StringLiteral: value=STRING;
 
@@ -159,6 +156,8 @@ IntLiteral: value=INT;
 BooleanLiteral: value=Bool;
 
 CharLiteral: value=CHAR;
+
+UnitLiteral: {UnitLiteral} 'unit';
 
 terminal CHAR returns EChar: "'" ( '\\' . /* 'b'|'t'|'n'|'f'|'r'|'u'|'"'|"'"|'\\' */ | !('\\'|"'") ) "'";
 
@@ -172,7 +171,7 @@ ReferenceType:
     RoleType | {Null} NULL_TYPE;
 
 PrimitiveType:
-    {Int} 'int' | {Boolean} 'boolean' | {Char} 'char' | {Void} 'void';
+    {Int} 'int' | {Boolean} 'boolean' | {Char} 'char' | {Unit} 'unit'?;
 
 RoleType:
     role=Role base=ClassRef;

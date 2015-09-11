@@ -15,7 +15,7 @@ import ch.trick17.peppl.lang.peppl.SimpleClassRef
 import ch.trick17.peppl.lang.peppl.Stmt
 import ch.trick17.peppl.lang.peppl.TopLevelElem
 import ch.trick17.peppl.lang.peppl.Var
-import ch.trick17.peppl.lang.peppl.Void
+import ch.trick17.peppl.lang.peppl.Unit
 import ch.trick17.peppl.lang.typesystem.PepplSystem
 import ch.trick17.peppl.lang.typesystem.PepplUtils
 import ch.trick17.peppl.lang.typesystem.validation.PepplSystemValidator
@@ -201,7 +201,7 @@ class PepplValidator extends PepplSystemValidator {
 	
 	@Check
 	def checkReturn(Method m) {
-	    if(!(m.type instanceof Void)) {
+	    if(!(m.type instanceof Unit)) {
 	        checkReturnExpr(m.body)
 	    }
 	}

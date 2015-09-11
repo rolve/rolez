@@ -1,3 +1,4 @@
+import ch.trick17.peppl.lang.peppl.Argumented
 import ch.trick17.peppl.lang.peppl.ArithmeticExpr
 import ch.trick17.peppl.lang.peppl.Assignment
 import ch.trick17.peppl.lang.peppl.Block
@@ -7,7 +8,6 @@ import ch.trick17.peppl.lang.peppl.Cast
 import ch.trick17.peppl.lang.peppl.CharLiteral
 import ch.trick17.peppl.lang.peppl.Class
 import ch.trick17.peppl.lang.peppl.ClassRef
-import ch.trick17.peppl.lang.peppl.Argumented
 import ch.trick17.peppl.lang.peppl.EqualityExpr
 import ch.trick17.peppl.lang.peppl.Expr
 import ch.trick17.peppl.lang.peppl.ExprStmt
@@ -32,6 +32,7 @@ import ch.trick17.peppl.lang.peppl.ReturnNothing
 import ch.trick17.peppl.lang.peppl.Role
 import ch.trick17.peppl.lang.peppl.RoleType
 import ch.trick17.peppl.lang.peppl.SimpleClassRef
+import ch.trick17.peppl.lang.peppl.Start
 import ch.trick17.peppl.lang.peppl.Stmt
 import ch.trick17.peppl.lang.peppl.StringLiteral
 import ch.trick17.peppl.lang.peppl.This
@@ -46,7 +47,6 @@ import java.util.Set
 
 import static ch.trick17.peppl.lang.peppl.PepplPackage.Literals.*
 import static ch.trick17.peppl.lang.peppl.Role.*
-import ch.trick17.peppl.lang.peppl.Start
 
 system ch.trick17.peppl.lang.typesystem.PepplSystem
 

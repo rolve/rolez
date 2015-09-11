@@ -6,7 +6,6 @@ import javax.inject.Inject
 import org.eclipse.xtext.junit4.InjectWith
 import org.eclipse.xtext.junit4.XtextRunner
 import org.eclipse.xtext.junit4.util.ParseHelper
-import org.eclipse.xtext.junit4.validation.ValidationTestHelper
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -20,7 +19,6 @@ class PepplParserTest {
     
     @Inject extension ParseHelper<Program>
     @Inject extension PepplUtils
-    @Inject extension ValidationTestHelper
     
     @Test
     def testEmptyClass() {
@@ -34,18 +32,4 @@ class PepplParserTest {
         clazz.members.assertThat(empty)
         clazz.constructors.assertThat(empty) // Why can't I use is(empty) here?
     }
-    
-    @Test
-    def testCast() {
-        parse('''
-            task Main: void {
-                (int) 5;
-                (int) (int) 5;
-                ((int) 5);
-                (int) (5);
-                (int) ((int) 5);
-            }
-        ''').assertNoErrors
-    }
-    
 }
