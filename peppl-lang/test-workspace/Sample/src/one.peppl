@@ -14,18 +14,18 @@ class Person {
 		return "Hi";
 	}
 
-	def readwrite setAddress(val address: readwrite Address): void {
+	def readwrite setAddress(val address: readwrite Address): {
 		this.address = address;
 	}
 	
-	def readonly bar(val k: int): void {		
+	def readonly bar(val k: int): {		
 		var i: int = -555555555;
 		val j: pure String = "Hi";
 		
 		this.address = null;
 		new Account;
 		
-		val s: readonly String = "Hi" + -'c' + null + 5 + null + this.surname;
+		val s: readonly String = "Hi" + 'c' + null + 5 + null + this.surname;
 		
 		while(i < j.length())
 			if((false && !true) || 5 < 0 + 7)
@@ -38,7 +38,7 @@ class Person {
 class Student extends Person {
 	val university: readonly String
 	
-	def pure bla: void {
+	def pure bla: {
 		this.name;
 		this.setAddress(new Address);
 	}
@@ -55,7 +55,7 @@ class Address {
 	val city: readonly String
 	val zipCode: readonly String
 	
-	def readonly foo(val a: readonly Account, val b: readonly Account): void {
+	def readonly foo(val a: readonly Account, val b: readonly Account): {
 		this.city;
 		this.foo(a, new Account);
 		
@@ -66,7 +66,7 @@ class Address {
 	}
 }
 
-main {
+task Main: {
 	var o: pure Object = "Hello";
 	var a: readonly Address = new Address;
 	a.city;

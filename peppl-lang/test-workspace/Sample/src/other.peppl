@@ -10,7 +10,7 @@ class SomeImportantClass {
 			return null;
 	}
 	
-	def readonly bar(val a: int): void {
+	def readonly bar(val a: int): {
 		
 		this.bar();
 	}

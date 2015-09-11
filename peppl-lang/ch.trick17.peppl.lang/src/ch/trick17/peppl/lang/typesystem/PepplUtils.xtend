@@ -37,6 +37,7 @@ import org.eclipse.emf.ecore.util.EcoreUtil
 import org.eclipse.xtext.naming.QualifiedName
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils
 import org.eclipse.xtext.scoping.IGlobalScopeProvider
+import org.eclipse.xtext.scoping.IScopeProvider
 
 import static ch.trick17.peppl.lang.peppl.PepplPackage.Literals.*
 
@@ -49,7 +50,7 @@ import static extension org.eclipse.emf.ecore.util.EcoreUtil.copy
 class PepplUtils {
     
     @Inject private PepplSystem system
-    @Inject private IGlobalScopeProvider globalScopeProv
+    @Inject private IScopeProvider scopeProv
     private val factory = PepplFactory.eINSTANCE
     
     def RoleType roleType(Role r, ClassRef base) {
@@ -153,11 +154,10 @@ class PepplUtils {
         else
             c.superclass
     }
-
+    
     def findClass(QualifiedName name, EObject context) {
-        globalScopeProv.getScope(context.eResource, CLASS__SUPERCLASS, [true])
+        scopeProv.getScope(context, CLASS__SUPERCLASS)
             .getSingleElement(name)?.EObjectOrProxy as Class
-        // FIXME: This still doesn't seem to work right! Reproduce in a test and fix!
     }
     
     def Iterable<Var> variables(ParameterizedBody b) {
