@@ -759,7 +759,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def testTThisMain() {
+    def testTThisTask() {
         parse('''
             task Main: void {
                 this;
@@ -768,7 +768,7 @@ class PepplSystemTest {
     }
     
     @Test
-    def testTVariableRef() {
+    def testTVarRef() {
         parse('''
             task Main: void {
                 val i: int = 5;
@@ -958,6 +958,110 @@ class PepplSystemTest {
             }
         ''').assertError(NEW, null, "constructor", "ambiguous")
     }
+    
+    @Test
+    def testTStart() {
+        var program = parse('''
+            class Object
+            class Task
+            task T: int {}
+            task Main: void { start T; }
+        ''')
+        program.main.lastExpr.type
+            .assertThat(isRoleType(PURE, classRef(program.findClass("Task"), intType)))
+        
+        program = parse('''
+            class Object
+            class Task
+            task T: void {}
+            task Main: void { start T; }
+        ''')
+        program.main.lastExpr.type
+            .assertThat(isRoleType(PURE, classRef(program.findClass("Task"), voidType)))
+        
+        program = parse('''
+            class Object
+            class Task
+            class A
+            task T: readwrite A {}
+            task Main: void { start T; }
+        ''')
+        program.main.lastExpr.type
+            .assertThat(isRoleType(PURE, classRef(program.findClass("Task"),
+                roleType(READWRITE, classRef(program.findClass("A"))))))
+        
+        parse('''
+            class Object
+            class Task
+            task T(val i: int): void {}
+            task Main: void { start T(5); }
+        ''').assertNoErrors
+        parse('''
+            class Object
+            class Task
+            class A
+            task T(val a: pure A): void {}
+            task Main: void {
+                start T(new A);
+                start T((readonly A) new A);
+                start T((pure A) new A);
+                start T(null);
+            }
+        ''').assertNoErrors
+        parse('''
+            class Object
+            class Task
+            class A
+            task T(val i: int, val c: char, val a: readwrite A): void {}
+            task Main: void {
+                start T(0, 'c', new A);
+            }
+        ''').assertNoErrors
+    }
+    
+    @Test
+    def testTStartTaskClassNotDefined() {
+        parse('''
+            class Object
+            task T: void {}
+            task Main: void { start T; }
+        ''').assertError(START, TSTART, "task class", "not defined")
+    }
+    
+    @Test
+    def testTStartErrorInArg() {
+        parse('''
+            class Object
+            class Task
+            task T(val i: int): void {}
+            task Main: void { start T(!5); }
+        ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
+    }
+    
+    @Test
+    def testTStartTypeMismatch() {
+        parse('''
+            class Object
+            class Task
+            task T: int {}
+            task Main: void { start T(5); }
+        ''').assertError(START, null, "too many arguments")
+        parse('''
+            class Object
+            class Task
+            task T(val i: int): int {}
+            task Main: void { start T; }
+        ''').assertError(START, null, "too few arguments")
+        
+        parse('''
+            class Object
+            class Task
+            task T(val i: int): int {}
+            task Main: void { start T(true); }
+        ''').assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "boolean", "int")
+    }
+    
+    // TODO: Rest of the SimpleExpr type rules!
     
     @Test
     def testWBlock() {

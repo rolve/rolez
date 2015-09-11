@@ -471,6 +471,24 @@ class PepplValidatorTest {
     }
     
     @Test
+    def testTaskClass() {
+        parse('''
+            class Object
+            class Task
+        ''').assertNoErrors
+        parse('''
+            class Object
+            class Task extends Object
+        ''').assertNoErrors
+        
+        parse('''
+            class Object
+            class A
+            class Task extends A
+        ''').assertError(CLASS, INCORRECT_TASK_SUPERCLASS)
+    }
+    
+    @Test
     def testCircularInheritance() {
         parse('''
             class A extends A

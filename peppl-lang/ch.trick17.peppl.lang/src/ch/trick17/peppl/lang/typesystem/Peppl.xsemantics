@@ -46,6 +46,7 @@ import java.util.Set
 
 import static ch.trick17.peppl.lang.peppl.PepplPackage.Literals.*
 import static ch.trick17.peppl.lang.peppl.Role.*
+import ch.trick17.peppl.lang.peppl.Start
 
 system ch.trick17.peppl.lang.typesystem.PepplSystem
 
@@ -268,6 +269,17 @@ from {
     // TODO: Can constructors somehow be linked?
 }
 
+rule TStart
+    G |- Start s : Type t
+    error "Task class is not defined"
+    source s
+from {
+    val taskClass = findClass(taskClassName, s)
+    taskClass != null
+    G |- s << s.task
+    t = roleType(PURE, classRef(taskClass, s.task.type))
+}
+
 rule TParenthesized
     G |- Parenthesized p : Type t
 from {
@@ -472,12 +484,10 @@ checkrule CheckStmt for
     Stmt s // Checked for all stmts individually, to get multiple error markers
 from {
     val class = s.enclosingClass
-    if(class == null) {
-        // Main block
+    if(class == null) { // Task
         empty |- s
     }
-    else {
-        // Method or constructor
+    else { // Method or constructor
         val thisType = roleType(READWRITE, classRef(class))
         "this" <- thisType |- s
     }

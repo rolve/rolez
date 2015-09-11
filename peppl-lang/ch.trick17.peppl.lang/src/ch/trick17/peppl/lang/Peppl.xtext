@@ -133,12 +133,16 @@ MethodSelector: method=[Method] '(' (args+=Expr (',' args+=Expr)*)? ')';
 // TODO: Allow method calls without parentheses
 
 SimpleExpr returns Expr:
-    {This} 'this' | VarRef | New | Parenthesized | Literal;
+    {This} 'this' | VarRef | New | Start | Parenthesized | Literal;
 
 VarRef: variable=[Var];
 
 New:
     'new' classRef=ClassRef
+    ('(' args+=Expr (',' args+=Expr)* ')')?;
+
+Start:
+    'start' task=[Task]
     ('(' args+=Expr (',' args+=Expr)* ')')?;
 
 Parenthesized: '(' expr=Expr ')';
@@ -200,4 +204,4 @@ ParameterizedBody:
     Constructor | Method | Task;
 
 Argumented:
-    New | MethodSelector;
+    MethodSelector | New | Start;

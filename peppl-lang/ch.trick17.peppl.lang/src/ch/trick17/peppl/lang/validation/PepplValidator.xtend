@@ -53,6 +53,7 @@ class PepplValidator extends PepplSystemValidator {
     public static val INCORRECT_TYPE_ARGS = "incorrect type arguments"
     public static val INCORRECT_OBJECT_SUPERCLASS = "incorrect object superclass"
     public static val INCORRECT_ARRAY_SUPERCLASS = "incorrect array superclass"
+    public static val INCORRECT_TASK_SUPERCLASS = "incorrect task superclass"
     public static val CIRCULAR_INHERITANCE = "circular inheritance"
 
     @Inject private extension PepplSystem
@@ -98,6 +99,17 @@ class PepplValidator extends PepplSystemValidator {
                error("The superclass of " + c.fullyQualifiedName + " must be "+ objectClassName,
                    c, CLASS__SUPERCLASS, INCORRECT_ARRAY_SUPERCLASS)
         }
+        // TODO: Check (built-in) members
+    }
+    
+    @Check
+    def checkTaskClass(Class c) {
+        if(c.fullyQualifiedName == taskClassName) {
+            if(c.actualSuperclass != findClass(objectClassName, c))
+               error("The superclass of " + c.fullyQualifiedName + " must be "+ objectClassName,
+                   c, CLASS__SUPERCLASS, INCORRECT_TASK_SUPERCLASS)
+        }
+        // TODO: Check (built-in) members
     }
     
     // TODO: Check string class
