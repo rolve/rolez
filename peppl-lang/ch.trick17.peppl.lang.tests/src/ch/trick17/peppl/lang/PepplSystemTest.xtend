@@ -2,12 +2,14 @@ package ch.trick17.peppl.lang
 
 import ch.trick17.peppl.lang.peppl.Block
 import ch.trick17.peppl.lang.peppl.Boolean
+import ch.trick17.peppl.lang.peppl.Char
 import ch.trick17.peppl.lang.peppl.Class
 import ch.trick17.peppl.lang.peppl.ClassRef
 import ch.trick17.peppl.lang.peppl.Expr
 import ch.trick17.peppl.lang.peppl.ExprStmt
 import ch.trick17.peppl.lang.peppl.GenericClassRef
 import ch.trick17.peppl.lang.peppl.Int
+import ch.trick17.peppl.lang.peppl.Null
 import ch.trick17.peppl.lang.peppl.ParameterizedBody
 import ch.trick17.peppl.lang.peppl.PrimitiveType
 import ch.trick17.peppl.lang.peppl.Program
@@ -1061,7 +1063,79 @@ class PepplSystemTest {
         ''').assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "boolean", "int")
     }
     
-    // TODO: Rest of the SimpleExpr type rules!
+    @Test
+    def testTParenthesized() {
+        val program = parse('''
+            class Object
+            class A
+            task Main: void {
+                (5);
+                ('c');
+                (new A);
+                ((pure A) new A);
+            }
+        ''')
+        program.main.expr(0).type.assertThat(instanceOf(Int))
+        program.main.expr(1).type.assertThat(instanceOf(Char))
+        program.main.expr(2).type.assertThat(
+            isRoleType(READWRITE, classRef(program.findClass("A"))))
+        program.main.expr(3).type.assertThat(
+            isRoleType(PURE, classRef(program.findClass("A"))))
+    }
+    
+    @Test
+    def testTStartErrorInExpr() {
+        parse('''
+            task Main: void { (!5); }
+        ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
+    }
+    
+    @Test
+    def testTStringLiteral() {
+        val program = parse('''
+            class Object
+            class String
+            task Main: void { "Hi"; }
+        ''')
+        program.main.lastExpr.type.assertThat(
+            isRoleType(READWRITE, classRef(program.findClass("String"))))
+    }
+    
+    @Test
+    def testTStringLiteralStringClassNotDefined() {
+        parse('''
+            class Object
+            task Main: void { "Hi"; }
+        ''').assertError(STRING_LITERAL, TSTRINGLITERAL, "String class", "not defined")
+    }
+    
+    @Test
+    def testTNullLiteral() {
+        parse('''
+            task Main: void { null; }
+        ''').main.lastExpr.type.assertThat(instanceOf(Null))
+    }
+    
+    @Test
+    def testTIntLiteral() {
+        parse('''
+            task Main: void { 5; }
+        ''').main.lastExpr.type.assertThat(instanceOf(Int))
+    }
+    
+    @Test
+    def testTBooleanLiteral() {
+        parse('''
+            task Main: void { true; }
+        ''').main.lastExpr.type.assertThat(instanceOf(Boolean))
+    }
+    
+    @Test
+    def testTCharLiteral() {
+        parse('''
+            task Main: void { 'c'; }
+        ''').main.lastExpr.type.assertThat(instanceOf(Char))
+    }
     
     @Test
     def testWBlock() {
