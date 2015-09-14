@@ -22,13 +22,13 @@ ClassLike:
     Class | Task;
 
 Class:
-    'class' name=ID ('extends' superclass=[Class])?
+    'class' name=QualifiedName ('extends' superclass=[Class])?
     ('{'
         (constructors+=Constructor | members+=Member)+
     '}')?;
 
 Task:
-    'task' name=ID ('(' params+=Param (',' params+=Param)* ')')?
+    'task' name=QualifiedName ('(' params+=Param (',' params+=Param)* ')')?
     ':' type=Type body=Block;
 
 Member:

@@ -45,6 +45,25 @@ class LinkingTest {
             class B extends A
         ''', set).assertNoErrors
         
+        // Classes can specify package directly in declaration
+        set = newResourceSet.with("class Object").with('''
+            class foo.bar.A
+        ''')
+        parse('''
+            package foo.bar
+            class B extends A
+        ''', set).assertNoErrors
+        
+        // Also partially
+        set = newResourceSet.with("class Object").with('''
+            package foo
+            class bar.A
+        ''')
+        parse('''
+            package foo.bar
+            class B extends A
+        ''', set).assertNoErrors
+        
         // Classes can be imported
         set = newResourceSet.with("class Object").with('''
             package foo.bar
