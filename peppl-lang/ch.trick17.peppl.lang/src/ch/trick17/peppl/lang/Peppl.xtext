@@ -156,13 +156,17 @@ Start:
 Parenthesized: '(' expr=Expr ')';
 
 Literal:
-    StringLiteral | {NullLiteral} 'null' | IntLiteral | BooleanLiteral | CharLiteral | UnitLiteral;
+    StringLiteral | {NullLiteral} 'null' | IntLiteral | DoubleLiteral | BooleanLiteral | CharLiteral | UnitLiteral;
 
 StringLiteral: value=STRING;
 
-terminal STRING: '"' ( '\\' . /* 'b'|'t'|'n'|'f'|'r'|'u'|'"'|"'"|'\\' */ | !('\\'|'"') )* '"';
+terminal STRING: '"' ( '\\' ('b'|'t'|'n'|'f'|'r'|'u'|'"'|"'"|'\\') | !('\\'|'"') )* '"';
 
 IntLiteral: value=INT;
+
+DoubleLiteral: value=DOUBLE;
+
+terminal DOUBLE: INT '.' INT;
 
 BooleanLiteral: value=Bool;
 
@@ -170,7 +174,7 @@ CharLiteral: value=CHAR;
 
 UnitLiteral: {UnitLiteral} 'unit';
 
-terminal CHAR returns EChar: "'" ( '\\' . /* 'b'|'t'|'n'|'f'|'r'|'u'|'"'|"'"|'\\' */ | !('\\'|"'") ) "'";
+terminal CHAR returns EChar: "'" ( '\\' ('b'|'t'|'n'|'f'|'r'|'u'|'"'|"'"|'\\') | !('\\'|"'") ) "'";
 
 Bool returns EBoolean: 'true' | 'false';
 
@@ -182,7 +186,7 @@ ReferenceType:
     RoleType | {Null} NULL_TYPE;
 
 PrimitiveType:
-    {Int} 'int' | {Boolean} 'boolean' | {Char} 'char' | {Unit} 'unit'?;
+    {Int} 'int' | {Double} 'double' | {Boolean} 'boolean' | {Char} 'char' | {Unit} 'unit'?;
 
 RoleType:
     role=Role base=ClassRef;

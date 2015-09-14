@@ -47,6 +47,7 @@ import java.util.Set
 
 import static ch.trick17.peppl.lang.peppl.PepplPackage.Literals.*
 import static ch.trick17.peppl.lang.peppl.Role.*
+import ch.trick17.peppl.lang.peppl.DoubleLiteral
 
 system ch.trick17.peppl.lang.typesystem.PepplSystem
 
@@ -301,6 +302,9 @@ axiom TNullLiteral
 
 axiom TIntLiteral
     G |- IntLiteral __ : intType
+
+axiom TDoubleLiteral
+    G |- DoubleLiteral __ : doubleType
 
 axiom TBooleanLiteral
     G |- BooleanLiteral __ : booleanType

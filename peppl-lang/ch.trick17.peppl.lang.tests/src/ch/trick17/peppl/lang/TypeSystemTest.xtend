@@ -3,6 +3,7 @@ package ch.trick17.peppl.lang
 import ch.trick17.peppl.lang.peppl.Boolean
 import ch.trick17.peppl.lang.peppl.Char
 import ch.trick17.peppl.lang.peppl.Int
+import ch.trick17.peppl.lang.peppl.Double
 import ch.trick17.peppl.lang.peppl.Null
 import ch.trick17.peppl.lang.peppl.Program
 import ch.trick17.peppl.lang.peppl.Role
@@ -449,8 +450,8 @@ class TypeSystemTest {
     
     @Test
     def testTMemberAccessIllegalTarget() {
-        parse('''task Main: { 5.a; }''')
-            .assertError(INT_LITERAL, null, "Illegal", "target", "access")
+        parse('''task Main: { 5.5.a; }''')
+            .assertError(DOUBLE_LITERAL, null, "Illegal", "target", "access")
         parse('''task Main: { false.foo(); }''')
             .assertError(BOOLEAN_LITERAL, null, "Illegal", "target", "access")
     }
@@ -1094,6 +1095,13 @@ class TypeSystemTest {
         parse('''
             task Main: { 5; }
         ''').main.lastExpr.type.assertThat(instanceOf(Int))
+    }
+    
+    @Test
+    def testTDoubleLiteral() {
+        parse('''
+            task Main: { 5.0; }
+        ''').main.lastExpr.type.assertThat(instanceOf(Double))
     }
     
     @Test

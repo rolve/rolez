@@ -9,6 +9,7 @@ import ch.trick17.peppl.lang.peppl.Constructor
 import ch.trick17.peppl.lang.peppl.Field
 import ch.trick17.peppl.lang.peppl.GenericClassRef
 import ch.trick17.peppl.lang.peppl.Int
+import ch.trick17.peppl.lang.peppl.Double
 import ch.trick17.peppl.lang.peppl.LocalVar
 import ch.trick17.peppl.lang.peppl.Member
 import ch.trick17.peppl.lang.peppl.Method
@@ -55,7 +56,7 @@ class PepplUtils {
     def RoleType roleType(Role r, ClassRef base) {
         val result = factory.createRoleType()
         result.setRole(r)
-        result.setBase(base.copy) // TODO: So... when is copy necessary?..
+        result.setBase(base.copy) // Copy, because "base" is "contained" in the type
         result
     }
     
@@ -74,6 +75,10 @@ class PepplUtils {
 
     def Int intType() {
         factory.createInt
+    }
+
+    def Double doubleType() {
+        factory.createDouble
     }
 
     def Boolean booleanType() {
