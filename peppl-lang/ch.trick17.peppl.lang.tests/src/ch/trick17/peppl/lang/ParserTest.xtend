@@ -15,7 +15,7 @@ import static extension org.hamcrest.MatcherAssert.assertThat
 
 @RunWith(XtextRunner)
 @InjectWith(PepplInjectorProvider)
-class PepplParserTest {
+class ParserTest {
     
     @Inject extension ParseHelper<Program>
     @Inject extension PepplUtils

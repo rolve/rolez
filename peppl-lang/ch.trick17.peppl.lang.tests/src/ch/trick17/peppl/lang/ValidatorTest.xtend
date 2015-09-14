@@ -17,7 +17,7 @@ import static ch.trick17.peppl.lang.validation.PepplValidator.*
 
 @RunWith(XtextRunner)
 @InjectWith(PepplInjectorProvider)
-class PepplValidatorTest {
+class ValidatorTest {
     
     @Inject extension ParseHelper<Program>
     @Inject extension ValidationTestHelper

@@ -42,7 +42,7 @@ import static extension org.hamcrest.MatcherAssert.assertThat
 
 @RunWith(XtextRunner)
 @InjectWith(PepplInjectorProvider)
-class PepplSystemTest {
+class TypeSystemTest {
     
     @Inject extension ParseHelper<Program>
     @Inject extension ValidationTestHelper
