@@ -150,7 +150,7 @@ New:
     ('(' args+=Expr (',' args+=Expr)* ')')?;
 
 Start:
-    'start' (task=[Task] | '(' task=[Task|QualifiedName] ')')
+    'start' taskRef=TaskRef
     ('(' args+=Expr (',' args+=Expr)* ')')?;
 
 Parenthesized: '(' expr=Expr ')';
@@ -201,6 +201,9 @@ SimpleClassRef:
 
 GenericClassRef:
     clazz=[Class|QualifiedName] '[' typeArg=Type ']';
+
+TaskRef:
+    (task=[Task] | '(' task=[Task|QualifiedName] ')');
 
 Var:
     LocalVar | => Param; // => only needed to avoid warnings. Rule is not used anyway.

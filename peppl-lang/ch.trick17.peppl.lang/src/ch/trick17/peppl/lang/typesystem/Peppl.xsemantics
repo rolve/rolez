@@ -276,8 +276,8 @@ rule TStart
 from {
     val taskClass = findClass(taskClassName, s)
     taskClass != null
-    G |- s << s.task
-    t = roleType(PURE, classRef(taskClass, s.task.type))
+    G |- s << s.taskRef.task
+    t = roleType(PURE, classRef(taskClass, s.taskRef.task.type))
 }
 
 rule TParenthesized
