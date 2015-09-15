@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature
+      id="ch.trick17.rolez.lang.sdk"
+      label="Rolez SDK"
+      version="0.0.0"
+      provider-name="Michael Faes">
+
+   <plugin
+         id="ch.trick17.rolez.lang"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="ch.trick17.rolez.lang.ui"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+</feature>
