@@ -21,6 +21,7 @@ import javax.inject.Inject
 import org.eclipse.emf.common.util.URI
 import org.eclipse.emf.ecore.resource.ResourceSet
 import org.eclipse.xtext.junit4.validation.ValidationTestHelper
+import org.eclipse.xtext.naming.QualifiedName
 import org.eclipse.xtext.resource.XtextResourceSet
 import org.eclipse.xtext.util.StringInputStream
 import org.hamcrest.BaseMatcher
@@ -55,7 +56,15 @@ class TestUtilz {
     
     def findClass(Program program, String name) {
         program.assertNoErrors
+        name.assertThat(not(containsString(".")))
         val result = program.classes.findFirst[it.name == name]
+        result.assertThat(notNullValue)
+        result
+    }
+    
+    def findClass(Program program, QualifiedName name) {
+        program.assertNoErrors
+        val result = program.classes.findFirst[qualifiedName == name]
         result.assertThat(notNullValue)
         result
     }

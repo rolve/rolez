@@ -39,7 +39,7 @@ class TypeSystemTest {
     @Test
     def testTAssignment() {
         val program = parse('''
-            class Object
+            class rolez.lang.Object
             class A
             class B extends A 
             task Main: {
@@ -112,7 +112,7 @@ class TypeSystemTest {
         parse("task Main: { 5 != 3; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
 
         parse('''
-            class Object
+            class rolez.lang.Object
             class A
             task Main: {
                 new Object == new A;
@@ -133,7 +133,7 @@ class TypeSystemTest {
     @Test
     def testTEqualityExprIncompatibleTypes() {
         parse('''
-            class Object
+            class rolez.lang.Object
             class A
             class B
             task Main: { new A == new B; }
@@ -167,7 +167,7 @@ class TypeSystemTest {
     @Test
     def testTRelationalExprIncompatibleTypes() {
         parse('''
-            class Object
+            class rolez.lang.Object
             task Main: { new Object < new Object; }
         ''').assertError(RELATIONAL_EXPR, null, "compare", "Object")
         
@@ -189,22 +189,29 @@ class TypeSystemTest {
         parse("task Main: { 100 / -1; }").main.lastExpr.type.assertThat(instanceOf(Int))
         parse("task Main: { -99 %  3; }").main.lastExpr.type.assertThat(instanceOf(Int))
         
-        parse('''
-            class Object
-            class String
+        var program = parse('''
+            class rolez.lang.Object
+            class rolez.lang.String
             task Main: { "Hi" + " World"; }
-        ''').main.lastExpr.type.asRoleType.base.clazz.name.assertThat(is("String"))
-        parse('''
-            class Object
-            class String
+        ''')
+        program.main.lastExpr.type.assertThat(
+            isRoleType(READWRITE, classRef(program.findClass(stringClassName))))
+            
+        program = parse('''
+            class rolez.lang.Object
+            class rolez.lang.String
             task Main: { "" + '5'; }
-        ''').main.lastExpr.type.asRoleType.base.clazz.name.assertThat(is("String"))
-        parse('''
-            class Object
-            class String
+        ''')
+        program.main.lastExpr.type.assertThat(
+            isRoleType(READWRITE, classRef(program.findClass(stringClassName))))
+            
+        program = parse('''
+            class rolez.lang.Object
+            class rolez.lang.String
             task Main: { null + " "; }
-        ''').main.lastExpr.type.asRoleType.base.clazz.name.assertThat(is("String"))
-        // IMPROVE: check rest of the type as well
+        ''')
+        program.main.lastExpr.type.assertThat(
+            isRoleType(READWRITE, classRef(program.findClass(stringClassName))))
     }
     
     @Test
@@ -224,34 +231,34 @@ class TypeSystemTest {
     @Test
     def testTArtithmeticExprTypeMismatch() {
         parse('''
-            class Object
+            class rolez.lang.Object
             task Main: { new Object + new Object; }
         ''').assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "object")
         parse('''
-            class Object
+            class rolez.lang.Object
             class A
             class B
             task Main: { new A - new B; }
         ''').assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "A", "B")
         
         parse('''
-            class Object
-            class String
+            class rolez.lang.Object
+            class rolez.lang.String
             task Main: { "Hello" - "World"; }
         ''').assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "String")
         parse('''
-            class Object
-            class String
+            class rolez.lang.Object
+            class rolez.lang.String
             task Main: { "Hello" * new Object; }
         ''').assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "String", "Object")
         parse('''
-            class Object
-            class String
+            class rolez.lang.Object
+            class rolez.lang.String
             task Main: { 5 / "World"; }
         ''').assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "int", "String")
         parse('''
-            class Object
-            class String
+            class rolez.lang.Object
+            class rolez.lang.String
             task Main: { null % "World"; }
         ''').assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "null", "String")
         
@@ -272,15 +279,15 @@ class TypeSystemTest {
         parse("task Main: { true as boolean; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
         
         var program = parse('''
-            class Object
+            class rolez.lang.Object
             task Main: { new Object as readwrite Object; }
         ''')
-        program.main.lastExpr.type.assertThat(isRoleType(READWRITE, classRef(program.findClass("Object"))))
+        program.main.lastExpr.type.assertThat(isRoleType(READWRITE, classRef(program.findClass(objectClassName))))
         
         // Upcasts
         program = parse('''
-            class Object
-            class Array
+            class rolez.lang.Object
+            class rolez.lang.Array
             class A
             task Main: {
                 new A as readwrite Object;
@@ -292,19 +299,19 @@ class TypeSystemTest {
                 new Array[pure A] as readonly Array[pure A];
             }
         ''')
-        program.main.expr(0).type.assertThat(isRoleType(READWRITE, classRef(program.findClass("Object"))))
+        program.main.expr(0).type.assertThat(isRoleType(READWRITE, classRef(program.findClass(objectClassName))))
         program.main.expr(1).type.assertThat(isRoleType(READONLY,  classRef(program.findClass("A"))))
         program.main.expr(2).type.assertThat(isRoleType(PURE,      classRef(program.findClass("A"))))
         program.main.expr(3).type.assertThat(isRoleType(READWRITE, classRef(program.findClass("A"))))
         program.main.expr(4).type.assertThat(isRoleType(READONLY,  classRef(program.findClass("A"))))
         program.main.expr(5).type.assertThat(isRoleType(READONLY,
-                classRef(program.findClass("Array"), intType)))
+                classRef(program.findClass(arrayClassName), intType)))
         program.main.expr(6).type.assertThat(isRoleType(READONLY,
-            classRef(program.findClass("Array"), roleType(PURE, classRef(program.findClass("A"))))))
+            classRef(program.findClass(arrayClassName), roleType(PURE, classRef(program.findClass("A"))))))
         
         // Downcasts
         program = parse('''
-            class Object
+            class rolez.lang.Object
             class A
             task Main: { new Object as readwrite A; }
         ''')
@@ -329,42 +336,42 @@ class TypeSystemTest {
             .assertError(CAST, null, "cast", "int", "unit")
         
         parse('''
-            class Object
+            class rolez.lang.Object
             task Main: { 5 as readwrite Object; }
-        ''').assertError(CAST, null, "cast", "readwrite Object", "int")
+        ''').assertError(CAST, null, "cast", "readwrite rolez.lang.Object", "int")
         parse('''
-            class Object
+            class rolez.lang.Object
             task Main: { new Object as int; }
-        ''').assertError(CAST, null, "cast", "readwrite Object", "int")
+        ''').assertError(CAST, null, "cast", "readwrite rolez.lang.Object", "int")
         parse('''
-            class Object
+            class rolez.lang.Object
             class A
             task Main: { new A as readonly A as readwrite A; }
         ''').assertError(CAST, null, "cast", "readwrite A", "readonly A")
         
         parse('''
-            class Object
-            class Array
+            class rolez.lang.Object
+            class rolez.lang.Array
             task Main: { new Array[boolean] as readwrite Array[int]; }
-        ''').assertError(CAST, null, "cast", "readwrite Array[boolean]", "readwrite Array[int]")
+        ''').assertError(CAST, null, "cast", "readwrite rolez.lang.Array[boolean]", "readwrite rolez.lang.Array[int]")
         parse('''
-            class Object
-            class Array
+            class rolez.lang.Object
+            class rolez.lang.Array
             class A
             task Main: { new Array[pure Object] as readwrite Array[pure A]; }
-        ''').assertError(CAST, null, "cast", "readwrite Array[pure Object]", "readwrite Array[pure A]")
+        ''').assertError(CAST, null, "cast", "readwrite rolez.lang.Array[pure rolez.lang.Object]", "readwrite rolez.lang.Array[pure A]")
         parse('''
-            class Object
-            class Array
+            class rolez.lang.Object
+            class rolez.lang.Array
             class A
             task Main: { new Array[readwrite A] as readwrite Array[pure A]; }
-        ''').assertError(CAST, null, "cast", "readwrite Array[readwrite A]", "readwrite Array[pure A]")
+        ''').assertError(CAST, null, "cast", "readwrite rolez.lang.Array[readwrite A]", "readwrite rolez.lang.Array[pure A]")
         parse('''
-            class Object
-            class Array
+            class rolez.lang.Object
+            class rolez.lang.Array
             class A
             task Main: { new Array[pure A] as readwrite Array[readwrite A]; }
-        ''').assertError(CAST, null, "cast", "readwrite Array[pure A]", "readwrite Array[readwrite A]")
+        ''').assertError(CAST, null, "cast", "readwrite rolez.lang.Array[pure A]", "readwrite rolez.lang.Array[readwrite A]")
     }
     
     @Test
@@ -385,12 +392,12 @@ class TypeSystemTest {
     @Test
     def testTUnaryMinusTypeMismatch() {
         parse('''
-            class Object
+            class rolez.lang.Object
             task Main: { -new Object; }
         ''').assertError(NEW, SUBTYPEEXPR, "Object", "int")
         parse('''
-            class Object
-            class String
+            class rolez.lang.Object
+            class rolez.lang.String
             task Main: { -"Hello"; }
         ''').assertError(STRING_LITERAL, SUBTYPEEXPR, "String", "int")
         
@@ -423,12 +430,12 @@ class TypeSystemTest {
     @Test
     def testTUnaryNotTypeMismatch() {
         parse('''
-            class Object
+            class rolez.lang.Object
             task Main: { !new Object; }
         ''').assertError(NEW, SUBTYPEEXPR, "Object", "boolean")
         parse('''
-            class Object
-            class String
+            class rolez.lang.Object
+            class rolez.lang.String
             task Main: { !"Hello"; }
         ''').assertError(STRING_LITERAL, SUBTYPEEXPR, "String", "boolean")
         
@@ -459,12 +466,12 @@ class TypeSystemTest {
     @Test
     def testTMemberAccessField() {
         parse('''
-            class Object
+            class rolez.lang.Object
             class A { var x: int }
             task Main: { new A.x; }
         ''').main.lastExpr.type.assertThat(instanceOf(Int))
         parse('''
-            class Object
+            class rolez.lang.Object
             class A { var x: int }
             task Main: {
                 val a: readonly A = new A;
@@ -473,7 +480,7 @@ class TypeSystemTest {
         ''').main.lastExpr.type.assertThat(instanceOf(Int))
         
         val program = parse('''
-            class Object
+            class rolez.lang.Object
             class A { var a: readwrite A }
             task Main: {
                 val a: readwrite A = new A;
@@ -484,7 +491,7 @@ class TypeSystemTest {
             .assertThat(isRoleType(READWRITE, classRef(program.findClass("A"))))
         
         parse('''
-            class Object
+            class rolez.lang.Object
             class A { var a: readwrite A }
             task Main: {
                 val a: readonly A = new A;
@@ -492,7 +499,7 @@ class TypeSystemTest {
             }
         ''').main.lastExpr.type.asRoleType.role.assertThat(is(READONLY))
         parse('''
-            class Object
+            class rolez.lang.Object
             class A { var a: readonly A }
             task Main: {
                 val a: readwrite A = new A;
@@ -500,7 +507,7 @@ class TypeSystemTest {
             }
         ''').main.lastExpr.type.asRoleType.role.assertThat(is(READONLY))
         parse('''
-            class Object
+            class rolez.lang.Object
             class A { var a: pure A }
             task Main: {
                 val a: readwrite A = new A;
@@ -508,7 +515,7 @@ class TypeSystemTest {
             }
         ''').main.lastExpr.type.asRoleType.role.assertThat(is(PURE))
         parse('''
-            class Object
+            class rolez.lang.Object
             class A { var a: pure A }
             task Main: {
                 val a: readonly A = new A;
@@ -520,7 +527,7 @@ class TypeSystemTest {
     @Test
     def testTMemberAccessFieldRoleMismatch() {
         parse('''
-            class Object
+            class rolez.lang.Object
             class A { var x: int }
             task Main: {
                 val a: pure A = new A;
@@ -535,7 +542,7 @@ class TypeSystemTest {
         for(expected : Role.values) {
             for(actual : Role.values.filter[system.subroleSucceeded(it, expected)]) {
                 parse('''
-                    class Object
+                    class rolez.lang.Object
                     class A {
                         def «expected» x: int { return 42; }
                     }
@@ -548,7 +555,7 @@ class TypeSystemTest {
         }
         
         val program = parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 def readwrite a: readonly A { return null; }
             }
@@ -558,7 +565,7 @@ class TypeSystemTest {
             .assertThat(isRoleType(READONLY, classRef(program.findClass("A"))))
         
         parse('''
-            class Object
+            class rolez.lang.Object
             class A
             class B {
                 def readwrite foo(val a: readonly A, val b: readwrite B,
@@ -574,7 +581,7 @@ class TypeSystemTest {
         for(expected : Role.values) {
             for(actual : Role.values.filter[!system.subroleSucceeded(it, expected)]) {
                 parse('''
-                    class Object
+                    class rolez.lang.Object
                     class A {
                         def «expected» x: int { return 42; }
                     }
@@ -591,38 +598,38 @@ class TypeSystemTest {
     @Test
     def testTMemberAccessMethodTypeMismatch() {
         parse('''
-            class Object
+            class rolez.lang.Object
             class A { def readwrite foo: {} }
             task Main: { new A.foo(5); }
         ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "foo")
         parse('''
-            class Object
+            class rolez.lang.Object
             class A { def readwrite foo(val c: char): {} }
             task Main: { new A.foo(5, false); }
         ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "foo")
         parse('''
-            class Object
+            class rolez.lang.Object
             class A { def readwrite foo(val i: int): {} }
             task Main: { new A.foo(); }
         ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "foo")
         parse('''
-            class Object
+            class rolez.lang.Object
             class A { def readwrite foo(val i: int, val a: readwrite A): {} }
             task Main: { new A.foo(false); }
         ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "foo")
         
         parse('''
-            class Object
+            class rolez.lang.Object
             class A { def readwrite foo(val i: int): {} }
             task Main: { new A.foo(false); }
         ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "foo")
         parse('''
-            class Object
+            class rolez.lang.Object
             class A { def readwrite foo(val a: readwrite A): {} }
             task Main: { new A.foo(new Object); }
         ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "foo")
         parse('''
-            class Object
+            class rolez.lang.Object
             class A { def readwrite foo(val a: readwrite A): {} }
             task Main: { new A.foo(new A as readonly A); }
         ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "foo")
@@ -631,7 +638,7 @@ class TypeSystemTest {
     @Test
     def testTMemberAccessMethodOverloading() {
         var program = parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 def readwrite foo(val a: int): int { return 0; }
                 def readwrite foo(val a: boolean): boolean { return false; }
@@ -645,7 +652,7 @@ class TypeSystemTest {
         program.main.expr(1).type.assertThat(instanceOf(Boolean))
         
         program = parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 def readwrite foo(val a: readwrite A): int { return 0; }
                 def readwrite foo(val a: readonly  A): boolean { return false; }
@@ -660,7 +667,7 @@ class TypeSystemTest {
         
         // (Switch order of declaration to rule out accidental selection of the correct one)
         program = parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 def readwrite foo(val a: readonly  A): boolean { return false; }
                 def readwrite foo(val a: readwrite A): int { return 0; }
@@ -674,7 +681,7 @@ class TypeSystemTest {
         program.main.expr(1).type.assertThat(instanceOf(Boolean))
         
         program = parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 def readwrite foo(val a: readonly  A, val b: readonly  A): boolean { return false; }
                 def readwrite foo(val a: readwrite A, val b: readwrite A): int { return 0; }
@@ -692,7 +699,7 @@ class TypeSystemTest {
         program.main.expr(1).type.assertThat(instanceOf(Boolean))
         
         program = parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 def readwrite foo(val a: readwrite A, val b: readwrite A): int { return 0; }
                 def readwrite foo(val a: readonly  A, val b: readonly  A): boolean { return false; }
@@ -713,7 +720,7 @@ class TypeSystemTest {
     @Test
     def testTMemberAccessMethodAmbiguous() {
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 def readwrite foo(val a: readonly  A, val b: readwrite A): {}
                 def readwrite foo(val a: readwrite A, val b: readonly  A): {}
@@ -724,7 +731,7 @@ class TypeSystemTest {
         ''').assertError(METHOD_SELECTOR, AMBIGUOUS_CALL)
         
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 def readwrite foo(val a: readwrite Object, val b: readwrite A): {}
                 def readwrite foo(val a: readwrite A, val b: readwrite Object): {}
@@ -739,7 +746,7 @@ class TypeSystemTest {
     def testTThis() {
         for(expected : Role.values) {
             val program = parse('''
-                class Object
+                class rolez.lang.Object
                 class A {
                     def «expected» foo: { this; }
                 }
@@ -767,7 +774,7 @@ class TypeSystemTest {
             }
         ''').main.lastExpr.type.assertThat(instanceOf(Int))
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 def pure foo(val i: int): {
                     i;
@@ -777,7 +784,7 @@ class TypeSystemTest {
         ''').findClass("A").methods.head.lastExpr.type.assertThat(instanceOf(Int))
         
         var program = parse('''
-            class Object
+            class rolez.lang.Object
             class A
             task Main: {
                 val a: readonly A = new A;
@@ -791,7 +798,7 @@ class TypeSystemTest {
     @Test
     def testTNew() {
         var program = parse('''
-            class Object
+            class rolez.lang.Object
             class A
             task Main: { new A; }
         ''')
@@ -799,30 +806,30 @@ class TypeSystemTest {
             .assertThat(isRoleType(READWRITE, classRef(program.findClass("A"))))
         
         program = parse('''
-            class Object
-            class Array
+            class rolez.lang.Object
+            class rolez.lang.Array
             task Main: { new Array[int]; }
         ''')
         program.main.lastExpr.type
-            .assertThat(isRoleType(READWRITE, classRef(program.findClass("Array"), intType)))
+            .assertThat(isRoleType(READWRITE, classRef(program.findClass(arrayClassName), intType)))
         
         program = parse('''
-            class Object
+            class rolez.lang.Object
             class A
-            class Array
+            class rolez.lang.Array
             task Main: { new Array[readonly A]; }
         ''')
         program.main.lastExpr.type
-            .assertThat(isRoleType(READWRITE, classRef(program.findClass("Array"),
+            .assertThat(isRoleType(READWRITE, classRef(program.findClass(arrayClassName),
                 roleType(READONLY, classRef(program.findClass("A"))))))
         
         program = parse('''
-            class Object
+            class rolez.lang.Object
             class A
-            class Array
+            class rolez.lang.Array
             task Main: { new Array[pure Array[readwrite A]]; }
         ''')
-        val array = program.findClass("Array")
+        val array = program.findClass(arrayClassName)
         program.main.lastExpr.type
             .assertThat(isRoleType(READWRITE, classRef(array,
                 roleType(PURE, classRef(array,
@@ -832,33 +839,33 @@ class TypeSystemTest {
     @Test
     def testTNewTypeMismatch() {
         parse('''
-            class Object
+            class rolez.lang.Object
             class A
             task Main: { new A(5); }
         ''').assertError(NEW, null, "no suitable constructor")
         parse('''
-            class Object
+            class rolez.lang.Object
             class A { new {} }
             task Main: { new A(5); }
         ''').assertError(NEW, null, "no suitable constructor")
         parse('''
-            class Object
+            class rolez.lang.Object
             class A { new(val c: char) {} }
             task Main: { new A(5, false); }
         ''').assertError(NEW, null, "no suitable constructor")
         parse('''
-            class Object
+            class rolez.lang.Object
             class A { new(val i: int) {} }
             task Main: { new A; }
         ''').assertError(NEW, null, "no suitable constructor")
         
         parse('''
-            class Object
+            class rolez.lang.Object
             class A { new(val i: int) {} }
             task Main: { new A(false); }
         ''').assertError(NEW, null, "no suitable constructor")
         parse('''
-            class Object
+            class rolez.lang.Object
             class A { new(val a: readwrite A) {} }
             task Main: { new A(new Object); }
         ''').assertError(NEW, null, "no suitable constructor")
@@ -867,7 +874,7 @@ class TypeSystemTest {
     @Test
     def testTNewOverloading() {
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 new(val a: int) {}
                 new(val a: boolean) {}
@@ -881,7 +888,7 @@ class TypeSystemTest {
         // TODO: For the following, test that the right constructor is chosen,
         // either by linking something or after code generation.
         parse('''
-            class Object
+            class rolez.lang.Object
             class A
             class B {
                 new(val a: readwrite A) {}
@@ -895,7 +902,7 @@ class TypeSystemTest {
         
         // (Switch order of declaration to rule out accidental selection of the correct one)
         parse('''
-            class Object
+            class rolez.lang.Object
             class A
             class B {
                 new(val a: readonly  A) {}
@@ -911,7 +918,7 @@ class TypeSystemTest {
     @Test
     def testTNewAmbiguous() {
         parse('''
-            class Object
+            class rolez.lang.Object
             class A
             class B {
                 new(val a: readonly  A, val b: readwrite A) {}
@@ -923,7 +930,7 @@ class TypeSystemTest {
         ''').assertError(NEW, null, "constructor", "ambiguous")
         
         parse('''
-            class Object
+            class rolez.lang.Object
             class A
             class B {
                 new(val a: readwrite Object, val b: readwrite A) {}
@@ -938,43 +945,43 @@ class TypeSystemTest {
     @Test
     def testTStart() {
         var program = parse('''
-            class Object
-            class Task
+            class rolez.lang.Object
+            class rolez.lang.Task
             task T: int {}
             task Main: { start T; }
         ''')
         program.main.lastExpr.type
-            .assertThat(isRoleType(PURE, classRef(program.findClass("Task"), intType)))
+            .assertThat(isRoleType(PURE, classRef(program.findClass(taskClassName), intType)))
         
         program = parse('''
-            class Object
-            class Task
+            class rolez.lang.Object
+            class rolez.lang.Task
             task T: {}
             task Main: { start T; }
         ''')
         program.main.lastExpr.type
-            .assertThat(isRoleType(PURE, classRef(program.findClass("Task"), unitType)))
+            .assertThat(isRoleType(PURE, classRef(program.findClass(taskClassName), unitType)))
         
         program = parse('''
-            class Object
-            class Task
+            class rolez.lang.Object
+            class rolez.lang.Task
             class A
             task T: readwrite A {}
             task Main: { start T; }
         ''')
         program.main.lastExpr.type
-            .assertThat(isRoleType(PURE, classRef(program.findClass("Task"),
+            .assertThat(isRoleType(PURE, classRef(program.findClass(taskClassName),
                 roleType(READWRITE, classRef(program.findClass("A"))))))
         
         parse('''
-            class Object
-            class Task
+            class rolez.lang.Object
+            class rolez.lang.Task
             task T(val i: int): {}
             task Main: { start T(5); }
         ''').assertNoErrors
         parse('''
-            class Object
-            class Task
+            class rolez.lang.Object
+            class rolez.lang.Task
             class A
             task T(val a: pure A): {}
             task Main: {
@@ -985,8 +992,8 @@ class TypeSystemTest {
             }
         ''').assertNoErrors
         parse('''
-            class Object
-            class Task
+            class rolez.lang.Object
+            class rolez.lang.Task
             class A
             task T(val i: int, val c: char, val a: readwrite A): {}
             task Main: {
@@ -998,7 +1005,7 @@ class TypeSystemTest {
     @Test
     def testTStartTaskClassNotDefined() {
         parse('''
-            class Object
+            class rolez.lang.Object
             task T: {}
             task Main: { start T; }
         ''').assertError(START, TSTART, "task class", "not defined")
@@ -1007,8 +1014,8 @@ class TypeSystemTest {
     @Test
     def testTStartErrorInArg() {
         parse('''
-            class Object
-            class Task
+            class rolez.lang.Object
+            class rolez.lang.Task
             task T(val i: int): {}
             task Main: { start T(!5); }
         ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
@@ -1017,21 +1024,21 @@ class TypeSystemTest {
     @Test
     def testTStartTypeMismatch() {
         parse('''
-            class Object
-            class Task
+            class rolez.lang.Object
+            class rolez.lang.Task
             task T: int {}
             task Main: { start T(5); }
         ''').assertError(START, null, "too many arguments")
         parse('''
-            class Object
-            class Task
+            class rolez.lang.Object
+            class rolez.lang.Task
             task T(val i: int): int {}
             task Main: { start T; }
         ''').assertError(START, null, "too few arguments")
         
         parse('''
-            class Object
-            class Task
+            class rolez.lang.Object
+            class rolez.lang.Task
             task T(val i: int): int {}
             task Main: { start T(true); }
         ''').assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "boolean", "int")
@@ -1040,7 +1047,7 @@ class TypeSystemTest {
     @Test
     def testTParenthesized() {
         val program = parse('''
-            class Object
+            class rolez.lang.Object
             class A
             task Main: {
                 (5);
@@ -1067,20 +1074,20 @@ class TypeSystemTest {
     @Test
     def testTStringLiteral() {
         val program = parse('''
-            class Object
-            class String
+            class rolez.lang.Object
+            class rolez.lang.String
             task Main: { "Hi"; }
         ''')
         program.main.lastExpr.type.assertThat(
-            isRoleType(READWRITE, classRef(program.findClass("String"))))
+            isRoleType(READWRITE, classRef(program.findClass(stringClassName))))
     }
     
     @Test
     def testTStringLiteralStringClassNotDefined() {
         parse('''
-            class Object
+            class rolez.lang.Object
             task Main: { "Hi"; }
-        ''').assertError(STRING_LITERAL, TSTRINGLITERAL, "String class", "not defined")
+        ''').assertError(STRING_LITERAL, TSTRINGLITERAL, "rolez.lang.String class", "not defined")
     }
     
     @Test
@@ -1121,7 +1128,7 @@ class TypeSystemTest {
     @Test
     def testWBlock() {
         parse('''
-            class Object
+            class rolez.lang.Object
             task Main: {
                 new Object;
                 {
@@ -1146,6 +1153,7 @@ class TypeSystemTest {
             }
         ''').assertError(CAST, null, "cannot cast", "boolean", "int")
         parse('''
+            class rolez.lang.Object
             task Main: {
                 {
                     new Object;
@@ -1163,7 +1171,7 @@ class TypeSystemTest {
     @Test
     def testWLocalVarDecl() {
         parse('''
-            class Object
+            class rolez.lang.Object
             class A
             task Main: {
                 val i: int = 1;
@@ -1179,24 +1187,24 @@ class TypeSystemTest {
             }
         ''').assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "boolean", "int")
         parse('''
-            class Object
+            class rolez.lang.Object
             task Main: {
                 val o: readwrite Object = new Object as pure Object;
             }
-        ''').assertError(CAST, SUBTYPEEXPR, "pure Object", "readwrite Object")
+        ''').assertError(CAST, SUBTYPEEXPR, "pure rolez.lang.Object", "readwrite rolez.lang.Object")
         parse('''
-            class Object
+            class rolez.lang.Object
             class A
             task Main: {
                 val o: pure A = new A as pure Object;
             }
-        ''').assertError(CAST, SUBTYPEEXPR, "pure Object", "pure A")
+        ''').assertError(CAST, SUBTYPEEXPR, "pure rolez.lang.Object", "pure A")
     }
     
     @Test
     def testWIfStmt() {
         parse('''
-            class Object
+            class rolez.lang.Object
             task Main: {
                 if(true)
                     new Object;
@@ -1216,7 +1224,7 @@ class TypeSystemTest {
         ''').assertNoErrors
         
         parse('''
-            class Object
+            class rolez.lang.Object
             task Main: {
                 if(5)
                     new Object;
@@ -1240,7 +1248,7 @@ class TypeSystemTest {
     @Test
     def testWWhileLoop() {
         parse('''
-            class Object
+            class rolez.lang.Object
             task Main: {
                 while(true)
                     new Object;
@@ -1253,7 +1261,7 @@ class TypeSystemTest {
         ''').assertNoErrors
         
         parse('''
-            class Object
+            class rolez.lang.Object
             task Main: {
                 while(5)
                     new Object;
@@ -1270,7 +1278,7 @@ class TypeSystemTest {
     @Test
     def testWReturn() {
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 def pure a: {}
                 def pure b: {
@@ -1292,7 +1300,7 @@ class TypeSystemTest {
         ''').assertNoErrors
         
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 def pure a: {
                     return 1;
@@ -1300,7 +1308,7 @@ class TypeSystemTest {
             }
         ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "unit")
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 def pure a: int {
                     return false;
@@ -1308,7 +1316,7 @@ class TypeSystemTest {
             }
         ''').assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "boolean", "int")
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 def pure a: readwrite A {
                     return new A as pure A;
@@ -1320,8 +1328,8 @@ class TypeSystemTest {
     @Test
     def testSubtype() {
         parse('''
-            class Object
-            class Array
+            class rolez.lang.Object
+            class rolez.lang.Array
             class A
             task Main: {
                 val i: int = 5;
@@ -1377,89 +1385,89 @@ class TypeSystemTest {
     @Test
     def testSubtypeSimpleClassMismatch() {
         parse('''
-            class Object
+            class rolez.lang.Object
             class A
             task Main: {
                 val a: readwrite A = new Object;
             }
-        ''').assertError(NEW, SUBTYPEEXPR, "readwrite Object", "readwrite A")
+        ''').assertError(NEW, SUBTYPEEXPR, "readwrite rolez.lang.Object", "readwrite A")
     }
     
     @Test
     def testSubtypeGenericClassMismatch() {
         parse('''
-            class Object
-            class Array
+            class rolez.lang.Object
+            class rolez.lang.Array
             task Main: {
                 val a: pure Array[int] = new Array[boolean];
             }
-        ''').assertError(NEW, SUBTYPEEXPR, "readwrite Array[boolean]", "pure Array[int]")
+        ''').assertError(NEW, SUBTYPEEXPR, "readwrite rolez.lang.Array[boolean]", "pure rolez.lang.Array[int]")
         parse('''
-            class Object
-            class Array
+            class rolez.lang.Object
+            class rolez.lang.Array
             task Main: {
                 val a: pure Array[int] = new Array[pure Object];
             }
-        ''').assertError(NEW, SUBTYPEEXPR, "readwrite Array[pure Object]", "pure Array[int]")
+        ''').assertError(NEW, SUBTYPEEXPR, "readwrite rolez.lang.Array[pure rolez.lang.Object]", "pure rolez.lang.Array[int]")
         parse('''
-            class Object
-            class Array
+            class rolez.lang.Object
+            class rolez.lang.Array
             task Main: {
                 val a: pure Array[pure Object] = new Array[int];
             }
-        ''').assertError(NEW, SUBTYPEEXPR, "readwrite Array[int]", "pure Array[pure Object]")
+        ''').assertError(NEW, SUBTYPEEXPR, "readwrite rolez.lang.Array[int]", "pure rolez.lang.Array[pure rolez.lang.Object]")
         parse('''
-            class Object
-            class Array
+            class rolez.lang.Object
+            class rolez.lang.Array
             class A
             task Main: {
                 val a: pure Array[pure Object] = new Array[pure A];
             }
-        ''').assertError(NEW, SUBTYPEEXPR, "readwrite Array[pure A]", "pure Array[pure Object]")
+        ''').assertError(NEW, SUBTYPEEXPR, "readwrite rolez.lang.Array[pure A]", "pure rolez.lang.Array[pure rolez.lang.Object]")
         parse('''
-            class Object
-            class Array
+            class rolez.lang.Object
+            class rolez.lang.Array
             class A
             task Main: {
                 val a: pure Array[pure A] = new Array[pure Object];
             }
-        ''').assertError(NEW, SUBTYPEEXPR, "readwrite Array[pure Object]", "pure Array[pure A]")
+        ''').assertError(NEW, SUBTYPEEXPR, "readwrite rolez.lang.Array[pure rolez.lang.Object]", "pure rolez.lang.Array[pure A]")
         parse('''
-            class Object
-            class Array
+            class rolez.lang.Object
+            class rolez.lang.Array
             class A
             task Main: {
                 val a: pure Array[pure A] = new Array[readwrite A];
             }
-        ''').assertError(NEW, SUBTYPEEXPR, "readwrite Array[readwrite A]", "pure Array[pure A]")
+        ''').assertError(NEW, SUBTYPEEXPR, "readwrite rolez.lang.Array[readwrite A]", "pure rolez.lang.Array[pure A]")
         parse('''
-            class Object
-            class Array
+            class rolez.lang.Object
+            class rolez.lang.Array
             class A
             task Main: {
                 val a: pure Array[readwrite A] = new Array[pure A];
             }
-        ''').assertError(NEW, SUBTYPEEXPR, "readwrite Array[pure A]", "pure Array[readwrite A]")
+        ''').assertError(NEW, SUBTYPEEXPR, "readwrite rolez.lang.Array[pure A]", "pure rolez.lang.Array[readwrite A]")
     }
     
     @Test
     def testSubtypeRoleMismatch() {
         parse('''
-            class Object
+            class rolez.lang.Object
             class A
             task Main: {
                 val a: readwrite A = new A as readonly A;
             }
         ''').assertError(CAST, SUBTYPEEXPR, "readonly A", "readwrite A")
         parse('''
-            class Object
+            class rolez.lang.Object
             class A
             task Main: {
                 val a: readwrite A = new A as pure A;
             }
         ''').assertError(CAST, SUBTYPEEXPR, "pure A", "readwrite A")
         parse('''
-            class Object
+            class rolez.lang.Object
             class A
             task Main: {
                 val a: readonly A = new A as pure A;

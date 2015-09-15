@@ -6,8 +6,6 @@ import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.scoping.impl.ImportNormalizer
 import org.eclipse.xtext.scoping.impl.ImportedNamespaceAwareLocalScopeProvider
 
-import static java.util.Arrays.asList
-
 import static extension org.eclipse.xtext.EcoreUtil2.getContainerOfType
 
 class RolezImportedNamespaceScopeProvider extends ImportedNamespaceAwareLocalScopeProvider {
@@ -16,7 +14,9 @@ class RolezImportedNamespaceScopeProvider extends ImportedNamespaceAwareLocalSco
     override List<ImportNormalizer> internalGetImportedNamespaceResolvers(
             EObject context, boolean ignoreCase) {
         val ns = context.getContainerOfType(Program).name + ".*";
-        (super.internalGetImportedNamespaceResolvers(context, ignoreCase)
-            + asList(createImportedNamespaceResolver(ns, ignoreCase))).toList;
+        val result = super.internalGetImportedNamespaceResolvers(context, ignoreCase)
+        result += createImportedNamespaceResolver(ns, ignoreCase)
+        result += createImportedNamespaceResolver("rolez.lang.*", ignoreCase)
+        result
     }
 }

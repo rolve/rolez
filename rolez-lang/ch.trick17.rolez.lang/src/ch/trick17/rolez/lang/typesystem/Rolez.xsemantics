@@ -273,7 +273,7 @@ from {
 
 rule TStart
     G |- Start s : Type t
-    error "Task class is not defined"
+    error "rolez.lang.Task class is not defined"
     source s
 from {
     val taskClass = findClass(taskClassName, s)
@@ -290,7 +290,7 @@ from {
 
 rule TStringLiteral
     G |- StringLiteral s : Type t
-    error "String class is not defined"
+    error "rolez.lang.String class is not defined"
     source s
 from {
     val stringClass = findClass(stringClassName, s)

@@ -22,7 +22,7 @@ class ValidatorTest {
     @Test
     def testObjectExists() {
         parse('''
-            class Object
+            class rolez.lang.Object
             class A
         ''').assertNoErrors
         
@@ -32,17 +32,17 @@ class ValidatorTest {
     @Test
     def testDuplicateTopLevelElems() {
         parse('''
-            class Object
+            class rolez.lang.Object
             class A
             class A
         ''').assertError(CLASS, DUPLICATE_TOP_LEVEL_ELEMENT)
         parse('''
-            class Object
+            class rolez.lang.Object
             task A: {}
             task A: {}
         ''').assertError(TASK, DUPLICATE_TOP_LEVEL_ELEMENT)
         val program = parse('''
-            class Object
+            class rolez.lang.Object
             class A
             task A: {}
         ''')
@@ -53,7 +53,7 @@ class ValidatorTest {
     @Test
     def testOverloading() {
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 def readwrite foo: {}
                 def readwrite foo(val i: int): {}
@@ -67,7 +67,7 @@ class ValidatorTest {
         ''').assertNoErrors
         
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 def readwrite foo(val a: readwrite A): {}
                 def readwrite bar(val a: readonly  A): {}
@@ -95,49 +95,49 @@ class ValidatorTest {
     @Test
     def testDuplicateMethods() {
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 def readwrite foo: {}
                 def readwrite foo: {}
             }
         ''').assertError(METHOD, DUPLICATE_METHOD)
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 def readwrite foo: int {}
                 def readwrite foo: {}
             }
         ''').assertError(METHOD, DUPLICATE_METHOD)
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 def readonly  foo: int {}
                 def readwrite foo: {}
             }
         ''').assertError(METHOD, DUPLICATE_METHOD)
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 def readwrite foo(val i: int): {}
                 def readwrite foo(val i: int): {}
             }
         ''').assertError(METHOD, DUPLICATE_METHOD)
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 def readwrite foo(val i: int): {}
                 def readwrite foo(val j: int): {}
             }
         ''').assertError(METHOD, DUPLICATE_METHOD)
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 def readwrite foo(val a: readwrite A): {}
                 def readwrite foo(val a: readwrite A): {}
             }
         ''').assertError(METHOD, DUPLICATE_METHOD)
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 def readwrite foo(val a: readwrite A): {}
                 def readwrite foo(val b: readwrite A): {}
@@ -148,33 +148,33 @@ class ValidatorTest {
     @Test
     def testOverride() {
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {                def readwrite foo: {} }
             class B extends A { override readwrite foo: {} }
         ''').assertNoErrors
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {                def readwrite foo(val i: int): {} }
             class B extends A { override readwrite foo(val i: int): {} }
         ''').assertNoErrors
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {                def readwrite foo(val i: int): int { return 0; } }
             class B extends A { override readwrite foo(val j: int): int { return 0; } }
         ''').assertNoErrors
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {                def readwrite foo: readwrite A { return new A; } }
             class B extends A { override readwrite foo: readwrite B { return new B; } }
         ''').assertNoErrors
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {                def readwrite foo: readonly  A { return new A; } }
             class B extends A { override readwrite foo: readwrite A { return new A; } }
         ''').assertNoErrors
         
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {                def readwrite foo: {} }
             class B extends A { override readonly  foo: {} }
         ''').assertNoErrors
@@ -183,32 +183,32 @@ class ValidatorTest {
     @Test
     def testMissingOverride() {
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {           def readwrite foo: {} }
             class B extends A { def readwrite foo: {} }
         ''').assertError(METHOD, MISSING_OVERRIDE)
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {           def readwrite foo: int  {} }
             class B extends A { def readwrite foo: {} }
         ''').assertError(METHOD, MISSING_OVERRIDE)
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {           def readwrite foo(val i: int): {} }
             class B extends A { def readwrite foo(val i: int): {} }
         ''').assertError(METHOD, MISSING_OVERRIDE)
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {           def readwrite foo(val i: int): {} }
             class B extends A { def readwrite foo(val j: int): {} }
         ''').assertError(METHOD, MISSING_OVERRIDE)
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {           def readwrite foo(val a: readwrite A): {} }
             class B extends A { def readwrite foo(val a: readwrite A): {} }
         ''').assertError(METHOD, MISSING_OVERRIDE)
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {           def readwrite foo(val a: readwrite A): {} }
             class B extends A { def readwrite foo(val b: readwrite A): {} }
         ''').assertError(METHOD, MISSING_OVERRIDE)
@@ -217,37 +217,37 @@ class ValidatorTest {
     @Test
     def testIncorrectOverride() {
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {                def readonly  foo: {} }
             class B extends A { override readwrite foo: {} }
         ''').assertError(METHOD, INCOMPATIBLE_THIS_ROLE)
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {                def readwrite foo: {} }
             class B extends A { override readwrite foo(val i: int): {} }
         ''').assertError(METHOD, INCORRECT_OVERRIDE)
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {                def readwrite foo(val i: int): {} }
             class B extends A { override readwrite foo(val c: char): {} }
         ''').assertError(METHOD, INCORRECT_OVERRIDE)
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {                def readwrite foo(val a: readonly  A): {} }
             class B extends A { override readwrite foo(val a: readwrite A): {} }
         ''').assertError(METHOD, INCORRECT_OVERRIDE)
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {                def readwrite foo(val a: readwrite A): {} }
             class B extends A { override readwrite foo(val a: readonly  A): {} }
         ''').assertError(METHOD, INCORRECT_OVERRIDE)
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {                def readwrite foo(val a: readwrite A): {} }
             class B extends A { override readwrite foo(val a: readwrite B): {} }
         ''').assertError(METHOD, INCORRECT_OVERRIDE)
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {                def readwrite foo(val a: readwrite B): {} }
             class B extends A { override readwrite foo(val a: readwrite A): {} }
         ''').assertError(METHOD, INCORRECT_OVERRIDE)
@@ -256,7 +256,7 @@ class ValidatorTest {
     @Test
     def testReturn() {
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 def pure a: {}
                 def pure b: {
@@ -307,13 +307,13 @@ class ValidatorTest {
     @Test
     def testMissingReturn() {
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 def pure a: int {}
             }
         ''').assertError(BLOCK, MISSING_RETURN)
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 def pure a(val i: int): int {
                     if(i == 0)
@@ -322,7 +322,7 @@ class ValidatorTest {
             }
         ''').assertError(IF_STMT, MISSING_RETURN)
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 def pure a(val i: int): int {
                     if(i == 0) {}
@@ -336,7 +336,7 @@ class ValidatorTest {
     @Test
     def testDuplicateFields() {
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 var a: int
                 val a: boolean
@@ -347,20 +347,20 @@ class ValidatorTest {
     @Test
     def testDuplicateLocalVar() {
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 def readwrite foo(val a: int, val a: boolean): {}
             }
         ''').assertError(PARAM, DUPLICATE_VARIABLE)
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 new(val a: int, val a: boolean) {}
             }
         ''').assertError(PARAM, DUPLICATE_VARIABLE)
         
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 def readwrite foo: {
                     var a: int;
@@ -369,7 +369,7 @@ class ValidatorTest {
             }
         ''').assertError(LOCAL_VAR, DUPLICATE_VARIABLE)
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 new {
                     var a: int;
@@ -389,7 +389,7 @@ class ValidatorTest {
         ''').assertError(LOCAL_VAR, DUPLICATE_VARIABLE)
         
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 def readwrite foo(val a: int): {
                     var a: boolean;
@@ -397,7 +397,7 @@ class ValidatorTest {
             }
         ''').assertError(PARAM, DUPLICATE_VARIABLE)
         parse('''
-            class Object
+            class rolez.lang.Object
             class A {
                 new(val a: int) {
                     var a: boolean;
@@ -409,8 +409,8 @@ class ValidatorTest {
     @Test
     def testTypeArgs() {
         parse('''
-            class Object
-            class Array
+            class rolez.lang.Object
+            class rolez.lang.Array
             class A
             task Main: {
                 val a: pure Array[int] = new Array[int];
@@ -420,28 +420,28 @@ class ValidatorTest {
         ''').assertNoErrors
         
         parse('''
-            class Object
-            class Array
+            class rolez.lang.Object
+            class rolez.lang.Array
             task Main: {
                 val a: pure Array;
             }
-        ''').assertError(SIMPLE_CLASS_REF, MISSING_TYPE_ARGS, "class Array")
+        ''').assertError(SIMPLE_CLASS_REF, MISSING_TYPE_ARGS, "class rolez.lang.Array")
         parse('''
-            class Object
+            class rolez.lang.Object
             class A
             task Main: {
                 val a: pure A[int];
             }
         ''').assertError(GENERIC_CLASS_REF, INCORRECT_TYPE_ARGS, "class A")
         parse('''
-            class Object
+            class rolez.lang.Object
             class A
             task Main: {
                 val a: pure A = new A[int];
             }
         ''').assertError(GENERIC_CLASS_REF, INCORRECT_TYPE_ARGS, "class A")
         parse('''
-            class Object
+            class rolez.lang.Object
             class A
             task Main: {
                 val a: pure A[readwrite A];
@@ -453,43 +453,43 @@ class ValidatorTest {
     def testObjectClass() {
         parse('''
             class A
-            class Object extends A
+            class rolez.lang.Object extends A
         ''').assertError(CLASS, INCORRECT_OBJECT_SUPERCLASS)
     }
     
     @Test
     def testArrayClass() {
         parse('''
-            class Object
-            class Array
+            class rolez.lang.Object
+            class rolez.lang.Array
         ''').assertNoErrors
         parse('''
-            class Object
-            class Array extends Object
+            class rolez.lang.Object
+            class rolez.lang.Array extends Object
         ''').assertNoErrors
         
         parse('''
-            class Object
+            class rolez.lang.Object
             class A
-            class Array extends A
+            class rolez.lang.Array extends A
         ''').assertError(CLASS, INCORRECT_ARRAY_SUPERCLASS)
     }
     
     @Test
     def testTaskClass() {
         parse('''
-            class Object
-            class Task
+            class rolez.lang.Object
+            class rolez.lang.Task
         ''').assertNoErrors
         parse('''
-            class Object
-            class Task extends Object
+            class rolez.lang.Object
+            class rolez.lang.Task extends Object
         ''').assertNoErrors
         
         parse('''
-            class Object
+            class rolez.lang.Object
             class A
-            class Task extends A
+            class rolez.lang.Task extends A
         ''').assertError(CLASS, INCORRECT_TASK_SUPERCLASS)
     }
     

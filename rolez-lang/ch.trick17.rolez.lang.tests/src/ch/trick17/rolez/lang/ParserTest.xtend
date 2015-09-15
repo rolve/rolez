@@ -22,12 +22,12 @@ class ParserTest {
     
     @Test
     def testEmptyClass() {
-        val program = parse("class Object")
+        val program = parse("class rolez.lang.Object")
         program.elements.size.assertThat(is(1))
         program.classes.size.assertThat(is(1))
         
         val clazz = program.classes.head
-        clazz.name.assertThat(is("Object"))
+        clazz.name.assertThat(is("rolez.lang.Object"))
         clazz.superclass.assertThat(is(nullValue))
         clazz.members.assertThat(empty)
         clazz.constructors.assertThat(empty) // Why can't I use is(empty) here?

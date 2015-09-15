@@ -17,17 +17,16 @@ import ch.trick17.rolez.lang.rolez.Stmt
 import ch.trick17.rolez.lang.rolez.Unit
 import ch.trick17.rolez.lang.rolez.Var
 import ch.trick17.rolez.lang.typesystem.RolezSystem
+import ch.trick17.rolez.lang.typesystem.Utilz
 import ch.trick17.rolez.lang.typesystem.validation.RolezSystemValidator
 import java.util.HashSet
 import java.util.Set
 import javax.inject.Inject
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.EStructuralFeature
-import org.eclipse.xtext.naming.IQualifiedNameProvider
 import org.eclipse.xtext.validation.Check
 
 import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
-import ch.trick17.rolez.lang.typesystem.Utilz
 
 /**
  * This class contains custom validation rules. 
@@ -58,11 +57,10 @@ class RolezValidator extends RolezSystemValidator {
 
     @Inject private extension RolezSystem
     @Inject private extension Utilz
-    @Inject private extension IQualifiedNameProvider
     
 	@Check
     def checkClassNameStartsWithCapital(Class c) {
-        if(!Character.isUpperCase(c.name.charAt(0)))
+        if(!Character.isUpperCase(c.qualifiedName.lastSegment.charAt(0)))
             warning("Name should start with a capital",
                 NAMED__NAME, INVALID_NAME)
     }
@@ -85,18 +83,18 @@ class RolezValidator extends RolezSystemValidator {
 	
     @Check
     def checkObjectClass(Class c) {
-        if(c.fullyQualifiedName == objectClassName) {
+        if(c.qualifiedName == objectClassName) {
             if(c.superclass != null)
-               error(c.fullyQualifiedName + " must not have a superclass",
+               error(c.qualifiedName + " must not have a superclass",
                    c, CLASS__SUPERCLASS, INCORRECT_OBJECT_SUPERCLASS)
         }
     }
     
     @Check
     def checkArrayClass(Class c) {
-        if(c.fullyQualifiedName == arrayClassName) {
+        if(c.qualifiedName == arrayClassName) {
             if(c.actualSuperclass != findClass(objectClassName, c))
-               error("The superclass of " + c.fullyQualifiedName + " must be "+ objectClassName,
+               error("The superclass of " + c.qualifiedName + " must be "+ objectClassName,
                    c, CLASS__SUPERCLASS, INCORRECT_ARRAY_SUPERCLASS)
         }
         // TODO: Check (built-in) members
@@ -104,9 +102,9 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkTaskClass(Class c) {
-        if(c.fullyQualifiedName == taskClassName) {
+        if(c.qualifiedName == taskClassName) {
             if(c.actualSuperclass != findClass(objectClassName, c))
-               error("The superclass of " + c.fullyQualifiedName + " must be "+ objectClassName,
+               error("The superclass of " + c.qualifiedName + " must be "+ objectClassName,
                    c, CLASS__SUPERCLASS, INCORRECT_TASK_SUPERCLASS)
         }
         // TODO: Check (built-in) members

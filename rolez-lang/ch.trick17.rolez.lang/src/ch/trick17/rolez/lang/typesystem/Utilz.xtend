@@ -1,45 +1,33 @@
 package ch.trick17.rolez.lang.typesystem
 
 import ch.trick17.rolez.lang.rolez.Argumented
-import ch.trick17.rolez.lang.rolez.Boolean
-import ch.trick17.rolez.lang.rolez.Char
 import ch.trick17.rolez.lang.rolez.Class
 import ch.trick17.rolez.lang.rolez.ClassRef
 import ch.trick17.rolez.lang.rolez.Constructor
 import ch.trick17.rolez.lang.rolez.Field
-import ch.trick17.rolez.lang.rolez.GenericClassRef
-import ch.trick17.rolez.lang.rolez.Int
-import ch.trick17.rolez.lang.rolez.Double
 import ch.trick17.rolez.lang.rolez.LocalVar
 import ch.trick17.rolez.lang.rolez.Member
 import ch.trick17.rolez.lang.rolez.Method
 import ch.trick17.rolez.lang.rolez.MethodSelector
-import ch.trick17.rolez.lang.rolez.Null
 import ch.trick17.rolez.lang.rolez.ParameterizedBody
-import ch.trick17.rolez.lang.rolez.RolezFactory
 import ch.trick17.rolez.lang.rolez.Program
 import ch.trick17.rolez.lang.rolez.Role
-import ch.trick17.rolez.lang.rolez.RoleType
-import ch.trick17.rolez.lang.rolez.SimpleClassRef
+import ch.trick17.rolez.lang.rolez.RolezFactory
 import ch.trick17.rolez.lang.rolez.Stmt
 import ch.trick17.rolez.lang.rolez.Type
-import ch.trick17.rolez.lang.rolez.Unit
-import ch.trick17.rolez.lang.rolez.Var
 import it.xsemantics.runtime.RuleEnvironment
 import it.xsemantics.runtime.RuleEnvironmentEntry
-import java.util.ArrayList
-import java.util.HashSet
-import java.util.List
-import java.util.Set
 import javax.inject.Inject
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.EReference
 import org.eclipse.emf.ecore.util.EcoreUtil
+import org.eclipse.xtext.naming.IQualifiedNameProvider
 import org.eclipse.xtext.naming.QualifiedName
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils
 import org.eclipse.xtext.scoping.IScopeProvider
 
 import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
+import static java.util.Arrays.asList
 
 import static extension org.eclipse.emf.ecore.util.EcoreUtil.copy
 
@@ -49,68 +37,69 @@ import static extension org.eclipse.emf.ecore.util.EcoreUtil.copy
  */
 class Utilz {
     
+    @Inject private extension IQualifiedNameProvider
     @Inject private RolezSystem system
     @Inject private IScopeProvider scopeProv
     private val factory = RolezFactory.eINSTANCE
     
-    def RoleType roleType(Role r, ClassRef base) {
+    def roleType(Role r, ClassRef base) {
         val result = factory.createRoleType()
         result.setRole(r)
         result.setBase(base.copy) // Copy, because "base" is "contained" in the type
         result
     }
     
-    def SimpleClassRef classRef(Class c) {
+    def classRef(Class c) {
         val result = factory.createSimpleClassRef
         result.clazz = c
         result
     }
     
-    def GenericClassRef classRef(Class c, Type arg) {
+    def classRef(Class c, Type arg) {
         val result = factory.createGenericClassRef
         result.clazz = c
         result.typeArg = arg.copy
         result
     }
 
-    def Int intType() {
+    def intType() {
         factory.createInt
     }
 
-    def Double doubleType() {
+    def doubleType() {
         factory.createDouble
     }
 
-    def Boolean booleanType() {
+    def booleanType() {
         factory.createBoolean
     }
 
-    def Char charType() {
+    def charType() {
         factory.createChar
     }
 
-    def Unit unitType() {
+    def unitType() {
         factory.createUnit
     }
 
-    def Null nullType() {
+    def nullType() {
         factory.createNull
     }
 
-    def QualifiedName objectClassName() {
-        QualifiedName.create("Object")
+    def objectClassName() {
+        QualifiedName.create("rolez", "lang", "Object")
     }
 
-    def QualifiedName stringClassName() {
-        QualifiedName.create("String")
+    def stringClassName() {
+        QualifiedName.create("rolez", "lang", "String")
     }
 
-    def QualifiedName arrayClassName() {
-        QualifiedName.create("Array")
+    def arrayClassName() {
+        QualifiedName.create("rolez", "lang", "Array")
     }
 
-    def QualifiedName taskClassName() {
-        QualifiedName.create("Task")
+    def taskClassName() {
+        QualifiedName.create("rolez", "lang", "Task")
     }
     
     def envFor(EObject o) {
@@ -123,40 +112,43 @@ class Utilz {
         }
     }
     
-    def Iterable<Class> classes(Program p) {
-        p.elements.filter(Class)
+    def Iterable<Class> classes(Program it) {
+        elements.filter(Class)
     }
     
-    def Iterable<Method> methods(Class c) {
-        c.members.filter(Method)
+    def Iterable<Method> methods(Class it) {
+        members.filter(Method)
     }
     
-    def Iterable<Field> fields(Class c) {
-        c.members.filter(Field)
+    def Iterable<Field> fields(Class it) {
+        members.filter(Field)
     }
     
-    def Set<Constructor> allConstructors(Class c) {
-        val result = new HashSet(c.constructors)
-        if(result.isEmpty)
-            result.add(factory.createConstructor)
-        result
+    def qualifiedName(Class it) {
+        fullyQualifiedName
     }
     
-    def List<Member> allMembers(Class c) {
-        val result = new ArrayList(c.members)
-        if(c.actualSuperclass != null)
-            result.addAll(c.actualSuperclass.allMembers)
-        result
+    def simpleName(Class it) {
+        fullyQualifiedName.lastSegment
     }
     
-    def actualSuperclass(Class c) {
-        val objectClass = findClass(objectClassName, c)
-        if(c == objectClass)
+    def Iterable<Constructor> allConstructors(Class it) {
+        if(!constructors.isEmpty) constructors
+        else asList(factory.createConstructor)
+    }
+    
+    def Iterable<Member> allMembers(Class it) {
+        members + if(actualSuperclass != null) actualSuperclass.allMembers else emptyList
+    }
+    
+    def actualSuperclass(Class it) {
+        val objectClass = findClass(objectClassName, it)
+        if(it == objectClass)
             null
-        else if(c.superclass == null)
+        else if(superclass == null)
             objectClass
         else
-            c.superclass
+            superclass
     }
     
     def findClass(QualifiedName name, EObject context) {
@@ -164,44 +156,44 @@ class Utilz {
             .getSingleElement(name)?.EObjectOrProxy as Class
     }
     
-    def Iterable<Var> variables(ParameterizedBody b) {
-        b.body.eAllContents.filter(LocalVar).toList + b.params
+    def variables(ParameterizedBody it) {
+        body.eAllContents.filter(LocalVar).toList + params
     }
     
-    def Stmt enclosingStmt(EObject o) {
-        val container = o?.eContainer
+    def Stmt enclosingStmt(EObject it) {
+        val container = it?.eContainer
         switch(container) {
             Stmt: container
             default: container?.enclosingStmt
         }
     }
     
-    def Method enclosingMethod(EObject o) {
-        val container = o?.eContainer
+    def Method enclosingMethod(EObject it) {
+        val container = it?.eContainer
         switch(container) {
             Method: container
             default: container?.enclosingMethod
         }
     }
     
-    def Class enclosingClass(EObject o) {
-        val container = o?.eContainer
+    def Class enclosingClass(EObject it) {
+        val container = it?.eContainer
         switch(container) {
             Class: container
             default: container?.enclosingClass
         }
     }
     
-    def Program enclosingProgram(EObject o) {
-        val container = o?.eContainer
+    def Program enclosingProgram(EObject it) {
+        val container = it?.eContainer
         switch(container) {
             Program: container
             default: container?.enclosingProgram
         }
     }
     
-    def ParameterizedBody enclosingBody(EObject o) {
-        val container = o?.eContainer
+    def ParameterizedBody enclosingBody(EObject it) {
+        val container = it?.eContainer
         switch(container) {
             ParameterizedBody: container
             default: container?.enclosingBody
@@ -251,9 +243,8 @@ class Utilz {
         target.params.forall[system.subtypeSucceeded(envFor(target), it.type, i.next.type)]
     }
     
-    def methodName(MethodSelector s) {
-        val result = refText(s, METHOD_SELECTOR__METHOD, 0)
-        result
+    def methodName(MethodSelector it) {
+        refText(it, METHOD_SELECTOR__METHOD, 0)
     }
     
     def refText(EObject o, EReference ref, int index) {
