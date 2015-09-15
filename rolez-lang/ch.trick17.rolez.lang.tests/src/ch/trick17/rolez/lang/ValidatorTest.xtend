@@ -511,7 +511,7 @@ class ValidatorTest {
     }
     
     @Test
-    def testValFieldsAreInitializedOnce() {
+    def testValFieldsInitializedOnce() {
         parse('''
             class rolez.lang.Object
             class A {
@@ -549,5 +549,77 @@ class ValidatorTest {
             "initialize", "value field more than once")
     }
     
-    // TODO: Test that variables are initialized before they're used
+    @Test
+    def testLocalValInitialized() {
+        parse('''
+            class rolez.lang.Object
+            class A {
+                def pure foo: {
+                    val i: int = 0;
+                    val a: readonly A = new A;
+                }
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object
+            class A {
+                def pure foo: {
+                    val i: int;
+                }
+            }
+        ''').assertError(LOCAL_VAR, VAL_NOT_INITIALIZED)
+    }
+    
+    @Test
+    def testLocalVarsInitialized() {
+        parse('''
+            class rolez.lang.Object
+            class A {
+                def pure foo(val x: int): int {
+                    var i: int = 0;
+                    var j: int;
+                    j = 0;
+                    var k: int;
+                    if(x > 0)
+                        k = 42;
+                    else
+                        k = 3;
+                    return i + j + k;
+                }
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object
+            class A {
+                def pure foo: int {
+                    var i: int;
+                    return i;
+                }
+            }
+        ''').assertError(VAR_REF, VAR_NOT_INITIALIZED, "variable i")
+        parse('''
+            class rolez.lang.Object
+            class A {
+                def pure foo(val x: int): int {
+                    var i: int;
+                    if(x > 0)
+                        i = 5;
+                    return i;
+                }
+            }
+        ''').assertError(VAR_REF, VAR_NOT_INITIALIZED, "variable i")
+        parse('''
+            class rolez.lang.Object
+            class A {
+                def pure foo(val x: int): int {
+                    var i: int;
+                    if(x > 0)
+                        i = 5;
+                    return i;
+                }
+            }
+        ''').assertError(VAR_REF, VAR_NOT_INITIALIZED, "variable i")
+    }
 }

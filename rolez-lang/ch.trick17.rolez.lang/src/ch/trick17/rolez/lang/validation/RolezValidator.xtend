@@ -6,10 +6,13 @@ package ch.trick17.rolez.lang.validation
 import ch.trick17.rolez.lang.rolez.Block
 import ch.trick17.rolez.lang.rolez.Class
 import ch.trick17.rolez.lang.rolez.ClassLike
+import ch.trick17.rolez.lang.rolez.Constructor
 import ch.trick17.rolez.lang.rolez.Field
 import ch.trick17.rolez.lang.rolez.GenericClassRef
 import ch.trick17.rolez.lang.rolez.IfStmt
+import ch.trick17.rolez.lang.rolez.LocalVarDecl
 import ch.trick17.rolez.lang.rolez.Method
+import ch.trick17.rolez.lang.rolez.ParameterizedBody
 import ch.trick17.rolez.lang.rolez.Program
 import ch.trick17.rolez.lang.rolez.ReturnExpr
 import ch.trick17.rolez.lang.rolez.SimpleClassRef
@@ -27,7 +30,8 @@ import org.eclipse.emf.ecore.EStructuralFeature
 import org.eclipse.xtext.validation.Check
 
 import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
-import ch.trick17.rolez.lang.rolez.Constructor
+import static ch.trick17.rolez.lang.rolez.VarKind.*
+import ch.trick17.rolez.lang.rolez.RolezPackage
 
 /**
  * This class contains custom validation rules. 
@@ -57,6 +61,8 @@ class RolezValidator extends RolezSystemValidator {
     public static val CIRCULAR_INHERITANCE = "circular inheritance"
     public static val VAL_FIELD_NOT_INITIALIZED = "val field not initialized"
     public static val VAL_FIELD_OVERINITIALIZED = "val field overinitialized"
+    public static val VAL_NOT_INITIALIZED = "val not initialized"
+    public static val VAR_NOT_INITIALIZED = "var not initialized"
 
     @Inject private extension RolezSystem
     @Inject private extension Utilz
@@ -251,8 +257,19 @@ class RolezValidator extends RolezSystemValidator {
     }
     
     @Check
-    def checkValFieldInitialization(Constructor it) {
+    def checkValFieldsInitialized(Constructor it) {
         // TODO: This requires a data flow analysis of sorts...
+    }
+    
+    @Check
+    def checkLocalValInitialized(LocalVarDecl it) {
+        if(variable.kind == VAL && initializer == null)
+            error("Uninitialized value", variable, null, VAL_NOT_INITIALIZED)
+    }
+    
+    @Check
+    def checkLocalVarsInitialized(ParameterizedBody it) {
+        // TODO
     }
     
 	/*
