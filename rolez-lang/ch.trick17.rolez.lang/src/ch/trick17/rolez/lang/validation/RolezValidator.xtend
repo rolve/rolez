@@ -27,6 +27,7 @@ import org.eclipse.emf.ecore.EStructuralFeature
 import org.eclipse.xtext.validation.Check
 
 import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
+import ch.trick17.rolez.lang.rolez.Constructor
 
 /**
  * This class contains custom validation rules. 
@@ -54,58 +55,60 @@ class RolezValidator extends RolezSystemValidator {
     public static val INCORRECT_ARRAY_SUPERCLASS = "incorrect array superclass"
     public static val INCORRECT_TASK_SUPERCLASS = "incorrect task superclass"
     public static val CIRCULAR_INHERITANCE = "circular inheritance"
+    public static val VAL_FIELD_NOT_INITIALIZED = "val field not initialized"
+    public static val VAL_FIELD_OVERINITIALIZED = "val field overinitialized"
 
     @Inject private extension RolezSystem
     @Inject private extension Utilz
     
 	@Check
-    def checkClassNameStartsWithCapital(Class c) {
-        if(!Character.isUpperCase(c.qualifiedName.lastSegment.charAt(0)))
+    def checkClassNameStartsWithCapital(Class it) {
+        if(!Character.isUpperCase(qualifiedName.lastSegment.charAt(0)))
             warning("Name should start with a capital",
                 NAMED__NAME, INVALID_NAME)
     }
 	
 	@Check
-	def checkObjectExists(Class c) {
-	    if(c.superclass == null && findClass(objectClassName, c) == null)
+	def checkObjectExists(Class it) {
+	    if(superclass == null && findClass(objectClassName, it) == null)
 	       error("Object class is not defined",
 	           NAMED__NAME,  OBJECT_CLASS_NOT_DEFINED)
 	}
 	
 	@Check
-	def checkNoDuplicateTopLevelElem(ClassLike c) {
-	    val matching = c.enclosingProgram.elements.filter[name.equals(c.name)]
+	def checkNoDuplicateTopLevelElem(ClassLike it) {
+	    val matching = enclosingProgram.elements.filter[e | e.name.equals(name)]
         if(matching.size < 1)
            throw new AssertionError
         if(matching.size > 1)
-           error("Duplicate top-level element " + c.name, NAMED__NAME, DUPLICATE_TOP_LEVEL_ELEMENT)
+           error("Duplicate top-level element " + name, NAMED__NAME, DUPLICATE_TOP_LEVEL_ELEMENT)
 	}
 	
     @Check
-    def checkObjectClass(Class c) {
-        if(c.qualifiedName == objectClassName) {
-            if(c.superclass != null)
-               error(c.qualifiedName + " must not have a superclass",
-                   c, CLASS__SUPERCLASS, INCORRECT_OBJECT_SUPERCLASS)
+    def checkObjectClass(Class it) {
+        if(qualifiedName == objectClassName) {
+            if(superclass != null)
+               error(qualifiedName + " must not have a superclass",
+                   it, CLASS__SUPERCLASS, INCORRECT_OBJECT_SUPERCLASS)
         }
     }
     
     @Check
-    def checkArrayClass(Class c) {
-        if(c.qualifiedName == arrayClassName) {
-            if(c.actualSuperclass != findClass(objectClassName, c))
-               error("The superclass of " + c.qualifiedName + " must be "+ objectClassName,
-                   c, CLASS__SUPERCLASS, INCORRECT_ARRAY_SUPERCLASS)
+    def checkArrayClass(Class it) {
+        if(qualifiedName == arrayClassName) {
+            if(actualSuperclass != findClass(objectClassName, it))
+               error("The superclass of " + qualifiedName + " must be "+ objectClassName,
+                   it, CLASS__SUPERCLASS, INCORRECT_ARRAY_SUPERCLASS)
         }
         // TODO: Check (built-in) members
     }
     
     @Check
-    def checkTaskClass(Class c) {
-        if(c.qualifiedName == taskClassName) {
-            if(c.actualSuperclass != findClass(objectClassName, c))
-               error("The superclass of " + c.qualifiedName + " must be "+ objectClassName,
-                   c, CLASS__SUPERCLASS, INCORRECT_TASK_SUPERCLASS)
+    def checkTaskClass(Class it) {
+        if(qualifiedName == taskClassName) {
+            if(actualSuperclass != findClass(objectClassName, it))
+               error("The superclass of " + qualifiedName + " must be "+ objectClassName,
+                   it, CLASS__SUPERCLASS, INCORRECT_TASK_SUPERCLASS)
         }
         // TODO: Check (built-in) members
     }
@@ -113,17 +116,17 @@ class RolezValidator extends RolezSystemValidator {
     // TODO: Check string class
     
     @Check
-    def checkCircularInheritance(Class c) {
-        if(c.findSuperclass(c))
-            error("Circular inheritance", c, CLASS__SUPERCLASS, CIRCULAR_INHERITANCE)
+    def checkCircularInheritance(Class it) {
+        if(findSuperclass(it))
+            error("Circular inheritance", it, CLASS__SUPERCLASS, CIRCULAR_INHERITANCE)
     }
     
-    private def boolean findSuperclass(Class c, Class toFind) {
-        switch(c.actualSuperclass) {
+    private def boolean findSuperclass(Class it, Class c) {
+        switch(actualSuperclass) {
             case null: false
-            case toFind: true
+            case c: true
             default:
-                findSuperclass(c.actualSuperclass, toFind)
+                findSuperclass(actualSuperclass, c)
         }
     }
 	
@@ -137,31 +140,31 @@ class RolezValidator extends RolezSystemValidator {
 	 * statically dispatched based on its role.
 	 */
     @Check
-    def checkNoDuplicateMethods(Method m) {
-        val matching = m.enclosingClass.methods.filter[equalSignature(it, m)]
+    def checkNoDuplicateMethods(Method it) {
+        val matching = enclosingClass.methods.filter[m | equalSignature(m, it)]
         if(matching.size < 1)
            throw new AssertionError
         if(matching.size > 1)
-           error("Duplicate method " + m.name + "("+ m.params.join(",") + ")",
+           error("Duplicate method " + name + "("+ params.join(",") + ")",
                NAMED__NAME, DUPLICATE_METHOD)
     }
     
     @Check
-    def checkNoDuplicateFields(Field f) {
-        val matching = f.enclosingClass.fields.filter[name.equals(f.name)]
+    def checkNoDuplicateFields(Field it) {
+        val matching = enclosingClass.fields.filter[f | f.name.equals(name)]
         if(matching.size < 1)
            throw new AssertionError
         if(matching.size > 1)
-           error("Duplicate field " + f.name, NAMED__NAME, DUPLICATE_FIELD)
+           error("Duplicate field " + name, NAMED__NAME, DUPLICATE_FIELD)
     }
     
     @Check
-    def checkNoDuplicateVars(Var v) {
-        val matching = v.enclosingBody.variables.filter[name.equals(v.name)]
+    def checkNoDuplicateVars(Var it) {
+        val matching = enclosingBody.variables.filter[v | v.name.equals(name)]
         if(matching.size < 1)
            throw new AssertionError
         if(matching.size > 1)
-           error("Duplicate variable " + v.name, NAMED__NAME, DUPLICATE_VARIABLE)
+           error("Duplicate variable " + name, NAMED__NAME, DUPLICATE_VARIABLE)
     }
 	
 	/**
@@ -171,18 +174,18 @@ class RolezValidator extends RolezSystemValidator {
 	 * be unsafe.
 	 */
 	@Check
-	def checkOverrides(Method m) {
-	    val superMethods = m.enclosingClass.actualSuperclass
+	def checkOverrides(Method it) {
+	    val superMethods = enclosingClass.actualSuperclass
 	           .allMembers.filter(Method)
-        val matching = superMethods.filter[equalSignature(it, m)]
+        val matching = superMethods.filter[m | equalSignature(m, it)]
 	    
 	    if(matching.size > 0) {
-	        if(m.overriding) {
+	        if(overriding) {
                 for(match : matching) {
-                    if(subtype(envFor(m), m.type, match.type).failed)
+                    if(subtype(envFor(it), type, match.type).failed)
                         error("The return type is incompatible with overridden method" + match,
                             TYPED__TYPE, INCOMPATIBLE_RETURN_TYPE)
-                    if(subrole(match.thisRole, m.thisRole).failed)
+                    if(subrole(match.thisRole, thisRole).failed)
                         error("This role of \"this\" is incompatible with overridden method" + match,
                             TYPED__TYPE, INCOMPATIBLE_THIS_ROLE)
                 }
@@ -192,60 +195,64 @@ class RolezValidator extends RolezSystemValidator {
                         actually overrides a superclass method",
                     NAMED__NAME, MISSING_OVERRIDE)
         }
-        else if(m.overriding)
+        else if(overriding)
            error("Method must override a superclass method",
                NAMED__NAME, INCORRECT_OVERRIDE)
 	}
 	
 	@Check
-	def checkReturn(Method m) {
-	    if(!(m.type instanceof Unit)) {
-	        checkReturnExpr(m.body)
-	    }
+	def checkReturn(Method it) {
+	    if(!(type instanceof Unit))
+	        checkReturnExpr(body)
 	}
 	
 	/**
 	 * Checks if the given statement is guaranteed to return an expression,
 	 * reports an error otherwise.
 	 */
-	private def void checkReturnExpr(Stmt s) {
-	    switch (s) {
+	private def void checkReturnExpr(Stmt it) {
+	    switch(it) {
             ReturnExpr: { /* Found it! */ }
             Block: {
-                if(s.stmts.empty)
-                    error("Method must return a value of type " + s.enclosingMethod.type.stringRep,
-                        s, null, MISSING_RETURN)
+                if(stmts.empty)
+                    error("Method must return a value of type " + enclosingMethod.type.stringRep,
+                        it, null, MISSING_RETURN)
                 else
-                    checkReturnExpr(s.stmts.last)
+                    checkReturnExpr(stmts.last)
             }
             IfStmt: {
-                checkReturnExpr(s.thenPart)
-                if(s.elsePart == null)
-                    error("Method must return a value of type " + s.enclosingMethod.type.stringRep,
-                        s, null, MISSING_RETURN)
+                checkReturnExpr(thenPart)
+                if(elsePart == null)
+                    error("Method must return a value of type " + enclosingMethod.type.stringRep,
+                        it, null, MISSING_RETURN)
                 else
-                    checkReturnExpr(s.elsePart)
+                    checkReturnExpr(elsePart)
             }
             default:
-                if(s != null)
-                    error("Method must return a value of type " + s.enclosingMethod.type.stringRep,
-                        s, null, MISSING_RETURN)
+                if(it != null)
+                    error("Method must return a value of type " + enclosingMethod.type.stringRep,
+                        it, null, MISSING_RETURN)
         }
         // IMPROVE: Better handling of dead code
     }
     
     @Check
-    def checkSimpleClassRef(SimpleClassRef ref) {
-        if(ref.clazz == findClass(arrayClassName, ref))
-            error("Class " + ref.clazz.name + " takes type arguments",
-                ref, CLASS_REF__CLAZZ, MISSING_TYPE_ARGS)
+    def checkSimpleClassRef(SimpleClassRef it) {
+        if(clazz == findClass(arrayClassName, it))
+            error("Class " + clazz.name + " takes type arguments",
+                it, CLASS_REF__CLAZZ, MISSING_TYPE_ARGS)
     }
     
     @Check
-    def checkGenericClassRef(GenericClassRef ref) {
-        if(ref.clazz != findClass(arrayClassName, ref))
-            error("Class " + ref.clazz.name + " does not take type arguments",
-                ref, GENERIC_CLASS_REF__TYPE_ARG, INCORRECT_TYPE_ARGS)
+    def checkGenericClassRef(GenericClassRef it) {
+        if(clazz != findClass(arrayClassName, it))
+            error("Class " + clazz.name + " does not take type arguments",
+                it, GENERIC_CLASS_REF__TYPE_ARG, INCORRECT_TYPE_ARGS)
+    }
+    
+    @Check
+    def checkValFieldInitialization(Constructor it) {
+        // TODO: This requires a data flow analysis of sorts...
     }
     
 	/*

@@ -68,10 +68,35 @@ class TypeSystemTest {
     def testTAssignmentNotAssignable() {
         parse('''
             task Main: {
+                5 = 3;
+            }
+        ''').assertError(INT_LITERAL, AEXPR, "assign", "5")
+        parse('''
+            class rolez.lang.Object
+            class A {
+                def pure foo: {}
+            }
+            task Main: {
+                new A.foo() = 3;
+            }
+        ''').assertError(MEMBER_ACCESS, AMEMBERACCESS, "assign", "foo()")
+        
+        parse('''
+            task Main: {
                 val x: int;
                 x = 5;
             }
         ''').assertError(VAR_REF, AVARREF, "assign", "value")
+        
+        parse('''
+            class rolez.lang.Object
+            class A {
+                val x: int
+                def pure foo: {
+                    this.x = 4;
+                }
+            }
+        ''').assertError(MEMBER_ACCESS, null, "assign", "value field")
     }
     
     @Test
@@ -754,6 +779,15 @@ class TypeSystemTest {
             program.findClass("A").findMethod("foo").lastExpr.type
                 .assertThat(isRoleType(expected, classRef(program.findClass("A"))))
         }
+        
+        val program = parse('''
+            class rolez.lang.Object
+            class A {
+                new { this; }
+            }
+        ''')
+        program.findClass("A").constructors.head.lastExpr.type
+            .assertThat(isRoleType(READWRITE, classRef(program.findClass("A"))))
     }
     
     @Test

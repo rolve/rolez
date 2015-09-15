@@ -509,4 +509,45 @@ class ValidatorTest {
             class D extends A
         ''').assertError(CLASS, CIRCULAR_INHERITANCE)
     }
+    
+    @Test
+    def testValFieldsAreInitializedOnce() {
+        parse('''
+            class rolez.lang.Object
+            class A {
+                val i: int
+                new {
+                    this.i = 3;
+                }
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object
+            class A {
+                val i: int
+            }
+        ''').assertError(FIELD, VAL_FIELD_NOT_INITIALIZED)
+        parse('''
+            class rolez.lang.Object
+            class A {
+                val i: int
+                new {}
+            }
+        ''').assertError(CONSTRUCTOR, VAL_FIELD_NOT_INITIALIZED, "i")
+        
+        parse('''
+            class rolez.lang.Object
+            class A {
+                val x: int
+                new {
+                    this.x = 3;
+                    this.x = 4;
+                }
+            }
+        ''').assertError(MEMBER_ACCESS, VAL_FIELD_OVERINITIALIZED,
+            "initialize", "value field more than once")
+    }
+    
+    // TODO: Test that variables are initialized before they're used
 }

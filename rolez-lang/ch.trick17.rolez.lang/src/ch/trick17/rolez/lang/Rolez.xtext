@@ -73,6 +73,8 @@ IfStmt:
 WhileLoop:
     'while' '(' condition=Expr ')' body=Stmt;
 
+// TODO: for-each and maybe parallel for-each
+
 Return:
     ReturnNothing | ReturnExpr;
 
@@ -132,6 +134,7 @@ UnaryNot returns Expr:
 
 MemberAccess returns Expr:
     SimpleExpr ({MemberAccess.target=current} '.' selector=Selector)*;
+    // TODO: Allow member accesses without "this"
 
 Selector: FieldSelector | MethodSelector;
 

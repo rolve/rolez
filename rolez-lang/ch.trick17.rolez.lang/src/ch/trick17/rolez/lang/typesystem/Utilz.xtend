@@ -27,9 +27,11 @@ import org.eclipse.xtext.nodemodel.util.NodeModelUtils
 import org.eclipse.xtext.scoping.IScopeProvider
 
 import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
+import static ch.trick17.rolez.lang.rolez.Role.*
 import static java.util.Arrays.asList
 
 import static extension org.eclipse.emf.ecore.util.EcoreUtil.copy
+import ch.trick17.rolez.lang.rolez.Task
 
 /** 
  * Utility functions for Rolez language constructs
@@ -103,12 +105,18 @@ class Utilz {
     }
     
     def envFor(EObject o) {
-        val method = o.enclosingMethod
-        if(method == null)
-            new RuleEnvironment
-        else {
-            val thisType = roleType(method.thisRole, classRef(method.enclosingClass))
-            new RuleEnvironment(new RuleEnvironmentEntry("this", thisType))
+        val body = o.enclosingBody
+        switch(body) {
+            case null: new RuleEnvironment
+            Task: new RuleEnvironment
+            Method: {
+                val thisType = roleType(body.thisRole, classRef(body.enclosingClass))
+                new RuleEnvironment(new RuleEnvironmentEntry("this", thisType))
+            }
+            Constructor: {
+                val thisType = roleType(READWRITE, classRef(body.enclosingClass))
+                new RuleEnvironment(new RuleEnvironmentEntry("this", thisType))
+            }
         }
     }
     

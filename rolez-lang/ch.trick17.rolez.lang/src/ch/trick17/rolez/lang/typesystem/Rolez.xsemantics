@@ -49,6 +49,7 @@ import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
 import static ch.trick17.rolez.lang.rolez.Role.*
 import ch.trick17.rolez.lang.rolez.DoubleLiteral
 import ch.trick17.rolez.lang.typesystem.Utilz
+import ch.trick17.rolez.lang.rolez.Constructor
 
 system ch.trick17.rolez.lang.typesystem.RolezSystem
 
@@ -78,8 +79,7 @@ judgments {
     equalType |- Type left ~~ Type right error "equal type"
     
     assignable |= Expr e
-        error "Cannot assign to " + e.stringRep
-        source e
+        error "Cannot assign to " + e.stringRep source e
 }
 
 auxiliary leastCommonSuperrole(Role r1, Role r2) {
@@ -124,12 +124,10 @@ from {
     G |- e.right : var Type rightType
     
     G |- leftType <: rightType
-    or
-    G |- rightType <: leftType
-    or
-    fail
-        error "Cannot compare " + leftType.stringRep + " to " + rightType.stringRep
-        source e
+        or G |- rightType <: leftType
+        or fail
+            error "Cannot compare " + leftType.stringRep + " to " + rightType.stringRep
+            source e
 }
 
 rule TRelationalExpr
@@ -141,14 +139,10 @@ from {
     {
         G |- leftType  <: intType
         G |- rightType <: intType
-    }
-    or
-    {
+    } or {
         G |- leftType  <: charType
         G |- rightType <: charType
-    }
-    or
-    fail
+    } or fail
         error "Cannot compare " + leftType.stringRep + " to " + rightType.stringRep
         source e
 }
@@ -165,14 +159,11 @@ from {
         
         G |- leftType <: stringType or G |- rightType <: stringType     
         t = stringType
-    }
-    or
-    {
+    } or {
         G |- leftType  <: intType
         G |- rightType <: intType
         t = intType
-    }
-    or fail
+    } or fail
         error "The operator + is undefined for the argument types "
             + leftType.stringRep + ", " + rightType.stringRep
         source e
@@ -184,14 +175,12 @@ from {
     G |- c.expr : var Type exprType
     
     G |- exprType <: c.type // Upcasts are always fine
-    or
-    {
+    or {
         // Downcasts only allowed if role stays the same and of there is a subclass relation
         c.type instanceof RoleType && exprType instanceof RoleType
         (exprType as RoleType).role == (c.type as RoleType).role
         G |- (c.type as RoleType).base <~ (exprType as RoleType).base
-    }
-    or fail
+    } or fail
         error "Cannot cast " + exprType.stringRep + " to " + c.type.stringRep
         source c
     
@@ -250,8 +239,7 @@ from {
 
 rule TThis
     G |- This t : Type type
-    error "Cannot refer to \"this\" in this context"
-    source t
+    error "Cannot refer to \"this\" in this context" source t
 from {
     type = env(G, "this", RoleType)
 }
@@ -273,8 +261,7 @@ from {
 
 rule TStart
     G |- Start s : Type t
-    error "rolez.lang.Task class is not defined"
-    source s
+    error "rolez.lang.Task class is not defined" source s
 from {
     val taskClass = findClass(taskClassName, s)
     taskClass != null
@@ -290,8 +277,7 @@ from {
 
 rule TStringLiteral
     G |- StringLiteral s : Type t
-    error "rolez.lang.String class is not defined"
-    source s
+    error "rolez.lang.String class is not defined" source s
 from {
     val stringClass = findClass(stringClassName, s)
     stringClass != null
@@ -325,9 +311,7 @@ from {
 rule WLocalVarDecl
     G |- LocalVarDecl d
 from {
-    d.initializer == null
-    or
-    G |- d.initializer <| d.variable.type
+    d.initializer == null or G |- d.initializer <| d.variable.type
 }
 
 rule WIfStmt
@@ -336,9 +320,7 @@ from {
     G |- ifStmt.^condition <| booleanType
     G |- ifStmt.thenPart
     
-    ifStmt.elsePart == null
-    or
-    G |- ifStmt.elsePart
+    ifStmt.elsePart == null or G |- ifStmt.elsePart
 }
 
 rule WWhileLoop
@@ -368,11 +350,9 @@ rule ValidArgs
     G |- Argumented a << ParameterizedBody p
 from {
     a.args.size >= p.params.size or fail
-        error "Too few arguments"
-        source a
+        error "Too few arguments" source a
     a.args.size == p.params.size or fail
-        error "Too many arguments"
-        source a
+        error "Too many arguments" source a
     
     val i = a.args.iterator
     for(t : p.params.map[type]) {
@@ -451,8 +431,7 @@ from {
     left.base instanceof GenericClassRef == right.base instanceof GenericClassRef
     
     left.base instanceof SimpleClassRef
-    or
-    G |- (left.base as GenericClassRef).typeArg ~~ (right.base as GenericClassRef).typeArg
+        or G |- (left.base as GenericClassRef).typeArg ~~ (right.base as GenericClassRef).typeArg
 }
 
 rule EqualTypeGeneral
@@ -462,8 +441,7 @@ from { fail }
 
 rule AVarRef
     G |= VarRef r
-    error "Cannot assign to a value"
-    source r
+    error "Cannot assign to a value" source r
 from {
     r.variable.kind == VarKind.VAR
 }
@@ -472,12 +450,13 @@ rule AMemberAccess
     G |= MemberAccess a
 from {
     a.selector instanceof FieldSelector
-    (a.selector as FieldSelector).field.kind == VarKind.VAR or fail
-        error "Cannot assign to a value field" source a
+    (a.selector as FieldSelector).field.kind == VarKind.VAR
+        or a.target instanceof This && a.enclosingBody instanceof Constructor
+        or fail error "Cannot assign to a value field" source a
     
     G |- a.target : var RoleType type
-    G |- type.role <! READWRITE or fail
-        error "Cannot assign to field of " + type.role + " object" source a
+    G |- type.role <! READWRITE
+        or fail error "Cannot assign to field of " + type.role + " object" source a
 }
 
 rule AExpr
