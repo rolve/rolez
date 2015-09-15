@@ -64,6 +64,20 @@ class LinkingTest {
             class B extends A
         ''', set).assertNoErrors
         
+        // Classes can be referred to using their fully qualified name
+        set = newResourceSet.with("class rolez.lang.Object").with('''
+            package foo.bar
+            class A
+        ''')
+        parse('''
+            package a.b
+            class B extends foo.bar.A {
+                def pure foo: {
+                    val a: pure foo.bar.A;
+                }
+            }
+        ''', set).assertNoErrors
+        
         // Classes can be imported
         set = newResourceSet.with("class rolez.lang.Object").with('''
             package foo.bar
@@ -110,6 +124,7 @@ class LinkingTest {
         parse('''
             package foo.bar
             class B extends A
+            class C extends rolez.lang.A
         ''', set).assertNoErrors
         
         set = newResourceSet.with("class rolez.lang.Object").with('''

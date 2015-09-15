@@ -22,7 +22,7 @@ ClassLike:
     Class | Task;
 
 Class:
-    'class' name=QualifiedName ('extends' superclass=[Class])?
+    'class' name=QualifiedName ('extends' superclass=[Class|QualifiedName])?
     ('{'
         (constructors+=Constructor | members+=Member)+
     '}')?;
@@ -146,12 +146,10 @@ SimpleExpr returns Expr:
 VarRef: variable=[Var];
 
 New:
-    'new' classRef=ClassRef
-    ('(' args+=Expr (',' args+=Expr)* ')')?;
+    'new' classRef=UnambiguousClassRef ('(' args+=Expr (',' args+=Expr)* ')')?;
 
 Start:
-    'start' taskRef=TaskRef
-    ('(' args+=Expr (',' args+=Expr)* ')')?;
+    'start' taskRef=UnambiguousTaskRef ('(' args+=Expr (',' args+=Expr)* ')')?;
 
 Parenthesized: '(' expr=Expr ')';
 
@@ -200,14 +198,22 @@ ClassRef:
     SimpleClassRef | GenericClassRef;
 
 SimpleClassRef:
-    clazz=[Class] | '(' clazz=[Class|QualifiedName] ')';
-    // To avoid ambiguity with field reads, qualified names must be in parentheses
+    clazz=[Class|QualifiedName];
 
 GenericClassRef:
     clazz=[Class|QualifiedName] '[' typeArg=Type ']';
 
+UnambiguousClassRef returns ClassRef:
+    {SimpleClassRef} '(' clazz=[Class|QualifiedName] ')'
+    | {SimpleClassRef} clazz=[Class]
+    | GenericClassRef;
+
+UnambiguousTaskRef returns TaskRef:
+    {SimpleTaskRef} '(' task=[Task|QualifiedName] ')'
+    | {SimpleTaskRef} task=[Task];
+
 TaskRef:
-    (task=[Task] | '(' task=[Task|QualifiedName] ')');
+    task=[Task|QualifiedName];
 
 Var:
     LocalVar | => Param; // => only needed to avoid warnings. Rule is not used anyway.
