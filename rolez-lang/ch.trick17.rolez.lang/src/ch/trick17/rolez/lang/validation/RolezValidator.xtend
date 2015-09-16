@@ -31,7 +31,6 @@ import org.eclipse.xtext.validation.Check
 
 import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
 import static ch.trick17.rolez.lang.rolez.VarKind.*
-import ch.trick17.rolez.lang.rolez.RolezPackage
 
 /**
  * This class contains custom validation rules. 

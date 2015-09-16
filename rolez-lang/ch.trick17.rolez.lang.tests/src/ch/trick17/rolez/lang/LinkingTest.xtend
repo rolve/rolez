@@ -73,7 +73,7 @@ class LinkingTest {
             package a.b
             class B extends foo.bar.A {
                 def pure foo: {
-                    val a: pure foo.bar.A;
+                    var a: pure foo.bar.A;
                 }
             }
         ''', set).assertNoErrors

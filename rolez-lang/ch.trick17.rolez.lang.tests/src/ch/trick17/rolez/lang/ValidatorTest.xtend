@@ -415,7 +415,7 @@ class ValidatorTest {
             task Main: {
                 val a: pure Array[int] = new Array[int];
                 var b: readonly Array[readwrite Array[pure A]];
-                val c: readwrite A;
+                var c: readwrite A;
             }
         ''').assertNoErrors
         
