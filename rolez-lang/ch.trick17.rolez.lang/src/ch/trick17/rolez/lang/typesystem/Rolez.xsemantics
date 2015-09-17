@@ -50,6 +50,7 @@ import static ch.trick17.rolez.lang.rolez.Role.*
 import ch.trick17.rolez.lang.rolez.DoubleLiteral
 import ch.trick17.rolez.lang.typesystem.Utilz
 import ch.trick17.rolez.lang.rolez.Constructor
+import ch.trick17.rolez.lang.rolez.TypedBody
 
 system ch.trick17.rolez.lang.typesystem.RolezSystem
 
@@ -336,7 +337,12 @@ axiom WReturnNothing
 rule WReturnExpr
     G |- ReturnExpr r
 from {
-    G |- r.expr <| r.enclosingMethod.type
+    // Apparently, this needs to be in braces:...
+    {r.enclosingBody instanceof TypedBody} or fail
+        error "Cannot return an expression in a " + r.enclosingBody.kind
+        source r
+    
+    G |- r.expr <| (r.enclosingBody as TypedBody).type
 }
 
 rule WExprStmt
@@ -349,10 +355,10 @@ from {
 rule ValidArgs
     G |- Argumented a << ParameterizedBody p
 from {
-    a.args.size >= p.params.size or fail
-        error "Too few arguments" source a
-    a.args.size == p.params.size or fail
-        error "Too many arguments" source a
+    a.args.size >= p.params.size
+        or fail error "Too few arguments" source a
+    a.args.size == p.params.size
+        or fail error "Too many arguments" source a
     
     val i = a.args.iterator
     for(t : p.params.map[type]) {

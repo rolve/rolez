@@ -13,7 +13,7 @@ import it.xsemantics.runtime.StringRepresentation
 class RolezStringRepresentation extends StringRepresentation {
     
     protected def stringRep(Int _)     { "int" }
-    protected def stringRep(Double _)     { "double" }
+    protected def stringRep(Double _)  { "double" }
     protected def stringRep(Boolean _) { "boolean" }
     protected def stringRep(Char _)    { "char" }
     protected def stringRep(Unit _)    { "unit" }
@@ -23,10 +23,7 @@ class RolezStringRepresentation extends StringRepresentation {
         t.role + " " + t.base.string
     }
     
-    protected def stringRep(SimpleClassRef r) {
-        r.clazz.name
-    }
-    
+    protected def stringRep(SimpleClassRef r) { r.clazz.name }
     protected def stringRep(GenericClassRef r) {
         r.clazz.name + "[" + r.typeArg.string + "]"
     }

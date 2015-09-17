@@ -3,20 +3,19 @@
  */
 package ch.trick17.rolez.lang.validation
 
-import ch.trick17.rolez.lang.rolez.Block
+import ch.trick17.rolez.lang.cfg.CfgBuilder
 import ch.trick17.rolez.lang.rolez.Class
 import ch.trick17.rolez.lang.rolez.ClassLike
 import ch.trick17.rolez.lang.rolez.Constructor
 import ch.trick17.rolez.lang.rolez.Field
 import ch.trick17.rolez.lang.rolez.GenericClassRef
-import ch.trick17.rolez.lang.rolez.IfStmt
 import ch.trick17.rolez.lang.rolez.LocalVarDecl
 import ch.trick17.rolez.lang.rolez.Method
 import ch.trick17.rolez.lang.rolez.ParameterizedBody
 import ch.trick17.rolez.lang.rolez.Program
 import ch.trick17.rolez.lang.rolez.ReturnExpr
 import ch.trick17.rolez.lang.rolez.SimpleClassRef
-import ch.trick17.rolez.lang.rolez.Stmt
+import ch.trick17.rolez.lang.rolez.TypedBody
 import ch.trick17.rolez.lang.rolez.Unit
 import ch.trick17.rolez.lang.rolez.Var
 import ch.trick17.rolez.lang.typesystem.RolezSystem
@@ -49,8 +48,7 @@ class RolezValidator extends RolezSystemValidator {
     public static val INCORRECT_OVERRIDE = "incorrect override"
     public static val INCOMPATIBLE_RETURN_TYPE = "incompatible return type"
     public static val INCOMPATIBLE_THIS_ROLE = "incompatible \"this\" role"
-    public static val INCORRECT_RETURN = "incorrect return statement"
-    public static val MISSING_RETURN = "missing return statement"
+    public static val MISSING_RETURN_EXPR = "missing return statement"
     public static val AMBIGUOUS_CALL = "ambiguous call"
     public static val MISSING_TYPE_ARGS = "missing type arguments"
     public static val INCORRECT_TYPE_ARGS = "incorrect type arguments"
@@ -62,8 +60,9 @@ class RolezValidator extends RolezSystemValidator {
     public static val VAL_FIELD_OVERINITIALIZED = "val field overinitialized"
     public static val VAL_NOT_INITIALIZED = "val not initialized"
     public static val VAR_NOT_INITIALIZED = "var not initialized"
-
+    
     @Inject private extension RolezSystem
+    @Inject private extension CfgBuilder
     @Inject private extension Utilz
     
 	@Check
@@ -206,40 +205,18 @@ class RolezValidator extends RolezSystemValidator {
 	}
 	
 	@Check
-	def checkReturn(Method it) {
-	    if(!(type instanceof Unit))
-	        checkReturnExpr(body)
+	def checkReturnExpr(TypedBody it) {
+        if(type instanceof Unit)
+            return;
+	    for(p : controlFlowGraph.exit.predecessors) {
+	        if(p.stmts.empty)
+                error("Method must return a value of type " + type.stringRep,
+                    p.associatedStmt, null, MISSING_RETURN_EXPR)
+            else if(!(p.stmts.last instanceof ReturnExpr))
+                error("Method must return a value of type " + type.stringRep,
+                    p.stmts.last, null, MISSING_RETURN_EXPR)
+	    }
 	}
-	
-	/**
-	 * Checks if the given statement is guaranteed to return an expression,
-	 * reports an error otherwise.
-	 */
-	private def void checkReturnExpr(Stmt it) {
-	    switch(it) {
-            ReturnExpr: { /* Found it! */ }
-            Block: {
-                if(stmts.empty)
-                    error("Method must return a value of type " + enclosingMethod.type.stringRep,
-                        it, null, MISSING_RETURN)
-                else
-                    checkReturnExpr(stmts.last)
-            }
-            IfStmt: {
-                checkReturnExpr(thenPart)
-                if(elsePart == null)
-                    error("Method must return a value of type " + enclosingMethod.type.stringRep,
-                        it, null, MISSING_RETURN)
-                else
-                    checkReturnExpr(elsePart)
-            }
-            default:
-                if(it != null)
-                    error("Method must return a value of type " + enclosingMethod.type.stringRep,
-                        it, null, MISSING_RETURN)
-        }
-        // IMPROVE: Better handling of dead code
-    }
     
     @Check
     def checkSimpleClassRef(SimpleClassRef it) {

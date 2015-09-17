@@ -301,6 +301,13 @@ class ValidatorTest {
                     return 1;
                 }
             }
+            task T: int {
+                return 3;
+            }
+            task U: {}
+            task V: {
+                return;
+            }
         ''').assertNoErrors
     }
     
@@ -311,7 +318,16 @@ class ValidatorTest {
             class A {
                 def pure a: int {}
             }
-        ''').assertError(BLOCK, MISSING_RETURN)
+        ''').assertError(BLOCK, MISSING_RETURN_EXPR)
+        parse('''
+            class rolez.lang.Object
+            class A {
+                def pure a: int {
+                    return;
+                }
+            }
+        ''').assertError(RETURN_NOTHING, MISSING_RETURN_EXPR)
+        
         parse('''
             class rolez.lang.Object
             class A {
@@ -320,7 +336,17 @@ class ValidatorTest {
                         return 0;
                 }
             }
-        ''').assertError(IF_STMT, MISSING_RETURN)
+        ''').assertError(BLOCK, MISSING_RETURN_EXPR)
+        parse('''
+            class rolez.lang.Object
+            class A {
+                def pure a(val i: int): int {
+                    1;
+                    if(i == 0)
+                        return 0;
+                }
+            }
+        ''').assertError(BLOCK, MISSING_RETURN_EXPR)
         parse('''
             class rolez.lang.Object
             class A {
@@ -330,7 +356,28 @@ class ValidatorTest {
                         return 0;
                 }
             }
-        ''').assertError(BLOCK, MISSING_RETURN)
+        ''').assertError(BLOCK, MISSING_RETURN_EXPR)
+        
+        parse('''
+            task Main: int {}
+        ''').assertError(BLOCK, MISSING_RETURN_EXPR)
+        parse('''
+            task Main: int {
+                return;
+            }
+        ''').assertError(RETURN_NOTHING, MISSING_RETURN_EXPR)
+    }
+    
+    @Test
+    def testIncorrectReturn() {
+        parse('''
+            class rolez.lang.Object
+            class A {
+                new {
+                    return 4;
+                }
+            }
+        ''').assertError(RETURN_EXPR, null, "cannot return", "constructor")
     }
     
     @Test

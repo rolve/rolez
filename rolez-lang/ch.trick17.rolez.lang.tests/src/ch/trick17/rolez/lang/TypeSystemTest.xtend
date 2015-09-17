@@ -981,7 +981,7 @@ class TypeSystemTest {
         var program = parse('''
             class rolez.lang.Object
             class rolez.lang.Task
-            task T: int {}
+            task T: int { return 0; }
             task Main: { start T; }
         ''')
         program.main.lastExpr.type
@@ -1000,7 +1000,7 @@ class TypeSystemTest {
             class rolez.lang.Object
             class rolez.lang.Task
             class A
-            task T: readwrite A {}
+            task T: readwrite A { return null; }
             task Main: { start T; }
         ''')
         program.main.lastExpr.type
@@ -1339,6 +1339,11 @@ class TypeSystemTest {
                 def pure a: {
                     return 1;
                 }
+            }
+        ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "unit")
+        parse('''
+            task T: {
+                return 1;
             }
         ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "unit")
         parse('''

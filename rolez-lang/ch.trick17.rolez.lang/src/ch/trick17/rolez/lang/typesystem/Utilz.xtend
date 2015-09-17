@@ -64,29 +64,12 @@ class Utilz {
         result
     }
 
-    def intType() {
-        factory.createInt
-    }
-
-    def doubleType() {
-        factory.createDouble
-    }
-
-    def booleanType() {
-        factory.createBoolean
-    }
-
-    def charType() {
-        factory.createChar
-    }
-
-    def unitType() {
-        factory.createUnit
-    }
-
-    def nullType() {
-        factory.createNull
-    }
+    def intType()     { factory.createInt }
+    def doubleType()  { factory.createDouble }
+    def booleanType() { factory.createBoolean }
+    def charType()    { factory.createChar }
+    def unitType()    { factory.createUnit }
+    def nullType()    { factory.createNull }
 
     def objectClassName() {
         QualifiedName.create("rolez", "lang", "Object")
@@ -258,4 +241,8 @@ class Utilz {
     def refText(EObject o, EReference ref, int index) {
         NodeModelUtils.findNodesForFeature(o, ref).get(index).text
     }
+    
+    def dispatch kind(Method _)      { "method" }
+    def dispatch kind(Constructor _) { "constructor" }
+    def dispatch kind(Task _)        { "task" }
 }

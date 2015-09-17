@@ -225,10 +225,13 @@ Named:
     ClassLike | Typed;
 
 Typed:
-    Member | Task | => Var; // => only needed to avoid warnings. Rule is not used anyway.
+    TypedBody | Field | => Var; // => only needed to avoid warnings. Rule is not used anyway.
 
 ParameterizedBody:
-    Constructor | Method | Task;
+    Constructor | TypedBody;
+
+TypedBody:
+    Method | Task;
 
 Argumented:
     MethodSelector | New | Start;
