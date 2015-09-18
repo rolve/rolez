@@ -312,7 +312,7 @@ class ValidatorTest {
     }
     
     @Test
-    def testMissingReturn() {
+    def testMissingReturnExpr() {
         parse('''
             class rolez.lang.Object
             class A {
@@ -327,6 +327,17 @@ class ValidatorTest {
                 }
             }
         ''').assertError(RETURN_NOTHING, MISSING_RETURN_EXPR)
+        val program = parse('''
+            class rolez.lang.Object
+            class A {
+                def pure a: int {
+                    if(1 == 0)
+                        return;
+                }
+            }
+        ''')
+        program.assertError(RETURN_NOTHING, MISSING_RETURN_EXPR)
+        program.assertError(IF_STMT, MISSING_RETURN_EXPR)
         
         parse('''
             class rolez.lang.Object
@@ -336,7 +347,7 @@ class ValidatorTest {
                         return 0;
                 }
             }
-        ''').assertError(BLOCK, MISSING_RETURN_EXPR)
+        ''').assertError(IF_STMT, MISSING_RETURN_EXPR)
         parse('''
             class rolez.lang.Object
             class A {
@@ -346,7 +357,7 @@ class ValidatorTest {
                         return 0;
                 }
             }
-        ''').assertError(BLOCK, MISSING_RETURN_EXPR)
+        ''').assertError(IF_STMT, MISSING_RETURN_EXPR)
         parse('''
             class rolez.lang.Object
             class A {
@@ -356,7 +367,7 @@ class ValidatorTest {
                         return 0;
                 }
             }
-        ''').assertError(BLOCK, MISSING_RETURN_EXPR)
+        ''').assertError(IF_STMT, MISSING_RETURN_EXPR)
         
         parse('''
             task Main: int {}

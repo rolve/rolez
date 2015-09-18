@@ -1,6 +1,6 @@
-class Object
+class rolez.lang.Object
 
-class String {
+class rolez.lang.String {
 	def pure length: int { return 0; }
 }
 

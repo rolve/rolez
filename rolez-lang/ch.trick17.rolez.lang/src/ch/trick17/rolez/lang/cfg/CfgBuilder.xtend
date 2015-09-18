@@ -6,61 +6,88 @@ import ch.trick17.rolez.lang.rolez.ParameterizedBody
 import ch.trick17.rolez.lang.rolez.Return
 import ch.trick17.rolez.lang.rolez.Stmt
 import ch.trick17.rolez.lang.rolez.WhileLoop
-import java.util.Optional
+
+import static extension java.util.Objects.requireNonNull
 
 class CfgBuilder {
     
+    /* Linkers are used to elegantly connect CFG nodes */
+    
+    package interface Linker {
+        def boolean link(Node n)
+    }
+    
+    private static class NodeHolder implements Linker {
+        public var Node node
+        override link(Node n) {
+            if(node != null) throw new IllegalStateException
+            this.node = n
+            true
+        }
+    }
+    
+    private def Linker linker(StmtNode it) {[ node |
+        if(successor != null) throw new IllegalStateException
+        successor = node.requireNonNull
+        node.addPredecessor(it)
+    ]}
+    
+    private def Linker thenLinker(ConditionNode it) {[node | setSuccessor(node, 0)]}
+    private def Linker elseLinker(ConditionNode it) {[node | setSuccessor(node, 1)]}
+    
+    private def setSuccessor(ConditionNode it, Node node, int index) {
+        if(successors.get(index) != null) throw new IllegalStateException
+        successors.set(index, node.requireNonNull)
+        node.addPredecessor(it)
+    }
+    
+    /* Here comes the implementation */
+    
     def controlFlowGraph(ParameterizedBody it) {
-        val enter = new BasicBlock(body)
-        val exit = new BasicBlock(body)
-        exit.setNoSuccessors()
-        process(body.lift, enter.lift, exit).ifPresent[setSuccessors(exit)]
-        return new ControlFlowGraph(enter, exit)
+        val enter = new NodeHolder
+        val exit = new ExitNode
+        process(body, enter, exit).link(exit)
+        return new ControlFlowGraph(enter.node, exit)
     }
     
-    private def process(Optional<Stmt> s, Optional<BasicBlock> current, BasicBlock exit) {
-        current.flatMap[c | s.flatMap[doProcess(it, c, exit)]]
+    private def dispatch Linker process(Block block, Linker prev, ExitNode exit) {
+        block.stmts.fold(prev, [p, stmt | process(stmt, p, exit)])
     }
     
-    private def dispatch Optional<BasicBlock> doProcess(Block block, BasicBlock current, BasicBlock exit) {
-        block.stmts.fold(current.lift, [b, stmt | process(stmt.lift, b, exit)])
-    }
-    
-    private def dispatch Optional<BasicBlock> doProcess(IfStmt s, BasicBlock current, BasicBlock exit) {
-        val thenBlock = new BasicBlock(s)
-        val elseBlock = s.elsePart.asOptional.map[new BasicBlock(s)]
-        val next = new BasicBlock(current.associatedStmt)
+    private def dispatch Linker process(IfStmt s, Linker prev, ExitNode exit) {
+        val node = new ConditionNode(s.condition)
+        if(!prev.link(node))
+            return [false]
         
-        current.setSuccessors(thenBlock, elseBlock.orElse(next), s.condition)
-        process(s.thenPart.lift, thenBlock.lift, exit).ifPresent[setSuccessors(next)]
-        process(s.elsePart.asOptional, elseBlock, exit).ifPresent[setSuccessors(next)]
+        val thenLinker = process(s.thenPart, node.thenLinker, exit)
+        val elseLinker = 
+            if(s.elsePart == null) node.elseLinker
+            else process(s.elsePart, node.elseLinker, exit);
         
-        if(next.predecessors.empty) Optional.empty
-        else next.lift
+        [val linked = elseLinker.link(it); thenLinker.link(it) || linked]
     }
     
-    private def dispatch Optional<BasicBlock> doProcess(WhileLoop w, BasicBlock current, BasicBlock exit) {
-        val conditionBlock = new BasicBlock(w)
-        val bodyBlock = new BasicBlock(w.body)
-        val next = new BasicBlock(current.associatedStmt)
+    private def dispatch Linker process(WhileLoop w, Linker prev, ExitNode exit) {
+        val node = new ConditionNode(w.condition)
+        if(!prev.link(node))
+            return [false]
         
-        current.setSuccessors(conditionBlock)
-        conditionBlock.setSuccessors(bodyBlock, next, w.condition)
-        process(w.body.lift, bodyBlock.lift, exit).ifPresent[setSuccessors(conditionBlock)]
-        next.lift
+        process(w.body, node.thenLinker, exit).link(node)
+        node.elseLinker
     }
     
-    private def dispatch Optional<BasicBlock> doProcess(Return s, BasicBlock current, BasicBlock exit) {
-        current.stmts += s
-        current.setSuccessors(exit)
-        Optional.empty
+    private def dispatch Linker process(Stmt s, Linker prev, ExitNode exit) {
+        val node = new StmtNode(s)
+        if(prev.link(node))
+            node.linker
+        else
+            [false]
     }
     
-    private def dispatch Optional<BasicBlock> doProcess(Stmt s, BasicBlock current, BasicBlock exit) {
-        current.stmts += s
-        current.lift
+    private def dispatch Linker process(Return r, Linker prev, ExitNode exit) {
+        val node = new StmtNode(r)
+        if(prev.link(node))
+            node.linker.link(exit);
+        [false]
     }
-    
-    private def <T> lift(T t) { Optional.of(t) }
-    private def <T> asOptional(T t) { Optional.ofNullable(t) }
 }

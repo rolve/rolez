@@ -30,6 +30,8 @@ import org.eclipse.xtext.validation.Check
 
 import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
 import static ch.trick17.rolez.lang.rolez.VarKind.*
+import ch.trick17.rolez.lang.cfg.ConditionNode
+import ch.trick17.rolez.lang.cfg.StmtNode
 
 /**
  * This class contains custom validation rules. 
@@ -208,13 +210,20 @@ class RolezValidator extends RolezSystemValidator {
 	def checkReturnExpr(TypedBody it) {
         if(type instanceof Unit)
             return;
-	    for(p : controlFlowGraph.exit.predecessors) {
-	        if(p.stmts.empty)
-                error("Method must return a value of type " + type.stringRep,
-                    p.associatedStmt, null, MISSING_RETURN_EXPR)
-            else if(!(p.stmts.last instanceof ReturnExpr))
-                error("Method must return a value of type " + type.stringRep,
-                    p.stmts.last, null, MISSING_RETURN_EXPR)
+	    val cfg = controlFlowGraph
+	    
+	    if(cfg.exit === cfg.entry)
+            error("Method must return a value of type " + type.stringRep,
+                body, null, MISSING_RETURN_EXPR)
+        for(p : cfg.exit.predecessors) {
+            switch(p) {
+                ConditionNode:
+                    error("Method must return a value of type " + type.stringRep,
+                        p.condition.enclosingStmt, null, MISSING_RETURN_EXPR)
+                StmtNode case !(p.stmt instanceof ReturnExpr):
+                    error("Method must return a value of type " + type.stringRep,
+                        p.stmt, null, MISSING_RETURN_EXPR)
+            }
 	    }
 	}
     
