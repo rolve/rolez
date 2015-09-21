@@ -258,43 +258,43 @@ class TypeSystemTest {
         parse('''
             class rolez.lang.Object
             task Main: { new Object + new Object; }
-        ''').assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "object")
+        ''').assertError(ARITHMETIC_BINARY_EXPR, null, "operator", "undefined", "object")
         parse('''
             class rolez.lang.Object
             class A
             class B
             task Main: { new A - new B; }
-        ''').assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "A", "B")
+        ''').assertError(ARITHMETIC_BINARY_EXPR, null, "operator", "undefined", "A", "B")
         
         parse('''
             class rolez.lang.Object
             class rolez.lang.String
             task Main: { "Hello" - "World"; }
-        ''').assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "String")
+        ''').assertError(ARITHMETIC_BINARY_EXPR, null, "operator", "undefined", "String")
         parse('''
             class rolez.lang.Object
             class rolez.lang.String
             task Main: { "Hello" * new Object; }
-        ''').assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "String", "Object")
+        ''').assertError(ARITHMETIC_BINARY_EXPR, null, "operator", "undefined", "String", "Object")
         parse('''
             class rolez.lang.Object
             class rolez.lang.String
             task Main: { 5 / "World"; }
-        ''').assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "int", "String")
+        ''').assertError(ARITHMETIC_BINARY_EXPR, null, "operator", "undefined", "int", "String")
         parse('''
             class rolez.lang.Object
             class rolez.lang.String
             task Main: { null % "World"; }
-        ''').assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "null", "String")
+        ''').assertError(ARITHMETIC_BINARY_EXPR, null, "operator", "undefined", "null", "String")
         
         parse("task Main: { 'a' * 'b'; }")
-            .assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "char")
+            .assertError(ARITHMETIC_BINARY_EXPR, null, "operator", "undefined", "char")
         parse("task Main: { null / null; }")
-            .assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "null")
+            .assertError(ARITHMETIC_BINARY_EXPR, null, "operator", "undefined", "null")
         parse("task Main: { 5 % '5'; }")
-            .assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "int", "char")
+            .assertError(ARITHMETIC_BINARY_EXPR, null, "operator", "undefined", "int", "char")
         parse("task Main: { true % '5'; }")
-            .assertError(ARITHMETIC_EXPR, null, "operator", "undefined", "boolean", "char")
+            .assertError(ARITHMETIC_BINARY_EXPR, null, "operator", "undefined", "boolean", "char")
     }
     
     @Test

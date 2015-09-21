@@ -94,14 +94,14 @@ Assignment returns Expr:
     OrExpr ({Assignment.left=current} '=' right=Expr)?;
 
 OrExpr returns Expr:
-    AndExpr ({BooleanExpr.left=current} op=OpOr right=AndExpr)?;
+    AndExpr ({LogicalExpr.left=current} op=OpOr right=AndExpr)?;
 
-enum OpOr returns OpBoolean: OR='||';
+enum OpOr returns OpLogical: OR='||';
 
 AndExpr returns Expr:
-    EqualityExpr ({BooleanExpr.left=current} op=OpAnd right=EqualityExpr)?;
+    EqualityExpr ({LogicalExpr.left=current} op=OpAnd right=EqualityExpr)?;
 
-enum OpAnd returns OpBoolean: AND='&&';
+enum OpAnd returns OpLogical: AND='&&';
 
 EqualityExpr returns Expr:
     RelationalExpr ({EqualityExpr.left=current} op=OpEquality right=RelationalExpr)?;
@@ -114,12 +114,12 @@ RelationalExpr returns Expr:
 enum OpRelational: SMALLER='<' | GREATER='>' | SMALLER_EQUALS='<=' | GREATER_EQUALS='>=';
 
 AdditiveExpr returns Expr:
-    MultiplicativeExpr ({ArithmeticExpr.left=current} op=OpAdditive right=MultiplicativeExpr)*;
+    MultiplicativeExpr ({ArithmeticBinaryExpr.left=current} op=OpAdditive right=MultiplicativeExpr)*;
 
 enum OpAdditive returns OpArithmetic: PLUS='+' | MINUS='-';
 
 MultiplicativeExpr returns Expr:
-    Cast ({ArithmeticExpr.left=current} op=OpMultiplicative right=Cast)*;
+    Cast ({ArithmeticBinaryExpr.left=current} op=OpMultiplicative right=Cast)*;
 
 enum OpMultiplicative returns OpArithmetic: TIMES='*' | DIVIDED_BY='/' | MODULO='%';
 
@@ -152,7 +152,7 @@ New:
     'new' classRef=UnambiguousClassRef ('(' args+=Expr (',' args+=Expr)* ')')?;
 
 Start:
-    'start' taskRef=UnambiguousTaskRef ('(' args+=Expr (',' args+=Expr)* ')')?;
+    'start' taskRef=TaskRef ('(' args+=Expr (',' args+=Expr)* ')')?;
 
 Parenthesized: '(' expr=Expr ')';
 
@@ -211,21 +211,35 @@ UnambiguousClassRef returns ClassRef:
     | {SimpleClassRef} clazz=[Class]
     | GenericClassRef;
 
-UnambiguousTaskRef returns TaskRef:
-    {SimpleTaskRef} '(' task=[Task|QualifiedName] ')'
-    | {SimpleTaskRef} task=[Task];
-
 TaskRef:
-    task=[Task|QualifiedName];
+    '(' task=[Task|QualifiedName] ')' | task=[Task];
+
+
+/* 
+ * The following rules are only used to modify the type hierarchy. The
+ * various IDs suppress ambiguity warnings. It's a mess...
+ */
+
+Expr2 returns Expr:
+    UnaryExpr | BinaryExpr;
+
+UnaryExpr:
+    {UnaryMinus} | ID {UnaryNot} | ID ID {Parenthesized};
+
+BinaryExpr:
+    BooleanBinaryExpr | {ArithmeticBinaryExpr};
+
+BooleanBinaryExpr:
+    ID {LogicalExpr} | ID ID {EqualityExpr} | ID ID ID {RelationalExpr};
 
 Var:
-    LocalVar | => Param; // => only needed to avoid warnings. Rule is not used anyway.
+    LocalVar | {Param};
 
 Named:
     ClassLike | Typed;
 
 Typed:
-    TypedBody | Field | => Var; // => only needed to avoid warnings. Rule is not used anyway.
+    TypedBody | Field | {Var};
 
 ParameterizedBody:
     Constructor | TypedBody;
