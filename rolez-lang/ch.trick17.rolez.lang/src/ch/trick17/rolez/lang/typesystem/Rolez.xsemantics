@@ -1,3 +1,4 @@
+import ch.trick17.rolez.lang.RolezExtensions
 import ch.trick17.rolez.lang.rolez.Argumented
 import ch.trick17.rolez.lang.rolez.ArithmeticBinaryExpr
 import ch.trick17.rolez.lang.rolez.Assignment
@@ -48,14 +49,18 @@ import ch.trick17.rolez.lang.rolez.WhileLoop
 import ch.trick17.rolez.lang.validation.AbstractRolezValidator
 import java.util.Set
 
+import static ch.trick17.rolez.lang.Constants.*
 import static ch.trick17.rolez.lang.rolez.Role.*
 import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
+
+import static extension org.eclipse.emf.ecore.util.EcoreUtil.copy
 
 system ch.trick17.rolez.lang.typesystem.RolezSystem
 
 validatorExtends AbstractRolezValidator
 
-inject extension Utilz _
+inject extension RolezExtensions _
+inject extension RolezUtils __
 
 auxiliary {
     leastCommonSuperrole(Role r1, Role r2): Role
@@ -69,7 +74,7 @@ judgments {
     validArgs |- Argumented a << ParameterizedBody p
     
     subtypeExpr |- Expr left <| Type right
-        error "Type mismatch: " + left.type.value.stringRep + " is not a subtype of " + right.stringRep
+        error "Type mismatch: " + left.type.value?.string + " is not a subtype of " + right.string
         source left
     
     subtype  |- Type  left <: Type  right error "subtype" // Apparently, an error message is necessary for sensible error message selection
@@ -79,7 +84,7 @@ judgments {
     equalType |- Type left ~~ Type right error "equal type"
     
     assignable |= Expr e
-        error "Cannot assign to " + e.stringRep source e
+        error "Cannot assign to " + e.string source e
 }
 
 auxiliary leastCommonSuperrole(Role r1, Role r2) {
@@ -111,14 +116,14 @@ from {
 }
 
 rule TLogicalExpr
-    G |- LogicalExpr e : booleanType
+    G |- LogicalExpr e : newBooleanType
 from {
-    G |- e.left  <| booleanType
-    G |- e.right <| booleanType
+    G |- e.left  <| newBooleanType
+    G |- e.right <| newBooleanType
 }
 
 rule TEqualityExpr
-    G |- EqualityExpr e : booleanType
+    G |- EqualityExpr e : newBooleanType
 from {
     G |- e.left  : var Type leftType
     G |- e.right : var Type rightType
@@ -126,24 +131,24 @@ from {
     G |- leftType <: rightType
         or G |- rightType <: leftType
         or fail
-            error "Cannot compare " + leftType.stringRep + " to " + rightType.stringRep
+            error "Cannot compare " + leftType.string + " to " + rightType.string
             source e
 }
 
 rule TRelationalExpr
-    G |- RelationalExpr e : booleanType
+    G |- RelationalExpr e : newBooleanType
 from {
     G |- e.left  : var Type leftType
     G |- e.right : var Type rightType
     
     {
-        G |- leftType  <: intType
-        G |- rightType <: intType
+        G |- leftType  <: newIntType
+        G |- rightType <: newIntType
     } or {
-        G |- leftType  <: charType
-        G |- rightType <: charType
+        G |- leftType  <: newCharType
+        G |- rightType <: newCharType
     } or fail
-        error "Cannot compare " + leftType.stringRep + " to " + rightType.stringRep
+        error "Cannot compare " + leftType.string + " to " + rightType.string
         source e
 }
 
@@ -155,17 +160,17 @@ from {
     
     {
         e.op == OpArithmetic.PLUS;
-        val stringType = roleType(READONLY, classRef(findClass(stringClassName, e)))
+        val stringType = newRoleType(READONLY, newClassRef(findClass(stringClassName, e)))
         
         G |- leftType <: stringType or G |- rightType <: stringType     
         t = stringType
     } or {
-        G |- leftType  <: intType
-        G |- rightType <: intType
-        t = intType
+        G |- leftType  <: newIntType
+        G |- rightType <: newIntType
+        t = newIntType
     } or fail
         error "The operator + is undefined for the argument types "
-            + leftType.stringRep + ", " + rightType.stringRep
+            + leftType.string + ", " + rightType.string
         source e
 }
 
@@ -181,7 +186,7 @@ from {
         (exprType as RoleType).role == (c.type as RoleType).role
         G |- (c.type as RoleType).base <~ (exprType as RoleType).base
     } or fail
-        error "Cannot cast " + exprType.stringRep + " to " + c.type.stringRep
+        error "Cannot cast " + exprType.string + " to " + c.type.string
         source c
     
     t = c.type
@@ -189,15 +194,15 @@ from {
 }
 
 rule TUnaryMinus
-    G |- UnaryMinus m : intType
+    G |- UnaryMinus m : newIntType
 from {
-    G |- m.expr <| intType
+    G |- m.expr <| newIntType
 }
 
 rule TUnaryNot
-    G |- UnaryNot n : booleanType
+    G |- UnaryNot n : newBooleanType
 from {
-    G |- n.expr <| booleanType
+    G |- n.expr <| newBooleanType
 }
 
 rule TMemberAccess
@@ -210,21 +215,21 @@ from {
             FieldSelector: {
                 G |- targetType.role <! READONLY or fail
                     error "Role mismatch: Cannot access field of a "
-                        + targetType.role.stringRep + " target"
+                        + targetType.role.string + " target"
                     source a.target
                 var fieldType = selector.field.type
                 switch(fieldType) {
                     PrimitiveType: { t = fieldType }
                     RoleType: {
                         val role = leastCommonSuperrole(targetType.role, fieldType.role)
-                        t = roleType(role, fieldType.base)
+                        t = newRoleType(role, fieldType.base.copy)
                     }
                 }
             }
             MethodSelector: {
                 G |- targetType.role <! selector.method.thisRole or fail
-                    error "Role mismatch: Cannot call method " + selector.method.stringRep
-                        +" on a " + targetType.role.stringRep + " target"
+                    error "Role mismatch: Cannot call method " + selector.method.string
+                        +" on a " + targetType.role.string + " target"
                     source a.target
                 t = selector.method.type
             }
@@ -232,7 +237,7 @@ from {
     }
     else {
         fail
-        error "Illegal target type for member access: " + targetType.stringRep
+        error "Illegal target type for member access: " + targetType.string
         source a.target
     }
 }
@@ -248,7 +253,7 @@ axiom TVarRef
     G |- VarRef r : r.variable.type
 
 rule TNew
-    G |- New n : roleType(READWRITE, n.classRef)
+    G |- New n : newRoleType(READWRITE, n.classRef.copy)
 from {
     val maxSpecific = n.classRef.clazz.allConstructors.maximallySpecific(n)
     maxSpecific.size == 1 or fail
@@ -266,7 +271,7 @@ from {
     val taskClass = findClass(taskClassName, s)
     taskClass != null
     G |- s << s.taskRef.task
-    t = roleType(PURE, classRef(taskClass, s.taskRef.task.type))
+    t = newRoleType(PURE, newClassRef(taskClass, s.taskRef.task.type.copy))
 }
 
 rule TParenthesized
@@ -281,23 +286,23 @@ rule TStringLiteral
 from {
     val stringClass = findClass(stringClassName, s)
     stringClass != null
-    t = roleType(READWRITE, classRef(stringClass))
+    t = newRoleType(READWRITE, newClassRef(stringClass))
 }
 
 axiom TNullLiteral
-    G |- NullLiteral __ : nullType
+    G |- NullLiteral __ : newNullType
 
 axiom TIntLiteral
-    G |- IntLiteral __ : intType
+    G |- IntLiteral __ : newIntType
 
 axiom TDoubleLiteral
-    G |- DoubleLiteral __ : doubleType
+    G |- DoubleLiteral __ : newDoubleType
 
 axiom TBooleanLiteral
-    G |- BooleanLiteral __ : booleanType
+    G |- BooleanLiteral __ : newBooleanType
 
 axiom TCharLiteral
-    G |- CharLiteral __ : charType
+    G |- CharLiteral __ : newCharType
 
 
 rule WBlock
@@ -317,7 +322,7 @@ from {
 rule WIfStmt
     G |- IfStmt ifStmt
 from {
-    G |- ifStmt.^condition <| booleanType
+    G |- ifStmt.^condition <| newBooleanType
     G |- ifStmt.thenPart
     
     ifStmt.elsePart == null or G |- ifStmt.elsePart
@@ -326,7 +331,7 @@ from {
 rule WWhileLoop
     G |- WhileLoop l
 from {
-    G |- l.^condition <| booleanType
+    G |- l.^condition <| newBooleanType
     G |- l.body
 }
 
@@ -477,7 +482,7 @@ from {
         empty |- s
     }
     else { // Method or constructor
-        val thisType = roleType(READWRITE, classRef(class))
+        val thisType = newRoleType(READWRITE, newClassRef(class))
         "this" <- thisType |- s
     }
 }

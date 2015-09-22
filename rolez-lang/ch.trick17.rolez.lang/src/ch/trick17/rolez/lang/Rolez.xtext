@@ -227,10 +227,7 @@ UnaryExpr:
     {UnaryMinus} | ID {UnaryNot} | ID ID {Parenthesized};
 
 BinaryExpr:
-    BooleanBinaryExpr | {ArithmeticBinaryExpr};
-
-BooleanBinaryExpr:
-    ID {LogicalExpr} | ID ID {EqualityExpr} | ID ID ID {RelationalExpr};
+    {LogicalExpr} | ID {EqualityExpr} | ID ID {RelationalExpr} | ID ID ID {ArithmeticBinaryExpr};
 
 Var:
     LocalVar | {Param};

@@ -2,7 +2,6 @@ package ch.trick17.rolez.lang
 
 import ch.trick17.rolez.lang.cfg.CfgBuilder
 import ch.trick17.rolez.lang.cfg.ControlFlowGraph
-import ch.trick17.rolez.lang.cfg.Node
 import ch.trick17.rolez.lang.rolez.ParameterizedBody
 import ch.trick17.rolez.lang.rolez.Program
 import java.util.HashSet
@@ -19,17 +18,16 @@ import static org.hamcrest.Matchers.*
 
 import static extension org.hamcrest.MatcherAssert.assertThat
 import static extension org.junit.Assert.assertEquals
+import ch.trick17.rolez.lang.cfg.Node
 
 @RunWith(XtextRunner)
 @InjectWith(RolezInjectorProvider)
 class CfgBuilderTest {
     
+    @Inject extension CfgBuilder
+    @Inject extension TestUtilz
     @Inject extension ParseHelper<Program>
     @Inject extension ValidationTestHelper
-    @Inject extension TestUtilz
-    @Inject extension CfgBuilder
-    
-    // TODO: Test the WHOLE structure!
     
     @Test
     def testBlock() {

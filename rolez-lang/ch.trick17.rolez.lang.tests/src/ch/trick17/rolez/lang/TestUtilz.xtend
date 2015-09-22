@@ -15,7 +15,7 @@ import ch.trick17.rolez.lang.rolez.SimpleClassRef
 import ch.trick17.rolez.lang.rolez.Task
 import ch.trick17.rolez.lang.rolez.Type
 import ch.trick17.rolez.lang.typesystem.RolezSystem
-import ch.trick17.rolez.lang.typesystem.Utilz
+import ch.trick17.rolez.lang.typesystem.RolezUtils
 import java.util.Random
 import javax.inject.Inject
 import org.eclipse.emf.common.util.URI
@@ -34,9 +34,10 @@ import static extension org.hamcrest.MatcherAssert.assertThat
 
 class TestUtilz {
     
-    @Inject extension RolezSystem system
+    @Inject RolezSystem system
+    @Inject extension RolezExtensions
+    @Inject extension RolezUtils
     @Inject extension ValidationTestHelper
-    @Inject extension Utilz
     
     private val r = new Random()
 
@@ -101,7 +102,7 @@ class TestUtilz {
     }
     
     def Matcher<Type> isRoleType(Role role, ClassRef base) {
-        new RoleTypeMatcher(system, roleType(role, base))
+        new RoleTypeMatcher(system, newRoleType(role, base))
     }
     
     static class RoleTypeMatcher extends BaseMatcher<Type> {

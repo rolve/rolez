@@ -3,7 +3,10 @@
  */
 package ch.trick17.rolez.lang.validation
 
+import ch.trick17.rolez.lang.RolezExtensions
 import ch.trick17.rolez.lang.cfg.CfgBuilder
+import ch.trick17.rolez.lang.cfg.ConditionNode
+import ch.trick17.rolez.lang.cfg.StmtNode
 import ch.trick17.rolez.lang.rolez.Class
 import ch.trick17.rolez.lang.rolez.ClassLike
 import ch.trick17.rolez.lang.rolez.Constructor
@@ -19,7 +22,7 @@ import ch.trick17.rolez.lang.rolez.TypedBody
 import ch.trick17.rolez.lang.rolez.Unit
 import ch.trick17.rolez.lang.rolez.Var
 import ch.trick17.rolez.lang.typesystem.RolezSystem
-import ch.trick17.rolez.lang.typesystem.Utilz
+import ch.trick17.rolez.lang.typesystem.RolezUtils
 import ch.trick17.rolez.lang.typesystem.validation.RolezSystemValidator
 import java.util.HashSet
 import java.util.Set
@@ -28,10 +31,9 @@ import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.EStructuralFeature
 import org.eclipse.xtext.validation.Check
 
+import static ch.trick17.rolez.lang.Constants.*
 import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
 import static ch.trick17.rolez.lang.rolez.VarKind.*
-import ch.trick17.rolez.lang.cfg.ConditionNode
-import ch.trick17.rolez.lang.cfg.StmtNode
 
 /**
  * This class contains custom validation rules. 
@@ -63,9 +65,10 @@ class RolezValidator extends RolezSystemValidator {
     public static val VAL_NOT_INITIALIZED = "val not initialized"
     public static val VAR_NOT_INITIALIZED = "var not initialized"
     
-    @Inject private extension RolezSystem
-    @Inject private extension CfgBuilder
-    @Inject private extension Utilz
+    @Inject private extension RolezExtensions
+    @Inject private RolezSystem system
+    @Inject private CfgBuilder builder
+    @Inject private RolezUtils utils
     
 	@Check
     def checkClassNameStartsWithCapital(Class it) {
@@ -76,7 +79,7 @@ class RolezValidator extends RolezSystemValidator {
 	
 	@Check
 	def checkObjectExists(Class it) {
-	    if(superclass == null && findClass(objectClassName, it) == null)
+	    if(superclass == null && utils.findClass(objectClassName, it) == null)
 	       error("Object class is not defined",
 	           NAMED__NAME,  OBJECT_CLASS_NOT_DEFINED)
 	}
@@ -102,7 +105,7 @@ class RolezValidator extends RolezSystemValidator {
     @Check
     def checkArrayClass(Class it) {
         if(qualifiedName == arrayClassName) {
-            if(actualSuperclass != findClass(objectClassName, it))
+            if(actualSuperclass != utils.findClass(objectClassName, it))
                error("The superclass of " + qualifiedName + " must be "+ objectClassName,
                    it, CLASS__SUPERCLASS, INCORRECT_ARRAY_SUPERCLASS)
         }
@@ -112,8 +115,8 @@ class RolezValidator extends RolezSystemValidator {
     @Check
     def checkTaskClass(Class it) {
         if(qualifiedName == taskClassName) {
-            if(actualSuperclass != findClass(objectClassName, it))
-               error("The superclass of " + qualifiedName + " must be "+ objectClassName,
+            if(actualSuperclass != utils.findClass(objectClassName, it))
+               error("The superclass of " + qualifiedName + " must be " + objectClassName,
                    it, CLASS__SUPERCLASS, INCORRECT_TASK_SUPERCLASS)
         }
         // TODO: Check (built-in) members
@@ -147,7 +150,7 @@ class RolezValidator extends RolezSystemValidator {
 	 */
     @Check
     def checkNoDuplicateMethods(Method it) {
-        val matching = enclosingClass.methods.filter[m | equalSignature(m, it)]
+        val matching = enclosingClass.methods.filter[m | utils.equalSignature(m, it)]
         if(matching.size < 1)
            throw new AssertionError
         if(matching.size > 1)
@@ -183,15 +186,15 @@ class RolezValidator extends RolezSystemValidator {
 	def checkOverrides(Method it) {
 	    val superMethods = enclosingClass.actualSuperclass
 	           .allMembers.filter(Method)
-        val matching = superMethods.filter[m | equalSignature(m, it)]
+        val matching = superMethods.filter[m | utils.equalSignature(m, it)]
 	    
 	    if(matching.size > 0) {
 	        if(overriding) {
                 for(match : matching) {
-                    if(subtype(envFor(it), type, match.type).failed)
+                    if(system.subtype(utils.envFor(it), type, match.type).failed)
                         error("The return type is incompatible with overridden method" + match,
                             TYPED__TYPE, INCOMPATIBLE_RETURN_TYPE)
-                    if(subrole(match.thisRole, thisRole).failed)
+                    if(system.subrole(match.thisRole, thisRole).failed)
                         error("This role of \"this\" is incompatible with overridden method" + match,
                             TYPED__TYPE, INCOMPATIBLE_THIS_ROLE)
                 }
@@ -210,18 +213,18 @@ class RolezValidator extends RolezSystemValidator {
 	def checkReturnExpr(TypedBody it) {
         if(type instanceof Unit)
             return;
-	    val cfg = controlFlowGraph
+	    val cfg = builder.controlFlowGraph(it)
 	    
 	    if(cfg.exit === cfg.entry)
-            error("Method must return a value of type " + type.stringRep,
+            error("Method must return a value of type " + type.string,
                 body, null, MISSING_RETURN_EXPR)
         for(p : cfg.exit.predecessors) {
             switch(p) {
                 ConditionNode:
-                    error("Method must return a value of type " + type.stringRep,
+                    error("Method must return a value of type " + type.string,
                         p.condition.enclosingStmt, null, MISSING_RETURN_EXPR)
                 StmtNode case !(p.stmt instanceof ReturnExpr):
-                    error("Method must return a value of type " + type.stringRep,
+                    error("Method must return a value of type " + type.string,
                         p.stmt, null, MISSING_RETURN_EXPR)
             }
 	    }
@@ -229,14 +232,14 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkSimpleClassRef(SimpleClassRef it) {
-        if(clazz == findClass(arrayClassName, it))
+        if(clazz == utils.findClass(arrayClassName, it))
             error("Class " + clazz.name + " takes type arguments",
                 it, CLASS_REF__CLAZZ, MISSING_TYPE_ARGS)
     }
     
     @Check
     def checkGenericClassRef(GenericClassRef it) {
-        if(clazz != findClass(arrayClassName, it))
+        if(clazz != utils.findClass(arrayClassName, it))
             error("Class " + clazz.name + " does not take type arguments",
                 it, GENERIC_CLASS_REF__TYPE_ARG, INCORRECT_TYPE_ARGS)
     }

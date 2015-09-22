@@ -1,5 +1,6 @@
 package ch.trick17.rolez.lang.scoping
 
+import ch.trick17.rolez.lang.RolezExtensions
 import ch.trick17.rolez.lang.rolez.Block
 import ch.trick17.rolez.lang.rolez.Field
 import ch.trick17.rolez.lang.rolez.FieldSelector
@@ -13,6 +14,7 @@ import ch.trick17.rolez.lang.rolez.Stmt
 import ch.trick17.rolez.lang.rolez.Var
 import ch.trick17.rolez.lang.rolez.VarRef
 import ch.trick17.rolez.lang.typesystem.RolezSystem
+import ch.trick17.rolez.lang.typesystem.RolezUtils
 import ch.trick17.rolez.lang.validation.RolezValidator
 import javax.inject.Inject
 import org.eclipse.emf.ecore.EReference
@@ -21,16 +23,16 @@ import org.eclipse.xtext.scoping.Scopes
 import org.eclipse.xtext.scoping.impl.AbstractDeclarativeScopeProvider
 
 import static ch.trick17.rolez.lang.validation.RolezValidator.*
-import ch.trick17.rolez.lang.typesystem.Utilz
 
 class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     
+    @Inject private extension RolezExtensions
     @Inject private RolezSystem system
     @Inject private RolezValidator validator
-    @Inject private extension Utilz
+    @Inject private RolezUtils utils
     
     def IScope scope_FieldSelector_field(FieldSelector s, EReference ref) {
-        val targetType = system.type(envFor(s), (s.eContainer as MemberAccess).target).value
+        val targetType = system.type(utils.envFor(s), (s.eContainer as MemberAccess).target).value
         if(targetType instanceof RoleType)
             Scopes.scopeFor(targetType.base.clazz.allMembers.filter(Field))
         else
@@ -38,10 +40,11 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     }
     
     def IScope scope_MethodSelector_method(MethodSelector s, EReference ref) {
-        val targetType = system.type(envFor(s), (s.eContainer as MemberAccess).target).value
+        val targetType = system.type(utils.envFor(s), (s.eContainer as MemberAccess).target).value
         if(targetType instanceof RoleType) {
-            val maxSpecific = targetType.base.clazz.allMembers.filter(Method)
-                .filter[name.equals(s.methodName)].maximallySpecific(s)
+            val candidates = targetType.base.clazz.allMembers.filter(Method)
+                .filter[name.equals(utils.methodName(s))]
+            val maxSpecific = utils.maximallySpecific(candidates, s)
             
             if(maxSpecific.size <= 1)
                 Scopes.scopeFor(maxSpecific)

@@ -16,12 +16,12 @@ import org.eclipse.xtext.Assignment
 import org.eclipse.xtext.scoping.Scopes
 import org.eclipse.xtext.ui.editor.contentassist.ContentAssistContext
 import org.eclipse.xtext.ui.editor.contentassist.ICompletionProposalAcceptor
-import ch.trick17.rolez.lang.typesystem.Utilz
+import ch.trick17.rolez.lang.typesystem.RolezUtils
 
 class RolezProposalProvider extends AbstractRolezProposalProvider {
 
     @Inject private extension RolezSystem system
-    @Inject private extension Utilz
+    @Inject private extension RolezUtils
 
     override completeFieldSelector_Field(EObject model, Assignment a, ContentAssistContext context,
         ICompletionProposalAcceptor acceptor) {

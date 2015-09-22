@@ -8,7 +8,7 @@ import ch.trick17.rolez.lang.rolez.Null
 import ch.trick17.rolez.lang.rolez.Program
 import ch.trick17.rolez.lang.rolez.Role
 import ch.trick17.rolez.lang.typesystem.RolezSystem
-import ch.trick17.rolez.lang.typesystem.Utilz
+import ch.trick17.rolez.lang.typesystem.RolezUtils
 import javax.inject.Inject
 import org.eclipse.xtext.junit4.InjectWith
 import org.eclipse.xtext.junit4.XtextRunner
@@ -17,6 +17,7 @@ import org.eclipse.xtext.junit4.validation.ValidationTestHelper
 import org.junit.Test
 import org.junit.runner.RunWith
 
+import static ch.trick17.rolez.lang.Constants.*
 import static ch.trick17.rolez.lang.rolez.Role.*
 import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
 import static ch.trick17.rolez.lang.typesystem.RolezSystem.*
@@ -31,10 +32,11 @@ import static extension org.hamcrest.MatcherAssert.assertThat
 class TypeSystemTest {
     
     @Inject RolezSystem system
+    @Inject extension RolezExtensions
+    @Inject extension RolezUtils
+    @Inject extension TestUtilz
     @Inject extension ParseHelper<Program>
     @Inject extension ValidationTestHelper
-    @Inject extension Utilz
-    @Inject extension TestUtilz
     
     @Test
     def testTAssignment() {
@@ -48,7 +50,7 @@ class TypeSystemTest {
             }
         ''')
         program.main.lastExpr.type
-            .assertThat(isRoleType(READWRITE, classRef(program.findClass("A"))))
+            .assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
     }
     
     @Test
@@ -220,7 +222,7 @@ class TypeSystemTest {
             task Main: { "Hi" + " World"; }
         ''')
         program.main.lastExpr.type.assertThat(
-            isRoleType(READWRITE, classRef(program.findClass(stringClassName))))
+            isRoleType(READWRITE, newClassRef(program.findClass(stringClassName))))
             
         program = parse('''
             class rolez.lang.Object
@@ -228,7 +230,7 @@ class TypeSystemTest {
             task Main: { "" + '5'; }
         ''')
         program.main.lastExpr.type.assertThat(
-            isRoleType(READWRITE, classRef(program.findClass(stringClassName))))
+            isRoleType(READWRITE, newClassRef(program.findClass(stringClassName))))
             
         program = parse('''
             class rolez.lang.Object
@@ -236,7 +238,7 @@ class TypeSystemTest {
             task Main: { null + " "; }
         ''')
         program.main.lastExpr.type.assertThat(
-            isRoleType(READWRITE, classRef(program.findClass(stringClassName))))
+            isRoleType(READWRITE, newClassRef(program.findClass(stringClassName))))
     }
     
     @Test
@@ -307,7 +309,7 @@ class TypeSystemTest {
             class rolez.lang.Object
             task Main: { new Object as readwrite Object; }
         ''')
-        program.main.lastExpr.type.assertThat(isRoleType(READWRITE, classRef(program.findClass(objectClassName))))
+        program.main.lastExpr.type.assertThat(isRoleType(READWRITE, newClassRef(program.findClass(objectClassName))))
         
         // Upcasts
         program = parse('''
@@ -324,15 +326,15 @@ class TypeSystemTest {
                 new Array[pure A] as readonly Array[pure A];
             }
         ''')
-        program.main.expr(0).type.assertThat(isRoleType(READWRITE, classRef(program.findClass(objectClassName))))
-        program.main.expr(1).type.assertThat(isRoleType(READONLY,  classRef(program.findClass("A"))))
-        program.main.expr(2).type.assertThat(isRoleType(PURE,      classRef(program.findClass("A"))))
-        program.main.expr(3).type.assertThat(isRoleType(READWRITE, classRef(program.findClass("A"))))
-        program.main.expr(4).type.assertThat(isRoleType(READONLY,  classRef(program.findClass("A"))))
+        program.main.expr(0).type.assertThat(isRoleType(READWRITE, newClassRef(program.findClass(objectClassName))))
+        program.main.expr(1).type.assertThat(isRoleType(READONLY,  newClassRef(program.findClass("A"))))
+        program.main.expr(2).type.assertThat(isRoleType(PURE,      newClassRef(program.findClass("A"))))
+        program.main.expr(3).type.assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
+        program.main.expr(4).type.assertThat(isRoleType(READONLY,  newClassRef(program.findClass("A"))))
         program.main.expr(5).type.assertThat(isRoleType(READONLY,
-                classRef(program.findClass(arrayClassName), intType)))
+                newClassRef(program.findClass(arrayClassName), newIntType)))
         program.main.expr(6).type.assertThat(isRoleType(READONLY,
-            classRef(program.findClass(arrayClassName), roleType(PURE, classRef(program.findClass("A"))))))
+            newClassRef(program.findClass(arrayClassName), newRoleType(PURE, newClassRef(program.findClass("A"))))))
         
         // Downcasts
         program = parse('''
@@ -340,7 +342,7 @@ class TypeSystemTest {
             class A
             task Main: { new Object as readwrite A; }
         ''')
-        program.main.lastExpr.type.assertThat(isRoleType(READWRITE, classRef(program.findClass("A"))))
+        program.main.lastExpr.type.assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
     }
     
     @Test
@@ -513,7 +515,7 @@ class TypeSystemTest {
             }
         ''')
         program.main.lastExpr.type
-            .assertThat(isRoleType(READWRITE, classRef(program.findClass("A"))))
+            .assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
         
         parse('''
             class rolez.lang.Object
@@ -587,7 +589,7 @@ class TypeSystemTest {
             task Main: { new A.a(); }
         ''')
         program.main.lastExpr.type
-            .assertThat(isRoleType(READONLY, classRef(program.findClass("A"))))
+            .assertThat(isRoleType(READONLY, newClassRef(program.findClass("A"))))
         
         parse('''
             class rolez.lang.Object
@@ -777,7 +779,7 @@ class TypeSystemTest {
                 }
             ''')
             program.findClass("A").findMethod("foo").lastExpr.type
-                .assertThat(isRoleType(expected, classRef(program.findClass("A"))))
+                .assertThat(isRoleType(expected, newClassRef(program.findClass("A"))))
         }
         
         val program = parse('''
@@ -787,7 +789,7 @@ class TypeSystemTest {
             }
         ''')
         program.findClass("A").constructors.head.lastExpr.type
-            .assertThat(isRoleType(READWRITE, classRef(program.findClass("A"))))
+            .assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
     }
     
     @Test
@@ -826,7 +828,7 @@ class TypeSystemTest {
             }
         ''')
         program.main.lastExpr.type
-            .assertThat(isRoleType(READONLY, classRef(program.findClass("A"))))
+            .assertThat(isRoleType(READONLY, newClassRef(program.findClass("A"))))
     }
     
     @Test
@@ -837,7 +839,7 @@ class TypeSystemTest {
             task Main: { new A; }
         ''')
         program.main.lastExpr.type
-            .assertThat(isRoleType(READWRITE, classRef(program.findClass("A"))))
+            .assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
         
         program = parse('''
             class rolez.lang.Object
@@ -845,7 +847,7 @@ class TypeSystemTest {
             task Main: { new Array[int]; }
         ''')
         program.main.lastExpr.type
-            .assertThat(isRoleType(READWRITE, classRef(program.findClass(arrayClassName), intType)))
+            .assertThat(isRoleType(READWRITE, newClassRef(program.findClass(arrayClassName), newIntType)))
         
         program = parse('''
             class rolez.lang.Object
@@ -854,8 +856,8 @@ class TypeSystemTest {
             task Main: { new Array[readonly A]; }
         ''')
         program.main.lastExpr.type
-            .assertThat(isRoleType(READWRITE, classRef(program.findClass(arrayClassName),
-                roleType(READONLY, classRef(program.findClass("A"))))))
+            .assertThat(isRoleType(READWRITE, newClassRef(program.findClass(arrayClassName),
+                newRoleType(READONLY, newClassRef(program.findClass("A"))))))
         
         program = parse('''
             class rolez.lang.Object
@@ -865,9 +867,9 @@ class TypeSystemTest {
         ''')
         val array = program.findClass(arrayClassName)
         program.main.lastExpr.type
-            .assertThat(isRoleType(READWRITE, classRef(array,
-                roleType(PURE, classRef(array,
-                    roleType(READWRITE, classRef(program.findClass("A"))))))))
+            .assertThat(isRoleType(READWRITE, newClassRef(array,
+                newRoleType(PURE, newClassRef(array,
+                    newRoleType(READWRITE, newClassRef(program.findClass("A"))))))))
     }
     
     @Test
@@ -985,7 +987,7 @@ class TypeSystemTest {
             task Main: { start T; }
         ''')
         program.main.lastExpr.type
-            .assertThat(isRoleType(PURE, classRef(program.findClass(taskClassName), intType)))
+            .assertThat(isRoleType(PURE, newClassRef(program.findClass(taskClassName), newIntType)))
         
         program = parse('''
             class rolez.lang.Object
@@ -994,7 +996,7 @@ class TypeSystemTest {
             task Main: { start T; }
         ''')
         program.main.lastExpr.type
-            .assertThat(isRoleType(PURE, classRef(program.findClass(taskClassName), unitType)))
+            .assertThat(isRoleType(PURE, newClassRef(program.findClass(taskClassName), newUnitType)))
         
         program = parse('''
             class rolez.lang.Object
@@ -1004,8 +1006,8 @@ class TypeSystemTest {
             task Main: { start T; }
         ''')
         program.main.lastExpr.type
-            .assertThat(isRoleType(PURE, classRef(program.findClass(taskClassName),
-                roleType(READWRITE, classRef(program.findClass("A"))))))
+            .assertThat(isRoleType(PURE, newClassRef(program.findClass(taskClassName),
+                newRoleType(READWRITE, newClassRef(program.findClass("A"))))))
         
         parse('''
             class rolez.lang.Object
@@ -1093,9 +1095,9 @@ class TypeSystemTest {
         program.main.expr(0).type.assertThat(instanceOf(Int))
         program.main.expr(1).type.assertThat(instanceOf(Char))
         program.main.expr(2).type.assertThat(
-            isRoleType(READWRITE, classRef(program.findClass("A"))))
+            isRoleType(READWRITE, newClassRef(program.findClass("A"))))
         program.main.expr(3).type.assertThat(
-            isRoleType(PURE, classRef(program.findClass("A"))))
+            isRoleType(PURE, newClassRef(program.findClass("A"))))
     }
     
     @Test
@@ -1113,7 +1115,7 @@ class TypeSystemTest {
             task Main: { "Hi"; }
         ''')
         program.main.lastExpr.type.assertThat(
-            isRoleType(READWRITE, classRef(program.findClass(stringClassName))))
+            isRoleType(READWRITE, newClassRef(program.findClass(stringClassName))))
     }
     
     @Test

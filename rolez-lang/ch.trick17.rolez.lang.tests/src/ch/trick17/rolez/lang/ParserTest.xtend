@@ -1,26 +1,25 @@
 package ch.trick17.rolez.lang
 
 import ch.trick17.rolez.lang.rolez.Program
-import ch.trick17.rolez.lang.typesystem.Utilz
 import javax.inject.Inject
 import org.eclipse.xtext.junit4.InjectWith
 import org.eclipse.xtext.junit4.XtextRunner
 import org.eclipse.xtext.junit4.util.ParseHelper
+import org.eclipse.xtext.junit4.validation.ValidationTestHelper
 import org.junit.Test
 import org.junit.runner.RunWith
 
 import static org.hamcrest.Matchers.*
 
 import static extension org.hamcrest.MatcherAssert.assertThat
-import org.eclipse.xtext.junit4.validation.ValidationTestHelper
 
 @RunWith(XtextRunner)
 @InjectWith(RolezInjectorProvider)
 class ParserTest {
     
+    @Inject extension RolezExtensions
     @Inject extension ParseHelper<Program>
     @Inject extension ValidationTestHelper
-    @Inject extension Utilz
     
     @Test
     def testEmptyClass() {

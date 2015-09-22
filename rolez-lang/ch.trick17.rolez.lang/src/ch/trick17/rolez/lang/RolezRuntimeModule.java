@@ -4,20 +4,13 @@ package ch.trick17.rolez.lang;
 import com.google.inject.Binder;
 import com.google.inject.name.Names;
 
-import ch.trick17.rolez.lang.AbstractRolezRuntimeModule;
 import ch.trick17.rolez.lang.scoping.RolezImportedNamespaceScopeProvider;
-import ch.trick17.rolez.lang.typesystem.RolezStringRepresentation;
-import it.xsemantics.runtime.StringRepresentation;
 
 /**
  * Use this class to register components to be used at runtime / without the
  * Equinox extension registry.
  */
 public class RolezRuntimeModule extends AbstractRolezRuntimeModule {
-    
-    public Class<? extends StringRepresentation> bindStringRepresentation() {
-        return RolezStringRepresentation.class;
-    }
     
     @Override
     public void configureIScopeProviderDelegate(Binder binder) {
