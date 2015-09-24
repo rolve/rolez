@@ -224,10 +224,11 @@ Expr2 returns Expr:
     UnaryExpr | BinaryExpr;
 
 UnaryExpr:
-    {UnaryMinus} | ID {UnaryNot} | ID ID {Parenthesized};
+    {UnaryMinus} | ID {UnaryNot} | ID ID {Cast} | ID ID ID {Parenthesized};
 
 BinaryExpr:
-    {LogicalExpr} | ID {EqualityExpr} | ID ID {RelationalExpr} | ID ID ID {ArithmeticBinaryExpr};
+    {Assignment} | ID {LogicalExpr} | ID ID {EqualityExpr}
+        | ID ID ID {RelationalExpr} | ID ID ID ID {ArithmeticBinaryExpr};
 
 Var:
     LocalVar | {Param};

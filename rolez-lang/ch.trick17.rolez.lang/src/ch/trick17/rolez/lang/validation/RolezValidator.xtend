@@ -5,7 +5,6 @@ package ch.trick17.rolez.lang.validation
 
 import ch.trick17.rolez.lang.RolezExtensions
 import ch.trick17.rolez.lang.cfg.CfgBuilder
-import ch.trick17.rolez.lang.cfg.ConditionNode
 import ch.trick17.rolez.lang.cfg.StmtNode
 import ch.trick17.rolez.lang.rolez.Class
 import ch.trick17.rolez.lang.rolez.ClassLike
@@ -219,14 +218,12 @@ class RolezValidator extends RolezSystemValidator {
             error("Method must return a value of type " + type.string,
                 body, null, MISSING_RETURN_EXPR)
         for(p : cfg.exit.predecessors) {
-            switch(p) {
-                ConditionNode:
-                    error("Method must return a value of type " + type.string,
-                        p.condition.enclosingStmt, null, MISSING_RETURN_EXPR)
-                StmtNode case !(p.stmt instanceof ReturnExpr):
+            if(p instanceof StmtNode) {
+                if(!(p.stmt instanceof ReturnExpr))
                     error("Method must return a value of type " + type.string,
                         p.stmt, null, MISSING_RETURN_EXPR)
             }
+            else throw new AssertionError
 	    }
 	}
     

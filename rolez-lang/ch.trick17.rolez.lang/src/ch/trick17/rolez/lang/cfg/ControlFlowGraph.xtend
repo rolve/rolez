@@ -8,9 +8,9 @@ import java.util.Set
 class ControlFlowGraph {
     
     public val Node entry
-    public val ExitNode exit
+    public val Node exit
     
-    new (Node entry, ExitNode exit) {
+    package new (Node entry, Node exit) {
         this.entry = entry
         this.exit = exit
     }
@@ -18,16 +18,25 @@ class ControlFlowGraph {
     /**
      * Returns all nodes in this graph, in reverse post-order
      */
-    def List<Node> nodes() {
+    def List<Node> nodes() { nodes(false) }
+    
+    /**
+     * Returns all nodes in this graph, in reverse post-order.
+     * If <code>reverse</code> is <code>true</code>, the reverse CFG is taken
+     * to compute the order (so nodes are returned in <em>reverse post-order of
+     * the reverse CFG</em> :P).
+     */
+    def List<Node> nodes(boolean reverse) {
         val list = new LinkedList
         val seen = new HashSet
-        collectSuccessors(entry, list, seen)
+        collectNodes(if(reverse) exit else entry, list, seen, reverse)
         list
     }
     
-    private def void collectSuccessors(Node n, LinkedList<Node> list, Set<Node> seen) {
+    private def void collectNodes(Node n, LinkedList<Node> list, Set<Node> seen, boolean reverse) {
         if(seen += n) {
-            n.successors.reverseView.forEach[collectSuccessors(list, seen)]
+            (if(reverse) n.preds else n.succs)
+                .reverseView.forEach[collectNodes(list, seen, reverse)]
             list.addFirst(n)
         }
     }

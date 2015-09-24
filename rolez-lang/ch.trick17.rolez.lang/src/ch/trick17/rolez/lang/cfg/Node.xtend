@@ -2,37 +2,47 @@ package ch.trick17.rolez.lang.cfg
 
 import ch.trick17.rolez.lang.rolez.Expr
 import ch.trick17.rolez.lang.rolez.Stmt
-import com.google.common.collect.ImmutableList
 import java.util.ArrayList
 import java.util.List
 
 import static extension java.util.Objects.*
+import ch.trick17.rolez.lang.rolez.WhileLoop
 
 abstract class Node {
-    val List<Node> predecessors = new ArrayList
-    package def addPredecessor(Node p) { predecessors += p }
+    package val List<Node> preds = new ArrayList(1)
+    package val List<Node> succs = new ArrayList(1)
     
-    def getPredecessors() { return predecessors.unmodifiableView }
-    def List<Node> getSuccessors()
-}
-
-class ExitNode extends Node {
-    override getSuccessors() { emptyList }
+    def getPredecessors() { preds.unmodifiableView }
+    def getSuccessors()   { succs.unmodifiableView }
+    def getSoleSuccessor() {
+        if(succs.size != 0) throw new AssertionError
+        succs.get(0)
+    }
+    def getTrueSuccessor() {
+        if(succs.size != 2) throw new AssertionError
+        succs.get(0)
+    }
+    def getFalseSuccessor() {
+        if(succs.size != 2) throw new AssertionError
+        succs.get(1)
+    }
+    def isJoin()  { preds.size > 1 }
+    def isSplit() { succs.size > 1 }
 }
 
 class StmtNode extends Node {
-    public val Stmt stmt
-    package var Node successor
-    
-    override getSuccessors() { ImmutableList.of(successor) }
+    public val Stmt stmt    
     new (Stmt s) { stmt = s.requireNonNull }
 }
 
-class ConditionNode extends Node {
-    public val Expr condition
-    package var List<Node> successors = newArrayList(null, null)
-    
-    new (Expr condition) { this.condition = condition }
-    
-    override getSuccessors() { successors.unmodifiableView }
+class ExprNode extends Node {
+    public val Expr expr
+    new (Expr expr) { this.expr = expr.requireNonNull }
 }
+
+class LoopHeadNode extends Node {
+    public val WhileLoop loop
+    new (WhileLoop loop) { this.loop = loop.requireNonNull }
+}
+
+class ExitNode extends Node {}

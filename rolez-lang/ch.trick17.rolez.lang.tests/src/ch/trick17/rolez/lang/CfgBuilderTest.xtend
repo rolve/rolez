@@ -40,15 +40,18 @@ class CfgBuilderTest {
         parse('''
             task Main: {
                 0;
-                1;
                 2;
+                4;
             }
         ''').main.cfg.assertStructure('''
             0 -> 1
             1 -> 2
             2 -> 3
-            3 -> 
-        ''')
+            3 -> 4
+            4 -> 5
+            5 -> 6
+            6 -> 
+        ''') // Note there's a node for every stmt and for every expr
         
         parse('''
             class rolez.lang.Object
@@ -62,73 +65,87 @@ class CfgBuilderTest {
         ''').main.cfg.assertStructure('''
             0 -> 1
             1 -> 2
-            2 -> 
+            2 -> 3
+            3 -> 
         ''')
     }
     
     @Test
     def testIfStmt() {
         parse('''
-            task Main: {
+            task Main(val b: boolean): {
                 0;
-                if(1 == 1) {
-                    2;
+                if(b) {
                     3;
+                    5;
                 }
                 else
-                    4;
+                    7;
             }
         ''').main.cfg.assertStructure('''
             0 -> 1
-            1 -> 2, 4
-            2 -> 3
-            3 -> 5
+            1 -> 2
+            2 -> 3, 7
+            3 -> 4
             4 -> 5
-            5 -> 
+            5 -> 6
+            6 -> 9
+            7 -> 8
+            8 -> 9
+            9 -> 10
+            10 -> 
         ''')
         
         parse('''
-            task Main: {
-                if(0 == 0) {}
+            task Main(val b: boolean): {
+                if(b) {}
                 else {}
             }
         ''').main.cfg.assertStructure('''
-            0 -> 1, 1
-            1 -> 
-        ''') // That's pretty crazy...
-        
-        parse('''
-            task Main: {
-                0;
-                if(1 == 1)
-                    2;
-                else
-                    3;
-                4;
-            }
-        ''').main.cfg.assertStructure('''
-            0 -> 1
-            1 -> 2, 3
-            2 -> 4
-            3 -> 4
-            4 -> 5
-            5 -> 
-        ''')
-        
-        parse('''
-            task Main: {
-                if(0 == 0)
-                    1;
-            }
-        ''').main.cfg.assertStructure('''
-            0 -> 1, 2
+            0 -> 1, 1« /* That's pretty crazy...*/ »
             1 -> 2
             2 -> 
         ''')
         
         parse('''
-            task Main: {
-                if(0 != 0)
+            task Main(val b: boolean): {
+                0;
+                if(b)
+                    3;
+                else
+                    5;
+                8;
+            }
+        ''').main.cfg.assertStructure('''
+            0 -> 1
+            1 -> 2
+            2 -> 3, 5
+            3 -> 4
+            4 -> 7
+            5 -> 6
+            6 -> 7
+            7 -> 8
+            8 -> 9
+            9 -> 10
+            10 -> 
+        ''')
+        
+        parse('''
+            task Main(val b: boolean): {
+                if(b)
+                    1;
+            }
+        ''').main.cfg.assertStructure('''
+            0 -> 1, 3
+            1 -> 2
+            2 -> 3
+            3 -> 4
+            4 -> 
+        ''')
+        
+        parse('''
+            task Main(val b: boolean): {
+                if(b)
                     return;
                 else {
                     return;
@@ -142,8 +159,8 @@ class CfgBuilderTest {
         ''')
         
         parse('''
-            task Main: {
-                if(0 == 0)
+            task Main(val b: boolean): {
+                if(b)
                     return;
                 else
                     return;
@@ -157,22 +174,10 @@ class CfgBuilderTest {
         ''')
         
         parse('''
-            task Main: {
-                if(0 == 0) {
+            task Main(val b: boolean): {
+                if(b) {
                     return;
                 }
-            }
-        ''').main.cfg.assertStructure('''
-            0 -> 1, 2
-            1 -> 2
-            2 -> 
-        ''')
-        
-        parse('''
-            task Main: {
-                if(0 < 0)
-                    return;
-                2;
             }
         ''').main.cfg.assertStructure('''
             0 -> 1, 2
@@ -180,30 +185,170 @@ class CfgBuilderTest {
             2 -> 3
             3 -> 
         ''')
+        
+        parse('''
+            task Main(val b: boolean): {
+                if(b)
+                    return;
+                3;
+            }
+        ''').main.cfg.assertStructure('''
+            0 -> 1, 2
+            1 -> 5
+            2 -> 3
+            3 -> 4
+            4 -> 5
+            5 -> 
+        ''')
     }
     
     @Test
     def testWhileLoop() {
         parse('''
-            task Main: {
-                while(0 == 0)
-                    1;
+            task Main(val b: boolean): {
+                while(b)
+                    2;
             }
         ''').main.cfg.assertStructure('''
-            0 -> 1, 2
-            1 -> 0
+            0 -> 1
+            1 -> 2, 4
+            2 -> 3
+            3 -> 0
+            4 -> 5
+            5 -> 
+        ''')
+        
+        parse('''
+            task Main(val b: boolean): {
+                while(b)
+                    return;
+            }
+        ''').main.cfg.assertStructure('''
+            0 -> 1
+            1 -> 2, 3
+            2 -> 4
+            3 -> 4
+            4 -> 
+        ''')
+    }
+    
+    @Test
+    def testExpr() {
+        parse('''
+            task Main: {
+                0;
+            }
+        ''').main.cfg.assertStructure('''
+            0 -> 1
+            1 -> 2
             2 -> 
+        ''')
+        parse('''
+            task Main: {
+                (0);
+            }
+        ''').main.cfg.assertStructure('''
+            0 -> 1
+            1 -> 2
+            2 -> 3
+            3 -> 
+        ''')
+        parse('''
+            task Main: {
+                -0;
+            }
+        ''').main.cfg.assertStructure('''
+            0 -> 1
+            1 -> 2
+            2 -> 3
+            3 -> 
+        ''')
+        parse('''
+            task Main: {
+                !true;
+            }
+        ''').main.cfg.assertStructure('''
+            0 -> 1
+            1 -> 2
+            2 -> 3
+            3 -> 
         ''')
         
         parse('''
             task Main: {
-                while(0 != 0)
-                    return;
+                0 + 1;
+            }
+        ''').main.cfg.assertStructure('''
+            0 -> 1
+            1 -> 2
+            2 -> 3
+            3 -> 4
+            4 -> 
+        ''')
+        
+        parse('''
+            task Main: {
+                0 == 1;
+            }
+        ''').main.cfg.assertStructure('''
+            0 -> 1
+            1 -> 2
+            2 -> 3
+            3 -> 4
+            4 -> 
+        ''')
+        
+        // Short-circuit!
+        parse('''
+            task Main(val a: boolean, val b: boolean): {
+                a && b;
             }
         ''').main.cfg.assertStructure('''
             0 -> 1, 2
             1 -> 2
-            2 -> 
+            2 -> 3
+            3 -> 4
+            4 -> 
+        ''')
+        parse('''
+            task Main(val a: boolean, val b: boolean): {
+                a || b;
+            }
+        ''').main.cfg.assertStructure('''
+            0 -> 2, 1
+            1 -> 2
+            2 -> 3
+            3 -> 4
+            4 -> 
+        ''')
+        parse('''
+            task Main(val b: boolean): {
+                0 == 1 && b;
+            }
+        ''').main.cfg.assertStructure('''
+            0 -> 1
+            1 -> 2
+            2 -> 3, 4
+            3 -> 4
+            4 -> 5
+            5 -> 6
+            6 -> 
+        ''')
+        parse('''
+            task Main(val a: boolean, val b: boolean): {
+                a && (1 > 2 || b);
+            }
+        ''').main.cfg.assertStructure('''
+            0 -> 1, 7
+            1 -> 2
+            2 -> 3
+            3 -> 5, 4
+            4 -> 5
+            5 -> 6
+            6 -> 7
+            7 -> 8
+            8 -> 9
+            9 -> 
         ''')
     }
     
@@ -235,6 +380,8 @@ class CfgBuilderTest {
         for(node : reachable)
             for(successor : node.successors)
                 successor.predecessors.assertThat(hasItem(node))
+        
+        // Test that expressions have been evaluated
     }
     
     def void collectReachableNodes(Node it, Set<Node> nodes) {
