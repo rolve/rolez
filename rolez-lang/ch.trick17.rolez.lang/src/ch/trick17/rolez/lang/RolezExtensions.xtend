@@ -7,13 +7,14 @@ import ch.trick17.rolez.lang.rolez.ClassLike
 import ch.trick17.rolez.lang.rolez.ClassRef
 import ch.trick17.rolez.lang.rolez.Constructor
 import ch.trick17.rolez.lang.rolez.Double
-import ch.trick17.rolez.lang.rolez.Expr
 import ch.trick17.rolez.lang.rolez.Field
 import ch.trick17.rolez.lang.rolez.GenericClassRef
+import ch.trick17.rolez.lang.rolez.Instr
 import ch.trick17.rolez.lang.rolez.Int
 import ch.trick17.rolez.lang.rolez.LocalVar
 import ch.trick17.rolez.lang.rolez.Member
 import ch.trick17.rolez.lang.rolez.Method
+import ch.trick17.rolez.lang.rolez.Null
 import ch.trick17.rolez.lang.rolez.ParameterizedBody
 import ch.trick17.rolez.lang.rolez.Program
 import ch.trick17.rolez.lang.rolez.Role
@@ -31,7 +32,6 @@ import org.eclipse.xtext.naming.IQualifiedNameProvider
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils
 
 import static ch.trick17.rolez.lang.Constants.*
-import ch.trick17.rolez.lang.rolez.Null
 
 /**
  * Extension methods for the Rolez language elements
@@ -133,10 +133,12 @@ class RolezExtensions {
      */
     
     def string(Member it)   { memberString }
-    def string(Expr it)     { NodeModelUtils.findActualNodeFor(it).text }
     def string(Type it)     { typeString }
     def string(Role it)     { literal }
     def string(ClassRef it) { classRefString }
+    def string(Instr it)    {
+        NodeModelUtils.findActualNodeFor(it).text.trim.replaceAll("\\s+", " ")
+    }
     
     private def dispatch memberString(Method it) {
         thisRole.string + " " + qualifiedName

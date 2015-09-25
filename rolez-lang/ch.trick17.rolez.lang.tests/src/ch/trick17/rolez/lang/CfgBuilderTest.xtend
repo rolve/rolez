@@ -2,8 +2,16 @@ package ch.trick17.rolez.lang
 
 import ch.trick17.rolez.lang.cfg.CfgBuilder
 import ch.trick17.rolez.lang.cfg.ControlFlowGraph
+import ch.trick17.rolez.lang.cfg.InstrNode
+import ch.trick17.rolez.lang.cfg.Node
+import ch.trick17.rolez.lang.rolez.Boolean
+import ch.trick17.rolez.lang.rolez.Expr
+import ch.trick17.rolez.lang.rolez.IfStmt
+import ch.trick17.rolez.lang.rolez.LogicalExpr
 import ch.trick17.rolez.lang.rolez.ParameterizedBody
 import ch.trick17.rolez.lang.rolez.Program
+import ch.trick17.rolez.lang.typesystem.RolezSystem
+import ch.trick17.rolez.lang.typesystem.RolezUtils
 import java.util.HashSet
 import java.util.Set
 import javax.inject.Inject
@@ -18,13 +26,13 @@ import static org.hamcrest.Matchers.*
 
 import static extension org.hamcrest.MatcherAssert.assertThat
 import static extension org.junit.Assert.assertEquals
-import ch.trick17.rolez.lang.cfg.Node
 
 @RunWith(XtextRunner)
 @InjectWith(RolezInjectorProvider)
 class CfgBuilderTest {
     
-    @Inject extension CfgBuilder
+    @Inject var RolezSystem system
+    @Inject var RolezUtils utils
     @Inject extension TestUtilz
     @Inject extension ParseHelper<Program>
     @Inject extension ValidationTestHelper
@@ -34,7 +42,8 @@ class CfgBuilderTest {
         parse('''
             task Main: {}
         ''').main.cfg.assertStructure('''
-            0 -> 
+            0 -> 1
+            1 -> 
         ''')
         
         parse('''
@@ -50,8 +59,9 @@ class CfgBuilderTest {
             3 -> 4
             4 -> 5
             5 -> 6
-            6 -> 
-        ''') // Note there's a node for every stmt and for every expr
+            6 -> 7
+            7 -> 
+        ''') // Note there's a node for every stmt (incl. blocks) and for every expr
         
         parse('''
             class rolez.lang.Object
@@ -80,20 +90,22 @@ class CfgBuilderTest {
                     5;
                 }
                 else
-                    7;
+                    8;
             }
         ''').main.cfg.assertStructure('''
             0 -> 1
             1 -> 2
-            2 -> 3, 7
+            2 -> 3, 8
             3 -> 4
             4 -> 5
             5 -> 6
-            6 -> 9
-            7 -> 8
+            6 -> 7
+            7 -> 10
             8 -> 9
             9 -> 10
-            10 -> 
+            10 -> 11
+            11 -> 12
+            12 -> 
         ''')
         
         parse('''
@@ -102,9 +114,12 @@ class CfgBuilderTest {
                 else {}
             }
         ''').main.cfg.assertStructure('''
-            0 -> 1, 1« /* That's pretty crazy...*/ »
-            1 -> 2
-            2 -> 
+            0 -> 1, 2
+            1 -> 3
+            2 -> 3
+            3 -> 4
+            4 -> 5
+            5 -> 
         ''')
         
         parse('''
@@ -127,7 +142,8 @@ class CfgBuilderTest {
             7 -> 8
             8 -> 9
             9 -> 10
-            10 -> 
+            10 -> 11
+            11 -> 
         ''')
         
         parse('''
@@ -140,7 +156,8 @@ class CfgBuilderTest {
             1 -> 2
             2 -> 3
             3 -> 4
-            4 -> 
+            4 -> 5
+            5 -> 
         ''')
         
         parse('''
@@ -181,9 +198,10 @@ class CfgBuilderTest {
             }
         ''').main.cfg.assertStructure('''
             0 -> 1, 2
-            1 -> 3
+            1 -> 4
             2 -> 3
-            3 -> 
+            3 -> 4
+            4 -> 
         ''')
         
         parse('''
@@ -194,9 +212,25 @@ class CfgBuilderTest {
             }
         ''').main.cfg.assertStructure('''
             0 -> 1, 2
-            1 -> 5
+            1 -> 6
             2 -> 3
             3 -> 4
+            4 -> 5
+            5 -> 6
+            6 -> 
+        ''')
+        
+        parse('''
+            task Main(val b: boolean): {
+                if(b) {}
+                else
+                    return;
+            }
+        ''').main.cfg.assertStructure('''
+            0 -> 1, 4
+            1 -> 2
+            2 -> 3
+            3 -> 5
             4 -> 5
             5 -> 
         ''')
@@ -215,7 +249,8 @@ class CfgBuilderTest {
             2 -> 3
             3 -> 0
             4 -> 5
-            5 -> 
+            5 -> 6
+            6 -> 
         ''')
         
         parse('''
@@ -226,9 +261,10 @@ class CfgBuilderTest {
         ''').main.cfg.assertStructure('''
             0 -> 1
             1 -> 2, 3
-            2 -> 4
+            2 -> 5
             3 -> 4
-            4 -> 
+            4 -> 5
+            5 -> 
         ''')
     }
     
@@ -241,7 +277,8 @@ class CfgBuilderTest {
         ''').main.cfg.assertStructure('''
             0 -> 1
             1 -> 2
-            2 -> 
+            2 -> 3
+            3 -> 
         ''')
         parse('''
             task Main: {
@@ -251,7 +288,8 @@ class CfgBuilderTest {
             0 -> 1
             1 -> 2
             2 -> 3
-            3 -> 
+            3 -> 4
+            4 -> 
         ''')
         parse('''
             task Main: {
@@ -261,7 +299,8 @@ class CfgBuilderTest {
             0 -> 1
             1 -> 2
             2 -> 3
-            3 -> 
+            3 -> 4
+            4 -> 
         ''')
         parse('''
             task Main: {
@@ -271,7 +310,8 @@ class CfgBuilderTest {
             0 -> 1
             1 -> 2
             2 -> 3
-            3 -> 
+            3 -> 4
+            4 -> 
         ''')
         
         parse('''
@@ -283,7 +323,8 @@ class CfgBuilderTest {
             1 -> 2
             2 -> 3
             3 -> 4
-            4 -> 
+            4 -> 5
+            5 -> 
         ''')
         
         parse('''
@@ -295,7 +336,8 @@ class CfgBuilderTest {
             1 -> 2
             2 -> 3
             3 -> 4
-            4 -> 
+            4 -> 5
+            5 -> 
         ''')
         
         // Short-circuit!
@@ -308,7 +350,8 @@ class CfgBuilderTest {
             1 -> 2
             2 -> 3
             3 -> 4
-            4 -> 
+            4 -> 5
+            5 -> 
         ''')
         parse('''
             task Main(val a: boolean, val b: boolean): {
@@ -319,7 +362,8 @@ class CfgBuilderTest {
             1 -> 2
             2 -> 3
             3 -> 4
-            4 -> 
+            4 -> 5
+            5 -> 
         ''')
         parse('''
             task Main(val b: boolean): {
@@ -332,7 +376,8 @@ class CfgBuilderTest {
             3 -> 4
             4 -> 5
             5 -> 6
-            6 -> 
+            6 -> 7
+            7 -> 
         ''')
         parse('''
             task Main(val a: boolean, val b: boolean): {
@@ -348,21 +393,22 @@ class CfgBuilderTest {
             6 -> 7
             7 -> 8
             8 -> 9
-            9 -> 
+            9 -> 10
+            10 -> 
         ''')
     }
     
-    def cfg(ParameterizedBody it) {
+    private def cfg(ParameterizedBody it) {
         assertNoErrors
-        controlFlowGraph
+        new CfgBuilder(it).build
     }
     
-    def assertStructure(ControlFlowGraph it, String expected) {
+    private def assertStructure(ControlFlowGraph it, String expected) {
         assertInvariants
         expected.assertEquals(dumpStructure)
     }
     
-    def assertInvariants(ControlFlowGraph it) {
+    private def assertInvariants(ControlFlowGraph it) {
         nodes.assertThat(hasItem(entry))
         nodes.assertThat(hasItem(exit))
         
@@ -377,21 +423,43 @@ class CfgBuilderTest {
         entry.collectReachableNodes(reachable)
         nodes.toSet.assertThat(equalTo(reachable))
         
-        for(node : reachable)
+        for(node : reachable) {
             for(successor : node.successors)
                 successor.predecessors.assertThat(hasItem(node))
+            
+            if(node.isSplit) {
+                node.successors.size.assertThat(is(2))
+                node.assertThat(instanceOf(InstrNode))
+                val instr = (node as InstrNode).instr
+                instr.assertThat(instanceOf(Expr))
+                system.type(utils.envFor(instr), instr as Expr).value
+                    .assertThat(instanceOf(Boolean))
+            }
+            else
+                node.successors.size.assertThat(lessThan(2))
+            
+            if(node.isJoin) {
+                node.predecessors.size.assertThat(is(2))
+                if(node instanceof InstrNode)
+                    node.instr.assertThat(either(instanceOf(IfStmt))
+                        .or(instanceOf(LogicalExpr)))
+            }
+        }
         
-        // Test that expressions have been evaluated
+        reachable.filter[successors.empty].size.assertThat(is(1))
+        
+        // IMPROVE: Check things like head nodes of loops or expressions have
+        // been evaluated
     }
     
-    def void collectReachableNodes(Node it, Set<Node> nodes) {
+    private def void collectReachableNodes(Node it, Set<Node> nodes) {
         if(nodes += it) {
             successors.forEach[collectReachableNodes(nodes)]
             predecessors.forEach[collectReachableNodes(nodes)]
         }
     }
     
-    def dumpStructure(ControlFlowGraph it) {
+    private def dumpStructure(ControlFlowGraph it) {
         val i = (0..nodes.size).iterator
         val map = nodes.toInvertedMap[i.next]
         map.entrySet.map['''

@@ -1,18 +1,22 @@
 package ch.trick17.rolez.lang.cfg
 
+import ch.trick17.rolez.lang.rolez.Instr
 import java.util.HashSet
 import java.util.LinkedList
 import java.util.List
+import java.util.Map
 import java.util.Set
 
 class ControlFlowGraph {
     
     public val Node entry
     public val Node exit
+    val Map<Instr, Node> instrMap
     
-    package new (Node entry, Node exit) {
+    package new (Node entry, Node exit, Map<Instr, Node> instrMap) {
         this.entry = entry
         this.exit = exit
+        this.instrMap = instrMap
     }
     
     /**
@@ -40,4 +44,6 @@ class ControlFlowGraph {
             list.addFirst(n)
         }
     }
+    
+    def nodeOf(Instr i) { instrMap.get(i) }
 }

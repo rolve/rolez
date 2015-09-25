@@ -6,6 +6,7 @@ import ch.trick17.rolez.lang.rolez.Expr
 import ch.trick17.rolez.lang.rolez.ExprStmt
 import ch.trick17.rolez.lang.rolez.FieldSelector
 import ch.trick17.rolez.lang.rolez.IfStmt
+import ch.trick17.rolez.lang.rolez.Instr
 import ch.trick17.rolez.lang.rolez.LocalVarDecl
 import ch.trick17.rolez.lang.rolez.LogicalExpr
 import ch.trick17.rolez.lang.rolez.MemberAccess
@@ -17,9 +18,13 @@ import ch.trick17.rolez.lang.rolez.ReturnNothing
 import ch.trick17.rolez.lang.rolez.Start
 import ch.trick17.rolez.lang.rolez.UnaryExpr
 import ch.trick17.rolez.lang.rolez.WhileLoop
+import java.util.HashMap
+import java.util.Map
 
-import static extension java.util.Objects.requireNonNull
 import static ch.trick17.rolez.lang.rolez.OpLogical.*
+
+import static extension ch.trick17.rolez.lang.cfg.CfgBuilder.*
+import static extension java.util.Objects.requireNonNull
 
 class CfgBuilder {
     
@@ -41,6 +46,10 @@ class CfgBuilder {
         node.preds.add(it)
     ]}
     
+    private static def Linker +(Linker l1, Linker l2) {[ node |
+        val linked = l1.link(node); l2.link(node) || linked // Avoid short-circuit
+    ]}
+    
     private static class NodeHolder extends Linker {
         public var Node node
         override link(Node n) {
@@ -52,107 +61,120 @@ class CfgBuilder {
     
     /* Here comes the implementation */
     
-    def controlFlowGraph(ParameterizedBody it) {
+    val ParameterizedBody body
+    val ExitNode exit
+    val Map<Instr, Node> instrMap = new HashMap
+    
+    new(ParameterizedBody body) {
+        this.body = body
+        this.exit = new ExitNode
+    }
+    
+    def build() {
         val enter = new NodeHolder
-        val exit = new ExitNode
-        processStmt(body, enter, exit).link(exit)
-        return new ControlFlowGraph(enter.node, exit)
+        process(body.body, enter).link(exit)
+        return new ControlFlowGraph(enter.node, exit, instrMap)
     }
     
-    private def dispatch Linker processStmt(Block block, Linker prev, ExitNode exit) {
-        block.stmts.fold(prev, [p, stmt | processStmt(stmt, p, exit)])
+    private def newInstrNode(Instr i) {
+        val node = new InstrNode(i)
+        instrMap.put(i, node)
+        node
     }
     
-    private def dispatch Linker processStmt(LocalVarDecl d, Linker prev, ExitNode exit) {
+    private def dispatch Linker process(Block block, Linker prev) {
+        block.stmts.fold(prev, [p, stmt | process(stmt, p)])
+            .linkAndReturn(newInstrNode(block))
+    }
+    
+    private def dispatch Linker process(LocalVarDecl d, Linker prev) {
         val linker =
             if(d.initializer == null) prev
-            else processExpr(d.initializer, prev)
-        linker.linkAndReturn(new StmtNode(d))
+            else process(d.initializer, prev)
+        linker.linkAndReturn(newInstrNode(d))
     }
     
-    private def dispatch Linker processStmt(IfStmt s, Linker prev, ExitNode exit) {
-        val conditionLinker = processExpr(s.condition, prev)
-        val thenLinker = processStmt(s.thenPart, conditionLinker, exit)
+    private def dispatch Linker process(IfStmt s, Linker prev) {
+        val conditionLinker = process(s.condition, prev)
+        val thenLinker = process(s.thenPart, conditionLinker)
         val elseLinker = 
             if(s.elsePart == null) conditionLinker
-            else processStmt(s.elsePart, conditionLinker, exit);
+            else process(s.elsePart, conditionLinker);
         
-        val node = new StmtNode(s)
-        thenLinker.link(node)
-        elseLinker.linkAndReturn(node)
+        (thenLinker + elseLinker).linkAndReturn(newInstrNode(s))
     }
     
-    private def dispatch Linker processStmt(WhileLoop l, Linker prev, ExitNode exit) {
+    private def dispatch Linker process(WhileLoop l, Linker prev) {
         val headNode = new LoopHeadNode(l)
         if(!prev.link(headNode))
             return [false]
         
-        val conditionLinker = processExpr(l.condition, headNode.linker)
-        processStmt(l.body, conditionLinker, exit).link(headNode)
-        conditionLinker.linkAndReturn(new StmtNode(l))
+        val conditionLinker = process(l.condition, headNode.linker)
+        process(l.body, conditionLinker).link(headNode)
+        conditionLinker.linkAndReturn(newInstrNode(l))
     }
     
-    private def dispatch Linker processStmt(ReturnNothing r, Linker prev, ExitNode exit) {
-        prev.linkAndReturn(new StmtNode(r)).link(exit);
+    private def dispatch Linker process(ReturnNothing r, Linker prev) {
+        prev.linkAndReturn(newInstrNode(r)).link(exit);
         [false]
     }
     
-    private def dispatch Linker processStmt(ReturnExpr r, Linker prev, ExitNode exit) {
-        processExpr(r.expr, prev).linkAndReturn(new StmtNode(r)).link(exit);
+    private def dispatch Linker process(ReturnExpr r, Linker prev) {
+        process(r.expr, prev).linkAndReturn(newInstrNode(r)).link(exit);
         [false]
     }
     
-    private def dispatch Linker processStmt(ExprStmt s, Linker prev, ExitNode exit) {
-        processExpr(s.expr, prev).linkAndReturn(new StmtNode(s))
+    private def dispatch Linker process(ExprStmt s, Linker prev) {
+        process(s.expr, prev).linkAndReturn(newInstrNode(s))
     }
     
-    private def dispatch Linker processExpr(BinaryExpr e, Linker prev) {
-        val leftLinker = processExpr(e.left, prev)
-        processExpr(e.right, leftLinker).linkAndReturn(new ExprNode(e))
+    private def dispatch Linker process(BinaryExpr e, Linker prev) {
+        val leftLinker = process(e.left, prev)
+        process(e.right, leftLinker).linkAndReturn(newInstrNode(e))
     }
     
-    private def dispatch Linker processExpr(LogicalExpr e, Linker prev) {
-        val leftLinker = processExpr(e.left, prev)
-        val node = new ExprNode(e)
+    private def dispatch Linker process(LogicalExpr e, Linker prev) {
+        val leftLinker = process(e.left, prev)
+        val node = newInstrNode(e)
         if(e.op == OR) {
             // Short-circuit to "&&" node if left is "true", so link "&&" node first
             leftLinker.link(node)
-            processExpr(e.right, leftLinker).linkAndReturn(node)
+            process(e.right, leftLinker).linkAndReturn(node)
         }
         else {
             // Short-circuit to "&&" node if left is "false", so link "&&" node second
-            processExpr(e.right, leftLinker).link(node)
+            process(e.right, leftLinker).link(node)
             leftLinker.linkAndReturn(node)
         }
     }
     
-    private def dispatch Linker processExpr(UnaryExpr e, Linker prev) {
-        processExpr(e.expr, prev).linkAndReturn(new ExprNode(e))
+    private def dispatch Linker process(UnaryExpr e, Linker prev) {
+        process(e.expr, prev).linkAndReturn(newInstrNode(e))
     }
     
-    private def dispatch Linker processExpr(MemberAccess a, Linker prev) {
-        val targetLinker = processExpr(a.target, prev)
+    private def dispatch Linker process(MemberAccess a, Linker prev) {
+        val targetLinker = process(a.target, prev)
         val selector = a.selector
         val lastLinker = switch(selector) {
-            FieldSelector: targetLinker.linkAndReturn(new ExprNode(a))
+            FieldSelector: targetLinker.linkAndReturn(newInstrNode(a))
             MethodSelector:
-                selector.args.fold(targetLinker, [p, e | processExpr(e, p)])
+                selector.args.fold(targetLinker, [p, e | process(e, p)])
         }
-        lastLinker.linkAndReturn(new ExprNode(a))
+        lastLinker.linkAndReturn(newInstrNode(a))
     }
     
-    private def dispatch Linker processExpr(New n, Linker prev) {
-        val lastLinker = n.args.fold(prev, [p, e | processExpr(e, p)])
-        lastLinker.linkAndReturn(new ExprNode(n))
+    private def dispatch Linker process(New n, Linker prev) {
+        val lastLinker = n.args.fold(prev, [p, e | process(e, p)])
+        lastLinker.linkAndReturn(newInstrNode(n))
     }
     
-    private def dispatch Linker processExpr(Start s, Linker prev) {
-        val lastLinker = s.args.fold(prev, [p, e | processExpr(e, p)])
-        lastLinker.linkAndReturn(new ExprNode(s))
+    private def dispatch Linker process(Start s, Linker prev) {
+        val lastLinker = s.args.fold(prev, [p, e | process(e, p)])
+        lastLinker.linkAndReturn(newInstrNode(s))
     }
     
     // Everything else (This, VarRef, Literals)
-    private def dispatch Linker processExpr(Expr e, Linker prev) {
-        prev.linkAndReturn(new ExprNode(e))
+    private def dispatch Linker process(Expr e, Linker prev) {
+        prev.linkAndReturn(newInstrNode(e))
     }
 }

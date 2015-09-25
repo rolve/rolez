@@ -4,13 +4,15 @@
 package ch.trick17.rolez.lang.validation
 
 import ch.trick17.rolez.lang.RolezExtensions
-import ch.trick17.rolez.lang.cfg.CfgBuilder
-import ch.trick17.rolez.lang.cfg.StmtNode
+import ch.trick17.rolez.lang.cfg.CfgProvider
+import ch.trick17.rolez.lang.cfg.InstrNode
+import ch.trick17.rolez.lang.rolez.Block
 import ch.trick17.rolez.lang.rolez.Class
 import ch.trick17.rolez.lang.rolez.ClassLike
 import ch.trick17.rolez.lang.rolez.Constructor
 import ch.trick17.rolez.lang.rolez.Field
 import ch.trick17.rolez.lang.rolez.GenericClassRef
+import ch.trick17.rolez.lang.rolez.IfStmt
 import ch.trick17.rolez.lang.rolez.LocalVarDecl
 import ch.trick17.rolez.lang.rolez.Method
 import ch.trick17.rolez.lang.rolez.ParameterizedBody
@@ -64,10 +66,10 @@ class RolezValidator extends RolezSystemValidator {
     public static val VAL_NOT_INITIALIZED = "val not initialized"
     public static val VAR_NOT_INITIALIZED = "var not initialized"
     
-    @Inject private extension RolezExtensions
-    @Inject private RolezSystem system
-    @Inject private CfgBuilder builder
-    @Inject private RolezUtils utils
+    @Inject extension RolezExtensions
+    @Inject RolezSystem system
+    @Inject CfgProvider cfgs
+    @Inject RolezUtils utils
     
 	@Check
     def checkClassNameStartsWithCapital(Class it) {
@@ -212,18 +214,31 @@ class RolezValidator extends RolezSystemValidator {
 	def checkReturnExpr(TypedBody it) {
         if(type instanceof Unit)
             return;
-	    val cfg = builder.controlFlowGraph(it)
+	    val cfg = cfgs.controlFlowGraph(it)
 	    
 	    if(cfg.exit === cfg.entry)
             error("Method must return a value of type " + type.string,
                 body, null, MISSING_RETURN_EXPR)
         for(p : cfg.exit.predecessors) {
-            if(p instanceof StmtNode) {
-                if(!(p.stmt instanceof ReturnExpr))
+            if(p instanceof InstrNode) {
+                if(!(p.instr instanceof ReturnExpr))
                     error("Method must return a value of type " + type.string,
-                        p.stmt, null, MISSING_RETURN_EXPR)
+                        nonReturningNode(p).instr, null, MISSING_RETURN_EXPR)
             }
             else throw new AssertionError
+	    }
+	}
+	
+	private def InstrNode nonReturningNode(InstrNode n) {
+	    val instr = n.instr
+	    switch(instr) {
+	        Block:
+	           if(instr.stmts.isEmpty) n
+	           else nonReturningNode(n.solePredecessor as InstrNode)
+	        IfStmt:
+	           if(n.isJoin || n.solePredecessor.isSplit) n
+	           else nonReturningNode(n.solePredecessor as InstrNode)
+	        default: n
 	    }
 	}
     

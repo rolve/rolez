@@ -367,7 +367,7 @@ class ValidatorTest {
                         return 0;
                 }
             }
-        ''').assertError(IF_STMT, MISSING_RETURN_EXPR)
+        ''').assertError(BLOCK, MISSING_RETURN_EXPR)
         
         parse('''
             task Main: int {}

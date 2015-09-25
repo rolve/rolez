@@ -230,6 +230,9 @@ BinaryExpr:
     {Assignment} | ID {LogicalExpr} | ID ID {EqualityExpr}
         | ID ID ID {RelationalExpr} | ID ID ID ID {ArithmeticBinaryExpr};
 
+Instr:
+    Expr | Stmt;
+
 Var:
     LocalVar | {Param};
 
