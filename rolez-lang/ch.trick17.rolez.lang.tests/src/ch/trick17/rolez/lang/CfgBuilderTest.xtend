@@ -2,6 +2,7 @@ package ch.trick17.rolez.lang
 
 import ch.trick17.rolez.lang.cfg.CfgBuilder
 import ch.trick17.rolez.lang.cfg.ControlFlowGraph
+import ch.trick17.rolez.lang.cfg.ExitNode
 import ch.trick17.rolez.lang.cfg.InstrNode
 import ch.trick17.rolez.lang.cfg.Node
 import ch.trick17.rolez.lang.rolez.Boolean
@@ -42,8 +43,8 @@ class CfgBuilderTest {
         parse('''
             task Main: {}
         ''').main.cfg.assertStructure('''
-            0 -> 1
-            1 -> 
+            entry -> 1
+            1 -> exit
         ''')
         
         parse('''
@@ -53,14 +54,14 @@ class CfgBuilderTest {
                 4;
             }
         ''').main.cfg.assertStructure('''
-            0 -> 1
+            entry -> 1
             1 -> 2
             2 -> 3
             3 -> 4
             4 -> 5
             5 -> 6
             6 -> 7
-            7 -> 
+            7 -> exit
         ''') // Note there's a node for every stmt (incl. blocks) and for every expr
         
         parse('''
@@ -73,10 +74,10 @@ class CfgBuilderTest {
                 5+5;
             }
         ''').main.cfg.assertStructure('''
-            0 -> 1
+            entry -> 1
             1 -> 2
             2 -> 3
-            3 -> 
+            3 -> exit
         ''')
     }
     
@@ -93,19 +94,19 @@ class CfgBuilderTest {
                     8;
             }
         ''').main.cfg.assertStructure('''
-            0 -> 1
+            entry -> 1
             1 -> 2
-            2 -> 3, 8
-            3 -> 4
+            2 -> 3
+            3 -> 4, 9
             4 -> 5
             5 -> 6
             6 -> 7
-            7 -> 10
-            8 -> 9
+            7 -> 8
+            8 -> 11
             9 -> 10
             10 -> 11
             11 -> 12
-            12 -> 
+            12 -> exit
         ''')
         
         parse('''
@@ -114,12 +115,12 @@ class CfgBuilderTest {
                 else {}
             }
         ''').main.cfg.assertStructure('''
-            0 -> 1, 2
-            1 -> 3
-            2 -> 3
+            entry -> 1
+            1 -> 2, 3
+            2 -> 4
             3 -> 4
             4 -> 5
-            5 -> 
+            5 -> exit
         ''')
         
         parse('''
@@ -132,18 +133,18 @@ class CfgBuilderTest {
                 8;
             }
         ''').main.cfg.assertStructure('''
-            0 -> 1
+            entry -> 1
             1 -> 2
-            2 -> 3, 5
-            3 -> 4
-            4 -> 7
-            5 -> 6
+            2 -> 3
+            3 -> 4, 6
+            4 -> 5
+            5 -> 8
             6 -> 7
             7 -> 8
             8 -> 9
             9 -> 10
             10 -> 11
-            11 -> 
+            11 -> exit
         ''')
         
         parse('''
@@ -152,12 +153,12 @@ class CfgBuilderTest {
                     1;
             }
         ''').main.cfg.assertStructure('''
-            0 -> 1, 3
-            1 -> 2
+            entry -> 1
+            1 -> 2, 4
             2 -> 3
             3 -> 4
             4 -> 5
-            5 -> 
+            5 -> exit
         ''')
         
         parse('''
@@ -169,10 +170,10 @@ class CfgBuilderTest {
                 }
             }
         ''').main.cfg.assertStructure('''
-            0 -> 1, 2
-            1 -> 3
-            2 -> 3
-            3 -> 
+            entry -> 1
+            1 -> 2, 3
+            2 -> exit
+            3 -> exit
         ''')
         
         parse('''
@@ -184,10 +185,10 @@ class CfgBuilderTest {
                 3;
             }
         ''').main.cfg.assertStructure('''
-            0 -> 1, 2
-            1 -> 3
-            2 -> 3
-            3 -> 
+            entry -> 1
+            1 -> 2, 3
+            2 -> exit
+            3 -> exit
         ''')
         
         parse('''
@@ -197,11 +198,11 @@ class CfgBuilderTest {
                 }
             }
         ''').main.cfg.assertStructure('''
-            0 -> 1, 2
-            1 -> 4
-            2 -> 3
+            entry -> 1
+            1 -> 2, 3
+            2 -> exit
             3 -> 4
-            4 -> 
+            4 -> exit
         ''')
         
         parse('''
@@ -211,13 +212,13 @@ class CfgBuilderTest {
                 3;
             }
         ''').main.cfg.assertStructure('''
-            0 -> 1, 2
-            1 -> 6
-            2 -> 3
+            entry -> 1
+            1 -> 2, 3
+            2 -> exit
             3 -> 4
             4 -> 5
             5 -> 6
-            6 -> 
+            6 -> exit
         ''')
         
         parse('''
@@ -227,12 +228,12 @@ class CfgBuilderTest {
                     return;
             }
         ''').main.cfg.assertStructure('''
-            0 -> 1, 4
-            1 -> 2
+            entry -> 1
+            1 -> 2, 5
             2 -> 3
-            3 -> 5
-            4 -> 5
-            5 -> 
+            3 -> 4
+            4 -> exit
+            5 -> exit
         ''')
     }
     
@@ -244,13 +245,13 @@ class CfgBuilderTest {
                     2;
             }
         ''').main.cfg.assertStructure('''
-            0 -> 1
-            1 -> 2, 4
-            2 -> 3
-            3 -> 0
-            4 -> 5
+            entry -> 1
+            1 -> 2
+            2 -> 3, 5
+            3 -> 4
+            4 -> 1
             5 -> 6
-            6 -> 
+            6 -> exit
         ''')
         
         parse('''
@@ -259,12 +260,12 @@ class CfgBuilderTest {
                     return;
             }
         ''').main.cfg.assertStructure('''
-            0 -> 1
-            1 -> 2, 3
-            2 -> 5
-            3 -> 4
+            entry -> 1
+            1 -> 2
+            2 -> 3, 4
+            3 -> exit
             4 -> 5
-            5 -> 
+            5 -> exit
         ''')
     }
     
@@ -275,43 +276,43 @@ class CfgBuilderTest {
                 0;
             }
         ''').main.cfg.assertStructure('''
-            0 -> 1
+            entry -> 1
             1 -> 2
             2 -> 3
-            3 -> 
+            3 -> exit
         ''')
         parse('''
             task Main: {
                 (0);
             }
         ''').main.cfg.assertStructure('''
-            0 -> 1
+            entry -> 1
             1 -> 2
             2 -> 3
             3 -> 4
-            4 -> 
+            4 -> exit
         ''')
         parse('''
             task Main: {
                 -0;
             }
         ''').main.cfg.assertStructure('''
-            0 -> 1
+            entry -> 1
             1 -> 2
             2 -> 3
             3 -> 4
-            4 -> 
+            4 -> exit
         ''')
         parse('''
             task Main: {
                 !true;
             }
         ''').main.cfg.assertStructure('''
-            0 -> 1
+            entry -> 1
             1 -> 2
             2 -> 3
             3 -> 4
-            4 -> 
+            4 -> exit
         ''')
         
         parse('''
@@ -319,12 +320,12 @@ class CfgBuilderTest {
                 0 + 1;
             }
         ''').main.cfg.assertStructure('''
-            0 -> 1
+            entry -> 1
             1 -> 2
             2 -> 3
             3 -> 4
             4 -> 5
-            5 -> 
+            5 -> exit
         ''')
         
         parse('''
@@ -332,12 +333,12 @@ class CfgBuilderTest {
                 0 == 1;
             }
         ''').main.cfg.assertStructure('''
-            0 -> 1
+            entry -> 1
             1 -> 2
             2 -> 3
             3 -> 4
             4 -> 5
-            5 -> 
+            5 -> exit
         ''')
         
         // Short-circuit!
@@ -346,55 +347,55 @@ class CfgBuilderTest {
                 a && b;
             }
         ''').main.cfg.assertStructure('''
-            0 -> 1, 2
-            1 -> 2
+            entry -> 1
+            1 -> 2, 3
             2 -> 3
             3 -> 4
             4 -> 5
-            5 -> 
+            5 -> exit
         ''')
         parse('''
             task Main(val a: boolean, val b: boolean): {
                 a || b;
             }
         ''').main.cfg.assertStructure('''
-            0 -> 2, 1
-            1 -> 2
+            entry -> 1
+            1 -> 3, 2
             2 -> 3
             3 -> 4
             4 -> 5
-            5 -> 
+            5 -> exit
         ''')
         parse('''
             task Main(val b: boolean): {
                 0 == 1 && b;
             }
         ''').main.cfg.assertStructure('''
-            0 -> 1
+            entry -> 1
             1 -> 2
-            2 -> 3, 4
-            3 -> 4
+            2 -> 3
+            3 -> 4, 5
             4 -> 5
             5 -> 6
             6 -> 7
-            7 -> 
+            7 -> exit
         ''')
         parse('''
             task Main(val a: boolean, val b: boolean): {
                 a && (1 > 2 || b);
             }
         ''').main.cfg.assertStructure('''
-            0 -> 1, 7
-            1 -> 2
+            entry -> 1
+            1 -> 2, 8
             2 -> 3
-            3 -> 5, 4
-            4 -> 5
+            3 -> 4
+            4 -> 6, 5
             5 -> 6
             6 -> 7
             7 -> 8
             8 -> 9
             9 -> 10
-            10 -> 
+            10 -> exit
         ''')
     }
     
@@ -409,15 +410,13 @@ class CfgBuilderTest {
     }
     
     private def assertInvariants(ControlFlowGraph it) {
+        nodes.size.assertThat(greaterThan(2))
         nodes.assertThat(hasItem(entry))
         nodes.assertThat(hasItem(exit))
-        
-        if(entry !== exit) {
-            nodes.size.assertThat(greaterThan(1))
-            entry.successors.assertThat(not(empty))
-            exit.predecessors.assertThat(not(empty))
-        }
+        entry.predecessors.assertThat(empty)
+        entry.successors.assertThat(not(empty))
         exit.successors.assertThat(empty)
+        exit.predecessors.assertThat(not(empty))
         
         val reachable = new HashSet
         entry.collectReachableNodes(reachable)
@@ -461,8 +460,11 @@ class CfgBuilderTest {
     
     private def dumpStructure(ControlFlowGraph it) {
         val i = (0..nodes.size).iterator
-        val map = nodes.toInvertedMap[i.next]
-        map.entrySet.map['''
+        val map = nodes.toInvertedMap[i.next.toString]
+        map.put(entry, "entry")
+        map.put(exit, "exit")
+        
+        map.entrySet.filter[!(key instanceof ExitNode)].map['''
             «value» -> «key.successors.map[map.get(it)].join(", ")»
         '''].join
     }

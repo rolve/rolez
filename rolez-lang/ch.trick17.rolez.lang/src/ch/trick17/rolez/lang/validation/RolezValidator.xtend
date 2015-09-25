@@ -215,10 +215,6 @@ class RolezValidator extends RolezSystemValidator {
         if(type instanceof Unit)
             return;
 	    val cfg = cfgs.controlFlowGraph(it)
-	    
-	    if(cfg.exit === cfg.entry)
-            error("Method must return a value of type " + type.string,
-                body, null, MISSING_RETURN_EXPR)
         for(p : cfg.exit.predecessors) {
             if(p instanceof InstrNode) {
                 if(!(p.instr instanceof ReturnExpr))

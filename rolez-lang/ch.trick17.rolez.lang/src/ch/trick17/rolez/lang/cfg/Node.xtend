@@ -13,21 +13,21 @@ abstract class Node {
     
     def getPredecessors() { preds.unmodifiableView }
     def getSolePredecessor() {
-        if(preds.size != 1) throw new AssertionError
+        if(preds.size != 1) throw new UnsupportedOperationException
         preds.get(0)
     }
     
     def getSuccessors()   { succs.unmodifiableView }
     def getSoleSuccessor() {
-        if(succs.size != 1) throw new AssertionError
+        if(succs.size != 1) throw new UnsupportedOperationException
         succs.get(0)
     }
     def getTrueSuccessor() {
-        if(succs.size != 2) throw new AssertionError
+        if(succs.size != 2) throw new UnsupportedOperationException
         succs.get(0)
     }
     def getFalseSuccessor() {
-        if(succs.size != 2) throw new AssertionError
+        if(succs.size != 2) throw new UnsupportedOperationException
         succs.get(1)
     }
     
@@ -45,4 +45,5 @@ class LoopHeadNode extends Node {
     new(WhileLoop loop) { this.loop = loop.requireNonNull }
 }
 
+class EntryNode extends Node {}
 class ExitNode extends Node {}

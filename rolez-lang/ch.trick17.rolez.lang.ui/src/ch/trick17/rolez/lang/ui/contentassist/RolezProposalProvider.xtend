@@ -3,6 +3,7 @@
  */
 package ch.trick17.rolez.lang.ui.contentassist
 
+import ch.trick17.rolez.lang.RolezExtensions
 import ch.trick17.rolez.lang.rolez.Expr
 import ch.trick17.rolez.lang.rolez.Field
 import ch.trick17.rolez.lang.rolez.Member
@@ -10,18 +11,19 @@ import ch.trick17.rolez.lang.rolez.MemberAccess
 import ch.trick17.rolez.lang.rolez.Method
 import ch.trick17.rolez.lang.rolez.RoleType
 import ch.trick17.rolez.lang.typesystem.RolezSystem
+import ch.trick17.rolez.lang.typesystem.RolezUtils
 import javax.inject.Inject
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.Assignment
 import org.eclipse.xtext.scoping.Scopes
 import org.eclipse.xtext.ui.editor.contentassist.ContentAssistContext
 import org.eclipse.xtext.ui.editor.contentassist.ICompletionProposalAcceptor
-import ch.trick17.rolez.lang.typesystem.RolezUtils
 
 class RolezProposalProvider extends AbstractRolezProposalProvider {
 
-    @Inject private extension RolezSystem system
-    @Inject private extension RolezUtils
+    @Inject RolezSystem system
+    @Inject RolezUtils utils
+    @Inject extension RolezExtensions
 
     override completeFieldSelector_Field(EObject model, Assignment a, ContentAssistContext context,
         ICompletionProposalAcceptor acceptor) {
@@ -48,7 +50,7 @@ class RolezProposalProvider extends AbstractRolezProposalProvider {
         }
         
         if (target != null) {
-            val targetType = system.type(envFor(model), target).value
+            val targetType = system.type(utils.envFor(model), target).value
             if (targetType instanceof RoleType) {
                 val factory = getProposalFactory("MemberAccess", context)
                 val scope = Scopes.scopeFor(targetType.base.clazz.allMembers.filter(kind))

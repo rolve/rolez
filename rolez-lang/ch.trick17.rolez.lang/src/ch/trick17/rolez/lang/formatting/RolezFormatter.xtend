@@ -13,8 +13,6 @@ import org.eclipse.xtext.formatting.impl.FormattingConfig
  * 
  * See https://www.eclipse.org/Xtext/documentation/303_runtime_concepts.html#formatting
  * on how and when to use it.
- * 
- * Also see {@link org.eclipse.xtext.xtext.XtextFormattingTokenSerializer} as an example
  */
 class RolezFormatter extends AbstractDeclarativeFormatter {
 

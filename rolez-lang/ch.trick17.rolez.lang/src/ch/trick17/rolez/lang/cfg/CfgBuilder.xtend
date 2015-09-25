@@ -50,15 +50,6 @@ class CfgBuilder {
         val linked = l1.link(node); l2.link(node) || linked // Avoid short-circuit
     ]}
     
-    private static class NodeHolder extends Linker {
-        public var Node node
-        override link(Node n) {
-            if(node != null) throw new IllegalStateException
-            this.node = n
-            true
-        }
-    }
-    
     /* Here comes the implementation */
     
     val ParameterizedBody body
@@ -71,9 +62,9 @@ class CfgBuilder {
     }
     
     def build() {
-        val enter = new NodeHolder
-        process(body.body, enter).link(exit)
-        return new ControlFlowGraph(enter.node, exit, instrMap)
+        val entry = new EntryNode
+        process(body.body, entry.linker).link(exit)
+        return new ControlFlowGraph(entry, exit, instrMap)
     }
     
     private def newInstrNode(Instr i) {

@@ -9,11 +9,11 @@ import java.util.Set
 
 class ControlFlowGraph {
     
-    public val Node entry
-    public val Node exit
+    public val EntryNode entry
+    public val ExitNode exit
     val Map<Instr, Node> instrMap
     
-    package new (Node entry, Node exit, Map<Instr, Node> instrMap) {
+    package new (EntryNode entry, ExitNode exit, Map<Instr, Node> instrMap) {
         this.entry = entry
         this.exit = exit
         this.instrMap = instrMap
