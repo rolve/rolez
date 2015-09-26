@@ -574,8 +574,13 @@ class ValidatorTest {
             class rolez.lang.Object
             class A {
                 val i: int
+                var j: int
                 new {
                     this.i = 3;
+                }
+                new(val b: boolean, val i: int) {
+                    if(b) this.i = i;
+                    else  this.i = 0;
                 }
             }
         ''').assertNoErrors
@@ -593,6 +598,25 @@ class ValidatorTest {
                 new {}
             }
         ''').assertError(CONSTRUCTOR, VAL_FIELD_NOT_INITIALIZED, "i")
+        parse('''
+            class rolez.lang.Object
+            class A {
+                val i: int
+                new(val b: boolean) {
+                    if(b) this.i = 0;
+                }
+            }
+        ''').assertError(CONSTRUCTOR, VAL_FIELD_NOT_INITIALIZED, "i")
+        parse('''
+            class rolez.lang.Object
+            class A {
+                val i: int
+                new(val a: boolean, val b: boolean) {
+                    if(a) this.i = 2;
+                    if(b) this.i = 0;
+                }
+            }
+        ''').assertError(CONSTRUCTOR, VAL_FIELD_NOT_INITIALIZED, "i")
         
         parse('''
             class rolez.lang.Object
@@ -603,8 +627,30 @@ class ValidatorTest {
                     this.x = 4;
                 }
             }
-        ''').assertError(MEMBER_ACCESS, VAL_FIELD_OVERINITIALIZED,
-            "initialize", "value field more than once")
+        ''').assertError(ASSIGNMENT, VAL_FIELD_OVERINITIALIZED, "i")
+        parse('''
+            class rolez.lang.Object
+            class A {
+                val x: int
+                new(val b: boolean) {
+                    if(b)
+                        this.x = 3;
+                    this.x = 4;
+                }
+            }
+        ''').assertError(ASSIGNMENT, VAL_FIELD_OVERINITIALIZED, "i")
+        val program = parse('''
+            class rolez.lang.Object
+            class A {
+                val x: int
+                new(val b: boolean) {
+                    while(b)
+                        this.x = 3;
+                }
+            }
+        ''')
+        program.assertError(ASSIGNMENT, VAL_FIELD_OVERINITIALIZED, "i")
+        program.assertError(CONSTRUCTOR, VAL_FIELD_NOT_INITIALIZED, "i")
     }
     
     @Test

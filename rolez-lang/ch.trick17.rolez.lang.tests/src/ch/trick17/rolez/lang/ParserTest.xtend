@@ -40,7 +40,7 @@ class ParserTest {
         parse('''
             class rolez.lang.Object
             class rolez.lang.Array {
-                val length: int
+                var length: int
             }
             class foo.A
             class foo.B extends foo.A {
@@ -57,7 +57,7 @@ class ParserTest {
         parse('''
             class rolez.lang.Object
             class A {
-                val i: int
+                var i: int
                 def pure f: {}
             }
             class B {

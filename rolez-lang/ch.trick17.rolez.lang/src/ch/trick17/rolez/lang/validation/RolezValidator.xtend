@@ -6,6 +6,7 @@ package ch.trick17.rolez.lang.validation
 import ch.trick17.rolez.lang.RolezExtensions
 import ch.trick17.rolez.lang.cfg.CfgProvider
 import ch.trick17.rolez.lang.cfg.InstrNode
+import ch.trick17.rolez.lang.rolez.Assignment
 import ch.trick17.rolez.lang.rolez.Block
 import ch.trick17.rolez.lang.rolez.Class
 import ch.trick17.rolez.lang.rolez.ClassLike
@@ -35,6 +36,8 @@ import org.eclipse.xtext.validation.Check
 import static ch.trick17.rolez.lang.Constants.*
 import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
 import static ch.trick17.rolez.lang.rolez.VarKind.*
+
+import static ch.trick17.rolez.lang.validation.ValFieldsInitializedAnalysis.*
 
 /**
  * This class contains custom validation rules. 
@@ -67,8 +70,8 @@ class RolezValidator extends RolezSystemValidator {
     public static val VAR_NOT_INITIALIZED = "var not initialized"
     
     @Inject extension RolezExtensions
+    @Inject extension CfgProvider
     @Inject RolezSystem system
-    @Inject CfgProvider cfgs
     @Inject RolezUtils utils
     
 	@Check
@@ -214,7 +217,7 @@ class RolezValidator extends RolezSystemValidator {
 	def checkReturnExpr(TypedBody it) {
         if(type instanceof Unit)
             return;
-	    val cfg = cfgs.controlFlowGraph(it)
+	    val cfg = controlFlowGraph
         for(p : cfg.exit.predecessors) {
             if(p instanceof InstrNode) {
                 if(!(p.instr instanceof ReturnExpr))
@@ -253,8 +256,27 @@ class RolezValidator extends RolezSystemValidator {
     }
     
     @Check
+    def checkValFieldInitialized(Field it) {
+        if(kind == VAL && enclosingClass.constructors.isEmpty)
+            error("Value field " + name + " is uninitialized",
+                it, null, VAL_FIELD_NOT_INITIALIZED)
+    }
+    
+    @Check
     def checkValFieldsInitialized(Constructor it) {
-        // TODO: This requires a data flow analysis of sorts...
+        val cfg = controlFlowGraph
+        val extension analysis = new ValFieldsInitializedAnalysis(cfg)
+        for(f : enclosingClass.fields.filter[kind == VAL])
+            if(!f.definitelyInitializedAfter(cfg.exit))
+                error("Value field " + f.name + " may not have been initialized",
+                    it, null, VAL_FIELD_NOT_INITIALIZED)
+        
+        for(a : eAllContents.filter(Assignment).filter[isValFieldInit(it)].toIterable) {
+            val f = assignedField(a)
+            if(f.possiblyInitializedBefore(cfg.nodeOf(a)))
+                error("Value field " + f.name + " may already have been initialized",
+                    a, null, VAL_FIELD_OVERINITIALIZED)
+        }
     }
     
     @Check
@@ -267,6 +289,8 @@ class RolezValidator extends RolezSystemValidator {
     def checkLocalVarsInitialized(ParameterizedBody it) {
         // TODO
     }
+    
+    // TODO: Super constructor call
     
 	/*
 	 * Delayed errors
