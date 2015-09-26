@@ -50,6 +50,10 @@ class ValFieldsInitializedAnalysis extends DataFlowAnalysis<Initialized> {
             copyOf(flow1.definitely.intersection(flow2.definitely)))
     }
     
+    def definitelyInitializedBefore(Field it, Node n) {
+        n.beforeFlow.definitely.contains(it)
+    }
+    
     def definitelyInitializedAfter(Field it, Node n) {
         n.afterFlow.definitely.contains(it)
     }

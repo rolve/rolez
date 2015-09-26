@@ -14,6 +14,7 @@ import ch.trick17.rolez.lang.rolez.Constructor
 import ch.trick17.rolez.lang.rolez.Field
 import ch.trick17.rolez.lang.rolez.GenericClassRef
 import ch.trick17.rolez.lang.rolez.IfStmt
+import ch.trick17.rolez.lang.rolez.LocalVar
 import ch.trick17.rolez.lang.rolez.LocalVarDecl
 import ch.trick17.rolez.lang.rolez.Method
 import ch.trick17.rolez.lang.rolez.ParameterizedBody
@@ -23,6 +24,7 @@ import ch.trick17.rolez.lang.rolez.SimpleClassRef
 import ch.trick17.rolez.lang.rolez.TypedBody
 import ch.trick17.rolez.lang.rolez.Unit
 import ch.trick17.rolez.lang.rolez.Var
+import ch.trick17.rolez.lang.rolez.VarRef
 import ch.trick17.rolez.lang.typesystem.RolezSystem
 import ch.trick17.rolez.lang.typesystem.RolezUtils
 import ch.trick17.rolez.lang.typesystem.validation.RolezSystemValidator
@@ -36,8 +38,10 @@ import org.eclipse.xtext.validation.Check
 import static ch.trick17.rolez.lang.Constants.*
 import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
 import static ch.trick17.rolez.lang.rolez.VarKind.*
-
 import static ch.trick17.rolez.lang.validation.ValFieldsInitializedAnalysis.*
+import ch.trick17.rolez.lang.rolez.Expr
+import ch.trick17.rolez.lang.rolez.MemberAccess
+import ch.trick17.rolez.lang.rolez.FieldSelector
 
 /**
  * This class contains custom validation rules. 
@@ -271,12 +275,29 @@ class RolezValidator extends RolezSystemValidator {
                 error("Value field " + f.name + " may not have been initialized",
                     it, null, VAL_FIELD_NOT_INITIALIZED)
         
-        for(a : eAllContents.filter(Assignment).filter[isValFieldInit(it)].toIterable) {
+        for(a : all(Assignment).filter[isValFieldInit(it)]) {
             val f = assignedField(a)
             if(f.possiblyInitializedBefore(cfg.nodeOf(a)))
                 error("Value field " + f.name + " may already have been initialized",
                     a, null, VAL_FIELD_OVERINITIALIZED)
         }
+        
+        for(a : all(MemberAccess).filter[isFieldAccess]) {
+            val f = (a.selector as FieldSelector).field
+            if(f.kind == VAL && !a.isAssignmentTarget
+                    && !f.definitelyInitializedBefore(cfg.nodeOf(a)))
+                error("Value field " + f.name + " may not have been initialized",
+                    a, MEMBER_ACCESS__SELECTOR, VAL_FIELD_NOT_INITIALIZED)
+        }
+    }
+    
+    private def isAssignmentTarget(Expr e) {
+        e.eContainer instanceof Assignment
+            && (e.eContainer as Assignment).left == e
+    }
+    
+    private def <T> all(ParameterizedBody it, java.lang.Class<T> c) {
+        eAllContents.filter(c).toIterable
     }
     
     @Check
@@ -287,7 +308,13 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkLocalVarsInitialized(ParameterizedBody it) {
-        // TODO
+        val cfg = controlFlowGraph
+        val extension analysis = new LocalVarsInitializedAnalysis(cfg)
+        for(v : all(VarRef))
+            if(v.variable instanceof LocalVar && !v.isAssignmentTarget
+                    && !v.variable.initializedBefore(cfg.nodeOf(v)))
+                error("Variable " + v.variable.name + " may not have been initialized",
+                    v, VAR_REF__VARIABLE, VAR_NOT_INITIALIZED)
     }
     
     // TODO: Super constructor call

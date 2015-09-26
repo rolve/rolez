@@ -569,7 +569,7 @@ class ValidatorTest {
     }
     
     @Test
-    def testValFieldsInitializedOnce() {
+    def testValFieldsInitialized() {
         parse('''
             class rolez.lang.Object
             class A {
@@ -577,10 +577,12 @@ class ValidatorTest {
                 var j: int
                 new {
                     this.i = 3;
+                    3 + this.i;
                 }
                 new(val b: boolean, val i: int) {
                     if(b) this.i = i;
                     else  this.i = 0;
+                    3 + this.i;
                 }
             }
         ''').assertNoErrors
@@ -591,13 +593,17 @@ class ValidatorTest {
                 val i: int
             }
         ''').assertError(FIELD, VAL_FIELD_NOT_INITIALIZED)
-        parse('''
+        var program = parse('''
             class rolez.lang.Object
             class A {
                 val i: int
+                val j: int
                 new {}
             }
-        ''').assertError(CONSTRUCTOR, VAL_FIELD_NOT_INITIALIZED, "i")
+        ''')
+        program.assertError(CONSTRUCTOR, VAL_FIELD_NOT_INITIALIZED, "field i")
+        program.assertError(CONSTRUCTOR, VAL_FIELD_NOT_INITIALIZED, "field j")
+        
         parse('''
             class rolez.lang.Object
             class A {
@@ -606,7 +612,7 @@ class ValidatorTest {
                     if(b) this.i = 0;
                 }
             }
-        ''').assertError(CONSTRUCTOR, VAL_FIELD_NOT_INITIALIZED, "i")
+        ''').assertError(CONSTRUCTOR, VAL_FIELD_NOT_INITIALIZED)
         parse('''
             class rolez.lang.Object
             class A {
@@ -616,7 +622,17 @@ class ValidatorTest {
                     if(b) this.i = 0;
                 }
             }
-        ''').assertError(CONSTRUCTOR, VAL_FIELD_NOT_INITIALIZED, "i")
+        ''').assertError(CONSTRUCTOR, VAL_FIELD_NOT_INITIALIZED)
+        parse('''
+            class rolez.lang.Object
+            class A {
+                val i: int
+                new(val a: boolean, val b: boolean) {
+                    3 + this.i;
+                    this.i = 0;
+                }
+            }
+        ''').assertError(MEMBER_ACCESS, VAL_FIELD_NOT_INITIALIZED)
         
         parse('''
             class rolez.lang.Object
@@ -627,7 +643,7 @@ class ValidatorTest {
                     this.x = 4;
                 }
             }
-        ''').assertError(ASSIGNMENT, VAL_FIELD_OVERINITIALIZED, "i")
+        ''').assertError(ASSIGNMENT, VAL_FIELD_OVERINITIALIZED)
         parse('''
             class rolez.lang.Object
             class A {
@@ -638,8 +654,8 @@ class ValidatorTest {
                     this.x = 4;
                 }
             }
-        ''').assertError(ASSIGNMENT, VAL_FIELD_OVERINITIALIZED, "i")
-        val program = parse('''
+        ''').assertError(ASSIGNMENT, VAL_FIELD_OVERINITIALIZED)
+        program = parse('''
             class rolez.lang.Object
             class A {
                 val x: int
@@ -649,8 +665,8 @@ class ValidatorTest {
                 }
             }
         ''')
-        program.assertError(ASSIGNMENT, VAL_FIELD_OVERINITIALIZED, "i")
-        program.assertError(CONSTRUCTOR, VAL_FIELD_NOT_INITIALIZED, "i")
+        program.assertError(ASSIGNMENT, VAL_FIELD_OVERINITIALIZED)
+        program.assertError(CONSTRUCTOR, VAL_FIELD_NOT_INITIALIZED)
     }
     
     @Test

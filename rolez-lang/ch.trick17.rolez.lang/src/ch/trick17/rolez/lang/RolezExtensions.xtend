@@ -32,6 +32,9 @@ import org.eclipse.xtext.naming.IQualifiedNameProvider
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils
 
 import static ch.trick17.rolez.lang.Constants.*
+import ch.trick17.rolez.lang.rolez.MemberAccess
+import ch.trick17.rolez.lang.rolez.FieldSelector
+import ch.trick17.rolez.lang.rolez.MethodSelector
 
 /**
  * Extension methods for the Rolez language elements
@@ -127,6 +130,9 @@ class RolezExtensions {
     def dispatch kind(Method _)      { "method" }
     def dispatch kind(Constructor _) { "constructor" }
     def dispatch kind(Task _)        { "task" }
+    
+    def isFieldAccess(MemberAccess it) { selector instanceof FieldSelector }
+    def isMethodInvoke(MemberAccess it) { selector instanceof MethodSelector }
     
     /*
      * toString() replacements:
