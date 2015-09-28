@@ -604,6 +604,17 @@ class TypeSystemTest {
     }
     
     @Test
+    def testTMemberAccessMethodErrorInArg() {
+        parse('''
+            class rolez.lang.Object
+            class A {
+                def pure foo(val i: int): {}
+                def pure bar: { foo(!5); }
+            }
+        ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
+    }
+    
+    @Test
     def testTMemberAccessMethodRoleMismatch() {
         for(expected : Role.values) {
             for(actual : Role.values.filter[!system.subroleSucceeded(it, expected)]) {
@@ -870,6 +881,17 @@ class TypeSystemTest {
             .assertThat(isRoleType(READWRITE, newClassRef(array,
                 newRoleType(PURE, newClassRef(array,
                     newRoleType(READWRITE, newClassRef(program.findClass("A"))))))))
+    }
+    
+    @Test
+    def testTNewErrorInArg() {
+        parse('''
+            class rolez.lang.Object
+            class A {
+                new(val i: int) {}
+                def pure foo(val i: int): { new A(!5); }
+            }
+        ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
     @Test

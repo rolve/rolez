@@ -255,6 +255,9 @@ axiom TVarRef
 rule TNew
     G |- New n : newRoleType(READWRITE, n.classRef.copy)
 from {
+    for(arg : n.args) {
+        G |- arg : var Type _
+    }
     val maxSpecific = n.classRef.clazz.allConstrs.maximallySpecific(n)
     maxSpecific.size == 1 or fail
         error
