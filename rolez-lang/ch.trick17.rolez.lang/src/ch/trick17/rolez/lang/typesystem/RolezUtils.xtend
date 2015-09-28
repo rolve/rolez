@@ -4,7 +4,7 @@ import ch.trick17.rolez.lang.RolezExtensions
 import ch.trick17.rolez.lang.rolez.Argumented
 import ch.trick17.rolez.lang.rolez.Class
 import ch.trick17.rolez.lang.rolez.ClassRef
-import ch.trick17.rolez.lang.rolez.Constructor
+import ch.trick17.rolez.lang.rolez.Constr
 import ch.trick17.rolez.lang.rolez.Method
 import ch.trick17.rolez.lang.rolez.MethodSelector
 import ch.trick17.rolez.lang.rolez.ParameterizedBody
@@ -77,7 +77,7 @@ class RolezUtils {
                 val thisType = newRoleType(body.thisRole, newClassRef(body.enclosingClass))
                 new RuleEnvironment(new RuleEnvironmentEntry("this", thisType))
             }
-            Constructor: {
+            Constr: {
                 val thisType = newRoleType(READWRITE, newClassRef(body.enclosingClass))
                 new RuleEnvironment(new RuleEnvironmentEntry("this", thisType))
             }

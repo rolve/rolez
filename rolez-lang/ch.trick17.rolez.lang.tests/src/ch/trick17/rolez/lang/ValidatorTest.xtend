@@ -601,8 +601,8 @@ class ValidatorTest {
                 new {}
             }
         ''')
-        program.assertError(CONSTRUCTOR, VAL_FIELD_NOT_INITIALIZED, "field i")
-        program.assertError(CONSTRUCTOR, VAL_FIELD_NOT_INITIALIZED, "field j")
+        program.assertError(CONSTR, VAL_FIELD_NOT_INITIALIZED, "field i")
+        program.assertError(CONSTR, VAL_FIELD_NOT_INITIALIZED, "field j")
         
         parse('''
             class rolez.lang.Object
@@ -612,7 +612,7 @@ class ValidatorTest {
                     if(b) this.i = 0;
                 }
             }
-        ''').assertError(CONSTRUCTOR, VAL_FIELD_NOT_INITIALIZED)
+        ''').assertError(CONSTR, VAL_FIELD_NOT_INITIALIZED)
         parse('''
             class rolez.lang.Object
             class A {
@@ -622,7 +622,7 @@ class ValidatorTest {
                     if(b) this.i = 0;
                 }
             }
-        ''').assertError(CONSTRUCTOR, VAL_FIELD_NOT_INITIALIZED)
+        ''').assertError(CONSTR, VAL_FIELD_NOT_INITIALIZED)
         parse('''
             class rolez.lang.Object
             class A {
@@ -666,7 +666,7 @@ class ValidatorTest {
             }
         ''')
         program.assertError(ASSIGNMENT, VAL_FIELD_OVERINITIALIZED)
-        program.assertError(CONSTRUCTOR, VAL_FIELD_NOT_INITIALIZED)
+        program.assertError(CONSTR, VAL_FIELD_NOT_INITIALIZED)
     }
     
     @Test

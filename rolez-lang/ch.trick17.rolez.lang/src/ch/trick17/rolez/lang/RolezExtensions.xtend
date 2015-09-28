@@ -5,15 +5,18 @@ import ch.trick17.rolez.lang.rolez.Char
 import ch.trick17.rolez.lang.rolez.Class
 import ch.trick17.rolez.lang.rolez.ClassLike
 import ch.trick17.rolez.lang.rolez.ClassRef
-import ch.trick17.rolez.lang.rolez.Constructor
+import ch.trick17.rolez.lang.rolez.Constr
 import ch.trick17.rolez.lang.rolez.Double
 import ch.trick17.rolez.lang.rolez.Field
+import ch.trick17.rolez.lang.rolez.FieldSelector
 import ch.trick17.rolez.lang.rolez.GenericClassRef
 import ch.trick17.rolez.lang.rolez.Instr
 import ch.trick17.rolez.lang.rolez.Int
 import ch.trick17.rolez.lang.rolez.LocalVar
 import ch.trick17.rolez.lang.rolez.Member
+import ch.trick17.rolez.lang.rolez.MemberAccess
 import ch.trick17.rolez.lang.rolez.Method
+import ch.trick17.rolez.lang.rolez.MethodSelector
 import ch.trick17.rolez.lang.rolez.Null
 import ch.trick17.rolez.lang.rolez.ParameterizedBody
 import ch.trick17.rolez.lang.rolez.Program
@@ -32,9 +35,6 @@ import org.eclipse.xtext.naming.IQualifiedNameProvider
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils
 
 import static ch.trick17.rolez.lang.Constants.*
-import ch.trick17.rolez.lang.rolez.MemberAccess
-import ch.trick17.rolez.lang.rolez.FieldSelector
-import ch.trick17.rolez.lang.rolez.MethodSelector
 
 /**
  * Extension methods for the Rolez language elements
@@ -62,9 +62,9 @@ class RolezExtensions {
         nameProvider.getFullyQualifiedName(it).lastSegment
     }
     
-    def Iterable<Constructor> allConstructors(Class it) {
+    def Iterable<Constr> allConstrs(Class it) {
         if(!constructors.isEmpty) constructors
-        else #[RolezFactory.eINSTANCE.createConstructor]
+        else #[RolezFactory.eINSTANCE.createConstr]
     }
     
     def Iterable<Member> allMembers(Class it) {
@@ -127,9 +127,9 @@ class RolezExtensions {
         }
     }
     
-    def dispatch kind(Method _)      { "method" }
-    def dispatch kind(Constructor _) { "constructor" }
-    def dispatch kind(Task _)        { "task" }
+    def dispatch kind(Method _) { "method" }
+    def dispatch kind(Constr _) { "constructor" }
+    def dispatch kind(Task _)   { "task" }
     
     def isFieldAccess(MemberAccess it) { selector instanceof FieldSelector }
     def isMethodInvoke(MemberAccess it) { selector instanceof MethodSelector }

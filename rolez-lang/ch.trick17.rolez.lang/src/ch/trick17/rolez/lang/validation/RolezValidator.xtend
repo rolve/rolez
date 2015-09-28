@@ -10,12 +10,15 @@ import ch.trick17.rolez.lang.rolez.Assignment
 import ch.trick17.rolez.lang.rolez.Block
 import ch.trick17.rolez.lang.rolez.Class
 import ch.trick17.rolez.lang.rolez.ClassLike
-import ch.trick17.rolez.lang.rolez.Constructor
+import ch.trick17.rolez.lang.rolez.Constr
+import ch.trick17.rolez.lang.rolez.Expr
 import ch.trick17.rolez.lang.rolez.Field
+import ch.trick17.rolez.lang.rolez.FieldSelector
 import ch.trick17.rolez.lang.rolez.GenericClassRef
 import ch.trick17.rolez.lang.rolez.IfStmt
 import ch.trick17.rolez.lang.rolez.LocalVar
 import ch.trick17.rolez.lang.rolez.LocalVarDecl
+import ch.trick17.rolez.lang.rolez.MemberAccess
 import ch.trick17.rolez.lang.rolez.Method
 import ch.trick17.rolez.lang.rolez.ParameterizedBody
 import ch.trick17.rolez.lang.rolez.Program
@@ -39,9 +42,6 @@ import static ch.trick17.rolez.lang.Constants.*
 import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
 import static ch.trick17.rolez.lang.rolez.VarKind.*
 import static ch.trick17.rolez.lang.validation.ValFieldsInitializedAnalysis.*
-import ch.trick17.rolez.lang.rolez.Expr
-import ch.trick17.rolez.lang.rolez.MemberAccess
-import ch.trick17.rolez.lang.rolez.FieldSelector
 
 /**
  * This class contains custom validation rules. 
@@ -267,7 +267,7 @@ class RolezValidator extends RolezSystemValidator {
     }
     
     @Check
-    def checkValFieldsInitialized(Constructor it) {
+    def checkValFieldsInitialized(Constr it) {
         val cfg = controlFlowGraph
         val extension analysis = new ValFieldsInitializedAnalysis(cfg)
         for(f : enclosingClass.fields.filter[kind == VAL])

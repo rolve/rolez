@@ -24,7 +24,7 @@ ClassLike:
 Class:
     'class' name=QualifiedName ('extends' superclass=[Class|QualifiedName])?
     ('{'
-        (constructors+=Constructor | members+=Member)+
+        (constructors+=Constr | members+=Member)+
     '}')?;
 
 Task:
@@ -34,7 +34,7 @@ Task:
 Member:
     Field | Method;
 
-Constructor:
+Constr:
     'new' ('(' params+=Param (',' params+=Param)* ')')? body=Block;
 
 Field:
@@ -243,7 +243,7 @@ Typed:
     TypedBody | Field | {Var};
 
 ParameterizedBody:
-    Constructor | TypedBody;
+    Constr | TypedBody;
 
 TypedBody:
     Method | Task;
