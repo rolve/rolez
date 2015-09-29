@@ -584,6 +584,12 @@ class ValidatorTest {
                     else  this.i = 0;
                     3 + this.i;
                 }
+                new(val a: pure A) {
+                    this.i = 0;
+                    while(this.foo())
+                        new A;
+                }
+               def pure foo: boolean { return false; }
             }
         ''').assertNoErrors
         
@@ -675,8 +681,8 @@ class ValidatorTest {
             class rolez.lang.Object
             class A {
                 def pure foo: {
-                    val i: int = 0;
-                    val a: readonly A = new A;
+                    val i: int = 4;
+                    var j: int = 0;
                 }
             }
         ''').assertNoErrors
@@ -706,6 +712,12 @@ class ValidatorTest {
                     else
                         k = 3;
                     return i + j + k;
+                }
+                
+                def pure bar: {
+                    var i: int = 0;
+                    while(this.foo(5) > i)
+                        this.bar();
                 }
             }
         ''').assertNoErrors
@@ -753,7 +765,7 @@ class ValidatorTest {
             class A {
                 new {}
                 new(val i: int) {}
-                def pure foo: {}
+                def pure foo: boolean { return false; }
             }
             class B extends A {
                 new {
@@ -766,6 +778,10 @@ class ValidatorTest {
                 }
                 new(val s: pure String) {
                     super(s.length());
+                }
+                new(val a: pure A) {
+                    while(this.foo())
+                        this.bar();
                 }
                 def pure bar: {}
             }

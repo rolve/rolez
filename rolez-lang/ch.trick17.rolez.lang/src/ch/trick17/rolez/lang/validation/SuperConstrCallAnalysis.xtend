@@ -14,7 +14,7 @@ class SuperConstrCallAnalysis extends DataFlowAnalysis<Boolean> {
         analyze
     }
     
-    protected override newFlow() { true }
+    protected override newFlow() { false }
     protected override entryFlow() {
         // If there are no explicit super constr calls, the no-param constr
         // is called implicitly before the first statement

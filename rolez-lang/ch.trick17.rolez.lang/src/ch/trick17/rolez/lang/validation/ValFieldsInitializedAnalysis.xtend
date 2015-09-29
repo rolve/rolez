@@ -30,12 +30,14 @@ class ValFieldsInitializedAnalysis extends DataFlowAnalysis<Initialized> {
         ((left as MemberAccess).selector as FieldSelector).field
     }
     
+    val newFlow = new Initialized(null, null)
+    
     new(ControlFlowGraph cfg) {
         super(cfg, true)
         analyze()
     }
     
-    protected override newFlow()   { new Initialized(emptySet, emptySet) }
+    protected override newFlow()   { newFlow }
     protected override entryFlow() { new Initialized(emptySet, emptySet) }
     
     protected def dispatch flowThrough(Assignment a, Initialized in) {
@@ -46,7 +48,9 @@ class ValFieldsInitializedAnalysis extends DataFlowAnalysis<Initialized> {
     protected def dispatch flowThrough(Instr i, Initialized in) { in }
     
     protected override merge(Initialized in1, Initialized in2) {
-        new Initialized(copyOf(in1.possibly.union(in2.possibly)),
+        if(in1 === newFlow) in2
+        else if(in2 === newFlow) in1
+        else new Initialized(copyOf(in1.possibly.union(in2.possibly)),
             copyOf(in1.definitely.intersection(in2.definitely)))
     }
     
