@@ -13,6 +13,7 @@ import ch.trick17.rolez.lang.rolez.GenericClassRef
 import ch.trick17.rolez.lang.rolez.Instr
 import ch.trick17.rolez.lang.rolez.Int
 import ch.trick17.rolez.lang.rolez.LocalVar
+import ch.trick17.rolez.lang.rolez.Void
 import ch.trick17.rolez.lang.rolez.Member
 import ch.trick17.rolez.lang.rolez.MemberAccess
 import ch.trick17.rolez.lang.rolez.Method
@@ -27,7 +28,6 @@ import ch.trick17.rolez.lang.rolez.SimpleClassRef
 import ch.trick17.rolez.lang.rolez.Stmt
 import ch.trick17.rolez.lang.rolez.Task
 import ch.trick17.rolez.lang.rolez.Type
-import ch.trick17.rolez.lang.rolez.Unit
 import ch.trick17.rolez.lang.typesystem.RolezUtils
 import javax.inject.Inject
 import org.eclipse.emf.ecore.EObject
@@ -57,6 +57,11 @@ class RolezExtensions {
     }
     
     def qualifiedName(ClassLike it) { nameProvider.getFullyQualifiedName(it) }
+    
+    def getPackage(ClassLike it) {
+        val segments = qualifiedName.segments
+        segments.takeWhile[it != segments.last].join(".")
+    }
     
     def simpleName(ClassLike it) {
         nameProvider.getFullyQualifiedName(it).lastSegment
@@ -160,7 +165,7 @@ class RolezExtensions {
     private def dispatch typeString(Double _)  { "double" }
     private def dispatch typeString(Boolean _) { "boolean" }
     private def dispatch typeString(Char _)    { "char" }
-    private def dispatch typeString(Unit _)    { "unit" }
+    private def dispatch typeString(Void _)    { "void" }
     private def dispatch typeString(Null _)    { "null" }
     
     private def dispatch String typeString(RoleType it) {

@@ -65,7 +65,7 @@ class RolezUtils {
     def newDoubleType()  { factory.createDouble }
     def newBooleanType() { factory.createBoolean }
     def newCharType()    { factory.createChar }
-    def newUnitType()    { factory.createUnit }
+    def newVoidType()    { factory.createVoid }
     def newNullType()    { factory.createNull }
     
     def envFor(EObject o) {

@@ -5,9 +5,15 @@ class rolez.lang.String {
 }
 
 class Person {
-	val name: readonly String
-	val surname: readonly String
-	var address: readwrite Address
+	val name: pure String
+	val surname: pure String
+	var address: readonly Address
+	
+	new(val name: pure String, val surname: pure String, val address: readonly Address) {
+		this.name = name;
+		this.surname = surname;
+		this.address = address;
+	}
 	
 	def readonly fullName: readonly String {
 		val n: Null = null;
@@ -36,7 +42,12 @@ class Person {
 }
 
 class Student extends Person {
-	val university: readonly String
+	val university: pure String
+	
+	new {
+		super("John", "Doe", null);
+		this.university = "ETH";
+	}
 	
 	def pure bla: {
 		this.name;
@@ -45,24 +56,24 @@ class Student extends Person {
 }
 
 class Account {
-	val owner: readonly Person
-	val description: readonly String
+	var owner: readonly Person
+	var description: readonly String
 }
 
 class Address {
-	val street: readonly String
-	val number: readonly String
-	val city: readonly String
-	val zipCode: readonly String
+	var street: pure String
+	var number: pure String
+	var city: pure String
+	var zipCode: pure String
 	
 	def readonly foo(val a: readonly Account, val b: readonly Account): {
 		this.city;
 		this.foo(a, new Account);
 		
-		val p: readonly Person = new Person;
+		val p: readwrite Person = new Person("Jim", "Dee", this);
 		p.name;
 		p.fullName();
-		new Person.setAddress(null);
+		p.setAddress(null);
 	}
 }
 

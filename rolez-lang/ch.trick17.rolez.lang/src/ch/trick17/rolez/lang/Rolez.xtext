@@ -190,7 +190,7 @@ ReferenceType:
     RoleType | {Null} NULL_TYPE;
 
 PrimitiveType:
-    {Int} 'int' | {Double} 'double' | {Boolean} 'boolean' | {Char} 'char' | {Unit} 'unit'?;
+    {Int} 'int' | {Double} 'double' | {Boolean} 'boolean' | {Char} 'char' | {Void} 'void'?;
 
 RoleType:
     role=Role base=ClassRef;

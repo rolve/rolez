@@ -77,6 +77,9 @@ judgments {
     subtypeExpr |- Expr left <| Type right
         error "Type mismatch: " + left.type.value?.string + " is not a subtype of " + right.string
         source left
+        // TODO: left.type could need an environment. Convert to explicit
+        // failure once issue code are supported:
+        // https://github.com/LorenzoBettini/xsemantics/issues/58
     
     subtype  |- Type  left <: Type  right error "subtype" // Apparently, an error message is necessary for sensible error message selection
     subrole  |- Role  left <! Role  right error "subrole"

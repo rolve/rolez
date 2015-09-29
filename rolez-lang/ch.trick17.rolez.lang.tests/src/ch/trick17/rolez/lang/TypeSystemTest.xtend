@@ -360,7 +360,7 @@ class TypeSystemTest {
         parse("task Main: { null as int; }")
             .assertError(CAST, null, "cast", "null", "int")
         parse("task Main: { 5 as ; }")
-            .assertError(CAST, null, "cast", "int", "unit")
+            .assertError(CAST, null, "cast", "int", "void")
         
         parse('''
             class rolez.lang.Object
@@ -1018,7 +1018,7 @@ class TypeSystemTest {
             task Main: { start T; }
         ''')
         program.main.lastExpr.type
-            .assertThat(isRoleType(PURE, newClassRef(program.findClass(taskClassName), newUnitType)))
+            .assertThat(isRoleType(PURE, newClassRef(program.findClass(taskClassName), newVoidType)))
         
         program = parse('''
             class rolez.lang.Object
@@ -1539,12 +1539,12 @@ class TypeSystemTest {
                     return 1;
                 }
             }
-        ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "unit")
+        ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "void")
         parse('''
             task T: {
                 return 1;
             }
-        ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "unit")
+        ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "void")
         parse('''
             class rolez.lang.Object
             class A {

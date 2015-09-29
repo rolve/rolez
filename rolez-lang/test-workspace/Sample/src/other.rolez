@@ -1,14 +1,16 @@
 class SomeImportantClass {
-	val foo: readwrite Account
+	var foo: readwrite Account
+	var i: int
+	
+	new {}
 	
 	def pure bar: readonly Account {
 		if(true)
 			return new Account;
-		1;
+		return null;
 	}
 	
 	def readonly bar(val a: int): {
-		
 		this.bar();
 	}
 }

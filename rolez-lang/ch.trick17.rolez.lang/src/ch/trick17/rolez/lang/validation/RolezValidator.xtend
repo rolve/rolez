@@ -25,7 +25,7 @@ import ch.trick17.rolez.lang.rolez.Program
 import ch.trick17.rolez.lang.rolez.ReturnExpr
 import ch.trick17.rolez.lang.rolez.SimpleClassRef
 import ch.trick17.rolez.lang.rolez.TypedBody
-import ch.trick17.rolez.lang.rolez.Unit
+import ch.trick17.rolez.lang.rolez.Void
 import ch.trick17.rolez.lang.rolez.Var
 import ch.trick17.rolez.lang.rolez.VarRef
 import ch.trick17.rolez.lang.typesystem.RolezSystem
@@ -45,11 +45,6 @@ import static ch.trick17.rolez.lang.validation.ValFieldsInitializedAnalysis.*
 import ch.trick17.rolez.lang.rolez.SuperConstrCall
 import ch.trick17.rolez.lang.rolez.This
 
-/**
- * This class contains custom validation rules. 
- *
- * See https://www.eclipse.org/Xtext/documentation/303_runtime_concepts.html#validation
- */
 class RolezValidator extends RolezSystemValidator {
 
     public static val INVALID_NAME = "invalid name"
@@ -225,7 +220,7 @@ class RolezValidator extends RolezSystemValidator {
 	
 	@Check
 	def checkReturnExpr(TypedBody it) {
-        if(type instanceof Unit)
+        if(type instanceof Void)
             return;
 	    val cfg = controlFlowGraph
         for(p : cfg.exit.predecessors) {
