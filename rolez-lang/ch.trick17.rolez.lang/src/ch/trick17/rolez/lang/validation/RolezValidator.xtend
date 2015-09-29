@@ -42,6 +42,8 @@ import static ch.trick17.rolez.lang.Constants.*
 import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
 import static ch.trick17.rolez.lang.rolez.VarKind.*
 import static ch.trick17.rolez.lang.validation.ValFieldsInitializedAnalysis.*
+import ch.trick17.rolez.lang.rolez.SuperConstrCall
+import ch.trick17.rolez.lang.rolez.This
 
 /**
  * This class contains custom validation rules. 
@@ -72,6 +74,10 @@ class RolezValidator extends RolezSystemValidator {
     public static val VAL_FIELD_OVERINITIALIZED = "val field overinitialized"
     public static val VAL_NOT_INITIALIZED = "val not initialized"
     public static val VAR_NOT_INITIALIZED = "var not initialized"
+    public static val INCORRECT_SUPER_CONSTR_CALL = "incorrect super constructor call"
+    public static val MISSING_SUPER_CONSTR_CALL = "missing super constructor call"
+    public static val SUPER_CONSTR_CALL_FIRST = "super constructor call first"
+    public static val THIS_BEFORE_SUPER_CONSTR_CALL = "'this' before super constructor call"
     
     @Inject extension RolezExtensions
     @Inject extension CfgProvider
@@ -312,12 +318,45 @@ class RolezValidator extends RolezSystemValidator {
         val extension analysis = new LocalVarsInitializedAnalysis(cfg)
         for(v : all(VarRef))
             if(v.variable instanceof LocalVar && !v.isAssignmentTarget
-                    && !v.variable.initializedBefore(cfg.nodeOf(v)))
+                    && !v.variable.isInitializedBefore(cfg.nodeOf(v)))
                 error("Variable " + v.variable.name + " may not have been initialized",
                     v, VAR_REF__VARIABLE, VAR_NOT_INITIALIZED)
     }
     
-    // TODO: Super constructor call
+    @Check
+    def checkSuperConstrCall(SuperConstrCall it) {
+        if(!(enclosingBody instanceof Constr))
+            error("Cannot call a super constructor here", it,
+                null, INCORRECT_SUPER_CONSTR_CALL)
+    }
+    
+    @Check
+    def checkSuperConstrCall(Constr it) {
+        val cfg = controlFlowGraph
+        val extension analysis = new SuperConstrCallAnalysis(cfg)
+        for(t : all(This))
+            if(cfg.nodeOf(t).isBeforeSuperConstrCall)
+                error("Cannot refer to 'this' before calling the super constructor",
+                    t, null, THIS_BEFORE_SUPER_CONSTR_CALL)
+        
+        for(c : all(SuperConstrCall))
+            if(body.stmts.head !== c)
+                error("Super constructor call must be the first statement",
+                    c, null, SUPER_CONSTR_CALL_FIRST)
+        
+        val superConstr = enclosingClass.actualSuperclass.allConstrs
+        if(superConstr.filter[params.isEmpty].isEmpty && all(SuperConstrCall).isEmpty)
+            error("Missing super constructor call",
+                it, null, MISSING_SUPER_CONSTR_CALL)
+    }
+    
+    @Check
+    def checkSuperConstrCall(Class it) {
+        val superConstr = actualSuperclass.allConstrs
+        if(superConstr.filter[params.isEmpty].isEmpty && constructors.isEmpty)
+            error("Missing super constructor call",
+                it, NAMED__NAME, MISSING_SUPER_CONSTR_CALL)
+    }
     
 	/*
 	 * Delayed errors

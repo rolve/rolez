@@ -25,6 +25,7 @@ import static ch.trick17.rolez.lang.rolez.OpLogical.*
 
 import static extension ch.trick17.rolez.lang.cfg.CfgBuilder.*
 import static extension java.util.Objects.requireNonNull
+import ch.trick17.rolez.lang.rolez.SuperConstrCall
 
 class CfgBuilder {
     
@@ -108,6 +109,10 @@ class CfgBuilder {
     private def dispatch Linker process(ReturnNothing r, Linker prev) {
         prev.linkAndReturn(newInstrNode(r)).link(exit);
         [false]
+    }
+    
+    private def dispatch Linker process(SuperConstrCall c, Linker prev) {
+        c.args.fold(prev, [p, e | process(e, p)]).linkAndReturn(new InstrNode(c))
     }
     
     private def dispatch Linker process(ReturnExpr r, Linker prev) {

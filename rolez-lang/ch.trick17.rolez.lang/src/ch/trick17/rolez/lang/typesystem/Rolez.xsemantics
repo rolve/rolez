@@ -54,6 +54,7 @@ import static ch.trick17.rolez.lang.rolez.Role.*
 import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
 
 import static extension org.eclipse.emf.ecore.util.EcoreUtil.copy
+import ch.trick17.rolez.lang.rolez.SuperConstrCall
 
 system ch.trick17.rolez.lang.typesystem.RolezSystem
 
@@ -336,6 +337,20 @@ rule WWhileLoop
 from {
     G |- l.^condition <| newBooleanType
     G |- l.body
+}
+
+rule WSuperConstrCall
+    G |- SuperConstrCall c
+from {
+    for(arg : c.args) {
+        G |- arg : var Type _
+    }
+    val maxSpecific = c.enclosingClass.actualSuperclass.allConstrs.maximallySpecific(c)
+    maxSpecific.size == 1 or fail
+        error
+            if(maxSpecific.size == 0) "No suitable super constructor for given argument types"
+            else "Constructor call is ambiguous"
+        source c
 }
 
 axiom WReturnNothing

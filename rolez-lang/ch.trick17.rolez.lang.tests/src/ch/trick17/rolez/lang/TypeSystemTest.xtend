@@ -1123,7 +1123,7 @@ class TypeSystemTest {
     }
     
     @Test
-    def testTStartErrorInExpr() {
+    def testTParenthesizedErrorInExpr() {
         parse('''
             task Main: { (!5); }
         ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
@@ -1331,6 +1331,181 @@ class TypeSystemTest {
                     false as int;
             }
         ''').assertError(CAST, null, "cannot cast", "boolean", "int")
+    }
+    
+    @Test
+    def testWSuperConstrCall() {
+        parse('''
+            class rolez.lang.Object
+            class A
+            class B extends A {
+                new {}
+            }
+            class C extends B
+            class D extends C {
+                new(val i: int) { 2; }
+            }
+            class E extends D {
+                new {
+                    super(0);
+                    5;
+                }
+                new(val a: readonly A, val b: pure B) { super(1); }
+            }
+            class F extends E {
+                new(val a: readwrite A) { super(a, new B); }
+            }
+            class G {
+                new { super(); }
+            }
+        ''').assertNoErrors
+    }
+    
+    @Test
+    def testWSuperConstrCallErrorInArg() {
+        parse('''
+            class rolez.lang.Object
+            class A {
+                new(val i: int) {}
+            }
+            class B extends A {
+                new { super(!5); }
+            }
+        ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
+    }
+    
+    @Test
+    def testWSuperConstrCallTypeMismatch() {
+        parse('''
+            class rolez.lang.Object
+            class A
+            class B extends A {
+                new { super(5); }
+            }
+        ''').assertError(SUPER_CONSTR_CALL, null, "no suitable super constructor")
+        parse('''
+            class rolez.lang.Object
+            class A {
+                new { super(5); }
+            }
+        ''').assertError(SUPER_CONSTR_CALL, null, "no suitable super constructor")
+        parse('''
+            class rolez.lang.Object
+            class A {
+                new {}
+            }
+            class B extends A {
+                new { super(5); }
+            }
+        ''').assertError(SUPER_CONSTR_CALL, null, "no suitable super constructor")
+        parse('''
+            class rolez.lang.Object
+            class A {
+                new(val c: char) {}
+            }
+            class B extends A {
+                new { super(5, false); }
+            }
+        ''').assertError(SUPER_CONSTR_CALL, null, "no suitable super constructor")
+        parse('''
+            class rolez.lang.Object
+            class A {
+                new(val i: int) {}
+            }
+            class B extends A { 
+                new { super(); }
+            }
+        ''').assertError(SUPER_CONSTR_CALL, null, "no suitable super constructor")
+        
+        parse('''
+            class rolez.lang.Object
+            class A {
+                new(val i: int) {}
+            }
+            class B extends A {
+                new { super(false); }
+            }
+        ''').assertError(SUPER_CONSTR_CALL, null, "no suitable super constructor")
+        parse('''
+            class rolez.lang.Object
+            class A {
+                new(val a: readwrite A) {}
+            }
+            class B extends A {
+                new { super(new Object); }
+            }
+        ''').assertError(SUPER_CONSTR_CALL, null, "no suitable super constructor")
+    }
+    
+    @Test
+    def testWSuperConstrCallOverloading() {
+        parse('''
+            class rolez.lang.Object
+            class A {
+                new(val a: int) {}
+                new(val a: boolean) {}
+            }
+            class B extends A {
+                new { super(4); }
+                new(val b: boolean) { super(b); }
+            }
+        ''').assertNoErrors
+        
+        // TODO: For the following, test that the right constructor is chosen,
+        // either by linking something or after code generation.
+        parse('''
+            class rolez.lang.Object
+            class A
+            class B {
+                new(val a: readwrite A) {}
+                new(val a: readonly  A) {}
+            }
+            class C extends B {
+                new { super(new A); }
+                new(val i: int) { super(new A as readonly A); }
+            }
+        ''').assertNoErrors
+        
+        // (Switch order of declaration to rule out accidental selection of the correct one)
+        parse('''
+            class rolez.lang.Object
+            class A
+            class B {
+                new(val a: readonly  A) {}
+                new(val a: readwrite A) {}
+            }
+            class C extends B {
+                new { super(new A); }
+                new(val i: int) { super(new A as readonly A); }
+            }
+        ''').assertNoErrors
+    }
+    
+    @Test
+    def testWSuperConstrCallAmbiguous() {
+        parse('''
+            class rolez.lang.Object
+            class A
+            class B {
+                new(val a: readonly  A, val b: readwrite A) {}
+                new(val a: readwrite A, val b: readonly  A) {}
+            }
+            class C extends B {
+                new { super(new A, new A); }
+            }
+        ''').assertError(SUPER_CONSTR_CALL, null, "constructor", "ambiguous")
+        
+        parse('''
+            class rolez.lang.Object
+            class A
+            class B {
+                new(val a: readwrite Object, val b: readwrite A) {}
+                new(val a: readwrite A, val b: readwrite Object) {}
+            }
+            class C extends B {
+                new { super(new A, new A); }
+            }
+        ''').assertError(SUPER_CONSTR_CALL, null, "constructor", "ambiguous")
     }
     
     @Test

@@ -742,4 +742,107 @@ class ValidatorTest {
             }
         ''').assertError(VAR_REF, VAR_NOT_INITIALIZED, "variable i")
     }
+    
+    @Test
+    def testSuperConstrCalls() {
+        parse('''
+            class rolez.lang.Object
+            class rolez.lang.String {
+                def pure length: int { return 0; }
+            }
+            class A {
+                new {}
+                new(val i: int) {}
+                def pure foo: {}
+            }
+            class B extends A {
+                new {
+                    super();
+                    this.foo();
+                    this.bar();
+                }
+                new(val i: int) {
+                    this.foo();
+                }
+                new(val s: pure String) {
+                    super(s.length());
+                }
+                def pure bar: {}
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object
+            class A {
+                new {
+                    3;
+                    super();
+                }
+            }
+        ''').assertError(SUPER_CONSTR_CALL, SUPER_CONSTR_CALL_FIRST)
+        
+        parse('''
+            class rolez.lang.Object
+            class A {
+                new(val i: int) {}
+            }
+            class B extends A
+        ''').assertError(CLASS, MISSING_SUPER_CONSTR_CALL)
+        parse('''
+            class rolez.lang.Object
+            class A {
+                new(val i: int) {}
+            }
+            class B extends A {
+                new {}
+            }
+        ''').assertError(CONSTR, MISSING_SUPER_CONSTR_CALL)
+        
+        parse('''
+            class rolez.lang.Object
+            class A {
+                new(val i: int) {}
+                def pure foo: {}
+            }
+            class B extends A {
+                new {
+                    this.foo();
+                    super(5);
+                }
+            }
+        ''').assertError(THIS, THIS_BEFORE_SUPER_CONSTR_CALL)
+        parse('''
+            class rolez.lang.Object
+            class A {
+                new(val i: int) {}
+                def pure foo: int { return 1; }
+            }
+            class B extends A {
+                new {
+                    super(this.foo());
+                }
+            }
+        ''').assertError(THIS, THIS_BEFORE_SUPER_CONSTR_CALL)
+        parse('''
+            class rolez.lang.Object
+            class A {
+                new(val o: pure Object) {}
+            }
+            class B extends A {
+                new {
+                    super(new A(this));
+                }
+            }
+        ''').assertError(THIS, THIS_BEFORE_SUPER_CONSTR_CALL)
+        
+        parse('''
+            class rolez.lang.Object
+            class A {
+                def pure foo: { super(); }
+            }
+        ''').assertError(SUPER_CONSTR_CALL, INCORRECT_SUPER_CONSTR_CALL)
+        parse('''
+            task Main: { super(); }
+        ''').assertError(SUPER_CONSTR_CALL, INCORRECT_SUPER_CONSTR_CALL)
+    }
 }

@@ -58,7 +58,7 @@ Block:
     {Block} '{' (stmts+=Stmt)* '}';
 
 Stmt:
-    Block | LocalVarDecl | IfStmt | WhileLoop | Return | ExprStmt;
+    Block | LocalVarDecl | IfStmt | WhileLoop | SuperConstrCall | Return | ExprStmt;
 
 LocalVarDecl:
     variable=LocalVar ('=' initializer=Expr)? ';';
@@ -75,11 +75,14 @@ WhileLoop:
 
 // TODO: for-each and maybe parallel for-each
 
+SuperConstrCall:
+    {SuperConstrCall} 'super' '(' (args+=Expr (',' args+=Expr)*)? ')' ';';
+
 Return:
     ReturnNothing | ReturnExpr;
 
 ReturnNothing:
-    {ReturnNothing} 'return;';
+    {ReturnNothing} 'return' ';';
 
 ReturnExpr:
     'return' expr=Expr ';';
@@ -249,4 +252,4 @@ TypedBody:
     Method | Task;
 
 Argumented:
-    MethodSelector | New | Start;
+    MethodSelector | New | Start | SuperConstrCall;

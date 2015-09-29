@@ -30,36 +30,36 @@ class ValFieldsInitializedAnalysis extends DataFlowAnalysis<Initialized> {
         ((left as MemberAccess).selector as FieldSelector).field
     }
     
-    new(ControlFlowGraph graph) {
-        super(graph, true)
+    new(ControlFlowGraph cfg) {
+        super(cfg, true)
         analyze()
     }
     
     protected override newFlow()   { new Initialized(emptySet, emptySet) }
     protected override entryFlow() { new Initialized(emptySet, emptySet) }
     
-    protected def dispatch flowThrough(Assignment a, Initialized before) {
-        if(a.isValFieldInit) before.with(a.assignedField)
-        else before
+    protected def dispatch flowThrough(Assignment a, Initialized in) {
+        if(a.isValFieldInit) in.with(a.assignedField)
+        else in
     }
     
-    protected def dispatch flowThrough(Instr i, Initialized before) { before }
+    protected def dispatch flowThrough(Instr i, Initialized in) { in }
     
-    protected override merge(Initialized flow1, Initialized flow2) {
-        new Initialized(copyOf(flow1.possibly.union(flow2.possibly)),
-            copyOf(flow1.definitely.intersection(flow2.definitely)))
+    protected override merge(Initialized in1, Initialized in2) {
+        new Initialized(copyOf(in1.possibly.union(in2.possibly)),
+            copyOf(in1.definitely.intersection(in2.definitely)))
     }
     
     def definitelyInitializedBefore(Field it, Node n) {
-        n.beforeFlow.definitely.contains(it)
+        n.inFlow.definitely.contains(it)
     }
     
     def definitelyInitializedAfter(Field it, Node n) {
-        n.afterFlow.definitely.contains(it)
+        n.outFlow.definitely.contains(it)
     }
     
     def possiblyInitializedBefore(Field it, Node n) {
-        n.beforeFlow.possibly.contains(it)
+        n.inFlow.possibly.contains(it)
     }
     
     @Data static class Initialized {

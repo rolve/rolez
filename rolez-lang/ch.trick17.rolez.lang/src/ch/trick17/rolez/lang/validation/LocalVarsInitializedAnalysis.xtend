@@ -15,34 +15,32 @@ import ch.trick17.rolez.lang.rolez.LocalVarDecl
 
 class LocalVarsInitializedAnalysis extends DataFlowAnalysis<Set<Var>> {
     
-    new(ControlFlowGraph graph) {
-        super(graph, true)
+    new(ControlFlowGraph cfg) {
+        super(cfg, true)
         analyze()
     }
     
     protected override newFlow() { emptySet }
     protected override entryFlow() { emptySet }
     
-    protected def dispatch flowThrough(Assignment a, Set<Var> before) {
+    protected def dispatch flowThrough(Assignment a, Set<Var> in) {
         val left = a.left
-        if(left instanceof VarRef) before.with(left.variable)
-        else before
+        if(left instanceof VarRef) in.with(left.variable)
+        else in
     }
     
-    protected def dispatch flowThrough(LocalVarDecl d, Set<Var> before) {
-        if(d.initializer != null) before.with(d.variable)
-        else before
+    protected def dispatch flowThrough(LocalVarDecl d, Set<Var> in) {
+        if(d.initializer != null) in.with(d.variable)
+        else in
     }
     
-    protected def dispatch flowThrough(Instr i, Set<Var> before) { before }
+    protected def dispatch flowThrough(Instr i, Set<Var> in) { in }
     
-    protected override merge(Set<Var> flow1, Set<Var> flow2) {
-        copyOf(flow1.intersection(flow2))
+    protected override merge(Set<Var> in1, Set<Var> in2) {
+        copyOf(in1.intersection(in2))
     }
     
     private def with(Set<Var> it, Var v) { copyOf(it + #[v]) }
     
-    def initializedBefore(Var it, Node n) {
-        n.beforeFlow.contains(it)
-    }
+    def isInitializedBefore(Var it, Node n) { n.inFlow.contains(it) }
 }
