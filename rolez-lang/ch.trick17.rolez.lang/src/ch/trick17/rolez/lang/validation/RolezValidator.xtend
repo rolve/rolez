@@ -44,6 +44,7 @@ import static ch.trick17.rolez.lang.rolez.VarKind.*
 import static ch.trick17.rolez.lang.validation.ValFieldsInitializedAnalysis.*
 import ch.trick17.rolez.lang.rolez.SuperConstrCall
 import ch.trick17.rolez.lang.rolez.This
+import ch.trick17.rolez.lang.rolez.Null
 
 class RolezValidator extends RolezSystemValidator {
 
@@ -73,6 +74,7 @@ class RolezValidator extends RolezSystemValidator {
     public static val MISSING_SUPER_CONSTR_CALL = "missing super constructor call"
     public static val SUPER_CONSTR_CALL_FIRST = "super constructor call first"
     public static val THIS_BEFORE_SUPER_CONSTR_CALL = "'this' before super constructor call"
+    public static val NULL_TYPE_USED = "null type used"
     
     @Inject extension RolezExtensions
     @Inject extension CfgProvider
@@ -351,6 +353,11 @@ class RolezValidator extends RolezSystemValidator {
         if(superConstr.filter[params.isEmpty].isEmpty && constructors.isEmpty)
             error("Missing super constructor call",
                 it, NAMED__NAME, MISSING_SUPER_CONSTR_CALL)
+    }
+    
+    @Check
+    def checkNullTypeUsed(Null it) {
+        error("The null type cannot be used explicitly", it, null, NULL_TYPE_USED)
     }
     
 	/*

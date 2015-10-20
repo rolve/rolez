@@ -3,5 +3,5 @@ package rolez.lang
 class Object
 
 class String {
-	def pure length: int { return 0; }
+	def pure length: int { return (4 - 3 - (2-1)) as int; }
 }

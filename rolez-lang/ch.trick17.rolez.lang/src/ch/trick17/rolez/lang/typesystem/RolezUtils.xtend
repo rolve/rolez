@@ -88,7 +88,7 @@ class RolezUtils {
     
     def findClass(QualifiedName name, EObject context) {
         scopeProvider.getScope(context, CLASS__SUPERCLASS)
-            .getSingleElement(name)?.EObjectOrProxy.resolve(context) as Class
+            .getSingleElement(name)?.EObjectOrProxy?.resolve(context) as Class
     }
     
     /**

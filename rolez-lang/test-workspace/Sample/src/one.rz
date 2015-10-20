@@ -12,7 +12,7 @@ class Person {
 	}
 	
 	def readonly fullName: readonly String {
-		val n: Null = null;
+		val n: pure Person = null;
 		return "Hi";
 	}
 	

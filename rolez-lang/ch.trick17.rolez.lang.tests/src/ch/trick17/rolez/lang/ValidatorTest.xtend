@@ -488,7 +488,7 @@ class ValidatorTest {
             class rolez.lang.Object
             class A
             task Main: {
-                val a: pure A[int];
+                val a: pure A[int] = null;
             }
         ''').assertError(GENERIC_CLASS_REF, INCORRECT_TYPE_ARGS, "class A")
         parse('''
@@ -860,5 +860,12 @@ class ValidatorTest {
         parse('''
             task Main: { super(); }
         ''').assertError(SUPER_CONSTR_CALL, INCORRECT_SUPER_CONSTR_CALL)
+    }
+    
+    @Test
+    def testNullTypeUsed() {
+        parse('''
+            task Main: Null { return null; }
+        ''').assertError(NULL, NULL_TYPE_USED)
     }
 }

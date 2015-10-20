@@ -152,7 +152,7 @@ class RolezGenerator implements IGenerator {
     private def CharSequence gen(Expr it) { generateExpr }
     
     private def dispatch generateExpr(Assignment it) {
-        '''«left.gen» = («right.gen»)'''
+        '''«left.gen» = «right.gen»'''
     }
     
     private def dispatch generateExpr(BinaryExpr it) {
@@ -162,7 +162,7 @@ class RolezGenerator implements IGenerator {
             RelationalExpr: op
             ArithmeticBinaryExpr: op
         }
-        '''(«left.gen») «op» «right.gen»'''
+        '''«left.gen» «op» («right.gen»)'''
     }
     
     private def dispatch generateExpr(Cast it) {
@@ -200,7 +200,7 @@ class RolezGenerator implements IGenerator {
         '''null /* TODO */'''
     }
     
-    private def dispatch generateExpr(Parenthesized it) {'''(«expr.gen»)'''}
+    private def dispatch generateExpr(Parenthesized it) {'''«expr.gen»'''}
     
     private def dispatch generateExpr(    IntLiteral it) { value.toString }
     private def dispatch generateExpr( DoubleLiteral it) { value.toString }
@@ -221,9 +221,14 @@ class RolezGenerator implements IGenerator {
      */
     
     private def CharSequence gen(Type it) { generateType }
+    
     private def dispatch generateType(PrimitiveType it) { string }
-    private def dispatch generateType(     RoleType it) { base.gen }
-    private def dispatch generateType(         Null it) { "java.lang.Void" }
+    
+    private def dispatch generateType(RoleType it) { base.gen }
+    
+    private def dispatch generateType(Null it) {
+        throw new AssertionError("Null type usage not checked")
+    }
     
     private def gen(ClassRef it) { generateClassRef }
     
