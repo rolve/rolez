@@ -24,6 +24,8 @@ import org.eclipse.xtext.scoping.IScopeProvider
 import static ch.trick17.rolez.lang.rolez.Role.*
 import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
 
+import static extension org.eclipse.emf.ecore.util.EcoreUtil.resolve
+
 /** 
  * Utility functions for Rolez language constructs
  * @author Michael Faes
@@ -86,7 +88,7 @@ class RolezUtils {
     
     def findClass(QualifiedName name, EObject context) {
         scopeProvider.getScope(context, CLASS__SUPERCLASS)
-            .getSingleElement(name)?.EObjectOrProxy as Class
+            .getSingleElement(name)?.EObjectOrProxy.resolve(context) as Class
     }
     
     /**

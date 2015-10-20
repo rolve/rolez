@@ -1,8 +1,4 @@
-class rolez.lang.Object
-
-class rolez.lang.String {
-	def pure length: int { return 0; }
-}
+package foo
 
 class Person {
 	val name: pure String
@@ -27,6 +23,7 @@ class Person {
 	def readonly bar(val k: int): {		
 		var i: int = -555555555;
 		val j: pure String = "Hi";
+		
 		
 		this.address = null;
 		new Account;

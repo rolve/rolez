@@ -1,3 +1,5 @@
+package foo
+
 class SomeImportantClass {
 	var foo: readwrite Account
 	var i: int

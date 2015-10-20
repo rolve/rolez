@@ -46,7 +46,7 @@ class RolezGenerator implements IGenerator {
         }
     '''}
     
-    private def generate(Class it) { name } // Qualified name is not easy to get, apparently...
+    private def generate(Class it) { qualifiedName.toString }
     
     private def generate(Field it) {'''
         public «type.generate» «name»;

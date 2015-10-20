@@ -1,0 +1,7 @@
+package rolez.lang
+
+class Object
+
+class String {
+	def pure length: int { return 0; }
+}
