@@ -160,7 +160,7 @@ Start:
 Parenthesized: '(' expr=Expr ')';
 
 Literal:
-    StringLiteral | {NullLiteral} 'null' | IntLiteral | DoubleLiteral | BooleanLiteral | CharLiteral | UnitLiteral;
+    IntLiteral | DoubleLiteral | BooleanLiteral | CharLiteral | StringLiteral | {NullLiteral} 'null';
 
 StringLiteral: value=STRING;
 
@@ -175,8 +175,6 @@ terminal DOUBLE: INT '.' INT;
 BooleanLiteral: value=Bool;
 
 CharLiteral: value=CHAR;
-
-UnitLiteral: {UnitLiteral} 'unit';
 
 terminal CHAR returns EChar: "'" ( '\\' ('b'|'t'|'n'|'f'|'r'|'u'|'"'|"'"|'\\') | !('\\'|"'") ) "'";
 
