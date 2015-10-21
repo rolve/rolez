@@ -9,6 +9,7 @@ class Person {
 		this.name = name;
 		this.surname = surname;
 		this.address = address;
+		val a: pure Object = new Array[readwrite Address]("Hi".length());
 		new Array[readwrite Address]("Hi".length()) as pure Object;
 	}
 	

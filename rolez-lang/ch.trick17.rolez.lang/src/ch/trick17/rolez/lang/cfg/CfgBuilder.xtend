@@ -58,6 +58,7 @@ class CfgBuilder {
     val Map<Instr, Node> instrMap = new HashMap
     
     new(ParameterizedBody body) {
+        if(body.body == null) throw new AssertionError
         this.body = body
         this.exit = new ExitNode
     }

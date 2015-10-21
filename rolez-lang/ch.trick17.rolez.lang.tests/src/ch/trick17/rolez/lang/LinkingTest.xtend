@@ -22,21 +22,21 @@ class LinkingTest {
     
     @Test
     def testMultipleResources() {
-        val set = newResourceSet.with("class rolez.lang.Object").with("class A")
+        val set = newResourceSet.with("mapped class rolez.lang.Object").with("class A")
         parse("class B extends A", set).assertNoErrors
     }
     
     @Test
     def testPackagesAndImports() {
         // "Unpackaged" classes are visible from everywhere
-        var set = newResourceSet.with("class rolez.lang.Object").with("class A")
+        var set = newResourceSet.with("mapped class rolez.lang.Object").with("class A")
         parse('''
             package foo.bar
             class B extends A
         ''', set).assertNoErrors
         
         // Classes in same package are visible
-        set = newResourceSet.with("class rolez.lang.Object").with('''
+        set = newResourceSet.with("mapped class rolez.lang.Object").with('''
             package foo.bar
             class A
         ''')
@@ -46,7 +46,7 @@ class LinkingTest {
         ''', set).assertNoErrors
         
         // Classes can specify package directly in declaration
-        set = newResourceSet.with("class rolez.lang.Object").with('''
+        set = newResourceSet.with("mapped class rolez.lang.Object").with('''
             class foo.bar.A
         ''')
         parse('''
@@ -55,7 +55,7 @@ class LinkingTest {
         ''', set).assertNoErrors
         
         // Also partially
-        set = newResourceSet.with("class rolez.lang.Object").with('''
+        set = newResourceSet.with("mapped class rolez.lang.Object").with('''
             package foo
             class bar.A
         ''')
@@ -65,7 +65,7 @@ class LinkingTest {
         ''', set).assertNoErrors
         
         // Classes can be referred to using their fully qualified name
-        set = newResourceSet.with("class rolez.lang.Object").with('''
+        set = newResourceSet.with("mapped class rolez.lang.Object").with('''
             package foo.bar
             class A
         ''')
@@ -79,7 +79,7 @@ class LinkingTest {
         ''', set).assertNoErrors
         
         // Classes can be imported
-        set = newResourceSet.with("class rolez.lang.Object").with('''
+        set = newResourceSet.with("mapped class rolez.lang.Object").with('''
             package foo.bar
             class A
         ''')
@@ -90,7 +90,7 @@ class LinkingTest {
         ''', set).assertNoErrors
         
         // Also with wildcards
-        set = newResourceSet.with("class rolez.lang.Object").with('''
+        set = newResourceSet.with("mapped class rolez.lang.Object").with('''
             package foo.bar
             class A
         ''')
@@ -101,7 +101,7 @@ class LinkingTest {
         ''', set).assertNoErrors
         
         // Class in same package is chosen, not "unpackaged" class
-        set = newResourceSet.with("class rolez.lang.Object").with('''
+        set = newResourceSet.with("mapped class rolez.lang.Object").with('''
             class A
         ''').with('''
             package foo.bar
@@ -118,8 +118,8 @@ class LinkingTest {
         
         // Classes in rolez.lang are always visible
         set = newResourceSet.with('''
-            class rolez.lang.Object
-            class rolez.lang.A
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.A
         ''')
         parse('''
             package foo.bar
@@ -127,7 +127,7 @@ class LinkingTest {
             class C extends rolez.lang.A
         ''', set).assertNoErrors
         
-        set = newResourceSet.with("class rolez.lang.Object").with('''
+        set = newResourceSet.with("mapped class rolez.lang.Object").with('''
             package foo.bar
             class A
         ''')
@@ -135,7 +135,7 @@ class LinkingTest {
             package a.b
             class B extends A
         ''', set).assertError(CLASS, LINKING_DIAGNOSTIC)
-        set = newResourceSet.with("class rolez.lang.Object").with('''
+        set = newResourceSet.with("mapped class rolez.lang.Object").with('''
             package foo.bar
             class A
         ''')
@@ -154,7 +154,7 @@ class LinkingTest {
             }
         ''').assertNoErrors
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 def pure foo(val i: int): {
                     i;

@@ -22,7 +22,7 @@ class ValidatorTest {
     @Test
     def testObjectExists() {
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A
         ''').assertNoErrors
         
@@ -32,17 +32,17 @@ class ValidatorTest {
     @Test
     def testDuplicateTopLevelElems() {
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A
             class A
         ''').assertError(CLASS, DUPLICATE_TOP_LEVEL_ELEMENT)
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             task A: {}
             task A: {}
         ''').assertError(TASK, DUPLICATE_TOP_LEVEL_ELEMENT)
         val program = parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A
             task A: {}
         ''')
@@ -53,7 +53,7 @@ class ValidatorTest {
     @Test
     def testOverloading() {
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 def readwrite foo: {}
                 def readwrite foo(val i: int): {}
@@ -67,7 +67,7 @@ class ValidatorTest {
         ''').assertNoErrors
         
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 def readwrite foo(val a: readwrite A): {}
                 def readwrite bar(val a: readonly  A): {}
@@ -95,49 +95,49 @@ class ValidatorTest {
     @Test
     def testDuplicateMethods() {
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 def readwrite foo: {}
                 def readwrite foo: {}
             }
         ''').assertError(METHOD, DUPLICATE_METHOD)
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 def readwrite foo: int {}
                 def readwrite foo: {}
             }
         ''').assertError(METHOD, DUPLICATE_METHOD)
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 def readonly  foo: int {}
                 def readwrite foo: {}
             }
         ''').assertError(METHOD, DUPLICATE_METHOD)
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 def readwrite foo(val i: int): {}
                 def readwrite foo(val i: int): {}
             }
         ''').assertError(METHOD, DUPLICATE_METHOD)
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 def readwrite foo(val i: int): {}
                 def readwrite foo(val j: int): {}
             }
         ''').assertError(METHOD, DUPLICATE_METHOD)
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 def readwrite foo(val a: readwrite A): {}
                 def readwrite foo(val a: readwrite A): {}
             }
         ''').assertError(METHOD, DUPLICATE_METHOD)
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 def readwrite foo(val a: readwrite A): {}
                 def readwrite foo(val b: readwrite A): {}
@@ -148,33 +148,33 @@ class ValidatorTest {
     @Test
     def testOverride() {
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {                def readwrite foo: {} }
             class B extends A { override readwrite foo: {} }
         ''').assertNoErrors
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {                def readwrite foo(val i: int): {} }
             class B extends A { override readwrite foo(val i: int): {} }
         ''').assertNoErrors
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {                def readwrite foo(val i: int): int { return 0; } }
             class B extends A { override readwrite foo(val j: int): int { return 0; } }
         ''').assertNoErrors
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {                def readwrite foo: readwrite A { return new A; } }
             class B extends A { override readwrite foo: readwrite B { return new B; } }
         ''').assertNoErrors
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {                def readwrite foo: readonly  A { return new A; } }
             class B extends A { override readwrite foo: readwrite A { return new A; } }
         ''').assertNoErrors
         
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {                def readwrite foo: {} }
             class B extends A { override readonly  foo: {} }
         ''').assertNoErrors
@@ -183,32 +183,32 @@ class ValidatorTest {
     @Test
     def testMissingOverride() {
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {           def readwrite foo: {} }
             class B extends A { def readwrite foo: {} }
         ''').assertError(METHOD, MISSING_OVERRIDE)
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {           def readwrite foo: int  {} }
             class B extends A { def readwrite foo: {} }
         ''').assertError(METHOD, MISSING_OVERRIDE)
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {           def readwrite foo(val i: int): {} }
             class B extends A { def readwrite foo(val i: int): {} }
         ''').assertError(METHOD, MISSING_OVERRIDE)
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {           def readwrite foo(val i: int): {} }
             class B extends A { def readwrite foo(val j: int): {} }
         ''').assertError(METHOD, MISSING_OVERRIDE)
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {           def readwrite foo(val a: readwrite A): {} }
             class B extends A { def readwrite foo(val a: readwrite A): {} }
         ''').assertError(METHOD, MISSING_OVERRIDE)
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {           def readwrite foo(val a: readwrite A): {} }
             class B extends A { def readwrite foo(val b: readwrite A): {} }
         ''').assertError(METHOD, MISSING_OVERRIDE)
@@ -217,37 +217,37 @@ class ValidatorTest {
     @Test
     def testIncorrectOverride() {
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {                def readonly  foo: {} }
             class B extends A { override readwrite foo: {} }
         ''').assertError(METHOD, INCOMPATIBLE_THIS_ROLE)
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {                def readwrite foo: {} }
             class B extends A { override readwrite foo(val i: int): {} }
         ''').assertError(METHOD, INCORRECT_OVERRIDE)
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {                def readwrite foo(val i: int): {} }
             class B extends A { override readwrite foo(val c: char): {} }
         ''').assertError(METHOD, INCORRECT_OVERRIDE)
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {                def readwrite foo(val a: readonly  A): {} }
             class B extends A { override readwrite foo(val a: readwrite A): {} }
         ''').assertError(METHOD, INCORRECT_OVERRIDE)
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {                def readwrite foo(val a: readwrite A): {} }
             class B extends A { override readwrite foo(val a: readonly  A): {} }
         ''').assertError(METHOD, INCORRECT_OVERRIDE)
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {                def readwrite foo(val a: readwrite A): {} }
             class B extends A { override readwrite foo(val a: readwrite B): {} }
         ''').assertError(METHOD, INCORRECT_OVERRIDE)
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {                def readwrite foo(val a: readwrite B): {} }
             class B extends A { override readwrite foo(val a: readwrite A): {} }
         ''').assertError(METHOD, INCORRECT_OVERRIDE)
@@ -256,7 +256,7 @@ class ValidatorTest {
     @Test
     def testReturn() {
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 def pure a: {}
                 def pure b: {
@@ -314,13 +314,13 @@ class ValidatorTest {
     @Test
     def testMissingReturnExpr() {
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 def pure a: int {}
             }
         ''').assertError(BLOCK, MISSING_RETURN_EXPR)
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 def pure a: int {
                     return;
@@ -328,7 +328,7 @@ class ValidatorTest {
             }
         ''').assertError(RETURN_NOTHING, MISSING_RETURN_EXPR)
         val program = parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 def pure a: int {
                     if(1 == 0)
@@ -340,7 +340,7 @@ class ValidatorTest {
         program.assertError(IF_STMT, MISSING_RETURN_EXPR)
         
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 def pure a(val i: int): int {
                     if(i == 0)
@@ -349,7 +349,7 @@ class ValidatorTest {
             }
         ''').assertError(IF_STMT, MISSING_RETURN_EXPR)
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 def pure a(val i: int): int {
                     1;
@@ -359,7 +359,7 @@ class ValidatorTest {
             }
         ''').assertError(IF_STMT, MISSING_RETURN_EXPR)
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 def pure a(val i: int): int {
                     if(i == 0) {}
@@ -382,7 +382,7 @@ class ValidatorTest {
     @Test
     def testIncorrectReturn() {
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 new {
                     return 4;
@@ -394,7 +394,7 @@ class ValidatorTest {
     @Test
     def testDuplicateFields() {
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 var a: int
                 val a: boolean
@@ -405,20 +405,20 @@ class ValidatorTest {
     @Test
     def testDuplicateLocalVar() {
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 def readwrite foo(val a: int, val a: boolean): {}
             }
         ''').assertError(PARAM, DUPLICATE_VARIABLE)
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 new(val a: int, val a: boolean) {}
             }
         ''').assertError(PARAM, DUPLICATE_VARIABLE)
         
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 def readwrite foo: {
                     var a: int;
@@ -427,7 +427,7 @@ class ValidatorTest {
             }
         ''').assertError(LOCAL_VAR, DUPLICATE_VARIABLE)
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 new {
                     var a: int;
@@ -447,7 +447,7 @@ class ValidatorTest {
         ''').assertError(LOCAL_VAR, DUPLICATE_VARIABLE)
         
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 def readwrite foo(val a: int): {
                     var a: boolean;
@@ -455,7 +455,7 @@ class ValidatorTest {
             }
         ''').assertError(PARAM, DUPLICATE_VARIABLE)
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 new(val a: int) {
                     var a: boolean;
@@ -467,9 +467,9 @@ class ValidatorTest {
     @Test
     def testTypeArgs() {
         parse('''
-            class rolez.lang.Object
-            class rolez.lang.Array {
-                new(val length: int) {}
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array {
+                mapped new(val length: int)
             }
             class A
             task Main: {
@@ -480,106 +480,33 @@ class ValidatorTest {
         ''').assertNoErrors
         
         parse('''
-            class rolez.lang.Object
-            class rolez.lang.Array
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array
             task Main: {
                 val a: pure Array;
             }
         ''').assertError(SIMPLE_CLASS_REF, MISSING_TYPE_ARGS, "class rolez.lang.Array")
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A
             task Main: {
                 val a: pure A[int] = null;
             }
         ''').assertError(GENERIC_CLASS_REF, INCORRECT_TYPE_ARGS, "class A")
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A
             task Main: {
                 val a: pure A = new A[int];
             }
         ''').assertError(GENERIC_CLASS_REF, INCORRECT_TYPE_ARGS, "class A")
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A
             task Main: {
                 val a: pure A[readwrite A];
             }
         ''').assertError(GENERIC_CLASS_REF, INCORRECT_TYPE_ARGS, "class A")
-    }
-    
-    @Test
-    def testObjectClass() {
-        parse('''
-            class A
-            class rolez.lang.Object extends A
-        ''').assertError(CLASS, INCORRECT_OBJECT_SUPERCLASS)
-    }
-    
-    @Test
-    def testArrayClass() {
-        parse('''
-            class rolez.lang.Object
-            class rolez.lang.Array {
-                new(val length: int) {}
-            }
-        ''').assertNoErrors
-        parse('''
-            class rolez.lang.Object
-            class rolez.lang.Array extends Object {
-                new(val i: int) {}
-            }
-        ''').assertNoErrors
-        
-        parse('''
-            class rolez.lang.Object
-            class A
-            class rolez.lang.Array extends A {
-                new(val length: int) {}
-            }
-        ''').assertError(CLASS, INCORRECT_ARRAY_SUPERCLASS)
-        
-        parse('''
-            class rolez.lang.Object
-            class rolez.lang.Array
-        ''').assertError(CLASS, INCORRECT_ARRAY_CONSTRS)
-        parse('''
-            class rolez.lang.Object
-            class rolez.lang.Array {
-                new {}
-            }
-        ''').assertError(CONSTR, INCORRECT_ARRAY_CONSTRS)
-        parse('''
-            class rolez.lang.Object
-            class rolez.lang.Array {
-                new(val i: int, val j: int) {}
-            }
-        ''').assertError(CONSTR, INCORRECT_ARRAY_CONSTRS)
-        parse('''
-            class rolez.lang.Object
-            class rolez.lang.Array {
-                new(val i: double) {}
-            }
-        ''').assertError(DOUBLE, INCORRECT_ARRAY_CONSTRS)
-    }
-    
-    @Test
-    def testTaskClass() {
-        parse('''
-            class rolez.lang.Object
-            class rolez.lang.Task
-        ''').assertNoErrors
-        parse('''
-            class rolez.lang.Object
-            class rolez.lang.Task extends Object
-        ''').assertNoErrors
-        
-        parse('''
-            class rolez.lang.Object
-            class A
-            class rolez.lang.Task extends A
-        ''').assertError(CLASS, INCORRECT_TASK_SUPERCLASS)
     }
     
     @Test
@@ -602,7 +529,7 @@ class ValidatorTest {
     @Test
     def testValFieldsInitialized() {
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 val i: int
                 var j: int
@@ -625,13 +552,13 @@ class ValidatorTest {
         ''').assertNoErrors
         
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 val i: int
             }
         ''').assertError(FIELD, VAL_FIELD_NOT_INITIALIZED)
         var program = parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 val i: int
                 val j: int
@@ -642,7 +569,7 @@ class ValidatorTest {
         program.assertError(CONSTR, VAL_FIELD_NOT_INITIALIZED, "field j")
         
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 val i: int
                 new(val b: boolean) {
@@ -651,7 +578,7 @@ class ValidatorTest {
             }
         ''').assertError(CONSTR, VAL_FIELD_NOT_INITIALIZED)
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 val i: int
                 new(val a: boolean, val b: boolean) {
@@ -661,7 +588,7 @@ class ValidatorTest {
             }
         ''').assertError(CONSTR, VAL_FIELD_NOT_INITIALIZED)
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 val i: int
                 new(val a: boolean, val b: boolean) {
@@ -672,7 +599,7 @@ class ValidatorTest {
         ''').assertError(MEMBER_ACCESS, VAL_FIELD_NOT_INITIALIZED)
         
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 val x: int
                 new {
@@ -682,7 +609,7 @@ class ValidatorTest {
             }
         ''').assertError(ASSIGNMENT, VAL_FIELD_OVERINITIALIZED)
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 val x: int
                 new(val b: boolean) {
@@ -693,7 +620,7 @@ class ValidatorTest {
             }
         ''').assertError(ASSIGNMENT, VAL_FIELD_OVERINITIALIZED)
         program = parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 val x: int
                 new(val b: boolean) {
@@ -709,7 +636,7 @@ class ValidatorTest {
     @Test
     def testLocalValInitialized() {
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 def pure foo: {
                     val i: int = 4;
@@ -719,7 +646,7 @@ class ValidatorTest {
         ''').assertNoErrors
         
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 def pure foo: {
                     val i: int;
@@ -731,7 +658,7 @@ class ValidatorTest {
     @Test
     def testLocalVarsInitialized() {
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 def pure foo(val x: int): int {
                     var i: int = 0;
@@ -754,7 +681,7 @@ class ValidatorTest {
         ''').assertNoErrors
         
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 def pure foo: int {
                     var i: int;
@@ -763,7 +690,7 @@ class ValidatorTest {
             }
         ''').assertError(VAR_REF, VAR_NOT_INITIALIZED, "variable i")
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 def pure foo(val x: int): int {
                     var i: int;
@@ -774,7 +701,7 @@ class ValidatorTest {
             }
         ''').assertError(VAR_REF, VAR_NOT_INITIALIZED, "variable i")
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 def pure foo(val x: int): int {
                     var i: int;
@@ -789,8 +716,8 @@ class ValidatorTest {
     @Test
     def testSuperConstrCalls() {
         parse('''
-            class rolez.lang.Object
-            class rolez.lang.String {
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.String {
                 def pure length: int { return 0; }
             }
             class A {
@@ -819,7 +746,7 @@ class ValidatorTest {
         ''').assertNoErrors
         
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 new {
                     3;
@@ -829,14 +756,14 @@ class ValidatorTest {
         ''').assertError(SUPER_CONSTR_CALL, SUPER_CONSTR_CALL_FIRST)
         
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 new(val i: int) {}
             }
             class B extends A
         ''').assertError(CLASS, MISSING_SUPER_CONSTR_CALL)
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 new(val i: int) {}
             }
@@ -846,7 +773,7 @@ class ValidatorTest {
         ''').assertError(CONSTR, MISSING_SUPER_CONSTR_CALL)
         
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 new(val i: int) {}
                 def pure foo: {}
@@ -859,7 +786,7 @@ class ValidatorTest {
             }
         ''').assertError(THIS, THIS_BEFORE_SUPER_CONSTR_CALL)
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 new(val i: int) {}
                 def pure foo: int { return 1; }
@@ -871,7 +798,7 @@ class ValidatorTest {
             }
         ''').assertError(THIS, THIS_BEFORE_SUPER_CONSTR_CALL)
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 new(val o: pure Object) {}
             }
@@ -883,7 +810,7 @@ class ValidatorTest {
         ''').assertError(THIS, THIS_BEFORE_SUPER_CONSTR_CALL)
         
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 def pure foo: { super(); }
             }
@@ -896,8 +823,8 @@ class ValidatorTest {
     @Test
     def testExprStmt() {
         parse('''
-            class rolez.lang.Object
-            class rolez.lang.String {
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.String {
                 def pure length: int { return 0; }
             }
             class rolez.lang.Task
@@ -929,8 +856,8 @@ class ValidatorTest {
             }
         ''').assertWarning(VAR_REF, OUTER_EXPR_NO_SIDE_FX)
         parse('''
-            class rolez.lang.Object
-            class rolez.lang.String
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.String
             task Main: {
                 val s: pure String = "Hello";
                 s as pure Object;
@@ -944,13 +871,13 @@ class ValidatorTest {
             }
         ''').assertWarning(PARENTHESIZED, OUTER_EXPR_NO_SIDE_FX)
         parse('''
-            class rolez.lang.Object
-            class rolez.lang.String
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.String
             task Main: { (new String); }
         ''').assertWarning(PARENTHESIZED, OUTER_EXPR_NO_SIDE_FX)
         parse('''
-            class rolez.lang.Object
-            class rolez.lang.String {
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.String {
                 def pure length: int { return 0; }
             }
             task Main: {
@@ -965,5 +892,217 @@ class ValidatorTest {
         parse('''
             task Main: Null { return null; }
         ''').assertError(NULL, NULL_TYPE_USED)
+    }
+    
+    @Test
+    def testMappedField() {
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array {
+                mapped val length: int
+                mapped new(val length: int)
+            }
+            class A {
+                var length: int
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            mapped class rolez.lang.Object
+            class A {
+                mapped val length: int
+            }
+        ''').assertError(FIELD, MAPPED_IN_NORMAL_CLASS)
+    }
+    
+    @Test
+    def testMappedMethod() {
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.String {
+                mapped def pure length: int
+            }
+            class A {
+                def pure length: int { return 0; }
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            mapped class rolez.lang.Object
+            class A {
+                mapped def pure length: int
+            }
+        ''').assertError(METHOD, MAPPED_IN_NORMAL_CLASS)
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.String {
+                mapped def pure length: int { return 0; }
+            }
+        ''').assertError(BLOCK, MAPPED_WITH_BODY)
+        parse('''
+            mapped class rolez.lang.Object
+            class A {
+                def pure length: int
+            }
+        ''').assertError(METHOD, MISSING_BODY)
+    }
+    
+    @Test
+    def testMappedConstr() {
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array {
+                mapped new(val length: int)
+            }
+            class A {
+                new(val length: int) {}
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            mapped class rolez.lang.Object
+            class A {
+                mapped new(val length: int)
+            }
+        ''').assertError(CONSTR, MAPPED_IN_NORMAL_CLASS)
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array {
+                mapped new(val length: int) {}
+            }
+        ''').assertError(BLOCK, MAPPED_WITH_BODY)
+        parse('''
+            mapped class rolez.lang.Object
+            class A {
+                new
+            }
+        ''').assertError(CONSTR, MISSING_BODY)
+    }
+    
+    @Test
+    def testMappedClass() {
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.String
+            mapped class rolez.lang.Array {
+                mapped new(val length: int)
+            }
+            class A
+        ''').assertNoErrors
+        
+        parse("class rolez.lang.Object").assertError(CLASS, CLASS_ACTUALLY_MAPPED)
+        parse("class rolez.lang.String").assertError(CLASS, CLASS_ACTUALLY_MAPPED)
+        parse("class rolez.lang.Array").assertError(CLASS, CLASS_ACTUALLY_MAPPED)
+        
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class A
+        ''').assertError(CLASS, UNKNOWN_MAPPED_CLASS)
+    }
+    
+    @Test
+    def testObjectClass() {
+        parse('''
+            class A
+            mapped class rolez.lang.Object extends A
+        ''').assertError(CLASS, INCORRECT_OBJECT_SUPERCLASS)
+    }
+    
+    @Test
+    def testArrayClass() {
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array {
+                mapped new(val length: int)
+            }
+        ''').assertNoErrors
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array extends Object {
+                mapped new(val length: int)
+            }
+        ''').assertNoErrors
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array {
+                mapped new(val length: int)
+                mapped val length: int
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            mapped class rolez.lang.Object
+            class A
+            mapped class rolez.lang.Array extends A
+        ''').assertError(CLASS, INCORRECT_ARRAY_SUPERCLASS)
+        
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array
+        ''').assertError(CLASS, INCORRECT_ARRAY_CONSTRS)
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array {
+                mapped new {}
+            }
+        ''').assertError(CONSTR, INCORRECT_ARRAY_CONSTRS)
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array {
+                mapped new(val i: int, val j: int) {}
+            }
+        ''').assertError(CONSTR, INCORRECT_ARRAY_CONSTRS)
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array {
+                mapped new(val i: double) {}
+            }
+        ''').assertError(DOUBLE, INCORRECT_ARRAY_CONSTRS)
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array {
+                new(val i: int) {}
+            }
+        ''').assertError(CONSTR, INCORRECT_ARRAY_CONSTRS)
+        
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array {
+                mapped new(val length: int)
+                val length: int
+            }
+        ''').assertError(FIELD, INCORRECT_LENGTH_FIELD)
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array {
+                mapped new(val length: int)
+                mapped var length: int
+            }
+        ''').assertError(FIELD, INCORRECT_LENGTH_FIELD)
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array {
+                mapped new(val length: int)
+                mapped val length: double
+            }
+        ''').assertError(DOUBLE, INCORRECT_LENGTH_FIELD)
+    }
+    
+    @Test
+    def testTaskClass() {
+        parse('''
+            mapped class rolez.lang.Object
+            class rolez.lang.Task
+        ''').assertNoErrors
+        parse('''
+            mapped class rolez.lang.Object
+            class rolez.lang.Task extends Object
+        ''').assertNoErrors
+        
+        parse('''
+            mapped class rolez.lang.Object
+            class A
+            class rolez.lang.Task extends A
+        ''').assertError(CLASS, INCORRECT_TASK_SUPERCLASS)
     }
 }

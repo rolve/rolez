@@ -1,11 +1,12 @@
 package rolez.lang
 
-class Object
+mapped class Object
 
-class String {
+mapped class String {
 	def pure length: int { return (4 - 3 - (2-1)) as int; }
 }
 
-class Array {
-	new(val length: int) {}
+mapped class Array {
+	mapped new(val i: int)
+	mapped val length: int
 }

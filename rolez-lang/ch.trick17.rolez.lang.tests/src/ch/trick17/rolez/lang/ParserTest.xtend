@@ -23,7 +23,7 @@ class ParserTest {
     
     @Test
     def testEmptyClass() {
-        val program = parse("class rolez.lang.Object")
+        val program = parse("mapped class rolez.lang.Object")
         program.assertNoErrors
         program.elements.size.assertThat(is(1))
         program.classes.size.assertThat(is(1))
@@ -38,10 +38,10 @@ class ParserTest {
     @Test
     def testQualifiedClassRef() {
         parse('''
-            class rolez.lang.Object
-            class rolez.lang.Array {
-                new(val length: int) {}
-                var length: int
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array {
+                mapped new(val length: int)
+                mapped val length: int
             }
             class foo.A
             class foo.B extends foo.A {
@@ -56,7 +56,7 @@ class ParserTest {
     @Test
     def testNewAndMemberAccess() {
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
             class A {
                 var i: int
                 def pure f: {}

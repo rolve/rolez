@@ -22,7 +22,7 @@ ClassLike:
     Class | Task;
 
 Class:
-    'class' name=QualifiedName ('extends' superclass=[Class|QualifiedName])?
+    mapped?='mapped'? 'class' name=QualifiedName ('extends' superclass=[Class|QualifiedName])?
     ('{'
         (constructors+=Constr | members+=Member)+
     '}')?;
@@ -35,19 +35,21 @@ Member:
     Field | Method;
 
 Constr:
-    'new' ('(' params+=Param (',' params+=Param)* ')')? body=Block;
+    {Constr} mapped?='mapped'? 'new' ('(' params+=Param (',' params+=Param)* ')')?
+    body=Block?;
 
 Field:
-    kind=VarKind name=ID ':' type=Type;
+    mapped?='mapped'? kind=VarKind name=ID ':' type=Type;
 
 enum VarKind:
     VAL='val' | VAR='var';
 
 Method:
-    (overriding?='override' | 'def')
+    mapped?='mapped'? (overriding?='override' | 'def')
     thisRole=Role name=ID
     ('(' params+=Param (',' params+=Param)* ')')?
-    ':' type=Type body=Block;
+    ':' type=Type
+    body=Block?;
 
 Param:
     kind=Val name=ID ':' type=Type;

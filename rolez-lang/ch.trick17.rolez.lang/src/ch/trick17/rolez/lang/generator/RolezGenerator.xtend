@@ -62,7 +62,7 @@ class RolezGenerator implements IGenerator {
     @Inject extension RolezExtensions
     @Inject RolezUtils utils
     
-    private static val specialClassesMap = #{
+    public static val mappedClasses = #{
         objectClassName -> "java.lang.Object",
         stringClassName -> "java.lang.String",
         arrayClassName  -> null
@@ -70,11 +70,7 @@ class RolezGenerator implements IGenerator {
     
     override void doGenerate(Resource resource, IFileSystemAccess fsa) {
         val program = resource.contents.head as Program
-        val filtered = program.classes.filter[
-            !specialClassesMap.containsKey(qualifiedName)
-        ]
-        
-        for (c : filtered) {
+        for (c : program.classes.filter[!mapped]) {
             val name = c.qualifiedName.segments.join(File.separator) + ".java"
             fsa.generateFile(name, c.generate(program))
         }
@@ -143,7 +139,8 @@ class RolezGenerator implements IGenerator {
     
     private def dispatch generateStmt(IfStmt it) {'''
         if(«condition.gen») «thenPart.genIndent»
-        «if(elsePart != null) '''else «elsePart.genIndent»'''»
+        «if(elsePart != null)
+            '''else «elsePart.genIndent»'''»
     '''}
     
     private def dispatch generateStmt(WhileLoop it) {'''
@@ -316,8 +313,12 @@ class RolezGenerator implements IGenerator {
     }
     
     private def generateName(Class it) {
-        val name = specialClassesMap.getOrDefault(qualifiedName, qualifiedName.toString)
-        if(name == null) throw new AssertionError
-        name
+        if(mapped) {
+            val name = mappedClasses.get(qualifiedName)
+            if(name == null) throw new AssertionError
+            name
+        }
+        else
+            qualifiedName.toString
     }
 }
