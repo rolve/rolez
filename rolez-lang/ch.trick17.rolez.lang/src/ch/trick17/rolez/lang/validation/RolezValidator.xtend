@@ -80,12 +80,13 @@ class RolezValidator extends RolezSystemValidator {
     public static val MAPPED_WITH_BODY = "mapped with body"
     public static val MISSING_BODY = "missing body"
     public static val UNKNOWN_MAPPED_CLASS = "unknown mapped class"
+    public static val UNKNOWN_MAPPED_FIELD = "unknown mapped field"
+    public static val UNKNOWN_MAPPED_METHOD = "unknown mapped method"
     public static val CLASS_ACTUALLY_MAPPED = "class actually mapped"
-    public static val INCORRECT_OBJECT_SUPERCLASS = "incorrect object superclass"
-    public static val INCORRECT_ARRAY_SUPERCLASS = "incorrect array superclass"
-    public static val INCORRECT_ARRAY_CONSTRS = "incorrect array constructors"
-    public static val INCORRECT_LENGTH_FIELD = "incorrect length field"
-    public static val INCORRECT_TASK_SUPERCLASS = "incorrect task superclass"
+    public static val INCORRECT_MAPPED_SUPERCLASS = "incorrect mapped superclass"
+    public static val INCORRECT_MAPPED_FIELD = "incorrect mapped field"
+    public static val INCORRECT_MAPPED_METHOD = "incorrect mapped method"
+    public static val INCORRECT_MAPPED_CONSTR = "incorrect mapped constructor"
     
     @Inject extension RolezExtensions
     @Inject extension CfgProvider
@@ -398,62 +399,103 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkObjectClass(Class it) {
-        if(qualifiedName == objectClassName) {
-            if(superclass != null)
-               error(qualifiedName + " must not have a superclass",
-                   it, CLASS__SUPERCLASS, INCORRECT_OBJECT_SUPERCLASS)
-        }
+        if(qualifiedName != objectClassName) return;
+        
+        if(superclass != null)
+           error(qualifiedName + " must not have a superclass",
+               it, CLASS__SUPERCLASS, INCORRECT_MAPPED_SUPERCLASS)
+        
+        // TODO: no default constructor
+    }
+    
+    @Check
+    def checkStringClass(Class it) {
+        if(qualifiedName != stringClassName) return;
+        
+        if(actualSuperclass != utils.findClass(objectClassName, it))
+           error("The superclass of " + qualifiedName + " must be "+ objectClassName,
+               it, CLASS__SUPERCLASS, INCORRECT_MAPPED_SUPERCLASS)
+        
+        constructors.forEach[
+           error(stringClassName + " cannot have any constructors",
+               it, null, INCORRECT_MAPPED_CONSTR)
+        ]
+        
+        fields.filter[isMapped].forEach[
+            error("unknown mapped field " + name, it, NAMED__NAME, UNKNOWN_MAPPED_FIELD)
+        ]
+        
+        methods.filter[name == "length"].forEach[
+            if(!mapped)
+                error("this method must be declared as mapped", it,
+                    NAMED__NAME, INCORRECT_MAPPED_METHOD)
+            if(!(type instanceof Int))
+                error("the return type of this method must be int", type,
+                    null, INCORRECT_MAPPED_METHOD)
+            if(!params.isEmpty)
+                error("the parameter list of this method must be empty", type,
+                    null, INCORRECT_MAPPED_METHOD)
+        ]
+        
+        methods.filter[isMapped && name != "length"].forEach[
+            error("unknown mapped method " + name, it, NAMED__NAME, UNKNOWN_MAPPED_METHOD)
+        ]
     }
     
     @Check
     def checkArrayClass(Class it) {
-        if(qualifiedName == arrayClassName) {
-            if(actualSuperclass != utils.findClass(objectClassName, it))
-               error("The superclass of " + qualifiedName + " must be "+ objectClassName,
-                   it, CLASS__SUPERCLASS, INCORRECT_ARRAY_SUPERCLASS)
-            
-            if(constructors.size != 1)
-               error(qualifiedName + " must have exactly one constructor",
-                   it, null, INCORRECT_ARRAY_CONSTRS)
-            constructors.head => [
-                if(!mapped)
-                   error("This constructor must be declared as mapped",
-                       it, null, INCORRECT_ARRAY_CONSTRS)
-                else if(params.size != 1)
-                   error("This constructor must have a single parameter",
-                       it, null, INCORRECT_ARRAY_CONSTRS)
-                else if(!(params.head.type instanceof Int))
-                   error("The parameter of this constructor must be of type int",
-                       params.head.type, null, INCORRECT_ARRAY_CONSTRS)
-            ]
-            
-            fields.filter[name == "length"].forEach[
-                if(!mapped)
-                    error("length field must be declared as mapped", it,
-                        NAMED__NAME, INCORRECT_LENGTH_FIELD)
-                if(kind != VAL)
-                    error("length field must be a value field", it,
-                        FIELD__KIND, INCORRECT_LENGTH_FIELD)
-                if(!(type instanceof Int))
-                    error("the type of the length field must be int", type,
-                        null, INCORRECT_LENGTH_FIELD)
-            ]
-        }
+        if(qualifiedName != arrayClassName) return;
+        
+        if(actualSuperclass != utils.findClass(objectClassName, it))
+           error("The superclass of " + qualifiedName + " must be "+ objectClassName,
+               it, CLASS__SUPERCLASS, INCORRECT_MAPPED_SUPERCLASS)
+        
+        if(constructors.size != 1)
+           error(qualifiedName + " must have exactly one constructor",
+               it, null, INCORRECT_MAPPED_CONSTR)
+        constructors.head => [
+            if(!mapped)
+               error("This constructor must be declared as mapped",
+                   it, null, INCORRECT_MAPPED_CONSTR)
+            else if(params.size != 1)
+               error("This constructor must have a single parameter",
+                   it, null, INCORRECT_MAPPED_CONSTR)
+            else if(!(params.head.type instanceof Int))
+               error("The parameter of this constructor must be of type int",
+                   params.head.type, null, INCORRECT_MAPPED_CONSTR)
+        ]
+        
+        fields.filter[name == "length"].forEach[
+            if(!mapped)
+                error("this field must be declared as mapped", it,
+                    NAMED__NAME, INCORRECT_MAPPED_FIELD)
+            if(kind != VAL)
+                error("this field must be a value field", it,
+                    FIELD__KIND, INCORRECT_MAPPED_FIELD)
+            if(!(type instanceof Int))
+                error("the type of this field must be int", type,
+                    null, INCORRECT_MAPPED_FIELD)
+        ]
+        fields.filter[isMapped && name != "length"].forEach[
+            error("unknown mapped field " + name, it, NAMED__NAME, UNKNOWN_MAPPED_FIELD)
+        ]
+        
+        methods.filter[isMapped].forEach[
+            error("unknown mapped method " + name, it, NAMED__NAME, UNKNOWN_MAPPED_METHOD)
+        ]
     }
     
     @Check
     def checkTaskClass(Class it) {
-        if(qualifiedName == taskClassName) {
-            if(actualSuperclass != utils.findClass(objectClassName, it))
-               error("The superclass of " + qualifiedName + " must be " + objectClassName,
-                   it, CLASS__SUPERCLASS, INCORRECT_TASK_SUPERCLASS)
-        }
+        if(qualifiedName != taskClassName) return;
+        
+        if(actualSuperclass != utils.findClass(objectClassName, it))
+           error("The superclass of " + qualifiedName + " must be " + objectClassName,
+               it, CLASS__SUPERCLASS, INCORRECT_MAPPED_SUPERCLASS)
         // TODO: Check (mapped) members
     }
     
-    // TODO: Check string class
-    
-	/*
+    /*
 	 * Delayed errors
 	 */
 	

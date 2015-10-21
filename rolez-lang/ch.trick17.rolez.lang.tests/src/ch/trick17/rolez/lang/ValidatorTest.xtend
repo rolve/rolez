@@ -718,7 +718,7 @@ class ValidatorTest {
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.String {
-                def pure length: int { return 0; }
+                mapped def pure length: int
             }
             class A {
                 new {}
@@ -825,7 +825,7 @@ class ValidatorTest {
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.String {
-                def pure length: int { return 0; }
+                mapped def pure length: int
             }
             class rolez.lang.Task
             task Main: {
@@ -878,7 +878,7 @@ class ValidatorTest {
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.String {
-                def pure length: int { return 0; }
+                mapped def pure length: int
             }
             task Main: {
                 val s: pure String = new String;
@@ -1005,7 +1005,60 @@ class ValidatorTest {
         parse('''
             class A
             mapped class rolez.lang.Object extends A
-        ''').assertError(CLASS, INCORRECT_OBJECT_SUPERCLASS)
+        ''').assertError(CLASS, INCORRECT_MAPPED_SUPERCLASS)
+    }
+
+    @Test
+    def testStringClass() {
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.String
+        ''').assertNoErrors
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.String extends Object {
+                mapped def pure length: int
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            mapped class rolez.lang.Object
+            class A
+            mapped class rolez.lang.String extends A
+        ''').assertError(CLASS, INCORRECT_MAPPED_SUPERCLASS)
+        
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.String {
+                mapped new {}
+            }
+        ''').assertError(CONSTR, INCORRECT_MAPPED_CONSTR)
+        
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.String {
+                def pure length: int
+            }
+        ''').assertError(METHOD, INCORRECT_MAPPED_METHOD)
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.String {
+                mapped def pure length: double
+            }
+        ''').assertError(DOUBLE, INCORRECT_MAPPED_METHOD)
+        
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.String {
+                mapped var length: int
+            }
+        ''').assertError(FIELD, UNKNOWN_MAPPED_FIELD)
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.String {
+                mapped def pure foo: int
+            }
+        ''').assertError(METHOD, UNKNOWN_MAPPED_METHOD)
     }
     
     @Test
@@ -1020,12 +1073,6 @@ class ValidatorTest {
             mapped class rolez.lang.Object
             mapped class rolez.lang.Array extends Object {
                 mapped new(val length: int)
-            }
-        ''').assertNoErrors
-        parse('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.Array {
-                mapped new(val length: int)
                 mapped val length: int
             }
         ''').assertNoErrors
@@ -1034,36 +1081,36 @@ class ValidatorTest {
             mapped class rolez.lang.Object
             class A
             mapped class rolez.lang.Array extends A
-        ''').assertError(CLASS, INCORRECT_ARRAY_SUPERCLASS)
+        ''').assertError(CLASS, INCORRECT_MAPPED_SUPERCLASS)
         
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.Array
-        ''').assertError(CLASS, INCORRECT_ARRAY_CONSTRS)
+        ''').assertError(CLASS, INCORRECT_MAPPED_CONSTR)
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.Array {
                 mapped new {}
             }
-        ''').assertError(CONSTR, INCORRECT_ARRAY_CONSTRS)
+        ''').assertError(CONSTR, INCORRECT_MAPPED_CONSTR)
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.Array {
                 mapped new(val i: int, val j: int) {}
             }
-        ''').assertError(CONSTR, INCORRECT_ARRAY_CONSTRS)
+        ''').assertError(CONSTR, INCORRECT_MAPPED_CONSTR)
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.Array {
                 mapped new(val i: double) {}
             }
-        ''').assertError(DOUBLE, INCORRECT_ARRAY_CONSTRS)
+        ''').assertError(DOUBLE, INCORRECT_MAPPED_CONSTR)
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.Array {
                 new(val i: int) {}
             }
-        ''').assertError(CONSTR, INCORRECT_ARRAY_CONSTRS)
+        ''').assertError(CONSTR, INCORRECT_MAPPED_CONSTR)
         
         parse('''
             mapped class rolez.lang.Object
@@ -1071,21 +1118,36 @@ class ValidatorTest {
                 mapped new(val length: int)
                 val length: int
             }
-        ''').assertError(FIELD, INCORRECT_LENGTH_FIELD)
+        ''').assertError(FIELD, INCORRECT_MAPPED_FIELD)
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.Array {
                 mapped new(val length: int)
                 mapped var length: int
             }
-        ''').assertError(FIELD, INCORRECT_LENGTH_FIELD)
+        ''').assertError(FIELD, INCORRECT_MAPPED_FIELD)
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.Array {
                 mapped new(val length: int)
                 mapped val length: double
             }
-        ''').assertError(DOUBLE, INCORRECT_LENGTH_FIELD)
+        ''').assertError(DOUBLE, INCORRECT_MAPPED_FIELD)
+        
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array {
+                mapped new(val length: int)
+                mapped val foo: int
+            }
+        ''').assertError(FIELD, UNKNOWN_MAPPED_FIELD)
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array {
+                mapped new(val length: int)
+                mapped def pure foo: int
+            }
+        ''').assertError(METHOD, UNKNOWN_MAPPED_METHOD)
     }
     
     @Test
@@ -1103,6 +1165,6 @@ class ValidatorTest {
             mapped class rolez.lang.Object
             class A
             class rolez.lang.Task extends A
-        ''').assertError(CLASS, INCORRECT_TASK_SUPERCLASS)
+        ''').assertError(CLASS, INCORRECT_MAPPED_SUPERCLASS)
     }
 }
