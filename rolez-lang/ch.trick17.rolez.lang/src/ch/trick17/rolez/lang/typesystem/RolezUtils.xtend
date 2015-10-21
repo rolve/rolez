@@ -2,14 +2,19 @@ package ch.trick17.rolez.lang.typesystem
 
 import ch.trick17.rolez.lang.RolezExtensions
 import ch.trick17.rolez.lang.rolez.Argumented
+import ch.trick17.rolez.lang.rolez.Assignment
 import ch.trick17.rolez.lang.rolez.Class
 import ch.trick17.rolez.lang.rolez.ClassRef
 import ch.trick17.rolez.lang.rolez.Constr
+import ch.trick17.rolez.lang.rolez.Expr
+import ch.trick17.rolez.lang.rolez.MemberAccess
 import ch.trick17.rolez.lang.rolez.Method
 import ch.trick17.rolez.lang.rolez.MethodSelector
+import ch.trick17.rolez.lang.rolez.New
 import ch.trick17.rolez.lang.rolez.ParameterizedBody
 import ch.trick17.rolez.lang.rolez.Role
 import ch.trick17.rolez.lang.rolez.RolezFactory
+import ch.trick17.rolez.lang.rolez.Start
 import ch.trick17.rolez.lang.rolez.Task
 import ch.trick17.rolez.lang.rolez.Type
 import it.xsemantics.runtime.RuleEnvironment
@@ -21,6 +26,7 @@ import org.eclipse.xtext.naming.QualifiedName
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils
 import org.eclipse.xtext.scoping.IScopeProvider
 
+import static ch.trick17.rolez.lang.Constants.*
 import static ch.trick17.rolez.lang.rolez.Role.*
 import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
 
@@ -136,5 +142,21 @@ class RolezUtils {
     
     def methodName(MethodSelector it) {
         NodeModelUtils.findNodesForFeature(it, METHOD_SELECTOR__METHOD).get(0).text
+    }
+    
+    /**
+     * Returns <code>true</code> iff the given expression is a kind of
+     * expression that may have side effects, i.e., an assignment, a non-array
+     * object instantiation, a task creation or a method invocation.
+     * Note that nested expressions may still have side effects.
+     */
+    def isSideFxExpr(Expr it) {
+        switch(it) {
+            Assignment: true
+            New: classRef.clazz.qualifiedName != arrayClassName
+            Start: true
+            MemberAccess: selector instanceof MethodSelector
+            default: false
+        }
     }
 }

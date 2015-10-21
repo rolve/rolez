@@ -314,7 +314,9 @@ class TypeSystemTest {
         // Upcasts
         program = parse('''
             class rolez.lang.Object
-            class rolez.lang.Array
+            class rolez.lang.Array {
+                new(val length: int) {}
+            }
             class A
             task Main: {
                 new A as readwrite Object;
@@ -322,8 +324,8 @@ class TypeSystemTest {
                 new A as pure A;
                 null as readwrite A;
                 null as readonly A;
-                new Array[int] as readonly Array[int];
-                new Array[pure A] as readonly Array[pure A];
+                new Array[int](3) as readonly Array[int];
+                new Array[pure A](0) as readonly Array[pure A];
             }
         ''')
         program.main.expr(0).type.assertThat(isRoleType(READWRITE, newClassRef(program.findClass(objectClassName))))
@@ -854,8 +856,10 @@ class TypeSystemTest {
         
         program = parse('''
             class rolez.lang.Object
-            class rolez.lang.Array
-            task Main: { new Array[int]; }
+            class rolez.lang.Array {
+                new(val length: int) {}
+            }
+            task Main: { new Array[int](100); }
         ''')
         program.main.lastExpr.type
             .assertThat(isRoleType(READWRITE, newClassRef(program.findClass(arrayClassName), newIntType)))
@@ -863,8 +867,10 @@ class TypeSystemTest {
         program = parse('''
             class rolez.lang.Object
             class A
-            class rolez.lang.Array
-            task Main: { new Array[readonly A]; }
+            class rolez.lang.Array {
+                new(val length: int) {}
+            }
+            task Main: { new Array[readonly A](10); }
         ''')
         program.main.lastExpr.type
             .assertThat(isRoleType(READWRITE, newClassRef(program.findClass(arrayClassName),
@@ -873,8 +879,10 @@ class TypeSystemTest {
         program = parse('''
             class rolez.lang.Object
             class A
-            class rolez.lang.Array
-            task Main: { new Array[pure Array[readwrite A]]; }
+            class rolez.lang.Array {
+                new(val length: int) {}
+            }
+            task Main: { new Array[pure Array[readwrite A]](1000); }
         ''')
         val array = program.findClass(arrayClassName)
         program.main.lastExpr.type
@@ -1567,7 +1575,9 @@ class TypeSystemTest {
     def testSubtype() {
         parse('''
             class rolez.lang.Object
-            class rolez.lang.Array
+            class rolez.lang.Array {
+                new(val length: int) {}
+            }
             class A
             task Main: {
                 val i: int = 5;
@@ -1586,10 +1596,11 @@ class TypeSystemTest {
                 var o: pure Object = new A;
                 o = new A as pure A;
                 o = new A as readwrite Object;
+                o = new Array[int](2);
                 
-                var ia: pure Array[int] = new Array[int];
+                var ia: pure Array[int] = new Array[int](2);
                 ia = null;
-                var oa: readwrite Array[pure Object] = new Array[pure Object];
+                var oa: readwrite Array[pure Object] = new Array[pure Object](1);
                 oa = null;
             }
         ''').assertNoErrors

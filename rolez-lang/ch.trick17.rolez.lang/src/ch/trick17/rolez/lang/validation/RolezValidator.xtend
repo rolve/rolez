@@ -12,6 +12,7 @@ import ch.trick17.rolez.lang.rolez.Class
 import ch.trick17.rolez.lang.rolez.ClassLike
 import ch.trick17.rolez.lang.rolez.Constr
 import ch.trick17.rolez.lang.rolez.Expr
+import ch.trick17.rolez.lang.rolez.ExprStmt
 import ch.trick17.rolez.lang.rolez.Field
 import ch.trick17.rolez.lang.rolez.FieldSelector
 import ch.trick17.rolez.lang.rolez.GenericClassRef
@@ -20,14 +21,17 @@ import ch.trick17.rolez.lang.rolez.LocalVar
 import ch.trick17.rolez.lang.rolez.LocalVarDecl
 import ch.trick17.rolez.lang.rolez.MemberAccess
 import ch.trick17.rolez.lang.rolez.Method
+import ch.trick17.rolez.lang.rolez.Null
 import ch.trick17.rolez.lang.rolez.ParameterizedBody
 import ch.trick17.rolez.lang.rolez.Program
 import ch.trick17.rolez.lang.rolez.ReturnExpr
 import ch.trick17.rolez.lang.rolez.SimpleClassRef
+import ch.trick17.rolez.lang.rolez.SuperConstrCall
+import ch.trick17.rolez.lang.rolez.This
 import ch.trick17.rolez.lang.rolez.TypedBody
-import ch.trick17.rolez.lang.rolez.Void
 import ch.trick17.rolez.lang.rolez.Var
 import ch.trick17.rolez.lang.rolez.VarRef
+import ch.trick17.rolez.lang.rolez.Void
 import ch.trick17.rolez.lang.typesystem.RolezSystem
 import ch.trick17.rolez.lang.typesystem.RolezUtils
 import ch.trick17.rolez.lang.typesystem.validation.RolezSystemValidator
@@ -42,9 +46,7 @@ import static ch.trick17.rolez.lang.Constants.*
 import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
 import static ch.trick17.rolez.lang.rolez.VarKind.*
 import static ch.trick17.rolez.lang.validation.ValFieldsInitializedAnalysis.*
-import ch.trick17.rolez.lang.rolez.SuperConstrCall
-import ch.trick17.rolez.lang.rolez.This
-import ch.trick17.rolez.lang.rolez.Null
+import ch.trick17.rolez.lang.rolez.Int
 
 class RolezValidator extends RolezSystemValidator {
 
@@ -64,6 +66,7 @@ class RolezValidator extends RolezSystemValidator {
     public static val INCORRECT_TYPE_ARGS = "incorrect type arguments"
     public static val INCORRECT_OBJECT_SUPERCLASS = "incorrect object superclass"
     public static val INCORRECT_ARRAY_SUPERCLASS = "incorrect array superclass"
+    public static val INCORRECT_ARRAY_CONSTRS = "incorrect array constructors"
     public static val INCORRECT_TASK_SUPERCLASS = "incorrect task superclass"
     public static val CIRCULAR_INHERITANCE = "circular inheritance"
     public static val VAL_FIELD_NOT_INITIALIZED = "val field not initialized"
@@ -74,6 +77,7 @@ class RolezValidator extends RolezSystemValidator {
     public static val MISSING_SUPER_CONSTR_CALL = "missing super constructor call"
     public static val SUPER_CONSTR_CALL_FIRST = "super constructor call first"
     public static val THIS_BEFORE_SUPER_CONSTR_CALL = "'this' before super constructor call"
+    public static val OUTER_EXPR_NO_SIDE_FX = "outer expr no side effects"
     public static val NULL_TYPE_USED = "null type used"
     
     @Inject extension RolezExtensions
@@ -119,6 +123,17 @@ class RolezValidator extends RolezSystemValidator {
             if(actualSuperclass != utils.findClass(objectClassName, it))
                error("The superclass of " + qualifiedName + " must be "+ objectClassName,
                    it, CLASS__SUPERCLASS, INCORRECT_ARRAY_SUPERCLASS)
+            
+            if(constructors.size != 1)
+               error(qualifiedName + " must have exactly one constructor",
+                   it, null, INCORRECT_ARRAY_CONSTRS)
+            else if(constructors.head.params.size != 1)
+               error(qualifiedName + " constructor must have a single parameter",
+                   constructors.head, null, INCORRECT_ARRAY_CONSTRS)
+            else if(!(constructors.head.params.head.type instanceof Int))
+               error("Parameter of " + qualifiedName + " constructor must be of type int",
+                   constructors.head.params.head.type, null, INCORRECT_ARRAY_CONSTRS)
+            // TODO: check that constructor body is empty (once possible)
         }
         // TODO: Check (built-in) members
     }
@@ -353,6 +368,13 @@ class RolezValidator extends RolezSystemValidator {
         if(superConstr.filter[params.isEmpty].isEmpty && constructors.isEmpty)
             error("Missing super constructor call",
                 it, NAMED__NAME, MISSING_SUPER_CONSTR_CALL)
+    }
+    
+    @Check
+    def checkExprStmt(ExprStmt it) {
+        if(!utils.isSideFxExpr(expr))
+            warning("Outer-most expression has no side effects", expr, null,
+                OUTER_EXPR_NO_SIDE_FX)
     }
     
     @Check

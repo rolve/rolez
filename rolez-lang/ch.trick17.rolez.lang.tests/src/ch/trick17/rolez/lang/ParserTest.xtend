@@ -40,13 +40,14 @@ class ParserTest {
         parse('''
             class rolez.lang.Object
             class rolez.lang.Array {
+                new(val length: int) {}
                 var length: int
             }
             class foo.A
             class foo.B extends foo.A {
                 def pure foo: {
                     val a: pure foo.A = new (foo.A);
-                    new rolez.lang.Array[int].length;
+                    new rolez.lang.Array[int](5).length;
                 }
             }
         ''').assertNoErrors

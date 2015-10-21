@@ -43,10 +43,12 @@ import ch.trick17.rolez.lang.rolez.StringLiteral
 import ch.trick17.rolez.lang.rolez.SuperConstrCall
 import ch.trick17.rolez.lang.rolez.This
 import ch.trick17.rolez.lang.rolez.Type
+import ch.trick17.rolez.lang.rolez.UnaryExpr
 import ch.trick17.rolez.lang.rolez.UnaryMinus
 import ch.trick17.rolez.lang.rolez.UnaryNot
 import ch.trick17.rolez.lang.rolez.VarRef
 import ch.trick17.rolez.lang.rolez.WhileLoop
+import ch.trick17.rolez.lang.typesystem.RolezUtils
 import java.io.File
 import javax.inject.Inject
 import org.eclipse.emf.ecore.resource.Resource
@@ -58,12 +60,23 @@ import static ch.trick17.rolez.lang.Constants.*
 class RolezGenerator implements IGenerator {
     
     @Inject extension RolezExtensions
+    @Inject RolezUtils utils
+    
+    private static val specialClassesMap = #{
+        objectClassName -> "java.lang.Object",
+        stringClassName -> "java.lang.String",
+        arrayClassName  -> null
+    }
     
     override void doGenerate(Resource resource, IFileSystemAccess fsa) {
         val program = resource.contents.head as Program
-        for (c : program.classes) {
+        val filtered = program.classes.filter[
+            !specialClassesMap.containsKey(qualifiedName)
+        ]
+        
+        for (c : filtered) {
             val name = c.qualifiedName.segments.join(File.separator) + ".java"
-            fsa.generateFile(name, generate(c, program))
+            fsa.generateFile(name, c.generate(program))
         }
     }
     
@@ -76,7 +89,7 @@ class RolezGenerator implements IGenerator {
         
         «p.imports.map[importedNamespace].join('''
         ''')»
-        public class «simpleName» extends «actualSuperclass?.qualifiedName?:"java.lang.Object"» {
+        public class «simpleName» extends «actualSuperclass?.generateName?:"java.lang.Object"» {
             
             «fields.map[gen].join»
             
@@ -106,6 +119,14 @@ class RolezGenerator implements IGenerator {
     
     private def CharSequence gen(Stmt it) { generateStmt }
     
+    private def dispatch CharSequence genIndent(Block it) { gen }
+    private def dispatch CharSequence genIndent(Stmt it) {
+        '''
+        
+            «gen»
+        '''
+    }
+    
     private def dispatch generateStmt(Block it) {'''
         {
             «stmts.map[gen].join»
@@ -121,12 +142,12 @@ class RolezGenerator implements IGenerator {
     }
     
     private def dispatch generateStmt(IfStmt it) {'''
-        if(«condition.gen») «thenPart.gen»
-        «if(elsePart != null) '''else «elsePart.gen»'''»
+        if(«condition.gen») «thenPart.genIndent»
+        «if(elsePart != null) '''else «elsePart.genIndent»'''»
     '''}
     
     private def dispatch generateStmt(WhileLoop it) {'''
-        while(«condition.gen») «body.gen»
+        while(«condition.gen») «body.genIndent»
     '''}
     
     private def dispatch generateStmt(SuperConstrCall it) {'''
@@ -141,9 +162,25 @@ class RolezGenerator implements IGenerator {
         return «expr.gen»;
     '''}
     
+    /* Java only allows certain kinds of "expression statements", so find
+     * the corresponding expressions in the rolez expression tree */
     private def dispatch generateStmt(ExprStmt it) {'''
-        «expr.gen»;
+        «findSideFxExpr(expr).map[gen + ";\n"].join»
     '''}
+    
+    private def Iterable<Expr> findSideFxExpr(Expr it) {
+        switch(it) {
+            case utils.isSideFxExpr(it): #[it]
+            BinaryExpr: findSideFxExpr(left) + findSideFxExpr(right)
+            UnaryExpr: findSideFxExpr(expr)
+            // Special case for array instantiations:
+            New: {
+                if(args.size != 1) throw new AssertionError
+                findSideFxExpr(args.head)
+            }
+            default: emptyList
+        }
+    }
     
     /*
      * Expressions
@@ -179,6 +216,7 @@ class RolezGenerator implements IGenerator {
     
     private def dispatch generateExpr(MemberAccess it) {
         // TODO: guard
+        // TODO: access to special classes
         '''«target.gen».«selector.generateSelector»'''
     }
     
@@ -193,7 +231,41 @@ class RolezGenerator implements IGenerator {
     private def dispatch generateExpr(VarRef it) { variable.name }
     
     private def dispatch generateExpr(New it) {
-        '''new «classRef.gen»(«args.map[gen].join(", ")»)'''
+        if(classRef.clazz.qualifiedName == arrayClassName) {
+            if(args.size != 1) throw new AssertionError
+            
+            val ref = classRef as GenericClassRef
+            val emptyBrackets = (1 .. arrayNesting(ref)).map["[]"].join
+            '''new «elemType(ref).gen»[«args.head.gen»]«emptyBrackets»'''
+        }
+        else
+            '''new «classRef.gen»(«args.map[gen].join(", ")»)'''
+    }
+    
+    private def int arrayNesting(GenericClassRef it) {
+        if(clazz.qualifiedName != arrayClassName)
+            throw new AssertionError
+        
+        val arg = typeArg
+        switch(arg) {
+            RoleType case arg.base instanceof GenericClassRef:
+                arrayNesting(arg.base as GenericClassRef) + 1
+            default:
+                1
+        }
+    }
+    
+    private def Type elemType(GenericClassRef it) {
+        if(clazz.qualifiedName != arrayClassName)
+            throw new AssertionError
+        
+        val arg = typeArg
+        switch(arg) {
+            RoleType case arg.base instanceof GenericClassRef:
+                elemType(arg.base as GenericClassRef)
+            default:
+                arg
+        }
     }
     
     private def dispatch generateExpr(Start it) {
@@ -233,13 +305,19 @@ class RolezGenerator implements IGenerator {
     private def gen(ClassRef it) { generateClassRef }
     
     private def dispatch generateClassRef(SimpleClassRef it) {
-        clazz.qualifiedName.toString
+        clazz.generateName
     }
     
     private def dispatch generateClassRef(GenericClassRef it) {
         if(clazz.qualifiedName == arrayClassName)
             '''«typeArg.gen»[]'''
         else
-            '''«clazz.qualifiedName»<«typeArg.gen»>'''
+            '''«clazz.generateName»<«typeArg.gen»>'''
+    }
+    
+    private def generateName(Class it) {
+        val name = specialClassesMap.getOrDefault(qualifiedName, qualifiedName.toString)
+        if(name == null) throw new AssertionError
+        name
     }
 }

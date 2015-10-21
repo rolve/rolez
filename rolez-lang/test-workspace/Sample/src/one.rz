@@ -9,6 +9,7 @@ class Person {
 		this.name = name;
 		this.surname = surname;
 		this.address = address;
+		new Array[readwrite Address]("Hi".length()) as pure Object;
 	}
 	
 	def readonly fullName: readonly String {
@@ -28,7 +29,7 @@ class Person {
 		this.address = null;
 		new Account;
 		
-		val s: readonly String = "Hi" + 'c' + null + 5 + null + this.surname;
+		val s: readonly String = "Hi" + 'c' + null + 5 + null + this.surname.length();
 		
 		while(i < j.length())
 			if((false && !true) || 5 < 0 + 7)
@@ -37,6 +38,7 @@ class Person {
 				i = k;
 	}
 }
+
 
 class Student extends Person {
 	val university: pure String
@@ -69,8 +71,7 @@ class Address {
 		
 		val p: readwrite Person = new Person("Jim", "Dee", this);
 		p.name;
-		p.fullName();
-		p.setAddress(null);
+		p.fullName() + p.setAddress(null);
 	}
 }
 

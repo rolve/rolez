@@ -468,10 +468,12 @@ class ValidatorTest {
     def testTypeArgs() {
         parse('''
             class rolez.lang.Object
-            class rolez.lang.Array
+            class rolez.lang.Array {
+                new(val length: int) {}
+            }
             class A
             task Main: {
-                val a: pure Array[int] = new Array[int];
+                val a: pure Array[int] = new Array[int](42);
                 var b: readonly Array[readwrite Array[pure A]];
                 var c: readwrite A;
             }
@@ -519,18 +521,47 @@ class ValidatorTest {
     def testArrayClass() {
         parse('''
             class rolez.lang.Object
-            class rolez.lang.Array
+            class rolez.lang.Array {
+                new(val length: int) {}
+            }
         ''').assertNoErrors
         parse('''
             class rolez.lang.Object
-            class rolez.lang.Array extends Object
+            class rolez.lang.Array extends Object {
+                new(val i: int) {}
+            }
         ''').assertNoErrors
         
         parse('''
             class rolez.lang.Object
             class A
-            class rolez.lang.Array extends A
+            class rolez.lang.Array extends A {
+                new(val length: int) {}
+            }
         ''').assertError(CLASS, INCORRECT_ARRAY_SUPERCLASS)
+        
+        parse('''
+            class rolez.lang.Object
+            class rolez.lang.Array
+        ''').assertError(CLASS, INCORRECT_ARRAY_CONSTRS)
+        parse('''
+            class rolez.lang.Object
+            class rolez.lang.Array {
+                new {}
+            }
+        ''').assertError(CONSTR, INCORRECT_ARRAY_CONSTRS)
+        parse('''
+            class rolez.lang.Object
+            class rolez.lang.Array {
+                new(val i: int, val j: int) {}
+            }
+        ''').assertError(CONSTR, INCORRECT_ARRAY_CONSTRS)
+        parse('''
+            class rolez.lang.Object
+            class rolez.lang.Array {
+                new(val i: double) {}
+            }
+        ''').assertError(DOUBLE, INCORRECT_ARRAY_CONSTRS)
     }
     
     @Test
@@ -860,6 +891,73 @@ class ValidatorTest {
         parse('''
             task Main: { super(); }
         ''').assertError(SUPER_CONSTR_CALL, INCORRECT_SUPER_CONSTR_CALL)
+    }
+    
+    @Test
+    def testExprStmt() {
+        parse('''
+            class rolez.lang.Object
+            class rolez.lang.String {
+                def pure length: int { return 0; }
+            }
+            class rolez.lang.Task
+            task Main: {
+                var i: int;
+                i = 5 - 2;
+                new String;
+                new String.length();
+                start Main;
+            }
+        ''').assertNoIssues
+        
+        parse('''
+            task Main: { 5; }
+        ''').assertWarning(INT_LITERAL, OUTER_EXPR_NO_SIDE_FX)
+        parse('''
+            task Main: { 3 == 5; }
+        ''').assertWarning(EQUALITY_EXPR, OUTER_EXPR_NO_SIDE_FX)
+        parse('''
+            task Main: { true && 4 > 2; }
+        ''').assertWarning(LOGICAL_EXPR, OUTER_EXPR_NO_SIDE_FX)
+        parse('''
+            task Main: { null; }
+        ''').assertWarning(NULL_LITERAL, OUTER_EXPR_NO_SIDE_FX)
+        parse('''
+            task Main: {
+                val i: int = 5;
+                i;
+            }
+        ''').assertWarning(VAR_REF, OUTER_EXPR_NO_SIDE_FX)
+        parse('''
+            class rolez.lang.Object
+            class rolez.lang.String
+            task Main: {
+                val s: pure String = "Hello";
+                s as pure Object;
+            }
+        ''').assertWarning(CAST, OUTER_EXPR_NO_SIDE_FX)
+        
+        parse('''
+            task Main: {
+                var i: int;
+                (i = 4);
+            }
+        ''').assertWarning(PARENTHESIZED, OUTER_EXPR_NO_SIDE_FX)
+        parse('''
+            class rolez.lang.Object
+            class rolez.lang.String
+            task Main: { (new String); }
+        ''').assertWarning(PARENTHESIZED, OUTER_EXPR_NO_SIDE_FX)
+        parse('''
+            class rolez.lang.Object
+            class rolez.lang.String {
+                def pure length: int { return 0; }
+            }
+            task Main: {
+                val s: pure String = new String;
+                2 * s.length();
+            }
+        ''').assertWarning(ARITHMETIC_BINARY_EXPR, OUTER_EXPR_NO_SIDE_FX)
     }
     
     @Test

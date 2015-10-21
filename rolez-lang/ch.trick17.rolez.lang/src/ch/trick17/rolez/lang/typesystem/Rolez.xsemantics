@@ -429,7 +429,7 @@ from {
 
 
 rule SubclassSimple
-    G |- SimpleClassRef left <~ SimpleClassRef right
+    G |- ClassRef left <~ SimpleClassRef right
 from {
     left.clazz == right.clazz || strictSuperclasses(left.clazz).contains(right.clazz)
 }
