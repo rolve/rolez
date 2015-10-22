@@ -89,7 +89,7 @@ class RolezGenerator implements IGenerator {
             
             «fields.map[gen].join»
             
-            «constructors.map[gen].join("\n")»
+            «constrs.map[gen].join("\n")»
             
             «methods.map[gen].join("\n")»
         }

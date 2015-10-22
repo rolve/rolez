@@ -77,6 +77,7 @@ class RolezValidator extends RolezSystemValidator {
     public static val OUTER_EXPR_NO_SIDE_FX = "outer expr no side effects"
     public static val NULL_TYPE_USED = "null type used"
     public static val MAPPED_IN_NORMAL_CLASS = "mapped member in normal class"
+    public static val NON_MAPPED_CONSTR = "non-mapped constructor"
     public static val MAPPED_WITH_BODY = "mapped with body"
     public static val MISSING_BODY = "missing body"
     public static val UNKNOWN_MAPPED_CLASS = "unknown mapped class"
@@ -245,7 +246,7 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkValFieldInitialized(Field it) {
-        if(kind == VAL && enclosingClass.constructors.isEmpty)
+        if(kind == VAL && enclosingClass.constrs.isEmpty)
             error("Value field " + name + " is not initialized",
                 it, null, VAL_FIELD_NOT_INITIALIZED)
     }
@@ -328,8 +329,8 @@ class RolezValidator extends RolezSystemValidator {
                 error("Super constructor call must be the first statement",
                     c, null, SUPER_CONSTR_CALL_FIRST)
         
-        val superConstr = enclosingClass.actualSuperclass.allConstrs
-        if(superConstr.filter[params.isEmpty].isEmpty && all(SuperConstrCall).isEmpty)
+        val superConstrs = enclosingClass.actualSuperclass.allConstrs
+        if(superConstrs.filter[params.isEmpty].isEmpty && all(SuperConstrCall).isEmpty)
             error("Missing super constructor call",
                 it, null, MISSING_SUPER_CONSTR_CALL)
     }
@@ -337,7 +338,7 @@ class RolezValidator extends RolezSystemValidator {
     @Check
     def checkSuperConstrCall(Class it) {
         val superConstr = actualSuperclass.allConstrs
-        if(superConstr.filter[params.isEmpty].isEmpty && constructors.isEmpty)
+        if(superConstr.filter[params.isEmpty].isEmpty && constrs.isEmpty)
             error("Missing super constructor call",
                 it, NAMED__NAME, MISSING_SUPER_CONSTR_CALL)
     }
@@ -384,7 +385,13 @@ class RolezValidator extends RolezSystemValidator {
             if(body != null)
                 error("mapped constructors cannot have a body", body, null, MAPPED_WITH_BODY)
         }
-        else if(body == null) error("Missing body", it, null, MISSING_BODY)
+        else {
+            if(enclosingClass.mapped)
+                error("Constructors of mapped classes must be mapped",
+                    it, null, NON_MAPPED_CONSTR)
+            if(body == null)
+                error("Missing body", it, null, MISSING_BODY)
+        }
     }
     
     @Check
@@ -405,7 +412,7 @@ class RolezValidator extends RolezSystemValidator {
            error(qualifiedName + " must not have a superclass",
                it, CLASS__SUPERCLASS, INCORRECT_MAPPED_SUPERCLASS)
         
-        // TODO: no default constructor
+        // FIXME: no default constructor
     }
     
     @Check
@@ -416,7 +423,7 @@ class RolezValidator extends RolezSystemValidator {
            error("The superclass of " + qualifiedName + " must be "+ objectClassName,
                it, CLASS__SUPERCLASS, INCORRECT_MAPPED_SUPERCLASS)
         
-        constructors.forEach[
+        constrs.forEach[
            error(stringClassName + " cannot have any constructors",
                it, null, INCORRECT_MAPPED_CONSTR)
         ]
@@ -450,10 +457,10 @@ class RolezValidator extends RolezSystemValidator {
            error("The superclass of " + qualifiedName + " must be "+ objectClassName,
                it, CLASS__SUPERCLASS, INCORRECT_MAPPED_SUPERCLASS)
         
-        if(constructors.size != 1)
+        if(constrs.size != 1)
            error(qualifiedName + " must have exactly one constructor",
                it, null, INCORRECT_MAPPED_CONSTR)
-        constructors.head => [
+        constrs.head => [
             if(!mapped)
                error("This constructor must be declared as mapped",
                    it, null, INCORRECT_MAPPED_CONSTR)

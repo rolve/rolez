@@ -32,7 +32,7 @@ class ParserTest {
         clazz.name.assertThat(is("rolez.lang.Object"))
         clazz.superclass.assertThat(is(nullValue))
         clazz.members.assertThat(empty)
-        clazz.constructors.assertThat(empty) // Why can't I use is(empty) here?
+        clazz.constrs.assertThat(empty) // Why can't I use is(empty) here?
     }
     
     @Test

@@ -68,7 +68,7 @@ class RolezExtensions {
     }
     
     def Iterable<Constr> allConstrs(Class it) {
-        if(!constructors.isEmpty) constructors
+        if(!constrs.isEmpty) constrs
         else #[RolezFactory.eINSTANCE.createConstr]
     }
     

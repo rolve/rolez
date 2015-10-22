@@ -801,7 +801,7 @@ class TypeSystemTest {
                 new { this; }
             }
         ''')
-        program.findClass("A").constructors.head.lastExpr.type
+        program.findClass("A").constrs.head.lastExpr.type
             .assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
     }
     

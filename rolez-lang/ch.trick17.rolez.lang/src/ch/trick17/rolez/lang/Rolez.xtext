@@ -24,7 +24,7 @@ ClassLike:
 Class:
     mapped?='mapped'? 'class' name=QualifiedName ('extends' superclass=[Class|QualifiedName])?
     ('{'
-        (constructors+=Constr | members+=Member)+
+        (constrs+=Constr | members+=Member)+
     '}')?;
 
 Task:

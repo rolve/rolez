@@ -973,6 +973,12 @@ class ValidatorTest {
         ''').assertError(BLOCK, MAPPED_WITH_BODY)
         parse('''
             mapped class rolez.lang.Object
+            mapped class rolez.lang.Array {
+                new(val length: int) {}
+            }
+        ''').assertError(CONSTR, NON_MAPPED_CONSTR)
+        parse('''
+            mapped class rolez.lang.Object
             class A {
                 new
             }
