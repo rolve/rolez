@@ -54,8 +54,9 @@ class RolezValidator extends RolezSystemValidator {
     public static val INVALID_NAME = "invalid name"
     public static val OBJECT_CLASS_NOT_DEFINED = "object class not defined"
     public static val DUPLICATE_TOP_LEVEL_ELEMENT = "duplicate top-level element"
-    public static val DUPLICATE_METHOD = "duplicate method"
     public static val DUPLICATE_FIELD = "duplicate field"
+    public static val DUPLICATE_METHOD = "duplicate method"
+    public static val DUPLICATE_CONSTR = "duplicate constructor"
     public static val DUPLICATE_VARIABLE = "duplicate variable"
     public static val MISSING_OVERRIDE = "missing override"
     public static val INCORRECT_OVERRIDE = "incorrect override"
@@ -120,7 +121,7 @@ class RolezValidator extends RolezSystemValidator {
     @Check
     def checkCircularInheritance(Class it) {
         if(findSuperclass(it))
-            error("Circular inheritance", it, CLASS__SUPERCLASS, CIRCULAR_INHERITANCE)
+            error("Circular inheritance", CLASS__SUPERCLASS, CIRCULAR_INHERITANCE)
     }
     
     private def boolean findSuperclass(Class it, Class c) {
@@ -130,6 +131,15 @@ class RolezValidator extends RolezSystemValidator {
             default:
                 findSuperclass(actualSuperclass, c)
         }
+    }
+    
+    @Check
+    def checkNoDuplicateFields(Field it) {
+        val matching = enclosingClass.fields.filter[f | f.name.equals(name)]
+        if(matching.size < 1)
+           throw new AssertionError
+        if(matching.size > 1)
+           error("Duplicate field " + name, NAMED__NAME, DUPLICATE_FIELD)
     }
 	
 	/**
@@ -147,17 +157,17 @@ class RolezValidator extends RolezSystemValidator {
         if(matching.size < 1)
            throw new AssertionError
         if(matching.size > 1)
-           error("Duplicate method " + name + "("+ params.join(",") + ")",
+           error("Duplicate method " + name + "("+ params.map[type.string].join(", ") + ")",
                NAMED__NAME, DUPLICATE_METHOD)
     }
     
     @Check
-    def checkNoDuplicateFields(Field it) {
-        val matching = enclosingClass.fields.filter[f | f.name.equals(name)]
+    def checkNoDuplicateConstrs(Constr it) {
+        val matching = enclosingClass.constrs.filter[c | utils.equalParams(c, it)]
         if(matching.size < 1)
            throw new AssertionError
         if(matching.size > 1)
-           error("Duplicate field " + name, NAMED__NAME, DUPLICATE_FIELD)
+           error("Duplicate constructor", null, DUPLICATE_CONSTR)
     }
     
     @Check
@@ -234,21 +244,21 @@ class RolezValidator extends RolezSystemValidator {
     def checkSimpleClassRef(SimpleClassRef it) {
         if(clazz == utils.findClass(arrayClassName, it))
             error("Class " + clazz.name + " takes type arguments",
-                it, CLASS_REF__CLAZZ, MISSING_TYPE_ARGS)
+                CLASS_REF__CLAZZ, MISSING_TYPE_ARGS)
     }
     
     @Check
     def checkGenericClassRef(GenericClassRef it) {
         if(clazz != utils.findClass(arrayClassName, it))
             error("Class " + clazz.name + " does not take type arguments",
-                it, GENERIC_CLASS_REF__TYPE_ARG, INCORRECT_TYPE_ARGS)
+                GENERIC_CLASS_REF__TYPE_ARG, INCORRECT_TYPE_ARGS)
     }
     
     @Check
     def checkValFieldInitialized(Field it) {
         if(kind == VAL && enclosingClass.constrs.isEmpty)
             error("Value field " + name + " is not initialized",
-                it, null, VAL_FIELD_NOT_INITIALIZED)
+                null, VAL_FIELD_NOT_INITIALIZED)
     }
     
     @Check
@@ -260,7 +270,7 @@ class RolezValidator extends RolezSystemValidator {
         for(f : enclosingClass.fields.filter[kind == VAL])
             if(!f.definitelyInitializedAfter(cfg.exit))
                 error("Value field " + f.name + " may not have been initialized",
-                    it, null, VAL_FIELD_NOT_INITIALIZED)
+                    null, VAL_FIELD_NOT_INITIALIZED)
         
         for(a : all(Assignment).filter[isValFieldInit(it)]) {
             val f = assignedField(a)
@@ -309,8 +319,7 @@ class RolezValidator extends RolezSystemValidator {
     @Check
     def checkSuperConstrCall(SuperConstrCall it) {
         if(!(enclosingBody instanceof Constr))
-            error("Cannot call a super constructor here", it,
-                null, INCORRECT_SUPER_CONSTR_CALL)
+            error("Cannot call a super constructor here", null, INCORRECT_SUPER_CONSTR_CALL)
     }
     
     @Check
@@ -331,16 +340,14 @@ class RolezValidator extends RolezSystemValidator {
         
         val superConstrs = enclosingClass.actualSuperclass.allConstrs
         if(superConstrs.filter[params.isEmpty].isEmpty && all(SuperConstrCall).isEmpty)
-            error("Missing super constructor call",
-                it, null, MISSING_SUPER_CONSTR_CALL)
+            error("Missing super constructor call", null, MISSING_SUPER_CONSTR_CALL)
     }
     
     @Check
     def checkSuperConstrCall(Class it) {
         val superConstr = actualSuperclass.allConstrs
         if(superConstr.filter[params.isEmpty].isEmpty && constrs.isEmpty)
-            error("Missing super constructor call",
-                it, NAMED__NAME, MISSING_SUPER_CONSTR_CALL)
+            error("Missing super constructor call", NAMED__NAME, MISSING_SUPER_CONSTR_CALL)
     }
     
     @Check
@@ -360,7 +367,7 @@ class RolezValidator extends RolezSystemValidator {
         if(mapped) {
             if(!enclosingClass.mapped)
                 error("mapped fields are allowed in mapped classes only",
-                    it, NAMED__NAME, MAPPED_IN_NORMAL_CLASS)
+                    NAMED__NAME, MAPPED_IN_NORMAL_CLASS)
         }
     }
     
@@ -369,11 +376,11 @@ class RolezValidator extends RolezSystemValidator {
         if(mapped) {
             if(!enclosingClass.mapped)
                 error("mapped methods are allowed in mapped classes only",
-                    it, NAMED__NAME, MAPPED_IN_NORMAL_CLASS)
+                    NAMED__NAME, MAPPED_IN_NORMAL_CLASS)
             if(body != null)
                 error("mapped methods cannot have a body", body, null, MAPPED_WITH_BODY)
         }
-        else if(body == null) error("Missing body", it, NAMED__NAME, MISSING_BODY)
+        else if(body == null) error("Missing body", NAMED__NAME, MISSING_BODY)
     }
     
     @Check
@@ -381,16 +388,16 @@ class RolezValidator extends RolezSystemValidator {
         if(mapped) {
             if(!enclosingClass.mapped)
                 error("mapped constructors are allowed in mapped classes only",
-                    it, null, MAPPED_IN_NORMAL_CLASS)
+                    null, MAPPED_IN_NORMAL_CLASS)
             if(body != null)
                 error("mapped constructors cannot have a body", body, null, MAPPED_WITH_BODY)
         }
         else {
             if(enclosingClass.mapped)
                 error("Constructors of mapped classes must be mapped",
-                    it, null, NON_MAPPED_CONSTR)
+                    null, NON_MAPPED_CONSTR)
             if(body == null)
-                error("Missing body", it, null, MISSING_BODY)
+                error("Missing body", null, MISSING_BODY)
         }
     }
     
@@ -398,10 +405,10 @@ class RolezValidator extends RolezSystemValidator {
     def checkMappedClass(Class it) {
         if(RolezGenerator.mappedClasses.containsKey(qualifiedName)) {
             if(!mapped)
-                error("Class must be declared as mapped", it, NAMED__NAME, CLASS_ACTUALLY_MAPPED)
+                error("Class must be declared as mapped", NAMED__NAME, CLASS_ACTUALLY_MAPPED)
         }
         else if(mapped)
-            error("Unknown mapped class " + qualifiedName, it, NAMED__NAME, UNKNOWN_MAPPED_CLASS)
+            error("Unknown mapped class " + qualifiedName, NAMED__NAME, UNKNOWN_MAPPED_CLASS)
     }
     
     @Check
@@ -410,7 +417,7 @@ class RolezValidator extends RolezSystemValidator {
         
         if(superclass != null)
            error(qualifiedName + " must not have a superclass",
-               it, CLASS__SUPERCLASS, INCORRECT_MAPPED_SUPERCLASS)
+               CLASS__SUPERCLASS, INCORRECT_MAPPED_SUPERCLASS)
         
         // FIXME: no default constructor
     }
@@ -421,7 +428,7 @@ class RolezValidator extends RolezSystemValidator {
         
         if(actualSuperclass != utils.findClass(objectClassName, it))
            error("The superclass of " + qualifiedName + " must be "+ objectClassName,
-               it, CLASS__SUPERCLASS, INCORRECT_MAPPED_SUPERCLASS)
+               CLASS__SUPERCLASS, INCORRECT_MAPPED_SUPERCLASS)
         
         constrs.forEach[
            error(stringClassName + " cannot have any constructors",
@@ -455,11 +462,11 @@ class RolezValidator extends RolezSystemValidator {
         
         if(actualSuperclass != utils.findClass(objectClassName, it))
            error("The superclass of " + qualifiedName + " must be "+ objectClassName,
-               it, CLASS__SUPERCLASS, INCORRECT_MAPPED_SUPERCLASS)
+               CLASS__SUPERCLASS, INCORRECT_MAPPED_SUPERCLASS)
         
         if(constrs.size != 1)
            error(qualifiedName + " must have exactly one constructor",
-               it, null, INCORRECT_MAPPED_CONSTR)
+               null, INCORRECT_MAPPED_CONSTR)
         constrs.head => [
             if(!mapped)
                error("This constructor must be declared as mapped",
@@ -498,7 +505,7 @@ class RolezValidator extends RolezSystemValidator {
         
         if(actualSuperclass != utils.findClass(objectClassName, it))
            error("The superclass of " + qualifiedName + " must be " + objectClassName,
-               it, CLASS__SUPERCLASS, INCORRECT_MAPPED_SUPERCLASS)
+               CLASS__SUPERCLASS, INCORRECT_MAPPED_SUPERCLASS)
         // TODO: Check (mapped) members
     }
     

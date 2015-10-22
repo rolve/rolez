@@ -103,9 +103,12 @@ class RolezUtils {
      * just as is the containing class.
      */
     def equalSignature(Method left, Method right) {
+        left.name == right.name && equalParams(left, right)
+    }
+    
+    def equalParams(ParameterizedBody left, ParameterizedBody right) {
         val i = right.params.map[type].iterator
-        left.name.equals(right.name)
-            && left.params.size == right.params.size
+        left.params.size == right.params.size
             && left.params.map[type].forall[
                 EcoreUtil.equals(it, i.next)
             ]

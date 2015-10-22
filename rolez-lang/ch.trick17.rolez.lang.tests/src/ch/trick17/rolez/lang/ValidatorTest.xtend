@@ -51,101 +51,6 @@ class ValidatorTest {
     }
     
     @Test
-    def testOverloading() {
-        parse('''
-            mapped class rolez.lang.Object
-            class A {
-                def readwrite foo: {}
-                def readwrite foo(val i: int): {}
-                def readwrite foo(val c: char): {}
-                def readwrite foo(val o: readonly Object): {}
-                def readwrite foo(val o: readwrite Object): {}
-                def readwrite foo(val a: readonly A): {}
-                def readwrite foo(val a: readwrite A): {}
-                def readwrite foo(val a: readwrite A, val b: readwrite A): {}
-            }
-        ''').assertNoErrors
-        
-        parse('''
-            mapped class rolez.lang.Object
-            class A {
-                def readwrite foo(val a: readwrite A): {}
-                def readwrite bar(val a: readonly  A): {}
-            }
-            class B extends A {
-                def readwrite foo(val a: readonly  A): {}
-                def readwrite foo(val a: readwrite B): {}
-                def readwrite foo(val a: readwrite Object): {}
-                def readwrite bar(val a: readwrite A): {}
-            }
-            class C extends B {
-                def readwrite foo(val i: int): {}
-            }
-            class D extends C {
-                def readwrite foo(val i: char): int { return 0; }
-            }
-            class E extends D {
-                def readwrite foo(val i: int, val j: int): readonly A {
-                    return new A;
-                }
-            }
-        ''').assertNoErrors
-    }
-    
-    @Test
-    def testDuplicateMethods() {
-        parse('''
-            mapped class rolez.lang.Object
-            class A {
-                def readwrite foo: {}
-                def readwrite foo: {}
-            }
-        ''').assertError(METHOD, DUPLICATE_METHOD)
-        parse('''
-            mapped class rolez.lang.Object
-            class A {
-                def readwrite foo: int {}
-                def readwrite foo: {}
-            }
-        ''').assertError(METHOD, DUPLICATE_METHOD)
-        parse('''
-            mapped class rolez.lang.Object
-            class A {
-                def readonly  foo: int {}
-                def readwrite foo: {}
-            }
-        ''').assertError(METHOD, DUPLICATE_METHOD)
-        parse('''
-            mapped class rolez.lang.Object
-            class A {
-                def readwrite foo(val i: int): {}
-                def readwrite foo(val i: int): {}
-            }
-        ''').assertError(METHOD, DUPLICATE_METHOD)
-        parse('''
-            mapped class rolez.lang.Object
-            class A {
-                def readwrite foo(val i: int): {}
-                def readwrite foo(val j: int): {}
-            }
-        ''').assertError(METHOD, DUPLICATE_METHOD)
-        parse('''
-            mapped class rolez.lang.Object
-            class A {
-                def readwrite foo(val a: readwrite A): {}
-                def readwrite foo(val a: readwrite A): {}
-            }
-        ''').assertError(METHOD, DUPLICATE_METHOD)
-        parse('''
-            mapped class rolez.lang.Object
-            class A {
-                def readwrite foo(val a: readwrite A): {}
-                def readwrite foo(val b: readwrite A): {}
-            }
-        ''').assertError(METHOD, DUPLICATE_METHOD)
-    }
-    
-    @Test
     def testOverride() {
         parse('''
             mapped class rolez.lang.Object
@@ -400,6 +305,144 @@ class ValidatorTest {
                 val a: boolean
             }
         ''').assertError(FIELD, DUPLICATE_FIELD)
+    }
+    
+    @Test
+    def testMethodOverloading() {
+        parse('''
+            mapped class rolez.lang.Object
+            class A {
+                def readwrite foo: {}
+                def readwrite foo(val i: int): {}
+                def readwrite foo(val c: char): {}
+                def readwrite foo(val o: readonly Object): {}
+                def readwrite foo(val o: readwrite Object): {}
+                def readwrite foo(val a: readonly A): {}
+                def readwrite foo(val a: readwrite A): {}
+                def readwrite foo(val a: readwrite A, val b: readwrite A): {}
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            mapped class rolez.lang.Object
+            class A {
+                def readwrite foo(val a: readwrite A): {}
+                def readwrite bar(val a: readonly  A): {}
+            }
+            class B extends A {
+                def readwrite foo(val a: readonly  A): {}
+                def readwrite foo(val a: readwrite B): {}
+                def readwrite foo(val a: readwrite Object): {}
+                def readwrite bar(val a: readwrite A): {}
+            }
+            class C extends B {
+                def readwrite foo(val i: int): {}
+            }
+            class D extends C {
+                def readwrite foo(val i: char): int { return 0; }
+            }
+            class E extends D {
+                def readwrite foo(val i: int, val j: int): readonly A {
+                    return new A;
+                }
+            }
+        ''').assertNoErrors
+    }
+    
+    @Test
+    def testDuplicateMethods() {
+        parse('''
+            mapped class rolez.lang.Object
+            class A {
+                def readwrite foo: {}
+                def readwrite foo: {}
+            }
+        ''').assertError(METHOD, DUPLICATE_METHOD)
+        parse('''
+            mapped class rolez.lang.Object
+            class A {
+                def readwrite foo: int {}
+                def readwrite foo: {}
+            }
+        ''').assertError(METHOD, DUPLICATE_METHOD)
+        parse('''
+            mapped class rolez.lang.Object
+            class A {
+                def readonly  foo: int {}
+                def readwrite foo: {}
+            }
+        ''').assertError(METHOD, DUPLICATE_METHOD)
+        parse('''
+            mapped class rolez.lang.Object
+            class A {
+                def readwrite foo(val i: int): {}
+                def readwrite foo(val i: int): {}
+            }
+        ''').assertError(METHOD, DUPLICATE_METHOD)
+        parse('''
+            mapped class rolez.lang.Object
+            class A {
+                def readwrite foo(val i: int): {}
+                def readwrite foo(val j: int): {}
+            }
+        ''').assertError(METHOD, DUPLICATE_METHOD)
+        parse('''
+            mapped class rolez.lang.Object
+            class A {
+                def readwrite foo(val a: readwrite A): {}
+                def readwrite foo(val a: readwrite A): {}
+            }
+        ''').assertError(METHOD, DUPLICATE_METHOD)
+        parse('''
+            mapped class rolez.lang.Object
+            class A {
+                def readwrite foo(val a: readwrite A): {}
+                def readwrite foo(val b: readwrite A): {}
+            }
+        ''').assertError(METHOD, DUPLICATE_METHOD)
+    }
+    
+    @Test
+    def testConstrOverloading() {
+        parse('''
+            mapped class rolez.lang.Object
+            class A
+            class B {
+                new {}
+                new(val i: int) {}
+                new(val c: char) {}
+                new(val o: readonly Object) {}
+                new(val o: readwrite Object) {}
+                new(val a: readonly A) {}
+                new(val a: readwrite A) {}
+                new(val a: readwrite A, val b: readwrite A) {}
+            }
+        ''').assertNoErrors
+    }
+    
+    @Test
+    def testDuplicateConstrs() {
+        parse('''
+            mapped class rolez.lang.Object
+            class A {
+                new {}
+                new {}
+            }
+        ''').assertError(CONSTR, DUPLICATE_CONSTR)
+        parse('''
+            mapped class rolez.lang.Object
+            class A {
+                new(val i: int) {}
+                new(val j: int) {}
+            }
+        ''').assertError(CONSTR, DUPLICATE_CONSTR)
+        parse('''
+            mapped class rolez.lang.Object
+            class A {
+                new(val a: readwrite A) {}
+                new(val b: readwrite A) {}
+            }
+        ''').assertError(CONSTR, DUPLICATE_CONSTR)
     }
     
     @Test
