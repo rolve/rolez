@@ -13,13 +13,13 @@ import ch.trick17.rolez.lang.rolez.GenericClassRef
 import ch.trick17.rolez.lang.rolez.Instr
 import ch.trick17.rolez.lang.rolez.Int
 import ch.trick17.rolez.lang.rolez.LocalVar
-import ch.trick17.rolez.lang.rolez.Void
 import ch.trick17.rolez.lang.rolez.Member
 import ch.trick17.rolez.lang.rolez.MemberAccess
 import ch.trick17.rolez.lang.rolez.Method
 import ch.trick17.rolez.lang.rolez.MethodSelector
 import ch.trick17.rolez.lang.rolez.Null
 import ch.trick17.rolez.lang.rolez.ParameterizedBody
+import ch.trick17.rolez.lang.rolez.PrimitiveType
 import ch.trick17.rolez.lang.rolez.Program
 import ch.trick17.rolez.lang.rolez.Role
 import ch.trick17.rolez.lang.rolez.RoleType
@@ -28,6 +28,7 @@ import ch.trick17.rolez.lang.rolez.SimpleClassRef
 import ch.trick17.rolez.lang.rolez.Stmt
 import ch.trick17.rolez.lang.rolez.Task
 import ch.trick17.rolez.lang.rolez.Type
+import ch.trick17.rolez.lang.rolez.Void
 import ch.trick17.rolez.lang.typesystem.RolezUtils
 import javax.inject.Inject
 import org.eclipse.emf.ecore.EObject
@@ -73,7 +74,16 @@ class RolezExtensions {
     }
     
     def Iterable<Member> allMembers(Class it) {
-        members + if(actualSuperclass != null) actualSuperclass.allMembers else emptyList
+        members +
+            if(actualSuperclass == null) emptyList
+            else actualSuperclass.allMembers.filter[m | !overrides(m)]
+    }
+    
+    private def overrides(Class it, Member m) {
+        switch(m) {
+            Field: false
+            Method: methods.exists[utils.equalSignature(it, m)]
+        }
     }
     
     def actualSuperclass(Class it) {
@@ -160,12 +170,15 @@ class RolezExtensions {
     private def dispatch memberString(Field it) {
         qualifiedName + ": " + type.string
     }
-
-    private def dispatch typeString(Int _)     { "int" }
-    private def dispatch typeString(Double _)  { "double" }
-    private def dispatch typeString(Boolean _) { "boolean" }
-    private def dispatch typeString(Char _)    { "char" }
-    private def dispatch typeString(Void _)    { "void" }
+    
+    private def dispatch typeString(PrimitiveType it) { name }
+    
+    def dispatch name(Int _)     { "int" }
+    def dispatch name(Double _)  { "double" }
+    def dispatch name(Boolean _) { "boolean" }
+    def dispatch name(Char _)    { "char" }
+    def dispatch name(Void _)    { "void" }
+    
     private def dispatch typeString(Null _)    { "null" }
     
     private def dispatch String typeString(RoleType it) {

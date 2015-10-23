@@ -81,3 +81,10 @@ task Main: {
 	var a: readonly Address = new Address;
 	a.city;
 }
+
+class Test {
+	def pure foo: char {
+		val s: pure String = new Account.toString().trim() + new String(new Array[char](5));
+		return s.charAt(s.hashCode() - 1);
+	}
+}

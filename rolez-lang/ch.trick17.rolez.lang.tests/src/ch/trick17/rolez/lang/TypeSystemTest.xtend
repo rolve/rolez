@@ -603,6 +603,17 @@ class TypeSystemTest {
             class C extends B
             task Main: { new C.foo(new A, new C, null, 5); }
         ''').assertNoErrors
+        
+        parse('''
+            mapped class rolez.lang.Object
+            class A {
+                def readwrite foo: {}
+            }
+            class B extends A {
+                override readwrite foo: {}
+            }
+            task Main: { new B.foo(); }
+        ''').assertNoErrors
     }
     
     @Test
@@ -614,6 +625,16 @@ class TypeSystemTest {
                 def pure bar: { foo(!5); }
             }
         ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
+        
+        // Apparently, when the method is defined in another resource,
+        // linking somehow works differently...
+        val set = newResourceSet.with("class A { def pure foo(val i: int): {} }")
+        parse('''
+            mapped class rolez.lang.Object
+            class B {
+                def pure bar: { new A.foo(!5); }
+            }
+        ''', set).assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
     @Test
@@ -629,7 +650,7 @@ class TypeSystemTest {
                         val a: «actual» A = new A;
                         a.x();
                     }
-                ''').assertError(VAR_REF, null,
+                ''').assertError(METHOD_SELECTOR, null,
                         "Role", "mismatch", "method", actual.toString)
             }
         }

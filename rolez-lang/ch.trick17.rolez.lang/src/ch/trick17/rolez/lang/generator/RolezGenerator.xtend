@@ -232,7 +232,7 @@ class RolezGenerator implements IGenerator {
             if(args.size != 1) throw new AssertionError
             
             val ref = classRef as GenericClassRef
-            val emptyBrackets = (1 .. arrayNesting(ref)).map["[]"].join
+            val emptyBrackets = (1 ..< arrayNesting(ref)).map["[]"].join
             '''new «elemType(ref).gen»[«args.head.gen»]«emptyBrackets»'''
         }
         else

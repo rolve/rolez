@@ -25,11 +25,14 @@ import ch.trick17.rolez.lang.rolez.MemberAccess
 import ch.trick17.rolez.lang.rolez.Method
 import ch.trick17.rolez.lang.rolez.Null
 import ch.trick17.rolez.lang.rolez.ParameterizedBody
+import ch.trick17.rolez.lang.rolez.PrimitiveType
 import ch.trick17.rolez.lang.rolez.Program
 import ch.trick17.rolez.lang.rolez.ReturnExpr
+import ch.trick17.rolez.lang.rolez.RoleType
 import ch.trick17.rolez.lang.rolez.SimpleClassRef
 import ch.trick17.rolez.lang.rolez.SuperConstrCall
 import ch.trick17.rolez.lang.rolez.This
+import ch.trick17.rolez.lang.rolez.Type
 import ch.trick17.rolez.lang.rolez.TypedBody
 import ch.trick17.rolez.lang.rolez.Var
 import ch.trick17.rolez.lang.rolez.VarRef
@@ -368,6 +371,20 @@ class RolezValidator extends RolezSystemValidator {
             if(!enclosingClass.mapped)
                 error("mapped fields are allowed in mapped classes only",
                     NAMED__NAME, MAPPED_IN_NORMAL_CLASS)
+            
+            val javaClass = java.lang.Class.forName(
+                RolezGenerator.mappedClasses.get(enclosingClass.qualifiedName))
+            
+            val javaField =
+                try javaClass.getField(name)
+                catch(NoSuchFieldException _) {
+                    error("Unknown mapped field", NAMED__NAME, UNKNOWN_MAPPED_FIELD)
+                    return
+                }
+            
+            if(!type.mapsTo(javaField.genericType))
+                error("Incorrect type for mapped field: should map to "
+                    + javaField.genericType, type, null, INCORRECT_MAPPED_FIELD)
         }
     }
     
@@ -379,6 +396,26 @@ class RolezValidator extends RolezSystemValidator {
                     NAMED__NAME, MAPPED_IN_NORMAL_CLASS)
             if(body != null)
                 error("mapped methods cannot have a body", body, null, MAPPED_WITH_BODY)
+            
+            val javaClass = java.lang.Class.forName(
+                RolezGenerator.mappedClasses.get(enclosingClass.qualifiedName))
+            
+            val candidates = javaClass.methods.filter[m | m.name == name]
+            if(candidates.isEmpty)
+                error("Unknown mapped method", NAMED__NAME, UNKNOWN_MAPPED_METHOD)
+            else {
+                val matched = candidates.filter[m |
+                    val javaParamTypes = m.genericParameterTypes.iterator
+                    type.mapsTo(m.genericReturnType)
+                        && params.size == m.parameterCount
+                        && params.forall[type.mapsTo(javaParamTypes.next)]
+                ]
+                if(matched.size == 0)
+                    error("Incorrect parameter or return types for mapped method",
+                        NAMED__NAME, INCORRECT_MAPPED_METHOD)
+                else if(matched.size > 1)
+                    throw new AssertionError("So, this can happen...")
+            }
         }
         else if(body == null) error("Missing body", NAMED__NAME, MISSING_BODY)
     }
@@ -391,6 +428,19 @@ class RolezValidator extends RolezSystemValidator {
                     null, MAPPED_IN_NORMAL_CLASS)
             if(body != null)
                 error("mapped constructors cannot have a body", body, null, MAPPED_WITH_BODY)
+            
+            val javaClass = java.lang.Class.forName(
+                RolezGenerator.mappedClasses.get(enclosingClass.qualifiedName))
+            val matched = javaClass.constructors.filter[c |
+                val javaParamTypes = c.genericParameterTypes.iterator
+                params.size == c.parameterCount
+                    && params.forall[type.mapsTo(javaParamTypes.next)]
+            ]
+            if(matched.size == 0)
+                error("Incorrect parameter or return types for mapped constructor",
+                    null, INCORRECT_MAPPED_CONSTR)
+            else if(matched.size > 1)
+                throw new AssertionError("So, this can happen...")
         }
         else {
             if(enclosingClass.mapped)
@@ -400,6 +450,20 @@ class RolezValidator extends RolezSystemValidator {
                 error("Missing body", null, MISSING_BODY)
         }
     }
+    
+    private def dispatch boolean mapsTo(PrimitiveType it, java.lang.Class<?> javaType) {
+        javaType.isPrimitive && name == javaType.name
+    }
+    
+    private def dispatch boolean mapsTo(RoleType it, java.lang.Class<?> javaType) {
+        val base = base
+        if(base instanceof GenericClassRef)
+            javaType.isArray && base.typeArg.mapsTo(javaType.componentType)
+        else
+            RolezGenerator.mappedClasses.get(base.clazz.qualifiedName) == javaType.name
+    }
+    
+    private def dispatch boolean mapsTo(Type it, java.lang.reflect.Type _) { false }
     
     @Check
     def checkMappedClass(Class it) {
@@ -418,8 +482,6 @@ class RolezValidator extends RolezSystemValidator {
         if(superclass != null)
            error(qualifiedName + " must not have a superclass",
                CLASS__SUPERCLASS, INCORRECT_MAPPED_SUPERCLASS)
-        
-        // FIXME: no default constructor
     }
     
     @Check
@@ -429,31 +491,6 @@ class RolezValidator extends RolezSystemValidator {
         if(actualSuperclass != utils.findClass(objectClassName, it))
            error("The superclass of " + qualifiedName + " must be "+ objectClassName,
                CLASS__SUPERCLASS, INCORRECT_MAPPED_SUPERCLASS)
-        
-        constrs.forEach[
-           error(stringClassName + " cannot have any constructors",
-               it, null, INCORRECT_MAPPED_CONSTR)
-        ]
-        
-        fields.filter[isMapped].forEach[
-            error("unknown mapped field " + name, it, NAMED__NAME, UNKNOWN_MAPPED_FIELD)
-        ]
-        
-        methods.filter[name == "length"].forEach[
-            if(!mapped)
-                error("this method must be declared as mapped", it,
-                    NAMED__NAME, INCORRECT_MAPPED_METHOD)
-            if(!(type instanceof Int))
-                error("the return type of this method must be int", type,
-                    null, INCORRECT_MAPPED_METHOD)
-            if(!params.isEmpty)
-                error("the parameter list of this method must be empty", type,
-                    null, INCORRECT_MAPPED_METHOD)
-        ]
-        
-        methods.filter[isMapped && name != "length"].forEach[
-            error("unknown mapped method " + name, it, NAMED__NAME, UNKNOWN_MAPPED_METHOD)
-        ]
     }
     
     @Check
@@ -493,7 +530,6 @@ class RolezValidator extends RolezSystemValidator {
         fields.filter[isMapped && name != "length"].forEach[
             error("unknown mapped field " + name, it, NAMED__NAME, UNKNOWN_MAPPED_FIELD)
         ]
-        
         methods.filter[isMapped].forEach[
             error("unknown mapped method " + name, it, NAMED__NAME, UNKNOWN_MAPPED_METHOD)
         ]

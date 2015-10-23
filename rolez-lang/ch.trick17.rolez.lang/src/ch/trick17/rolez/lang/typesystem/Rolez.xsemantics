@@ -38,6 +38,7 @@ import ch.trick17.rolez.lang.rolez.SimpleClassRef
 import ch.trick17.rolez.lang.rolez.Start
 import ch.trick17.rolez.lang.rolez.Stmt
 import ch.trick17.rolez.lang.rolez.StringLiteral
+import ch.trick17.rolez.lang.rolez.SuperConstrCall
 import ch.trick17.rolez.lang.rolez.This
 import ch.trick17.rolez.lang.rolez.Type
 import ch.trick17.rolez.lang.rolez.TypedBody
@@ -54,7 +55,6 @@ import static ch.trick17.rolez.lang.rolez.Role.*
 import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
 
 import static extension org.eclipse.emf.ecore.util.EcoreUtil.copy
-import ch.trick17.rolez.lang.rolez.SuperConstrCall
 
 system ch.trick17.rolez.lang.typesystem.RolezSystem
 
@@ -231,10 +231,14 @@ from {
                 }
             }
             MethodSelector: {
+                // First, check if args are well-typed
+                for(arg : selector.args) {
+                    G |- arg : var Type _
+                }
                 G |- targetType.role <! selector.method.thisRole or fail
                     error "Role mismatch: Cannot call method " + selector.method.string
                         +" on a " + targetType.role.string + " target"
-                    source a.target
+                    source a.selector
                 t = selector.method.type
             }
         }
