@@ -1,13 +1,13 @@
 package ch.trick17.rolez.lang.cfg
 
 import ch.trick17.rolez.lang.rolez.ParameterizedBody
-import java.util.concurrent.ConcurrentHashMap
+import org.eclipse.xtext.util.OnChangeEvictingCache
 
 class CfgProvider {
     
-    val cfgs = new ConcurrentHashMap<ParameterizedBody, ControlFlowGraph>
+    val cfgs = new OnChangeEvictingCache
     
     def controlFlowGraph(ParameterizedBody it) {
-        cfgs.computeIfAbsent(it, [new CfgBuilder(it).build])
+        cfgs.get(it, eResource, [new CfgBuilder(it).build])
     }
 }
