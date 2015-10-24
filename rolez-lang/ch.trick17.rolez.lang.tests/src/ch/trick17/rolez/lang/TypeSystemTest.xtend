@@ -165,7 +165,7 @@ class TypeSystemTest {
             class B
             task Main: { new A == new B; }
         ''').assertError(EQUALITY_EXPR, null, "compare", "A", "B")
-        // IMPROVE: Find a way to include an issue code for explicit failures?
+        // IMPROVE: Test issue code once supported for explicit failures
         
         parse("task Main: { 42 != false; }")
             .assertError(EQUALITY_EXPR, null, "compare", "int", "boolean")
@@ -314,7 +314,7 @@ class TypeSystemTest {
         // Upcasts
         program = parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array {
+            mapped class rolez.lang.Array[T] {
                 mapped new(val length: int)
             }
             class A
@@ -380,24 +380,24 @@ class TypeSystemTest {
         
         parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array
+            mapped class rolez.lang.Array[T]
             task Main: { new Array[boolean] as readwrite Array[int]; }
         ''').assertError(CAST, null, "cast", "readwrite rolez.lang.Array[boolean]", "readwrite rolez.lang.Array[int]")
         parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array
+            mapped class rolez.lang.Array[T]
             class A
             task Main: { new Array[pure Object] as readwrite Array[pure A]; }
         ''').assertError(CAST, null, "cast", "readwrite rolez.lang.Array[pure rolez.lang.Object]", "readwrite rolez.lang.Array[pure A]")
         parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array
+            mapped class rolez.lang.Array[T]
             class A
             task Main: { new Array[readwrite A] as readwrite Array[pure A]; }
         ''').assertError(CAST, null, "cast", "readwrite rolez.lang.Array[readwrite A]", "readwrite rolez.lang.Array[pure A]")
         parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array
+            mapped class rolez.lang.Array[T]
             class A
             task Main: { new Array[pure A] as readwrite Array[readwrite A]; }
         ''').assertError(CAST, null, "cast", "readwrite rolez.lang.Array[pure A]", "readwrite rolez.lang.Array[readwrite A]")
@@ -583,7 +583,7 @@ class TypeSystemTest {
             }
         }
         
-        val program = parse('''
+        var program = parse('''
             mapped class rolez.lang.Object
             class A {
                 def readwrite a: readonly A { return null; }
@@ -592,6 +592,42 @@ class TypeSystemTest {
         ''')
         program.main.lastExpr.type
             .assertThat(isRoleType(READONLY, newClassRef(program.findClass("A"))))
+        
+        val lib = newResourceSet.with('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array[T] {
+                mapped new(val length: int)
+                mapped def readonly  get(val i: int): T
+                mapped def readwrite set(val i: int, val o: T):
+            }
+        ''')
+        parse('''
+            task Main: {
+                val a: readwrite Array[int] = new Array[int](1);
+                a.set(0, 42);
+                a.get(0);
+            }
+        ''', lib).main.lastExpr.type.assertThat(instanceOf(Int))
+        program = parse('''
+            class A
+            task Main: {
+                val a: readwrite Array[readwrite A] = new Array[readwrite A](1);
+                a.set(0, new A);
+                a.get(0);
+            }
+        ''', lib)
+        program.main.lastExpr.type
+            .assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
+        program = parse('''
+            class A
+            task Main: {
+                val a: readwrite Array[pure A] = new Array[pure A](1);
+                a.set(0, new A);
+                a.get(0);
+            }
+        ''', lib)
+        program.main.lastExpr.type
+            .assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
         
         parse('''
             mapped class rolez.lang.Object
@@ -694,6 +730,29 @@ class TypeSystemTest {
             class A { def readwrite foo(val a: readwrite A): {} }
             task Main: { new A.foo(new A as readonly A); }
         ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "foo")
+        
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array[T] {
+                mapped new(val i: int)
+                mapped def readwrite set(val i: int, val o: T):
+            }
+            task Main: {
+                new Array[int](1).set(0, true);
+            }
+        ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "set")
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array[T] {
+                mapped new(val i: int)
+                mapped def readwrite set(val i: int, val o: T):
+            }
+            class A
+            class B
+            task Main: {
+                new Array[pure A](1).set(0, new B);
+            }
+        ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "set")
     }
     
     @Test
@@ -776,6 +835,8 @@ class TypeSystemTest {
         program.main.expr(1).type.assertThat(instanceOf(Boolean))
         program.main.expr(1).type.assertThat(instanceOf(Boolean))
         program.main.expr(1).type.assertThat(instanceOf(Boolean))
+        
+        // IMPROVE: test generic methods, once supported outside of array class
     }
     
     @Test
@@ -801,6 +862,8 @@ class TypeSystemTest {
                 new A.foo(new A, new A);
             }
         ''').assertError(METHOD_SELECTOR, AMBIGUOUS_CALL)
+        
+        // IMPROVE: test generic methods, once supported outside of array class
     }
     
     @Test 
@@ -877,7 +940,7 @@ class TypeSystemTest {
         
         program = parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array {
+            mapped class rolez.lang.Array[T] {
                 mapped new(val length: int)
             }
             task Main: { new Array[int](100); }
@@ -888,7 +951,7 @@ class TypeSystemTest {
         program = parse('''
             mapped class rolez.lang.Object
             class A
-            mapped class rolez.lang.Array {
+            mapped class rolez.lang.Array[T] {
                 mapped new(val length: int)
             }
             task Main: { new Array[readonly A](10); }
@@ -900,7 +963,7 @@ class TypeSystemTest {
         program = parse('''
             mapped class rolez.lang.Object
             class A
-            mapped class rolez.lang.Array {
+            mapped class rolez.lang.Array[T] {
                 mapped new(val length: int)
             }
             task Main: { new Array[pure Array[readwrite A]](1000); }
@@ -910,6 +973,8 @@ class TypeSystemTest {
             .assertThat(isRoleType(READWRITE, newClassRef(array,
                 newRoleType(PURE, newClassRef(array,
                     newRoleType(READWRITE, newClassRef(program.findClass("A"))))))))
+        
+        // IMPROVE: test generic constructors, once  supported outside of the array class
     }
     
     @Test
@@ -956,6 +1021,8 @@ class TypeSystemTest {
             class A { new(val a: readwrite A) {} }
             task Main: { new A(new Object); }
         ''').assertError(NEW, null, "no suitable constructor")
+        
+        // IMPROVE: test generic constructors, once  supported outside of the array class
     }
     
     @Test
@@ -972,7 +1039,7 @@ class TypeSystemTest {
             }
         ''').assertNoErrors
         
-        // TODO: For the following, test that the right constructor is chosen,
+        // IMPROVE: For the following, test that the right constructor is chosen,
         // either by linking something or after code generation.
         parse('''
             mapped class rolez.lang.Object
@@ -1000,6 +1067,8 @@ class TypeSystemTest {
                 new B(new A as readonly A);
             }
         ''').assertNoErrors
+        
+        // IMPROVE: test generic constructors, once  supported outside of the array class
     }
     
     @Test
@@ -1027,6 +1096,8 @@ class TypeSystemTest {
                 new B(new A, new A);
             }
         ''').assertError(NEW, null, "constructor", "ambiguous")
+        
+        // IMPROVE: test generic constructors, once  supported outside of the array class
     }
     
     @Test
@@ -1480,7 +1551,7 @@ class TypeSystemTest {
             }
         ''').assertNoErrors
         
-        // TODO: For the following, test that the right constructor is chosen,
+        // IMPROVE: For the following, test that the right constructor is chosen,
         // either by linking something or after code generation.
         parse('''
             mapped class rolez.lang.Object
@@ -1596,7 +1667,7 @@ class TypeSystemTest {
     def testSubtype() {
         parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array {
+            mapped class rolez.lang.Array[T] {
                 mapped new(val length: int)
             }
             class A
@@ -1625,6 +1696,8 @@ class TypeSystemTest {
                 oa = null;
             }
         ''').assertNoErrors
+        
+        // IMPROVE: Test type params, once they're supported outside the array class
     }
     
     @Test
@@ -1667,28 +1740,28 @@ class TypeSystemTest {
     def testSubtypeGenericClassMismatch() {
         parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array
+            mapped class rolez.lang.Array[T]
             task Main: {
                 val a: pure Array[int] = new Array[boolean];
             }
         ''').assertError(NEW, SUBTYPEEXPR, "readwrite rolez.lang.Array[boolean]", "pure rolez.lang.Array[int]")
         parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array
+            mapped class rolez.lang.Array[T]
             task Main: {
                 val a: pure Array[int] = new Array[pure Object];
             }
         ''').assertError(NEW, SUBTYPEEXPR, "readwrite rolez.lang.Array[pure rolez.lang.Object]", "pure rolez.lang.Array[int]")
         parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array
+            mapped class rolez.lang.Array[T]
             task Main: {
                 val a: pure Array[pure Object] = new Array[int];
             }
         ''').assertError(NEW, SUBTYPEEXPR, "readwrite rolez.lang.Array[int]", "pure rolez.lang.Array[pure rolez.lang.Object]")
         parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array
+            mapped class rolez.lang.Array[T]
             class A
             task Main: {
                 val a: pure Array[pure Object] = new Array[pure A];
@@ -1696,7 +1769,7 @@ class TypeSystemTest {
         ''').assertError(NEW, SUBTYPEEXPR, "readwrite rolez.lang.Array[pure A]", "pure rolez.lang.Array[pure rolez.lang.Object]")
         parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array
+            mapped class rolez.lang.Array[T]
             class A
             task Main: {
                 val a: pure Array[pure A] = new Array[pure Object];
@@ -1704,7 +1777,7 @@ class TypeSystemTest {
         ''').assertError(NEW, SUBTYPEEXPR, "readwrite rolez.lang.Array[pure rolez.lang.Object]", "pure rolez.lang.Array[pure A]")
         parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array
+            mapped class rolez.lang.Array[T]
             class A
             task Main: {
                 val a: pure Array[pure A] = new Array[readwrite A];
@@ -1712,7 +1785,7 @@ class TypeSystemTest {
         ''').assertError(NEW, SUBTYPEEXPR, "readwrite rolez.lang.Array[readwrite A]", "pure rolez.lang.Array[pure A]")
         parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array
+            mapped class rolez.lang.Array[T]
             class A
             task Main: {
                 val a: pure Array[readwrite A] = new Array[pure A];

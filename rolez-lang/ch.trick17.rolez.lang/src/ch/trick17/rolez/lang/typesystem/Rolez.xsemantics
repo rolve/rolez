@@ -41,6 +41,7 @@ import ch.trick17.rolez.lang.rolez.StringLiteral
 import ch.trick17.rolez.lang.rolez.SuperConstrCall
 import ch.trick17.rolez.lang.rolez.This
 import ch.trick17.rolez.lang.rolez.Type
+import ch.trick17.rolez.lang.rolez.TypeParamRef
 import ch.trick17.rolez.lang.rolez.TypedBody
 import ch.trick17.rolez.lang.rolez.UnaryMinus
 import ch.trick17.rolez.lang.rolez.UnaryNot
@@ -223,11 +224,11 @@ from {
                     source a.target
                 var fieldType = selector.field.type
                 switch(fieldType) {
-                    PrimitiveType: { t = fieldType }
                     RoleType: {
                         val role = leastCommonSuperrole(targetType.role, fieldType.role)
                         t = newRoleType(role, fieldType.base.copy)
                     }
+                    default: { t = fieldType }
                 }
             }
             MethodSelector: {
@@ -239,7 +240,11 @@ from {
                     error "Role mismatch: Cannot call method " + selector.method.string
                         +" on a " + targetType.role.string + " target"
                     source a.selector
-                t = selector.method.type
+                val returnType = selector.method.type
+                t = switch(returnType) {
+                    TypeParamRef: selector.typeParamMap.get(returnType.param)
+                    default: returnType
+                }
             }
         }
     }
@@ -389,8 +394,15 @@ from {
     a.args.size == p.params.size
         or fail error "Too many arguments" source a
     
+    val paramTypes = p.params.map[
+        val t = type
+        switch(t) {
+            TypeParamRef: a.typeParamMap.get(t.param)
+            default: t
+        }
+    ]
     val i = a.args.iterator
-    for(t : p.params.map[type]) {
+    for(t : paramTypes) {
         G |- i.next <| t
     }
 }
@@ -404,6 +416,12 @@ from {
 }
 
 
+rule SubtypePrimitiveTypes
+    G |- PrimitiveType left <: PrimitiveType right
+from {
+    left.class == right.class
+}
+
 rule SubtypeRoleTypes
     G |- RoleType left <: RoleType right
 from {
@@ -411,14 +429,14 @@ from {
     G |- left.base <~ right.base // Subclass
 }
 
-rule SubtypePrimitiveTypes
-    G |- PrimitiveType left <: PrimitiveType right
-from {
-    left.class == right.class
-}
-
 axiom SubtypeNull
     G |- Null __ <: ReferenceType ___
+
+rule SubtypeTypeVarRef
+    G |- TypeParamRef left <: TypeParamRef right
+from {
+    left.param == right.param
+}
 
 rule SubtypeGeneral
     G |- Type left <: Type right
@@ -455,9 +473,6 @@ from {
     left.class == right.class
 }
 
-axiom EqualTypeNull
-    G |- Null left ~~ Null right
-
 rule EqualTypeRoleTypes
     G |- RoleType left ~~ RoleType right
 from {
@@ -467,6 +482,15 @@ from {
     
     left.base instanceof SimpleClassRef
         or G |- (left.base as GenericClassRef).typeArg ~~ (right.base as GenericClassRef).typeArg
+}
+
+axiom EqualTypeNull
+    G |- Null left ~~ Null right
+
+rule EqualTypeTypeVarRef
+    G |- TypeParamRef left ~~ TypeParamRef right
+from {
+    left.param == right.param
 }
 
 rule EqualTypeGeneral

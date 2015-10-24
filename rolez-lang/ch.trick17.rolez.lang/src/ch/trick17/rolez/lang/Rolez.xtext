@@ -22,7 +22,9 @@ ClassLike:
     Class | Task;
 
 Class:
-    mapped?='mapped'? 'class' name=QualifiedName ('extends' superclass=[Class|QualifiedName])?
+    mapped?='mapped'? 'class' name=QualifiedName
+    ('[' typeParam=TypeParam ']')?
+    ('extends' superclass=[Class|QualifiedName])?
     ('{'
         (constrs+=Constr | members+=Member)+
     '}')?;
@@ -30,6 +32,8 @@ Class:
 Task:
     'task' name=QualifiedName ('(' params+=Param (',' params+=Param)* ')')?
     ':' type=Type body=Block;
+
+TypeParam: name=ID;
 
 Member:
     Field | Method;
@@ -184,13 +188,16 @@ Bool returns EBoolean: 'true' | 'false';
 
 
 Type:
-    ReferenceType | PrimitiveType;
+    ReferenceType | PrimitiveType | TypeParamRef;
 
 ReferenceType:
     RoleType | {Null} NULL_TYPE;
 
 PrimitiveType:
     {Int} 'int' | {Double} 'double' | {Boolean} 'boolean' | {Char} 'char' | {Void} 'void'?;
+
+TypeParamRef:
+    param=[TypeParam];
 
 RoleType:
     role=Role base=ClassRef;

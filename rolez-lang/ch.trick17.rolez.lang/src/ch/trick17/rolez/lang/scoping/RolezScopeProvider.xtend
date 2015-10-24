@@ -57,7 +57,6 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
             IScope.NULLSCOPE;
     }
     
-    
     def IScope scope_VarRef_variable(VarRef varRef, EReference eRef) {
         val stmt = varRef.enclosingStmt
         Scopes.scopeFor(varsAbove(stmt.eContainer, stmt))

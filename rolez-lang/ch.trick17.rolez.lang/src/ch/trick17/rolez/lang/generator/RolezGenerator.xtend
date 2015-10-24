@@ -43,6 +43,7 @@ import ch.trick17.rolez.lang.rolez.StringLiteral
 import ch.trick17.rolez.lang.rolez.SuperConstrCall
 import ch.trick17.rolez.lang.rolez.This
 import ch.trick17.rolez.lang.rolez.Type
+import ch.trick17.rolez.lang.rolez.TypeParamRef
 import ch.trick17.rolez.lang.rolez.UnaryExpr
 import ch.trick17.rolez.lang.rolez.UnaryMinus
 import ch.trick17.rolez.lang.rolez.UnaryNot
@@ -298,6 +299,8 @@ class RolezGenerator implements IGenerator {
     private def dispatch generateType(Null it) {
         throw new AssertionError("Null type usage not checked")
     }
+    
+    private def dispatch generateType(TypeParamRef _) { throw new AssertionError }
     
     private def gen(ClassRef it) { generateClassRef }
     

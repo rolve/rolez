@@ -38,10 +38,10 @@ import static extension org.eclipse.emf.ecore.util.EcoreUtil.resolve
  */
 class RolezUtils {
     
-    @Inject private extension RolezExtensions
-    @Inject private RolezSystem system
-    @Inject private IScopeProvider scopeProvider
-    private val factory = RolezFactory.eINSTANCE
+    @Inject extension RolezExtensions
+    @Inject RolezSystem system
+    @Inject IScopeProvider scopeProvider
+    val factory = RolezFactory.eINSTANCE
     
     def newRoleType(Role r, ClassRef base) {
         if(base.eContainer != null)
@@ -121,7 +121,8 @@ class RolezUtils {
      * http://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.12.2
      * </a>.
      */
-    def maximallySpecific(Iterable<? extends ParameterizedBody> candidates, Argumented args) {
+    def maximallySpecific(Iterable<? extends ParameterizedBody> candidates,
+            Argumented args) {
         val applicable = candidates.filter[
             system.validArgsSucceeded(envFor(args), args, it)
         ].toList

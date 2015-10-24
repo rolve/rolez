@@ -51,6 +51,31 @@ class ValidatorTest {
     }
     
     @Test
+    def testCircularInheritance() {
+        parse('''
+            class A extends A
+        ''').assertError(CLASS, CIRCULAR_INHERITANCE)
+        parse('''
+            class A extends B
+            class B extends A
+        ''').assertError(CLASS, CIRCULAR_INHERITANCE)
+        parse('''
+            class A extends B
+            class B extends C
+            class C extends D
+            class D extends A
+        ''').assertError(CLASS, CIRCULAR_INHERITANCE)
+    }
+    
+    @Test
+    def checkTypeParam() {
+        parse('''
+            class rolez.lang.Object
+            class A[T]
+        ''').assertError(CLASS, INCORRECT_TYPE_PARAM)
+    }
+    
+    @Test
     def testOverride() {
         parse('''
             mapped class rolez.lang.Object
@@ -508,10 +533,10 @@ class ValidatorTest {
     }
     
     @Test
-    def testTypeArgs() {
+    def testTypeArg() {
         parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array {
+            mapped class rolez.lang.Array[T] {
                 mapped new(val length: int)
             }
             class A
@@ -524,49 +549,32 @@ class ValidatorTest {
         
         parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array
+            mapped class rolez.lang.Array[T]
             task Main: {
-                val a: pure Array;
+                var a: pure Array;
             }
-        ''').assertError(SIMPLE_CLASS_REF, MISSING_TYPE_ARGS, "class rolez.lang.Array")
+        ''').assertError(SIMPLE_CLASS_REF, MISSING_TYPE_ARG)
         parse('''
             mapped class rolez.lang.Object
             class A
             task Main: {
                 val a: pure A[int] = null;
             }
-        ''').assertError(GENERIC_CLASS_REF, INCORRECT_TYPE_ARGS, "class A")
+        ''').assertError(GENERIC_CLASS_REF, INCORRECT_TYPE_ARG, "class A")
         parse('''
             mapped class rolez.lang.Object
             class A
             task Main: {
                 val a: pure A = new A[int];
             }
-        ''').assertError(GENERIC_CLASS_REF, INCORRECT_TYPE_ARGS, "class A")
+        ''').assertError(GENERIC_CLASS_REF, INCORRECT_TYPE_ARG, "class A")
         parse('''
             mapped class rolez.lang.Object
             class A
             task Main: {
                 val a: pure A[readwrite A];
             }
-        ''').assertError(GENERIC_CLASS_REF, INCORRECT_TYPE_ARGS, "class A")
-    }
-    
-    @Test
-    def testCircularInheritance() {
-        parse('''
-            class A extends A
-        ''').assertError(CLASS, CIRCULAR_INHERITANCE)
-        parse('''
-            class A extends B
-            class B extends A
-        ''').assertError(CLASS, CIRCULAR_INHERITANCE)
-        parse('''
-            class A extends B
-            class B extends C
-            class C extends D
-            class D extends A
-        ''').assertError(CLASS, CIRCULAR_INHERITANCE)
+        ''').assertError(GENERIC_CLASS_REF, INCORRECT_TYPE_ARG, "class A")
     }
     
     @Test
@@ -941,7 +949,7 @@ class ValidatorTest {
     def testMappedField() {
         parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array {
+            mapped class rolez.lang.Array[T] {
                 mapped val length: int
                 mapped new(val length: int)
             }
@@ -957,7 +965,7 @@ class ValidatorTest {
             }
         ''').assertError(FIELD, MAPPED_IN_NORMAL_CLASS)
         
-        // TODO: Test mapped fields for a "normal" (non-array) class
+        // IMPROVE: Test mapped fields for a "normal" (non-array) class
     }
     
     @Test
@@ -1030,7 +1038,7 @@ class ValidatorTest {
     def testMappedConstr() {
         parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array {
+            mapped class rolez.lang.Array[T] {
                 mapped new(val l: int)
             }
             mapped class rolez.lang.String {
@@ -1057,13 +1065,13 @@ class ValidatorTest {
         ''').assertError(CONSTR, MAPPED_IN_NORMAL_CLASS)
         parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array {
+            mapped class rolez.lang.Array[T] {
                 mapped new(val l: int) {}
             }
         ''').assertError(BLOCK, MAPPED_WITH_BODY)
         parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array {
+            mapped class rolez.lang.Array[T] {
                 new(val l: int) {}
             }
         ''').assertError(CONSTR, NON_MAPPED_CONSTR)
@@ -1087,8 +1095,7 @@ class ValidatorTest {
             }
         ''').assertError(CONSTR, INCORRECT_MAPPED_CONSTR)
         
-        // TODO: Test implicit constructor with class that doesn't have a
-        // no-arg constructor
+        // TODO: Test implicit constructor with a Java class that doesn't have a no-arg constructor
     }
     
     @Test
@@ -1096,7 +1103,7 @@ class ValidatorTest {
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.String
-            mapped class rolez.lang.Array {
+            mapped class rolez.lang.Array[T] {
                 mapped new(val length: int)
             }
             class A
@@ -1142,70 +1149,79 @@ class ValidatorTest {
     def testArrayClass() {
         parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array {
+            mapped class rolez.lang.Array[T] {
                 mapped new(val length: int)
             }
         ''').assertNoErrors
         parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array extends Object {
+            mapped class rolez.lang.Array[T] extends Object {
                 mapped new(val length: int)
                 mapped val length: int
+                mapped def readonly get(val i: int): T
+                mapped def readwrite set(val i: int, val o: T):
             }
         ''').assertNoErrors
         
         parse('''
             mapped class rolez.lang.Object
             class A
-            mapped class rolez.lang.Array extends A
+            mapped class rolez.lang.Array[T] extends A
         ''').assertError(CLASS, INCORRECT_MAPPED_SUPERCLASS)
         
         parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array
+            mapped class rolez.lang.Array {
+                mapped new(val length: int)
+            }
+        ''').assertError(CLASS, MISSING_TYPE_PARAM)
+        
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array[T]
         ''').assertError(CLASS, INCORRECT_MAPPED_CONSTR)
         parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array {
+            mapped class rolez.lang.Array[T] {
                 mapped new {}
             }
         ''').assertError(CONSTR, INCORRECT_MAPPED_CONSTR)
         parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array {
+            mapped class rolez.lang.Array[T] {
                 mapped new(val i: int, val j: int) {}
             }
         ''').assertError(CONSTR, INCORRECT_MAPPED_CONSTR)
         parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array {
+            mapped class rolez.lang.Array[T] {
                 mapped new(val i: double) {}
             }
         ''').assertError(DOUBLE, INCORRECT_MAPPED_CONSTR)
         parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array {
+            mapped class rolez.lang.Array[T] {
                 new(val i: int) {}
             }
         ''').assertError(CONSTR, INCORRECT_MAPPED_CONSTR)
         
         parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array {
+            mapped class rolez.lang.Array[T] {
                 mapped new(val length: int)
                 val length: int
             }
         ''').assertError(FIELD, INCORRECT_MAPPED_FIELD)
         parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array {
+            mapped class rolez.lang.Array[T] {
                 mapped new(val length: int)
                 mapped var length: int
             }
         ''').assertError(FIELD, INCORRECT_MAPPED_FIELD)
         parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array {
+            mapped class rolez.lang.Array[T] {
                 mapped new(val length: int)
                 mapped val length: double
             }
@@ -1213,14 +1229,80 @@ class ValidatorTest {
         
         parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array {
+            mapped class rolez.lang.Array[T] {
                 mapped new(val length: int)
                 mapped val foo: int
             }
         ''').assertError(FIELD, UNKNOWN_MAPPED_FIELD)
+        
         parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array {
+            mapped class rolez.lang.Array[T] extends Object {
+                mapped new(val length: int)
+                def readonly get(val i: int): T
+            }
+        ''').assertError(METHOD, INCORRECT_MAPPED_METHOD)
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array[T] extends Object {
+                mapped new(val length: int)
+                mapped def readonly get(val i: int): int
+            }
+        ''').assertError(METHOD, INCORRECT_MAPPED_METHOD)
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array[T] extends Object {
+                mapped new(val length: int)
+                mapped def readonly get: T
+            }
+        ''').assertError(METHOD, INCORRECT_MAPPED_METHOD)
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array[T] extends Object {
+                mapped new(val length: int)
+                mapped def readonly get(val i: double): T
+            }
+        ''').assertError(DOUBLE, INCORRECT_MAPPED_METHOD)
+        
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array[T] extends Object {
+                mapped new(val length: int)
+                def readwrite set(val i: int, val o: T):
+            }
+        ''').assertError(METHOD, INCORRECT_MAPPED_METHOD)
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array[T] extends Object {
+                mapped new(val length: int)
+                mapped def readwrite set(val i: int, val o: T): int
+            }
+        ''').assertError(INT, INCORRECT_MAPPED_METHOD)
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array[T] extends Object {
+                mapped new(val length: int)
+                mapped def readwrite set(val o: T):
+            }
+        ''').assertError(METHOD, INCORRECT_MAPPED_METHOD)
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array[T] extends Object {
+                mapped new(val length: int)
+                mapped def readwrite set(val i: double, val o: T):
+            }
+        ''').assertError(DOUBLE, INCORRECT_MAPPED_METHOD)
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array[T] extends Object {
+                mapped new(val length: int)
+                mapped def readwrite set(val i: int, val o: pure Object):
+            }
+        ''').assertError(ROLE_TYPE, INCORRECT_MAPPED_METHOD)
+        
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array[T] {
                 mapped new(val length: int)
                 mapped def pure foo: int
             }

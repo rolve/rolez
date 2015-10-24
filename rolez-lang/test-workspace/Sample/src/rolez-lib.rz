@@ -17,7 +17,9 @@ mapped class String {
 	mapped override pure hashCode: int
 }
 
-mapped class Array {
+mapped class Array[T] {
 	mapped new(val i: int)
 	mapped val length: int
+	mapped def readonly  get(val i: int): T
+	mapped def readwrite set(val i: int, val o: T):
 }

@@ -39,7 +39,7 @@ class ParserTest {
     def testQualifiedClassRef() {
         parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.lang.Array {
+            mapped class rolez.lang.Array[T] {
                 mapped new(val length: int)
                 mapped val length: int
             }

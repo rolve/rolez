@@ -51,12 +51,15 @@ import static ch.trick17.rolez.lang.Constants.*
 import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
 import static ch.trick17.rolez.lang.rolez.VarKind.*
 import static ch.trick17.rolez.lang.validation.ValFieldsInitializedAnalysis.*
+import ch.trick17.rolez.lang.rolez.TypeParamRef
 
 class RolezValidator extends RolezSystemValidator {
 
     public static val INVALID_NAME = "invalid name"
     public static val OBJECT_CLASS_NOT_DEFINED = "object class not defined"
     public static val DUPLICATE_TOP_LEVEL_ELEMENT = "duplicate top-level element"
+    public static val INCORRECT_TYPE_PARAM = "incorrect type variable"
+    public static val MISSING_TYPE_PARAM = "missing type parameter"
     public static val DUPLICATE_FIELD = "duplicate field"
     public static val DUPLICATE_METHOD = "duplicate method"
     public static val DUPLICATE_CONSTR = "duplicate constructor"
@@ -67,8 +70,8 @@ class RolezValidator extends RolezSystemValidator {
     public static val INCOMPATIBLE_THIS_ROLE = "incompatible \"this\" role"
     public static val MISSING_RETURN_EXPR = "missing return statement"
     public static val AMBIGUOUS_CALL = "ambiguous call"
-    public static val MISSING_TYPE_ARGS = "missing type arguments"
-    public static val INCORRECT_TYPE_ARGS = "incorrect type arguments"
+    public static val MISSING_TYPE_ARG = "missing type argument"
+    public static val INCORRECT_TYPE_ARG = "incorrect type argument"
     public static val CIRCULAR_INHERITANCE = "circular inheritance"
     public static val VAL_FIELD_NOT_INITIALIZED = "val field not initialized"
     public static val VAL_FIELD_OVERINITIALIZED = "val field overinitialized"
@@ -106,25 +109,32 @@ class RolezValidator extends RolezSystemValidator {
     }
 	
 	@Check
-	def checkObjectExists(Class it) {
-	    if(superclass == null && utils.findClass(objectClassName, it) == null)
-	       error("Object class is not defined",
-	           NAMED__NAME,  OBJECT_CLASS_NOT_DEFINED)
-	}
+    def checkObjectExists(Class it) {
+        if(superclass == null && utils.findClass(objectClassName, it) == null)
+            error("Object class is not defined", NAMED__NAME,
+                OBJECT_CLASS_NOT_DEFINED)
+    }
 	
 	@Check
 	def checkNoDuplicateTopLevelElem(ClassLike it) {
 	    val matching = enclosingProgram.elements.filter[e | e.name.equals(name)]
         if(matching.size < 1)
-           throw new AssertionError
+            throw new AssertionError
         if(matching.size > 1)
-           error("Duplicate top-level element " + name, NAMED__NAME, DUPLICATE_TOP_LEVEL_ELEMENT)
+            error("Duplicate top-level element " + name, NAMED__NAME, DUPLICATE_TOP_LEVEL_ELEMENT)
 	}
     
     @Check
     def checkCircularInheritance(Class it) {
         if(findSuperclass(it))
             error("Circular inheritance", CLASS__SUPERCLASS, CIRCULAR_INHERITANCE)
+    }
+    
+    @Check
+    def checkTypeParam(Class it) {
+        if(qualifiedName != arrayClassName && typeParam != null)
+            error("Only " + arrayClassName + " may declare a type parameter",
+                CLASS__TYPE_PARAM, INCORRECT_TYPE_PARAM)
     }
     
     private def boolean findSuperclass(Class it, Class c) {
@@ -245,16 +255,16 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkSimpleClassRef(SimpleClassRef it) {
-        if(clazz == utils.findClass(arrayClassName, it))
-            error("Class " + clazz.name + " takes type arguments",
-                CLASS_REF__CLAZZ, MISSING_TYPE_ARGS)
+        if(clazz.typeParam != null)
+            error("Class " + clazz.name + " takes a type argument",
+                CLASS_REF__CLAZZ, MISSING_TYPE_ARG)
     }
     
     @Check
     def checkGenericClassRef(GenericClassRef it) {
-        if(clazz != utils.findClass(arrayClassName, it))
-            error("Class " + clazz.name + " does not take type arguments",
-                GENERIC_CLASS_REF__TYPE_ARG, INCORRECT_TYPE_ARGS)
+        if(clazz.typeParam == null)
+            error("Class " + clazz.name + " does not take a type argument",
+                GENERIC_CLASS_REF__TYPE_ARG, INCORRECT_TYPE_ARG)
     }
     
     @Check
@@ -488,7 +498,7 @@ class RolezValidator extends RolezSystemValidator {
     def checkStringClass(Class it) {
         if(qualifiedName != stringClassName) return;
         
-        if(actualSuperclass != utils.findClass(objectClassName, it))
+        if(actualSuperclass.qualifiedName != objectClassName)
            error("The superclass of " + qualifiedName + " must be "+ objectClassName,
                CLASS__SUPERCLASS, INCORRECT_MAPPED_SUPERCLASS)
     }
@@ -497,9 +507,13 @@ class RolezValidator extends RolezSystemValidator {
     def checkArrayClass(Class it) {
         if(qualifiedName != arrayClassName) return;
         
-        if(actualSuperclass != utils.findClass(objectClassName, it))
+        if(actualSuperclass.qualifiedName != objectClassName)
            error("The superclass of " + qualifiedName + " must be "+ objectClassName,
                CLASS__SUPERCLASS, INCORRECT_MAPPED_SUPERCLASS)
+        
+        if(typeParam == null)
+            error(qualifiedName + " must declare a type parameter",
+                NAMED__NAME, MISSING_TYPE_PARAM)
         
         if(constrs.size != 1)
            error(qualifiedName + " must have exactly one constructor",
@@ -518,19 +532,57 @@ class RolezValidator extends RolezSystemValidator {
         
         fields.filter[name == "length"].forEach[
             if(!mapped)
-                error("this field must be declared as mapped", it,
+                error("This field must be declared as mapped", it,
                     NAMED__NAME, INCORRECT_MAPPED_FIELD)
             if(kind != VAL)
-                error("this field must be a value field", it,
+                error("This field must be a value field", it,
                     FIELD__KIND, INCORRECT_MAPPED_FIELD)
             if(!(type instanceof Int))
-                error("the type of this field must be int", type,
+                error("The type of this field must be int", type,
                     null, INCORRECT_MAPPED_FIELD)
         ]
         fields.filter[isMapped && name != "length"].forEach[
-            error("unknown mapped field " + name, it, NAMED__NAME, UNKNOWN_MAPPED_FIELD)
+            error("Unknown mapped field " + name, it, NAMED__NAME, UNKNOWN_MAPPED_FIELD)
         ]
-        methods.filter[isMapped].forEach[
+        
+        methods.filter[name == "get"].forEach[
+            if(!mapped)
+                error("This method must be declared as mapped", it,
+                    NAMED__NAME, INCORRECT_MAPPED_METHOD)
+            val type = type
+            switch(type) {
+                TypeParamRef case type.param == enclosingClass.typeParam: {}
+                default: error("The return type of this method must be "
+                    + enclosingClass.typeParam.name, it, NAMED__NAME, INCORRECT_MAPPED_METHOD)
+            }
+            if(params.size != 1)
+                error("This method must have a single int parameter", it,
+                    NAMED__NAME, INCORRECT_MAPPED_METHOD)
+            else if(!(params.head.type instanceof Int))
+                error("This parameter's type must be int", params.head.type,
+                    null, INCORRECT_MAPPED_METHOD)
+        ]
+        methods.filter[name == "set"].forEach[
+            if(!mapped)
+                error("This method must be declared as mapped", it,
+                    NAMED__NAME, INCORRECT_MAPPED_METHOD)
+            if(!(type instanceof Void))
+                error("The return type of this method must be void", type,
+                    null, INCORRECT_MAPPED_METHOD)
+            
+            if(params.size != 2)
+                error("This method must have two parameters", it,
+                    NAMED__NAME, INCORRECT_MAPPED_METHOD)
+            else {
+                if(!(params.get(0).type instanceof Int))
+                    error("This parameter's type must be int", params.get(0).type,
+                        null, INCORRECT_MAPPED_METHOD)
+                if(!(params.get(1).type instanceof TypeParamRef))
+                    error("This parameter's type must be " + enclosingClass.typeParam.name,
+                        params.get(1).type, null, INCORRECT_MAPPED_METHOD)
+            }
+        ]
+        methods.filter[isMapped && name != "get" && name != "set"].forEach[
             error("unknown mapped method " + name, it, NAMED__NAME, UNKNOWN_MAPPED_METHOD)
         ]
     }
@@ -539,7 +591,7 @@ class RolezValidator extends RolezSystemValidator {
     def checkTaskClass(Class it) {
         if(qualifiedName != taskClassName) return;
         
-        if(actualSuperclass != utils.findClass(objectClassName, it))
+        if(actualSuperclass.qualifiedName != objectClassName)
            error("The superclass of " + qualifiedName + " must be " + objectClassName,
                CLASS__SUPERCLASS, INCORRECT_MAPPED_SUPERCLASS)
         // TODO: Check (mapped) members
