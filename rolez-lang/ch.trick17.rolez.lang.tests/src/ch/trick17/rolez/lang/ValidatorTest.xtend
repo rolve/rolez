@@ -878,6 +878,11 @@ class ValidatorTest {
             mapped class rolez.lang.String {
                 mapped def pure length: int
             }
+            mapped class rolez.lang.Array[T] {
+                mapped new(val l: int)
+                mapped def readonly  get(val i: int): T
+                mapped def readwrite set(val i: int, val o: T):
+            }
             class rolez.lang.Task
             task Main: {
                 var i: int;
@@ -885,27 +890,43 @@ class ValidatorTest {
                 new String;
                 new String.length();
                 start Main;
+                new Array[int](1).set(0, 42);
             }
         ''').assertNoIssues
         
         parse('''
-            task Main: { 5; }
-        ''').assertWarning(INT_LITERAL, OUTER_EXPR_NO_SIDE_FX)
+            task Main: { true && 4 > 2; }
+        ''').assertWarning(LOGICAL_EXPR, OUTER_EXPR_NO_SIDE_FX)
         parse('''
             task Main: { 3 == 5; }
         ''').assertWarning(EQUALITY_EXPR, OUTER_EXPR_NO_SIDE_FX)
         parse('''
-            task Main: { true && 4 > 2; }
-        ''').assertWarning(LOGICAL_EXPR, OUTER_EXPR_NO_SIDE_FX)
-        parse('''
-            task Main: { null; }
-        ''').assertWarning(NULL_LITERAL, OUTER_EXPR_NO_SIDE_FX)
-        parse('''
-            task Main: {
-                val i: int = 5;
-                i;
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.String {
+                mapped def pure length: int
             }
-        ''').assertWarning(VAR_REF, OUTER_EXPR_NO_SIDE_FX)
+            task Main: {
+                val s: pure String = new String;
+                2 * s.length();
+            }
+        ''').assertWarning(ARITHMETIC_BINARY_EXPR, OUTER_EXPR_NO_SIDE_FX)
+        parse('''
+            mapped class rolez.lang.Object
+            class A { var i: int }
+            task Main: {
+                new A.i;
+            }
+        ''').assertWarning(MEMBER_ACCESS, OUTER_EXPR_NO_SIDE_FX)
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array[T] {
+                mapped new(val l: int)
+                mapped def get(val i: int): T
+            }
+            task Main: {
+                new Array[int](1).get(0);
+            }
+        ''').assertWarning(MEMBER_ACCESS, OUTER_EXPR_NO_SIDE_FX)
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.String
@@ -914,7 +935,21 @@ class ValidatorTest {
                 s as pure Object;
             }
         ''').assertWarning(CAST, OUTER_EXPR_NO_SIDE_FX)
-        
+        parse('''
+            task Main: {
+                val i: int = 5;
+                i;
+            }
+        ''').assertWarning(VAR_REF, OUTER_EXPR_NO_SIDE_FX)
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array[T] {
+                mapped new(val l: int)
+            }
+            task Main: {
+                new Array[int](1);
+            }
+        ''').assertWarning(NEW, OUTER_EXPR_NO_SIDE_FX)
         parse('''
             task Main: {
                 var i: int;
@@ -927,15 +962,11 @@ class ValidatorTest {
             task Main: { (new String); }
         ''').assertWarning(PARENTHESIZED, OUTER_EXPR_NO_SIDE_FX)
         parse('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.String {
-                mapped def pure length: int
-            }
-            task Main: {
-                val s: pure String = new String;
-                2 * s.length();
-            }
-        ''').assertWarning(ARITHMETIC_BINARY_EXPR, OUTER_EXPR_NO_SIDE_FX)
+            task Main: { 5; }
+        ''').assertWarning(INT_LITERAL, OUTER_EXPR_NO_SIDE_FX)
+        parse('''
+            task Main: { null; }
+        ''').assertWarning(NULL_LITERAL, OUTER_EXPR_NO_SIDE_FX)
     }
     
     @Test

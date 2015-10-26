@@ -155,6 +155,14 @@ class RolezExtensions {
     def isFieldAccess(MemberAccess it) { selector instanceof FieldSelector }
     def isMethodInvoke(MemberAccess it) { selector instanceof MethodSelector }
     
+    def isArrayGet(Method it) {
+        enclosingClass.qualifiedName == arrayClassName && name == "get" && mapped
+    }
+    
+    def isArraySet(Method it) {
+        enclosingClass.qualifiedName == arrayClassName && name == "set" && mapped
+    }
+    
     def dispatch Map<TypeParam, Type> typeParamMap(MethodSelector it) {
         val target = (eContainer as MemberAccess).target
         val targetType = system.type(utils.envFor(it), target).value

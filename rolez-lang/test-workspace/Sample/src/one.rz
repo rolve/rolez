@@ -90,6 +90,7 @@ class Test {
 		array.set(2, 'l');
 		array.set(3, 'l');
 		array.set(4, 'o');
+		array.get(new String(new Array[char](0)).length());
 		
 		val s: pure String = new Account.toString().trim() + new String(array);
 		return s.charAt(s.hashCode() - 1);

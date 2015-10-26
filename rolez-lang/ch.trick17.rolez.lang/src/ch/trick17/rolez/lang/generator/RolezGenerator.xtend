@@ -57,6 +57,7 @@ import org.eclipse.xtext.generator.IFileSystemAccess
 import org.eclipse.xtext.generator.IGenerator
 
 import static ch.trick17.rolez.lang.Constants.*
+
 import static extension org.eclipse.xtext.util.Strings.convertToJavaString
 
 class RolezGenerator implements IGenerator {
@@ -172,10 +173,15 @@ class RolezGenerator implements IGenerator {
             case utils.isSideFxExpr(it): #[it]
             BinaryExpr: findSideFxExpr(left) + findSideFxExpr(right)
             UnaryExpr: findSideFxExpr(expr)
-            // Special case for array instantiations:
+            // Special cases for array instantiations and get
+            MemberAccess case selector instanceof MethodSelector
+                    && (selector as MethodSelector).method.isArrayGet: {
+                if((selector as MethodSelector).args.size != 1) throw new AssertionError
+                findSideFxExpr((selector as MethodSelector).args.get(0))
+            }
             New: {
                 if(args.size != 1) throw new AssertionError
-                findSideFxExpr(args.head)
+                findSideFxExpr(args.get(0))
             }
             default: emptyList
         }
@@ -215,8 +221,15 @@ class RolezGenerator implements IGenerator {
     
     private def dispatch generateExpr(MemberAccess it) {
         // TODO: guard
-        // TODO: access to special classes
-        '''«target.gen».«selector.generateSelector»'''
+        val selector = selector
+        switch(selector) {
+            MethodSelector case selector.method.isArrayGet:
+                '''«target.gen»[«selector.args.get(0).gen»]'''
+            MethodSelector case selector.method.isArraySet:
+                '''«target.gen»[«selector.args.get(0).gen»] = «selector.args.get(1).gen»'''
+            default:
+                '''«target.gen».«selector.generateSelector»'''
+        }
     }
     
     private def dispatch generateSelector( FieldSelector it) { field.name }

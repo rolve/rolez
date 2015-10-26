@@ -151,7 +151,8 @@ class RolezUtils {
     /**
      * Returns <code>true</code> iff the given expression is a kind of
      * expression that may have side effects, i.e., an assignment, a non-array
-     * object instantiation, a task creation or a method invocation.
+     * object instantiation, a task creation or a method invocation that is
+     * not an array set.
      * Note that nested expressions may still have side effects.
      */
     def isSideFxExpr(Expr it) {
@@ -160,6 +161,7 @@ class RolezUtils {
             New: classRef.clazz.qualifiedName != arrayClassName
             Start: true
             MemberAccess: selector instanceof MethodSelector
+                && !(selector as MethodSelector).method.isArrayGet
             default: false
         }
     }
