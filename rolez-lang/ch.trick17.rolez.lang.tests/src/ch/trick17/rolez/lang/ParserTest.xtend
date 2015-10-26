@@ -12,6 +12,8 @@ import org.junit.runner.RunWith
 import static org.hamcrest.Matchers.*
 
 import static extension org.hamcrest.MatcherAssert.assertThat
+import ch.trick17.rolez.lang.rolez.CharLiteral
+import ch.trick17.rolez.lang.rolez.StringLiteral
 
 @RunWith(XtextRunner)
 @InjectWith(RolezInjectorProvider)
@@ -20,6 +22,7 @@ class ParserTest {
     @Inject extension RolezExtensions
     @Inject extension ParseHelper<Program>
     @Inject extension ValidationTestHelper
+    @Inject extension TestUtilz
     
     @Test
     def testEmptyClass() {
@@ -68,5 +71,47 @@ class ParserTest {
                 }
             }
         ''').assertNoErrors
+    }
+    
+    @Test
+    def testTestCharLiteral() {
+        val program = parse('''
+            task Main: {
+                'H';
+                '"';
+                '\'';
+                '\\';
+                '\n';
+                '\t';
+            }
+        ''')
+        (program.main.expr(0) as CharLiteral).value.assertThat(is(Character.valueOf('H')))
+        (program.main.expr(1) as CharLiteral).value.assertThat(is(Character.valueOf('"')))
+        (program.main.expr(2) as CharLiteral).value.assertThat(is(Character.valueOf('\'')))
+        (program.main.expr(3) as CharLiteral).value.assertThat(is(Character.valueOf('\\')))
+        (program.main.expr(4) as CharLiteral).value.assertThat(is(Character.valueOf('\n')))
+        (program.main.expr(5) as CharLiteral).value.assertThat(is(Character.valueOf('\t')))
+    }
+    
+    @Test
+    def testTestStringLiteral() {
+        val program = parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.String
+            task Main: {
+                "Hello World!";
+                "\"";
+                "'";
+                "\\";
+                "\n\n";
+                "\t";
+            }
+        ''')
+        (program.main.expr(0) as StringLiteral).value.assertThat(is("Hello World!"))
+        (program.main.expr(1) as StringLiteral).value.assertThat(is("\""))
+        (program.main.expr(2) as StringLiteral).value.assertThat(is("'"))
+        (program.main.expr(3) as StringLiteral).value.assertThat(is("\\"))
+        (program.main.expr(4) as StringLiteral).value.assertThat(is("\n\n"))
+        (program.main.expr(5) as StringLiteral).value.assertThat(is("\t"))
     }
 }

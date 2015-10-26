@@ -57,6 +57,7 @@ import org.eclipse.xtext.generator.IFileSystemAccess
 import org.eclipse.xtext.generator.IGenerator
 
 import static ch.trick17.rolez.lang.Constants.*
+import static extension org.eclipse.xtext.util.Strings.convertToJavaString
 
 class RolezGenerator implements IGenerator {
     
@@ -277,11 +278,11 @@ class RolezGenerator implements IGenerator {
     private def dispatch generateExpr(BooleanLiteral it) { value.toString }
     
     private def dispatch generateExpr(StringLiteral it) {
-        '''"«value.replace("\\", "\\\\").replace("\"", "\\\"")»"'''
+        "\"" + value.convertToJavaString + "\""
     }
     
     private def dispatch generateExpr(CharLiteral it) {
-        ''''«value.toString.replace("\\", "\\\\").replace("'", "\\'")»' '''
+        "'" + value.toString.convertToJavaString.replace("\\\"", "\"").replace("'", "\\'") + "'"
     }
     
     private def dispatch generateExpr(NullLiteral _) {'''null'''}
