@@ -82,7 +82,7 @@ WhileLoop:
 // TODO: for-each and maybe parallel for-each
 
 SuperConstrCall:
-    {SuperConstrCall} 'super' '(' (args+=Expr (',' args+=Expr)*)? ')' ';';
+    {SuperConstrCall} 'super' ('(' args+=Expr (',' args+=Expr)* ')')? ';';
 
 Return:
     ReturnNothing | ReturnExpr;

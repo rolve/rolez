@@ -1498,7 +1498,7 @@ class TypeSystemTest {
                 new(val a: readwrite A) { super(a, new B); }
             }
             class G {
-                new { super(); }
+                new { super; }
             }
         ''').assertNoErrors
     }

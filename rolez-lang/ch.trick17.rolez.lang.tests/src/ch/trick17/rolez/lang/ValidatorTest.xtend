@@ -812,7 +812,7 @@ class ValidatorTest {
             }
             class B extends A {
                 new {
-                    super();
+                    super;
                     this.foo;
                     this.bar;
                 }
@@ -835,7 +835,7 @@ class ValidatorTest {
             class A {
                 new {
                     3;
-                    super();
+                    super;
                 }
             }
         ''').assertError(SUPER_CONSTR_CALL, SUPER_CONSTR_CALL_FIRST)
@@ -897,11 +897,11 @@ class ValidatorTest {
         parse('''
             mapped class rolez.lang.Object
             class A {
-                def pure foo: { super(); }
+                def pure foo: { super; }
             }
         ''').assertError(SUPER_CONSTR_CALL, INCORRECT_SUPER_CONSTR_CALL)
         parse('''
-            task Main: { super(); }
+            task Main: { super; }
         ''').assertError(SUPER_CONSTR_CALL, INCORRECT_SUPER_CONSTR_CALL)
     }
     

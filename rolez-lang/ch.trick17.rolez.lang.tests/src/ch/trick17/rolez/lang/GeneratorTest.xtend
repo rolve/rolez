@@ -29,7 +29,10 @@ class GeneratorTest {
         newResourceSet.with('''
             mapped class rolez.lang.Object
             class Base
-            class foo.bar.Base
+            class foo.bar.Base {
+                new {}
+                new(val i: int) {}
+            }
         ''')
     }
     
@@ -195,6 +198,46 @@ class GeneratorTest {
                 this.bar();
             }
         '''.frameJava)
+    }
+    
+    @Test
+    def testWhileLoop() {
+        parse('''
+            while(b)
+                this.bar;
+        '''.frame, classes).generate.assertEquals('''
+            while(b)
+                this.bar();
+        '''.frameJava)
+    }
+    
+    @Test
+    def testSuperConstrCall() {
+        parse('''
+            class A extends Base {
+                new { super; }
+            }
+        ''', classes).generate.assertEquals('''
+            public class A extends Base {
+                
+                public A() {
+                    super();
+                }
+            }
+        ''')
+        
+        parse('''
+            class A extends foo.bar.Base {
+                new { super(42); }
+            }
+        ''', classes).generate.assertEquals('''
+            public class A extends foo.bar.Base {
+                
+                public A() {
+                    super(42);
+                }
+            }
+        ''')
     }
     
     private def generate(Program it) {
