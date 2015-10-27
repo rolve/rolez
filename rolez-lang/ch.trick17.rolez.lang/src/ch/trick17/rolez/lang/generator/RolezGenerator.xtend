@@ -58,6 +58,7 @@ import static ch.trick17.rolez.lang.Constants.*
 import static ch.trick17.rolez.lang.rolez.VarKind.VAL
 
 import static extension org.eclipse.xtext.util.Strings.convertToJavaString
+import ch.trick17.rolez.lang.rolez.VarKind
 
 class RolezGenerator implements IGenerator {
     
@@ -96,20 +97,22 @@ class RolezGenerator implements IGenerator {
     '''}
     
     private def gen(Field it) {'''
-        public «if(kind == VAL) "final " else ""»«type.gen» «name»;
+        public «kind.gen»«type.gen» «name»;
     '''}
     
     private def gen(Constr it) {'''
         
-        public «enclosingClass.simpleName»(«params.map[gen].join(", ")») «body.gen»
+        public «enclosingClass.simpleName»(«params.map[gen].join(", ")»)«body.gen»
     '''}
     
     private def gen(Method it) {'''
         
-        public «type.gen» «name»(«params.map[gen].join(", ")») «body.gen»
+        public «type.gen» «name»(«params.map[gen].join(", ")»)«body.gen»
     '''}
     
-    private def gen(Param it) {'''«type.gen» «name»'''}
+    private def gen(Param it) {'''«kind.gen»«type.gen» «name»'''}
+    
+    private def gen(VarKind it) { if(it == VAL) "final " else "" }
     
     /*
      * Statements
@@ -126,27 +129,27 @@ class RolezGenerator implements IGenerator {
     }
     
     private def dispatch generateStmt(Block it) {'''
-        {
+         {
             «stmts.map[gen].join»
         }
     '''}
     
     private def dispatch generateStmt(LocalVarDecl it) {
         if(initializer == null) '''
-            «variable.type.gen» «variable.name»;
+            «variable.kind.gen»«variable.type.gen» «variable.name»;
         ''' else '''
-            «variable.type.gen» «variable.name» = «initializer.gen»;
+            «variable.kind.gen»«variable.type.gen» «variable.name» = «initializer.gen»;
         '''
     }
     
     private def dispatch generateStmt(IfStmt it) {'''
-        if(«condition.gen») «thenPart.genIndent»
+        if(«condition.gen»)«thenPart.genIndent»
         «if(elsePart != null)
-            '''else «elsePart.genIndent»'''»
+        '''else«elsePart.genIndent»'''»
     '''}
     
     private def dispatch generateStmt(WhileLoop it) {'''
-        while(«condition.gen») «body.genIndent»
+        while(«condition.gen»)«body.genIndent»
     '''}
     
     private def dispatch generateStmt(SuperConstrCall it) {'''

@@ -91,7 +91,7 @@ class GeneratorTest {
     }
     
     @Test
-    def testMembers() {
+    def testField() {
         parse('''
             class foo.A {
                 val i: int
@@ -115,7 +115,10 @@ class GeneratorTest {
                 }
             }
         ''')
-        
+    }
+    
+    @Test
+    def testMethod() {
         parse('''
             class A {
                 def pure foo: {}
@@ -127,12 +130,15 @@ class GeneratorTest {
                 public void foo() {
                 }
                 
-                public int foo(int i) {
+                public int foo(final int i) {
                     return i;
                 }
             }
         ''')
-        
+    }
+    
+    @Test
+    def testConstr() {
         parse('''
             package foo
             class A {
@@ -147,10 +153,48 @@ class GeneratorTest {
                 public A() {
                 }
                 
-                public A(int i, foo.A a) {
+                public A(final int i, final foo.A a) {
                 }
             }
         ''')
+    }
+    
+    @Test
+    def testLocalVarDecl() {
+        parse('''
+            var j: int;
+            var k: int = 4;
+            val a: pure A = null;
+        '''.frame, classes).generate.assertEquals('''
+            int j;
+            int k = 4;
+            final A a = null;
+        '''.frameJava)
+    }
+    
+    @Test
+    def testIfStmt() {
+        parse('''
+            if(b)
+                this.bar;
+            else
+                this.bar;
+        '''.frame, classes).generate.assertEquals('''
+            if(b)
+                this.bar();
+            else
+                this.bar();
+        '''.frameJava)
+        
+        parse('''
+            if(b) {
+                this.bar;
+            }
+        '''.frame, classes).generate.assertEquals('''
+            if(b) {
+                this.bar();
+            }
+        '''.frameJava)
     }
     
     private def generate(Program it) {
@@ -161,6 +205,27 @@ class GeneratorTest {
         fsa.textFiles.size.assertThat(is(1))
         fsa.textFiles.values.head
     }
+    
+    private def frame(CharSequence it) {'''
+        class A {
+            def readwrite foo(val i: int, val b: boolean): {
+                «it»
+            }
+            def pure bar: {}
+        }
+    '''}
+    
+    private def frameJava(CharSequence it) {'''
+        public class A extends java.lang.Object {
+            
+            public void foo(final int i, final boolean b) {
+                «it»
+            }
+            
+            public void bar() {
+            }
+        }
+    '''}
     
     private def assertEquals(CharSequence it, CharSequence expected) {
         Assert.assertEquals(expected.toString, it.toString)
