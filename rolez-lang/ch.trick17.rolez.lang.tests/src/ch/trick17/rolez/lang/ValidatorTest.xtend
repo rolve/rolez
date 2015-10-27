@@ -375,6 +375,40 @@ class ValidatorTest {
     }
     
     @Test
+    def testFieldWithSameName() {
+        parse('''
+            mapped class rolez.lang.Object
+            class A {
+                var foo: int
+                def readwrite foo(val i: int): {}
+                def readwrite foo(val c: char): {}
+                def readwrite foo(val o: readonly Object): {}
+                def readwrite foo(val o: readwrite Object): {}
+                def readwrite foo(val a: readonly A): {}
+                def readwrite foo(val a: readwrite A): {}
+                def readwrite foo(val a: readwrite A, val b: readwrite A): {}
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            mapped class rolez.lang.Object
+            class A {
+                var foo: int
+                def readwrite foo: {}
+            }
+        ''').assertError(METHOD, FIELD_WITH_SAME_NAME)
+        parse('''
+            mapped class rolez.lang.Object
+            class A {
+                var foo: int
+            }
+            class B extends A {
+                def readwrite foo: {}
+            }
+        ''').assertError(METHOD, FIELD_WITH_SAME_NAME)
+    }
+    
+    @Test
     def testDuplicateMethods() {
         parse('''
             mapped class rolez.lang.Object
@@ -595,7 +629,7 @@ class ValidatorTest {
                 }
                 new(val a: pure A) {
                     this.i = 0;
-                    while(this.foo())
+                    while(this.foo)
                         new A;
                 }
                def pure foo: boolean { return false; }
@@ -726,7 +760,7 @@ class ValidatorTest {
                 def pure bar: {
                     var i: int = 0;
                     while(this.foo(5) > i)
-                        this.bar();
+                        this.bar;
                 }
             }
         ''').assertNoErrors
@@ -779,18 +813,18 @@ class ValidatorTest {
             class B extends A {
                 new {
                     super();
-                    this.foo();
-                    this.bar();
+                    this.foo;
+                    this.bar;
                 }
                 new(val i: int) {
-                    this.foo();
+                    this.foo;
                 }
                 new(val s: pure String) {
-                    super(s.length());
+                    super(s.length);
                 }
                 new(val a: pure A) {
-                    while(this.foo())
-                        this.bar();
+                    while(this.foo)
+                        this.bar;
                 }
                 def pure bar: {}
             }
@@ -888,7 +922,7 @@ class ValidatorTest {
                 var i: int;
                 i = 5 - 2;
                 new String;
-                new String.length();
+                new String.length;
                 start Main;
                 new Array[int](1).set(0, 42);
             }

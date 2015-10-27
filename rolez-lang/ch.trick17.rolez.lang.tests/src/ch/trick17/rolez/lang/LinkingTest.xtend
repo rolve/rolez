@@ -112,7 +112,7 @@ class LinkingTest {
         parse('''
             package foo.bar
             task B: {
-                new A.foo();
+                new A.foo;
             }
         ''', set).assertNoErrors
         

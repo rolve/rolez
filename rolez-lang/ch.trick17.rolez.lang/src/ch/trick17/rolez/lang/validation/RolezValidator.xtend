@@ -15,7 +15,6 @@ import ch.trick17.rolez.lang.rolez.Constr
 import ch.trick17.rolez.lang.rolez.Expr
 import ch.trick17.rolez.lang.rolez.ExprStmt
 import ch.trick17.rolez.lang.rolez.Field
-import ch.trick17.rolez.lang.rolez.FieldSelector
 import ch.trick17.rolez.lang.rolez.GenericClassRef
 import ch.trick17.rolez.lang.rolez.IfStmt
 import ch.trick17.rolez.lang.rolez.Int
@@ -33,6 +32,7 @@ import ch.trick17.rolez.lang.rolez.SimpleClassRef
 import ch.trick17.rolez.lang.rolez.SuperConstrCall
 import ch.trick17.rolez.lang.rolez.This
 import ch.trick17.rolez.lang.rolez.Type
+import ch.trick17.rolez.lang.rolez.TypeParamRef
 import ch.trick17.rolez.lang.rolez.TypedBody
 import ch.trick17.rolez.lang.rolez.Var
 import ch.trick17.rolez.lang.rolez.VarRef
@@ -50,8 +50,6 @@ import org.eclipse.xtext.validation.Check
 import static ch.trick17.rolez.lang.Constants.*
 import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
 import static ch.trick17.rolez.lang.rolez.VarKind.*
-import static ch.trick17.rolez.lang.validation.ValFieldsInitializedAnalysis.*
-import ch.trick17.rolez.lang.rolez.TypeParamRef
 
 class RolezValidator extends RolezSystemValidator {
 
@@ -62,6 +60,7 @@ class RolezValidator extends RolezSystemValidator {
     public static val MISSING_TYPE_PARAM = "missing type parameter"
     public static val DUPLICATE_FIELD = "duplicate field"
     public static val DUPLICATE_METHOD = "duplicate method"
+    public static val FIELD_WITH_SAME_NAME = "field with same name"
     public static val DUPLICATE_CONSTR = "duplicate constructor"
     public static val DUPLICATE_VARIABLE = "duplicate variable"
     public static val MISSING_OVERRIDE = "missing override"
@@ -98,6 +97,7 @@ class RolezValidator extends RolezSystemValidator {
     
     @Inject extension RolezExtensions
     @Inject extension CfgProvider
+    @Inject ValFieldsInitializedAnalysis.Provider valFieldsAnalysis
     @Inject RolezSystem system
     @Inject RolezUtils utils
     
@@ -172,6 +172,14 @@ class RolezValidator extends RolezSystemValidator {
         if(matching.size > 1)
            error("Duplicate method " + name + "("+ params.map[type.string].join(", ") + ")",
                NAMED__NAME, DUPLICATE_METHOD)
+    }
+    
+    @Check
+    def checkFieldWithSameName(Method it) {
+        if(params.isEmpty && !enclosingClass.allMembers.filter(Field)
+                .filter[f | f.name == name].isEmpty)
+            error("Field with same name: method cannot be called",
+                NAMED__NAME, FIELD_WITH_SAME_NAME)
     }
     
     @Check
@@ -279,25 +287,25 @@ class RolezValidator extends RolezSystemValidator {
         if(body == null) return
         
         val cfg = controlFlowGraph
-        val extension analysis = new ValFieldsInitializedAnalysis(cfg)
+        val extension analysis = valFieldsAnalysis.analyze(cfg)
         for(f : enclosingClass.fields.filter[kind == VAL])
             if(!f.definitelyInitializedAfter(cfg.exit))
                 error("Value field " + f.name + " may not have been initialized",
                     null, VAL_FIELD_NOT_INITIALIZED)
         
-        for(a : all(Assignment).filter[isValFieldInit(it)]) {
-            val f = assignedField(a)
+        for(a : all(Assignment).filter[utils.isValFieldInit(it)]) {
+            val f = utils.assignedField(a)
             if(f.possiblyInitializedBefore(cfg.nodeOf(a)))
                 error("Value field " + f.name + " may already have been initialized",
                     a, null, VAL_FIELD_OVERINITIALIZED)
         }
         
         for(a : all(MemberAccess).filter[isFieldAccess]) {
-            val f = (a.selector as FieldSelector).field
+            val f = a.field
             if(f.kind == VAL && !a.isAssignmentTarget
                     && !f.definitelyInitializedBefore(cfg.nodeOf(a)))
                 error("Value field " + f.name + " may not have been initialized",
-                    a, MEMBER_ACCESS__SELECTOR, VAL_FIELD_NOT_INITIALIZED)
+                    a, MEMBER_ACCESS__MEMBER, VAL_FIELD_NOT_INITIALIZED)
         }
     }
     

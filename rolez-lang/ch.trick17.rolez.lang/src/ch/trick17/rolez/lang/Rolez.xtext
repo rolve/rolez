@@ -142,20 +142,17 @@ UnaryNot returns Expr:
     MemberAccess | {UnaryNot} '!' expr=MemberAccess;
 
 MemberAccess returns Expr:
-    SimpleExpr ({MemberAccess.target=current} '.' selector=Selector)*;
+    SimpleExpr ({MemberAccess.target=current} '.' member=[Member] ('(' args+=Expr (',' args+=Expr)* ')')? )*;
     // TODO: Allow member accesses without "this"
-
-Selector: FieldSelector | MethodSelector;
-
-FieldSelector: field=[Field];
-
-MethodSelector: method=[Method] '(' (args+=Expr (',' args+=Expr)*)? ')';
-// TODO: Allow method calls without parentheses
 
 SimpleExpr returns Expr:
     {This} 'this' | VarRef | New | Start | Parenthesized | Literal;
 
 VarRef: variable=[Var];
+
+// The mess begins here: this rule is necessary for feature normalization
+// to work for the Argumented interface. And it needs to be here...
+ArgsOnly: args+=Expr;
 
 New:
     'new' classRef=UnambiguousClassRef ('(' args+=Expr (',' args+=Expr)* ')')?;
@@ -259,4 +256,4 @@ TypedBody:
     Method | Task;
 
 Argumented:
-    MethodSelector | New | Start | SuperConstrCall;
+    {MemberAccess} | New | Start | SuperConstrCall | ArgsOnly;

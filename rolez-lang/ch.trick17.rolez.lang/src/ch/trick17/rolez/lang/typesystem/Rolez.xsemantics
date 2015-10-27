@@ -13,14 +13,12 @@ import ch.trick17.rolez.lang.rolez.DoubleLiteral
 import ch.trick17.rolez.lang.rolez.EqualityExpr
 import ch.trick17.rolez.lang.rolez.Expr
 import ch.trick17.rolez.lang.rolez.ExprStmt
-import ch.trick17.rolez.lang.rolez.FieldSelector
 import ch.trick17.rolez.lang.rolez.GenericClassRef
 import ch.trick17.rolez.lang.rolez.IfStmt
 import ch.trick17.rolez.lang.rolez.IntLiteral
 import ch.trick17.rolez.lang.rolez.LocalVarDecl
 import ch.trick17.rolez.lang.rolez.LogicalExpr
 import ch.trick17.rolez.lang.rolez.MemberAccess
-import ch.trick17.rolez.lang.rolez.MethodSelector
 import ch.trick17.rolez.lang.rolez.New
 import ch.trick17.rolez.lang.rolez.Null
 import ch.trick17.rolez.lang.rolez.NullLiteral
@@ -56,6 +54,9 @@ import static ch.trick17.rolez.lang.rolez.Role.*
 import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
 
 import static extension org.eclipse.emf.ecore.util.EcoreUtil.copy
+import ch.trick17.rolez.lang.rolez.TypeParam
+import java.util.Map
+import it.xsemantics.runtime.RuleEnvironment
 
 system ch.trick17.rolez.lang.typesystem.RolezSystem
 
@@ -67,6 +68,7 @@ inject extension RolezUtils __
 auxiliary {
     leastCommonSuperrole(Role r1, Role r2): Role
     strictSuperclasses(Class clazz): Set<Class> cached
+    typeParamMap(Argumented a, RuleEnvironment G): Map<TypeParam, Type>
 }
 
 judgments {
@@ -108,6 +110,19 @@ auxiliary strictSuperclasses(Class c) {
     if(c != object && object != null)
         result.add(object)
     result
+}
+
+auxiliary typeParamMap(MemberAccess a, RuleEnvironment G) {
+    G |- a.target : var RoleType targetType
+    val base = targetType.base
+    switch(base) {
+        GenericClassRef: #{base.clazz.typeParam -> base.typeArg}
+        default: emptyMap
+    }
+}
+
+auxiliary typeParamMap(Argumented _, RuleEnvironment G) {
+    emptyMap // TODO: Support for new, start and super(...)
 }
 
 
@@ -215,36 +230,33 @@ rule TMemberAccess
 from {
     G |- a.target : var Type targetType
     if(targetType instanceof RoleType) {
-        val selector = a.selector
-        switch(selector) {
-            FieldSelector: {
-                G |- targetType.role <! READONLY or fail
-                    error "Role mismatch: Cannot access field of a "
-                        + targetType.role.string + " target"
-                    source a.target
-                var fieldType = selector.field.type
-                switch(fieldType) {
-                    RoleType: {
-                        val role = leastCommonSuperrole(targetType.role, fieldType.role)
-                        t = newRoleType(role, fieldType.base.copy)
-                    }
-                    default: { t = fieldType }
+        if(a.isFieldAccess) {
+            G |- targetType.role <! READONLY or fail
+                error "Role mismatch: Cannot access field of a "
+                    + targetType.role.string + " target"
+                source a.target
+            var fieldType = a.field.type
+            switch(fieldType) {
+                RoleType: {
+                    val role = leastCommonSuperrole(targetType.role, fieldType.role)
+                    t = newRoleType(role, fieldType.base.copy)
                 }
+                default: { t = fieldType }
             }
-            MethodSelector: {
-                // First, check if args are well-typed
-                for(arg : selector.args) {
-                    G |- arg : var Type _
-                }
-                G |- targetType.role <! selector.method.thisRole or fail
-                    error "Role mismatch: Cannot call method " + selector.method.string
-                        +" on a " + targetType.role.string + " target"
-                    source a.selector
-                val returnType = selector.method.type
-                t = switch(returnType) {
-                    TypeParamRef: selector.typeParamMap.get(returnType.param)
-                    default: returnType
-                }
+        }
+        else { // method invoke
+            // First, check if args are well-typed
+            for(arg : a.args) {
+                G |- arg : var Type _
+            }
+            G |- targetType.role <! a.method.thisRole or fail
+                error "Role mismatch: Cannot call method " + a.method.string
+                    +" on a " + targetType.role.string + " target"
+                source a
+            val returnType = a.method.type
+            t = switch(returnType) {
+                TypeParamRef: typeParamMap(a, G).get(returnType.param)
+                default: returnType
             }
         }
     }
@@ -397,7 +409,7 @@ from {
     val paramTypes = p.params.map[
         val t = type
         switch(t) {
-            TypeParamRef: a.typeParamMap.get(t.param)
+            TypeParamRef: typeParamMap(a, G).get(t.param)
             default: t
         }
     ]
@@ -508,8 +520,8 @@ from {
 rule AMemberAccess
     G |= MemberAccess a
 from {
-    a.selector instanceof FieldSelector
-    (a.selector as FieldSelector).field.kind == VarKind.VAR
+    a.isFieldAccess
+    a.field.kind == VarKind.VAR
         or a.target instanceof This && a.enclosingBody instanceof Constr
         or fail error "Cannot assign to a value field" source a
     

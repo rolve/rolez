@@ -16,7 +16,6 @@ import ch.trick17.rolez.lang.rolez.EqualityExpr
 import ch.trick17.rolez.lang.rolez.Expr
 import ch.trick17.rolez.lang.rolez.ExprStmt
 import ch.trick17.rolez.lang.rolez.Field
-import ch.trick17.rolez.lang.rolez.FieldSelector
 import ch.trick17.rolez.lang.rolez.GenericClassRef
 import ch.trick17.rolez.lang.rolez.IfStmt
 import ch.trick17.rolez.lang.rolez.IntLiteral
@@ -24,7 +23,6 @@ import ch.trick17.rolez.lang.rolez.LocalVarDecl
 import ch.trick17.rolez.lang.rolez.LogicalExpr
 import ch.trick17.rolez.lang.rolez.MemberAccess
 import ch.trick17.rolez.lang.rolez.Method
-import ch.trick17.rolez.lang.rolez.MethodSelector
 import ch.trick17.rolez.lang.rolez.New
 import ch.trick17.rolez.lang.rolez.Null
 import ch.trick17.rolez.lang.rolez.NullLiteral
@@ -174,10 +172,9 @@ class RolezGenerator implements IGenerator {
             BinaryExpr: findSideFxExpr(left) + findSideFxExpr(right)
             UnaryExpr: findSideFxExpr(expr)
             // Special cases for array instantiations and get
-            MemberAccess case selector instanceof MethodSelector
-                    && (selector as MethodSelector).method.isArrayGet: {
-                if((selector as MethodSelector).args.size != 1) throw new AssertionError
-                findSideFxExpr((selector as MethodSelector).args.get(0))
+            MemberAccess case isMethodInvoke && method.isArrayGet: {
+                if(args.size != 1) throw new AssertionError
+                findSideFxExpr(args.get(0))
             }
             New: {
                 if(args.size != 1) throw new AssertionError
@@ -221,21 +218,16 @@ class RolezGenerator implements IGenerator {
     
     private def dispatch generateExpr(MemberAccess it) {
         // TODO: guard
-        val selector = selector
-        switch(selector) {
-            MethodSelector case selector.method.isArrayGet:
-                '''«target.gen»[«selector.args.get(0).gen»]'''
-            MethodSelector case selector.method.isArraySet:
-                '''«target.gen»[«selector.args.get(0).gen»] = «selector.args.get(1).gen»'''
-            default:
-                '''«target.gen».«selector.generateSelector»'''
+        switch(it) {
+            case isMethodInvoke && method.isArrayGet:
+                '''«target.gen»[«args.get(0).gen»]'''
+            case isMethodInvoke && method.isArraySet:
+                '''«target.gen»[«args.get(0).gen»] = «args.get(1).gen»'''
+            case isMethodInvoke:
+                '''«target.gen».«method.name»(«args.map[gen].join(", ")»)'''
+            case isFieldAccess:
+                '''«target.gen».«field.name»'''
         }
-    }
-    
-    private def dispatch generateSelector( FieldSelector it) { field.name }
-    
-    private def dispatch generateSelector(MethodSelector it) {
-        '''«method.name»(«args.map[gen].join(", ")»)'''
     }
     
     private def dispatch generateExpr(This _) {'''this'''}

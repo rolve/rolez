@@ -1,33 +1,35 @@
 package ch.trick17.rolez.lang.cfg
 
+import ch.trick17.rolez.lang.RolezExtensions
 import ch.trick17.rolez.lang.rolez.BinaryExpr
 import ch.trick17.rolez.lang.rolez.Block
 import ch.trick17.rolez.lang.rolez.Expr
 import ch.trick17.rolez.lang.rolez.ExprStmt
-import ch.trick17.rolez.lang.rolez.FieldSelector
 import ch.trick17.rolez.lang.rolez.IfStmt
 import ch.trick17.rolez.lang.rolez.Instr
 import ch.trick17.rolez.lang.rolez.LocalVarDecl
 import ch.trick17.rolez.lang.rolez.LogicalExpr
 import ch.trick17.rolez.lang.rolez.MemberAccess
-import ch.trick17.rolez.lang.rolez.MethodSelector
 import ch.trick17.rolez.lang.rolez.New
 import ch.trick17.rolez.lang.rolez.ParameterizedBody
 import ch.trick17.rolez.lang.rolez.ReturnExpr
 import ch.trick17.rolez.lang.rolez.ReturnNothing
 import ch.trick17.rolez.lang.rolez.Start
+import ch.trick17.rolez.lang.rolez.SuperConstrCall
 import ch.trick17.rolez.lang.rolez.UnaryExpr
 import ch.trick17.rolez.lang.rolez.WhileLoop
 import java.util.HashMap
 import java.util.Map
+import javax.inject.Inject
 
 import static ch.trick17.rolez.lang.rolez.OpLogical.*
 
 import static extension ch.trick17.rolez.lang.cfg.CfgBuilder.*
 import static extension java.util.Objects.requireNonNull
-import ch.trick17.rolez.lang.rolez.SuperConstrCall
 
 class CfgBuilder {
+    
+    @Inject extension RolezExtensions
     
     /* Linkers are used to elegantly connect CFG nodes */
     
@@ -57,7 +59,7 @@ class CfgBuilder {
     val ExitNode exit
     val Map<Instr, Node> instrMap = new HashMap
     
-    new(ParameterizedBody body) {
+    package new(ParameterizedBody body) {
         if(body.body == null) throw new AssertionError
         this.body = body
         this.exit = new ExitNode
@@ -151,12 +153,11 @@ class CfgBuilder {
     
     private def dispatch Linker process(MemberAccess a, Linker prev) {
         val targetLinker = process(a.target, prev)
-        val selector = a.selector
-        val lastLinker = switch(selector) {
-            FieldSelector: targetLinker.linkAndReturn(newInstrNode(a))
-            MethodSelector:
-                selector.args.fold(targetLinker, [p, e | process(e, p)])
-        }
+        val lastLinker =
+            if(a.isFieldAccess)
+                targetLinker.linkAndReturn(newInstrNode(a))
+            else
+                a.args.fold(targetLinker, [p, e | process(e, p)])
         lastLinker.linkAndReturn(newInstrNode(a))
     }
     

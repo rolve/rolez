@@ -1,6 +1,6 @@
 package ch.trick17.rolez.lang
 
-import ch.trick17.rolez.lang.cfg.CfgBuilder
+import ch.trick17.rolez.lang.cfg.CfgProvider
 import ch.trick17.rolez.lang.cfg.ControlFlowGraph
 import ch.trick17.rolez.lang.cfg.ExitNode
 import ch.trick17.rolez.lang.cfg.InstrNode
@@ -32,8 +32,9 @@ import static extension org.junit.Assert.assertEquals
 @InjectWith(RolezInjectorProvider)
 class CfgBuilderTest {
     
-    @Inject var RolezSystem system
-    @Inject var RolezUtils utils
+    @Inject RolezSystem system
+    @Inject RolezUtils utils
+    @Inject extension CfgProvider
     @Inject extension TestUtilz
     @Inject extension ParseHelper<Program>
     @Inject extension ValidationTestHelper
@@ -401,7 +402,7 @@ class CfgBuilderTest {
     
     private def cfg(ParameterizedBody it) {
         assertNoErrors
-        new CfgBuilder(it).build
+        controlFlowGraph
     }
     
     private def assertStructure(ControlFlowGraph it, String expected) {

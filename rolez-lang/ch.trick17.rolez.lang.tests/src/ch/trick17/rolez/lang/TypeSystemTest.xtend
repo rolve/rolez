@@ -496,12 +496,16 @@ class TypeSystemTest {
     def testTMemberAccessField() {
         parse('''
             mapped class rolez.lang.Object
-            class A { var x: int }
+            class A {
+                var x: int
+            }
             task Main: { new A.x; }
         ''').main.lastExpr.type.assertThat(instanceOf(Int))
         parse('''
             mapped class rolez.lang.Object
-            class A { var x: int }
+            class A {
+                var x: int
+            }
             task Main: {
                 val a: readonly A = new A;
                 a.x;
@@ -510,7 +514,9 @@ class TypeSystemTest {
         
         val program = parse('''
             mapped class rolez.lang.Object
-            class A { var a: readwrite A }
+            class A {
+                var a: readwrite A
+            }
             task Main: {
                 val a: readwrite A = new A;
                 a.a;
@@ -521,7 +527,9 @@ class TypeSystemTest {
         
         parse('''
             mapped class rolez.lang.Object
-            class A { var a: readwrite A }
+            class A {
+                var a: readwrite A
+            }
             task Main: {
                 val a: readonly A = new A;
                 a.a;
@@ -529,7 +537,9 @@ class TypeSystemTest {
         ''').main.lastExpr.type.asRoleType.role.assertThat(is(READONLY))
         parse('''
             mapped class rolez.lang.Object
-            class A { var a: readonly A }
+            class A {
+                var a: readonly A
+            }
             task Main: {
                 val a: readwrite A = new A;
                 a.a;
@@ -537,7 +547,9 @@ class TypeSystemTest {
         ''').main.lastExpr.type.asRoleType.role.assertThat(is(READONLY))
         parse('''
             mapped class rolez.lang.Object
-            class A { var a: pure A }
+            class A {
+                var a: pure A
+            }
             task Main: {
                 val a: readwrite A = new A;
                 a.a;
@@ -545,7 +557,9 @@ class TypeSystemTest {
         ''').main.lastExpr.type.asRoleType.role.assertThat(is(PURE))
         parse('''
             mapped class rolez.lang.Object
-            class A { var a: pure A }
+            class A {
+                var a: pure A
+            }
             task Main: {
                 val a: readonly A = new A;
                 a.a;
@@ -577,7 +591,7 @@ class TypeSystemTest {
                     }
                     task Main: {
                         val a: «actual» A = new A;
-                        a.x();
+                        a.x;
                     }
                 ''').main.lastExpr.type.assertThat(instanceOf(Int))
             }
@@ -588,7 +602,7 @@ class TypeSystemTest {
             class A {
                 def readwrite a: readonly A { return null; }
             }
-            task Main: { new A.a(); }
+            task Main: { new A.a; }
         ''')
         program.main.lastExpr.type
             .assertThat(isRoleType(READONLY, newClassRef(program.findClass("A"))))
@@ -648,7 +662,7 @@ class TypeSystemTest {
             class B extends A {
                 override readwrite foo: {}
             }
-            task Main: { new B.foo(); }
+            task Main: { new B.foo; }
         ''').assertNoErrors
     }
     
@@ -686,7 +700,7 @@ class TypeSystemTest {
                         val a: «actual» A = new A;
                         a.x();
                     }
-                ''').assertError(METHOD_SELECTOR, null,
+                ''').assertError(MEMBER_ACCESS, null,
                         "Role", "mismatch", "method", actual.toString)
             }
         }
@@ -698,38 +712,38 @@ class TypeSystemTest {
             mapped class rolez.lang.Object
             class A { def readwrite foo: {} }
             task Main: { new A.foo(5); }
-        ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "foo")
+        ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
         parse('''
             mapped class rolez.lang.Object
             class A { def readwrite foo(val c: char): {} }
             task Main: { new A.foo(5, false); }
-        ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "foo")
+        ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
         parse('''
             mapped class rolez.lang.Object
             class A { def readwrite foo(val i: int): {} }
             task Main: { new A.foo(); }
-        ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "foo")
+        ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
         parse('''
             mapped class rolez.lang.Object
             class A { def readwrite foo(val i: int, val a: readwrite A): {} }
             task Main: { new A.foo(false); }
-        ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "foo")
+        ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
         
         parse('''
             mapped class rolez.lang.Object
             class A { def readwrite foo(val i: int): {} }
             task Main: { new A.foo(false); }
-        ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "foo")
+        ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
         parse('''
             mapped class rolez.lang.Object
             class A { def readwrite foo(val a: readwrite A): {} }
             task Main: { new A.foo(new Object); }
-        ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "foo")
+        ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
         parse('''
             mapped class rolez.lang.Object
             class A { def readwrite foo(val a: readwrite A): {} }
             task Main: { new A.foo(new A as readonly A); }
-        ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "foo")
+        ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
         
         parse('''
             mapped class rolez.lang.Object
@@ -740,7 +754,7 @@ class TypeSystemTest {
             task Main: {
                 new Array[int](1).set(0, true);
             }
-        ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "set")
+        ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "set")
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.Array[T] {
@@ -752,12 +766,40 @@ class TypeSystemTest {
             task Main: {
                 new Array[pure A](1).set(0, new B);
             }
-        ''').assertError(METHOD_SELECTOR, LINKING_DIAGNOSTIC, "method", "set")
+        ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "set")
     }
     
     @Test
-    def testTMemberAccessMethodOverloading() {
+    def testTMemberAccessOverloading() {
         var program = parse('''
+            mapped class rolez.lang.Object
+            class A {
+                def readwrite foo: int { return 0; }
+                def readwrite foo(val a: boolean): boolean { return false; }
+            }
+            task Main: {
+                new A.foo;
+                new A.foo(true);
+            }
+        ''')
+        program.main.expr(0).type.assertThat(instanceOf(Int))
+        program.main.expr(1).type.assertThat(instanceOf(Boolean))
+        
+        program = parse('''
+            mapped class rolez.lang.Object
+            class A {
+                var foo: int
+                def readwrite foo(val a: boolean): boolean { return false; }
+            }
+            task Main: {
+                new A.foo;
+                new A.foo(true);
+            }
+        ''')
+        program.main.expr(0).type.assertThat(instanceOf(Int))
+        program.main.expr(1).type.assertThat(instanceOf(Boolean))
+        
+        program = parse('''
             mapped class rolez.lang.Object
             class A {
                 def readwrite foo(val a: int): int { return 0; }
@@ -850,7 +892,7 @@ class TypeSystemTest {
             task Main: {
                 new A.foo(new A, new A);
             }
-        ''').assertError(METHOD_SELECTOR, AMBIGUOUS_CALL)
+        ''').assertError(MEMBER_ACCESS, AMBIGUOUS_CALL)
         
         parse('''
             mapped class rolez.lang.Object
@@ -861,7 +903,7 @@ class TypeSystemTest {
             task Main: {
                 new A.foo(new A, new A);
             }
-        ''').assertError(METHOD_SELECTOR, AMBIGUOUS_CALL)
+        ''').assertError(MEMBER_ACCESS, AMBIGUOUS_CALL)
         
         // IMPROVE: test generic methods, once supported outside of array class
     }

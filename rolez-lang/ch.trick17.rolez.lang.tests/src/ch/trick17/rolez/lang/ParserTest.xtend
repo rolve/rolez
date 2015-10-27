@@ -67,7 +67,7 @@ class ParserTest {
             class B {
                 def pure foo: {
                     new A.i;
-                    new A.f();
+                    new A.f;
                 }
             }
         ''').assertNoErrors

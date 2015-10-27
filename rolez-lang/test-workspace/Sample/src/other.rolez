@@ -13,6 +13,6 @@ class SomeImportantClass {
 	}
 	
 	def readonly bar(val a: int): {
-		this.bar();
+		this.bar;
 	}
 }

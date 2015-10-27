@@ -5,10 +5,7 @@ package ch.trick17.rolez.lang.ui.contentassist
 
 import ch.trick17.rolez.lang.RolezExtensions
 import ch.trick17.rolez.lang.rolez.Expr
-import ch.trick17.rolez.lang.rolez.Field
-import ch.trick17.rolez.lang.rolez.Member
 import ch.trick17.rolez.lang.rolez.MemberAccess
-import ch.trick17.rolez.lang.rolez.Method
 import ch.trick17.rolez.lang.rolez.RoleType
 import ch.trick17.rolez.lang.typesystem.RolezSystem
 import ch.trick17.rolez.lang.typesystem.RolezUtils
@@ -25,18 +22,8 @@ class RolezProposalProvider extends AbstractRolezProposalProvider {
     @Inject RolezUtils utils
     @Inject extension RolezExtensions
 
-    override completeFieldSelector_Field(EObject model, Assignment a, ContentAssistContext context,
+    override completeMemberAccess_Member(EObject model, Assignment a, ContentAssistContext context,
         ICompletionProposalAcceptor acceptor) {
-        completeMemberAccess(model, context, acceptor, Field)
-    }
-
-    override completeMethodSelector_Method(EObject model, Assignment a, ContentAssistContext context,
-        ICompletionProposalAcceptor acceptor) {
-        completeMemberAccess(model, context, acceptor, Method)
-    }
-
-    private def completeMemberAccess(EObject model, ContentAssistContext context, ICompletionProposalAcceptor acceptor,
-        Class<? extends Member> kind) {
         var Expr target
 
         // Find target. Why the heck is this so complicated???
@@ -53,7 +40,7 @@ class RolezProposalProvider extends AbstractRolezProposalProvider {
             val targetType = system.type(utils.envFor(model), target).value
             if (targetType instanceof RoleType) {
                 val factory = getProposalFactory("MemberAccess", context)
-                val scope = Scopes.scopeFor(targetType.base.clazz.allMembers.filter(kind))
+                val scope = Scopes.scopeFor(targetType.base.clazz.allMembers)
                 for (e : scope.allElements) {
                     if (!acceptor.canAcceptMoreProposals)
                         return;

@@ -5,43 +5,46 @@ import ch.trick17.rolez.lang.cfg.DataFlowAnalysis
 import ch.trick17.rolez.lang.cfg.Node
 import ch.trick17.rolez.lang.rolez.Assignment
 import ch.trick17.rolez.lang.rolez.Field
-import ch.trick17.rolez.lang.rolez.FieldSelector
 import ch.trick17.rolez.lang.rolez.Instr
-import ch.trick17.rolez.lang.rolez.MemberAccess
-import ch.trick17.rolez.lang.rolez.This
+import ch.trick17.rolez.lang.typesystem.RolezUtils
 import ch.trick17.rolez.lang.validation.ValFieldsInitializedAnalysis.Initialized
+import com.google.inject.MembersInjector
 import java.util.Set
+import javax.inject.Inject
 import org.eclipse.xtend.lib.annotations.Data
 
-import static ch.trick17.rolez.lang.rolez.VarKind.*
 import static com.google.common.collect.ImmutableSet.*
 
 import static extension com.google.common.collect.Sets.*
 
 class ValFieldsInitializedAnalysis extends DataFlowAnalysis<Initialized> {
     
-    static def isValFieldInit(Assignment it) {
-        !(#[left].filter(MemberAccess).filter[target instanceof This]
-            .map[selector].filter(FieldSelector).map[field]
-            .filter[kind == VAL].isEmpty)
+    static class Provider {
+        @Inject MembersInjector<ValFieldsInitializedAnalysis> injector
+        
+        def analyze(ControlFlowGraph cfg) {
+            val analysis = new ValFieldsInitializedAnalysis(cfg)
+            injector.injectMembers(analysis)
+            analysis.analyze
+            analysis
+        }
     }
     
-    static def assignedField(Assignment it) {
-        ((left as MemberAccess).selector as FieldSelector).field
-    }
+    @Inject RolezUtils utils
     
     val newFlow = new Initialized(null, null)
     
-    new(ControlFlowGraph cfg) {
+    private new(ControlFlowGraph cfg) {
         super(cfg, true)
-        analyze()
     }
+    
+    override protected analyze() { super.analyze() }
     
     protected override newFlow()   { newFlow }
     protected override entryFlow() { new Initialized(emptySet, emptySet) }
     
     protected def dispatch flowThrough(Assignment a, Initialized in) {
-        if(a.isValFieldInit) in.with(a.assignedField)
+        if(utils.isValFieldInit(a)) in.with(utils.assignedField(a))
         else in
     }
     

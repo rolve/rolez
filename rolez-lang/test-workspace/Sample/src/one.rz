@@ -9,8 +9,8 @@ class Person {
 		this.name = name;
 		this.surname = surname;
 		this.address = address;
-		val a: pure Object = new Array[readwrite Address]("Hi".length());
-		new Array[readwrite Address]("Hi".length()) as pure Object;
+		val a: pure Object = new Array[readwrite Address]("Hi".length);
+		new Array[readwrite Address]("Hi".length) as pure Object;
 	}
 	
 	def readonly fullName: readonly String {
@@ -30,9 +30,9 @@ class Person {
 		this.address = null;
 		new Account;
 		
-		val s: readonly String = "Hi" + 'c' + null + 5 + null + this.surname.length();
+		val s: readonly String = "Hi" + 'c' + null + 5 + null + this.surname.length;
 		
-		while(i < j.length())
+		while(i < j.length)
 			if((false && !true) || 5 < 0 + 7)
 				i = 2*i + 2;
 			else
@@ -72,7 +72,7 @@ class Address {
 		
 		val p: readwrite Person = new Person("Jim", "Dee", this);
 		p.name;
-		p.fullName() + p.setAddress(null);
+		p.fullName + p.setAddress(null);
 	}
 }
 
@@ -90,9 +90,9 @@ class Test {
 		array.set(2, 'l');
 		array.set(3, 'l');
 		array.set(4, 'o');
-		array.get(new String(new Array[char](0)).length());
+		array.get(new String(new Array[char](0)).length);
 		
-		val s: pure String = new Account.toString().trim() + new String(array);
-		return s.charAt(s.hashCode() - 1);
+		val s: readonly String = new Account.toString.trim + new String(array);
+		return s.charAt(s.hashCode - 1);
 	}
 }

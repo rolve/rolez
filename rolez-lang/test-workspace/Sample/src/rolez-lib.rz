@@ -1,7 +1,7 @@
 package rolez.lang
 
 mapped class Object {
-	mapped def readwrite equals(val other: readwrite Object): boolean
+	mapped def readonly equals(val other: readonly Object): boolean
 	mapped def readonly hashCode: int
 	mapped def readonly toString: pure String
 }
@@ -12,9 +12,6 @@ mapped class String {
 	mapped def pure length: int
 	mapped def pure trim: pure String
 	mapped def pure charAt(val position: int): char
-	
-	mapped override pure equals(val other: readwrite Object): boolean
-	mapped override pure hashCode: int
 }
 
 mapped class Array[T] {

@@ -9,13 +9,13 @@ import ch.trick17.rolez.lang.rolez.Constr
 import ch.trick17.rolez.lang.rolez.Expr
 import ch.trick17.rolez.lang.rolez.MemberAccess
 import ch.trick17.rolez.lang.rolez.Method
-import ch.trick17.rolez.lang.rolez.MethodSelector
 import ch.trick17.rolez.lang.rolez.New
 import ch.trick17.rolez.lang.rolez.ParameterizedBody
 import ch.trick17.rolez.lang.rolez.Role
 import ch.trick17.rolez.lang.rolez.RolezFactory
 import ch.trick17.rolez.lang.rolez.Start
 import ch.trick17.rolez.lang.rolez.Task
+import ch.trick17.rolez.lang.rolez.This
 import ch.trick17.rolez.lang.rolez.Type
 import it.xsemantics.runtime.RuleEnvironment
 import it.xsemantics.runtime.RuleEnvironmentEntry
@@ -23,12 +23,12 @@ import javax.inject.Inject
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.util.EcoreUtil
 import org.eclipse.xtext.naming.QualifiedName
-import org.eclipse.xtext.nodemodel.util.NodeModelUtils
 import org.eclipse.xtext.scoping.IScopeProvider
 
 import static ch.trick17.rolez.lang.Constants.*
 import static ch.trick17.rolez.lang.rolez.Role.*
 import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
+import static ch.trick17.rolez.lang.rolez.VarKind.VAL
 
 import static extension org.eclipse.emf.ecore.util.EcoreUtil.resolve
 
@@ -69,12 +69,12 @@ class RolezUtils {
         result
     }
 
-    def newIntType()     { factory.createInt }
-    def newDoubleType()  { factory.createDouble }
+    def newIntType()     { factory.createInt     }
+    def newDoubleType()  { factory.createDouble  }
     def newBooleanType() { factory.createBoolean }
-    def newCharType()    { factory.createChar }
-    def newVoidType()    { factory.createVoid }
-    def newNullType()    { factory.createNull }
+    def newCharType()    { factory.createChar    }
+    def newVoidType()    { factory.createVoid    }
+    def newNullType()    { factory.createNull    }
     
     def envFor(EObject o) {
         val body = o.enclosingBody
@@ -144,10 +144,6 @@ class RolezUtils {
         target.params.forall[system.subtypeSucceeded(envFor(target), it.type, i.next.type)]
     }
     
-    def methodName(MethodSelector it) {
-        NodeModelUtils.findNodesForFeature(it, METHOD_SELECTOR__METHOD).get(0).text
-    }
-    
     /**
      * Returns <code>true</code> iff the given expression is a kind of
      * expression that may have side effects, i.e., an assignment, a non-array
@@ -160,9 +156,15 @@ class RolezUtils {
             Assignment: true
             New: classRef.clazz.qualifiedName != arrayClassName
             Start: true
-            MemberAccess: selector instanceof MethodSelector
-                && !(selector as MethodSelector).method.isArrayGet
+            MemberAccess: isMethodInvoke && !method.isArrayGet
             default: false
         }
     }
+    
+    def isValFieldInit(Assignment it) {
+        !(#[left].filter(MemberAccess).filter[isFieldAccess && target instanceof This]
+            .map[field].filter[kind == VAL].isEmpty)
+    }
+    
+    def assignedField(Assignment it) { (left as MemberAccess).field }
 }
