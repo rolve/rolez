@@ -49,6 +49,8 @@ class Student extends Person {
 		this.university = "ETH";
 	}
 	
+	override readwrite setAddress(val address: readwrite Address): {}
+	
 	def pure bla: {
 		this.name;
 		this.setAddress(new Address);

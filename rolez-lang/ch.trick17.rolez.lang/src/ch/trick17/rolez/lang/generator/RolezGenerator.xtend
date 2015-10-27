@@ -55,6 +55,7 @@ import org.eclipse.xtext.generator.IFileSystemAccess
 import org.eclipse.xtext.generator.IGenerator
 
 import static ch.trick17.rolez.lang.Constants.*
+import static ch.trick17.rolez.lang.rolez.VarKind.VAL
 
 import static extension org.eclipse.xtext.util.Strings.convertToJavaString
 
@@ -82,29 +83,29 @@ class RolezGenerator implements IGenerator {
      */
     
     private def generate(Class it, Program p) {'''
-        «if(!package.isEmpty) '''package «package»;'''»
+        «if(!package.isEmpty)
+        '''
+        package «package»;
         
-        «p.imports.map[importedNamespace].join('''
-        ''')»
+        '''»
         public class «simpleName» extends «actualSuperclass?.generateName?:"java.lang.Object"» {
-            
             «fields.map[gen].join»
-            
-            «constrs.map[gen].join("\n")»
-            
-            «methods.map[gen].join("\n")»
+            «constrs.map[gen].join»
+            «methods.map[gen].join»
         }
     '''}
     
     private def gen(Field it) {'''
-        public «type.gen» «name»;
+        public «if(kind == VAL) "final " else ""»«type.gen» «name»;
     '''}
     
     private def gen(Constr it) {'''
+        
         public «enclosingClass.simpleName»(«params.map[gen].join(", ")») «body.gen»
     '''}
     
     private def gen(Method it) {'''
+        
         public «type.gen» «name»(«params.map[gen].join(", ")») «body.gen»
     '''}
     
