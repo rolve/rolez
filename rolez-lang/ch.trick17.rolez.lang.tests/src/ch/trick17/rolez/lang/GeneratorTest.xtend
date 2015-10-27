@@ -27,8 +27,17 @@ class GeneratorTest {
     
     def classes() {
         newResourceSet.with('''
-            mapped class rolez.lang.Object
-            class Base
+            mapped class rolez.lang.Object {
+                mapped def readonly hashCode: int
+            }
+            mapped class rolez.lang.Array[T] {
+                mapped new(val i: int)
+                mapped def readonly get(val i: int)
+                mapped def readonly set(val i: int, val o: T)
+            }
+            class Base {
+                var foo: int
+            }
             class foo.bar.Base {
                 new {}
                 new(val i: int) {}
@@ -238,6 +247,60 @@ class GeneratorTest {
                 }
             }
         ''')
+    }
+    
+    @Test
+    def testReturn() {
+        parse('''
+            class A {
+                def pure foo: int {
+                    return 0;
+                }
+                def pure bar: {
+                    return;
+                }
+            }
+        ''', classes).generate.assertEquals('''
+            public class A extends java.lang.Object {
+                
+                public int foo() {
+                    return 0;
+                }
+                
+                public void bar() {
+                    return;
+                }
+            }
+        ''')
+    }
+    
+    @Test
+    def testExprStmt() {
+        parse('''
+            var j: int;
+            j = i;
+            new Base;
+            new Base.hashCode;
+        '''.frame, classes).generate.assertEquals('''
+            int j;
+            j = i;
+            new Base();
+            new Base().hashCode();
+        '''.frameJava)
+        
+        parse('''
+            new Object == new Object;
+            new Base.foo;
+            new Array[int](new Base.hashCode).get(new Base.hashCode);
+            -new Object.hashCode;
+        '''.frame, classes).generate.assertEquals('''
+            new java.lang.Object();
+            new java.lang.Object();
+            new Base();
+            new Base().hashCode();
+            new Base().hashCode();
+            new java.lang.Object().hashCode();
+        '''.frameJava)
     }
     
     private def generate(Program it) {

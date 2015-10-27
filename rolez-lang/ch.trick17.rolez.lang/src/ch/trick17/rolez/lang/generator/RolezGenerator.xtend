@@ -178,12 +178,13 @@ class RolezGenerator implements IGenerator {
             // Special cases for array instantiations and get
             MemberAccess case isMethodInvoke && method.isArrayGet: {
                 if(args.size != 1) throw new AssertionError
-                findSideFxExpr(args.get(0))
+                findSideFxExpr(target) + findSideFxExpr(args.get(0))
             }
             New: {
                 if(args.size != 1) throw new AssertionError
                 findSideFxExpr(args.get(0))
             }
+            MemberAccess: findSideFxExpr(target)
             default: emptyList
         }
     }
