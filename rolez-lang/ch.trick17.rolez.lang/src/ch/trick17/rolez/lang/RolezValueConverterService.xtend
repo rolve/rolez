@@ -13,11 +13,10 @@ class RolezValueConverterService extends DefaultTerminalConverters {
     def IValueConverter<Character> CHAR() {
         new IValueConverter<Character> {
             override toString(Character it) {
-                "'" + toString.convertToJavaString.replace("\\\"", "\"").replace("'", "\\'") + "'"
+                "'" + toString.convertToJavaString + "'"
             }
             override toValue(String it, INode _)  {
-                substring(1, length-1).replace("\"", "\\\"").replace("\\'", "'")
-                    .convertFromJavaString(true).charAt(0)
+                substring(1, length-1).convertFromJavaString(true).charAt(0)
             }
         }
     }

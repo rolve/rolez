@@ -298,7 +298,7 @@ class RolezGenerator implements IGenerator {
     }
     
     private def dispatch generateExpr(CharLiteral it) {
-        "'" + value.toString.convertToJavaString.replace("\\\"", "\"").replace("'", "\\'") + "'"
+        "'" + value.toString.convertToJavaString + "'"
     }
     
     private def dispatch generateExpr(NullLiteral _) {'''null'''}

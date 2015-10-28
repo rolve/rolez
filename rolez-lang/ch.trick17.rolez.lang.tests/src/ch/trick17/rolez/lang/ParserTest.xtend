@@ -1,6 +1,9 @@
 package ch.trick17.rolez.lang
 
+import ch.trick17.rolez.lang.rolez.CharLiteral
+import ch.trick17.rolez.lang.rolez.IntLiteral
 import ch.trick17.rolez.lang.rolez.Program
+import ch.trick17.rolez.lang.rolez.StringLiteral
 import javax.inject.Inject
 import org.eclipse.xtext.junit4.InjectWith
 import org.eclipse.xtext.junit4.XtextRunner
@@ -12,8 +15,6 @@ import org.junit.runner.RunWith
 import static org.hamcrest.Matchers.*
 
 import static extension org.hamcrest.MatcherAssert.assertThat
-import ch.trick17.rolez.lang.rolez.CharLiteral
-import ch.trick17.rolez.lang.rolez.StringLiteral
 
 @RunWith(XtextRunner)
 @InjectWith(RolezInjectorProvider)
@@ -74,11 +75,12 @@ class ParserTest {
     }
     
     @Test
-    def testTestCharLiteral() {
+    def testCharLiteral() {
         val program = parse('''
             task Main: {
                 'H';
                 '"';
+                '\"';
                 '\'';
                 '\\';
                 '\n';
@@ -87,14 +89,15 @@ class ParserTest {
         ''')
         (program.main.expr(0) as CharLiteral).value.assertThat(is(Character.valueOf('H')))
         (program.main.expr(1) as CharLiteral).value.assertThat(is(Character.valueOf('"')))
-        (program.main.expr(2) as CharLiteral).value.assertThat(is(Character.valueOf('\'')))
-        (program.main.expr(3) as CharLiteral).value.assertThat(is(Character.valueOf('\\')))
-        (program.main.expr(4) as CharLiteral).value.assertThat(is(Character.valueOf('\n')))
-        (program.main.expr(5) as CharLiteral).value.assertThat(is(Character.valueOf('\t')))
+        (program.main.expr(2) as CharLiteral).value.assertThat(is(Character.valueOf('"')))
+        (program.main.expr(3) as CharLiteral).value.assertThat(is(Character.valueOf('\'')))
+        (program.main.expr(4) as CharLiteral).value.assertThat(is(Character.valueOf('\\')))
+        (program.main.expr(5) as CharLiteral).value.assertThat(is(Character.valueOf('\n')))
+        (program.main.expr(6) as CharLiteral).value.assertThat(is(Character.valueOf('\t')))
     }
     
     @Test
-    def testTestStringLiteral() {
+    def testStringLiteral() {
         val program = parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.String
@@ -102,6 +105,7 @@ class ParserTest {
                 "Hello World!";
                 "\"";
                 "'";
+                "\'";
                 "\\";
                 "\n\n";
                 "\t";
@@ -110,8 +114,24 @@ class ParserTest {
         (program.main.expr(0) as StringLiteral).value.assertThat(is("Hello World!"))
         (program.main.expr(1) as StringLiteral).value.assertThat(is("\""))
         (program.main.expr(2) as StringLiteral).value.assertThat(is("'"))
-        (program.main.expr(3) as StringLiteral).value.assertThat(is("\\"))
-        (program.main.expr(4) as StringLiteral).value.assertThat(is("\n\n"))
-        (program.main.expr(5) as StringLiteral).value.assertThat(is("\t"))
+        (program.main.expr(3) as StringLiteral).value.assertThat(is("'"))
+        (program.main.expr(4) as StringLiteral).value.assertThat(is("\\"))
+        (program.main.expr(5) as StringLiteral).value.assertThat(is("\n\n"))
+        (program.main.expr(6) as StringLiteral).value.assertThat(is("\t"))
+    }
+    
+    @Test
+    def testIntLiteral() {
+        val program = parse('''
+            task Main: {
+                0;
+                42;
+                «Integer.MAX_VALUE»;
+            }
+        ''')
+        (program.main.expr(0) as IntLiteral).value.assertThat(is(0));
+        (program.main.expr(1) as IntLiteral).value.assertThat(is(42));
+        (program.main.expr(2) as IntLiteral).value.assertThat(is(Integer.MAX_VALUE));
+        // IMPROVE: Support for Integer.MIN_VALUE
     }
 }
