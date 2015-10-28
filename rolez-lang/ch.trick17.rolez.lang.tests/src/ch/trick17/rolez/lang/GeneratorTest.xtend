@@ -28,12 +28,18 @@ class GeneratorTest {
     def classes() {
         newResourceSet.with('''
             mapped class rolez.lang.Object {
+                mapped def readonly equals(val o: readonly Object): boolean
                 mapped def readonly hashCode: int
+                mapped def readonly toString: pure String
+            }
+            mapped class rolez.lang.String {
+                mapped def pure length: int
+                mapped def pure substring(val b: int, val e: int): pure String
             }
             mapped class rolez.lang.Array[T] {
                 mapped new(val i: int)
-                mapped def readonly get(val i: int)
-                mapped def readonly set(val i: int, val o: T)
+                mapped def readonly  get(val i: int): T
+                mapped def readwrite set(val i: int, val o: T):
             }
             class Base {
                 var foo: int
@@ -177,11 +183,11 @@ class GeneratorTest {
             var j: int;
             var k: int = 4;
             val a: pure A = null;
-        '''.frame, classes).generate.assertEquals('''
+        '''.withFrame, classes).generate.assertEquals('''
             int j;
             int k = 4;
             final A a = null;
-        '''.frameJava)
+        '''.withJavaFrame)
     }
     
     @Test
@@ -191,22 +197,22 @@ class GeneratorTest {
                 this.bar;
             else
                 this.bar;
-        '''.frame, classes).generate.assertEquals('''
+        '''.withFrame, classes).generate.assertEquals('''
             if(b)
                 this.bar();
             else
                 this.bar();
-        '''.frameJava)
+        '''.withJavaFrame)
         
         parse('''
             if(b) {
                 this.bar;
             }
-        '''.frame, classes).generate.assertEquals('''
+        '''.withFrame, classes).generate.assertEquals('''
             if(b) {
                 this.bar();
             }
-        '''.frameJava)
+        '''.withJavaFrame)
     }
     
     @Test
@@ -214,10 +220,10 @@ class GeneratorTest {
         parse('''
             while(b)
                 this.bar;
-        '''.frame, classes).generate.assertEquals('''
+        '''.withFrame, classes).generate.assertEquals('''
             while(b)
                 this.bar();
-        '''.frameJava)
+        '''.withJavaFrame)
     }
     
     @Test
@@ -281,26 +287,128 @@ class GeneratorTest {
             j = i;
             new Base;
             new Base.hashCode;
-        '''.frame, classes).generate.assertEquals('''
+        '''.withFrame, classes).generate.assertEquals('''
             int j;
             j = i;
             new Base();
             new Base().hashCode();
-        '''.frameJava)
+        '''.withJavaFrame)
         
         parse('''
             new Object == new Object;
             new Base.foo;
             new Array[int](new Base.hashCode).get(new Base.hashCode);
             -new Object.hashCode;
-        '''.frame, classes).generate.assertEquals('''
+        '''.withFrame, classes).generate.assertEquals('''
             new java.lang.Object();
             new java.lang.Object();
             new Base();
             new Base().hashCode();
             new Base().hashCode();
             new java.lang.Object().hashCode();
-        '''.frameJava)
+        '''.withJavaFrame)
+    }
+    
+    @Test
+    def testAssignment() {
+        parse('''
+            var j: int;
+            j = i;
+            new Base.foo = j = 42;
+            j = 2 + 2;
+        '''.withFrame, classes).generate.assertEquals('''
+            int j;
+            j = i;
+            new Base().foo = j = 42;
+            j = 2 + 2;
+        '''.withJavaFrame)
+    }
+    
+    @Test
+    def testBinaryExpr() {
+        parse('''
+            var c: boolean = true || new Base.equals(new Base);
+            var d: boolean = b && false || true;
+            var e: boolean = true && (b || true);
+            var f: boolean = 2 < 3 || 3 < i;
+            
+            var j: int = 3 + 3 + 3;
+            var k: int = 3 - 2 - 1;
+            var l: int = 3 - (2 - 1);
+            var m: int = (1 + 2) * (3 + 4);
+        '''.withFrame, classes).generate.assertEquals('''
+            boolean c = true || new Base().equals(new Base());
+            boolean d = (b && false) || true;
+            boolean e = true && (b || true);
+            boolean f = (2 < 3) || (3 < i);
+            int j = (3 + 3) + 3;
+            int k = (3 - 2) - 1;
+            int l = 3 - (2 - 1);
+            int m = (1 + 2) * (3 + 4);
+        '''.withJavaFrame)
+    }
+    
+    @Test
+    def testCast() {
+        parse('''
+            var o: pure Object = new Base as readonly Object;
+            o = ("Hi " + "World!") as readonly Object;
+        '''.withFrame, classes).generate.assertEquals('''
+            java.lang.Object o = (java.lang.Object) new Base();
+            o = (java.lang.Object) ("Hi " + "World!");
+        '''.withJavaFrame)
+    }
+    
+    @Test
+    def testUnaryExpr() {
+        parse('''
+            var c: boolean = !false;
+            var d: boolean = !(b && false);
+            var e: boolean = !new Base.equals(new Base);
+            
+            var j: int = -3;
+            var k: int = -(3 - 2);
+            var l: int = -new Base.hashCode;
+        '''.withFrame, classes).generate.assertEquals('''
+            boolean c = !false;
+            boolean d = !(b && false);
+            boolean e = !new Base().equals(new Base());
+            int j = -3;
+            int k = -(3 - 2);
+            int l = -new Base().hashCode();
+        '''.withJavaFrame)
+    }
+    
+    @Test
+    def testMemberAccess() {
+        parse('''
+            "Hello".toString.length;
+            "Hello".equals("Hi");
+            ("Hello " + "World!").length;
+            (new Base as readonly Object).hashCode;
+            "Hello".substring(1, 3);
+            this.bar;
+            
+            var a: readwrite Array[int] = new Array[int](2);
+            a.set(0, 42);
+            var j: int = a.get(0);
+            var aa: readwrite Array[readwrite Array[int]] = new Array[readwrite Array[int]](1);
+            aa.set(0, a);
+            var l: int = aa.get(0).get(0);
+        '''.withFrame, classes).generate.assertEquals('''
+            "Hello".toString().length();
+            "Hello".equals("Hi");
+            ("Hello " + "World!").length();
+            ((java.lang.Object) new Base()).hashCode();
+            "Hello".substring(1, 3);
+            this.bar();
+            int[] a = new int[2];
+            a[0] = 42;
+            int j = a[0];
+            int[][] aa = new int[1][];
+            aa[0] = a;
+            int l = aa[0][0];
+        '''.withJavaFrame)
     }
     
     private def generate(Program it) {
@@ -312,7 +420,7 @@ class GeneratorTest {
         fsa.textFiles.values.head
     }
     
-    private def frame(CharSequence it) {'''
+    private def withFrame(CharSequence it) {'''
         class A {
             def readwrite foo(val i: int, val b: boolean): {
                 «it»
@@ -321,7 +429,7 @@ class GeneratorTest {
         }
     '''}
     
-    private def frameJava(CharSequence it) {'''
+    private def withJavaFrame(CharSequence it) {'''
         public class A extends java.lang.Object {
             
             public void foo(final int i, final boolean b) {

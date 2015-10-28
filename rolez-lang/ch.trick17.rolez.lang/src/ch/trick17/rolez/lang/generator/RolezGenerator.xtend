@@ -195,6 +195,12 @@ class RolezGenerator implements IGenerator {
     
     private def CharSequence gen(Expr it) { generateExpr }
     
+    private def dispatch CharSequence genNested(Assignment it) { gen }
+    private def dispatch CharSequence genNested(BinaryExpr it) { "(" + gen + ")" }
+    private def dispatch CharSequence genNested( UnaryExpr it) { "(" + gen + ")" }
+    private def dispatch CharSequence genNested(      Cast it) { "(" + gen + ")" }
+    private def dispatch CharSequence genNested(      Expr it) { gen }
+    
     private def dispatch generateExpr(Assignment it) {
         '''«left.gen» = «right.gen»'''
     }
@@ -206,19 +212,19 @@ class RolezGenerator implements IGenerator {
             RelationalExpr: op
             ArithmeticBinaryExpr: op
         }
-        '''«left.gen» «op» («right.gen»)'''
+        '''«left.genNested» «op» «right.genNested»'''
     }
     
     private def dispatch generateExpr(Cast it) {
-        '''((«type.gen») «expr.gen»)'''
+        '''(«type.gen») «expr.genNested»'''
     }
     
     private def dispatch generateExpr(UnaryMinus it) {
-        '''-(«expr.gen»)'''
+        '''-«expr.genNested»'''
     }
     
     private def dispatch generateExpr(UnaryNot it) {
-        '''!(«expr.gen»)'''
+        '''!«expr.genNested»'''
     }
     
     private def dispatch generateExpr(MemberAccess it) {
@@ -229,9 +235,9 @@ class RolezGenerator implements IGenerator {
             case isMethodInvoke && method.isArraySet:
                 '''«target.gen»[«args.get(0).gen»] = «args.get(1).gen»'''
             case isMethodInvoke:
-                '''«target.gen».«method.name»(«args.map[gen].join(", ")»)'''
+                '''«target.genNested».«method.name»(«args.map[gen].join(", ")»)'''
             case isFieldAccess:
-                '''«target.gen».«field.name»'''
+                '''«target.genNested».«field.name»'''
         }
     }
     
