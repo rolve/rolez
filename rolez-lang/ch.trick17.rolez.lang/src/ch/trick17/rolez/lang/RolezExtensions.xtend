@@ -15,6 +15,7 @@ import ch.trick17.rolez.lang.rolez.LocalVar
 import ch.trick17.rolez.lang.rolez.Member
 import ch.trick17.rolez.lang.rolez.MemberAccess
 import ch.trick17.rolez.lang.rolez.Method
+import ch.trick17.rolez.lang.rolez.NormalClass
 import ch.trick17.rolez.lang.rolez.Null
 import ch.trick17.rolez.lang.rolez.ParameterizedBody
 import ch.trick17.rolez.lang.rolez.PrimitiveType
@@ -23,6 +24,7 @@ import ch.trick17.rolez.lang.rolez.Role
 import ch.trick17.rolez.lang.rolez.RoleType
 import ch.trick17.rolez.lang.rolez.RolezFactory
 import ch.trick17.rolez.lang.rolez.SimpleClassRef
+import ch.trick17.rolez.lang.rolez.SingletonClass
 import ch.trick17.rolez.lang.rolez.Stmt
 import ch.trick17.rolez.lang.rolez.Task
 import ch.trick17.rolez.lang.rolez.Type
@@ -62,9 +64,13 @@ class RolezExtensions {
         nameProvider.getFullyQualifiedName(it).lastSegment
     }
     
-    def Iterable<Constr> allConstrs(Class it) {
+    def dispatch Iterable<Constr> allConstrs(NormalClass it) {
         if(!constrs.isEmpty) constrs
         else #[RolezFactory.eINSTANCE.createConstr]
+    }
+    
+    def dispatch Iterable<Constr> allConstrs(SingletonClass it) {
+        emptyList
     }
     
     def Iterable<Member> allMembers(Class it) {
@@ -72,6 +78,9 @@ class RolezExtensions {
             if(actualSuperclass == null) emptyList
             else actualSuperclass.allMembers.filter[m | !overrides(m)]
     }
+    
+    def dispatch clazz( SimpleClassRef it) { clazz }
+    def dispatch clazz(GenericClassRef it) { clazz } 
     
     private def overrides(Class it, Member m) {
         switch(m) {

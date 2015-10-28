@@ -24,6 +24,7 @@ import ch.trick17.rolez.lang.rolez.LogicalExpr
 import ch.trick17.rolez.lang.rolez.MemberAccess
 import ch.trick17.rolez.lang.rolez.Method
 import ch.trick17.rolez.lang.rolez.New
+import ch.trick17.rolez.lang.rolez.NormalClass
 import ch.trick17.rolez.lang.rolez.Null
 import ch.trick17.rolez.lang.rolez.NullLiteral
 import ch.trick17.rolez.lang.rolez.Param
@@ -35,6 +36,7 @@ import ch.trick17.rolez.lang.rolez.ReturnExpr
 import ch.trick17.rolez.lang.rolez.ReturnNothing
 import ch.trick17.rolez.lang.rolez.RoleType
 import ch.trick17.rolez.lang.rolez.SimpleClassRef
+import ch.trick17.rolez.lang.rolez.SingletonClass
 import ch.trick17.rolez.lang.rolez.Start
 import ch.trick17.rolez.lang.rolez.Stmt
 import ch.trick17.rolez.lang.rolez.StringLiteral
@@ -45,6 +47,7 @@ import ch.trick17.rolez.lang.rolez.TypeParamRef
 import ch.trick17.rolez.lang.rolez.UnaryExpr
 import ch.trick17.rolez.lang.rolez.UnaryMinus
 import ch.trick17.rolez.lang.rolez.UnaryNot
+import ch.trick17.rolez.lang.rolez.VarKind
 import ch.trick17.rolez.lang.rolez.VarRef
 import ch.trick17.rolez.lang.rolez.WhileLoop
 import ch.trick17.rolez.lang.typesystem.RolezUtils
@@ -58,7 +61,6 @@ import static ch.trick17.rolez.lang.Constants.*
 import static ch.trick17.rolez.lang.rolez.VarKind.VAL
 
 import static extension org.eclipse.xtext.util.Strings.convertToJavaString
-import ch.trick17.rolez.lang.rolez.VarKind
 
 class RolezGenerator implements IGenerator {
     
@@ -75,7 +77,7 @@ class RolezGenerator implements IGenerator {
         val program = resource.contents.head as Program
         for (c : program.classes.filter[!mapped]) {
             val name = c.qualifiedName.segments.join(File.separator) + ".java"
-            fsa.generateFile(name, c.generate(program))
+            fsa.generateFile(name, c.generateClass)
         }
     }
     
@@ -83,7 +85,7 @@ class RolezGenerator implements IGenerator {
      * Class and members
      */
     
-    private def generate(Class it, Program p) {'''
+    private def dispatch generateClass(NormalClass it) {'''
         «if(!package.isEmpty)
         '''
         package «package»;
@@ -95,6 +97,10 @@ class RolezGenerator implements IGenerator {
             «methods.map[gen].join»
         }
     '''}
+    
+    private def dispatch generateClass(SingletonClass it) {
+        // TODO
+    }
     
     private def gen(Field it) {'''
         public «kind.gen»«type.gen» «name»;

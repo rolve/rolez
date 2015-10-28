@@ -10,6 +10,7 @@ import ch.trick17.rolez.lang.rolez.Expr
 import ch.trick17.rolez.lang.rolez.MemberAccess
 import ch.trick17.rolez.lang.rolez.Method
 import ch.trick17.rolez.lang.rolez.New
+import ch.trick17.rolez.lang.rolez.NormalClass
 import ch.trick17.rolez.lang.rolez.ParameterizedBody
 import ch.trick17.rolez.lang.rolez.Role
 import ch.trick17.rolez.lang.rolez.RolezFactory
@@ -59,7 +60,7 @@ class RolezUtils {
         result
     }
     
-    def newClassRef(Class c, Type arg) {
+    def newClassRef(NormalClass c, Type arg) {
         if(arg.eContainer != null)
             throw new IllegalArgumentException("arg must not be contained")
         
@@ -93,8 +94,13 @@ class RolezUtils {
     }
     
     def findClass(QualifiedName name, EObject context) {
-        scopeProvider.getScope(context, CLASS__SUPERCLASS)
+        scopeProvider.getScope(context, SIMPLE_CLASS_REF__CLAZZ)
             .getSingleElement(name)?.EObjectOrProxy?.resolve(context) as Class
+    }
+    
+    def findNormalClass(QualifiedName name, EObject context) {
+        scopeProvider.getScope(context, GENERIC_CLASS_REF__CLAZZ)
+            .getSingleElement(name)?.EObjectOrProxy?.resolve(context) as NormalClass
     }
     
     /**

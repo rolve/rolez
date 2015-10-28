@@ -6,6 +6,7 @@ import ch.trick17.rolez.lang.rolez.ClassRef
 import ch.trick17.rolez.lang.rolez.Expr
 import ch.trick17.rolez.lang.rolez.ExprStmt
 import ch.trick17.rolez.lang.rolez.GenericClassRef
+import ch.trick17.rolez.lang.rolez.NormalClass
 import ch.trick17.rolez.lang.rolez.ParameterizedBody
 import ch.trick17.rolez.lang.rolez.PrimitiveType
 import ch.trick17.rolez.lang.rolez.Program
@@ -66,6 +67,21 @@ class TestUtilz {
     def findClass(Program program, QualifiedName name) {
         program.assertNoErrors
         val result = program.classes.findFirst[qualifiedName == name]
+        result.assertThat(notNullValue)
+        result
+    }
+    
+    def findNormalClass(Program program, String name) {
+        program.assertNoErrors
+        name.assertThat(not(containsString(".")))
+        val result = program.classes.filter(NormalClass).findFirst[it.name == name]
+        result.assertThat(notNullValue)
+        result
+    }
+    
+    def findNormalClass(Program program, QualifiedName name) {
+        program.assertNoErrors
+        val result = program.classes.filter(NormalClass).findFirst[qualifiedName == name]
         result.assertThat(notNullValue)
         result
     }

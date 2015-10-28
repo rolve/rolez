@@ -2,6 +2,7 @@ package ch.trick17.rolez.lang
 
 import ch.trick17.rolez.lang.rolez.CharLiteral
 import ch.trick17.rolez.lang.rolez.IntLiteral
+import ch.trick17.rolez.lang.rolez.NormalClass
 import ch.trick17.rolez.lang.rolez.Program
 import ch.trick17.rolez.lang.rolez.StringLiteral
 import javax.inject.Inject
@@ -32,7 +33,7 @@ class ParserTest {
         program.elements.size.assertThat(is(1))
         program.classes.size.assertThat(is(1))
         
-        val clazz = program.classes.head
+        val clazz = program.classes.head as NormalClass
         clazz.name.assertThat(is("rolez.lang.Object"))
         clazz.superclass.assertThat(is(nullValue))
         clazz.members.assertThat(empty)

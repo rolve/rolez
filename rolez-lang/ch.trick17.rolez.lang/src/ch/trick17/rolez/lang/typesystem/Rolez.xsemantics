@@ -37,8 +37,10 @@ import ch.trick17.rolez.lang.rolez.Start
 import ch.trick17.rolez.lang.rolez.Stmt
 import ch.trick17.rolez.lang.rolez.StringLiteral
 import ch.trick17.rolez.lang.rolez.SuperConstrCall
+import ch.trick17.rolez.lang.rolez.System
 import ch.trick17.rolez.lang.rolez.This
 import ch.trick17.rolez.lang.rolez.Type
+import ch.trick17.rolez.lang.rolez.TypeParam
 import ch.trick17.rolez.lang.rolez.TypeParamRef
 import ch.trick17.rolez.lang.rolez.TypedBody
 import ch.trick17.rolez.lang.rolez.UnaryMinus
@@ -47,6 +49,8 @@ import ch.trick17.rolez.lang.rolez.VarKind
 import ch.trick17.rolez.lang.rolez.VarRef
 import ch.trick17.rolez.lang.rolez.WhileLoop
 import ch.trick17.rolez.lang.validation.AbstractRolezValidator
+import it.xsemantics.runtime.RuleEnvironment
+import java.util.Map
 import java.util.Set
 
 import static ch.trick17.rolez.lang.Constants.*
@@ -54,9 +58,6 @@ import static ch.trick17.rolez.lang.rolez.Role.*
 import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
 
 import static extension org.eclipse.emf.ecore.util.EcoreUtil.copy
-import ch.trick17.rolez.lang.rolez.TypeParam
-import java.util.Map
-import it.xsemantics.runtime.RuleEnvironment
 
 system ch.trick17.rolez.lang.typesystem.RolezSystem
 
@@ -274,6 +275,15 @@ from {
     type = env(G, "this", RoleType)
 }
 
+rule TSystem
+    G |- System s : Type t
+    error "rolez.lang.System class is not defined" source s
+from {
+    val systemClass = findClass(systemClassName, s)
+    systemClass != null
+    t = newRoleType(READONLY, newClassRef(systemClass))
+}
+
 axiom TVarRef
     G |- VarRef r : r.variable.type
 
@@ -296,7 +306,7 @@ rule TStart
     G |- Start s : Type t
     error "rolez.lang.Task class is not defined" source s
 from {
-    val taskClass = findClass(taskClassName, s)
+    val taskClass = findNormalClass(taskClassName, s)
     taskClass != null
     G |- s << s.taskRef.task
     t = newRoleType(PURE, newClassRef(taskClass, s.taskRef.task.type.copy))

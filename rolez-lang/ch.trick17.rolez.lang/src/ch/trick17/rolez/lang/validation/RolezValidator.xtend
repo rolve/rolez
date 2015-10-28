@@ -22,6 +22,7 @@ import ch.trick17.rolez.lang.rolez.LocalVar
 import ch.trick17.rolez.lang.rolez.LocalVarDecl
 import ch.trick17.rolez.lang.rolez.MemberAccess
 import ch.trick17.rolez.lang.rolez.Method
+import ch.trick17.rolez.lang.rolez.NormalClass
 import ch.trick17.rolez.lang.rolez.Null
 import ch.trick17.rolez.lang.rolez.ParameterizedBody
 import ch.trick17.rolez.lang.rolez.PrimitiveType
@@ -29,6 +30,7 @@ import ch.trick17.rolez.lang.rolez.Program
 import ch.trick17.rolez.lang.rolez.ReturnExpr
 import ch.trick17.rolez.lang.rolez.RoleType
 import ch.trick17.rolez.lang.rolez.SimpleClassRef
+import ch.trick17.rolez.lang.rolez.SingletonClass
 import ch.trick17.rolez.lang.rolez.SuperConstrCall
 import ch.trick17.rolez.lang.rolez.This
 import ch.trick17.rolez.lang.rolez.Type
@@ -131,10 +133,10 @@ class RolezValidator extends RolezSystemValidator {
     }
     
     @Check
-    def checkTypeParam(Class it) {
+    def checkTypeParam(NormalClass it) {
         if(qualifiedName != arrayClassName && typeParam != null)
             error("Only " + arrayClassName + " may declare a type parameter",
-                CLASS__TYPE_PARAM, INCORRECT_TYPE_PARAM)
+                NORMAL_CLASS__TYPE_PARAM, INCORRECT_TYPE_PARAM)
     }
     
     private def boolean findSuperclass(Class it, Class c) {
@@ -184,7 +186,7 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkNoDuplicateConstrs(Constr it) {
-        val matching = enclosingClass.constrs.filter[c | utils.equalParams(c, it)]
+        val matching = enclosingClass.allConstrs.filter[c | utils.equalParams(c, it)]
         if(matching.size < 1)
            throw new AssertionError
         if(matching.size > 1)
@@ -263,9 +265,9 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkSimpleClassRef(SimpleClassRef it) {
-        if(clazz.typeParam != null)
+        if(clazz instanceof NormalClass && (clazz as NormalClass).typeParam != null)
             error("Class " + clazz.name + " takes a type argument",
-                CLASS_REF__CLAZZ, MISSING_TYPE_ARG)
+                SIMPLE_CLASS_REF__CLAZZ, MISSING_TYPE_ARG)
     }
     
     @Check
@@ -277,7 +279,11 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkValFieldInitialized(Field it) {
-        if(kind == VAL && enclosingClass.constrs.isEmpty)
+        if(kind != VAL) return;
+        
+        val clazz = enclosingClass
+        if(clazz instanceof NormalClass && (clazz as NormalClass).constrs.isEmpty
+                || clazz instanceof SingletonClass)
             error("Value field " + name + " is not initialized",
                 null, VAL_FIELD_NOT_INITIALIZED)
     }
@@ -365,9 +371,11 @@ class RolezValidator extends RolezSystemValidator {
     }
     
     @Check
-    def checkSuperConstrCall(Class it) {
-        val superConstr = actualSuperclass.allConstrs
-        if(superConstr.filter[params.isEmpty].isEmpty && constrs.isEmpty)
+    def checkSuperConstrCall(NormalClass it) {
+        if(actualSuperclass == null) return;
+        
+        val superConstrs = actualSuperclass.allConstrs
+        if(superConstrs.filter[params.isEmpty].isEmpty && constrs.isEmpty)
             error("Missing super constructor call", NAMED__NAME, MISSING_SUPER_CONSTR_CALL)
     }
     
@@ -494,7 +502,7 @@ class RolezValidator extends RolezSystemValidator {
     }
     
     @Check
-    def checkObjectClass(Class it) {
+    def checkObjectClass(NormalClass it) {
         if(qualifiedName != objectClassName) return;
         
         if(superclass != null)
@@ -503,7 +511,7 @@ class RolezValidator extends RolezSystemValidator {
     }
     
     @Check
-    def checkStringClass(Class it) {
+    def checkStringClass(NormalClass it) {
         if(qualifiedName != stringClassName) return;
         
         if(actualSuperclass.qualifiedName != objectClassName)
@@ -512,7 +520,7 @@ class RolezValidator extends RolezSystemValidator {
     }
     
     @Check
-    def checkArrayClass(Class it) {
+    def checkArrayClass(NormalClass it) {
         if(qualifiedName != arrayClassName) return;
         
         if(actualSuperclass.qualifiedName != objectClassName)
@@ -553,41 +561,41 @@ class RolezValidator extends RolezSystemValidator {
             error("Unknown mapped field " + name, it, NAMED__NAME, UNKNOWN_MAPPED_FIELD)
         ]
         
-        methods.filter[name == "get"].forEach[
-            if(!mapped)
-                error("This method must be declared as mapped", it,
+        methods.filter[name == "get"].forEach[m |
+            if(!m.mapped)
+                error("This method must be declared as mapped", m,
                     NAMED__NAME, INCORRECT_MAPPED_METHOD)
-            val type = type
+            val type = m.type
             switch(type) {
-                TypeParamRef case type.param == enclosingClass.typeParam: {}
+                TypeParamRef case type.param == typeParam: {}
                 default: error("The return type of this method must be "
-                    + enclosingClass.typeParam.name, it, NAMED__NAME, INCORRECT_MAPPED_METHOD)
+                    + typeParam.name, m, NAMED__NAME, INCORRECT_MAPPED_METHOD)
             }
-            if(params.size != 1)
-                error("This method must have a single int parameter", it,
+            if(m.params.size != 1)
+                error("This method must have a single int parameter", m,
                     NAMED__NAME, INCORRECT_MAPPED_METHOD)
-            else if(!(params.head.type instanceof Int))
-                error("This parameter's type must be int", params.head.type,
+            else if(!(m.params.head.type instanceof Int))
+                error("This parameter's type must be int", m.params.head.type,
                     null, INCORRECT_MAPPED_METHOD)
         ]
-        methods.filter[name == "set"].forEach[
-            if(!mapped)
-                error("This method must be declared as mapped", it,
+        methods.filter[name == "set"].forEach[m |
+            if(!m.mapped)
+                error("This method must be declared as mapped", m,
                     NAMED__NAME, INCORRECT_MAPPED_METHOD)
-            if(!(type instanceof Void))
-                error("The return type of this method must be void", type,
+            if(!(m.type instanceof Void))
+                error("The return type of this method must be void", m.type,
                     null, INCORRECT_MAPPED_METHOD)
             
-            if(params.size != 2)
-                error("This method must have two parameters", it,
+            if(m.params.size != 2)
+                error("This method must have two parameters", m,
                     NAMED__NAME, INCORRECT_MAPPED_METHOD)
             else {
-                if(!(params.get(0).type instanceof Int))
-                    error("This parameter's type must be int", params.get(0).type,
+                if(!(m.params.get(0).type instanceof Int))
+                    error("This parameter's type must be int", m.params.get(0).type,
                         null, INCORRECT_MAPPED_METHOD)
-                if(!(params.get(1).type instanceof TypeParamRef))
-                    error("This parameter's type must be " + enclosingClass.typeParam.name,
-                        params.get(1).type, null, INCORRECT_MAPPED_METHOD)
+                if(!(m.params.get(1).type instanceof TypeParamRef))
+                    error("This parameter's type must be " + typeParam.name,
+                        m.params.get(1).type, null, INCORRECT_MAPPED_METHOD)
             }
         ]
         methods.filter[isMapped && name != "get" && name != "set"].forEach[
@@ -596,7 +604,7 @@ class RolezValidator extends RolezSystemValidator {
     }
     
     @Check
-    def checkTaskClass(Class it) {
+    def checkTaskClass(NormalClass it) {
         if(qualifiedName != taskClassName) return;
         
         if(actualSuperclass.qualifiedName != objectClassName)
@@ -604,6 +612,8 @@ class RolezValidator extends RolezSystemValidator {
                CLASS__SUPERCLASS, INCORRECT_MAPPED_SUPERCLASS)
         // TODO: Check (mapped) members
     }
+    
+    // TODO: Check System class
     
     /*
 	 * Delayed errors

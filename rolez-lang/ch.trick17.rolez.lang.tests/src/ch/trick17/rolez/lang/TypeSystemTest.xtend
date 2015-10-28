@@ -334,9 +334,9 @@ class TypeSystemTest {
         program.main.expr(3).type.assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
         program.main.expr(4).type.assertThat(isRoleType(READONLY,  newClassRef(program.findClass("A"))))
         program.main.expr(5).type.assertThat(isRoleType(READONLY,
-                newClassRef(program.findClass(arrayClassName), newIntType)))
+                newClassRef(program.findNormalClass(arrayClassName), newIntType)))
         program.main.expr(6).type.assertThat(isRoleType(READONLY,
-            newClassRef(program.findClass(arrayClassName), newRoleType(PURE, newClassRef(program.findClass("A"))))))
+            newClassRef(program.findNormalClass(arrayClassName), newRoleType(PURE, newClassRef(program.findClass("A"))))))
         
         // Downcasts
         program = parse('''
@@ -927,7 +927,7 @@ class TypeSystemTest {
                 new { this; }
             }
         ''')
-        program.findClass("A").constrs.head.lastExpr.type
+        program.findNormalClass("A").constrs.head.lastExpr.type
             .assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
     }
     
@@ -988,7 +988,7 @@ class TypeSystemTest {
             task Main: { new Array[int](100); }
         ''')
         program.main.lastExpr.type
-            .assertThat(isRoleType(READWRITE, newClassRef(program.findClass(arrayClassName), newIntType)))
+            .assertThat(isRoleType(READWRITE, newClassRef(program.findNormalClass(arrayClassName), newIntType)))
         
         program = parse('''
             mapped class rolez.lang.Object
@@ -999,7 +999,7 @@ class TypeSystemTest {
             task Main: { new Array[readonly A](10); }
         ''')
         program.main.lastExpr.type
-            .assertThat(isRoleType(READWRITE, newClassRef(program.findClass(arrayClassName),
+            .assertThat(isRoleType(READWRITE, newClassRef(program.findNormalClass(arrayClassName),
                 newRoleType(READONLY, newClassRef(program.findClass("A"))))))
         
         program = parse('''
@@ -1010,7 +1010,7 @@ class TypeSystemTest {
             }
             task Main: { new Array[pure Array[readwrite A]](1000); }
         ''')
-        val array = program.findClass(arrayClassName)
+        val array = program.findNormalClass(arrayClassName)
         program.main.lastExpr.type
             .assertThat(isRoleType(READWRITE, newClassRef(array,
                 newRoleType(PURE, newClassRef(array,
@@ -1151,7 +1151,7 @@ class TypeSystemTest {
             task Main: { start T; }
         ''')
         program.main.lastExpr.type
-            .assertThat(isRoleType(PURE, newClassRef(program.findClass(taskClassName), newIntType)))
+            .assertThat(isRoleType(PURE, newClassRef(program.findNormalClass(taskClassName), newIntType)))
         
         program = parse('''
             mapped class rolez.lang.Object
@@ -1160,7 +1160,7 @@ class TypeSystemTest {
             task Main: { start T; }
         ''')
         program.main.lastExpr.type
-            .assertThat(isRoleType(PURE, newClassRef(program.findClass(taskClassName), newVoidType)))
+            .assertThat(isRoleType(PURE, newClassRef(program.findNormalClass(taskClassName), newVoidType)))
         
         program = parse('''
             mapped class rolez.lang.Object
@@ -1170,7 +1170,7 @@ class TypeSystemTest {
             task Main: { start T; }
         ''')
         program.main.lastExpr.type
-            .assertThat(isRoleType(PURE, newClassRef(program.findClass(taskClassName),
+            .assertThat(isRoleType(PURE, newClassRef(program.findNormalClass(taskClassName),
                 newRoleType(READWRITE, newClassRef(program.findClass("A"))))))
         
         parse('''

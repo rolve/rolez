@@ -22,11 +22,21 @@ ClassLike:
     Class | Task;
 
 Class:
+    NormalClass | SingletonClass;
+
+NormalClass:
     mapped?='mapped'? 'class' name=QualifiedName
     ('[' typeParam=TypeParam ']')?
-    ('extends' superclass=[Class|QualifiedName])?
+    ('extends' superclass=[NormalClass|QualifiedName])?
     ('{'
         (constrs+=Constr | members+=Member)+
+    '}')?;
+
+SingletonClass:
+    mapped?='mapped'? 'object' name=QualifiedName
+    ('extends' superclass=[NormalClass|QualifiedName])
+    ('{'
+        members+=Member+
     '}')?;
 
 Task:
@@ -146,16 +156,17 @@ MemberAccess returns Expr:
     // TODO: Allow member accesses without "this"
 
 SimpleExpr returns Expr:
-    {This} 'this' | VarRef | New | Start | Parenthesized | Literal;
+    {This} 'this' | {System} 'system' | VarRef | New | Start | Parenthesized | Literal;
 
-VarRef: variable=[Var];
+VarRef:
+    variable=[Var];
 
 // The mess begins here: this rule is necessary for feature normalization
 // to work for the Argumented interface. And it needs to be here...
 ArgsOnly: args+=Expr;
 
 New:
-    'new' classRef=UnambiguousClassRef ('(' args+=Expr (',' args+=Expr)* ')')?;
+    'new' classRef=NewClassRef ('(' args+=Expr (',' args+=Expr)* ')')?;
 
 Start:
     'start' taskRef=TaskRef ('(' args+=Expr (',' args+=Expr)* ')')?;
@@ -211,11 +222,11 @@ SimpleClassRef:
     clazz=[Class|QualifiedName];
 
 GenericClassRef:
-    clazz=[Class|QualifiedName] '[' typeArg=Type ']';
+    clazz=[NormalClass|QualifiedName] '[' typeArg=Type ']';
 
-UnambiguousClassRef returns ClassRef:
-    {SimpleClassRef} '(' clazz=[Class|QualifiedName] ')'
-    | {SimpleClassRef} clazz=[Class]
+NewClassRef returns ClassRef:
+    {SimpleClassRef} '(' clazz=[NormalClass|QualifiedName] ')'
+    | {SimpleClassRef} clazz=[NormalClass]
     | GenericClassRef;
 
 TaskRef:
