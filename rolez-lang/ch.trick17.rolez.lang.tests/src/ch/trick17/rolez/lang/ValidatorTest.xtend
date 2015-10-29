@@ -19,8 +19,7 @@ class ValidatorTest {
     @Inject extension ParseHelper<Program>
     @Inject extension ValidationTestHelper
     
-    @Test
-    def testObjectExists() {
+    @Test def testObjectExists() {
         parse('''
             mapped class rolez.lang.Object
             class A
@@ -29,8 +28,7 @@ class ValidatorTest {
         parse("class A").assertError(CLASS, OBJECT_CLASS_NOT_DEFINED)
     }
     
-    @Test
-    def testDuplicateTopLevelElems() {
+    @Test def testDuplicateTopLevelElems() {
         parse('''
             mapped class rolez.lang.Object
             class A
@@ -50,8 +48,7 @@ class ValidatorTest {
         program.assertError(TASK, DUPLICATE_TOP_LEVEL_ELEMENT)
     }
     
-    @Test
-    def testCircularInheritance() {
+    @Test def testCircularInheritance() {
         parse('''
             class A extends A
         ''').assertError(CLASS, CIRCULAR_INHERITANCE)
@@ -67,16 +64,14 @@ class ValidatorTest {
         ''').assertError(CLASS, CIRCULAR_INHERITANCE)
     }
     
-    @Test
-    def checkTypeParam() {
+    @Test def checkTypeParam() {
         parse('''
             class rolez.lang.Object
             class A[T]
         ''').assertError(CLASS, INCORRECT_TYPE_PARAM)
     }
     
-    @Test
-    def testOverride() {
+    @Test def testOverride() {
         parse('''
             mapped class rolez.lang.Object
             class A {                def readwrite foo: {} }
@@ -110,8 +105,7 @@ class ValidatorTest {
         ''').assertNoErrors
     }
     
-    @Test
-    def testMissingOverride() {
+    @Test def testMissingOverride() {
         parse('''
             mapped class rolez.lang.Object
             class A {           def readwrite foo: {} }
@@ -144,8 +138,7 @@ class ValidatorTest {
         ''').assertError(METHOD, MISSING_OVERRIDE)
     }
     
-    @Test
-    def testIncorrectOverride() {
+    @Test def testIncorrectOverride() {
         parse('''
             mapped class rolez.lang.Object
             class A {                def readonly  foo: {} }
@@ -183,8 +176,7 @@ class ValidatorTest {
         ''').assertError(METHOD, INCORRECT_OVERRIDE)
     }
     
-    @Test
-    def testReturn() {
+    @Test def testReturn() {
         parse('''
             mapped class rolez.lang.Object
             class A {
@@ -241,8 +233,7 @@ class ValidatorTest {
         ''').assertNoErrors
     }
     
-    @Test
-    def testMissingReturnExpr() {
+    @Test def testMissingReturnExpr() {
         parse('''
             mapped class rolez.lang.Object
             class A {
@@ -309,8 +300,7 @@ class ValidatorTest {
         ''').assertError(RETURN_NOTHING, MISSING_RETURN_EXPR)
     }
     
-    @Test
-    def testIncorrectReturn() {
+    @Test def testIncorrectReturn() {
         parse('''
             mapped class rolez.lang.Object
             class A {
@@ -321,8 +311,7 @@ class ValidatorTest {
         ''').assertError(RETURN_EXPR, null, "cannot return", "constructor")
     }
     
-    @Test
-    def testDuplicateFields() {
+    @Test def testDuplicateFields() {
         parse('''
             mapped class rolez.lang.Object
             class A {
@@ -332,8 +321,7 @@ class ValidatorTest {
         ''').assertError(FIELD, DUPLICATE_FIELD)
     }
     
-    @Test
-    def testMethodOverloading() {
+    @Test def testMethodOverloading() {
         parse('''
             mapped class rolez.lang.Object
             class A {
@@ -374,8 +362,7 @@ class ValidatorTest {
         ''').assertNoErrors
     }
     
-    @Test
-    def testFieldWithSameName() {
+    @Test def testFieldWithSameName() {
         parse('''
             mapped class rolez.lang.Object
             class A {
@@ -408,8 +395,7 @@ class ValidatorTest {
         ''').assertError(METHOD, FIELD_WITH_SAME_NAME)
     }
     
-    @Test
-    def testDuplicateMethods() {
+    @Test def testDuplicateMethods() {
         parse('''
             mapped class rolez.lang.Object
             class A {
@@ -461,8 +447,7 @@ class ValidatorTest {
         ''').assertError(METHOD, DUPLICATE_METHOD)
     }
     
-    @Test
-    def testConstrOverloading() {
+    @Test def testConstrOverloading() {
         parse('''
             mapped class rolez.lang.Object
             class A
@@ -479,8 +464,7 @@ class ValidatorTest {
         ''').assertNoErrors
     }
     
-    @Test
-    def testDuplicateConstrs() {
+    @Test def testDuplicateConstrs() {
         parse('''
             mapped class rolez.lang.Object
             class A {
@@ -504,8 +488,7 @@ class ValidatorTest {
         ''').assertError(CONSTR, DUPLICATE_CONSTR)
     }
     
-    @Test
-    def testDuplicateLocalVar() {
+    @Test def testDuplicateLocalVar() {
         parse('''
             mapped class rolez.lang.Object
             class A {
@@ -566,8 +549,7 @@ class ValidatorTest {
         ''').assertError(PARAM, DUPLICATE_VARIABLE)
     }
     
-    @Test
-    def testTypeArg() {
+    @Test def testTypeArg() {
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.Array[T] {
@@ -611,8 +593,7 @@ class ValidatorTest {
         ''').assertError(GENERIC_CLASS_REF, INCORRECT_TYPE_ARG, "class A")
     }
     
-    @Test
-    def testValFieldsInitialized() {
+    @Test def testValFieldsInitialized() {
         parse('''
             mapped class rolez.lang.Object
             class A {
@@ -718,8 +699,7 @@ class ValidatorTest {
         program.assertError(CONSTR, VAL_FIELD_NOT_INITIALIZED)
     }
     
-    @Test
-    def testLocalValInitialized() {
+    @Test def testLocalValInitialized() {
         parse('''
             mapped class rolez.lang.Object
             class A {
@@ -740,8 +720,7 @@ class ValidatorTest {
         ''').assertError(LOCAL_VAR, VAL_NOT_INITIALIZED)
     }
     
-    @Test
-    def testLocalVarsInitialized() {
+    @Test def testLocalVarsInitialized() {
         parse('''
             mapped class rolez.lang.Object
             class A {
@@ -798,8 +777,7 @@ class ValidatorTest {
         ''').assertError(VAR_REF, VAR_NOT_INITIALIZED, "variable i")
     }
     
-    @Test
-    def testSuperConstrCalls() {
+    @Test def testSuperConstrCalls() {
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.String {
@@ -905,8 +883,7 @@ class ValidatorTest {
         ''').assertError(SUPER_CONSTR_CALL, INCORRECT_SUPER_CONSTR_CALL)
     }
     
-    @Test
-    def testExprStmt() {
+    @Test def testExprStmt() {
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.String {
@@ -1003,15 +980,13 @@ class ValidatorTest {
         ''').assertWarning(NULL_LITERAL, OUTER_EXPR_NO_SIDE_FX)
     }
     
-    @Test
-    def testNullTypeUsed() {
+    @Test def testNullTypeUsed() {
         parse('''
             task Main: Null { return null; }
         ''').assertError(NULL, NULL_TYPE_USED)
     }
     
-    @Test
-    def testMappedField() {
+    @Test def testMappedField() {
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.Array[T] {
@@ -1033,8 +1008,7 @@ class ValidatorTest {
         // IMPROVE: Test mapped fields for a "normal" (non-array) class
     }
     
-    @Test
-    def testMappedMethod() {
+    @Test def testMappedMethod() {
         parse('''
             mapped class rolez.lang.Object {
                 mapped def pure equals(val o: pure Object): boolean
@@ -1099,8 +1073,7 @@ class ValidatorTest {
         ''').assertError(METHOD, INCORRECT_MAPPED_METHOD)
     }
     
-    @Test
-    def testMappedConstr() {
+    @Test def testMappedConstr() {
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.Array[T] {
@@ -1163,8 +1136,7 @@ class ValidatorTest {
         // TODO: Test implicit constructor with a Java class that doesn't have a no-arg constructor
     }
     
-    @Test
-    def testMappedClass() {
+    @Test def testMappedClass() {
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.String
@@ -1184,16 +1156,21 @@ class ValidatorTest {
         ''').assertError(CLASS, UNKNOWN_MAPPED_CLASS)
     }
     
-    @Test
-    def testObjectClass() {
+    @Test def testObjectClass() {
+        parse('''
+            mapped class rolez.lang.Object
+        ''').assertNoErrors
+        
+        parse('''
+            mapped object rolez.lang.Object
+        ''').assertError(CLASS, INCORRECT_MAPPED_CLASS_KIND)
         parse('''
             class A
             mapped class rolez.lang.Object extends A
         ''').assertError(CLASS, INCORRECT_MAPPED_SUPERCLASS)
     }
 
-    @Test
-    def testStringClass() {
+    @Test def testStringClass() {
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.String
@@ -1205,13 +1182,16 @@ class ValidatorTest {
         
         parse('''
             mapped class rolez.lang.Object
+            mapped object rolez.lang.String
+        ''').assertError(CLASS, INCORRECT_MAPPED_CLASS_KIND)
+        parse('''
+            mapped class rolez.lang.Object
             class A
             mapped class rolez.lang.String extends A
         ''').assertError(CLASS, INCORRECT_MAPPED_SUPERCLASS)
     }
     
-    @Test
-    def testArrayClass() {
+    @Test def testArrayClass() {
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.Array[T] {
@@ -1228,6 +1208,10 @@ class ValidatorTest {
             }
         ''').assertNoErrors
         
+        parse('''
+            mapped class rolez.lang.Object
+            mapped object rolez.lang.Array
+        ''').assertError(CLASS, INCORRECT_MAPPED_CLASS_KIND)
         parse('''
             mapped class rolez.lang.Object
             class A
@@ -1374,8 +1358,7 @@ class ValidatorTest {
         ''').assertError(METHOD, UNKNOWN_MAPPED_METHOD)
     }
     
-    @Test
-    def testTaskClass() {
+    @Test def testTaskClass() {
         parse('''
             mapped class rolez.lang.Object
             class rolez.lang.Task
@@ -1387,8 +1370,35 @@ class ValidatorTest {
         
         parse('''
             mapped class rolez.lang.Object
+            object rolez.lang.Task
+        ''').assertError(CLASS, INCORRECT_MAPPED_CLASS_KIND)
+        parse('''
+            mapped class rolez.lang.Object
             class A
             class rolez.lang.Task extends A
+        ''').assertError(CLASS, INCORRECT_MAPPED_SUPERCLASS)
+        
+        // TODO: Type parameter!
+    }
+    
+    @Test def testSystemClass() {
+        parse('''
+            mapped class rolez.lang.Object
+            mapped object rolez.lang.System
+        ''').assertNoErrors
+        parse('''
+            mapped class rolez.lang.Object
+            mapped object rolez.lang.System extends Object
+        ''').assertNoErrors
+        
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.System
+        ''').assertError(CLASS, INCORRECT_MAPPED_CLASS_KIND)
+        parse('''
+            mapped class rolez.lang.Object
+            class A
+            mapped object rolez.lang.System extends A
         ''').assertError(CLASS, INCORRECT_MAPPED_SUPERCLASS)
     }
 }

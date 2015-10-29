@@ -52,8 +52,7 @@ class GeneratorTest {
         ''')
     }
     
-    @Test
-    def testFiles() {
+    @Test def testFiles() {
         var program = parse('''
             mapped class rolez.lang.Object
             class A
@@ -78,8 +77,7 @@ class GeneratorTest {
         fsa.textFiles.size.assertThat(is(3))
     }
     
-    @Test
-    def testClass() {
+    @Test def testClass() {
         parse('''
             class A
         ''', classes).generate.assertEqualsJava('''
@@ -109,8 +107,7 @@ class GeneratorTest {
         ''')
     }
     
-    @Test
-    def testField() {
+    @Test def testField() {
         parse('''
             class foo.A {
                 val i: int
@@ -136,8 +133,7 @@ class GeneratorTest {
         ''')
     }
     
-    @Test
-    def testMethod() {
+    @Test def testMethod() {
         parse('''
             class A {
                 def pure foo: {}
@@ -156,8 +152,7 @@ class GeneratorTest {
         ''')
     }
     
-    @Test
-    def testConstr() {
+    @Test def testConstr() {
         parse('''
             package foo
             class A {
@@ -178,8 +173,7 @@ class GeneratorTest {
         ''')
     }
     
-    @Test
-    def testLocalVarDecl() {
+    @Test def testLocalVarDecl() {
         parse('''
             var j: int;
             var k: int = 4;
@@ -191,8 +185,7 @@ class GeneratorTest {
         '''.withJavaFrame)
     }
     
-    @Test
-    def testIfStmt() {
+    @Test def testIfStmt() {
         parse('''
             if(b)
                 this.bar;
@@ -216,8 +209,7 @@ class GeneratorTest {
         '''.withJavaFrame)
     }
     
-    @Test
-    def testWhileLoop() {
+    @Test def testWhileLoop() {
         parse('''
             while(b)
                 this.bar;
@@ -227,8 +219,7 @@ class GeneratorTest {
         '''.withJavaFrame)
     }
     
-    @Test
-    def testSuperConstrCall() {
+    @Test def testSuperConstrCall() {
         parse('''
             class A extends Base {
                 new { super; }
@@ -256,8 +247,7 @@ class GeneratorTest {
         ''')
     }
     
-    @Test
-    def testReturn() {
+    @Test def testReturn() {
         parse('''
             class A {
                 def pure foo: int {
@@ -281,8 +271,7 @@ class GeneratorTest {
         ''')
     }
     
-    @Test
-    def testExprStmt() {
+    @Test def testExprStmt() {
         parse('''
             var j: int;
             j = i;
@@ -310,8 +299,7 @@ class GeneratorTest {
         '''.withJavaFrame)
     }
     
-    @Test
-    def testAssignment() {
+    @Test def testAssignment() {
         parse('''
             var j: int;
             j = i;
@@ -325,8 +313,7 @@ class GeneratorTest {
         '''.withJavaFrame)
     }
     
-    @Test
-    def testBinaryExpr() {
+    @Test def testBinaryExpr() {
         parse('''
             var c: boolean = true || new Base.equals(new Base);
             var d: boolean = b && false || true;
@@ -349,8 +336,7 @@ class GeneratorTest {
         '''.withJavaFrame)
     }
     
-    @Test
-    def testCast() {
+    @Test def testCast() {
         parse('''
             var o: pure Object = new Base as readonly Object;
             o = ("Hi " + "World!") as readonly Object;
@@ -360,8 +346,7 @@ class GeneratorTest {
         '''.withJavaFrame)
     }
     
-    @Test
-    def testUnaryExpr() {
+    @Test def testUnaryExpr() {
         parse('''
             var c: boolean = !false;
             var d: boolean = !(b && false);
@@ -380,8 +365,7 @@ class GeneratorTest {
         '''.withJavaFrame)
     }
     
-    @Test
-    def testMemberAccess() {
+    @Test def testMemberAccess() {
         parse('''
             "Hello".toString.length;
             "Hello".equals("Hi");
@@ -412,8 +396,7 @@ class GeneratorTest {
         '''.withJavaFrame)
     }
     
-    @Test
-    def testNew() {
+    @Test def testNew() {
         parse('''
             new Base;
             new (foo.bar.Base)(0);
@@ -429,8 +412,7 @@ class GeneratorTest {
         '''.withJavaFrame)
     }
     
-    @Test
-    def testParenthesized() {
+    @Test def testParenthesized() {
         parse('''
             var j: int = (0);
             var k: int = (2 + 2) * 3;
@@ -440,8 +422,7 @@ class GeneratorTest {
         '''.withJavaFrame)
     }
     
-    @Test
-    def testStringLiteral() {
+    @Test def testStringLiteral() {
         parse('''
             var s: pure String = "Hello World!";
             s = "";
@@ -461,8 +442,7 @@ class GeneratorTest {
         '''.withJavaFrame)
     }
     
-    @Test
-    def testCharLiteral() {
+    @Test def testCharLiteral() {
         parse('''
             var c: char = 'H';
             c = '\'';

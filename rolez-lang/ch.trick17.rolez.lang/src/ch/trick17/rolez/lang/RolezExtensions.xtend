@@ -79,6 +79,8 @@ class RolezExtensions {
             else actualSuperclass.allMembers.filter[m | !overrides(m)]
     }
     
+    def isSingleton(Class it) { it instanceof SingletonClass }
+    
     def dispatch clazz( SimpleClassRef it) { clazz }
     def dispatch clazz(GenericClassRef it) { clazz } 
     

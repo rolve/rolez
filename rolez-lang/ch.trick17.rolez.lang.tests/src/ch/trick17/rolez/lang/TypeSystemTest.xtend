@@ -38,8 +38,7 @@ class TypeSystemTest {
     @Inject extension ParseHelper<Program>
     @Inject extension ValidationTestHelper
     
-    @Test
-    def testTAssignment() {
+    @Test def testTAssignment() {
         val program = parse('''
             mapped class rolez.lang.Object
             class A
@@ -53,8 +52,7 @@ class TypeSystemTest {
             .assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
     }
     
-    @Test
-    def testTAssignmentErrorInOp() {
+    @Test def testTAssignmentErrorInOp() {
         parse("task Main: { !5 = 5; }")
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
         
@@ -66,8 +64,7 @@ class TypeSystemTest {
         ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
-    @Test
-    def testTAssignmentNotAssignable() {
+    @Test def testTAssignmentNotAssignable() {
         parse('''
             task Main: {
                 5 = 3;
@@ -101,8 +98,7 @@ class TypeSystemTest {
         ''').assertError(MEMBER_ACCESS, null, "assign", "value field")
     }
     
-    @Test
-    def testTAssignmentTypeMismatch() {
+    @Test def testTAssignmentTypeMismatch() {
         parse('''
             task Main: {
                 var x: int;
@@ -111,30 +107,26 @@ class TypeSystemTest {
         ''').assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
-    @Test
-    def testTBooleanExpr() {
+    @Test def testTBooleanExpr() {
         parse("task Main: { true || false; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
         parse("task Main: { true && false; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
     }
     
-    @Test
-    def testTBooleanExprErrorInOp() {
+    @Test def testTBooleanExprErrorInOp() {
         parse("task Main: { !5 || false; }")
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
         parse("task Main: { true || !5; }")
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
-    @Test
-    def testTBooleanExprTypeMismatch() {
+    @Test def testTBooleanExprTypeMismatch() {
         parse("task Main: { 5 || false; }")
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
         parse("task Main: { true || 5; }")
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
-    @Test
-    def testTEqualityExpr() {
+    @Test def testTEqualityExpr() {
         parse("task Main: { true == false; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
         parse("task Main: { 5 != 3; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
 
@@ -149,16 +141,14 @@ class TypeSystemTest {
         ''').assertNoErrors
     }
     
-    @Test
-    def testTEqualityExprErrorInOp() {
+    @Test def testTEqualityExprErrorInOp() {
         parse("task Main: { !5 == false; }")
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
         parse("task Main: { true != !5; }")
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
-    @Test
-    def testTEqualityExprIncompatibleTypes() {
+    @Test def testTEqualityExprIncompatibleTypes() {
         parse('''
             mapped class rolez.lang.Object
             class A
@@ -171,16 +161,14 @@ class TypeSystemTest {
             .assertError(EQUALITY_EXPR, null, "compare", "int", "boolean")
     }
     
-    @Test
-    def testTRelationalExpr() {
+    @Test def testTRelationalExpr() {
         parse("task Main: {   5 <    6; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
         parse("task Main: {  -1 <= -10; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
         parse("task Main: { 'a' >  ' '; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
         parse("task Main: { 3+4 >=   0; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
     }
     
-    @Test
-    def testTRelationalExprErrorInOp() {
+    @Test def testTRelationalExprErrorInOp() {
         parse("task Main: { -true < 0; }")
             .assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "int", "boolean")
         parse("task Main: { 100 <= -false; }")
@@ -191,8 +179,7 @@ class TypeSystemTest {
             .assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
-    @Test
-    def testTRelationalExprIncompatibleTypes() {
+    @Test def testTRelationalExprIncompatibleTypes() {
         parse('''
             mapped class rolez.lang.Object
             task Main: { new Object < new Object; }
@@ -208,8 +195,7 @@ class TypeSystemTest {
             .assertError(RELATIONAL_EXPR, null, "compare", "boolean", "char")
     }
     
-    @Test
-    def testTArithmeticExpr() {
+    @Test def testTArithmeticExpr() {
         parse("task Main: {   4 +  4; }").main.lastExpr.type.assertThat(instanceOf(Int))
         parse("task Main: {   0 -  0; }").main.lastExpr.type.assertThat(instanceOf(Int))
         parse("task Main: {   3 *  2; }").main.lastExpr.type.assertThat(instanceOf(Int))
@@ -241,8 +227,7 @@ class TypeSystemTest {
             isRoleType(READWRITE, newClassRef(program.findClass(stringClassName))))
     }
     
-    @Test
-    def testTArithmeticExprErrorInOp() {
+    @Test def testTArithmeticExprErrorInOp() {
         parse("task Main: { !'a' + 0; }")
             .assertError(CHAR_LITERAL, SUBTYPEEXPR, "char", "boolean")
         parse("task Main: { 100 - -false; }")
@@ -255,8 +240,7 @@ class TypeSystemTest {
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
-    @Test
-    def testTArtithmeticExprTypeMismatch() {
+    @Test def testTArtithmeticExprTypeMismatch() {
         parse('''
             mapped class rolez.lang.Object
             task Main: { new Object + new Object; }
@@ -299,8 +283,7 @@ class TypeSystemTest {
             .assertError(ARITHMETIC_BINARY_EXPR, null, "operator", "undefined", "boolean", "char")
     }
     
-    @Test
-    def testCast() {
+    @Test def testCast() {
         // Redundant casts
         parse("task Main: { 5 as int; }").main.lastExpr.type.assertThat(instanceOf(Int))
         parse("task Main: { true as boolean; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
@@ -347,14 +330,12 @@ class TypeSystemTest {
         program.main.lastExpr.type.assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
     }
     
-    @Test
-    def testTCastErrorInOp() {
+    @Test def testTCastErrorInOp() {
         parse("task Main: { !5 as boolean; }")
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
-    @Test
-    def testTCastIllegal() {
+    @Test def testTCastIllegal() {
         parse("task Main: { 5 as boolean; }")
             .assertError(CAST, null, "cast", "int", "boolean")
         parse("task Main: { false as int; }")
@@ -403,23 +384,20 @@ class TypeSystemTest {
         ''').assertError(CAST, null, "cast", "readwrite rolez.lang.Array[pure A]", "readwrite rolez.lang.Array[readwrite A]")
     }
     
-    @Test
-    def testTUnaryMinus() {
+    @Test def testTUnaryMinus() {
         parse("task Main: { -2; }").main.lastExpr.type.assertThat(instanceOf(Int))
         parse("task Main: { val a: int = 5; -a; }").main.lastExpr.type.assertThat(instanceOf(Int))
         parse("task Main: { -(4-4); }").main.lastExpr.type.assertThat(instanceOf(Int))
     }
     
-    @Test
-    def testTUnaryMinusErrorInOp() {
+    @Test def testTUnaryMinusErrorInOp() {
         parse("task Main: { -!5; }")
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
         parse("task Main: { -(-'a'); }")
             .assertError(CHAR_LITERAL, SUBTYPEEXPR, "char", "int")
     }
     
-    @Test
-    def testTUnaryMinusTypeMismatch() {
+    @Test def testTUnaryMinusTypeMismatch() {
         parse('''
             mapped class rolez.lang.Object
             task Main: { -new Object; }
@@ -438,8 +416,7 @@ class TypeSystemTest {
             .assertError(NULL_LITERAL, SUBTYPEEXPR, "null", "int")
     }
     
-    @Test
-    def testTUnaryNot() {
+    @Test def testTUnaryNot() {
         parse("task Main: { !true; }").main.lastExpr.type
             .assertThat(instanceOf(Boolean))
         parse("task Main: { val a: boolean = false; !a; }").main.lastExpr.type
@@ -448,16 +425,14 @@ class TypeSystemTest {
             .assertThat(instanceOf(Boolean))
     }
     
-    @Test
-    def testTUnaryNotErrorInOp() {
+    @Test def testTUnaryNotErrorInOp() {
         parse("task Main: { !(-'a'); }")
             .assertError(CHAR_LITERAL, SUBTYPEEXPR, "char", "int")
         parse("task Main: { !(!5); }")
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
-    @Test
-    def testTUnaryNotTypeMismatch() {
+    @Test def testTUnaryNotTypeMismatch() {
         parse('''
             mapped class rolez.lang.Object
             task Main: { !new Object; }
@@ -476,24 +451,21 @@ class TypeSystemTest {
             .assertError(NULL_LITERAL, SUBTYPEEXPR, "null", "boolean")
     }
     
-    @Test
-    def testTMemberAccessErrorInTarget() {
+    @Test def testTMemberAccessErrorInTarget() {
         parse("task Main: { (!5).a; }")
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
         parse("task Main: { (!5).foo(); }")
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
-    @Test
-    def testTMemberAccessIllegalTarget() {
+    @Test def testTMemberAccessIllegalTarget() {
         parse('''task Main: { 5.5.a; }''')
             .assertError(DOUBLE_LITERAL, null, "Illegal", "target", "access")
         parse('''task Main: { false.foo(); }''')
             .assertError(BOOLEAN_LITERAL, null, "Illegal", "target", "access")
     }
     
-    @Test
-    def testTMemberAccessField() {
+    @Test def testTMemberAccessField() {
         parse('''
             mapped class rolez.lang.Object
             class A {
@@ -567,8 +539,7 @@ class TypeSystemTest {
         ''').main.lastExpr.type.asRoleType.role.assertThat(is(PURE))
     }
     
-    @Test
-    def testTMemberAccessFieldRoleMismatch() {
+    @Test def testTMemberAccessFieldRoleMismatch() {
         parse('''
             mapped class rolez.lang.Object
             class A { var x: int }
@@ -580,8 +551,7 @@ class TypeSystemTest {
                 "Role", "mismatch", "field", "pure")
     }
     
-    @Test
-    def testTMemberAccessMethod() {
+    @Test def testTMemberAccessMethod() {
         for(expected : Role.values) {
             for(actual : Role.values.filter[system.subroleSucceeded(it, expected)]) {
                 parse('''
@@ -666,8 +636,7 @@ class TypeSystemTest {
         ''').assertNoErrors
     }
     
-    @Test
-    def testTMemberAccessMethodErrorInArg() {
+    @Test def testTMemberAccessMethodErrorInArg() {
         parse('''
             mapped class rolez.lang.Object
             class A {
@@ -687,8 +656,7 @@ class TypeSystemTest {
         ''', set).assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
-    @Test
-    def testTMemberAccessMethodRoleMismatch() {
+    @Test def testTMemberAccessMethodRoleMismatch() {
         for(expected : Role.values) {
             for(actual : Role.values.filter[!system.subroleSucceeded(it, expected)]) {
                 parse('''
@@ -706,8 +674,7 @@ class TypeSystemTest {
         }
     }
     
-    @Test
-    def testTMemberAccessMethodTypeMismatch() {
+    @Test def testTMemberAccessMethodTypeMismatch() {
         parse('''
             mapped class rolez.lang.Object
             class A { def readwrite foo: {} }
@@ -769,8 +736,7 @@ class TypeSystemTest {
         ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "set")
     }
     
-    @Test
-    def testTMemberAccessOverloading() {
+    @Test def testTMemberAccessOverloading() {
         var program = parse('''
             mapped class rolez.lang.Object
             class A {
@@ -881,8 +847,7 @@ class TypeSystemTest {
         // IMPROVE: test generic methods, once supported outside of array class
     }
     
-    @Test
-    def testTMemberAccessMethodAmbiguous() {
+    @Test def testTMemberAccessMethodAmbiguous() {
         parse('''
             mapped class rolez.lang.Object
             class A {
@@ -908,8 +873,7 @@ class TypeSystemTest {
         // IMPROVE: test generic methods, once supported outside of array class
     }
     
-    @Test 
-    def testTThis() {
+    @Test def testTThis() {
         for(expected : Role.values) {
             val program = parse('''
                 mapped class rolez.lang.Object
@@ -931,8 +895,19 @@ class TypeSystemTest {
             .assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
     }
     
-    @Test
-    def testTThisTask() {
+    @Test def testTSystem() {
+        val program = parse('''
+            mapped class rolez.lang.Object
+            mapped object rolez.lang.System
+            task Main: {
+                system;
+            }
+        ''')
+        program.main.lastExpr.type.assertThat(
+            isRoleType(READONLY, newClassRef(program.findClass(systemClassName))))
+    }
+    
+    @Test def testTThisTask() {
         parse('''
             task Main: {
                 this;
@@ -940,8 +915,7 @@ class TypeSystemTest {
         ''').assertError(THIS, TTHIS)
     }
     
-    @Test
-    def testTVarRef() {
+    @Test def testTVarRef() {
         parse('''
             task Main: {
                 val i: int = 5;
@@ -970,8 +944,7 @@ class TypeSystemTest {
             .assertThat(isRoleType(READONLY, newClassRef(program.findClass("A"))))
     }
     
-    @Test
-    def testTNew() {
+    @Test def testTNew() {
         var program = parse('''
             mapped class rolez.lang.Object
             class A
@@ -1019,8 +992,7 @@ class TypeSystemTest {
         // IMPROVE: test generic constructors, once  supported outside of the array class
     }
     
-    @Test
-    def testTNewErrorInArg() {
+    @Test def testTNewErrorInArg() {
         parse('''
             mapped class rolez.lang.Object
             class A {
@@ -1030,8 +1002,7 @@ class TypeSystemTest {
         ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
-    @Test
-    def testTNewTypeMismatch() {
+    @Test def testTNewTypeMismatch() {
         parse('''
             mapped class rolez.lang.Object
             class A
@@ -1067,8 +1038,7 @@ class TypeSystemTest {
         // IMPROVE: test generic constructors, once  supported outside of the array class
     }
     
-    @Test
-    def testTNewOverloading() {
+    @Test def testTNewOverloading() {
         parse('''
             mapped class rolez.lang.Object
             class A {
@@ -1113,8 +1083,7 @@ class TypeSystemTest {
         // IMPROVE: test generic constructors, once  supported outside of the array class
     }
     
-    @Test
-    def testTNewAmbiguous() {
+    @Test def testTNewAmbiguous() {
         parse('''
             mapped class rolez.lang.Object
             class A
@@ -1142,8 +1111,7 @@ class TypeSystemTest {
         // IMPROVE: test generic constructors, once  supported outside of the array class
     }
     
-    @Test
-    def testTStart() {
+    @Test def testTStart() {
         var program = parse('''
             mapped class rolez.lang.Object
             class rolez.lang.Task
@@ -1202,8 +1170,7 @@ class TypeSystemTest {
         ''').assertNoErrors
     }
     
-    @Test
-    def testTStartTaskClassNotDefined() {
+    @Test def testTStartTaskClassNotDefined() {
         parse('''
             mapped class rolez.lang.Object
             task T: {}
@@ -1211,8 +1178,7 @@ class TypeSystemTest {
         ''').assertError(START, TSTART, "task class", "not defined")
     }
     
-    @Test
-    def testTStartErrorInArg() {
+    @Test def testTStartErrorInArg() {
         parse('''
             mapped class rolez.lang.Object
             class rolez.lang.Task
@@ -1221,8 +1187,7 @@ class TypeSystemTest {
         ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
-    @Test
-    def testTStartTypeMismatch() {
+    @Test def testTStartTypeMismatch() {
         parse('''
             mapped class rolez.lang.Object
             class rolez.lang.Task
@@ -1244,8 +1209,7 @@ class TypeSystemTest {
         ''').assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "boolean", "int")
     }
     
-    @Test
-    def testTParenthesized() {
+    @Test def testTParenthesized() {
         val program = parse('''
             mapped class rolez.lang.Object
             class A
@@ -1264,15 +1228,13 @@ class TypeSystemTest {
             isRoleType(PURE, newClassRef(program.findClass("A"))))
     }
     
-    @Test
-    def testTParenthesizedErrorInExpr() {
+    @Test def testTParenthesizedErrorInExpr() {
         parse('''
             task Main: { (!5); }
         ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
-    @Test
-    def testTStringLiteral() {
+    @Test def testTStringLiteral() {
         val program = parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.String
@@ -1282,51 +1244,44 @@ class TypeSystemTest {
             isRoleType(READWRITE, newClassRef(program.findClass(stringClassName))))
     }
     
-    @Test
-    def testTStringLiteralStringClassNotDefined() {
+    @Test def testTStringLiteralStringClassNotDefined() {
         parse('''
             mapped class rolez.lang.Object
             task Main: { "Hi"; }
         ''').assertError(STRING_LITERAL, TSTRINGLITERAL, "rolez.lang.String class", "not defined")
     }
     
-    @Test
-    def testTNullLiteral() {
+    @Test def testTNullLiteral() {
         parse('''
             task Main: { null; }
         ''').main.lastExpr.type.assertThat(instanceOf(Null))
     }
     
-    @Test
-    def testTIntLiteral() {
+    @Test def testTIntLiteral() {
         parse('''
             task Main: { 5; }
         ''').main.lastExpr.type.assertThat(instanceOf(Int))
     }
     
-    @Test
-    def testTDoubleLiteral() {
+    @Test def testTDoubleLiteral() {
         parse('''
             task Main: { 5.0; }
         ''').main.lastExpr.type.assertThat(instanceOf(Double))
     }
     
-    @Test
-    def testTBooleanLiteral() {
+    @Test def testTBooleanLiteral() {
         parse('''
             task Main: { true; }
         ''').main.lastExpr.type.assertThat(instanceOf(Boolean))
     }
     
-    @Test
-    def testTCharLiteral() {
+    @Test def testTCharLiteral() {
         parse('''
             task Main: { 'c'; }
         ''').main.lastExpr.type.assertThat(instanceOf(Char))
     }
     
-    @Test
-    def testWBlock() {
+    @Test def testWBlock() {
         parse('''
             mapped class rolez.lang.Object
             task Main: {
@@ -1368,8 +1323,7 @@ class TypeSystemTest {
         ''').assertError(CAST, null, "cannot cast", "boolean", "int")
     }
     
-    @Test
-    def testWLocalVarDecl() {
+    @Test def testWLocalVarDecl() {
         parse('''
             mapped class rolez.lang.Object
             class A
@@ -1401,8 +1355,7 @@ class TypeSystemTest {
         ''').assertError(CAST, SUBTYPEEXPR, "pure rolez.lang.Object", "pure A")
     }
     
-    @Test
-    def testWIfStmt() {
+    @Test def testWIfStmt() {
         parse('''
             mapped class rolez.lang.Object
             task Main: {
@@ -1445,8 +1398,7 @@ class TypeSystemTest {
         ''').assertError(CAST, null, "cannot cast", "boolean", "int")
     }
     
-    @Test
-    def testWWhileLoop() {
+    @Test def testWWhileLoop() {
         parse('''
             mapped class rolez.lang.Object
             task Main: {
@@ -1475,8 +1427,7 @@ class TypeSystemTest {
         ''').assertError(CAST, null, "cannot cast", "boolean", "int")
     }
     
-    @Test
-    def testWSuperConstrCall() {
+    @Test def testWSuperConstrCall() {
         parse('''
             mapped class rolez.lang.Object
             class A
@@ -1503,8 +1454,7 @@ class TypeSystemTest {
         ''').assertNoErrors
     }
     
-    @Test
-    def testWSuperConstrCallErrorInArg() {
+    @Test def testWSuperConstrCallErrorInArg() {
         parse('''
             mapped class rolez.lang.Object
             class A {
@@ -1516,8 +1466,7 @@ class TypeSystemTest {
         ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
-    @Test
-    def testWSuperConstrCallTypeMismatch() {
+    @Test def testWSuperConstrCallTypeMismatch() {
         parse('''
             mapped class rolez.lang.Object
             class A
@@ -1579,8 +1528,7 @@ class TypeSystemTest {
         ''').assertError(SUPER_CONSTR_CALL, null, "no suitable super constructor")
     }
     
-    @Test
-    def testWSuperConstrCallOverloading() {
+    @Test def testWSuperConstrCallOverloading() {
         parse('''
             mapped class rolez.lang.Object
             class A {
@@ -1623,8 +1571,7 @@ class TypeSystemTest {
         ''').assertNoErrors
     }
     
-    @Test
-    def testWSuperConstrCallAmbiguous() {
+    @Test def testWSuperConstrCallAmbiguous() {
         parse('''
             mapped class rolez.lang.Object
             class A
@@ -1650,8 +1597,7 @@ class TypeSystemTest {
         ''').assertError(SUPER_CONSTR_CALL, null, "constructor", "ambiguous")
     }
     
-    @Test
-    def testWReturn() {
+    @Test def testWReturn() {
         parse('''
             mapped class rolez.lang.Object
             class A {
@@ -1705,8 +1651,7 @@ class TypeSystemTest {
         ''').assertError(CAST, SUBTYPEEXPR, "pure A", "readwrite A")
     }
     
-    @Test
-    def testSubtype() {
+    @Test def testSubtype() {
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.Array[T] {
@@ -1742,8 +1687,7 @@ class TypeSystemTest {
         // IMPROVE: Test type params, once they're supported outside the array class
     }
     
-    @Test
-    def testSubtypePrimitiveMismatch() {
+    @Test def testSubtypePrimitiveMismatch() {
         parse('''
             task Main: {
                 val i: int = false;
@@ -1767,8 +1711,7 @@ class TypeSystemTest {
         // I think we get the picture...
     }
     
-    @Test
-    def testSubtypeSimpleClassMismatch() {
+    @Test def testSubtypeSimpleClassMismatch() {
         parse('''
             mapped class rolez.lang.Object
             class A
@@ -1778,8 +1721,7 @@ class TypeSystemTest {
         ''').assertError(NEW, SUBTYPEEXPR, "readwrite rolez.lang.Object", "readwrite A")
     }
     
-    @Test
-    def testSubtypeGenericClassMismatch() {
+    @Test def testSubtypeGenericClassMismatch() {
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.Array[T]
@@ -1835,8 +1777,7 @@ class TypeSystemTest {
         ''').assertError(NEW, SUBTYPEEXPR, "readwrite rolez.lang.Array[pure A]", "pure rolez.lang.Array[readwrite A]")
     }
     
-    @Test
-    def testSubtypeRoleMismatch() {
+    @Test def testSubtypeRoleMismatch() {
         parse('''
             mapped class rolez.lang.Object
             class A

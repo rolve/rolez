@@ -70,7 +70,8 @@ class RolezGenerator implements IGenerator {
     public static val mappedClasses = #{
         objectClassName -> "java.lang.Object",
         stringClassName -> "java.lang.String",
-        arrayClassName  -> null
+        arrayClassName  -> null,
+        systemClassName -> "java.lang.System"
     }
     
     override void doGenerate(Resource resource, IFileSystemAccess fsa) {

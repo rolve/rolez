@@ -20,14 +20,12 @@ class LinkingTest {
     @Inject extension ValidationTestHelper
     @Inject extension TestUtilz
     
-    @Test
-    def testMultipleResources() {
+    @Test def testMultipleResources() {
         val set = newResourceSet.with("mapped class rolez.lang.Object").with("class A")
         parse("class B extends A", set).assertNoErrors
     }
     
-    @Test
-    def testPackagesAndImports() {
+    @Test def testPackagesAndImports() {
         // "Unpackaged" classes are visible from everywhere
         var set = newResourceSet.with("mapped class rolez.lang.Object").with("class A")
         parse('''
@@ -145,8 +143,7 @@ class LinkingTest {
         ''', set).assertError(CLASS, LINKING_DIAGNOSTIC)
     }
     
-    @Test
-    def testVarRef() {
+    @Test def testVarRef() {
         parse('''
             task Main: {
                 val i: int = 5;

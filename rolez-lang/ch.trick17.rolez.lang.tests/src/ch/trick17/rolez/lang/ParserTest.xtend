@@ -26,8 +26,7 @@ class ParserTest {
     @Inject extension ValidationTestHelper
     @Inject extension TestUtilz
     
-    @Test
-    def testEmptyClass() {
+    @Test def testEmptyClass() {
         val program = parse("mapped class rolez.lang.Object")
         program.assertNoErrors
         program.elements.size.assertThat(is(1))
@@ -40,8 +39,7 @@ class ParserTest {
         clazz.constrs.assertThat(empty) // Why can't I use is(empty) here?
     }
     
-    @Test
-    def testQualifiedClassRef() {
+    @Test def testQualifiedClassRef() {
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.Array[T] {
@@ -58,8 +56,7 @@ class ParserTest {
         ''').assertNoErrors
     }
     
-    @Test
-    def testNewAndMemberAccess() {
+    @Test def testNewAndMemberAccess() {
         parse('''
             mapped class rolez.lang.Object
             class A {
@@ -75,8 +72,7 @@ class ParserTest {
         ''').assertNoErrors
     }
     
-    @Test
-    def testCharLiteral() {
+    @Test def testCharLiteral() {
         val program = parse('''
             task Main: {
                 'H';
@@ -97,8 +93,7 @@ class ParserTest {
         (program.main.expr(6) as CharLiteral).value.assertThat(is(Character.valueOf('\t')))
     }
     
-    @Test
-    def testStringLiteral() {
+    @Test def testStringLiteral() {
         val program = parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.String
@@ -121,8 +116,7 @@ class ParserTest {
         (program.main.expr(6) as StringLiteral).value.assertThat(is("\t"))
     }
     
-    @Test
-    def testIntLiteral() {
+    @Test def testIntLiteral() {
         val program = parse('''
             task Main: {
                 0;

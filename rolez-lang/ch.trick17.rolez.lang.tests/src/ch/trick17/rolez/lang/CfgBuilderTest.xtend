@@ -39,8 +39,7 @@ class CfgBuilderTest {
     @Inject extension ParseHelper<Program>
     @Inject extension ValidationTestHelper
     
-    @Test
-    def testBlock() {
+    @Test def testBlock() {
         parse('''
             task Main: {}
         ''').main.cfg.assertStructure('''
@@ -82,8 +81,7 @@ class CfgBuilderTest {
         ''')
     }
     
-    @Test
-    def testIfStmt() {
+    @Test def testIfStmt() {
         parse('''
             task Main(val b: boolean): {
                 0;
@@ -238,8 +236,7 @@ class CfgBuilderTest {
         ''')
     }
     
-    @Test
-    def testWhileLoop() {
+    @Test def testWhileLoop() {
         parse('''
             task Main(val b: boolean): {
                 while(b)
@@ -270,8 +267,7 @@ class CfgBuilderTest {
         ''')
     }
     
-    @Test
-    def testExpr() {
+    @Test def testExpr() {
         parse('''
             task Main: {
                 0;

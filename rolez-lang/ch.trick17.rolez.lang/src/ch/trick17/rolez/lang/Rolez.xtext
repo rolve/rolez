@@ -34,7 +34,7 @@ NormalClass:
 
 SingletonClass:
     mapped?='mapped'? 'object' name=QualifiedName
-    ('extends' superclass=[NormalClass|QualifiedName])
+    ('extends' superclass=[NormalClass|QualifiedName])?
     ('{'
         members+=Member+
     '}')?;

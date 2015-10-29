@@ -47,6 +47,7 @@ import java.util.Set
 import javax.inject.Inject
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.EStructuralFeature
+import org.eclipse.xtext.naming.QualifiedName
 import org.eclipse.xtext.validation.Check
 
 import static ch.trick17.rolez.lang.Constants.*
@@ -93,6 +94,7 @@ class RolezValidator extends RolezSystemValidator {
     public static val UNKNOWN_MAPPED_METHOD = "unknown mapped method"
     public static val CLASS_ACTUALLY_MAPPED = "class actually mapped"
     public static val INCORRECT_MAPPED_SUPERCLASS = "incorrect mapped superclass"
+    public static val INCORRECT_MAPPED_CLASS_KIND = "incorrect mapped class kind"
     public static val INCORRECT_MAPPED_FIELD = "incorrect mapped field"
     public static val INCORRECT_MAPPED_METHOD = "incorrect mapped method"
     public static val INCORRECT_MAPPED_CONSTR = "incorrect mapped constructor"
@@ -502,118 +504,135 @@ class RolezValidator extends RolezSystemValidator {
     }
     
     @Check
-    def checkObjectClass(NormalClass it) {
+    def checkObjectClass(Class it) {
         if(qualifiedName != objectClassName) return;
         
+        checkClassKind(false)
         if(superclass != null)
            error(qualifiedName + " must not have a superclass",
                CLASS__SUPERCLASS, INCORRECT_MAPPED_SUPERCLASS)
     }
     
     @Check
-    def checkStringClass(NormalClass it) {
+    def checkStringClass(Class it) {
         if(qualifiedName != stringClassName) return;
         
-        if(actualSuperclass.qualifiedName != objectClassName)
-           error("The superclass of " + qualifiedName + " must be "+ objectClassName,
-               CLASS__SUPERCLASS, INCORRECT_MAPPED_SUPERCLASS)
+        checkClassKind(false)
+        checkSuperclass(objectClassName)
     }
     
     @Check
-    def checkArrayClass(NormalClass it) {
+    def checkArrayClass(Class it) {
         if(qualifiedName != arrayClassName) return;
         
-        if(actualSuperclass.qualifiedName != objectClassName)
-           error("The superclass of " + qualifiedName + " must be "+ objectClassName,
-               CLASS__SUPERCLASS, INCORRECT_MAPPED_SUPERCLASS)
+        checkClassKind(false)
+        checkSuperclass(objectClassName)
         
-        if(typeParam == null)
-            error(qualifiedName + " must declare a type parameter",
-                NAMED__NAME, MISSING_TYPE_PARAM)
-        
-        if(constrs.size != 1)
-           error(qualifiedName + " must have exactly one constructor",
-               null, INCORRECT_MAPPED_CONSTR)
-        constrs.head => [
-            if(!mapped)
-               error("This constructor must be declared as mapped",
-                   it, null, INCORRECT_MAPPED_CONSTR)
-            else if(params.size != 1)
-               error("This constructor must have a single parameter",
-                   it, null, INCORRECT_MAPPED_CONSTR)
-            else if(!(params.head.type instanceof Int))
-               error("The parameter of this constructor must be of type int",
-                   params.head.type, null, INCORRECT_MAPPED_CONSTR)
-        ]
-        
-        fields.filter[name == "length"].forEach[
-            if(!mapped)
-                error("This field must be declared as mapped", it,
-                    NAMED__NAME, INCORRECT_MAPPED_FIELD)
-            if(kind != VAL)
-                error("This field must be a value field", it,
-                    FIELD__KIND, INCORRECT_MAPPED_FIELD)
-            if(!(type instanceof Int))
-                error("The type of this field must be int", type,
-                    null, INCORRECT_MAPPED_FIELD)
-        ]
-        fields.filter[isMapped && name != "length"].forEach[
-            error("Unknown mapped field " + name, it, NAMED__NAME, UNKNOWN_MAPPED_FIELD)
-        ]
-        
-        methods.filter[name == "get"].forEach[m |
-            if(!m.mapped)
-                error("This method must be declared as mapped", m,
-                    NAMED__NAME, INCORRECT_MAPPED_METHOD)
-            val type = m.type
-            switch(type) {
-                TypeParamRef case type.param == typeParam: {}
-                default: error("The return type of this method must be "
-                    + typeParam.name, m, NAMED__NAME, INCORRECT_MAPPED_METHOD)
-            }
-            if(m.params.size != 1)
-                error("This method must have a single int parameter", m,
-                    NAMED__NAME, INCORRECT_MAPPED_METHOD)
-            else if(!(m.params.head.type instanceof Int))
-                error("This parameter's type must be int", m.params.head.type,
-                    null, INCORRECT_MAPPED_METHOD)
-        ]
-        methods.filter[name == "set"].forEach[m |
-            if(!m.mapped)
-                error("This method must be declared as mapped", m,
-                    NAMED__NAME, INCORRECT_MAPPED_METHOD)
-            if(!(m.type instanceof Void))
-                error("The return type of this method must be void", m.type,
-                    null, INCORRECT_MAPPED_METHOD)
+        if(it instanceof NormalClass) {
+            if(typeParam == null)
+                error(qualifiedName + " must declare a type parameter",
+                    NAMED__NAME, MISSING_TYPE_PARAM)
             
-            if(m.params.size != 2)
-                error("This method must have two parameters", m,
-                    NAMED__NAME, INCORRECT_MAPPED_METHOD)
-            else {
-                if(!(m.params.get(0).type instanceof Int))
-                    error("This parameter's type must be int", m.params.get(0).type,
+            if(constrs.size != 1)
+               error(qualifiedName + " must have exactly one constructor",
+                   null, INCORRECT_MAPPED_CONSTR)
+            constrs.head => [
+                if(!mapped)
+                   error("This constructor must be declared as mapped",
+                       it, null, INCORRECT_MAPPED_CONSTR)
+                else if(params.size != 1)
+                   error("This constructor must have a single parameter",
+                       it, null, INCORRECT_MAPPED_CONSTR)
+                else if(!(params.head.type instanceof Int))
+                   error("The parameter of this constructor must be of type int",
+                       params.head.type, null, INCORRECT_MAPPED_CONSTR)
+            ]
+            
+            fields.filter[name == "length"].forEach[
+                if(!mapped)
+                    error("This field must be declared as mapped", it,
+                        NAMED__NAME, INCORRECT_MAPPED_FIELD)
+                if(kind != VAL)
+                    error("This field must be a value field", it,
+                        FIELD__KIND, INCORRECT_MAPPED_FIELD)
+                if(!(type instanceof Int))
+                    error("The type of this field must be int", type,
+                        null, INCORRECT_MAPPED_FIELD)
+            ]
+            fields.filter[isMapped && name != "length"].forEach[
+                error("Unknown mapped field " + name, it, NAMED__NAME, UNKNOWN_MAPPED_FIELD)
+            ]
+            
+            methods.filter[name == "get"].forEach[m |
+                if(!m.mapped)
+                    error("This method must be declared as mapped", m,
+                        NAMED__NAME, INCORRECT_MAPPED_METHOD)
+                val type = m.type
+                switch(type) {
+                    TypeParamRef case type.param == typeParam: {}
+                    default: error("The return type of this method must be "
+                        + typeParam.name, m, NAMED__NAME, INCORRECT_MAPPED_METHOD)
+                }
+                if(m.params.size != 1)
+                    error("This method must have a single int parameter", m,
+                        NAMED__NAME, INCORRECT_MAPPED_METHOD)
+                else if(!(m.params.head.type instanceof Int))
+                    error("This parameter's type must be int", m.params.head.type,
                         null, INCORRECT_MAPPED_METHOD)
-                if(!(m.params.get(1).type instanceof TypeParamRef))
-                    error("This parameter's type must be " + typeParam.name,
-                        m.params.get(1).type, null, INCORRECT_MAPPED_METHOD)
-            }
-        ]
-        methods.filter[isMapped && name != "get" && name != "set"].forEach[
-            error("unknown mapped method " + name, it, NAMED__NAME, UNKNOWN_MAPPED_METHOD)
-        ]
+            ]
+            methods.filter[name == "set"].forEach[m |
+                if(!m.mapped)
+                    error("This method must be declared as mapped", m,
+                        NAMED__NAME, INCORRECT_MAPPED_METHOD)
+                if(!(m.type instanceof Void))
+                    error("The return type of this method must be void", m.type,
+                        null, INCORRECT_MAPPED_METHOD)
+                
+                if(m.params.size != 2)
+                    error("This method must have two parameters", m,
+                        NAMED__NAME, INCORRECT_MAPPED_METHOD)
+                else {
+                    if(!(m.params.get(0).type instanceof Int))
+                        error("This parameter's type must be int", m.params.get(0).type,
+                            null, INCORRECT_MAPPED_METHOD)
+                    if(!(m.params.get(1).type instanceof TypeParamRef))
+                        error("This parameter's type must be " + typeParam.name,
+                            m.params.get(1).type, null, INCORRECT_MAPPED_METHOD)
+                }
+            ]
+            methods.filter[isMapped && name != "get" && name != "set"].forEach[
+                error("unknown mapped method " + name, it, NAMED__NAME, UNKNOWN_MAPPED_METHOD)
+            ]
+        }
     }
     
     @Check
-    def checkTaskClass(NormalClass it) {
+    def checkTaskClass(Class it) {
         if(qualifiedName != taskClassName) return;
         
-        if(actualSuperclass.qualifiedName != objectClassName)
-           error("The superclass of " + qualifiedName + " must be " + objectClassName,
-               CLASS__SUPERCLASS, INCORRECT_MAPPED_SUPERCLASS)
-        // TODO: Check (mapped) members
+        checkClassKind(false)
+        checkSuperclass(objectClassName)
     }
     
-    // TODO: Check System class
+    @Check
+    def checkSystemClass(Class it) {
+        if(qualifiedName != systemClassName) return;
+        
+        checkClassKind(true)
+        checkSuperclass(objectClassName)
+    }
+    
+    private def checkClassKind(Class it, boolean expectSingleton) {
+        if(isSingleton != expectSingleton)
+            error(qualifiedName + " must " + (if(expectSingleton) "" else "not ")
+                + "be a singleton class", NAMED__NAME, INCORRECT_MAPPED_CLASS_KIND)
+    }
+    
+    private def checkSuperclass(Class it, QualifiedName expected) {
+        if(actualSuperclass.qualifiedName != expected)
+           error("The superclass of " + qualifiedName + " must be " + expected,
+               CLASS__SUPERCLASS, INCORRECT_MAPPED_SUPERCLASS)
+    }
     
     /*
 	 * Delayed errors
