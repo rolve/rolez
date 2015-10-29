@@ -97,4 +97,8 @@ class Test {
 		val s: readonly String = new Account.toString.trim + new String(array);
 		return s.charAt(s.hashCode - 1);
 	}
+	
+	def pure bar: {
+		the System.exit(0);
+	}
 }

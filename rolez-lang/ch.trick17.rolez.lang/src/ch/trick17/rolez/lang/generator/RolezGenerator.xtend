@@ -41,6 +41,7 @@ import ch.trick17.rolez.lang.rolez.Start
 import ch.trick17.rolez.lang.rolez.Stmt
 import ch.trick17.rolez.lang.rolez.StringLiteral
 import ch.trick17.rolez.lang.rolez.SuperConstrCall
+import ch.trick17.rolez.lang.rolez.The
 import ch.trick17.rolez.lang.rolez.This
 import ch.trick17.rolez.lang.rolez.Type
 import ch.trick17.rolez.lang.rolez.TypeParamRef
@@ -49,6 +50,7 @@ import ch.trick17.rolez.lang.rolez.UnaryMinus
 import ch.trick17.rolez.lang.rolez.UnaryNot
 import ch.trick17.rolez.lang.rolez.VarKind
 import ch.trick17.rolez.lang.rolez.VarRef
+import ch.trick17.rolez.lang.rolez.Void
 import ch.trick17.rolez.lang.rolez.WhileLoop
 import ch.trick17.rolez.lang.typesystem.RolezUtils
 import java.io.File
@@ -76,7 +78,7 @@ class RolezGenerator implements IGenerator {
     
     override void doGenerate(Resource resource, IFileSystemAccess fsa) {
         val program = resource.contents.head as Program
-        for (c : program.classes.filter[!mapped]) {
+        for (c : program.classes.filter[!mapped || isSingleton]) {
             val name = c.qualifiedName.segments.join(File.separator) + ".java"
             fsa.generateFile(name, c.generateClass)
         }
@@ -99,12 +101,30 @@ class RolezGenerator implements IGenerator {
         }
     '''}
     
-    private def dispatch generateClass(SingletonClass it) {
-        // TODO
-    }
+    private def dispatch generateClass(SingletonClass it) {'''
+        «if(!package.isEmpty)
+        '''
+        package «package»;
+        
+        '''»
+        public final class «simpleName» extends «actualSuperclass?.generateName?:"java.lang.Object"» {
+            
+            public static final «simpleName» INSTANCE = new «simpleName»();
+            
+            private «simpleName»() {}
+            
+            «fields.map[genObjectField].join»
+            «methods.map[genObjectMethod].join»
+        }
+    '''}
     
     private def gen(Field it) {'''
         public «kind.gen»«type.gen» «name»;
+    '''}
+    
+    private def gen(Method it) {'''
+        
+        public «type.gen» «name»(«params.map[gen].join(", ")»)«body.gen»
     '''}
     
     private def gen(Constr it) {'''
@@ -112,10 +132,27 @@ class RolezGenerator implements IGenerator {
         public «enclosingClass.simpleName»(«params.map[gen].join(", ")»)«body.gen»
     '''}
     
-    private def gen(Method it) {'''
-        
-        public «type.gen» «name»(«params.map[gen].join(", ")»)«body.gen»
+    private def genObjectField(Field it) { if(!mapped) gen else '''
+        public «kind.gen»«type.gen» «name»
+            = «mappedClasses.get(enclosingClass.qualifiedName)».«name»;
     '''}
+    
+    private def genObjectMethod(Method it) { if(!mapped) gen else '''
+        public «type.gen» «name»(«params.map[gen].join(", ")») {
+            «
+            if(type instanceof Void) '''
+            «generateStaticCall»;
+            '''
+            else '''
+            return «generateStaticCall»;
+            '''
+            »
+        }
+    '''}
+    
+    private def generateStaticCall(Method it) {
+        '''«mappedClasses.get(enclosingClass.qualifiedName)».«name»(«params.map[name].join(", ")»)'''
+    }
     
     private def gen(Param it) {'''«kind.gen»«type.gen» «name»'''}
     
@@ -264,6 +301,10 @@ class RolezGenerator implements IGenerator {
             '''new «classRef.gen»(«args.map[gen].join(", ")»)'''
     }
     
+    private def dispatch generateExpr(The it) {
+        '''«classRef.gen».INSTANCE'''
+    }
+    
     private def int arrayNesting(GenericClassRef it) {
         if(clazz.qualifiedName != arrayClassName)
             throw new AssertionError
@@ -340,7 +381,7 @@ class RolezGenerator implements IGenerator {
     }
     
     private def generateName(Class it) {
-        if(mapped) {
+        if(mapped && !isSingleton) {
             val name = mappedClasses.get(qualifiedName)
             if(name == null) throw new AssertionError
             name

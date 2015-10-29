@@ -20,3 +20,7 @@ mapped class Array[T] {
 	mapped def readonly  get(val i: int): T
 	mapped def readwrite set(val i: int, val o: T):
 }
+
+mapped object System {
+	mapped def pure exit(val status: int): void
+}
