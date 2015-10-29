@@ -156,7 +156,7 @@ MemberAccess returns Expr:
     // TODO: Allow member accesses without "this"
 
 SimpleExpr returns Expr:
-    {This} 'this' | {System} 'system' | VarRef | New | Start | Parenthesized | Literal;
+    {This} 'this' | VarRef | New | The | Start | Parenthesized | Literal;
 
 VarRef:
     variable=[Var];
@@ -167,6 +167,9 @@ ArgsOnly: args+=Expr;
 
 New:
     'new' classRef=NewClassRef ('(' args+=Expr (',' args+=Expr)* ')')?;
+
+The:
+    'the' classRef=TheClassRef;
 
 Start:
     'start' taskRef=TaskRef ('(' args+=Expr (',' args+=Expr)* ')')?;
@@ -228,6 +231,10 @@ NewClassRef returns ClassRef:
     {SimpleClassRef} '(' clazz=[NormalClass|QualifiedName] ')'
     | {SimpleClassRef} clazz=[NormalClass]
     | GenericClassRef;
+
+TheClassRef returns ClassRef:
+    {SimpleClassRef} '(' clazz=[SingletonClass|QualifiedName] ')'
+    | {SimpleClassRef} clazz=[SingletonClass];
 
 TaskRef:
     '(' task=[Task|QualifiedName] ')' | task=[Task];

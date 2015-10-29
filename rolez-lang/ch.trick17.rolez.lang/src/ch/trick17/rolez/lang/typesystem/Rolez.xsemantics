@@ -37,7 +37,7 @@ import ch.trick17.rolez.lang.rolez.Start
 import ch.trick17.rolez.lang.rolez.Stmt
 import ch.trick17.rolez.lang.rolez.StringLiteral
 import ch.trick17.rolez.lang.rolez.SuperConstrCall
-import ch.trick17.rolez.lang.rolez.System
+import ch.trick17.rolez.lang.rolez.The
 import ch.trick17.rolez.lang.rolez.This
 import ch.trick17.rolez.lang.rolez.Type
 import ch.trick17.rolez.lang.rolez.TypeParam
@@ -275,15 +275,6 @@ from {
     type = env(G, "this", RoleType)
 }
 
-rule TSystem
-    G |- System s : Type t
-    error "rolez.lang.System class is not defined" source s
-from {
-    val systemClass = findClass(systemClassName, s)
-    systemClass != null
-    t = newRoleType(READONLY, newClassRef(systemClass))
-}
-
 axiom TVarRef
     G |- VarRef r : r.variable.type
 
@@ -301,6 +292,9 @@ from {
         source n
     // TODO: Can constructors somehow be linked?
 }
+
+axiom TThe
+    G |- The t : newRoleType(READONLY, t.classRef.copy)
 
 rule TStart
     G |- Start s : Type t

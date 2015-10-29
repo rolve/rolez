@@ -895,18 +895,6 @@ class TypeSystemTest {
             .assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
     }
     
-    @Test def testTSystem() {
-        val program = parse('''
-            mapped class rolez.lang.Object
-            mapped object rolez.lang.System
-            task Main: {
-                system;
-            }
-        ''')
-        program.main.lastExpr.type.assertThat(
-            isRoleType(READONLY, newClassRef(program.findClass(systemClassName))))
-    }
-    
     @Test def testTThisTask() {
         parse('''
             task Main: {
@@ -1109,6 +1097,17 @@ class TypeSystemTest {
         ''').assertError(NEW, null, "constructor", "ambiguous")
         
         // IMPROVE: test generic constructors, once  supported outside of the array class
+    }
+    
+    @Test def testTThe() {
+        val program = parse('''
+            mapped class rolez.lang.Object
+            mapped object rolez.lang.System
+            task Main: {
+                the System;
+            }
+        ''')
+        program.main.lastExpr.type.assertThat(isRoleType(READONLY, newClassRef(program.findClass(systemClassName))))
     }
     
     @Test def testTStart() {
