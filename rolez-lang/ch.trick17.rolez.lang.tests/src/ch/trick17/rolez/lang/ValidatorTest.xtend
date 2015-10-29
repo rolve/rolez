@@ -1004,6 +1004,11 @@ class ValidatorTest {
                 mapped val length: int
             }
         ''').assertError(FIELD, MAPPED_IN_NORMAL_CLASS)
+        parse('''
+            mapped class rolez.lang.Object {
+                var foo: int
+            }
+        ''').assertError(FIELD, NON_MAPPED_FIELD)
         
         // IMPROVE: Test mapped fields for a "normal" (non-array) class
     }
@@ -1034,6 +1039,11 @@ class ValidatorTest {
                 mapped def pure length: int
             }
         ''').assertError(METHOD, MAPPED_IN_NORMAL_CLASS)
+        parse('''
+            mapped class rolez.lang.Object {
+                def pure foo: {}
+            }
+        ''').assertError(METHOD, NON_MAPPED_METHOD)
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.String {
@@ -1101,6 +1111,16 @@ class ValidatorTest {
                 mapped new(val length: int)
             }
         ''').assertError(CONSTR, MAPPED_IN_NORMAL_CLASS)
+        parse('''
+            mapped class rolez.lang.Object {
+                new {}
+            }
+        ''').assertError(CONSTR, NON_MAPPED_CONSTR)
+        parse('''
+            mapped class rolez.lang.Object {
+                def pure foo: {}
+            }
+        ''').assertError(METHOD, NON_MAPPED_METHOD)
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.Array[T] {

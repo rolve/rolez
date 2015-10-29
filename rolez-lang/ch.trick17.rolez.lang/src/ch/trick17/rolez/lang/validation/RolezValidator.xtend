@@ -86,6 +86,8 @@ class RolezValidator extends RolezSystemValidator {
     public static val OUTER_EXPR_NO_SIDE_FX = "outer expr no side effects"
     public static val NULL_TYPE_USED = "null type used"
     public static val MAPPED_IN_NORMAL_CLASS = "mapped member in normal class"
+    public static val NON_MAPPED_FIELD = "non-mapped field"
+    public static val NON_MAPPED_METHOD = "non-mapped method"
     public static val NON_MAPPED_CONSTR = "non-mapped constructor"
     public static val MAPPED_WITH_BODY = "mapped with body"
     public static val MISSING_BODY = "missing body"
@@ -398,7 +400,7 @@ class RolezValidator extends RolezSystemValidator {
         if(mapped) {
             if(!enclosingClass.mapped)
                 error("mapped fields are allowed in mapped classes only",
-                    NAMED__NAME, MAPPED_IN_NORMAL_CLASS)
+                    FIELD__MAPPED, MAPPED_IN_NORMAL_CLASS)
             
             val javaClass = java.lang.Class.forName(
                 RolezGenerator.mappedClasses.get(enclosingClass.qualifiedName))
@@ -414,6 +416,9 @@ class RolezValidator extends RolezSystemValidator {
                 error("Incorrect type for mapped field: should map to "
                     + javaField.genericType, type, null, INCORRECT_MAPPED_FIELD)
         }
+        else if(enclosingClass.mapped)
+            error("Fields of mapped classes must be mapped",
+                NAMED__NAME, NON_MAPPED_FIELD)
     }
     
     @Check
@@ -421,7 +426,7 @@ class RolezValidator extends RolezSystemValidator {
         if(mapped) {
             if(!enclosingClass.mapped)
                 error("mapped methods are allowed in mapped classes only",
-                    NAMED__NAME, MAPPED_IN_NORMAL_CLASS)
+                    METHOD__MAPPED, MAPPED_IN_NORMAL_CLASS)
             if(body != null)
                 error("mapped methods cannot have a body", body, null, MAPPED_WITH_BODY)
             
@@ -445,7 +450,13 @@ class RolezValidator extends RolezSystemValidator {
                     throw new AssertionError("So, this can happen...")
             }
         }
-        else if(body == null) error("Missing body", NAMED__NAME, MISSING_BODY)
+        else {
+            if(enclosingClass.mapped)
+                error("Methods of mapped classes must be mapped",
+                    NAMED__NAME, NON_MAPPED_METHOD)
+            if(body == null)
+                error("Missing body", NAMED__NAME, MISSING_BODY)
+        }
     }
     
     @Check
@@ -453,7 +464,7 @@ class RolezValidator extends RolezSystemValidator {
         if(mapped) {
             if(!enclosingClass.mapped)
                 error("mapped constructors are allowed in mapped classes only",
-                    null, MAPPED_IN_NORMAL_CLASS)
+                    CONSTR__MAPPED, MAPPED_IN_NORMAL_CLASS)
             if(body != null)
                 error("mapped constructors cannot have a body", body, null, MAPPED_WITH_BODY)
             
