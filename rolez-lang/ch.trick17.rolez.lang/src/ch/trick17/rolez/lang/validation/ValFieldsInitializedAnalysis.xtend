@@ -1,9 +1,11 @@
 package ch.trick17.rolez.lang.validation
 
+import ch.trick17.rolez.lang.RolezExtensions
 import ch.trick17.rolez.lang.cfg.ControlFlowGraph
 import ch.trick17.rolez.lang.cfg.DataFlowAnalysis
 import ch.trick17.rolez.lang.cfg.Node
 import ch.trick17.rolez.lang.rolez.Assignment
+import ch.trick17.rolez.lang.rolez.Class
 import ch.trick17.rolez.lang.rolez.Field
 import ch.trick17.rolez.lang.rolez.Instr
 import ch.trick17.rolez.lang.typesystem.RolezUtils
@@ -13,6 +15,7 @@ import java.util.Set
 import javax.inject.Inject
 import org.eclipse.xtend.lib.annotations.Data
 
+import static ch.trick17.rolez.lang.rolez.VarKind.VAL
 import static com.google.common.collect.ImmutableSet.*
 
 import static extension com.google.common.collect.Sets.*
@@ -22,26 +25,32 @@ class ValFieldsInitializedAnalysis extends DataFlowAnalysis<Initialized> {
     static class Provider {
         @Inject MembersInjector<ValFieldsInitializedAnalysis> injector
         
-        def analyze(ControlFlowGraph cfg) {
-            val analysis = new ValFieldsInitializedAnalysis(cfg)
+        def analyze(ControlFlowGraph cfg, Class clazz) {
+            val analysis = new ValFieldsInitializedAnalysis(cfg, clazz)
             injector.injectMembers(analysis)
             analysis.analyze
             analysis
         }
     }
     
+    @Inject extension RolezExtensions
     @Inject RolezUtils utils
-    
+    val Class clazz
     val newFlow = new Initialized(null, null)
     
-    private new(ControlFlowGraph cfg) {
+    private new(ControlFlowGraph cfg, Class clazz) {
         super(cfg, true)
+        this.clazz = clazz
     }
     
     override protected analyze() { super.analyze() }
     
     protected override newFlow()   { newFlow }
-    protected override entryFlow() { new Initialized(emptySet, emptySet) }
+    
+    protected override entryFlow() {
+        val initialized = clazz.fields.filter[kind == VAL && initializer != null].toSet
+        new Initialized(initialized, initialized)
+    }
     
     protected def dispatch flowThrough(Assignment a, Initialized in) {
         if(utils.isValFieldInit(a)) in.with(utils.assignedField(a))

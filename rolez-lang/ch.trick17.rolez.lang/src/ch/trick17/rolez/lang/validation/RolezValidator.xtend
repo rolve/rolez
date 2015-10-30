@@ -77,6 +77,9 @@ class RolezValidator extends RolezSystemValidator {
     public static val CIRCULAR_INHERITANCE = "circular inheritance"
     public static val VAL_FIELD_NOT_INITIALIZED = "val field not initialized"
     public static val VAL_FIELD_OVERINITIALIZED = "val field overinitialized"
+    public static val THIS_IN_FIELD_INIT = "'this' in field initializer"
+    public static val MAPPED_FIELD_WITH_INIT = "mapped with with initializer"
+    public static val VAR_FIELD_IN_SINGLETON_CLASS = "var field in singleton class"
     public static val VAL_NOT_INITIALIZED = "val not initialized"
     public static val VAR_NOT_INITIALIZED = "var not initialized"
     public static val INCORRECT_SUPER_CONSTR_CALL = "incorrect super constructor call"
@@ -283,13 +286,13 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkValFieldInitialized(Field it) {
-        if(kind != VAL) return;
+        if(mapped || kind != VAL || initializer != null) return;
         
         val clazz = enclosingClass
         if(clazz instanceof NormalClass && (clazz as NormalClass).constrs.isEmpty
                 || clazz instanceof SingletonClass)
             error("Value field " + name + " is not initialized",
-                null, VAL_FIELD_NOT_INITIALIZED)
+                NAMED__NAME, VAL_FIELD_NOT_INITIALIZED)
     }
     
     @Check
@@ -297,7 +300,7 @@ class RolezValidator extends RolezSystemValidator {
         if(body == null) return
         
         val cfg = controlFlowGraph
-        val extension analysis = valFieldsAnalysis.analyze(cfg)
+        val extension analysis = valFieldsAnalysis.analyze(cfg, enclosingClass)
         for(f : enclosingClass.fields.filter[kind == VAL])
             if(!f.definitelyInitializedAfter(cfg.exit))
                 error("Value field " + f.name + " may not have been initialized",
@@ -324,14 +327,33 @@ class RolezValidator extends RolezSystemValidator {
             && (e.eContainer as Assignment).left == e
     }
     
-    private def <T> all(ParameterizedBody it, java.lang.Class<T> c) {
+    private def <T> all(EObject it, java.lang.Class<T> c) {
         eAllContents.filter(c).toIterable
+    }
+    
+    @Check
+    def checkFieldInitializer(Field it) {
+        if(initializer == null) return;
+        
+        if(mapped)
+            error("Mapped fields cannot have an initializer", initializer,
+                null, MAPPED_FIELD_WITH_INIT)
+        for(t : initializer.all(This))
+            error("Cannot refer to 'this' in a field initializer", t, null,
+                THIS_IN_FIELD_INIT)
+    }
+    
+    @Check
+    def checkVarFieldInSingletonClass(Field it) {
+        if(enclosingClass.isSingleton && kind != VAL)
+            error("Fields of singleton classes must be val", FIELD__KIND,
+                VAR_FIELD_IN_SINGLETON_CLASS)
     }
     
     @Check
     def checkLocalValInitialized(LocalVarDecl it) {
         if(variable.kind == VAL && initializer == null)
-            error("Value is not initialized", variable, null, VAL_NOT_INITIALIZED)
+            error("Value is not initialized", variable, NAMED__NAME, VAL_NOT_INITIALIZED)
     }
     
     @Check
@@ -344,7 +366,7 @@ class RolezValidator extends RolezSystemValidator {
             if(v.variable instanceof LocalVar && !v.isAssignmentTarget
                     && !v.variable.isInitializedBefore(cfg.nodeOf(v)))
                 error("Variable " + v.variable.name + " may not have been initialized",
-                    v, VAR_REF__VARIABLE, VAR_NOT_INITIALIZED)
+                    v, null, VAR_NOT_INITIALIZED)
     }
     
     @Check
@@ -355,7 +377,7 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkSuperConstrCall(Constr it) {
-        if(body == null) return
+        if(body == null || enclosingClass.qualifiedName == objectClassName) return
         
         val cfg = controlFlowGraph
         val extension analysis = new SuperConstrCallAnalysis(cfg)
@@ -559,22 +581,22 @@ class RolezValidator extends RolezSystemValidator {
                        params.head.type, null, INCORRECT_MAPPED_CONSTR)
             ]
             
-            fields.filter[name == "length"].forEach[
-                if(!mapped)
-                    error("This field must be declared as mapped", it,
+            for(f : fields.filter[name == "length"]) {
+                if(!f.mapped)
+                    error("This field must be declared as mapped", f,
                         NAMED__NAME, INCORRECT_MAPPED_FIELD)
-                if(kind != VAL)
-                    error("This field must be a value field", it,
+                if(f.kind != VAL)
+                    error("This field must be a value field", f,
                         FIELD__KIND, INCORRECT_MAPPED_FIELD)
-                if(!(type instanceof Int))
-                    error("The type of this field must be int", type,
+                if(!(f.type instanceof Int))
+                    error("The type of this field must be int", f.type,
                         null, INCORRECT_MAPPED_FIELD)
-            ]
-            fields.filter[isMapped && name != "length"].forEach[
-                error("Unknown mapped field " + name, it, NAMED__NAME, UNKNOWN_MAPPED_FIELD)
-            ]
+            }
+            for(f : fields.filter[isMapped && name != "length"])
+                error("Unknown mapped field " + f.name, f,
+                    NAMED__NAME, UNKNOWN_MAPPED_FIELD)
             
-            methods.filter[name == "get"].forEach[m |
+            for(m : methods.filter[name == "get"]) {
                 if(!m.mapped)
                     error("This method must be declared as mapped", m,
                         NAMED__NAME, INCORRECT_MAPPED_METHOD)
@@ -590,8 +612,8 @@ class RolezValidator extends RolezSystemValidator {
                 else if(!(m.params.head.type instanceof Int))
                     error("This parameter's type must be int", m.params.head.type,
                         null, INCORRECT_MAPPED_METHOD)
-            ]
-            methods.filter[name == "set"].forEach[m |
+            }
+            for(m : methods.filter[name == "set"]) {
                 if(!m.mapped)
                     error("This method must be declared as mapped", m,
                         NAMED__NAME, INCORRECT_MAPPED_METHOD)
@@ -610,10 +632,10 @@ class RolezValidator extends RolezSystemValidator {
                         error("This parameter's type must be " + typeParam.name,
                             m.params.get(1).type, null, INCORRECT_MAPPED_METHOD)
                 }
-            ]
-            methods.filter[isMapped && name != "get" && name != "set"].forEach[
-                error("unknown mapped method " + name, it, NAMED__NAME, UNKNOWN_MAPPED_METHOD)
-            ]
+            }
+            for(m : methods.filter[isMapped && name != "get" && name != "set"])
+                error("unknown mapped method " + m.name, m,
+                    NAMED__NAME, UNKNOWN_MAPPED_METHOD)
         }
     }
     

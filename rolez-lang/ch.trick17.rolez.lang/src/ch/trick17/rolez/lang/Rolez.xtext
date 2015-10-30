@@ -53,7 +53,8 @@ Constr:
     body=Block?;
 
 Field:
-    mapped?='mapped'? kind=VarKind name=ID ':' type=Type;
+    mapped?='mapped'? kind=VarKind name=ID ':' type=Type
+    ('=' initializer=Expr)?;
 
 enum VarKind:
     VAL='val' | VAR='var';

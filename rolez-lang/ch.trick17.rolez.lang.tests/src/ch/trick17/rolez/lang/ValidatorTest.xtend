@@ -597,10 +597,25 @@ class ValidatorTest {
         parse('''
             mapped class rolez.lang.Object
             class A {
+                var i: int
+                val j: int = 0
+            }
+        ''').assertNoErrors
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.io.PrintStream
+            mapped object rolez.lang.System {
+                mapped val out: readonly rolez.io.PrintStream
+            }
+        ''').assertNoErrors
+        parse('''
+            mapped class rolez.lang.Object
+            class A {
                 val i: int
                 var j: int
+                val k: int = 0
                 new {
-                    this.i = 3;
+                    this.i = 3 + this.k;
                     3 + this.i;
                 }
                 new(val b: boolean, val i: int) {
@@ -677,6 +692,15 @@ class ValidatorTest {
         parse('''
             mapped class rolez.lang.Object
             class A {
+                val x: int = 0
+                new {
+                    this.x = 3;
+                }
+            }
+        ''').assertError(ASSIGNMENT, VAL_FIELD_OVERINITIALIZED)
+        parse('''
+            mapped class rolez.lang.Object
+            class A {
                 val x: int
                 new(val b: boolean) {
                     if(b)
@@ -697,6 +721,56 @@ class ValidatorTest {
         ''')
         program.assertError(ASSIGNMENT, VAL_FIELD_OVERINITIALIZED)
         program.assertError(CONSTR, VAL_FIELD_NOT_INITIALIZED)
+    }
+    
+    @Test def testFieldInitializer() {
+        parse('''
+            mapped class rolez.lang.Object {
+                mapped def readonly toString: pure String
+            }
+            mapped class rolez.lang.String {
+                mapped def pure length: int
+            }
+            mapped object rolez.lang.System
+            class A {
+                val foo: int = 5
+                var bar: int = "Hello".length
+                val baz: pure String = the System.toString
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            mapped class rolez.lang.Object
+            class A {
+                val i: int = 0
+                val j: int = this.i
+            }
+        ''').assertError(THIS, THIS_IN_FIELD_INIT)
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array[T] {
+                mapped val length: int = 0
+            }
+        ''').assertError(INT_LITERAL, MAPPED_FIELD_WITH_INIT)
+    }
+    
+    @Test def testVarFieldInSingletonClass() {
+        parse('''
+            mapped class rolez.lang.Object
+            object A {
+                val foo: int = 0
+            }
+            class B {
+                var foo: int
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            mapped class rolez.lang.Object
+            object A {
+                var foo: int
+            }
+        ''').assertError(FIELD, VAR_FIELD_IN_SINGLETON_CLASS)
     }
     
     @Test def testLocalValInitialized() {

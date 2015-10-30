@@ -1,5 +1,7 @@
 package rolez.lang
 
+import rolez.io.PrintStream
+
 mapped class Object {
 	mapped def readonly equals(val other: readonly Object): boolean
 	mapped def readonly hashCode: int
@@ -22,5 +24,6 @@ mapped class Array[T] {
 }
 
 mapped object System {
-	mapped def pure exit(val status: int): void
+	mapped val out: readonly PrintStream
+	mapped def pure exit(val status: int):
 }

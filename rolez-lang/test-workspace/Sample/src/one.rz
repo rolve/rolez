@@ -1,5 +1,7 @@
 package foo
 
+import rolez.io.PrintStream
+
 class Person {
 	val name: pure String
 	val surname: pure String
@@ -99,6 +101,12 @@ class Test {
 	}
 	
 	def pure bar: {
+		the System.out.println("Hello World!");
+		
+		val s: readonly PrintStream = new PrintStream("out.txt");
+		s.println("Good bye!");
+		s.close;
+		
 		the System.exit(0);
 	}
 }

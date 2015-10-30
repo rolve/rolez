@@ -54,7 +54,7 @@ class GeneratorTest {
     
     @Test def testFiles() {
         var program = parse('''
-            mapped class rolez.lang.Object
+            mapped class rolez.io.PrintStream
             class A
         ''', classes)
         program.assertNoErrors
@@ -63,21 +63,24 @@ class GeneratorTest {
         generator.doGenerate(program.eResource, fsa)
         fsa.allFiles.size.assertThat(is(1))
         fsa.textFiles.size.assertThat(is(1))
+        fsa.textFiles.keySet.head.assertThat(endsWith("A.java"))
         
         program = parse('''
             class A
             class foo.B
             class foo.bar.C
+            object D
+            mapped object rolez.lang.System
         ''', classes)
         program.assertNoErrors
         fsa = new InMemoryFileSystemAccess
         fsa.allFiles.size.assertThat(is(0))
         generator.doGenerate(program.eResource, fsa)
-        fsa.allFiles.size.assertThat(is(3))
-        fsa.textFiles.size.assertThat(is(3))
+        fsa.allFiles.size.assertThat(is(5))
+        fsa.textFiles.size.assertThat(is(5))
     }
     
-    @Test def testClass() {
+    @Test def testNormalClass() {
         parse('''
             class A
         ''', classes).generate.assertEqualsJava('''
@@ -107,10 +110,54 @@ class GeneratorTest {
         ''')
     }
     
+    @Test def testSingletonClass() {
+        parse('''
+            object A
+        ''', classes).generate.assertEqualsJava('''
+            public final class A extends java.lang.Object {
+                
+                public static final A INSTANCE = new A();
+                
+                private A() {}
+            }
+        ''')
+    }
+    
+    @Test def testMappedSingletonClass() {
+        parse('''
+            mapped class rolez.io.PrintStream
+            mapped object rolez.lang.System {
+                mapped val out: readonly rolez.io.PrintStream
+                mapped def readonly exit(val status: int):
+                mapped def readonly lineSeparator: pure String
+            }
+        ''', classes).generate.assertEqualsJava('''
+            package rolez.lang;
+            
+            public final class System extends java.lang.Object {
+                
+                public static final System INSTANCE = new System();
+                
+                private System() {}
+                
+                public final java.io.PrintStream out = java.lang.System.out;
+                
+                public void exit(final int status) {
+                    java.lang.System.exit(status);
+                }
+                
+                public java.lang.String lineSeparator() {
+                    return java.lang.System.lineSeparator();
+                }
+            }
+        ''')
+    }
+    
     @Test def testField() {
         parse('''
             class foo.A {
                 val i: int
+                val j: int = 0
                 var b: boolean
                 var a: readwrite foo.A
                 
@@ -122,13 +169,33 @@ class GeneratorTest {
             package foo;
             
             public class A extends java.lang.Object {
+                
                 public final int i;
+                
+                public final int j = 0;
+                
                 public boolean b;
+                
                 public foo.A a;
                 
                 public A() {
                     this.i = 0;
                 }
+            }
+        ''')
+        
+        parse('''
+            object A {
+                val j: int = 0
+            }
+        ''', classes).generate.assertEqualsJava('''
+            public final class A extends java.lang.Object {
+                
+                public static final A INSTANCE = new A();
+                
+                private A() {}
+                
+                public final int j = 0;
             }
         ''')
     }
@@ -147,6 +214,22 @@ class GeneratorTest {
                 
                 public int foo(final int i) {
                     return i;
+                }
+            }
+        ''')
+        
+        parse('''
+            object A {
+                def pure foo: {}
+            }
+        ''', classes).generate.assertEqualsJava('''
+            public final class A extends java.lang.Object {
+                
+                public static final A INSTANCE = new A();
+                
+                private A() {}
+                
+                public void foo() {
                 }
             }
         ''')

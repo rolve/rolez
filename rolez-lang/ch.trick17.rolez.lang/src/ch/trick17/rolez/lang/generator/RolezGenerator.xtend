@@ -70,10 +70,11 @@ class RolezGenerator implements IGenerator {
     @Inject RolezUtils utils
     
     public static val mappedClasses = #{
-        objectClassName -> "java.lang.Object",
-        stringClassName -> "java.lang.String",
-        arrayClassName  -> null,
-        systemClassName -> "java.lang.System"
+        objectClassName      -> "java.lang.Object",
+        stringClassName      -> "java.lang.String",
+        arrayClassName       -> null,
+        systemClassName      -> "java.lang.System",
+        printStreamClassName -> "java.io.PrintStream"
     }
     
     override void doGenerate(Resource resource, IFileSystemAccess fsa) {
@@ -95,7 +96,7 @@ class RolezGenerator implements IGenerator {
         
         '''»
         public class «simpleName» extends «actualSuperclass?.generateName?:"java.lang.Object"» {
-            «fields.map[gen].join»
+            « fields.map[gen].join»
             «constrs.map[gen].join»
             «methods.map[gen].join»
         }
@@ -112,14 +113,17 @@ class RolezGenerator implements IGenerator {
             public static final «simpleName» INSTANCE = new «simpleName»();
             
             private «simpleName»() {}
-            
-            «fields.map[genObjectField].join»
+            « fields.map[genObjectField ].join»
             «methods.map[genObjectMethod].join»
         }
     '''}
     
     private def gen(Field it) {'''
-        public «kind.gen»«type.gen» «name»;
+        
+        public «kind.gen»«type.gen» «name»«
+            if(initializer != null) ''' = «initializer.gen»'''
+            else ''''''
+        »;
     '''}
     
     private def gen(Method it) {'''
@@ -133,11 +137,12 @@ class RolezGenerator implements IGenerator {
     '''}
     
     private def genObjectField(Field it) { if(!mapped) gen else '''
-        public «kind.gen»«type.gen» «name»
-            = «mappedClasses.get(enclosingClass.qualifiedName)».«name»;
+        
+        public «kind.gen»«type.gen» «name» = «mappedClasses.get(enclosingClass.qualifiedName)».«name»;
     '''}
     
     private def genObjectMethod(Method it) { if(!mapped) gen else '''
+        
         public «type.gen» «name»(«params.map[gen].join(", ")») {
             «
             if(type instanceof Void) '''
@@ -273,6 +278,7 @@ class RolezGenerator implements IGenerator {
     
     private def dispatch generateExpr(MemberAccess it) {
         // TODO: guard
+        // TODO: what to do with mapped methods that throw checked exceptions?
         switch(it) {
             case isMethodInvoke && method.isArrayGet:
                 '''«target.gen»[«args.get(0).gen»]'''
