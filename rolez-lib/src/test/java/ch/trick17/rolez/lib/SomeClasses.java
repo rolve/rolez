@@ -1,12 +1,14 @@
 package ch.trick17.rolez.lib;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+
 import ch.trick17.rolez.lib.guard.Guarded;
-import ch.trick17.rolez.lib.guard.GuardedObject;
-import ch.trick17.rolez.lib.immutable.ImmutableObject;
+import ch.trick17.rolez.lib.immutable.Immutable;
 
 public abstract class SomeClasses {
     
-    public static class Int extends GuardedObject {
+    public static class Int extends Guarded {
         
         public int value;
         
@@ -15,9 +17,19 @@ public abstract class SomeClasses {
         public Int(final int value) {
             this.value = value;
         }
+        
+        @Override
+        protected Iterable<? extends Guarded> guardedRefs() {
+            return emptyList();
+        }
+        
+        @Override
+        protected Iterable<? extends Guarded> views() {
+            return emptyList();
+        }
     }
     
-    public static class Ref<T extends Guarded> extends GuardedObject {
+    public static class Ref<T extends Guarded> extends Guarded {
         
         public T o;
         
@@ -26,9 +38,19 @@ public abstract class SomeClasses {
         public Ref(final T o) {
             this.o = o;
         }
+        
+        @Override
+        protected Iterable<? extends Guarded> guardedRefs() {
+            return asList(o);
+        }
+        
+        @Override
+        protected Iterable<? extends Guarded> views() {
+            return emptyList();
+        }
     }
     
-    public static class Node extends GuardedObject {
+    public static class Node extends Guarded {
         
         public Node next;
         public int data;
@@ -42,9 +64,19 @@ public abstract class SomeClasses {
         public Node(final Node o) {
             this.next = o;
         }
+        
+        @Override
+        protected Iterable<? extends Guarded> guardedRefs() {
+            return asList(next);
+        }
+        
+        @Override
+        protected Iterable<? extends Guarded> views() {
+            return emptyList();
+        }
     }
     
-    public static class SomeImmutable extends ImmutableObject {}
+    public static class SomeImmutable extends Immutable {}
     
     public static enum SomeEnum {
         A,

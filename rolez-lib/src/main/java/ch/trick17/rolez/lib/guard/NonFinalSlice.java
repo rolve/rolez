@@ -23,9 +23,9 @@ abstract class NonFinalSlice<S extends NonFinalSlice<S>> extends BaseSlice<S> {
     @Override
     public final S slice(final SliceRange sliceRange) {
         if(!range.covers(sliceRange))
-            throw new IllegalArgumentException("Given range: " + sliceRange
-                    + " is not covered by this slice's range: " + range);
-        
+            throw new IllegalArgumentException("Given range: " + sliceRange + " is not covered by this slice's range: "
+                    + range);
+                    
         final S slice = createSlice(sliceRange);
         
         /* Make sure the new slice is not added while existing slices are being
@@ -66,8 +66,7 @@ abstract class NonFinalSlice<S extends NonFinalSlice<S>> extends BaseSlice<S> {
                 slice.subslices.add(subslice);
             }
             else {
-                final SliceRange overlap =
-                        subslice.range.intersectWith(slice.range);
+                final SliceRange overlap = subslice.range.intersectWith(slice.range);
                 if(!overlap.isEmpty()) {
                     final S overlapSlice = createSlice(overlap);
                     slice.subslices.add(overlapSlice);
@@ -82,7 +81,7 @@ abstract class NonFinalSlice<S extends NonFinalSlice<S>> extends BaseSlice<S> {
     abstract S createSlice(SliceRange sliceRange);
     
     @Override
-    Iterable<S> views() {
+    protected final Iterable<S> views() {
         return subslices;
     }
 }

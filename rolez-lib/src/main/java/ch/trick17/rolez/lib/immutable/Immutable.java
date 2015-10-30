@@ -30,10 +30,9 @@ public abstract class Immutable {
      *         above.
      */
     public static boolean isImmutable(final Class<?> type) {
-        return type.isPrimitive() || type.isEnum()
-                || knownImmutable.contains(type)
-                || Immutable.class.isAssignableFrom(type);
+        return type.isPrimitive() || type.isEnum() || knownImmutable.contains(type) || Immutable.class.isAssignableFrom(
+                type);
     }
     
-    Immutable() {}
+    public Immutable() {}
 }

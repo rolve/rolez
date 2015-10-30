@@ -34,12 +34,11 @@ public class Slice<E extends Guarded> extends NonFinalSlice<Slice<E>> {
     }
     
     @Override
-    final Iterable<? extends Guarded> guardedRefs() {
+    protected final Iterable<? extends Guarded> guardedRefs() {
         return listImpl;
     }
     
-    private final class SliceList extends AbstractList<E> implements
-            RandomAccess {
+    private final class SliceList extends AbstractList<E> implements RandomAccess {
         @Override
         public E get(final int index) {
             return data[range.begin + index * range.step];

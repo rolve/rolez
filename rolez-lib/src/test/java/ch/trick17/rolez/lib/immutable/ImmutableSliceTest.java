@@ -4,9 +4,7 @@ import org.junit.Test;
 
 import ch.trick17.rolez.lib.SomeClasses.SomeEnum;
 import ch.trick17.rolez.lib.SomeClasses.SomeImmutable;
-import ch.trick17.rolez.lib.guard.GuardedObject;
-import ch.trick17.rolez.lib.immutable.ImmutableArray;
-import ch.trick17.rolez.lib.immutable.ImmutableSlice;
+import ch.trick17.rolez.lib.guard.Guarded;
 
 public class ImmutableSliceTest {
     
@@ -34,6 +32,6 @@ public class ImmutableSliceTest {
     
     @Test(expected = AssertionError.class)
     public void testConstructorGuarded() {
-        new ImmutableArray<>(new GuardedObject[10]).toString();
+        new ImmutableArray<>(new Guarded[10]).toString();
     }
 }

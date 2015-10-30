@@ -10,7 +10,7 @@ public abstract class Guarded {
                                   // should guarantee happens-before.
     final Object viewLock = new Object();
     
-    Guarded() {}
+    public Guarded() {}
     
     public void share() {
         getGuard().share(this);
@@ -22,7 +22,7 @@ public abstract class Guarded {
     
     final Guard getGuard() {
         if(guard == null)
-            guard = GuardFactory.getDefault().newGuard();
+            guard = new Guard();
         return guard;
     }
     
@@ -51,15 +51,14 @@ public abstract class Guarded {
             guard.guardReadWrite(this);
     }
     
-    final void processAll(final GuardOp op, final Set<Guarded> processed,
-            final boolean lockViews) {
+    final void processAll(final GuardOp op, final Set<Guarded> processed, final boolean lockViews) {
         if(processed.add(this)) {
             /* First, process references, otherwise "parent" task may replace
              * them through a view that has already been released. */
             for(final Guarded ref : guardedRefs())
                 if(ref != null)
                     ref.processAll(op, processed, lockViews);
-            
+                    
             /* Then, process views and finally "this". If necessary, make sure
              * that no new views are added during this phase using the viewLock. */
             if(lockViews) {
@@ -82,13 +81,12 @@ public abstract class Guarded {
                 view.processViewsRecursive(op, processed);
     }
     
-    private void processViewsRecursive(final GuardOp op,
-            final Set<Guarded> processed) {
+    private void processViewsRecursive(final GuardOp op, final Set<Guarded> processed) {
         if(processed.add(this)) {
             for(final Guarded view : views())
                 if(view != null)
                     view.processViewsRecursive(op, processed);
-            
+                    
             op.process(this);
         }
     }
@@ -102,7 +100,7 @@ public abstract class Guarded {
      *         simplify the implementation of this method, the {@link Iterable}
      *         may return <code>null</code> references.
      */
-    abstract Iterable<? extends Guarded> guardedRefs();
+    protected abstract Iterable<? extends Guarded> guardedRefs();
     
     /**
      * Returns all views of this object. Views are (guarded) objects that
@@ -112,5 +110,5 @@ public abstract class Guarded {
      *         method, the {@link Iterable} may return <code>null</code>
      *         references.
      */
-    abstract Iterable<? extends Guarded> views();
+    protected abstract Iterable<? extends Guarded> views();
 }

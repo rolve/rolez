@@ -25,7 +25,7 @@ public class DoubleSlice extends NonFinalSlice<DoubleSlice> {
     }
     
     @Override
-    final Iterable<? extends Guarded> guardedRefs() {
+    protected final Iterable<? extends Guarded> guardedRefs() {
         return emptySet();
     }
 }
