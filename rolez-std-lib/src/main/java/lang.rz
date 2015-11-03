@@ -1,0 +1,25 @@
+package rolez.lang
+
+import rolez.io.*
+
+mapped class Object {
+    mapped def readonly equals(val other: readonly Object): boolean
+    mapped def readonly hashCode: int
+    mapped def readonly toString: readonly String
+}
+
+mapped class Array[T] {
+    mapped new(val length: int)
+    mapped val length: int
+    mapped def readonly  get(val index: int): T
+    mapped def readwrite set(val index: int, val element: T):
+}
+
+mapped class String {
+    mapped def readonly length: int
+    mapped def readonly charAt(val position: int): char
+}
+
+mapped object System {
+    mapped val out: readonly PrintStream
+}
