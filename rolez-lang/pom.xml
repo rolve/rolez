@@ -1,0 +1,56 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>ch.trick17.rolez</groupId>
+    <artifactId>rolez-lang</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>Rolez Language</name>
+    <packaging>pom</packaging>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>1.7</maven.compiler.source>
+        <maven.compiler.target>1.7</maven.compiler.target>
+        <tychoVersion>0.24.0</tychoVersion>
+        <xtextVersion>2.8.4</xtextVersion>
+        <xtendVersion>${xtextVersion}</xtendVersion>
+        <xsemanticsVersion>1.8.1</xsemanticsVersion>
+        <xtendGenDirectory>${project.build.directory}/xtend-gen</xtendGenDirectory>
+        <mainProjectName>ch.trick17.rolez.lang</mainProjectName>
+    </properties>
+
+    <modules>
+        <module>${mainProjectName}</module>
+        <module>${mainProjectName}.ui</module>
+        <module>${mainProjectName}.tests</module>
+    </modules>
+
+    <repositories>
+        <repository>
+            <id>Eclipse Mars</id>
+            <layout>p2</layout>
+            <url>http://download.eclipse.org/releases/mars/201506241002/</url>
+        </repository>
+        <repository>
+            <id>Xtext</id>
+            <layout>p2</layout>
+            <url>http://download.eclipse.org/modeling/tmf/xtext/updates/releases/${xtextVersion}/</url>
+        </repository>
+        <repository>
+            <id>Xsemantics</id>
+            <layout>p2</layout>
+            <url>http://sourceforge.net/projects/xsemantics/files/updates/releases/1.8/1.8.1.v20151009-0657/</url>
+        </repository>
+    </repositories>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.eclipse.tycho</groupId>
+                <artifactId>tycho-maven-plugin</artifactId>
+                <version>${tychoVersion}</version>
+                <extensions>true</extensions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

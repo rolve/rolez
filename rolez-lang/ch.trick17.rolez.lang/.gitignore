@@ -1,4 +1,2 @@
-/src-gen
-/xtend-gen
-/bin
-/xsemantics-gen
+/target/
+/model/
