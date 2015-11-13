@@ -2,7 +2,20 @@ package ch.trick17.rolez.lang
 
 import ch.trick17.rolez.lang.generator.RolezGenerator
 import ch.trick17.rolez.lang.rolez.Program
+import com.google.common.io.ByteStreams
+import com.google.common.io.CharStreams
+import java.net.URI
+import java.util.regex.Pattern
 import javax.inject.Inject
+import javax.tools.Diagnostic
+import javax.tools.DiagnosticListener
+import javax.tools.FileObject
+import javax.tools.ForwardingJavaFileManager
+import javax.tools.ForwardingJavaFileObject
+import javax.tools.JavaFileManager.Location
+import javax.tools.JavaFileObject
+import javax.tools.SimpleJavaFileObject
+import javax.tools.ToolProvider
 import org.eclipse.xtext.generator.InMemoryFileSystemAccess
 import org.eclipse.xtext.junit4.InjectWith
 import org.eclipse.xtext.junit4.XtextRunner
@@ -11,10 +24,11 @@ import org.eclipse.xtext.junit4.validation.ValidationTestHelper
 import org.junit.Test
 import org.junit.runner.RunWith
 
+import static ch.trick17.rolez.lang.GeneratorTest.*
 import static org.hamcrest.Matchers.*
 
 import static extension org.hamcrest.MatcherAssert.assertThat
-import org.junit.Assert
+import static extension org.junit.Assert.*
 
 @RunWith(XtextRunner)
 @InjectWith(RolezInjectorProvider)
@@ -574,7 +588,43 @@ class GeneratorTest {
     '''}
     
     private def assertEqualsJava(CharSequence it, CharSequence javaCode) {
-        // TODO: check that Java code compiles
-        Assert.assertEquals(javaCode.toString, it.toString)
+        javaCode.assertCompilable
+        javaCode.toString.assertEquals(it.toString)
+    }
+    
+    static val className = Pattern.compile("public (final )?class (\\w+) ")
+    static val filterMsg = Pattern.compile("cannot find symbol|package (\\w|\\.)+ does not exist")
+    
+    private def assertCompilable(CharSequence code) {
+        val matcher = className.matcher(code)
+        matcher.find.assertTrue
+        
+        val uri = URI.create("string:///" + matcher.group(2) + ".java")
+        val src = new SimpleJavaFileObject(uri, JavaFileObject.Kind.SOURCE) {
+            override getCharContent(boolean _) { code }
+        }
+        
+        // Collect errors
+        val errors = new StringBuilder
+        val listener = new DiagnosticListener<JavaFileObject> {
+            override report(Diagnostic<? extends JavaFileObject> it) {
+                if(!filterMsg.matcher(getMessage(null)).find)
+                    errors.append(it)
+            }
+        }
+        
+        // Discard compiler output
+        val compiler = ToolProvider.systemJavaCompiler
+        val fileMgr = new ForwardingJavaFileManager(compiler.getStandardFileManager(null, null, null)) {
+            override getJavaFileForOutput(Location l, String c, JavaFileObject.Kind k, FileObject s) {
+                new ForwardingJavaFileObject(super.getJavaFileForOutput(l, c, k, s)) {
+                    override openOutputStream() { ByteStreams.nullOutputStream }
+                    override openWriter()       { CharStreams.nullWriter }
+                }
+            }
+        }
+        
+        compiler.getTask(null, fileMgr, listener, null, null, #[src]).call
+        "".assertEquals(errors.toString)
     }
 }
