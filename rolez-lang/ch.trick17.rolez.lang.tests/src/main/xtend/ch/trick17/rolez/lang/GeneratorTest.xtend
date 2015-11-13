@@ -270,6 +270,34 @@ class GeneratorTest {
         ''')
     }
     
+    @Test def testBlock() {
+        parse('''
+            {
+                var j: int;
+            }
+            {
+                var c: char;
+                {
+                    var k: int;
+                    var l: int;
+                }
+                var m: int;
+            }
+        '''.withFrame, classes).generate.assertEqualsJava('''
+            {
+                int j;
+            }
+            {
+                char c;
+                {
+                    int k;
+                    int l;
+                }
+                int m;
+            }
+        '''.withJavaFrame)
+    }
+    
     @Test def testLocalVarDecl() {
         parse('''
             var j: int;

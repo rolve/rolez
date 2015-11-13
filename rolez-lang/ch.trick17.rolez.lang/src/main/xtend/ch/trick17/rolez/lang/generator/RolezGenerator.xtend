@@ -128,12 +128,12 @@ class RolezGenerator implements IGenerator {
     
     private def gen(Method it) {'''
         
-        public «type.gen» «name»(«params.map[gen].join(", ")»)«body.gen»
+        public «type.gen» «name»(«params.map[gen].join(", ")») «body.gen»
     '''}
     
     private def gen(Constr it) {'''
         
-        public «enclosingClass.simpleName»(«params.map[gen].join(", ")»)«body.gen»
+        public «enclosingClass.simpleName»(«params.map[gen].join(", ")») «body.gen»
     '''}
     
     private def genObjectField(Field it) { if(!mapped) gen else '''
@@ -169,16 +169,11 @@ class RolezGenerator implements IGenerator {
     
     private def CharSequence gen(Stmt it) { generateStmt }
     
-    private def dispatch CharSequence genIndent(Block it) { gen }
-    private def dispatch CharSequence genIndent(Stmt it) {
-        '''
-        
-            «gen»
-        '''
-    }
+    private def dispatch CharSequence genIndent(Block it) { " " + gen }
+    private def dispatch CharSequence genIndent(Stmt it)  { "\n    " + gen }
     
     private def dispatch generateStmt(Block it) {'''
-         {
+        {
             «stmts.map[gen].join»
         }
     '''}
