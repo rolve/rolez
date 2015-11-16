@@ -7,7 +7,6 @@ import ch.trick17.rolez.lang.RolezExtensions
 import ch.trick17.rolez.lang.RolezUtils
 import ch.trick17.rolez.lang.cfg.CfgProvider
 import ch.trick17.rolez.lang.cfg.InstrNode
-import ch.trick17.rolez.lang.generator.RolezGenerator
 import ch.trick17.rolez.lang.rolez.Assignment
 import ch.trick17.rolez.lang.rolez.Block
 import ch.trick17.rolez.lang.rolez.Class
@@ -26,15 +25,12 @@ import ch.trick17.rolez.lang.rolez.Method
 import ch.trick17.rolez.lang.rolez.NormalClass
 import ch.trick17.rolez.lang.rolez.Null
 import ch.trick17.rolez.lang.rolez.ParameterizedBody
-import ch.trick17.rolez.lang.rolez.PrimitiveType
 import ch.trick17.rolez.lang.rolez.Program
 import ch.trick17.rolez.lang.rolez.ReturnExpr
-import ch.trick17.rolez.lang.rolez.RoleType
 import ch.trick17.rolez.lang.rolez.SimpleClassRef
 import ch.trick17.rolez.lang.rolez.SingletonClass
 import ch.trick17.rolez.lang.rolez.SuperConstrCall
 import ch.trick17.rolez.lang.rolez.This
-import ch.trick17.rolez.lang.rolez.Type
 import ch.trick17.rolez.lang.rolez.TypeParamRef
 import ch.trick17.rolez.lang.rolez.TypedBody
 import ch.trick17.rolez.lang.rolez.Var
@@ -106,6 +102,7 @@ class RolezValidator extends RolezSystemValidator {
     
     @Inject extension RolezExtensions
     @Inject extension CfgProvider
+    @Inject extension JavaMapper
     @Inject ValFieldsInitializedAnalysis.Provider valFieldsAnalysis
     @Inject RolezSystem system
     @Inject RolezUtils utils
@@ -424,11 +421,8 @@ class RolezValidator extends RolezSystemValidator {
                 error("mapped fields are allowed in mapped classes only",
                     FIELD__MAPPED, MAPPED_IN_NORMAL_CLASS)
             
-            val javaClass = java.lang.Class.forName(
-                RolezGenerator.mappedClasses.get(enclosingClass.qualifiedName))
-            
             val javaField =
-                try javaClass.getField(name)
+                try enclosingClass.javaClass.getField(name)
                 catch(NoSuchFieldException _) {
                     error("Unknown mapped field", NAMED__NAME, UNKNOWN_MAPPED_FIELD)
                     return
@@ -452,10 +446,7 @@ class RolezValidator extends RolezSystemValidator {
             if(body != null)
                 error("mapped methods cannot have a body", body, null, MAPPED_WITH_BODY)
             
-            val javaClass = java.lang.Class.forName(
-                RolezGenerator.mappedClasses.get(enclosingClass.qualifiedName))
-            
-            val candidates = javaClass.methods.filter[m | m.name == name]
+            val candidates = enclosingClass.javaClass.methods.filter[m | m.name == name]
             if(candidates.isEmpty)
                 error("Unknown mapped method", NAMED__NAME, UNKNOWN_MAPPED_METHOD)
             else {
@@ -490,11 +481,9 @@ class RolezValidator extends RolezSystemValidator {
             if(body != null)
                 error("mapped constructors cannot have a body", body, null, MAPPED_WITH_BODY)
             
-            val javaClass = java.lang.Class.forName(
-                RolezGenerator.mappedClasses.get(enclosingClass.qualifiedName))
-            val matched = javaClass.constructors.filter[c |
+            val matched = enclosingClass.javaClass.constructors.filter[c |
                 val javaParamTypes = c.genericParameterTypes.iterator
-                params.size == c.parameterTypes.length
+                params.size == c.genericParameterTypes.length
                     && params.forall[type.mapsTo(javaParamTypes.next)]
             ]
             if(matched.size == 0)
@@ -512,23 +501,9 @@ class RolezValidator extends RolezSystemValidator {
         }
     }
     
-    private def dispatch boolean mapsTo(PrimitiveType it, java.lang.Class<?> javaType) {
-        javaType.isPrimitive && name == javaType.name
-    }
-    
-    private def dispatch boolean mapsTo(RoleType it, java.lang.Class<?> javaType) {
-        val base = base
-        if(base instanceof GenericClassRef)
-            javaType.isArray && base.typeArg.mapsTo(javaType.componentType)
-        else
-            RolezGenerator.mappedClasses.get(base.clazz.qualifiedName) == javaType.name
-    }
-    
-    private def dispatch boolean mapsTo(Type it, java.lang.reflect.Type _) { false }
-    
     @Check
     def checkMappedClass(Class it) {
-        if(RolezGenerator.mappedClasses.containsKey(qualifiedName)) {
+        if(mappedClasses.contains(qualifiedName)) {
             if(!mapped)
                 error("Class must be declared as mapped", NAMED__NAME, CLASS_ACTUALLY_MAPPED)
         }

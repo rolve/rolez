@@ -53,6 +53,7 @@ import ch.trick17.rolez.lang.rolez.VarKind
 import ch.trick17.rolez.lang.rolez.VarRef
 import ch.trick17.rolez.lang.rolez.Void
 import ch.trick17.rolez.lang.rolez.WhileLoop
+import ch.trick17.rolez.lang.validation.JavaMapper
 import java.io.File
 import javax.inject.Inject
 import org.eclipse.emf.ecore.resource.Resource
@@ -67,15 +68,8 @@ import static extension org.eclipse.xtext.util.Strings.convertToJavaString
 class RolezGenerator implements IGenerator {
     
     @Inject extension RolezExtensions
+    @Inject extension JavaMapper
     @Inject RolezUtils utils
-    
-    public static val mappedClasses = #{
-        objectClassName      -> "java.lang.Object",
-        stringClassName      -> "java.lang.String",
-        arrayClassName       -> null,
-        systemClassName      -> "java.lang.System",
-        printStreamClassName -> "java.io.PrintStream"
-    }
     
     override void doGenerate(Resource resource, IFileSystemAccess fsa) {
         val program = resource.contents.head as Program
@@ -131,6 +125,8 @@ class RolezGenerator implements IGenerator {
         public «type.gen» «name»(«params.map[gen].join(", ")») «body.gen»
     '''}
     
+    // TODO: Check if body can throw a checked exception
+    
     private def gen(Constr it) {'''
         
         public «enclosingClass.simpleName»(«params.map[gen].join(", ")») «body.gen»
@@ -138,7 +134,7 @@ class RolezGenerator implements IGenerator {
     
     private def genObjectField(Field it) { if(!mapped) gen else '''
         
-        public «kind.gen»«type.gen» «name» = «mappedClasses.get(enclosingClass.qualifiedName)».«name»;
+        public «kind.gen»«type.gen» «name» = «enclosingClass.javaClassName».«name»;
     '''}
     
     private def genObjectMethod(Method it) { if(!mapped) gen else '''
@@ -156,7 +152,7 @@ class RolezGenerator implements IGenerator {
     '''}
     
     private def generateStaticCall(Method it) {
-        '''«mappedClasses.get(enclosingClass.qualifiedName)».«name»(«params.map[name].join(", ")»)'''
+        '''«enclosingClass.javaClassName».«name»(«params.map[name].join(", ")»)'''
     }
     
     private def gen(Param it) {'''«kind.gen»«type.gen» «name»'''}
@@ -383,7 +379,7 @@ class RolezGenerator implements IGenerator {
     
     private def generateName(Class it) {
         if(mapped && !isSingleton) {
-            val name = mappedClasses.get(qualifiedName)
+            val name = javaClassName
             if(name == null) throw new AssertionError
             name
         }
