@@ -26,7 +26,6 @@ import ch.trick17.rolez.lang.rolez.RolezFactory
 import ch.trick17.rolez.lang.rolez.SimpleClassRef
 import ch.trick17.rolez.lang.rolez.SingletonClass
 import ch.trick17.rolez.lang.rolez.Stmt
-import ch.trick17.rolez.lang.rolez.Task
 import ch.trick17.rolez.lang.rolez.Type
 import ch.trick17.rolez.lang.rolez.TypeParamRef
 import ch.trick17.rolez.lang.rolez.Void
@@ -143,10 +142,6 @@ class RolezExtensions {
             default: container?.enclosingBody
         }
     }
-    
-    def dispatch kind(Method _) { "method" }
-    def dispatch kind(Constr _) { "constructor" }
-    def dispatch kind(Task _)   { "task" }
     
     def isFieldAccess (MemberAccess it) { member instanceof Field  }
     def isMethodInvoke(MemberAccess it) { member instanceof Method }

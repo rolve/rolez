@@ -390,7 +390,7 @@ rule WReturnExpr
 from {
     // Apparently, this needs to be in braces:...
     {r.enclosingBody instanceof TypedBody} or fail
-        error "Cannot return an expression in a " + r.enclosingBody.kind
+        error "Cannot return an expression in a constructor"
         source r
     
     G |- r.expr <| (r.enclosingBody as TypedBody).type
