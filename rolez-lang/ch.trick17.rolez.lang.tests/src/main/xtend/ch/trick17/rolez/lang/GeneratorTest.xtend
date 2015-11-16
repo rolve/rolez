@@ -55,6 +55,9 @@ class GeneratorTest {
                 mapped def readonly  get(val i: int): T
                 mapped def readwrite set(val i: int, val o: T):
             }
+            mapped class rolez.io.PrintStream {
+                mapped new(val file: readonly String)
+            }
             class Base {
                 var foo: int
             }
@@ -268,6 +271,23 @@ class GeneratorTest {
                 }
             }
         ''')
+        
+        parse('''
+            class FooStream extends rolez.io.PrintStream {
+                new {
+                    super("foo.txt");
+                }
+            }
+        ''', classes).generate.assertEqualsJava('''
+            public class FooStream extends java.lang.PrintStream {
+                
+                public FooStream() throws java.io.FileNotFoundException {
+                    super("foo.txt");
+                }
+            }
+        ''')
+        
+        // TODO: Test case where super constr call or whole constr is implicit
     }
     
     @Test def testBlock() {
@@ -519,6 +539,8 @@ class GeneratorTest {
             aa[1 - 1] = a;
             int l = aa[0][0];
         '''.withJavaFrame)
+        
+        // TODO: Test methods that throw exceptions
     }
     
     @Test def testNew() {
@@ -535,6 +557,62 @@ class GeneratorTest {
             new foo.bar.Base("Hello".length(), 0);
             java.lang.Object a = new int[10 * 10];
         '''.withJavaFrame)
+        
+        parse('''
+            val j: int = 0;
+            val o: pure Object = new (rolez.io.PrintStream)("foo.txt");
+            val k: int = 0;
+        '''.withFrame, classes).generate.assertEqualsJava('''
+            try {
+                final int j = 0;
+                final java.lang.Object o = new java.io.PrintStream("foo.txt");
+                final int k = 0;
+            } catch(java.io.FileNotFoundException e) {
+                «throwExceptionWrapper("e")»
+            }
+        '''.withJavaFrame)
+        parse('''
+            if(new (rolez.io.PrintStream)("foo.txt").equals("")) {
+                new (rolez.io.PrintStream)("bar.txt");
+            }
+        '''.withFrame, classes).generate.assertEqualsJava('''
+            try {
+                if(new java.io.PrintStream("foo.txt").equals("")) {
+                    new java.io.PrintStream("bar.txt");
+                }
+            } catch(java.io.FileNotFoundException e) {
+                «throwExceptionWrapper("e")»
+            }
+        '''.withJavaFrame)
+        
+        parse('''
+            class FooStream extends rolez.io.PrintStream {
+                new {
+                    super("foo.txt");
+                }
+                
+                def foo: {
+                    new FooStream;
+                }
+            }
+        ''', classes).generate.assertEqualsJava('''
+            public class FooStream extends java.io.PrintStream {
+                
+                public FooStream() throws java.io.FileNotFoundException {
+                    super("foo.txt");
+                }
+                
+                public void foo() {
+                    try {
+                        new FooStream();
+                    } catch(java.io.FileNotFoundException e) {
+                        «throwExceptionWrapper("e")»
+                    }
+                }
+            }
+        ''')
+        
+        // TODO: Test with multiple types of exceptions and with RuntimeException(s)
     }
     
     @Test def testParenthesized() {
@@ -614,6 +692,10 @@ class GeneratorTest {
             }
         }
     '''}
+    
+    private def throwExceptionWrapper(String e) {
+        '''throw new RuntimeException("ROLEZ EXCEPTION WRAPPER", «e»);'''
+    }
     
     private def assertEqualsJava(CharSequence it, CharSequence javaCode) {
         javaCode.assertCompilable
