@@ -1140,21 +1140,21 @@ class ValidatorTest {
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.String {
-                mapped def pure length: boolean
-            }
-        ''').assertError(METHOD, INCORRECT_MAPPED_METHOD)
-        parse('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.String {
                 mapped def pure length(val i: int): int
             }
-        ''').assertError(METHOD, INCORRECT_MAPPED_METHOD)
+        ''').assertError(METHOD, UNKNOWN_MAPPED_METHOD)
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.String {
                 mapped def pure charAt(val d: double): char
             }
-        ''').assertError(METHOD, INCORRECT_MAPPED_METHOD)
+        ''').assertError(METHOD, UNKNOWN_MAPPED_METHOD)
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.String {
+                mapped def pure length: boolean
+            }
+        ''').assertError(BOOLEAN, INCORRECT_MAPPED_METHOD)
     }
     
     @Test def testMappedConstr() {
@@ -1219,13 +1219,13 @@ class ValidatorTest {
             mapped class rolez.lang.String {
                 mapped new(val d: double)
             }
-        ''').assertError(CONSTR, INCORRECT_MAPPED_CONSTR)
+        ''').assertError(CONSTR, UNKNOWN_MAPPED_CONSTR)
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.String {
                 mapped new(val b: int, val e: int)
             }
-        ''').assertError(CONSTR, INCORRECT_MAPPED_CONSTR)
+        ''').assertError(CONSTR, UNKNOWN_MAPPED_CONSTR)
         
         // TODO: Test implicit constructor with a Java class that doesn't have a no-arg constructor
     }

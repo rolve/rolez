@@ -1,7 +1,10 @@
 package ch.trick17.rolez.lang.validation
 
 import ch.trick17.rolez.lang.RolezExtensions
+import ch.trick17.rolez.lang.rolez.Constr
+import ch.trick17.rolez.lang.rolez.Field
 import ch.trick17.rolez.lang.rolez.GenericClassRef
+import ch.trick17.rolez.lang.rolez.Method
 import ch.trick17.rolez.lang.rolez.PrimitiveType
 import ch.trick17.rolez.lang.rolez.RoleType
 import ch.trick17.rolez.lang.rolez.Type
@@ -30,6 +33,37 @@ class JavaMapper {
     
     def javaClass(ch.trick17.rolez.lang.rolez.Class it) {
         Class.forName(javaClassName)
+    }
+    
+    def javaField(Field it) throws NoSuchFieldException {
+        enclosingClass.javaClass.getField(name)
+    }
+    
+    def javaMethod(Method it) throws NoSuchMethodException {
+        val matching = enclosingClass.javaClass.methods.filter[m |
+            val javaParamTypes = m.genericParameterTypes.iterator
+            name == m.name
+                && params.size == m.parameterTypes.length
+                && params.forall[type.mapsTo(javaParamTypes.next)]
+        ]
+        switch(matching.size) {
+            case 0 : throw new NoSuchMethodException
+            case 1 : return matching.head
+            default: throw new AssertionError("So, this can happen...")
+        }
+    }
+    
+    def javaConstr(Constr it) throws NoSuchMethodException {
+        val matching = enclosingClass.javaClass.constructors.filter[c |
+            val javaParamTypes = c.genericParameterTypes.iterator
+            params.size == c.parameterTypes.length
+                && params.forall[type.mapsTo(javaParamTypes.next)]
+        ]
+        switch(matching.size) {
+            case 0 : throw new NoSuchMethodException
+            case 1 : return matching.head
+            default: throw new AssertionError("So, this can happen...")
+        }
     }
     
     def dispatch boolean mapsTo(PrimitiveType it, Class<?> javaType) {

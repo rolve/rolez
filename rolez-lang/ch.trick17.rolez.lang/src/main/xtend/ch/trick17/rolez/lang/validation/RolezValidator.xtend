@@ -93,6 +93,7 @@ class RolezValidator extends RolezSystemValidator {
     public static val UNKNOWN_MAPPED_CLASS = "unknown mapped class"
     public static val UNKNOWN_MAPPED_FIELD = "unknown mapped field"
     public static val UNKNOWN_MAPPED_METHOD = "unknown mapped method"
+    public static val UNKNOWN_MAPPED_CONSTR = "unknown mapped constructor"
     public static val CLASS_ACTUALLY_MAPPED = "class actually mapped"
     public static val INCORRECT_MAPPED_SUPERCLASS = "incorrect mapped superclass"
     public static val INCORRECT_MAPPED_CLASS_KIND = "incorrect mapped class kind"
@@ -102,7 +103,7 @@ class RolezValidator extends RolezSystemValidator {
     
     @Inject extension RolezExtensions
     @Inject extension CfgProvider
-    @Inject extension JavaMapper
+    @Inject extension JavaMapper javaMapper
     @Inject ValFieldsInitializedAnalysis.Provider valFieldsAnalysis
     @Inject RolezSystem system
     @Inject RolezUtils utils
@@ -422,12 +423,11 @@ class RolezValidator extends RolezSystemValidator {
                     FIELD__MAPPED, MAPPED_IN_NORMAL_CLASS)
             
             val javaField =
-                try enclosingClass.javaClass.getField(name)
+                try javaMapper.javaField(it)
                 catch(NoSuchFieldException _) {
                     error("Unknown mapped field", NAMED__NAME, UNKNOWN_MAPPED_FIELD)
                     return
                 }
-            
             if(!type.mapsTo(javaField.genericType))
                 error("Incorrect type for mapped field: should map to "
                     + javaField.genericType, type, null, INCORRECT_MAPPED_FIELD)
@@ -446,22 +446,15 @@ class RolezValidator extends RolezSystemValidator {
             if(body != null)
                 error("mapped methods cannot have a body", body, null, MAPPED_WITH_BODY)
             
-            val candidates = enclosingClass.javaClass.methods.filter[m | m.name == name]
-            if(candidates.isEmpty)
-                error("Unknown mapped method", NAMED__NAME, UNKNOWN_MAPPED_METHOD)
-            else {
-                val matched = candidates.filter[m |
-                    val javaParamTypes = m.genericParameterTypes.iterator
-                    type.mapsTo(m.genericReturnType)
-                        && params.size == m.parameterTypes.length
-                        && params.forall[type.mapsTo(javaParamTypes.next)]
-                ]
-                if(matched.size == 0)
-                    error("Incorrect parameter or return types for mapped method",
-                        NAMED__NAME, INCORRECT_MAPPED_METHOD)
-                else if(matched.size > 1)
-                    throw new AssertionError("So, this can happen...")
-            }
+            val javaMethod = 
+                try javaMapper.javaMethod(it)
+                catch(NoSuchMethodException _) {
+                    error("Unknown mapped method", NAMED__NAME, UNKNOWN_MAPPED_METHOD)
+                    return
+                }
+            if(!type.mapsTo(javaMethod.genericReturnType))
+                error("Incorrect type for mapped method: should map to "
+                    + javaMethod.genericReturnType, type, null, INCORRECT_MAPPED_METHOD)
         }
         else {
             if(enclosingClass.mapped)
@@ -481,16 +474,11 @@ class RolezValidator extends RolezSystemValidator {
             if(body != null)
                 error("mapped constructors cannot have a body", body, null, MAPPED_WITH_BODY)
             
-            val matched = enclosingClass.javaClass.constructors.filter[c |
-                val javaParamTypes = c.genericParameterTypes.iterator
-                params.size == c.genericParameterTypes.length
-                    && params.forall[type.mapsTo(javaParamTypes.next)]
-            ]
-            if(matched.size == 0)
-                error("Incorrect parameter or return types for mapped constructor",
-                    null, INCORRECT_MAPPED_CONSTR)
-            else if(matched.size > 1)
-                throw new AssertionError("So, this can happen...")
+            try javaMapper.javaConstr(it)
+            catch(NoSuchMethodException _) {
+                error("Unknown mapped constr", null, UNKNOWN_MAPPED_CONSTR)
+                return
+            }
         }
         else {
             if(enclosingClass.mapped)
