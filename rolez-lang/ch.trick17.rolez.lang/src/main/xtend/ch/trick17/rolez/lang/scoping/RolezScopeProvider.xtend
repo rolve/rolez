@@ -7,15 +7,18 @@ import ch.trick17.rolez.lang.rolez.Field
 import ch.trick17.rolez.lang.rolez.LocalVarDecl
 import ch.trick17.rolez.lang.rolez.MemberAccess
 import ch.trick17.rolez.lang.rolez.Method
+import ch.trick17.rolez.lang.rolez.New
 import ch.trick17.rolez.lang.rolez.ParameterizedBody
 import ch.trick17.rolez.lang.rolez.RoleType
 import ch.trick17.rolez.lang.rolez.Stmt
+import ch.trick17.rolez.lang.rolez.SuperConstrCall
 import ch.trick17.rolez.lang.rolez.Var
 import ch.trick17.rolez.lang.rolez.VarRef
 import ch.trick17.rolez.lang.typesystem.RolezSystem
 import ch.trick17.rolez.lang.validation.RolezValidator
 import javax.inject.Inject
 import org.eclipse.emf.ecore.EReference
+import org.eclipse.xtext.naming.QualifiedName
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils
 import org.eclipse.xtext.scoping.IScope
 import org.eclipse.xtext.scoping.Scopes
@@ -56,6 +59,28 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
             IScope.NULLSCOPE;
     }
     
+    def IScope scope_New_target(New it, EReference ref) {
+        val maxSpecific = utils.maximallySpecific(classRef.clazz.allConstrs, it)
+        
+        if(maxSpecific.size <= 1)
+            Scopes.scopeFor(maxSpecific, [QualifiedName.create("new")], IScope.NULLSCOPE)
+        else {
+            validator.delayedError("Constructor call is ambiguous", it, ref, AMBIGUOUS_CALL)
+            Scopes.scopeFor(maxSpecific)
+        }
+    }
+    
+    def IScope scope_SuperConstrCall_target(SuperConstrCall it, EReference ref) {
+        val maxSpecific = utils.maximallySpecific(enclosingClass.actualSuperclass.allConstrs, it)
+        
+        if(maxSpecific.size <= 1)
+            Scopes.scopeFor(maxSpecific, [QualifiedName.create("super")], IScope.NULLSCOPE)
+        else {
+            validator.delayedError("Constructor call is ambiguous", it, ref, AMBIGUOUS_CALL)
+            Scopes.scopeFor(maxSpecific)
+        }
+    }
+        
     private def memberName(MemberAccess it) {
         NodeModelUtils.findNodesForFeature(it, MEMBER_ACCESS__MEMBER).get(0).text
     }

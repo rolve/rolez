@@ -63,8 +63,15 @@ class RolezExtensions {
     }
     
     def dispatch Iterable<Constr> allConstrs(NormalClass it) {
-        if(!constrs.isEmpty) constrs
-        else #[RolezFactory.eINSTANCE.createConstr]
+        if(constrs.isEmpty) {
+            val c = RolezFactory.eINSTANCE.createConstr
+            if(isMapped)
+                c.mapped = true
+            else
+                c.body = RolezFactory.eINSTANCE.createBlock
+            constrs.add(c)
+        }
+        constrs
     }
     
     def dispatch Iterable<Constr> allConstrs(SingletonClass it) {
@@ -80,7 +87,7 @@ class RolezExtensions {
     def isSingleton(Class it) { it instanceof SingletonClass }
     
     def dispatch clazz( SimpleClassRef it) { clazz }
-    def dispatch clazz(GenericClassRef it) { clazz } 
+    def dispatch clazz(GenericClassRef it) { clazz }
     
     private def overrides(Class it, Member m) {
         switch(m) {

@@ -994,33 +994,33 @@ class TypeSystemTest {
             mapped class rolez.lang.Object
             class A
             task Main: { new A(5); }
-        ''').assertError(NEW, null, "no suitable constructor")
+        ''').assertError(NEW, LINKING_DIAGNOSTIC)
         parse('''
             mapped class rolez.lang.Object
             class A { new {} }
             task Main: { new A(5); }
-        ''').assertError(NEW, null, "no suitable constructor")
+        ''').assertError(NEW, LINKING_DIAGNOSTIC)
         parse('''
             mapped class rolez.lang.Object
             class A { new(val c: char) {} }
             task Main: { new A(5, false); }
-        ''').assertError(NEW, null, "no suitable constructor")
+        ''').assertError(NEW, LINKING_DIAGNOSTIC)
         parse('''
             mapped class rolez.lang.Object
             class A { new(val i: int) {} }
             task Main: { new A; }
-        ''').assertError(NEW, null, "no suitable constructor")
+        ''').assertError(NEW, LINKING_DIAGNOSTIC)
         
         parse('''
             mapped class rolez.lang.Object
             class A { new(val i: int) {} }
             task Main: { new A(false); }
-        ''').assertError(NEW, null, "no suitable constructor")
+        ''').assertError(NEW, LINKING_DIAGNOSTIC)
         parse('''
             mapped class rolez.lang.Object
             class A { new(val a: readwrite A) {} }
             task Main: { new A(new Object); }
-        ''').assertError(NEW, null, "no suitable constructor")
+        ''').assertError(NEW, LINKING_DIAGNOSTIC)
         
         // IMPROVE: test generic constructors, once  supported outside of the array class
     }
@@ -1081,7 +1081,7 @@ class TypeSystemTest {
             task Main: {
                 new B(new A, new A);
             }
-        ''').assertError(NEW, null, "constructor", "ambiguous")
+        ''').assertError(NEW, AMBIGUOUS_CALL)
         
         parse('''
             mapped class rolez.lang.Object
@@ -1093,7 +1093,7 @@ class TypeSystemTest {
             task Main: {
                 new B(new A, new A);
             }
-        ''').assertError(NEW, null, "constructor", "ambiguous")
+        ''').assertError(NEW, AMBIGUOUS_CALL)
         
         // IMPROVE: test generic constructors, once  supported outside of the array class
     }
@@ -1471,13 +1471,13 @@ class TypeSystemTest {
             class B extends A {
                 new { super(5); }
             }
-        ''').assertError(SUPER_CONSTR_CALL, null, "no suitable super constructor")
+        ''').assertError(SUPER_CONSTR_CALL, LINKING_DIAGNOSTIC)
         parse('''
             mapped class rolez.lang.Object
             class A {
                 new { super(5); }
             }
-        ''').assertError(SUPER_CONSTR_CALL, null, "no suitable super constructor")
+        ''').assertError(SUPER_CONSTR_CALL, LINKING_DIAGNOSTIC)
         parse('''
             mapped class rolez.lang.Object
             class A {
@@ -1486,7 +1486,7 @@ class TypeSystemTest {
             class B extends A {
                 new { super(5); }
             }
-        ''').assertError(SUPER_CONSTR_CALL, null, "no suitable super constructor")
+        ''').assertError(SUPER_CONSTR_CALL, LINKING_DIAGNOSTIC)
         parse('''
             mapped class rolez.lang.Object
             class A {
@@ -1495,7 +1495,7 @@ class TypeSystemTest {
             class B extends A {
                 new { super(5, false); }
             }
-        ''').assertError(SUPER_CONSTR_CALL, null, "no suitable super constructor")
+        ''').assertError(SUPER_CONSTR_CALL, LINKING_DIAGNOSTIC)
         parse('''
             mapped class rolez.lang.Object
             class A {
@@ -1504,7 +1504,7 @@ class TypeSystemTest {
             class B extends A { 
                 new { super(); }
             }
-        ''').assertError(SUPER_CONSTR_CALL, null, "no suitable super constructor")
+        ''').assertError(SUPER_CONSTR_CALL, LINKING_DIAGNOSTIC)
         
         parse('''
             mapped class rolez.lang.Object
@@ -1514,7 +1514,7 @@ class TypeSystemTest {
             class B extends A {
                 new { super(false); }
             }
-        ''').assertError(SUPER_CONSTR_CALL, null, "no suitable super constructor")
+        ''').assertError(SUPER_CONSTR_CALL, LINKING_DIAGNOSTIC)
         parse('''
             mapped class rolez.lang.Object
             class A {
@@ -1523,7 +1523,7 @@ class TypeSystemTest {
             class B extends A {
                 new { super(new Object); }
             }
-        ''').assertError(SUPER_CONSTR_CALL, null, "no suitable super constructor")
+        ''').assertError(SUPER_CONSTR_CALL, LINKING_DIAGNOSTIC)
     }
     
     @Test def testWSuperConstrCallOverloading() {
@@ -1580,7 +1580,7 @@ class TypeSystemTest {
             class C extends B {
                 new { super(new A, new A); }
             }
-        ''').assertError(SUPER_CONSTR_CALL, null, "constructor", "ambiguous")
+        ''').assertError(SUPER_CONSTR_CALL, AMBIGUOUS_CALL)
         
         parse('''
             mapped class rolez.lang.Object
@@ -1592,7 +1592,7 @@ class TypeSystemTest {
             class C extends B {
                 new { super(new A, new A); }
             }
-        ''').assertError(SUPER_CONSTR_CALL, null, "constructor", "ambiguous")
+        ''').assertError(SUPER_CONSTR_CALL, AMBIGUOUS_CALL)
     }
     
     @Test def testWReturn() {

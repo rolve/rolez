@@ -285,13 +285,6 @@ from {
     for(arg : n.args) {
         G |- arg : var Type _
     }
-    val maxSpecific = n.classRef.clazz.allConstrs.maximallySpecific(n)
-    maxSpecific.size == 1 or fail
-        error
-            if(maxSpecific.size == 0) "No suitable constructor for given argument types"
-            else "Constructor call is ambiguous"
-        source n
-    // TODO: Can constructors somehow be linked?
 }
 
 axiom TThe
@@ -374,12 +367,6 @@ from {
     for(arg : c.args) {
         G |- arg : var Type _
     }
-    val maxSpecific = c.enclosingClass.actualSuperclass.allConstrs.maximallySpecific(c)
-    maxSpecific.size == 1 or fail
-        error
-            if(maxSpecific.size == 0) "No suitable super constructor for given argument types"
-            else "Constructor call is ambiguous"
-        source c
 }
 
 axiom WReturnNothing
