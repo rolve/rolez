@@ -73,7 +73,7 @@ class RolezGenerator implements IGenerator {
     
     override void doGenerate(Resource resource, IFileSystemAccess fsa) {
         val program = resource.contents.head as Program
-        for (c : program.classes.filter[!mapped || isSingleton]) {
+        for (c : program.classes.filter[!isMapped || isSingleton]) {
             val name = c.qualifiedName.segments.join(File.separator) + ".java"
             fsa.generateFile(name, c.generateClass)
         }
@@ -120,24 +120,65 @@ class RolezGenerator implements IGenerator {
         »;
     '''}
     
-    private def gen(Method it) {'''
+    private def gen(Method it) {
+        val exceptionTypes = body.thrownExceptionTypes
+        val genBody =
+            if(exceptionTypes.isEmpty) body.gen
+            else '''
+                {
+                    try «body.gen»
+                    catch(«exceptionTypes.map[name].join(" | ")» e) {
+                        throw new java.lang.RuntimeException("ROLEZ EXCEPTION WRAPPER", e);
+                    }
+                }
+            '''
         
-        public «type.gen» «name»(«params.map[gen].join(", ")») «body.gen»
-    '''}
+        return '''
+            
+            public «type.gen» «name»(«params.map[gen].join(", ")») «genBody»
+        '''
+    }
     
-    // TODO: Check if body can throw a checked exception
-    
-    private def gen(Constr it) {'''
+    private def gen(Constr it) {
+        val exceptionTypes = body.thrownExceptionTypes
+        val genBody =
+            if(exceptionTypes.isEmpty) body.gen
+            else '''
+            {
+                «body.stmts.head.gen»
+                try {
+                    «body.stmts.drop(1).map[gen].join»
+                }
+                catch(«exceptionTypes.map[name].join(" | ")» e) {
+                    throw new java.lang.RuntimeException("ROLEZ EXCEPTION WRAPPER", e);
+                }
+            }
+            '''
         
-        public «enclosingClass.simpleName»(«params.map[gen].join(", ")») «body.gen»
-    '''}
+        return '''
+            
+            public «enclosingClass.simpleName»(«params.map[gen].join(", ")») «genBody»
+        '''
+    }
     
-    private def genObjectField(Field it) { if(!mapped) gen else '''
+    private def thrownExceptionTypes(Block it) {
+        val all = eAllContents.toIterable.map[switch(it) {
+            MemberAccess case isMethodInvoke: method.checkedExceptionTypes
+            New: target.checkedExceptionTypes
+            default: emptyList
+        }].flatten.toSet
+        
+        all.filter[sub |
+            !all.exists[supr | sub !== supr && supr.isAssignableFrom(sub)]
+        ].toSet
+    }
+    
+    private def genObjectField(Field it) { if(!isMapped) gen else '''
         
         public «kind.gen»«type.gen» «name» = «enclosingClass.javaClassName».«name»;
     '''}
     
-    private def genObjectMethod(Method it) { if(!mapped) gen else '''
+    private def genObjectMethod(Method it) { if(!isMapped) gen else '''
         
         public «type.gen» «name»(«params.map[gen].join(", ")») {
             «

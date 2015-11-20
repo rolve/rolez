@@ -22,6 +22,7 @@ import ch.trick17.rolez.lang.rolez.LocalVar
 import ch.trick17.rolez.lang.rolez.LocalVarDecl
 import ch.trick17.rolez.lang.rolez.MemberAccess
 import ch.trick17.rolez.lang.rolez.Method
+import ch.trick17.rolez.lang.rolez.New
 import ch.trick17.rolez.lang.rolez.NormalClass
 import ch.trick17.rolez.lang.rolez.Null
 import ch.trick17.rolez.lang.rolez.ParameterizedBody
@@ -81,6 +82,7 @@ class RolezValidator extends RolezSystemValidator {
     public static val MISSING_SUPER_CONSTR_CALL = "missing super constructor call"
     public static val SUPER_CONSTR_CALL_FIRST = "super constructor call first"
     public static val THIS_BEFORE_SUPER_CONSTR_CALL = "'this' before super constructor call"
+    public static val UNCATCHABLE_CHECKED_EXCEPTION = "uncatchable checked exception"
     public static val OUTER_EXPR_NO_SIDE_FX = "outer expr no side effects"
     public static val NULL_TYPE_USED = "null type used"
     public static val MAPPED_IN_NORMAL_CLASS = "mapped member in normal class"
@@ -359,6 +361,10 @@ class RolezValidator extends RolezSystemValidator {
     def checkSuperConstrCall(SuperConstrCall it) {
         if(!(enclosingBody instanceof Constr))
             error("Cannot call a super constructor here", null, INCORRECT_SUPER_CONSTR_CALL)
+        
+        if(!target.checkedExceptionTypes.isEmpty)
+            error("Cannot call a mapped super constructor that throws checked exceptions",
+                null, UNCATCHABLE_CHECKED_EXCEPTION)
     }
     
     @Check
@@ -371,6 +377,11 @@ class RolezValidator extends RolezSystemValidator {
             if(cfg.nodeOf(t).isBeforeSuperConstrCall)
                 error("Cannot refer to 'this' before calling the super constructor",
                     t, null, THIS_BEFORE_SUPER_CONSTR_CALL)
+        for(n: all(New))
+            if(cfg.nodeOf(n).isBeforeSuperConstrCall
+                    && !(n.target.checkedExceptionTypes.isEmpty))
+                error("Cannot call a mapped constructor that throws checked exceptions before callig the super constructor",
+                    n, null, UNCATCHABLE_CHECKED_EXCEPTION)
         
         for(c : all(SuperConstrCall))
             if(body.stmts.head !== c)

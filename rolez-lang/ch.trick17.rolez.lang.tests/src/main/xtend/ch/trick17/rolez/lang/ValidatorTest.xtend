@@ -946,6 +946,34 @@ class ValidatorTest {
         parse('''
             task Main: { super; }
         ''').assertError(SUPER_CONSTR_CALL, INCORRECT_SUPER_CONSTR_CALL)
+        
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.String
+            mapped class rolez.io.PrintStream {
+                mapped new(val f: pure String)
+            }
+            class FooStream extends rolez.io.PrintStream {
+                new {
+                    super("test.txt");
+                }
+            }
+        ''').assertError(SUPER_CONSTR_CALL, UNCATCHABLE_CHECKED_EXCEPTION)
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.String
+            mapped class rolez.io.PrintStream {
+                mapped new(val f: pure String)
+            }
+            class A {
+                new(val s: pure rolez.io.PrintStream) {}
+            }
+            class B extends A {
+                new {
+                    super(new (rolez.io.PrintStream)("test.txt"));
+                }
+            }
+        ''').assertError(NEW, UNCATCHABLE_CHECKED_EXCEPTION)
     }
     
     @Test def testExprStmt() {

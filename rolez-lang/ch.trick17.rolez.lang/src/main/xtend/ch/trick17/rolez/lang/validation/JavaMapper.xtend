@@ -8,6 +8,7 @@ import ch.trick17.rolez.lang.rolez.Method
 import ch.trick17.rolez.lang.rolez.PrimitiveType
 import ch.trick17.rolez.lang.rolez.RoleType
 import ch.trick17.rolez.lang.rolez.Type
+import java.lang.reflect.Executable
 import javax.inject.Inject
 
 import static ch.trick17.rolez.lang.Constants.*
@@ -64,6 +65,26 @@ class JavaMapper {
             case 1 : return matching.head
             default: throw new AssertionError("So, this can happen...")
         }
+    }
+    
+    def checkedExceptionTypes(Method it) {
+        if(enclosingClass.qualifiedName == arrayClassName) emptyList
+        else if(!isMapped) emptyList
+        else javaMethod.checkedExceptionTypes
+    }
+    
+    def checkedExceptionTypes(Constr it) {
+        if(enclosingClass.qualifiedName == arrayClassName) emptyList
+        else if(!isMapped) emptyList
+        else javaConstr.checkedExceptionTypes
+    }
+    
+    private def checkedExceptionTypes(Executable it) {
+        exceptionTypes.filter[isCheckedException].map[it as Class<? extends Exception>]
+    }
+    
+    private def isCheckedException(Class<?> it) {
+        Exception.isAssignableFrom(it) && !RuntimeException.isAssignableFrom(it)
     }
     
     def dispatch boolean mapsTo(PrimitiveType it, Class<?> javaType) {
