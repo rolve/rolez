@@ -175,4 +175,14 @@ class LinkingTest {
             }
         ''').assertError(VAR_REF, LINKING_DIAGNOSTIC, "var", "i")
     }
+    
+    @Test def testNewClassRef() {
+        parse('''
+            mapped class rolez.lang.Object
+            object A
+            task Main: {
+                new A;
+            }
+        ''').assertError(NEW, LINKING_DIAGNOSTIC)
+    }
 }

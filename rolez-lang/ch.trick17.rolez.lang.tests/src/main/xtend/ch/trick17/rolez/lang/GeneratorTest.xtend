@@ -71,7 +71,9 @@ class GeneratorTest {
     
     @Test def testFiles() {
         var program = parse('''
-            mapped class rolez.io.PrintStream
+            mapped class rolez.io.PrintStream {
+                mapped new(val s: pure String)
+            }
             class A
         ''', classes)
         program.assertNoErrors
@@ -102,6 +104,10 @@ class GeneratorTest {
             class A
         ''', classes).generate.assertEqualsJava('''
             public class A extends java.lang.Object {
+                
+                public A() {
+                    super();
+                }
             }
         ''')
         parse('''
@@ -110,6 +116,10 @@ class GeneratorTest {
             package foo.bar;
             
             public class A extends java.lang.Object {
+                
+                public A() {
+                    super();
+                }
             }
         ''')
         
@@ -117,12 +127,20 @@ class GeneratorTest {
             class A extends Base
         ''', classes).generate.assertEqualsJava('''
             public class A extends Base {
+                
+                public A() {
+                    super();
+                }
             }
         ''')
         parse('''
             class A extends foo.bar.Base
         ''', classes).generate.assertEqualsJava('''
             public class A extends foo.bar.Base {
+                
+                public A() {
+                    super();
+                }
             }
         ''')
     }
@@ -142,7 +160,9 @@ class GeneratorTest {
     
     @Test def testMappedSingletonClass() {
         parse('''
-            mapped class rolez.io.PrintStream
+            mapped class rolez.io.PrintStream {
+                mapped new(val s: pure String)
+            }
             mapped object rolez.lang.System {
                 mapped val out: readonly rolez.io.PrintStream
                 mapped def readonly exit(val status: int):
@@ -196,6 +216,7 @@ class GeneratorTest {
                 public foo.A a;
                 
                 public A() {
+                    super();
                     this.i = 0;
                 }
             }
@@ -225,6 +246,10 @@ class GeneratorTest {
             }
         ''', classes).generate.assertEqualsJava('''
             public class A extends java.lang.Object {
+                
+                public A() {
+                    super();
+                }
                 
                 public void foo() {
                 }
@@ -265,9 +290,11 @@ class GeneratorTest {
             public class A extends java.lang.Object {
                 
                 public A() {
+                    super();
                 }
                 
                 public A(final int i, final foo.A a) {
+                    super();
                 }
             }
         ''')
@@ -404,6 +431,10 @@ class GeneratorTest {
             }
         ''', classes).generate.assertEqualsJava('''
             public class A extends java.lang.Object {
+                
+                public A() {
+                    super();
+                }
                 
                 public int foo() {
                     return 0;
@@ -683,6 +714,10 @@ class GeneratorTest {
     
     private def withJavaFrame(CharSequence it) {'''
         public class A extends java.lang.Object {
+            
+            public A() {
+                super();
+            }
             
             public void foo(final int i, final boolean b) {
                 «it»

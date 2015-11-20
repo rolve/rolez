@@ -11,6 +11,7 @@ import org.junit.runner.RunWith
 
 import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
 import static ch.trick17.rolez.lang.validation.RolezValidator.*
+import static org.eclipse.xtext.diagnostics.Diagnostic.*
 
 @RunWith(XtextRunner)
 @InjectWith(RolezInjectorProvider)
@@ -603,7 +604,10 @@ class ValidatorTest {
         ''').assertNoErrors
         parse('''
             mapped class rolez.lang.Object
-            mapped class rolez.io.PrintStream
+            mapped class rolez.lang.String
+            mapped class rolez.io.PrintStream {
+                mapped new(val s: pure String)
+            }
             mapped object rolez.lang.System {
                 mapped val out: readonly rolez.io.PrintStream
             }
@@ -637,7 +641,7 @@ class ValidatorTest {
             class A {
                 val i: int
             }
-        ''').assertError(FIELD, VAL_FIELD_NOT_INITIALIZED)
+        ''').assertError(CONSTR, VAL_FIELD_NOT_INITIALIZED)
         var program = parse('''
             mapped class rolez.lang.Object
             class A {
@@ -898,7 +902,7 @@ class ValidatorTest {
                 new(val i: int) {}
             }
             class B extends A
-        ''').assertError(CLASS, MISSING_SUPER_CONSTR_CALL)
+        ''').assertError(SUPER_CONSTR_CALL, LINKING_DIAGNOSTIC)
         parse('''
             mapped class rolez.lang.Object
             class A {
@@ -907,21 +911,8 @@ class ValidatorTest {
             class B extends A {
                 new {}
             }
-        ''').assertError(CONSTR, MISSING_SUPER_CONSTR_CALL)
+        ''').assertError(SUPER_CONSTR_CALL, LINKING_DIAGNOSTIC)
         
-        parse('''
-            mapped class rolez.lang.Object
-            class A {
-                new(val i: int) {}
-                def pure foo: {}
-            }
-            class B extends A {
-                new {
-                    this.foo();
-                    super(5);
-                }
-            }
-        ''').assertError(THIS, THIS_BEFORE_SUPER_CONSTR_CALL)
         parse('''
             mapped class rolez.lang.Object
             class A {
@@ -930,7 +921,7 @@ class ValidatorTest {
             }
             class B extends A {
                 new {
-                    super(this.foo());
+                    super(this.foo);
                 }
             }
         ''').assertError(THIS, THIS_BEFORE_SUPER_CONSTR_CALL)
@@ -1322,7 +1313,7 @@ class ValidatorTest {
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.Array[T]
-        ''').assertError(CLASS, INCORRECT_MAPPED_CONSTR)
+        ''').assertError(CONSTR, INCORRECT_MAPPED_CONSTR)
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.Array[T] {

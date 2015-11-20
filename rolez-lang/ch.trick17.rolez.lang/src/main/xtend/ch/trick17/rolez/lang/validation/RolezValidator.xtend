@@ -28,7 +28,6 @@ import ch.trick17.rolez.lang.rolez.ParameterizedBody
 import ch.trick17.rolez.lang.rolez.Program
 import ch.trick17.rolez.lang.rolez.ReturnExpr
 import ch.trick17.rolez.lang.rolez.SimpleClassRef
-import ch.trick17.rolez.lang.rolez.SingletonClass
 import ch.trick17.rolez.lang.rolez.SuperConstrCall
 import ch.trick17.rolez.lang.rolez.This
 import ch.trick17.rolez.lang.rolez.TypeParamRef
@@ -191,7 +190,7 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkNoDuplicateConstrs(Constr it) {
-        val matching = enclosingClass.allConstrs.filter[c | utils.equalParams(c, it)]
+        val matching = enclosingClass.constrs.filter[c | utils.equalParams(c, it)]
         if(matching.size < 1)
            throw new AssertionError
         if(matching.size > 1)
@@ -280,17 +279,6 @@ class RolezValidator extends RolezSystemValidator {
         if(clazz.typeParam == null)
             error("Class " + clazz.name + " does not take a type argument",
                 GENERIC_CLASS_REF__TYPE_ARG, INCORRECT_TYPE_ARG)
-    }
-    
-    @Check
-    def checkValFieldInitialized(Field it) {
-        if(mapped || kind != VAL || initializer != null) return;
-        
-        val clazz = enclosingClass
-        if(clazz instanceof NormalClass && (clazz as NormalClass).constrs.isEmpty
-                || clazz instanceof SingletonClass)
-            error("Value field " + name + " is not initialized",
-                NAMED__NAME, VAL_FIELD_NOT_INITIALIZED)
     }
     
     @Check
@@ -388,19 +376,6 @@ class RolezValidator extends RolezSystemValidator {
             if(body.stmts.head !== c)
                 error("Super constructor call must be the first statement",
                     c, null, SUPER_CONSTR_CALL_FIRST)
-        
-        val superConstrs = enclosingClass.actualSuperclass.allConstrs
-        if(superConstrs.filter[params.isEmpty].isEmpty && all(SuperConstrCall).isEmpty)
-            error("Missing super constructor call", null, MISSING_SUPER_CONSTR_CALL)
-    }
-    
-    @Check
-    def checkSuperConstrCall(NormalClass it) {
-        if(actualSuperclass == null) return;
-        
-        val superConstrs = actualSuperclass.allConstrs
-        if(superConstrs.filter[params.isEmpty].isEmpty && constrs.isEmpty)
-            error("Missing super constructor call", NAMED__NAME, MISSING_SUPER_CONSTR_CALL)
     }
     
     @Check
@@ -534,13 +509,13 @@ class RolezValidator extends RolezSystemValidator {
                    null, INCORRECT_MAPPED_CONSTR)
             constrs.head => [
                 if(!mapped)
-                   error("This constructor must be declared as mapped",
+                   error("Constructor must be declared as mapped",
                        it, null, INCORRECT_MAPPED_CONSTR)
                 else if(params.size != 1)
-                   error("This constructor must have a single parameter",
+                   error("Constructor must have a single parameter",
                        it, null, INCORRECT_MAPPED_CONSTR)
                 else if(!(params.head.type instanceof Int))
-                   error("The parameter of this constructor must be of type int",
+                   error("Constructor parameter must be of type int",
                        params.head.type, null, INCORRECT_MAPPED_CONSTR)
             ]
             

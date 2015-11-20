@@ -8,6 +8,7 @@ import ch.trick17.rolez.lang.rolez.LocalVarDecl
 import ch.trick17.rolez.lang.rolez.MemberAccess
 import ch.trick17.rolez.lang.rolez.Method
 import ch.trick17.rolez.lang.rolez.New
+import ch.trick17.rolez.lang.rolez.NormalClass
 import ch.trick17.rolez.lang.rolez.ParameterizedBody
 import ch.trick17.rolez.lang.rolez.RoleType
 import ch.trick17.rolez.lang.rolez.Stmt
@@ -60,18 +61,23 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     }
     
     def IScope scope_New_target(New it, EReference ref) {
-        val maxSpecific = utils.maximallySpecific(classRef.clazz.allConstrs, it)
-        
-        if(maxSpecific.size <= 1)
-            Scopes.scopeFor(maxSpecific, [QualifiedName.create("new")], IScope.NULLSCOPE)
-        else {
-            validator.delayedError("Constructor call is ambiguous", it, ref, AMBIGUOUS_CALL)
-            Scopes.scopeFor(maxSpecific)
+        val clazz = classRef.clazz
+        if(clazz instanceof NormalClass) {
+            val maxSpecific = utils.maximallySpecific(clazz.constrs, it)
+            
+            if(maxSpecific.size <= 1)
+                Scopes.scopeFor(maxSpecific, [QualifiedName.create("new")], IScope.NULLSCOPE)
+            else {
+                validator.delayedError("Constructor call is ambiguous", it, ref, AMBIGUOUS_CALL)
+                Scopes.scopeFor(maxSpecific)
+            }
         }
+        else
+            IScope.NULLSCOPE
     }
     
     def IScope scope_SuperConstrCall_target(SuperConstrCall it, EReference ref) {
-        val maxSpecific = utils.maximallySpecific(enclosingClass.actualSuperclass.allConstrs, it)
+        val maxSpecific = utils.maximallySpecific(enclosingClass.actualSuperclass.constrs, it)
         
         if(maxSpecific.size <= 1)
             Scopes.scopeFor(maxSpecific, [QualifiedName.create("super")], IScope.NULLSCOPE)
@@ -80,7 +86,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
             Scopes.scopeFor(maxSpecific)
         }
     }
-        
+    
     private def memberName(MemberAccess it) {
         NodeModelUtils.findNodesForFeature(it, MEMBER_ACCESS__MEMBER).get(0).text
     }

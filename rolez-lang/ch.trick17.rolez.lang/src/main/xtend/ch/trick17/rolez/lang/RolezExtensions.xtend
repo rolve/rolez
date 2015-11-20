@@ -22,7 +22,6 @@ import ch.trick17.rolez.lang.rolez.PrimitiveType
 import ch.trick17.rolez.lang.rolez.Program
 import ch.trick17.rolez.lang.rolez.Role
 import ch.trick17.rolez.lang.rolez.RoleType
-import ch.trick17.rolez.lang.rolez.RolezFactory
 import ch.trick17.rolez.lang.rolez.SimpleClassRef
 import ch.trick17.rolez.lang.rolez.SingletonClass
 import ch.trick17.rolez.lang.rolez.Stmt
@@ -62,22 +61,6 @@ class RolezExtensions {
         nameProvider.getFullyQualifiedName(it).lastSegment
     }
     
-    def dispatch Iterable<Constr> allConstrs(NormalClass it) {
-        if(constrs.isEmpty) {
-            val c = RolezFactory.eINSTANCE.createConstr
-            if(isMapped)
-                c.mapped = true
-            else
-                c.body = RolezFactory.eINSTANCE.createBlock
-            constrs.add(c)
-        }
-        constrs
-    }
-    
-    def dispatch Iterable<Constr> allConstrs(SingletonClass it) {
-        emptyList
-    }
-    
     def Iterable<Member> allMembers(Class it) {
         members +
             if(actualSuperclass == null) emptyList
@@ -97,7 +80,7 @@ class RolezExtensions {
     }
     
     def actualSuperclass(Class it) {
-        val objectClass = utils.findClass(objectClassName, it)
+        val objectClass = utils.findNormalClass(objectClassName, it)
         if(it == objectClass)
             null
         else if(superclass == null)
@@ -132,6 +115,10 @@ class RolezExtensions {
             Class: container
             default: container?.enclosingClass
         }
+    }
+    
+    def enclosingClass(Constr it) {
+        (it as EObject).enclosingClass as NormalClass
     }
     
     def Program enclosingProgram(EObject it) {

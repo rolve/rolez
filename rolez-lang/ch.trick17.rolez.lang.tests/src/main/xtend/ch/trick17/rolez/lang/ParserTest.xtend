@@ -2,7 +2,6 @@ package ch.trick17.rolez.lang
 
 import ch.trick17.rolez.lang.rolez.CharLiteral
 import ch.trick17.rolez.lang.rolez.IntLiteral
-import ch.trick17.rolez.lang.rolez.NormalClass
 import ch.trick17.rolez.lang.rolez.Program
 import ch.trick17.rolez.lang.rolez.StringLiteral
 import javax.inject.Inject
@@ -21,23 +20,9 @@ import static extension org.hamcrest.MatcherAssert.assertThat
 @InjectWith(RolezInjectorProvider)
 class ParserTest {
     
-    @Inject extension RolezExtensions
     @Inject extension ParseHelper<Program>
     @Inject extension ValidationTestHelper
     @Inject extension TestUtilz
-    
-    @Test def testEmptyClass() {
-        val program = parse("mapped class rolez.lang.Object")
-        program.assertNoErrors
-        program.elements.size.assertThat(is(1))
-        program.classes.size.assertThat(is(1))
-        
-        val clazz = program.classes.head as NormalClass
-        clazz.name.assertThat(is("rolez.lang.Object"))
-        clazz.superclass.assertThat(is(nullValue))
-        clazz.members.assertThat(empty)
-        clazz.constrs.assertThat(empty) // Why can't I use is(empty) here?
-    }
     
     @Test def testQualifiedClassRef() {
         parse('''
