@@ -11,7 +11,6 @@ import org.junit.runner.RunWith
 
 import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
 import static ch.trick17.rolez.lang.validation.RolezValidator.*
-import static org.eclipse.xtext.diagnostics.Diagnostic.*
 
 @RunWith(XtextRunner)
 @InjectWith(RolezInjectorProvider)
@@ -19,15 +18,6 @@ class ValidatorTest {
     
     @Inject extension ParseHelper<Program>
     @Inject extension ValidationTestHelper
-    
-    @Test def testObjectExists() {
-        parse('''
-            mapped class rolez.lang.Object
-            class A
-        ''').assertNoErrors
-        
-        parse("class A").assertError(CLASS, OBJECT_CLASS_NOT_DEFINED)
-    }
     
     @Test def testDuplicateTopLevelElems() {
         parse('''
@@ -895,23 +885,6 @@ class ValidatorTest {
                 }
             }
         ''').assertError(SUPER_CONSTR_CALL, SUPER_CONSTR_CALL_FIRST)
-        
-        parse('''
-            mapped class rolez.lang.Object
-            class A {
-                new(i: int) {}
-            }
-            class B extends A
-        ''').assertError(SUPER_CONSTR_CALL, LINKING_DIAGNOSTIC)
-        parse('''
-            mapped class rolez.lang.Object
-            class A {
-                new(i: int) {}
-            }
-            class B extends A {
-                new {}
-            }
-        ''').assertError(SUPER_CONSTR_CALL, LINKING_DIAGNOSTIC)
         
         parse('''
             mapped class rolez.lang.Object

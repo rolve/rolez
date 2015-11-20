@@ -53,7 +53,6 @@ import static ch.trick17.rolez.lang.rolez.VarKind.*
 class RolezValidator extends RolezSystemValidator {
 
     public static val INVALID_NAME = "invalid name"
-    public static val OBJECT_CLASS_NOT_DEFINED = "object class not defined"
     public static val DUPLICATE_TOP_LEVEL_ELEMENT = "duplicate top-level element"
     public static val INCORRECT_TYPE_PARAM = "incorrect type variable"
     public static val MISSING_TYPE_PARAM = "missing type parameter"
@@ -117,13 +116,6 @@ class RolezValidator extends RolezSystemValidator {
     }
 	
 	@Check
-    def checkObjectExists(Class it) {
-        if(superclass == null && utils.findClass(objectClassName, it) == null)
-            error("Object class is not defined", NAMED__NAME,
-                OBJECT_CLASS_NOT_DEFINED)
-    }
-	
-	@Check
 	def checkNoDuplicateTopLevelElem(ClassLike it) {
 	    val matching = enclosingProgram.elements.filter[e | e.name.equals(name)]
         if(matching.size < 1)
@@ -146,11 +138,11 @@ class RolezValidator extends RolezSystemValidator {
     }
     
     private def boolean findSuperclass(Class it, Class c) {
-        switch(actualSuperclass) {
+        switch(superclass) {
             case null: false
             case c: true
             default:
-                findSuperclass(actualSuperclass, c)
+                findSuperclass(superclass, c)
         }
     }
     
@@ -216,7 +208,7 @@ class RolezValidator extends RolezSystemValidator {
 	 */
 	@Check
 	def checkOverrides(Method it) {
-	    val superMethods = enclosingClass.actualSuperclass
+	    val superMethods = enclosingClass.superclass
 	           .allMembers.filter(Method)
         val matching = superMethods.filter[m | utils.equalSignature(m, it)]
 	    
@@ -611,7 +603,7 @@ class RolezValidator extends RolezSystemValidator {
     }
     
     private def checkSuperclass(Class it, QualifiedName expected) {
-        if(actualSuperclass.qualifiedName != expected)
+        if(superclass.qualifiedName != expected)
            error("The superclass of " + qualifiedName + " must be " + expected,
                CLASS__SUPERCLASS, INCORRECT_MAPPED_SUPERCLASS)
     }

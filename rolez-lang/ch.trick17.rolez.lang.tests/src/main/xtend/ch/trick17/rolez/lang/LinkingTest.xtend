@@ -143,6 +143,35 @@ class LinkingTest {
         ''', set).assertError(CLASS, LINKING_DIAGNOSTIC)
     }
     
+    @Test def testSuperClass() {
+        parse('''
+            mapped class rolez.lang.Object
+            class A extends B
+        ''').assertError(CLASS, LINKING_DIAGNOSTIC)
+        parse('''
+            class A
+        ''').assertError(CLASS, LINKING_DIAGNOSTIC)
+    }
+    
+    @Test def testSuperConstrCall() {
+        parse('''
+            mapped class rolez.lang.Object
+            class A {
+                new(i: int) {}
+            }
+            class B extends A
+        ''').assertError(SUPER_CONSTR_CALL, LINKING_DIAGNOSTIC)
+        parse('''
+            mapped class rolez.lang.Object
+            class A {
+                new(i: int) {}
+            }
+            class B extends A {
+                new {}
+            }
+        ''').assertError(SUPER_CONSTR_CALL, LINKING_DIAGNOSTIC)
+    }
+    
     @Test def testVarRef() {
         parse('''
             task Main: {

@@ -65,8 +65,8 @@ class RolezExtensions {
     
     def Iterable<Member> allMembers(Class it) {
         members +
-            if(actualSuperclass == null) emptyList
-            else actualSuperclass.allMembers.filter[m | !overrides(m)]
+            if(superclass == null) emptyList
+            else superclass.allMembers.filter[m | !overrides(m)]
     }
     
     def isSingleton(Class it) { it instanceof SingletonClass }
@@ -79,16 +79,6 @@ class RolezExtensions {
             Field: false
             Method: methods.exists[utils.equalSignature(it, m)]
         }
-    }
-    
-    def actualSuperclass(Class it) {
-        val objectClass = utils.findNormalClass(objectClassName, it)
-        if(it == objectClass)
-            null
-        else if(superclass == null)
-            objectClass
-        else
-            superclass
     }
     
     def dispatch kind(LocalVar it) { kind }

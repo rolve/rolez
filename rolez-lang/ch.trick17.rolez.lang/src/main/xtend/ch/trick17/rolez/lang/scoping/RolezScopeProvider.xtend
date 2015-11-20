@@ -77,7 +77,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     }
     
     def IScope scope_SuperConstrCall_target(SuperConstrCall it, EReference ref) {
-        val maxSpecific = utils.maximallySpecific(enclosingClass.actualSuperclass.constrs, it)
+        val maxSpecific = utils.maximallySpecific(enclosingClass.superclass.constrs, it)
         
         if(maxSpecific.size <= 1)
             Scopes.scopeFor(maxSpecific, [QualifiedName.create("super")], IScope.NULLSCOPE)
