@@ -28,7 +28,7 @@ class ParserTest {
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.Array[T] {
-                mapped new(val length: int)
+                mapped new(length: int)
                 mapped val length: int
             }
             class foo.A

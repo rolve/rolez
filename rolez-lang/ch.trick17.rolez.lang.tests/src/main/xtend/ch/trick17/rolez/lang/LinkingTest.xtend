@@ -153,7 +153,7 @@ class LinkingTest {
         parse('''
             mapped class rolez.lang.Object
             class A {
-                def pure foo(val i: int): {
+                def pure foo(i: int): {
                     i;
                 }
             }

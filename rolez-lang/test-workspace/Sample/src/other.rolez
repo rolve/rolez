@@ -12,7 +12,7 @@ class SomeImportantClass {
 		return null;
 	}
 	
-	def readonly bar(val a: int): {
+	def readonly bar(a: int): {
 		this.bar;
 	}
 }

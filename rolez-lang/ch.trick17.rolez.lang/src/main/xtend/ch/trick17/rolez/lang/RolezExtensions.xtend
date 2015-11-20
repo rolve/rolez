@@ -17,6 +17,7 @@ import ch.trick17.rolez.lang.rolez.MemberAccess
 import ch.trick17.rolez.lang.rolez.Method
 import ch.trick17.rolez.lang.rolez.NormalClass
 import ch.trick17.rolez.lang.rolez.Null
+import ch.trick17.rolez.lang.rolez.Param
 import ch.trick17.rolez.lang.rolez.ParameterizedBody
 import ch.trick17.rolez.lang.rolez.PrimitiveType
 import ch.trick17.rolez.lang.rolez.Program
@@ -27,6 +28,7 @@ import ch.trick17.rolez.lang.rolez.SingletonClass
 import ch.trick17.rolez.lang.rolez.Stmt
 import ch.trick17.rolez.lang.rolez.Type
 import ch.trick17.rolez.lang.rolez.TypeParamRef
+import ch.trick17.rolez.lang.rolez.VarKind
 import ch.trick17.rolez.lang.rolez.Void
 import javax.inject.Inject
 import org.eclipse.emf.ecore.EObject
@@ -88,6 +90,9 @@ class RolezExtensions {
         else
             superclass
     }
+    
+    def dispatch kind(LocalVar it) { kind }
+    def dispatch kind(   Param it) { VarKind.VAL }
     
     def variables(ParameterizedBody it) {
         body.eAllContents.filter(LocalVar).toList + params

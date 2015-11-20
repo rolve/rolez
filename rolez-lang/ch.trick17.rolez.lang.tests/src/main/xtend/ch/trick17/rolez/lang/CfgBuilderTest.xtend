@@ -82,7 +82,7 @@ class CfgBuilderTest {
     
     @Test def testIfStmt() {
         parse('''
-            task Main(val b: boolean): {
+            task Main(b: boolean): {
                 0;
                 if(b) {
                     3;
@@ -108,7 +108,7 @@ class CfgBuilderTest {
         ''')
         
         parse('''
-            task Main(val b: boolean): {
+            task Main(b: boolean): {
                 if(b) {}
                 else {}
             }
@@ -122,7 +122,7 @@ class CfgBuilderTest {
         ''')
         
         parse('''
-            task Main(val b: boolean): {
+            task Main(b: boolean): {
                 0;
                 if(b)
                     3;
@@ -146,7 +146,7 @@ class CfgBuilderTest {
         ''')
         
         parse('''
-            task Main(val b: boolean): {
+            task Main(b: boolean): {
                 if(b)
                     1;
             }
@@ -160,7 +160,7 @@ class CfgBuilderTest {
         ''')
         
         parse('''
-            task Main(val b: boolean): {
+            task Main(b: boolean): {
                 if(b)
                     return;
                 else {
@@ -175,7 +175,7 @@ class CfgBuilderTest {
         ''')
         
         parse('''
-            task Main(val b: boolean): {
+            task Main(b: boolean): {
                 if(b)
                     return;
                 else
@@ -190,7 +190,7 @@ class CfgBuilderTest {
         ''')
         
         parse('''
-            task Main(val b: boolean): {
+            task Main(b: boolean): {
                 if(b) {
                     return;
                 }
@@ -204,7 +204,7 @@ class CfgBuilderTest {
         ''')
         
         parse('''
-            task Main(val b: boolean): {
+            task Main(b: boolean): {
                 if(b)
                     return;
                 3;
@@ -220,7 +220,7 @@ class CfgBuilderTest {
         ''')
         
         parse('''
-            task Main(val b: boolean): {
+            task Main(b: boolean): {
                 if(b) {}
                 else
                     return;
@@ -237,7 +237,7 @@ class CfgBuilderTest {
     
     @Test def testWhileLoop() {
         parse('''
-            task Main(val b: boolean): {
+            task Main(b: boolean): {
                 while(b)
                     2;
             }
@@ -252,7 +252,7 @@ class CfgBuilderTest {
         ''')
         
         parse('''
-            task Main(val b: boolean): {
+            task Main(b: boolean): {
                 while(b)
                     return;
             }
@@ -339,7 +339,7 @@ class CfgBuilderTest {
         
         // Short-circuit!
         parse('''
-            task Main(val a: boolean, val b: boolean): {
+            task Main(a: boolean, b: boolean): {
                 a && b;
             }
         ''').main.cfg.assertStructure('''
@@ -351,7 +351,7 @@ class CfgBuilderTest {
             5 -> exit
         ''')
         parse('''
-            task Main(val a: boolean, val b: boolean): {
+            task Main(a: boolean, b: boolean): {
                 a || b;
             }
         ''').main.cfg.assertStructure('''
@@ -363,7 +363,7 @@ class CfgBuilderTest {
             5 -> exit
         ''')
         parse('''
-            task Main(val b: boolean): {
+            task Main(b: boolean): {
                 0 == 1 && b;
             }
         ''').main.cfg.assertStructure('''
@@ -377,7 +377,7 @@ class CfgBuilderTest {
             7 -> exit
         ''')
         parse('''
-            task Main(val a: boolean, val b: boolean): {
+            task Main(a: boolean, b: boolean): {
                 a && (1 > 2 || b);
             }
         ''').main.cfg.assertStructure('''

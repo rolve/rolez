@@ -67,9 +67,7 @@ Method:
     body=Block?;
 
 Param:
-    kind=Val name=ID ':' type=Type;
-
-enum Val returns VarKind: VAL='val';
+    name=ID ':' type=Type;
 
 Block:
     {Block} '{' (stmts+=Stmt)* '}';

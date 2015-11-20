@@ -297,7 +297,7 @@ class TypeSystemTest {
         program = parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.Array[T] {
-                mapped new(val length: int)
+                mapped new(length: int)
             }
             class A
             task Main: {
@@ -579,9 +579,9 @@ class TypeSystemTest {
         val lib = newResourceSet.with('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.Array[T] {
-                mapped new(val length: int)
-                mapped def readonly  get(val i: int): T
-                mapped def readwrite set(val i: int, val o: T):
+                mapped new(length: int)
+                mapped def readonly  get(i: int): T
+                mapped def readwrite set(i: int, o: T):
             }
         ''')
         parse('''
@@ -616,8 +616,8 @@ class TypeSystemTest {
             mapped class rolez.lang.Object
             class A
             class B {
-                def readwrite foo(val a: readonly A, val b: readwrite B,
-                        val c: readwrite C, val d: int): {}
+                def readwrite foo(a: readonly A, b: readwrite B,
+                        c: readwrite C, d: int): {}
             }
             class C extends B
             task Main: { new C.foo(new A, new C, null, 5); }
@@ -639,14 +639,14 @@ class TypeSystemTest {
         parse('''
             mapped class rolez.lang.Object
             class A {
-                def pure foo(val i: int): {}
+                def pure foo(i: int): {}
                 def pure bar: { foo(!5); }
             }
         ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
         
         // Apparently, when the method is defined in another resource,
         // linking somehow works differently...
-        val set = newResourceSet.with("class A { def pure foo(val i: int): {} }")
+        val set = newResourceSet.with("class A { def pure foo(i: int): {} }")
         parse('''
             mapped class rolez.lang.Object
             class B {
@@ -681,41 +681,41 @@ class TypeSystemTest {
         ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
         parse('''
             mapped class rolez.lang.Object
-            class A { def readwrite foo(val c: char): {} }
+            class A { def readwrite foo(c: char): {} }
             task Main: { new A.foo(5, false); }
         ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
         parse('''
             mapped class rolez.lang.Object
-            class A { def readwrite foo(val i: int): {} }
+            class A { def readwrite foo(i: int): {} }
             task Main: { new A.foo(); }
         ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
         parse('''
             mapped class rolez.lang.Object
-            class A { def readwrite foo(val i: int, val a: readwrite A): {} }
+            class A { def readwrite foo(i: int, a: readwrite A): {} }
             task Main: { new A.foo(false); }
         ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
         
         parse('''
             mapped class rolez.lang.Object
-            class A { def readwrite foo(val i: int): {} }
+            class A { def readwrite foo(i: int): {} }
             task Main: { new A.foo(false); }
         ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
         parse('''
             mapped class rolez.lang.Object
-            class A { def readwrite foo(val a: readwrite A): {} }
+            class A { def readwrite foo(a: readwrite A): {} }
             task Main: { new A.foo(new Object); }
         ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
         parse('''
             mapped class rolez.lang.Object
-            class A { def readwrite foo(val a: readwrite A): {} }
+            class A { def readwrite foo(a: readwrite A): {} }
             task Main: { new A.foo(new A as readonly A); }
         ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
         
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.Array[T] {
-                mapped new(val i: int)
-                mapped def readwrite set(val i: int, val o: T):
+                mapped new(i: int)
+                mapped def readwrite set(i: int, o: T):
             }
             task Main: {
                 new Array[int](1).set(0, true);
@@ -724,8 +724,8 @@ class TypeSystemTest {
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.Array[T] {
-                mapped new(val i: int)
-                mapped def readwrite set(val i: int, val o: T):
+                mapped new(i: int)
+                mapped def readwrite set(i: int, o: T):
             }
             class A
             class B
@@ -740,7 +740,7 @@ class TypeSystemTest {
             mapped class rolez.lang.Object
             class A {
                 def readwrite foo: int { return 0; }
-                def readwrite foo(val a: boolean): boolean { return false; }
+                def readwrite foo(a: boolean): boolean { return false; }
             }
             task Main: {
                 new A.foo;
@@ -754,7 +754,7 @@ class TypeSystemTest {
             mapped class rolez.lang.Object
             class A {
                 var foo: int
-                def readwrite foo(val a: boolean): boolean { return false; }
+                def readwrite foo(a: boolean): boolean { return false; }
             }
             task Main: {
                 new A.foo;
@@ -767,8 +767,8 @@ class TypeSystemTest {
         program = parse('''
             mapped class rolez.lang.Object
             class A {
-                def readwrite foo(val a: int): int { return 0; }
-                def readwrite foo(val a: boolean): boolean { return false; }
+                def readwrite foo(a: int): int { return 0; }
+                def readwrite foo(a: boolean): boolean { return false; }
             }
             task Main: {
                 new A.foo(4);
@@ -781,8 +781,8 @@ class TypeSystemTest {
         program = parse('''
             mapped class rolez.lang.Object
             class A {
-                def readwrite foo(val a: readwrite A): int { return 0; }
-                def readwrite foo(val a: readonly  A): boolean { return false; }
+                def readwrite foo(a: readwrite A): int { return 0; }
+                def readwrite foo(a: readonly  A): boolean { return false; }
             }
             task Main: {
                 new A.foo(new A);
@@ -796,8 +796,8 @@ class TypeSystemTest {
         program = parse('''
             mapped class rolez.lang.Object
             class A {
-                def readwrite foo(val a: readonly  A): boolean { return false; }
-                def readwrite foo(val a: readwrite A): int { return 0; }
+                def readwrite foo(a: readonly  A): boolean { return false; }
+                def readwrite foo(a: readwrite A): int { return 0; }
             }
             task Main: {
                 new A.foo(new A);
@@ -810,8 +810,8 @@ class TypeSystemTest {
         program = parse('''
             mapped class rolez.lang.Object
             class A {
-                def readwrite foo(val a: readonly  A, val b: readonly  A): boolean { return false; }
-                def readwrite foo(val a: readwrite A, val b: readwrite A): int { return 0; }
+                def readwrite foo(a: readonly  A, b: readonly  A): boolean { return false; }
+                def readwrite foo(a: readwrite A, b: readwrite A): int { return 0; }
             }
             task Main: {
                 new A.foo(new A, new A);
@@ -828,8 +828,8 @@ class TypeSystemTest {
         program = parse('''
             mapped class rolez.lang.Object
             class A {
-                def readwrite foo(val a: readwrite A, val b: readwrite A): int { return 0; }
-                def readwrite foo(val a: readonly  A, val b: readonly  A): boolean { return false; }
+                def readwrite foo(a: readwrite A, b: readwrite A): int { return 0; }
+                def readwrite foo(a: readonly  A, b: readonly  A): boolean { return false; }
             }
             task Main: {
                 new A.foo(new A, new A);
@@ -850,8 +850,8 @@ class TypeSystemTest {
         parse('''
             mapped class rolez.lang.Object
             class A {
-                def readwrite foo(val a: readonly  A, val b: readwrite A): {}
-                def readwrite foo(val a: readwrite A, val b: readonly  A): {}
+                def readwrite foo(a: readonly  A, b: readwrite A): {}
+                def readwrite foo(a: readwrite A, b: readonly  A): {}
             }
             task Main: {
                 new A.foo(new A, new A);
@@ -861,8 +861,8 @@ class TypeSystemTest {
         parse('''
             mapped class rolez.lang.Object
             class A {
-                def readwrite foo(val a: readwrite Object, val b: readwrite A): {}
-                def readwrite foo(val a: readwrite A, val b: readwrite Object): {}
+                def readwrite foo(a: readwrite Object, b: readwrite A): {}
+                def readwrite foo(a: readwrite A, b: readwrite Object): {}
             }
             task Main: {
                 new A.foo(new A, new A);
@@ -912,7 +912,7 @@ class TypeSystemTest {
         parse('''
             mapped class rolez.lang.Object
             class A {
-                def pure foo(val i: int): {
+                def pure foo(i: int): {
                     i;
                 }
             }
@@ -943,7 +943,7 @@ class TypeSystemTest {
         program = parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.Array[T] {
-                mapped new(val length: int)
+                mapped new(length: int)
             }
             task Main: { new Array[int](100); }
         ''')
@@ -954,7 +954,7 @@ class TypeSystemTest {
             mapped class rolez.lang.Object
             class A
             mapped class rolez.lang.Array[T] {
-                mapped new(val length: int)
+                mapped new(length: int)
             }
             task Main: { new Array[readonly A](10); }
         ''')
@@ -966,7 +966,7 @@ class TypeSystemTest {
             mapped class rolez.lang.Object
             class A
             mapped class rolez.lang.Array[T] {
-                mapped new(val length: int)
+                mapped new(length: int)
             }
             task Main: { new Array[pure Array[readwrite A]](1000); }
         ''')
@@ -983,8 +983,8 @@ class TypeSystemTest {
         parse('''
             mapped class rolez.lang.Object
             class A {
-                new(val i: int) {}
-                def pure foo(val i: int): { new A(!5); }
+                new(i: int) {}
+                def pure foo(i: int): { new A(!5); }
             }
         ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
@@ -1002,23 +1002,23 @@ class TypeSystemTest {
         ''').assertError(NEW, LINKING_DIAGNOSTIC)
         parse('''
             mapped class rolez.lang.Object
-            class A { new(val c: char) {} }
+            class A { new(c: char) {} }
             task Main: { new A(5, false); }
         ''').assertError(NEW, LINKING_DIAGNOSTIC)
         parse('''
             mapped class rolez.lang.Object
-            class A { new(val i: int) {} }
+            class A { new(i: int) {} }
             task Main: { new A; }
         ''').assertError(NEW, LINKING_DIAGNOSTIC)
         
         parse('''
             mapped class rolez.lang.Object
-            class A { new(val i: int) {} }
+            class A { new(i: int) {} }
             task Main: { new A(false); }
         ''').assertError(NEW, LINKING_DIAGNOSTIC)
         parse('''
             mapped class rolez.lang.Object
-            class A { new(val a: readwrite A) {} }
+            class A { new(a: readwrite A) {} }
             task Main: { new A(new Object); }
         ''').assertError(NEW, LINKING_DIAGNOSTIC)
         
@@ -1029,8 +1029,8 @@ class TypeSystemTest {
         parse('''
             mapped class rolez.lang.Object
             class A {
-                new(val a: int) {}
-                new(val a: boolean) {}
+                new(a: int) {}
+                new(a: boolean) {}
             }
             task Main: {
                 new A(4);
@@ -1044,8 +1044,8 @@ class TypeSystemTest {
             mapped class rolez.lang.Object
             class A
             class B {
-                new(val a: readwrite A) {}
-                new(val a: readonly  A) {}
+                new(a: readwrite A) {}
+                new(a: readonly  A) {}
             }
             task Main: {
                 new B(new A);
@@ -1058,8 +1058,8 @@ class TypeSystemTest {
             mapped class rolez.lang.Object
             class A
             class B {
-                new(val a: readonly  A) {}
-                new(val a: readwrite A) {}
+                new(a: readonly  A) {}
+                new(a: readwrite A) {}
             }
             task Main: {
                 new B(new A);
@@ -1075,8 +1075,8 @@ class TypeSystemTest {
             mapped class rolez.lang.Object
             class A
             class B {
-                new(val a: readonly  A, val b: readwrite A) {}
-                new(val a: readwrite A, val b: readonly  A) {}
+                new(a: readonly  A, b: readwrite A) {}
+                new(a: readwrite A, b: readonly  A) {}
             }
             task Main: {
                 new B(new A, new A);
@@ -1087,8 +1087,8 @@ class TypeSystemTest {
             mapped class rolez.lang.Object
             class A
             class B {
-                new(val a: readwrite Object, val b: readwrite A) {}
-                new(val a: readwrite A, val b: readwrite Object) {}
+                new(a: readwrite Object, b: readwrite A) {}
+                new(a: readwrite A, b: readwrite Object) {}
             }
             task Main: {
                 new B(new A, new A);
@@ -1142,14 +1142,14 @@ class TypeSystemTest {
         parse('''
             mapped class rolez.lang.Object
             class rolez.lang.Task
-            task T(val i: int): {}
+            task T(i: int): {}
             task Main: { start T(5); }
         ''').assertNoErrors
         parse('''
             mapped class rolez.lang.Object
             class rolez.lang.Task
             class A
-            task T(val a: pure A): {}
+            task T(a: pure A): {}
             task Main: {
                 start T(new A);
                 start T(new A as readonly A);
@@ -1161,7 +1161,7 @@ class TypeSystemTest {
             mapped class rolez.lang.Object
             class rolez.lang.Task
             class A
-            task T(val i: int, val c: char, val a: readwrite A): {}
+            task T(i: int, c: char, a: readwrite A): {}
             task Main: {
                 start T(0, 'c', new A);
             }
@@ -1180,7 +1180,7 @@ class TypeSystemTest {
         parse('''
             mapped class rolez.lang.Object
             class rolez.lang.Task
-            task T(val i: int): {}
+            task T(i: int): {}
             task Main: { start T(!5); }
         ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
@@ -1195,14 +1195,14 @@ class TypeSystemTest {
         parse('''
             mapped class rolez.lang.Object
             class rolez.lang.Task
-            task T(val i: int): int {}
+            task T(i: int): int {}
             task Main: { start T; }
         ''').assertError(START, null, "too few arguments")
         
         parse('''
             mapped class rolez.lang.Object
             class rolez.lang.Task
-            task T(val i: int): int {}
+            task T(i: int): int {}
             task Main: { start T(true); }
         ''').assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "boolean", "int")
     }
@@ -1434,17 +1434,17 @@ class TypeSystemTest {
             }
             class C extends B
             class D extends C {
-                new(val i: int) { 2; }
+                new(i: int) { 2; }
             }
             class E extends D {
                 new {
                     super(0);
                     5;
                 }
-                new(val a: readonly A, val b: pure B) { super(1); }
+                new(a: readonly A, b: pure B) { super(1); }
             }
             class F extends E {
-                new(val a: readwrite A) { super(a, new B); }
+                new(a: readwrite A) { super(a, new B); }
             }
             class G {
                 new { super; }
@@ -1456,7 +1456,7 @@ class TypeSystemTest {
         parse('''
             mapped class rolez.lang.Object
             class A {
-                new(val i: int) {}
+                new(i: int) {}
             }
             class B extends A {
                 new { super(!5); }
@@ -1490,7 +1490,7 @@ class TypeSystemTest {
         parse('''
             mapped class rolez.lang.Object
             class A {
-                new(val c: char) {}
+                new(c: char) {}
             }
             class B extends A {
                 new { super(5, false); }
@@ -1499,7 +1499,7 @@ class TypeSystemTest {
         parse('''
             mapped class rolez.lang.Object
             class A {
-                new(val i: int) {}
+                new(i: int) {}
             }
             class B extends A { 
                 new { super(); }
@@ -1509,7 +1509,7 @@ class TypeSystemTest {
         parse('''
             mapped class rolez.lang.Object
             class A {
-                new(val i: int) {}
+                new(i: int) {}
             }
             class B extends A {
                 new { super(false); }
@@ -1518,7 +1518,7 @@ class TypeSystemTest {
         parse('''
             mapped class rolez.lang.Object
             class A {
-                new(val a: readwrite A) {}
+                new(a: readwrite A) {}
             }
             class B extends A {
                 new { super(new Object); }
@@ -1530,12 +1530,12 @@ class TypeSystemTest {
         parse('''
             mapped class rolez.lang.Object
             class A {
-                new(val a: int) {}
-                new(val a: boolean) {}
+                new(a: int) {}
+                new(a: boolean) {}
             }
             class B extends A {
                 new { super(4); }
-                new(val b: boolean) { super(b); }
+                new(b: boolean) { super(b); }
             }
         ''').assertNoErrors
         
@@ -1545,12 +1545,12 @@ class TypeSystemTest {
             mapped class rolez.lang.Object
             class A
             class B {
-                new(val a: readwrite A) {}
-                new(val a: readonly  A) {}
+                new(a: readwrite A) {}
+                new(a: readonly  A) {}
             }
             class C extends B {
                 new { super(new A); }
-                new(val i: int) { super(new A as readonly A); }
+                new(i: int) { super(new A as readonly A); }
             }
         ''').assertNoErrors
         
@@ -1559,12 +1559,12 @@ class TypeSystemTest {
             mapped class rolez.lang.Object
             class A
             class B {
-                new(val a: readonly  A) {}
-                new(val a: readwrite A) {}
+                new(a: readonly  A) {}
+                new(a: readwrite A) {}
             }
             class C extends B {
                 new { super(new A); }
-                new(val i: int) { super(new A as readonly A); }
+                new(i: int) { super(new A as readonly A); }
             }
         ''').assertNoErrors
     }
@@ -1574,8 +1574,8 @@ class TypeSystemTest {
             mapped class rolez.lang.Object
             class A
             class B {
-                new(val a: readonly  A, val b: readwrite A) {}
-                new(val a: readwrite A, val b: readonly  A) {}
+                new(a: readonly  A, b: readwrite A) {}
+                new(a: readwrite A, b: readonly  A) {}
             }
             class C extends B {
                 new { super(new A, new A); }
@@ -1586,8 +1586,8 @@ class TypeSystemTest {
             mapped class rolez.lang.Object
             class A
             class B {
-                new(val a: readwrite Object, val b: readwrite A) {}
-                new(val a: readwrite A, val b: readwrite Object) {}
+                new(a: readwrite Object, b: readwrite A) {}
+                new(a: readwrite A, b: readwrite Object) {}
             }
             class C extends B {
                 new { super(new A, new A); }
@@ -1653,7 +1653,7 @@ class TypeSystemTest {
         parse('''
             mapped class rolez.lang.Object
             mapped class rolez.lang.Array[T] {
-                mapped new(val length: int)
+                mapped new(length: int)
             }
             class A
             task Main: {

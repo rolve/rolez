@@ -42,29 +42,29 @@ class GeneratorTest {
     def classes() {
         newResourceSet.with('''
             mapped class rolez.lang.Object {
-                mapped def readonly equals(val o: readonly Object): boolean
+                mapped def readonly equals(o: readonly Object): boolean
                 mapped def readonly hashCode: int
                 mapped def readonly toString: pure String
             }
             mapped class rolez.lang.String {
                 mapped def pure length: int
-                mapped def pure substring(val b: int, val e: int): pure String
+                mapped def pure substring(b: int, e: int): pure String
             }
             mapped class rolez.lang.Array[T] {
-                mapped new(val i: int)
-                mapped def readonly  get(val i: int): T
-                mapped def readwrite set(val i: int, val o: T):
+                mapped new(i: int)
+                mapped def readonly  get(i: int): T
+                mapped def readwrite set(i: int, o: T):
             }
             mapped class rolez.io.PrintStream {
-                mapped new(val file: readonly String)
+                mapped new(file: readonly String)
             }
             class Base {
                 var foo: int
             }
             class foo.bar.Base {
                 new {}
-                new(val i: int) {}
-                new(val i: int, val j: int) {}
+                new(i: int) {}
+                new(i: int, j: int) {}
             }
         ''')
     }
@@ -72,7 +72,7 @@ class GeneratorTest {
     @Test def testFiles() {
         var program = parse('''
             mapped class rolez.io.PrintStream {
-                mapped new(val s: pure String)
+                mapped new(s: pure String)
             }
             class A
         ''', classes)
@@ -161,11 +161,11 @@ class GeneratorTest {
     @Test def testMappedSingletonClass() {
         parse('''
             mapped class rolez.io.PrintStream {
-                mapped new(val s: pure String)
+                mapped new(s: pure String)
             }
             mapped object rolez.lang.System {
                 mapped val out: readonly rolez.io.PrintStream
-                mapped def readonly exit(val status: int):
+                mapped def readonly exit(status: int):
                 mapped def readonly lineSeparator: pure String
             }
         ''', classes).generate.assertEqualsJava('''
@@ -242,7 +242,7 @@ class GeneratorTest {
         parse('''
             class A {
                 def pure foo: {}
-                def readwrite foo(val i: int): int { return i; }
+                def readwrite foo(i: int): int { return i; }
             }
         ''', classes).generate.assertEqualsJava('''
             public class A extends java.lang.Object {
@@ -326,7 +326,7 @@ class GeneratorTest {
             package foo
             class A {
                 new {}
-                new(val i: int, val a: pure A) {}
+                new(i: int, a: pure A) {}
             }
         ''', classes).generate.assertEqualsJava('''
             package foo;
@@ -697,7 +697,7 @@ class GeneratorTest {
     
     private def withFrame(CharSequence it) {'''
         class A {
-            def readwrite foo(val i: int, val b: boolean): {
+            def readwrite foo(i: int, b: boolean): {
                 «it»
             }
             def pure bar: {}

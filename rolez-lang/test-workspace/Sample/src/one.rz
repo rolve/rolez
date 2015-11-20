@@ -7,7 +7,7 @@ class Person {
 	val surname: pure String
 	var address: readonly Address
 	
-	new(val name: pure String, val surname: pure String, val address: readonly Address) {
+	new(name: pure String, surname: pure String, address: readonly Address) {
 		this.name = name;
 		this.surname = surname;
 		this.address = address;
@@ -20,11 +20,11 @@ class Person {
 		return "Hi";
 	}
 	
-	def readwrite setAddress(val address: readwrite Address): {
+	def readwrite setAddress(address: readwrite Address): {
 		this.address = address;
 	}
 	
-	def readonly bar(val k: int): {		
+	def readonly bar(k: int): {		
 		var i: int = -555555555;
 		val j: pure String = "Hi";
 		
@@ -51,7 +51,7 @@ class Student extends Person {
 		this.university = "ETH";
 	}
 	
-	override readwrite setAddress(val address: readwrite Address): {}
+	override readwrite setAddress(address: readwrite Address): {}
 	
 	def pure bla: {
 		this.name;
@@ -70,7 +70,7 @@ class Address {
 	var city: pure String
 	var zipCode: pure String
 	
-	def readonly foo(val a: readonly Account, val b: readonly Account): {
+	def readonly foo(a: readonly Account, b: readonly Account): {
 		this.city;
 		this.foo(a, new Account);
 		
