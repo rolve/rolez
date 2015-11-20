@@ -71,6 +71,11 @@ class RolezExtensions {
     
     def isSingleton(Class it) { it instanceof SingletonClass }
     
+    def isObjectClass(Class it) { qualifiedName == objectClassName }
+    def isArrayClass (Class it) { qualifiedName ==  arrayClassName }
+    def isStringClass(Class it) { qualifiedName == stringClassName }
+    def isTaskClass  (Class it) { qualifiedName ==   taskClassName }
+    
     def dispatch clazz( SimpleClassRef it) { clazz }
     def dispatch clazz(GenericClassRef it) { clazz }
     

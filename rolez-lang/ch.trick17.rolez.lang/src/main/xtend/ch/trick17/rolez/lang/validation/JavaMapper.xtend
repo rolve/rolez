@@ -68,13 +68,13 @@ class JavaMapper {
     }
     
     def checkedExceptionTypes(Method it) {
-        if(enclosingClass.qualifiedName == arrayClassName) emptyList
+        if(enclosingClass.isArrayClass) emptyList
         else if(!isMapped) emptyList
         else javaMethod.checkedExceptionTypes
     }
     
     def checkedExceptionTypes(Constr it) {
-        if(enclosingClass.qualifiedName == arrayClassName) emptyList
+        if(enclosingClass.isArrayClass) emptyList
         else if(!isMapped) emptyList
         else javaConstr.checkedExceptionTypes
     }

@@ -26,7 +26,6 @@ import org.eclipse.emf.ecore.util.EcoreUtil
 import org.eclipse.xtext.naming.QualifiedName
 import org.eclipse.xtext.scoping.IScopeProvider
 
-import static ch.trick17.rolez.lang.Constants.*
 import static ch.trick17.rolez.lang.rolez.Role.*
 import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
 import static ch.trick17.rolez.lang.rolez.VarKind.VAL
@@ -160,7 +159,7 @@ class RolezUtils {
     def isSideFxExpr(Expr it) {
         switch(it) {
             Assignment: true
-            New: classRef.clazz.qualifiedName != arrayClassName
+            New: !classRef.clazz.isArrayClass
             Start: true
             MemberAccess: isMethodInvoke && !method.isArrayGet
             default: false

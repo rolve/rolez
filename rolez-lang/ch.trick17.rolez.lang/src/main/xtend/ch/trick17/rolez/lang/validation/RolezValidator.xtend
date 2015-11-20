@@ -132,7 +132,7 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkTypeParam(NormalClass it) {
-        if(qualifiedName != arrayClassName && typeParam != null)
+        if(!isArrayClass && typeParam != null)
             error("Only " + arrayClassName + " may declare a type parameter",
                 NORMAL_CLASS__TYPE_PARAM, INCORRECT_TYPE_PARAM)
     }
@@ -361,7 +361,7 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkSuperConstrCall(Constr it) {
-        if(body == null || enclosingClass.qualifiedName == objectClassName) return
+        if(body == null || enclosingClass.isObjectClass) return
         
         val cfg = controlFlowGraph
         val extension analysis = new SuperConstrCallAnalysis(cfg)
@@ -479,7 +479,7 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkObjectClass(Class it) {
-        if(qualifiedName != objectClassName) return;
+        if(!isObjectClass) return;
         
         checkClassKind(false)
         if(superclass != null)
@@ -489,7 +489,7 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkStringClass(Class it) {
-        if(qualifiedName != stringClassName) return;
+        if(!isStringClass) return;
         
         checkClassKind(false)
         checkSuperclass(objectClassName)
@@ -497,7 +497,7 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkArrayClass(Class it) {
-        if(qualifiedName != arrayClassName) return;
+        if(!isArrayClass) return;
         
         checkClassKind(false)
         checkSuperclass(objectClassName)
@@ -582,7 +582,7 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkTaskClass(Class it) {
-        if(qualifiedName != taskClassName) return;
+        if(!isTaskClass) return;
         
         checkClassKind(false)
         checkSuperclass(objectClassName)

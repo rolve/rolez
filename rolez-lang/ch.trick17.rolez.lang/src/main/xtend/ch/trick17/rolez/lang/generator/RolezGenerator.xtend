@@ -60,7 +60,6 @@ import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.xtext.generator.IFileSystemAccess
 import org.eclipse.xtext.generator.IGenerator
 
-import static ch.trick17.rolez.lang.Constants.*
 import static ch.trick17.rolez.lang.rolez.VarKind.VAL
 
 import static extension org.eclipse.xtext.util.Strings.convertToJavaString
@@ -328,7 +327,7 @@ class RolezGenerator implements IGenerator {
     private def dispatch generateExpr(VarRef it) { variable.name }
     
     private def dispatch generateExpr(New it) {
-        if(classRef.clazz.qualifiedName == arrayClassName) {
+        if(classRef.clazz.isArrayClass) {
             if(args.size != 1) throw new AssertionError
             
             val ref = classRef as GenericClassRef
@@ -344,7 +343,7 @@ class RolezGenerator implements IGenerator {
     }
     
     private def int arrayNesting(GenericClassRef it) {
-        if(clazz.qualifiedName != arrayClassName)
+        if(!clazz.isArrayClass)
             throw new AssertionError
         
         val arg = typeArg
@@ -357,7 +356,7 @@ class RolezGenerator implements IGenerator {
     }
     
     private def Type elemType(GenericClassRef it) {
-        if(clazz.qualifiedName != arrayClassName)
+        if(!clazz.isArrayClass)
             throw new AssertionError
         
         val arg = typeArg
@@ -412,7 +411,7 @@ class RolezGenerator implements IGenerator {
     }
     
     private def dispatch generateClassRef(GenericClassRef it) {
-        if(clazz.qualifiedName == arrayClassName)
+        if(clazz.isArrayClass)
             '''«typeArg.gen»[]'''
         else
             '''«clazz.generateName»<«typeArg.gen»>'''

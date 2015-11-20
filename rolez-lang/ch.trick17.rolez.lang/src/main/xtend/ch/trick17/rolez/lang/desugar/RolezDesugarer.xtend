@@ -9,8 +9,6 @@ import ch.trick17.rolez.lang.rolez.SuperConstrCall
 import javax.inject.Inject
 import org.eclipse.xtext.linking.lazy.SyntheticLinkingSupport
 
-import static ch.trick17.rolez.lang.Constants.*
-
 class RolezDesugarer extends AbstractDeclarativeDesugarer {
 
     extension RolezFactory = RolezFactory.eINSTANCE
@@ -31,7 +29,7 @@ class RolezDesugarer extends AbstractDeclarativeDesugarer {
     @Rule
     def addSuperConstrCall(Constr it) {
         if(body != null && !(body.stmts.head instanceof SuperConstrCall)
-                && enclosingClass.qualifiedName != objectClassName) {
+                && !enclosingClass.isObjectClass) {
             val call = createSuperConstrCall
             // eResource.contents += call
             body.stmts.add(0, call)
@@ -42,7 +40,7 @@ class RolezDesugarer extends AbstractDeclarativeDesugarer {
     
     @Rule
     def addSuperClass(Class it) {
-        if(superclass == null && qualifiedName != objectClassName)
+        if(superclass == null && !isObjectClass)
             createAndSetProxy(rolezPackage.class_Superclass, "rolez.lang.Object")
     }
 }
