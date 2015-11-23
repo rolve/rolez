@@ -445,6 +445,21 @@ class GeneratorTest {
         '''.withJavaFrame)
     }
     
+    @Test def testForLoop() {
+        parse('''
+            for(var n: int = 0; n < 10; n = n+1)
+                this.bar;
+        '''.withFrame, classes).generate.assertEqualsJava('''
+            {
+                int n = 0;
+                while(n < 10) {
+                    this.bar();
+                    n = n + 1;
+                }
+            }
+        '''.withJavaFrame)
+    }
+    
     @Test def testSuperConstrCall() {
         parse('''
             class A extends Base {

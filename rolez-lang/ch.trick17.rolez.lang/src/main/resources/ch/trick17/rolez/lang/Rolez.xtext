@@ -73,7 +73,7 @@ Block:
     {Block} '{' (stmts+=Stmt)* '}';
 
 Stmt:
-    Block | LocalVarDecl | IfStmt | WhileLoop | SuperConstrCall | Return | ExprStmt;
+    Block | LocalVarDecl | IfStmt | WhileLoop | ForLoop | SuperConstrCall | Return | ExprStmt;
 
 LocalVarDecl:
     variable=LocalVar ('=' initializer=Expr)? ';';
@@ -87,6 +87,9 @@ IfStmt:
 
 WhileLoop:
     'while' '(' condition=Expr ')' body=Stmt;
+
+ForLoop:
+    'for' '(' initializer=Stmt condition=Expr ';' step=Expr ')' body=Stmt;
 
 // TODO: for-each and maybe parallel for-each
 

@@ -9,6 +9,8 @@ import ch.trick17.rolez.lang.rolez.RolezFactory
 import ch.trick17.rolez.lang.rolez.SuperConstrCall
 import javax.inject.Inject
 import org.eclipse.xtext.linking.lazy.SyntheticLinkingSupport
+import ch.trick17.rolez.lang.rolez.ForLoop
+import ch.trick17.rolez.lang.rolez.Block
 
 class RolezDesugarer extends AbstractDeclarativeDesugarer {
 
@@ -17,12 +19,11 @@ class RolezDesugarer extends AbstractDeclarativeDesugarer {
     @Inject extension SyntheticLinkingSupport
 
     @Rule
-    def addDefaultConstr(NormalClass it) {
+    def void addDefaultConstr(NormalClass it) {
         if(constrs.isEmpty) {
             val c = createConstr
             if(isMapped) c.mapped = true
             else c.body = createBlock
-            // eResource.contents += c
             constrs += c
         }
     }
@@ -31,11 +32,9 @@ class RolezDesugarer extends AbstractDeclarativeDesugarer {
     def addSuperConstrCall(Constr it) {
         if(body != null && !(body.stmts.head instanceof SuperConstrCall)
                 && !enclosingClass.isObjectClass) {
-            val call = createSuperConstrCall
-            // eResource.contents += call
-            body.stmts.add(0, call)
-            call.createAndSetProxy(rolezPackage.superConstrCall_Target, "super")
-            call
+            val supr = createSuperConstrCall
+            body.stmts.add(0, supr)
+            supr.createAndSetProxy(rolezPackage.superConstrCall_Target, "super")
         }
     }
     
@@ -49,5 +48,25 @@ class RolezDesugarer extends AbstractDeclarativeDesugarer {
     def addElsePart(IfStmt it) {
         if(elsePart == null)
             elsePart = createBlock
+    }
+    
+    @Rule
+    def desugarForLoop(ForLoop orig) {
+        createBlock => [
+            stmts += orig.initializer
+            stmts += createWhileLoop => [
+                condition = orig.condition
+                body = createBlock => [
+                    val origBody = orig.body
+                    stmts += switch(origBody) {
+                        Block: origBody.stmts
+                        default: #[origBody]
+                    }
+                    stmts += createExprStmt => [
+                        expr = orig.step
+                    ]
+                ]
+            ]
+        ]
     }
 }
