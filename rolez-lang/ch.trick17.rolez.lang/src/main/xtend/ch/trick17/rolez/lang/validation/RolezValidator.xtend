@@ -295,7 +295,7 @@ class RolezValidator extends RolezSystemValidator {
         
         for(a : all(MemberAccess).filter[isFieldAccess]) {
             val f = a.field
-            if(f.kind == VAL && !a.isAssignmentTarget
+            if(f.kind == VAL && !a.isAssignmentTarget && a.target instanceof This
                     && !f.definitelyInitializedBefore(cfg.nodeOf(a)))
                 error("Value field " + f.name + " may not have been initialized",
                     a, MEMBER_ACCESS__MEMBER, VAL_FIELD_NOT_INITIALIZED)

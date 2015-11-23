@@ -625,6 +625,17 @@ class ValidatorTest {
                def pure foo: boolean { return false; }
             }
         ''').assertNoErrors
+        parse('''
+            mapped class rolez.lang.Object
+            object A {
+                val a: int = 0
+            }
+            class B {
+                new {
+                    the A.a;
+                }
+            }
+        ''').assertNoErrors
         
         parse('''
             mapped class rolez.lang.Object
