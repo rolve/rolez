@@ -88,7 +88,7 @@ class RolezGenerator implements IGenerator {
         package «package»;
         
         '''»
-        public class «simpleName» extends «superclass?.generateName?:"java.lang.Object"» {
+        public class «simpleName» extends «superclass.generateName» {
             « fields.map[gen].join»
             «constrs.map[gen].join»
             «methods.map[gen].join»
@@ -101,7 +101,7 @@ class RolezGenerator implements IGenerator {
         package «package»;
         
         '''»
-        public final class «simpleName» extends «superclass?.generateName?:"java.lang.Object"» {
+        public final class «simpleName» extends «superclass.generateName» {
             
             public static final «simpleName» INSTANCE = new «simpleName»();
             
