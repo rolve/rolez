@@ -3,6 +3,7 @@ package ch.trick17.rolez.lang.desugar
 import ch.trick17.rolez.lang.RolezExtensions
 import ch.trick17.rolez.lang.rolez.Class
 import ch.trick17.rolez.lang.rolez.Constr
+import ch.trick17.rolez.lang.rolez.IfStmt
 import ch.trick17.rolez.lang.rolez.NormalClass
 import ch.trick17.rolez.lang.rolez.RolezFactory
 import ch.trick17.rolez.lang.rolez.SuperConstrCall
@@ -42,5 +43,11 @@ class RolezDesugarer extends AbstractDeclarativeDesugarer {
     def addSuperClass(Class it) {
         if(superclass == null && !isObjectClass)
             createAndSetProxy(rolezPackage.class_Superclass, "rolez.lang.Object")
+    }
+    
+    @Rule
+    def addElsePart(IfStmt it) {
+        if(elsePart == null)
+            elsePart = createBlock
     }
 }

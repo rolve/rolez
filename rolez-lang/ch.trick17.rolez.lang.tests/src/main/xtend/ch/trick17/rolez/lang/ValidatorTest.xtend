@@ -249,7 +249,7 @@ class ValidatorTest {
             }
         ''')
         program.assertError(RETURN_NOTHING, MISSING_RETURN_EXPR)
-        program.assertError(IF_STMT, MISSING_RETURN_EXPR)
+        program.assertError(BLOCK, MISSING_RETURN_EXPR)
         
         parse('''
             mapped class rolez.lang.Object
@@ -259,7 +259,7 @@ class ValidatorTest {
                         return 0;
                 }
             }
-        ''').assertError(IF_STMT, MISSING_RETURN_EXPR)
+        ''').assertError(BLOCK, MISSING_RETURN_EXPR)
         parse('''
             mapped class rolez.lang.Object
             class A {
@@ -269,7 +269,7 @@ class ValidatorTest {
                         return 0;
                 }
             }
-        ''').assertError(IF_STMT, MISSING_RETURN_EXPR)
+        ''').assertError(BLOCK, MISSING_RETURN_EXPR)
         parse('''
             mapped class rolez.lang.Object
             class A {

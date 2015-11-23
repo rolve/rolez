@@ -299,6 +299,8 @@ class GeneratorTest {
                 if(new java.io.PrintStream("foo.txt").equals("")) {
                     new java.io.PrintStream("bar.txt");
                 }
+                else {
+                }
             }
             catch(java.io.FileNotFoundException e) {
                 «throwExceptionWrapper("e")»
@@ -427,6 +429,8 @@ class GeneratorTest {
         '''.withFrame, classes).generate.assertEqualsJava('''
             if(b) {
                 this.bar();
+            }
+            else {
             }
         '''.withJavaFrame)
     }

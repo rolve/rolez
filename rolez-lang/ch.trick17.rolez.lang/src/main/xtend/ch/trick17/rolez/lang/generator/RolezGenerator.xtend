@@ -224,8 +224,7 @@ class RolezGenerator implements IGenerator {
     
     private def dispatch generateStmt(IfStmt it) {'''
         if(«condition.gen»)«thenPart.genIndent»
-        «if(elsePart != null)
-        '''else«elsePart.genIndent»'''»
+        else«elsePart.genIndent»
     '''}
     
     private def dispatch generateStmt(WhileLoop it) {'''

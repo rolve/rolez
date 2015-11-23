@@ -350,8 +350,7 @@ rule WIfStmt
 from {
     G |- ifStmt.^condition <| newBooleanType
     G |- ifStmt.thenPart
-    
-    ifStmt.elsePart == null or G |- ifStmt.elsePart
+    G |- ifStmt.elsePart
 }
 
 rule WWhileLoop
