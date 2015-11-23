@@ -25,7 +25,7 @@ class Person {
 	}
 	
 	def readonly bar(k: int): {		
-		var i: int = -555555555;
+		var fives: int = -555555555;
 		val j: pure String = "Hi";
 		
 		
@@ -34,11 +34,15 @@ class Person {
 		
 		val s: readonly String = "Hi" + 'c' + null + 5 + null + this.surname.length;
 		
-		while(i < j.length)
+		for(var i: int = 0; i < 10; i = i + 1) {
+			the System.out.println("Hi, number " + i);
+		}
+		
+		while(fives < j.length)
 			if((false && !true) || 5 < 0 + 7)
-				i = 2*i + 2;
+				fives = 2*fives + 2;
 			else
-				i = k;
+				fives = k;
 	}
 }
 

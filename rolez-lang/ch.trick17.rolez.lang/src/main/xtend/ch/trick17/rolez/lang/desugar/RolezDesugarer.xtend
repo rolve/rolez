@@ -52,6 +52,8 @@ class RolezDesugarer extends AbstractDeclarativeDesugarer {
     
     @Rule
     def desugarForLoop(ForLoop orig) {
+        if(!orig.eResource.errors.isEmpty) return createBlock
+        
         createBlock => [
             stmts += orig.initializer
             stmts += createWhileLoop => [
