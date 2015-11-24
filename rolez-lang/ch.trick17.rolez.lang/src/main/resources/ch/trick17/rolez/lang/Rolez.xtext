@@ -114,7 +114,12 @@ Expr:
     Assignment;
 
 Assignment returns Expr:
-    OrExpr ({Assignment.left=current} '=' right=Expr)?;
+    OrExpr ({Assignment.left=current} op=OpAssignment right=Expr)?;
+
+enum OpAssignment:
+    ASSIGN='=' | OR_ASSIGN='|=' | AND_ASSIGN='&='
+    | PLUS_ASSIGN='+=' | MINUS_ASSIGN='-='
+    | TIMES_ASSIGN='*=' | DIVIDED_BY_ASSIGN='/=' | MODULO_ASSIGN='%=';
 
 OrExpr returns Expr:
     AndExpr ({LogicalExpr.left=current} op=OpOr right=AndExpr)?;

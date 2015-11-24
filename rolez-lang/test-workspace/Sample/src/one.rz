@@ -24,19 +24,14 @@ class Person {
 		this.address = address;
 	}
 	
-	def readonly bar(k: int): {		
+	def readonly bar(k: int): {
 		var fives: int = -555555555;
 		val j: pure String = "Hi";
 		
-		
-		this.address = null;
-		new Account;
-		
 		val s: readonly String = "Hi" + 'c' + null + 5 + null + this.surname.length;
 		
-		for(var i: int = 0; i < 10; i = i + 1) {
+		for(var i: int = 0; i < 10; i += 1)
 			the System.out.println("Hi, number " + i);
-		}
 		
 		while(fives < j.length)
 			if((false && !true) || 5 < 0 + 7)
@@ -45,7 +40,6 @@ class Person {
 				fives = k;
 	}
 }
-
 
 class Student extends Person {
 	val university: pure String
@@ -56,11 +50,6 @@ class Student extends Person {
 	}
 	
 	override readwrite setAddress(address: readwrite Address): {}
-	
-	def pure bla: {
-		this.name;
-		this.setAddress(new Address);
-	}
 }
 
 class Account {

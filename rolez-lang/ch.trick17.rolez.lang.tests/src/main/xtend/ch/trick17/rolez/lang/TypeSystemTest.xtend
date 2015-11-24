@@ -453,15 +453,11 @@ class TypeSystemTest {
     @Test def testTMemberAccessErrorInTarget() {
         parse("task Main: { (!5).a; }")
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
-        parse("task Main: { (!5).foo(); }")
-            .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
     @Test def testTMemberAccessIllegalTarget() {
         parse('''task Main: { 5.5.a; }''')
             .assertError(DOUBLE_LITERAL, null, "Illegal", "target", "access")
-        parse('''task Main: { false.foo(); }''')
-            .assertError(BOOLEAN_LITERAL, null, "Illegal", "target", "access")
     }
     
     @Test def testTMemberAccessField() {

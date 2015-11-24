@@ -35,10 +35,32 @@ abstract class AbstractDeclarativeDesugarer implements IDesugarer {
         while(allContents.toList != prevContents) {
             prevContents = allContents.toList
             for(var i = 0; i < contents.size; i++) {
-                val replacement = contents.get(i).desugar
-                if(replacement.isPresent)
-                    contents.set(i, replacement.get)
+                val orig = contents.get(i)
+                val repl = orig.desugar
+                if(repl.isPresent && repl.get !== orig)
+                    contents.set(i, repl.get)
                 contents.get(i).desugarChildren
+            }
+        }
+    }
+    
+    private def void desugarChildren(EObject it) {
+        for(ref : eClass.EAllContainments) {
+            val value = eGet(ref)
+            if(value instanceof EObject) {
+                val repl = value.desugar
+                if(repl.isPresent && repl.get !== value)
+                    eSet(ref, repl.get)
+                (eGet(ref) as EObject).desugarChildren
+            }
+            else if(value instanceof EObjectEList<?>) {
+                for(var i = 0; i < value.size; i++) {
+                    val orig = value.get(i) as EObject
+                    val repl = orig.desugar
+                    if(repl.isPresent && repl.get !== orig)
+                        (value as EObjectEList<EObject>).set(i, repl.get)
+                    (value.get(i) as EObject).desugarChildren
+                }
             }
         }
     }
@@ -48,32 +70,11 @@ abstract class AbstractDeclarativeDesugarer implements IDesugarer {
             if(m.returnType == void)
                 m.invoke(this, it)
             else {
-                val replacement = m.invoke(this, it) as EObject
-                if(replacement == null)
+                val repl = m.invoke(this, it) as EObject
+                if(repl == null)
                     throw new AssertionError("A @Rule method must not return null")
-                return Optional.of(replacement)
+                return Optional.of(repl)
             }
         Optional.empty
-    }
-    
-    private def void desugarChildren(EObject it) {
-        for(ref : eClass.EAllContainments) {
-            val value = eGet(ref)
-            if(value instanceof EObject) {
-                val replacement = value.desugar
-                if(replacement.isPresent)
-                    eSet(ref, replacement.get)
-                (eGet(ref) as EObject).desugarChildren
-            }
-            else if(value instanceof EObjectEList<?>) {
-                for(var i = 0; i < value.size; i++) {
-                    val child = value.get(i) as EObject
-                    val replacement = child.desugar
-                    if(replacement.isPresent)
-                        (value as EObjectEList<EObject>).set(i, replacement.get)
-                    (value.get(i) as EObject).desugarChildren
-                }
-            }
-        }
     }
 }

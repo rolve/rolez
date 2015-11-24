@@ -447,7 +447,7 @@ class GeneratorTest {
     
     @Test def testForLoop() {
         parse('''
-            for(var n: int = 0; n < 10; n = n+1)
+            for(var n: int = 0; n < 10; n += 1)
                 this.bar;
         '''.withFrame, classes).generate.assertEqualsJava('''
             {
@@ -555,6 +555,28 @@ class GeneratorTest {
             j = i;
             new Base().foo = j = 42;
             j = 2 + 2;
+        '''.withJavaFrame)
+        
+        parse('''
+            var a: boolean = false;
+            a |= true;
+            a &= false;
+            var j: int = 42;
+            j += 2;
+            j -= 1;
+            j *= 2;
+            j /= 3;
+            j %= 2;
+        '''.withFrame, classes).generate.assertEqualsJava('''
+            boolean a = false;
+            a = a || true;
+            a = a && false;
+            int j = 42;
+            j = j + 2;
+            j = j - 1;
+            j = j * 2;
+            j = j / 3;
+            j = j % 2;
         '''.withJavaFrame)
     }
     

@@ -12,7 +12,9 @@ import ch.trick17.rolez.lang.desugar.DesugaringLazyLinkingResource;
 import ch.trick17.rolez.lang.desugar.IDesugarer;
 import ch.trick17.rolez.lang.desugar.RolezDesugarer;
 import ch.trick17.rolez.lang.scoping.RolezImportedNamespaceScopeProvider;
+import ch.trick17.rolez.lang.typesystem.RolezValidatorFilter;
 import it.xsemantics.runtime.StringRepresentation;
+import it.xsemantics.runtime.validation.XsemanticsValidatorFilter;
 
 /**
  * Use this class to register components to be used at runtime / without the
@@ -44,5 +46,9 @@ public class RolezRuntimeModule extends ch.trick17.rolez.lang.AbstractRolezRunti
     
     public Class<? extends StringRepresentation> bindStringRepresentation() {
         return StringRepresentationFix.class;
+    }
+    
+    public Class<? extends XsemanticsValidatorFilter> bindValidatorFilter() {
+        return RolezValidatorFilter.class;
     }
 }
