@@ -75,9 +75,9 @@ class TypeSystemTest {
                 def pure foo: {}
             }
             task Main: {
-                new A.foo() = 3;
+                new A.foo = 3;
             }
-        ''').assertError(MEMBER_ACCESS, AMEMBERACCESS, "assign", "foo()")
+        ''').assertError(MEMBER_ACCESS, AMEMBERACCESS, "assign", "foo")
         
         parse('''
             task Main: {
@@ -90,7 +90,7 @@ class TypeSystemTest {
             mapped class rolez.lang.Object
             class A {
                 val x: int
-                def pure foo: {
+                def readwrite foo: {
                     this.x = 4;
                 }
             }
@@ -640,7 +640,7 @@ class TypeSystemTest {
             mapped class rolez.lang.Object
             class A {
                 def pure foo(i: int): {}
-                def pure bar: { foo(!5); }
+                def pure bar: { this.foo(!5); }
             }
         ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
         
@@ -665,12 +665,20 @@ class TypeSystemTest {
                     }
                     task Main: {
                         val a: «actual» A = new A;
-                        a.x();
+                        a.x;
                     }
                 ''').assertError(MEMBER_ACCESS, null,
                         "Role", "mismatch", "method", actual.toString)
             }
         }
+        
+        parse('''
+            mapped class rolez.lang.Object
+            class A {
+                def readwrite foo: {}
+                def readonly  bar: { this.foo; }
+            }
+        ''').assertError(MEMBER_ACCESS, null, "Role", "mismatch", "method", "readonly")
     }
     
     @Test def testTMemberAccessMethodTypeMismatch() {

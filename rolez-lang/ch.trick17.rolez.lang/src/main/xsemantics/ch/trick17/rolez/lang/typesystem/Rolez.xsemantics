@@ -20,6 +20,7 @@ import ch.trick17.rolez.lang.rolez.IntLiteral
 import ch.trick17.rolez.lang.rolez.LocalVarDecl
 import ch.trick17.rolez.lang.rolez.LogicalExpr
 import ch.trick17.rolez.lang.rolez.MemberAccess
+import ch.trick17.rolez.lang.rolez.Method
 import ch.trick17.rolez.lang.rolez.New
 import ch.trick17.rolez.lang.rolez.Null
 import ch.trick17.rolez.lang.rolez.NullLiteral
@@ -38,6 +39,7 @@ import ch.trick17.rolez.lang.rolez.Start
 import ch.trick17.rolez.lang.rolez.Stmt
 import ch.trick17.rolez.lang.rolez.StringLiteral
 import ch.trick17.rolez.lang.rolez.SuperConstrCall
+import ch.trick17.rolez.lang.rolez.Task
 import ch.trick17.rolez.lang.rolez.The
 import ch.trick17.rolez.lang.rolez.This
 import ch.trick17.rolez.lang.rolez.Type
@@ -529,12 +531,18 @@ from { fail }
 checkrule CheckStmt for
     Stmt s // Checked for all stmts individually, to get multiple error markers
 from {
-    val class = s.enclosingClass
-    if(class == null) { // Task
-        empty |- s
-    }
-    else { // Method or constructor
-        val thisType = newRoleType(READWRITE, newClassRef(class))
-        "this" <- thisType |- s
+    val body = s.enclosingBody
+    switch(body) {
+        Method: {
+            val thisType = newRoleType(body.thisRole, newClassRef(s.enclosingClass))
+            "this" <- thisType |- s
+        }
+        Constr: {
+            val thisType = newRoleType(READWRITE, newClassRef(s.enclosingClass))
+            "this" <- thisType |- s
+        }
+        Task: {
+            empty |- s
+        }
     }
 }
