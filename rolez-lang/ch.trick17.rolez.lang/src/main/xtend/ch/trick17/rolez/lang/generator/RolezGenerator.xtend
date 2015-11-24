@@ -308,7 +308,6 @@ class RolezGenerator implements IGenerator {
     
     private def dispatch generateExpr(MemberAccess it) {
         // TODO: guard
-        // TODO: what to do with mapped methods that throw checked exceptions?
         switch(it) {
             case isMethodInvoke && method.isArrayGet:
                 '''«target.gen»[«args.get(0).gen»]'''

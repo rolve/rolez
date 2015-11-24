@@ -4,9 +4,13 @@ import ch.trick17.rolez.lang.rolez.Boolean
 import ch.trick17.rolez.lang.rolez.Char
 import ch.trick17.rolez.lang.rolez.Double
 import ch.trick17.rolez.lang.rolez.Int
+import ch.trick17.rolez.lang.rolez.New
+import ch.trick17.rolez.lang.rolez.NormalClass
 import ch.trick17.rolez.lang.rolez.Null
 import ch.trick17.rolez.lang.rolez.Program
 import ch.trick17.rolez.lang.rolez.Role
+import ch.trick17.rolez.lang.rolez.RoleType
+import ch.trick17.rolez.lang.rolez.SuperConstrCall
 import ch.trick17.rolez.lang.typesystem.RolezSystem
 import javax.inject.Inject
 import org.eclipse.xtext.junit4.InjectWith
@@ -1030,7 +1034,7 @@ class TypeSystemTest {
     }
     
     @Test def testTNewOverloading() {
-        parse('''
+        var program = parse('''
             mapped class rolez.lang.Object
             class A {
                 new(a: int) {}
@@ -1040,11 +1044,11 @@ class TypeSystemTest {
                 new A(4);
                 new A(true);
             }
-        ''').assertNoErrors
+        ''')
+        (program.main.expr(0) as New).target.params.head.type.assertThat(instanceOf(Int))
+        (program.main.expr(1) as New).target.params.head.type.assertThat(instanceOf(Boolean))
         
-        // IMPROVE: For the following, test that the right constructor is chosen,
-        // either by linking something or after code generation.
-        parse('''
+        program = parse('''
             mapped class rolez.lang.Object
             class A
             class B {
@@ -1055,10 +1059,12 @@ class TypeSystemTest {
                 new B(new A);
                 new B(new A as readonly A);
             }
-        ''').assertNoErrors
+        ''')
+        ((program.main.expr(0) as New).target.params.head.type as RoleType).role.assertThat(is(READWRITE))
+        ((program.main.expr(1) as New).target.params.head.type as RoleType).role.assertThat(is(READONLY))
         
         // (Switch order of declaration to rule out accidental selection of the correct one)
-        parse('''
+        program = parse('''
             mapped class rolez.lang.Object
             class A
             class B {
@@ -1069,7 +1075,9 @@ class TypeSystemTest {
                 new B(new A);
                 new B(new A as readonly A);
             }
-        ''').assertNoErrors
+        ''')
+        ((program.main.expr(0) as New).target.params.head.type as RoleType).role.assertThat(is(READWRITE))
+        ((program.main.expr(1) as New).target.params.head.type as RoleType).role.assertThat(is(READONLY))
         
         // IMPROVE: test generic constructors, once  supported outside of the array class
     }
@@ -1531,21 +1539,23 @@ class TypeSystemTest {
     }
     
     @Test def testWSuperConstrCallOverloading() {
-        parse('''
+        val classB = (parse('''
             mapped class rolez.lang.Object
             class A {
                 new(a: int) {}
                 new(a: boolean) {}
             }
             class B extends A {
-                new { super(4); }
+                new             { super(4); }
                 new(b: boolean) { super(b); }
             }
-        ''').assertNoErrors
+        ''').classes.findFirst[name == "B"] as NormalClass)
+        (classB.constrs.findFirst[params.size == 0].body.stmts.head as SuperConstrCall)
+            .target.params.head.type.assertThat(instanceOf(Int))
+        (classB.constrs.findFirst[params.size == 1].body.stmts.head as SuperConstrCall)
+            .target.params.head.type.assertThat(instanceOf(Boolean))
         
-        // IMPROVE: For the following, test that the right constructor is chosen,
-        // either by linking something or after code generation.
-        parse('''
+        var classC = (parse('''
             mapped class rolez.lang.Object
             class A
             class B {
@@ -1553,13 +1563,17 @@ class TypeSystemTest {
                 new(a: readonly  A) {}
             }
             class C extends B {
-                new { super(new A); }
+                new         { super(new A); }
                 new(i: int) { super(new A as readonly A); }
             }
-        ''').assertNoErrors
+        ''').classes.findFirst[name == "C"] as NormalClass)
+        ((classC.constrs.findFirst[params.size == 0].body.stmts.head as SuperConstrCall)
+            .target.params.head.type as RoleType).role.assertThat(is(READWRITE))
+        ((classC.constrs.findFirst[params.size == 1].body.stmts.head as SuperConstrCall)
+            .target.params.head.type as RoleType).role.assertThat(is(READONLY))
         
         // (Switch order of declaration to rule out accidental selection of the correct one)
-        parse('''
+        classC = (parse('''
             mapped class rolez.lang.Object
             class A
             class B {
@@ -1567,10 +1581,14 @@ class TypeSystemTest {
                 new(a: readwrite A) {}
             }
             class C extends B {
-                new { super(new A); }
+                new         { super(new A); }
                 new(i: int) { super(new A as readonly A); }
             }
-        ''').assertNoErrors
+        ''').classes.findFirst[name == "C"] as NormalClass)
+        ((classC.constrs.findFirst[params.size == 0].body.stmts.head as SuperConstrCall)
+            .target.params.head.type as RoleType).role.assertThat(is(READWRITE))
+        ((classC.constrs.findFirst[params.size == 1].body.stmts.head as SuperConstrCall)
+            .target.params.head.type as RoleType).role.assertThat(is(READONLY))
     }
     
     @Test def testWSuperConstrCallAmbiguous() {
