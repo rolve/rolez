@@ -28,6 +28,7 @@ import ch.trick17.rolez.lang.rolez.Null
 import ch.trick17.rolez.lang.rolez.ParameterizedBody
 import ch.trick17.rolez.lang.rolez.Program
 import ch.trick17.rolez.lang.rolez.ReturnExpr
+import ch.trick17.rolez.lang.rolez.RoleType
 import ch.trick17.rolez.lang.rolez.SimpleClassRef
 import ch.trick17.rolez.lang.rolez.SuperConstrCall
 import ch.trick17.rolez.lang.rolez.This
@@ -47,6 +48,7 @@ import org.eclipse.xtext.naming.QualifiedName
 import org.eclipse.xtext.validation.Check
 
 import static ch.trick17.rolez.lang.Constants.*
+import static ch.trick17.rolez.lang.rolez.Role.*
 import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
 import static ch.trick17.rolez.lang.rolez.VarKind.*
 
@@ -75,6 +77,7 @@ class RolezValidator extends RolezSystemValidator {
     public static val THIS_IN_FIELD_INIT = "'this' in field initializer"
     public static val MAPPED_FIELD_WITH_INIT = "mapped with with initializer"
     public static val VAR_FIELD_IN_SINGLETON_CLASS = "var field in singleton class"
+    public static val INEFFECTIVE_FIELD_ROLE = "ineffective field role"
     public static val VAL_NOT_INITIALIZED = "val not initialized"
     public static val VAR_NOT_INITIALIZED = "var not initialized"
     public static val INCORRECT_SUPER_CONSTR_CALL = "incorrect super constructor call"
@@ -302,6 +305,13 @@ class RolezValidator extends RolezSystemValidator {
         }
     }
     
+    @Check
+    def checkValFieldInitialized(Field it) {
+        if(enclosingClass.isSingleton && !isMapped && initializer == null)
+            error("Value field " + name + " is not being initialized",
+                    NAMED__NAME, VAL_FIELD_NOT_INITIALIZED)
+    }
+    
     private def isAssignmentTarget(Expr e) {
         e.eContainer instanceof Assignment
             && (e.eContainer as Assignment).left == e
@@ -324,10 +334,20 @@ class RolezValidator extends RolezSystemValidator {
     }
     
     @Check
-    def checkVarFieldInSingletonClass(Field it) {
-        if(enclosingClass.isSingleton && kind != VAL)
+    def checkSingletonClassField(Field it) {
+        if(!enclosingClass.isSingleton) return;
+        
+        if(kind != VAL)
             error("Fields of singleton classes must be val", FIELD__KIND,
                 VAR_FIELD_IN_SINGLETON_CLASS)
+        
+        val type = type
+        if(type instanceof RoleType)
+            if(system.subrole(READONLY, type.role).failed) {
+                val effectiveRole = system.leastCommonSuperrole(READONLY, type.role);
+                warning("Singleton objects are always readonly, therefore this field's effective role is " + effectiveRole,
+                    type, ROLE_TYPE__ROLE, INEFFECTIVE_FIELD_ROLE)
+            }
     }
     
     @Check

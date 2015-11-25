@@ -643,6 +643,12 @@ class ValidatorTest {
                 val i: int
             }
         ''').assertError(CONSTR, VAL_FIELD_NOT_INITIALIZED)
+        parse('''
+            mapped class rolez.lang.Object
+            object A {
+                val i: int
+            }
+        ''').assertError(FIELD, VAL_FIELD_NOT_INITIALIZED)
         var program = parse('''
             mapped class rolez.lang.Object
             class A {
@@ -759,7 +765,7 @@ class ValidatorTest {
         ''').assertError(INT_LITERAL, MAPPED_FIELD_WITH_INIT)
     }
     
-    @Test def testVarFieldInSingletonClass() {
+    @Test def testSingletonClassField() {
         parse('''
             mapped class rolez.lang.Object
             object A {
@@ -776,6 +782,21 @@ class ValidatorTest {
                 var foo: int
             }
         ''').assertError(FIELD, VAR_FIELD_IN_SINGLETON_CLASS)
+        
+        parse('''
+            mapped class rolez.lang.Object
+            object A {
+                val i: int = 0
+                val o1: readonly Object = new Object
+                val o2: pure Object = new Object
+            }
+        ''').assertNoIssues
+        parse('''
+            mapped class rolez.lang.Object
+            object A {
+                var foo: readwrite Object
+            }
+        ''').assertWarning(TYPE, INEFFECTIVE_FIELD_ROLE)
     }
     
     @Test def testLocalValInitialized() {

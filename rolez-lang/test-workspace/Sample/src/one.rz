@@ -79,7 +79,10 @@ task Main: {
 	a.city;
 }
 
-class Test {
+object Test {
+	
+	val a: readonly Object = new Object
+	
 	def pure foo: char {
 		val array: readwrite Array[char] = new Array[char](5);
 		array.set(0, 'H');
