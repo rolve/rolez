@@ -94,7 +94,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     
     def IScope scope_VarRef_variable(VarRef varRef, EReference eRef) {
         val stmt = varRef.enclosingStmt
-        Scopes.scopeFor(varsAbove(stmt.eContainer, stmt))
+        scopeFor(varsAbove(stmt.eContainer, stmt))
     }
     
     private def dispatch Iterable<? extends Var> varsAbove(Stmt container, Stmt s) {
