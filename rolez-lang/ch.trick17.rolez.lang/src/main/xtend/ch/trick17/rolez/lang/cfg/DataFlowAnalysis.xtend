@@ -33,6 +33,7 @@ abstract class DataFlowAnalysis<F> {
     
     protected def analyze() {
         val worklist = new LinkedList(cfg.nodes(!forward))
+        // IMPROVE: Replace with LinkedHashSet for more efficient insertions?
         
         for(node : worklist)
             outFlows.put(node, newFlow)

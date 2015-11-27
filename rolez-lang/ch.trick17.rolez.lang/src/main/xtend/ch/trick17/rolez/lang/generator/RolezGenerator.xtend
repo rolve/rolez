@@ -163,7 +163,7 @@ class RolezGenerator implements IGenerator {
     private def thrownExceptionTypes(Block it) {
         val all = eAllContents.toIterable.map[switch(it) {
             MemberAccess case isMethodInvoke: method.checkedExceptionTypes
-            New: target.checkedExceptionTypes
+            New: constr.checkedExceptionTypes
             default: emptyList
         }].flatten.toSet
         

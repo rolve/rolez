@@ -374,7 +374,7 @@ class RolezValidator extends RolezSystemValidator {
         if(!(enclosingBody instanceof Constr))
             error("Cannot call a super constructor here", null, INCORRECT_SUPER_CONSTR_CALL)
         
-        if(!target.checkedExceptionTypes.isEmpty)
+        if(!constr.checkedExceptionTypes.isEmpty)
             error("Cannot call a mapped super constructor that throws checked exceptions",
                 null, UNCATCHABLE_CHECKED_EXCEPTION)
     }
@@ -391,7 +391,7 @@ class RolezValidator extends RolezSystemValidator {
                     t, null, THIS_BEFORE_SUPER_CONSTR_CALL)
         for(n: all(New))
             if(cfg.nodeOf(n).isBeforeSuperConstrCall
-                    && !(n.target.checkedExceptionTypes.isEmpty))
+                    && !(n.constr.checkedExceptionTypes.isEmpty))
                 error("Cannot call a mapped constructor that throws checked exceptions before callig the super constructor",
                     n, null, UNCATCHABLE_CHECKED_EXCEPTION)
         

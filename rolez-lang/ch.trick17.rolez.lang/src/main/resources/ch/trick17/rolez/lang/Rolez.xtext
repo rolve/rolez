@@ -94,7 +94,7 @@ ForLoop:
 // TODO: for-each and maybe parallel for-each
 
 SuperConstrCall:
-    {SuperConstrCall} target=[Constr|SuperKeyword] ('(' args+=Expr (',' args+=Expr)* ')')? ';';
+    {SuperConstrCall} constr=[Constr|SuperKeyword] ('(' args+=Expr (',' args+=Expr)* ')')? ';';
 
 SuperKeyword: 'super';
 
@@ -175,7 +175,7 @@ VarRef:
 ArgsOnly: args+=Expr;
 
 New:
-    target=[Constr|NewKeyword] classRef=NewClassRef ('(' args+=Expr (',' args+=Expr)* ')')?;
+    constr=[Constr|NewKeyword] classRef=NewClassRef ('(' args+=Expr (',' args+=Expr)* ')')?;
 
 NewKeyword: 'new';
 

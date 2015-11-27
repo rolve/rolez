@@ -18,6 +18,7 @@ import org.eclipse.xtext.linking.lazy.SyntheticLinkingSupport
 import static ch.trick17.rolez.lang.rolez.OpArithmetic.*
 import static ch.trick17.rolez.lang.rolez.OpAssignment.*
 import static ch.trick17.rolez.lang.rolez.OpLogical.*
+import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
 
 import static extension org.eclipse.emf.ecore.util.EcoreUtil.*
 
@@ -43,14 +44,14 @@ class RolezDesugarer extends AbstractDeclarativeDesugarer {
                 && !enclosingClass.isObjectClass) {
             val supr = createSuperConstrCall
             body.stmts.add(0, supr)
-            supr.createAndSetProxy(rolezPackage.superConstrCall_Target, "super")
+            supr.createAndSetProxy(SUPER_CONSTR_CALL__CONSTR, "super")
         }
     }
     
     @Rule
     def addSuperClass(Class it) {
         if(superclass == null && !isObjectClass)
-            createAndSetProxy(rolezPackage.class_Superclass, "rolez.lang.Object")
+            createAndSetProxy(CLASS__SUPERCLASS, "rolez.lang.Object")
     }
     
     @Rule

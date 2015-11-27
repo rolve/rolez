@@ -85,7 +85,7 @@ class TypeSystemTest {
         
         parse('''
             task Main: {
-                val x: int;
+                val x: int = 5;
                 x = 5;
             }
         ''').assertError(VAR_REF, AVARREF, "assign", "value")
@@ -1045,8 +1045,8 @@ class TypeSystemTest {
                 new A(true);
             }
         ''')
-        (program.main.expr(0) as New).target.params.head.type.assertThat(instanceOf(Int))
-        (program.main.expr(1) as New).target.params.head.type.assertThat(instanceOf(Boolean))
+        (program.main.expr(0) as New).constr.params.head.type.assertThat(instanceOf(Int))
+        (program.main.expr(1) as New).constr.params.head.type.assertThat(instanceOf(Boolean))
         
         program = parse('''
             mapped class rolez.lang.Object
@@ -1060,8 +1060,8 @@ class TypeSystemTest {
                 new B(new A as readonly A);
             }
         ''')
-        ((program.main.expr(0) as New).target.params.head.type as RoleType).role.assertThat(is(READWRITE))
-        ((program.main.expr(1) as New).target.params.head.type as RoleType).role.assertThat(is(READONLY))
+        ((program.main.expr(0) as New).constr.params.head.type as RoleType).role.assertThat(is(READWRITE))
+        ((program.main.expr(1) as New).constr.params.head.type as RoleType).role.assertThat(is(READONLY))
         
         // (Switch order of declaration to rule out accidental selection of the correct one)
         program = parse('''
@@ -1076,8 +1076,8 @@ class TypeSystemTest {
                 new B(new A as readonly A);
             }
         ''')
-        ((program.main.expr(0) as New).target.params.head.type as RoleType).role.assertThat(is(READWRITE))
-        ((program.main.expr(1) as New).target.params.head.type as RoleType).role.assertThat(is(READONLY))
+        ((program.main.expr(0) as New).constr.params.head.type as RoleType).role.assertThat(is(READWRITE))
+        ((program.main.expr(1) as New).constr.params.head.type as RoleType).role.assertThat(is(READONLY))
         
         // IMPROVE: test generic constructors, once  supported outside of the array class
     }
@@ -1551,9 +1551,9 @@ class TypeSystemTest {
             }
         ''').classes.findFirst[name == "B"] as NormalClass)
         (classB.constrs.findFirst[params.size == 0].body.stmts.head as SuperConstrCall)
-            .target.params.head.type.assertThat(instanceOf(Int))
+            .constr.params.head.type.assertThat(instanceOf(Int))
         (classB.constrs.findFirst[params.size == 1].body.stmts.head as SuperConstrCall)
-            .target.params.head.type.assertThat(instanceOf(Boolean))
+            .constr.params.head.type.assertThat(instanceOf(Boolean))
         
         var classC = (parse('''
             mapped class rolez.lang.Object
@@ -1568,9 +1568,9 @@ class TypeSystemTest {
             }
         ''').classes.findFirst[name == "C"] as NormalClass)
         ((classC.constrs.findFirst[params.size == 0].body.stmts.head as SuperConstrCall)
-            .target.params.head.type as RoleType).role.assertThat(is(READWRITE))
+            .constr.params.head.type as RoleType).role.assertThat(is(READWRITE))
         ((classC.constrs.findFirst[params.size == 1].body.stmts.head as SuperConstrCall)
-            .target.params.head.type as RoleType).role.assertThat(is(READONLY))
+            .constr.params.head.type as RoleType).role.assertThat(is(READONLY))
         
         // (Switch order of declaration to rule out accidental selection of the correct one)
         classC = (parse('''
@@ -1586,9 +1586,9 @@ class TypeSystemTest {
             }
         ''').classes.findFirst[name == "C"] as NormalClass)
         ((classC.constrs.findFirst[params.size == 0].body.stmts.head as SuperConstrCall)
-            .target.params.head.type as RoleType).role.assertThat(is(READWRITE))
+            .constr.params.head.type as RoleType).role.assertThat(is(READWRITE))
         ((classC.constrs.findFirst[params.size == 1].body.stmts.head as SuperConstrCall)
-            .target.params.head.type as RoleType).role.assertThat(is(READONLY))
+            .constr.params.head.type as RoleType).role.assertThat(is(READONLY))
     }
     
     @Test def testWSuperConstrCallAmbiguous() {
