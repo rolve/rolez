@@ -13,14 +13,15 @@ import ch.trick17.rolez.lang.rolez.OpLogical
 import ch.trick17.rolez.lang.rolez.RolezFactory
 import ch.trick17.rolez.lang.rolez.SuperConstrCall
 import javax.inject.Inject
+import org.eclipse.emf.ecore.EObject
+import org.eclipse.xtext.EcoreUtil2
 import org.eclipse.xtext.linking.lazy.SyntheticLinkingSupport
+import org.eclipse.xtext.nodemodel.INode
 
 import static ch.trick17.rolez.lang.rolez.OpArithmetic.*
 import static ch.trick17.rolez.lang.rolez.OpAssignment.*
 import static ch.trick17.rolez.lang.rolez.OpLogical.*
 import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
-
-import static extension org.eclipse.emf.ecore.util.EcoreUtil.*
 
 class RolezDesugarer extends AbstractDeclarativeDesugarer {
 
@@ -118,5 +119,15 @@ class RolezDesugarer extends AbstractDeclarativeDesugarer {
                 right = orig.right
             ]
         ]
+    }
+    
+    /**
+     * Copies the object and links the copy to the node model of the original,
+     * to enable reference resolution.
+     */
+    private def <T extends EObject> copy(T orig) {
+        val copy = EcoreUtil2.copy(orig)
+        copy.eAdapters += orig.eAdapters.filter[it instanceof INode]
+        copy
     }
 }
