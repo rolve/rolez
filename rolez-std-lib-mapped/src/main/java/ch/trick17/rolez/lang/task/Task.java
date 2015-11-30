@@ -12,6 +12,11 @@ public class Task<V> extends FutureTask<V> {
      * things we do not need. */
     
     private final TaskSystem taskSystem;
+    
+    /**
+     * The list of child tasks. Before a task finishes, it waits for all its
+     * children to finish.
+     */
     private final Set<Task<?>> childTasks = new HashSet<>();
     
     Task(final Callable<V> callable, final TaskSystem system) {
@@ -65,9 +70,9 @@ public class Task<V> extends FutureTask<V> {
         } catch(final ExecutionException e) {
             final Throwable cause = e.getCause();
             if(cause instanceof RuntimeException)
-                throw (RuntimeException) cause;
+                throw(RuntimeException) cause;
             else if(cause instanceof Error)
-                throw (Error) cause;
+                throw(Error) cause;
             else
                 throw new AssertionError("Checked exception in task", cause);
         }

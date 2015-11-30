@@ -7,6 +7,11 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 
 public abstract class TaskSystem implements Serializable {
     
+    /**
+     * Keeps track of the tasks that are executed within a thread. Whenever a
+     * new task is started, it is added as a child to current, i.e., the top
+     * task on the stack.
+     */
     final transient ThreadLocal<Deque<Task<?>>> localStack = new ThreadLocal<Deque<Task<?>>>() {
         @Override
         protected Deque<Task<?>> initialValue() {
