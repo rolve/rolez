@@ -31,7 +31,7 @@ public class GuardingTest extends JpfParallelismTest {
     // method:
     void verify(final int[][] seqGroups, final Runnable test) {
         if(verify(mode, seqGroups)) {
-            s.runDirectly(test);
+            s.run(test);
         }
     }
     

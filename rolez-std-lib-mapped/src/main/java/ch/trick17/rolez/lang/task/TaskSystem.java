@@ -14,31 +14,31 @@ public abstract class TaskSystem implements Serializable {
         }
     };
     
-    public Task<Void> run(final Runnable runnable) {
-        return run(new Task<Void>(runnable, this));
+    public Task<Void> start(final Runnable runnable) {
+        return start(new Task<Void>(runnable, this));
     }
     
-    public <V> Task<V> run(final Callable<V> callable) {
-        return run(new Task<>(callable, this));
+    public <V> Task<V> start(final Callable<V> callable) {
+        return start(new Task<>(callable, this));
     }
     
-    public void runDirectly(final Runnable runnable) {
+    public void run(final Runnable runnable) {
         new Task<>(runnable, this).run();
     }
     
-    public <V> void runDirectly(final Callable<V> callable) {
+    public <V> void run(final Callable<V> callable) {
         new Task<>(callable, this).run();
     }
     
-    private <V> Task<V> run(final Task<V> task) {
+    private <V> Task<V> start(final Task<V> task) {
         final Task<?> current = localStack.get().peek();
         if(current != null)
             current.addChild(task);
-        start(task);
+        doStart(task);
         return task;
     }
     
-    abstract void start(final Task<?> task);
+    abstract void doStart(final Task<?> task);
     
     @Override
     public String toString() {

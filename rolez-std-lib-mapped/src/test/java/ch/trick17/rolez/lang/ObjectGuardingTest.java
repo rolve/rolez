@@ -43,7 +43,7 @@ public class ObjectGuardingTest extends GuardingTest {
                 final Int i = new Int();
                 
                 i.share();
-                s.run(new Runnable() {
+                s.start(new Runnable() {
                     public void run() {
                         region(0);
                         assertEquals(0, i.value);
@@ -68,7 +68,7 @@ public class ObjectGuardingTest extends GuardingTest {
             final Int i = new Int();
             
             i.share();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     assertEquals(0, i.value);
                     i.releaseShared();
@@ -88,7 +88,7 @@ public class ObjectGuardingTest extends GuardingTest {
             final Int i = new Int();
             
             i.share();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     assertEquals(0, i.value);
                     // A missing release causes a deadlock
@@ -108,7 +108,7 @@ public class ObjectGuardingTest extends GuardingTest {
             final Int i = new Int();
             
             i.share();
-            final Task<?> task1 = s.run(new Runnable() {
+            final Task<?> task1 = s.start(new Runnable() {
                 public void run() {
                     region(0);
                     assertEquals(0, i.value);
@@ -118,7 +118,7 @@ public class ObjectGuardingTest extends GuardingTest {
             });
             
             i.share();
-            final Task<?> task2 = s.run(new Runnable() {
+            final Task<?> task2 = s.start(new Runnable() {
                 public void run() {
                     region(2);
                     assertEquals(0, i.value);
@@ -148,7 +148,7 @@ public class ObjectGuardingTest extends GuardingTest {
                 final int theI = k;
                 
                 i.share();
-                tasks[k] = s.run(new Runnable() {
+                tasks[k] = s.start(new Runnable() {
                     public void run() {
                         assertEquals(0, i.value);
                         
@@ -172,7 +172,7 @@ public class ObjectGuardingTest extends GuardingTest {
             final Int i = new Int();
             
             i.pass();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     i.registerNewOwner();
                     region(0);
@@ -199,7 +199,7 @@ public class ObjectGuardingTest extends GuardingTest {
             final Int i = new Int();
             
             i.pass();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     i.registerNewOwner();
                     i.value = 1;
@@ -221,7 +221,7 @@ public class ObjectGuardingTest extends GuardingTest {
             final Int i = new Int();
             
             i.pass();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     i.registerNewOwner();
                     i.value = 1;
@@ -244,7 +244,7 @@ public class ObjectGuardingTest extends GuardingTest {
             final Int i = new Int();
             
             i.pass();
-            final Task<?> task1 = s.run(new Runnable() {
+            final Task<?> task1 = s.start(new Runnable() {
                 public void run() {
                     i.registerNewOwner();
                     region(0);
@@ -255,7 +255,7 @@ public class ObjectGuardingTest extends GuardingTest {
             });
             
             i.pass();
-            final Task<?> task2 = s.run(new Runnable() {
+            final Task<?> task2 = s.start(new Runnable() {
                 public void run() {
                     i.registerNewOwner();
                     region(2);
@@ -287,7 +287,7 @@ public class ObjectGuardingTest extends GuardingTest {
             for(int k = 0; k < taskCount; k++) {
                 final int theK = k;
                 i.pass();
-                tasks[k] = s.run(new Runnable() {
+                tasks[k] = s.start(new Runnable() {
                     public void run() {
                         i.registerNewOwner();
                         i.value++;
@@ -313,13 +313,13 @@ public class ObjectGuardingTest extends GuardingTest {
             final Int i = new Int();
             
             i.pass();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     i.registerNewOwner();
                     i.value++;
                     
                     i.pass();
-                    final Task<Void> task2 = s.run(new Runnable() {
+                    final Task<Void> task2 = s.start(new Runnable() {
                         public void run() {
                             i.registerNewOwner();
                             i.value++;
@@ -357,13 +357,13 @@ public class ObjectGuardingTest extends GuardingTest {
             final Int i = new Int();
             
             i.pass();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     i.registerNewOwner();
                     i.value++;
                     
                     i.pass();
-                    final Task<Void> task2 = s.run(new Runnable() {
+                    final Task<Void> task2 = s.start(new Runnable() {
                         public void run() {
                             i.registerNewOwner();
                             i.value++;
@@ -388,7 +388,7 @@ public class ObjectGuardingTest extends GuardingTest {
             final Int i = new Int();
             
             i.pass();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     i.registerNewOwner();
                     i.value++;
@@ -398,7 +398,7 @@ public class ObjectGuardingTest extends GuardingTest {
             });
             
             i.share();
-            final Task<Void> task2 = s.run(new Runnable() {
+            final Task<Void> task2 = s.start(new Runnable() {
                 public void run() {
                     assertEquals(1, i.value);
                     region(1);
@@ -421,7 +421,7 @@ public class ObjectGuardingTest extends GuardingTest {
             final Ref<Int> r = new Ref<>(i);
             
             r.share();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     assertEquals(0, r.o.value);
                     region(0);
@@ -449,7 +449,7 @@ public class ObjectGuardingTest extends GuardingTest {
             for(int k = 0; k < 2; k++) {
                 final int theK = k;
                 r.share();
-                tasks[k] = s.run(new Runnable() {
+                tasks[k] = s.start(new Runnable() {
                     public void run() {
                         assertEquals(0, r.o.value);
                         r.releaseShared();
@@ -474,7 +474,7 @@ public class ObjectGuardingTest extends GuardingTest {
             final Ref<Int> r = new Ref<>(i);
             
             r.pass();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     r.registerNewOwner();
                     r.o.value++;
@@ -503,7 +503,7 @@ public class ObjectGuardingTest extends GuardingTest {
             final Task<?>[] tasks = new Task<?>[2];
             for(int k = 0; k < 2; k++) {
                 r.pass();
-                tasks[k] = s.run(new Runnable() {
+                tasks[k] = s.start(new Runnable() {
                     public void run() {
                         r.registerNewOwner();
                         r.o.value++;
@@ -527,14 +527,14 @@ public class ObjectGuardingTest extends GuardingTest {
             final Ref<Int> r = new Ref<>(i);
             
             r.pass();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     r.registerNewOwner();
                     final Int i2 = r.o;
                     i2.value++;
                     
                     r.pass();
-                    final Task<Void> task2 = s.run(new Runnable() {
+                    final Task<Void> task2 = s.start(new Runnable() {
                         public void run() {
                             r.registerNewOwner();
                             r.o.value++;
@@ -564,7 +564,7 @@ public class ObjectGuardingTest extends GuardingTest {
             final Ref<Int> r = new Ref<>(i);
             
             r.pass();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     r.registerNewOwner();
                     r.o.value++;
@@ -574,7 +574,7 @@ public class ObjectGuardingTest extends GuardingTest {
             });
             
             r.share();
-            final Task<Void> task2 = s.run(new Runnable() {
+            final Task<Void> task2 = s.start(new Runnable() {
                 public void run() {
                     assertEquals(1, r.o.value);
                     region(1);
@@ -597,7 +597,7 @@ public class ObjectGuardingTest extends GuardingTest {
             final Ref<Int> r = new Ref<>(i);
             
             i.share();
-            final Task<Void> task1 = s.run(new Runnable() {
+            final Task<Void> task1 = s.start(new Runnable() {
                 public void run() {
                     assertEquals(0, i.value);
                     region(0);
@@ -606,7 +606,7 @@ public class ObjectGuardingTest extends GuardingTest {
             });
             
             r.share();
-            final Task<Void> task2 = s.run(new Runnable() {
+            final Task<Void> task2 = s.start(new Runnable() {
                 public void run() {
                     assertEquals(0, r.o.value);
                     region(1);
@@ -615,7 +615,7 @@ public class ObjectGuardingTest extends GuardingTest {
             });
             
             i.share();
-            final Task<Void> task3 = s.run(new Runnable() {
+            final Task<Void> task3 = s.start(new Runnable() {
                 public void run() {
                     assertEquals(0, i.value);
                     region(2);
@@ -642,7 +642,7 @@ public class ObjectGuardingTest extends GuardingTest {
             final Ref<Int> r = new Ref<>(i);
             
             i.pass();
-            final Task<Void> task1 = s.run(new Runnable() {
+            final Task<Void> task1 = s.start(new Runnable() {
                 public void run() {
                     i.registerNewOwner();
                     region(0);
@@ -652,7 +652,7 @@ public class ObjectGuardingTest extends GuardingTest {
             });
             
             r.pass();
-            final Task<Void> task2 = s.run(new Runnable() {
+            final Task<Void> task2 = s.start(new Runnable() {
                 public void run() {
                     r.registerNewOwner();
                     region(1);
@@ -662,7 +662,7 @@ public class ObjectGuardingTest extends GuardingTest {
             });
             
             i.pass();
-            final Task<Void> task3 = s.run(new Runnable() {
+            final Task<Void> task3 = s.start(new Runnable() {
                 public void run() {
                     i.registerNewOwner();
                     region(2);
@@ -689,14 +689,14 @@ public class ObjectGuardingTest extends GuardingTest {
             final Ref<Int> r = new Ref<>(i);
             
             r.pass();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     r.registerNewOwner();
                     final Int i2 = r.o;
                     i2.value++;
                     
                     i2.pass();
-                    final Task<Void> task2 = s.run(new Runnable() {
+                    final Task<Void> task2 = s.start(new Runnable() {
                         public void run() {
                             i2.registerNewOwner();
                             region(0);
@@ -728,7 +728,7 @@ public class ObjectGuardingTest extends GuardingTest {
             final Ref<Int> r = new Ref<>(i);
             
             r.pass();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     r.registerNewOwner();
                     r.o.value++;
@@ -739,7 +739,7 @@ public class ObjectGuardingTest extends GuardingTest {
             });
             
             i.share();
-            final Task<Void> task2 = s.run(new Runnable() {
+            final Task<Void> task2 = s.start(new Runnable() {
                 public void run() {
                     region(2);
                     assertEquals(1, i.value);
@@ -763,7 +763,7 @@ public class ObjectGuardingTest extends GuardingTest {
             final Ref<Int> r = new Ref<>(i);
             
             r.share();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     assertEquals(0, i.value);
                     r.releaseShared();
@@ -785,7 +785,7 @@ public class ObjectGuardingTest extends GuardingTest {
             final Ref<Int> r = new Ref<>(i);
             
             r.pass();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     r.registerNewOwner();
                     r.o = new Int();
@@ -812,7 +812,7 @@ public class ObjectGuardingTest extends GuardingTest {
             final Ref<Int> r = new Ref<>(i);
             
             r.pass();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     r.registerNewOwner();
                     r.o = new Int();
@@ -820,7 +820,7 @@ public class ObjectGuardingTest extends GuardingTest {
                     final Int i2 = r.o;
                     i2.value++;
                     i2.pass();
-                    final Task<Void> task2 = s.run(new Runnable() {
+                    final Task<Void> task2 = s.start(new Runnable() {
                         public void run() {
                             i2.registerNewOwner();
                             i2.value++;
@@ -849,7 +849,7 @@ public class ObjectGuardingTest extends GuardingTest {
             n1.next = n2;
             
             n1.share();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     assertEquals(0, n1.next.data);
                     n1.releaseShared();

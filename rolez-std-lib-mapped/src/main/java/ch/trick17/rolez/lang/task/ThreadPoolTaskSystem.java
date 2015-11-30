@@ -26,7 +26,7 @@ public final class ThreadPoolTaskSystem extends TaskSystem {
     }
     
     @Override
-    protected void start(final Task<?> task) {
+    protected void doStart(final Task<?> task) {
         /* Try to find an idle worker */
         boolean success = false;
         for(final Worker worker : idleWorkers) {

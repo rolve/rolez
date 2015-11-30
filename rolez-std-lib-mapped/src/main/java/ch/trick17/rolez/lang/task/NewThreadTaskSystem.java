@@ -8,7 +8,7 @@ package ch.trick17.rolez.lang.task;
 public final class NewThreadTaskSystem extends TaskSystem {
     
     @Override
-    protected void start(final Task<?> task) {
+    protected void doStart(final Task<?> task) {
         new Thread(task).start();
     }
 }

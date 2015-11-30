@@ -50,7 +50,7 @@ public class ArrayGuardingTest extends GuardingTest {
                 a.data[i] = new Int(i);
             
             a.share();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     assertEquals(2, a.data[2].value);
                     a.releaseShared();
@@ -75,7 +75,7 @@ public class ArrayGuardingTest extends GuardingTest {
                 a.data[i] = new Int(i);
             
             a.share();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     assertEquals(2, a.data[2].value);
                     a.releaseShared();
@@ -97,7 +97,7 @@ public class ArrayGuardingTest extends GuardingTest {
             final IntArray a = new IntArray(new int[]{0});
             
             a.share();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     assertEquals(0, a.data[0]);
                     a.releaseShared();
@@ -119,7 +119,7 @@ public class ArrayGuardingTest extends GuardingTest {
                 a.data[i] = new Int(i);
             
             a.pass();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     a.registerNewOwner();
                     for(int i = 0; i < a.data.length; i++)
@@ -145,7 +145,7 @@ public class ArrayGuardingTest extends GuardingTest {
             final IntArray a = new IntArray(0, 1, 2);
             
             a.pass();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     a.registerNewOwner();
                     for(int i = 0; i < a.data.length; i++)
@@ -169,7 +169,7 @@ public class ArrayGuardingTest extends GuardingTest {
             final Array<Int> a = new Array<>(i);
             
             i.share();
-            final Task<Void> task1 = s.run(new Runnable() {
+            final Task<Void> task1 = s.start(new Runnable() {
                 public void run() {
                     assertEquals(0, i.value);
                     i.releaseShared();
@@ -177,7 +177,7 @@ public class ArrayGuardingTest extends GuardingTest {
             });
             
             a.share();
-            final Task<Void> task2 = s.run(new Runnable() {
+            final Task<Void> task2 = s.start(new Runnable() {
                 public void run() {
                     assertEquals(0, a.data[0].value);
                     a.releaseShared();
@@ -185,7 +185,7 @@ public class ArrayGuardingTest extends GuardingTest {
             });
             
             i.share();
-            final Task<Void> task3 = s.run(new Runnable() {
+            final Task<Void> task3 = s.start(new Runnable() {
                 public void run() {
                     assertEquals(0, i.value);
                     i.releaseShared();
@@ -209,7 +209,7 @@ public class ArrayGuardingTest extends GuardingTest {
             final Array<Int> a = new Array<>(i);
             
             i.pass();
-            final Task<Void> task1 = s.run(new Runnable() {
+            final Task<Void> task1 = s.start(new Runnable() {
                 public void run() {
                     i.registerNewOwner();
                     i.value++;
@@ -218,7 +218,7 @@ public class ArrayGuardingTest extends GuardingTest {
             });
             
             a.pass();
-            final Task<Void> task2 = s.run(new Runnable() {
+            final Task<Void> task2 = s.start(new Runnable() {
                 public void run() {
                     a.registerNewOwner();
                     a.data[0].value++;
@@ -227,7 +227,7 @@ public class ArrayGuardingTest extends GuardingTest {
             });
             
             i.pass();
-            final Task<Void> task3 = s.run(new Runnable() {
+            final Task<Void> task3 = s.start(new Runnable() {
                 public void run() {
                     i.registerNewOwner();
                     i.value++;
@@ -251,7 +251,7 @@ public class ArrayGuardingTest extends GuardingTest {
             final Array<Int> a = new Array<>(i);
             
             a.pass();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     a.registerNewOwner();
                     a.data[0] = new Int();
@@ -259,7 +259,7 @@ public class ArrayGuardingTest extends GuardingTest {
                     final Int i2 = a.data[0];
                     i2.value++;
                     i2.pass();
-                    final Task<Void> task2 = s.run(new Runnable() {
+                    final Task<Void> task2 = s.start(new Runnable() {
                         public void run() {
                             i2.registerNewOwner();
                             i2.value++;
@@ -293,7 +293,7 @@ public class ArrayGuardingTest extends GuardingTest {
             
             final Slice<Int> slice = a.slice(0, 2, 1);
             slice.share();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     assertEquals(1, slice.data[1].value);
                     slice.releaseShared();
@@ -318,7 +318,7 @@ public class ArrayGuardingTest extends GuardingTest {
             
             final Slice<Int> slice = a.slice(0, 2, 1);
             slice.share();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     assertEquals(1, slice.data[1].value);
                     slice.releaseShared();
@@ -341,7 +341,7 @@ public class ArrayGuardingTest extends GuardingTest {
                 a.data[i] = new Int(i);
             
             a.share();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     final Slice<Int> slice = a.slice(0, 2, 1);
                     a.releaseShared();
@@ -364,7 +364,7 @@ public class ArrayGuardingTest extends GuardingTest {
                 a.data[i] = new Int(i);
             
             a.share();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     assertEquals(1, a.data[1].value);
                     a.releaseShared();
@@ -392,7 +392,7 @@ public class ArrayGuardingTest extends GuardingTest {
             final Slice<Int> slice1 = a.slice(0, 3, 1);
             final Slice<Int> slice2 = a.slice(1, 4, 1);
             slice1.share();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     assertEquals(1, slice1.data[1].value);
                     slice1.releaseShared();
@@ -419,7 +419,7 @@ public class ArrayGuardingTest extends GuardingTest {
             
             final FinalSlice<Int> slice = a.slice(0, 2, 1);
             slice.share();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     assertEquals(1, slice.data[1].value);
                     slice.releaseShared();
@@ -442,7 +442,7 @@ public class ArrayGuardingTest extends GuardingTest {
             
             final IntSlice slice = a.slice(0, 1, 1);
             slice.share();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     assertEquals(0, slice.data[0]);
                     slice.releaseShared();
@@ -464,7 +464,7 @@ public class ArrayGuardingTest extends GuardingTest {
             final IntSlice slice = a.slice(0, 2, 1);
             final Ref<IntSlice> ref = new Ref<>(slice);
             ref.share();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     final IntSlice slice2 = ref.o.slice(1, 2, 1);
                     assertEquals(1, slice2.data[1]);
@@ -489,7 +489,7 @@ public class ArrayGuardingTest extends GuardingTest {
             final IntSlice slice1 = a.slice(0, 2, 1);
             final IntSlice slice2 = a.slice(1, 3, 1);
             slice1.share();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     assertEquals(1, slice1.data[1]);
                     slice1.releaseShared();
@@ -517,7 +517,7 @@ public class ArrayGuardingTest extends GuardingTest {
             System.gc();
             
             subslice.share();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     assertEquals(0, subslice.data[0].value);
                     subslice.releaseShared();
@@ -541,7 +541,7 @@ public class ArrayGuardingTest extends GuardingTest {
             
             final Slice<Int> slice = a.slice(0, 5, 1);
             slice.pass();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     slice.registerNewOwner();
                     for(int i = slice.range.begin; i < slice.range.end; i++)
@@ -573,7 +573,7 @@ public class ArrayGuardingTest extends GuardingTest {
             
             final FinalSlice<Int> slice = a.slice(0, a.range.size() / 2, 1);
             slice.pass();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     slice.registerNewOwner();
                     for(int i = slice.range.begin; i < slice.range.end; i++)
@@ -604,7 +604,7 @@ public class ArrayGuardingTest extends GuardingTest {
             
             final IntSlice slice = a.slice(0, 5, 1);
             slice.pass();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     slice.registerNewOwner();
                     for(int i = slice.range.begin; i < slice.range.end; i++)
@@ -631,7 +631,7 @@ public class ArrayGuardingTest extends GuardingTest {
             final IntSlice slice = a.slice(0, 5, 1);
             final Ref<IntSlice> ref = new Ref<>(slice);
             ref.pass();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     ref.registerNewOwner();
                     final IntSlice slice2 = ref.o.slice(0, 5, 1);
@@ -660,7 +660,7 @@ public class ArrayGuardingTest extends GuardingTest {
             final Slice<Int> slice = a.slice(0, 1, 1);
             
             slice.share();
-            final Task<Void> task1 = s.run(new Runnable() {
+            final Task<Void> task1 = s.start(new Runnable() {
                 public void run() {
                     assertEquals(0, slice.data[0].value);
                     slice.releaseShared();
@@ -668,7 +668,7 @@ public class ArrayGuardingTest extends GuardingTest {
             });
             
             a.share();
-            final Task<Void> task2 = s.run(new Runnable() {
+            final Task<Void> task2 = s.start(new Runnable() {
                 public void run() {
                     assertEquals(0, a.data[0].value);
                     a.releaseShared();
@@ -676,7 +676,7 @@ public class ArrayGuardingTest extends GuardingTest {
             });
             
             slice.share();
-            final Task<Void> task3 = s.run(new Runnable() {
+            final Task<Void> task3 = s.start(new Runnable() {
                 public void run() {
                     assertEquals(0, slice.data[0].value);
                     slice.releaseShared();
@@ -701,7 +701,7 @@ public class ArrayGuardingTest extends GuardingTest {
             final Slice<Int> slice = a.slice(0, 1, 1);
             
             slice.pass();
-            final Task<Void> task1 = s.run(new Runnable() {
+            final Task<Void> task1 = s.start(new Runnable() {
                 public void run() {
                     slice.registerNewOwner();
                     slice.data[0].value++;
@@ -710,7 +710,7 @@ public class ArrayGuardingTest extends GuardingTest {
             });
             
             a.pass();
-            final Task<Void> task2 = s.run(new Runnable() {
+            final Task<Void> task2 = s.start(new Runnable() {
                 public void run() {
                     a.registerNewOwner();
                     a.data[0].value++;
@@ -719,7 +719,7 @@ public class ArrayGuardingTest extends GuardingTest {
             });
             
             slice.pass();
-            final Task<Void> task3 = s.run(new Runnable() {
+            final Task<Void> task3 = s.start(new Runnable() {
                 public void run() {
                     slice.registerNewOwner();
                     slice.data[0].value++;
@@ -747,7 +747,7 @@ public class ArrayGuardingTest extends GuardingTest {
                     a.slice(slice1.range.end, a.data.length, 1);
             
             slice1.pass();
-            final Task<Void> task1 = s.run(new Runnable() {
+            final Task<Void> task1 = s.start(new Runnable() {
                 public void run() {
                     slice1.registerNewOwner();
                     for(int i = slice1.range.begin; i < slice1.range.end; i++)
@@ -758,7 +758,7 @@ public class ArrayGuardingTest extends GuardingTest {
             });
             
             slice2.pass();
-            final Task<Void> task2 = s.run(new Runnable() {
+            final Task<Void> task2 = s.start(new Runnable() {
                 public void run() {
                     slice2.registerNewOwner();
                     for(int i = slice2.range.begin; i < slice2.range.end; i++)
@@ -790,13 +790,13 @@ public class ArrayGuardingTest extends GuardingTest {
             
             final Slice<Int> slice1 = a.slice(0, 2, 1);
             slice1.pass();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     slice1.registerNewOwner();
                     
                     final Slice<Int> slice2 = slice1.slice(0, 1, 1);
                     slice2.pass();
-                    final Task<Void> task2 = s.run(new Runnable() {
+                    final Task<Void> task2 = s.start(new Runnable() {
                         public void run() {
                             slice2.registerNewOwner();
                             slice2.data[0].value++;
@@ -835,13 +835,13 @@ public class ArrayGuardingTest extends GuardingTest {
             
             final IntSlice slice1 = a.slice(0, 2, 1);
             slice1.pass();
-            final Task<Void> task = s.run(new Runnable() {
+            final Task<Void> task = s.start(new Runnable() {
                 public void run() {
                     slice1.registerNewOwner();
                     
                     final IntSlice slice2 = slice1.slice(0, 1, 1);
                     slice2.pass();
-                    final Task<Void> task2 = s.run(new Runnable() {
+                    final Task<Void> task2 = s.start(new Runnable() {
                         public void run() {
                             slice2.registerNewOwner();
                             slice2.data[0]++;
