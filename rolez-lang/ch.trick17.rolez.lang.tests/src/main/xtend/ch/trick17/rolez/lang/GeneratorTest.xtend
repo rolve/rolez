@@ -213,14 +213,60 @@ class GeneratorTest {
             }
         ''')
         parse('''
-            task Main: {
-                new Base;
+            task Main(i: int, j: int): {
+                new (foo.bar.Base)(i + j);
             }
         ''', classes).generate.assertEqualsJava('''
             public final class Main implements java.util.concurrent.Callable<java.lang.Void> {
                 
+                private final int i;
+                private final int j;
+                
+                public Main(final int i, final int j) {
+                    this.i = i;
+                    this.j = j;
+                }
+                
                 public java.lang.Void call() throws java.lang.Exception {
-                    new Base();
+                    new foo.bar.Base(i + j);
+                    return null;
+                }
+            }
+        ''')
+        
+        parse('''
+            main task Main: {}
+        ''', classes).generate.assertEqualsJava('''
+            public final class Main implements java.util.concurrent.Callable<java.lang.Void> {
+                
+                public static void main(final String[] args) throws java.lang.Exception {
+                    new Main().call();
+                }
+                
+                public java.lang.Void call() throws java.lang.Exception {
+                    return null;
+                }
+            }
+        ''')
+        parse('''
+            main task Main(args: readonly Array[pure String]): {
+                args.get(0).length;
+            }
+        ''', classes).generate.assertEqualsJava('''
+            public final class Main implements java.util.concurrent.Callable<java.lang.Void> {
+                
+                public static void main(final String[] args) throws java.lang.Exception {
+                    new Main(args).call();
+                }
+                
+                private final java.lang.String[] args;
+                
+                public Main(final java.lang.String[] args) {
+                    this.args = args;
+                }
+                
+                public java.lang.Void call() throws java.lang.Exception {
+                    args[0].length();
                     return null;
                 }
             }

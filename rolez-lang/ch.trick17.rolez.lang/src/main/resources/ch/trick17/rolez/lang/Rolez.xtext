@@ -40,7 +40,7 @@ SingletonClass:
     '}')?;
 
 Task:
-    'task' name=QualifiedName ('(' params+=Param (',' params+=Param)* ')')?
+    main?='main'? 'task' name=QualifiedName ('(' params+=Param (',' params+=Param)* ')')?
     ':' type=Type body=Block;
 
 TypeParam: name=ID;

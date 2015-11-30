@@ -73,10 +73,9 @@ class Address {
 	}
 }
 
-task Main: {
-	var o: pure Object = "Hello";
-	var a: readonly Address = new Address;
-	a.city;
+main task Main(args: readonly Array[pure String]): {
+	for(var i: int = 0; i < args.length; i += 1)
+		the System.out.println("Hello " + args.get(i) + "!");
 }
 
 object Test {

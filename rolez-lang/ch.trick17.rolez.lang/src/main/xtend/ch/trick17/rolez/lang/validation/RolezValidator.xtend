@@ -31,7 +31,9 @@ import ch.trick17.rolez.lang.rolez.ReturnExpr
 import ch.trick17.rolez.lang.rolez.RoleType
 import ch.trick17.rolez.lang.rolez.SimpleClassRef
 import ch.trick17.rolez.lang.rolez.SuperConstrCall
+import ch.trick17.rolez.lang.rolez.Task
 import ch.trick17.rolez.lang.rolez.This
+import ch.trick17.rolez.lang.rolez.Type
 import ch.trick17.rolez.lang.rolez.TypeParamRef
 import ch.trick17.rolez.lang.rolez.TypedBody
 import ch.trick17.rolez.lang.rolez.VarRef
@@ -55,6 +57,8 @@ class RolezValidator extends RolezSystemValidator {
 
     public static val INVALID_NAME = "invalid name"
     public static val DUPLICATE_TOP_LEVEL_ELEMENT = "duplicate top-level element"
+    public static val CIRCULAR_INHERITANCE = "circular inheritance"
+    public static val INCORRECT_MAIN_TASK = "incorrect main task"
     public static val INCORRECT_TYPE_PARAM = "incorrect type variable"
     public static val MISSING_TYPE_PARAM = "missing type parameter"
     public static val DUPLICATE_FIELD = "duplicate field"
@@ -70,7 +74,6 @@ class RolezValidator extends RolezSystemValidator {
     public static val AMBIGUOUS_CALL = "ambiguous call"
     public static val MISSING_TYPE_ARG = "missing type argument"
     public static val INCORRECT_TYPE_ARG = "incorrect type argument"
-    public static val CIRCULAR_INHERITANCE = "circular inheritance"
     public static val VAL_FIELD_NOT_INITIALIZED = "val field not initialized"
     public static val VAL_FIELD_OVERINITIALIZED = "val field overinitialized"
     public static val THIS_IN_FIELD_INIT = "'this' in field initializer"
@@ -130,6 +133,32 @@ class RolezValidator extends RolezSystemValidator {
     def checkCircularInheritance(Class it) {
         if(findSuperclass(it))
             error("Circular inheritance", CLASS__SUPERCLASS, CIRCULAR_INHERITANCE)
+    }
+    
+    @Check
+    def checkMainTask(Task it) {
+        if(!isMain) return;
+        
+        if(!(type instanceof Void))
+            error("A main task must have a void return type", type, null, INCORRECT_MAIN_TASK)
+        if(params.size > 1)
+            error("A main task must have zero or one parameter", PARAMETERIZED_BODY__PARAMS, INCORRECT_MAIN_TASK)
+        else if(params.size == 1 && !params.head.type.isStringArray)
+            error("The parameter of a main must must be of type readonly Array[String]",
+                params.head.type, null, INCORRECT_MAIN_TASK)
+    }
+    
+    private def isStringArray(Type it) {
+        switch(it) {
+            RoleType case role == READONLY && base.clazz.isArrayClass: {
+                val arg = (base as GenericClassRef).typeArg
+                switch(arg) {
+                    RoleType: arg.base.clazz.isStringClass
+                    default: false
+                }
+            }
+            default: false
+        }
     }
     
     @Check

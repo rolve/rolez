@@ -42,6 +42,7 @@ import ch.trick17.rolez.lang.rolez.Start
 import ch.trick17.rolez.lang.rolez.Stmt
 import ch.trick17.rolez.lang.rolez.StringLiteral
 import ch.trick17.rolez.lang.rolez.SuperConstrCall
+import ch.trick17.rolez.lang.rolez.Task
 import ch.trick17.rolez.lang.rolez.The
 import ch.trick17.rolez.lang.rolez.This
 import ch.trick17.rolez.lang.rolez.Type
@@ -54,6 +55,7 @@ import ch.trick17.rolez.lang.rolez.VarRef
 import ch.trick17.rolez.lang.rolez.Void
 import ch.trick17.rolez.lang.rolez.WhileLoop
 import ch.trick17.rolez.lang.validation.JavaMapper
+import com.google.common.primitives.Primitives
 import java.io.File
 import javax.inject.Inject
 import org.eclipse.emf.ecore.resource.Resource
@@ -63,8 +65,6 @@ import org.eclipse.xtext.generator.IGenerator
 import static ch.trick17.rolez.lang.rolez.VarKind.VAL
 
 import static extension org.eclipse.xtext.util.Strings.convertToJavaString
-import ch.trick17.rolez.lang.rolez.Task
-import com.google.common.primitives.Primitives
 
 class RolezGenerator implements IGenerator {
     
@@ -117,6 +117,28 @@ class RolezGenerator implements IGenerator {
         
         «ENDIF»
         public final class «simpleName» implements java.util.concurrent.Callable<«type.genGeneric»> {
+            «IF isMain»
+            
+            public static void main(final String[] args) throws java.lang.Exception {
+                «IF params.isEmpty»
+                new «simpleName»().call();
+                «ELSE»
+                new «simpleName»(args).call();
+                «ENDIF»
+            }
+            «ENDIF»
+            «IF !params.isEmpty»
+            
+            «FOR p : params»
+            private final «p.type.gen» «p.name»;
+            «ENDFOR»
+            
+            public «simpleName»(«params.map[gen].join(", ")») {
+                «FOR p : params»
+                this.«p.name» = «p.name»;
+                «ENDFOR»
+            }
+            «ENDIF»
             
             public «type.genGeneric» call() throws java.lang.Exception {
                 «body.stmts.map[gen].join»

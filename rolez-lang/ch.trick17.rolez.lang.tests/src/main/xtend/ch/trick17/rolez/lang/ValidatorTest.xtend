@@ -55,9 +55,41 @@ class ValidatorTest {
         ''').assertError(CLASS, CIRCULAR_INHERITANCE)
     }
     
-    @Test def checkTypeParam() {
+    @Test def testMainTask() {
         parse('''
-            class rolez.lang.Object
+            mapped class rolez.lang.Object
+            main task A: {}
+        ''').assertNoErrors
+        parse('''
+            mapped class rolez.lang.Object
+            mapped class rolez.lang.Array[T] {
+                mapped new(i: int)
+            }
+            mapped class rolez.lang.String
+            main task B(args: readonly Array[readonly String]): {}
+        ''').assertNoErrors
+        
+        parse('''
+            mapped class rolez.lang.Object
+            main task A: int { return 0; }
+        ''').assertError(INT, INCORRECT_MAIN_TASK)
+        parse('''
+            mapped class rolez.lang.Object
+            main task A(i: int): {}
+        ''').assertError(INT, INCORRECT_MAIN_TASK)
+        parse('''
+            mapped class rolez.lang.Object
+            main task A(args: readwrite Array[readonly String]): {}
+        ''').assertError(ROLE_TYPE, INCORRECT_MAIN_TASK)
+        parse('''
+            mapped class rolez.lang.Object
+            main task A(i: int, j: int): {}
+        ''').assertError(TASK, INCORRECT_MAIN_TASK)
+    }
+    
+    @Test def testTypeParam() {
+        parse('''
+            mapped class rolez.lang.Object
             class A[T]
         ''').assertError(CLASS, INCORRECT_TYPE_PARAM)
     }
