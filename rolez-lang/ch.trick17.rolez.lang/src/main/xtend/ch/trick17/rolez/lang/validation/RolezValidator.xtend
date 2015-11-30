@@ -34,7 +34,6 @@ import ch.trick17.rolez.lang.rolez.SuperConstrCall
 import ch.trick17.rolez.lang.rolez.This
 import ch.trick17.rolez.lang.rolez.TypeParamRef
 import ch.trick17.rolez.lang.rolez.TypedBody
-import ch.trick17.rolez.lang.rolez.Var
 import ch.trick17.rolez.lang.rolez.VarRef
 import ch.trick17.rolez.lang.rolez.Void
 import ch.trick17.rolez.lang.typesystem.RolezSystem
@@ -195,12 +194,17 @@ class RolezValidator extends RolezSystemValidator {
     }
     
     @Check
-    def checkNoDuplicateVars(Var it) {
-        val matching = enclosingBody.variables.filter[v | v.name.equals(name)]
-        if(matching.size < 1)
-           throw new AssertionError
-        if(matching.size > 1)
-           error("Duplicate variable " + name, NAMED__NAME, DUPLICATE_VARIABLE)
+    def checkNoDuplicateVars(LocalVar it) {
+        val vars = utils.varsAbove(enclosingStmt.eContainer, enclosingStmt)
+        if(vars.exists[v | v.name == name])
+            error("Duplicate variable " + name, NAMED__NAME, DUPLICATE_VARIABLE)
+    }
+    
+    @Check
+    def checkNoDuplicateParams(ParameterizedBody it) {
+        for(p : params)
+            if(params.exists[p !== it && p.name == name])
+                error("Duplicate parameter " + p.name, p, NAMED__NAME, DUPLICATE_VARIABLE)
     }
 	
 	/**

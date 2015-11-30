@@ -2,18 +2,13 @@ package ch.trick17.rolez.lang.scoping
 
 import ch.trick17.rolez.lang.RolezExtensions
 import ch.trick17.rolez.lang.RolezUtils
-import ch.trick17.rolez.lang.rolez.Block
 import ch.trick17.rolez.lang.rolez.Field
-import ch.trick17.rolez.lang.rolez.LocalVarDecl
 import ch.trick17.rolez.lang.rolez.MemberAccess
 import ch.trick17.rolez.lang.rolez.Method
 import ch.trick17.rolez.lang.rolez.New
 import ch.trick17.rolez.lang.rolez.NormalClass
-import ch.trick17.rolez.lang.rolez.ParameterizedBody
 import ch.trick17.rolez.lang.rolez.RoleType
-import ch.trick17.rolez.lang.rolez.Stmt
 import ch.trick17.rolez.lang.rolez.SuperConstrCall
-import ch.trick17.rolez.lang.rolez.Var
 import ch.trick17.rolez.lang.rolez.VarRef
 import ch.trick17.rolez.lang.typesystem.RolezSystem
 import ch.trick17.rolez.lang.validation.RolezValidator
@@ -94,19 +89,6 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     
     def IScope scope_VarRef_variable(VarRef varRef, EReference eRef) {
         val stmt = varRef.enclosingStmt
-        scopeFor(varsAbove(stmt.eContainer, stmt))
-    }
-    
-    private def dispatch Iterable<? extends Var> varsAbove(Stmt container, Stmt s) {
-        varsAbove(container.eContainer, container)
-    }
-    
-    private def dispatch Iterable<? extends Var> varsAbove(Block b, Stmt s) {
-        b.stmts.takeWhile[it != s].filter(LocalVarDecl).map[variable]
-            + varsAbove(b.eContainer, s)
-    }
-    
-    private def dispatch Iterable<? extends Var> varsAbove(ParameterizedBody p, Stmt s) {
-        p.params
+        scopeFor(utils.varsAbove(stmt.eContainer, stmt))
     }
 }

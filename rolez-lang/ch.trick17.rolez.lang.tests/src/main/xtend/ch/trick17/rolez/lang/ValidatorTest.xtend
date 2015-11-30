@@ -479,7 +479,23 @@ class ValidatorTest {
         ''').assertError(CONSTR, DUPLICATE_CONSTR)
     }
     
-    @Test def testDuplicateLocalVar() {
+    @Test def testDuplicateLocalVars() {
+        parse('''
+            mapped class rolez.lang.Object
+            class A {
+                def readwrite foo(i: int, b: boolean): {
+                    val j: int = 0;
+                    var a: boolean;
+                    {
+                        var k: int = 42;
+                    }
+                    {
+                        var k: int = 0;
+                    }
+                }
+            }
+        ''').assertNoErrors
+        
         parse('''
             mapped class rolez.lang.Object
             class A {
@@ -529,7 +545,8 @@ class ValidatorTest {
                     var a: boolean;
                 }
             }
-        ''').assertError(PARAM, DUPLICATE_VARIABLE)
+        ''').assertError(LOCAL_VAR, DUPLICATE_VARIABLE)
+        
         parse('''
             mapped class rolez.lang.Object
             class A {
@@ -537,7 +554,7 @@ class ValidatorTest {
                     var a: boolean;
                 }
             }
-        ''').assertError(PARAM, DUPLICATE_VARIABLE)
+        ''').assertError(LOCAL_VAR, DUPLICATE_VARIABLE)
     }
     
     @Test def testTypeArg() {
@@ -1189,10 +1206,10 @@ class ValidatorTest {
             }
             mapped class rolez.lang.String {
                 mapped new
-                mapped new(v: pure Array[char])
-                mapped new(v: pure Array[char], o: int, c: int)
-                mapped new(c: pure Array[int], o: int, c: int)
-                mapped new(s: pure String)
+                mapped new(original: pure String)
+                mapped new(value: pure Array[char])
+                mapped new(value: pure Array[char], offset: int, count: int)
+                mapped new(codePoints: pure Array[int], offset: int, count: int)
             }
             class A {
                 new(length: int) {}

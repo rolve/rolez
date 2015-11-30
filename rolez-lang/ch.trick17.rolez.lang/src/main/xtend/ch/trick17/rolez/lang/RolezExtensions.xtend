@@ -89,10 +89,6 @@ class RolezExtensions {
     def dispatch kind(LocalVar it) { kind }
     def dispatch kind(   Param it) { VarKind.VAL }
     
-    def variables(ParameterizedBody it) {
-        body.eAllContents.filter(LocalVar).toList + params
-    }
-    
     def Stmt enclosingStmt(EObject it) {
         val container = it?.eContainer
         switch(container) {

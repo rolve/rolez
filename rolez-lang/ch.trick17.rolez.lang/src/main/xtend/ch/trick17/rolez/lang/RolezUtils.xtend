@@ -2,10 +2,12 @@ package ch.trick17.rolez.lang
 
 import ch.trick17.rolez.lang.rolez.Argumented
 import ch.trick17.rolez.lang.rolez.Assignment
+import ch.trick17.rolez.lang.rolez.Block
 import ch.trick17.rolez.lang.rolez.Class
 import ch.trick17.rolez.lang.rolez.ClassRef
 import ch.trick17.rolez.lang.rolez.Constr
 import ch.trick17.rolez.lang.rolez.Expr
+import ch.trick17.rolez.lang.rolez.LocalVarDecl
 import ch.trick17.rolez.lang.rolez.MemberAccess
 import ch.trick17.rolez.lang.rolez.Method
 import ch.trick17.rolez.lang.rolez.New
@@ -14,9 +16,11 @@ import ch.trick17.rolez.lang.rolez.ParameterizedBody
 import ch.trick17.rolez.lang.rolez.Role
 import ch.trick17.rolez.lang.rolez.RolezFactory
 import ch.trick17.rolez.lang.rolez.Start
+import ch.trick17.rolez.lang.rolez.Stmt
 import ch.trick17.rolez.lang.rolez.Task
 import ch.trick17.rolez.lang.rolez.This
 import ch.trick17.rolez.lang.rolez.Type
+import ch.trick17.rolez.lang.rolez.Var
 import ch.trick17.rolez.lang.typesystem.RolezSystem
 import it.xsemantics.runtime.RuleEnvironment
 import it.xsemantics.runtime.RuleEnvironmentEntry
@@ -172,4 +176,17 @@ class RolezUtils {
     }
     
     def assignedField(Assignment it) { (left as MemberAccess).field }
+    
+    def dispatch Iterable<? extends Var> varsAbove(Stmt container, Stmt s) {
+        varsAbove(container.eContainer, container)
+    }
+    
+    def dispatch Iterable<? extends Var> varsAbove(Block container, Stmt s) {
+        container.stmts.takeWhile[it != s].filter(LocalVarDecl).map[variable]
+            + varsAbove(container.eContainer, s)
+    }
+    
+    def dispatch Iterable<? extends Var> varsAbove(ParameterizedBody container, Stmt s) {
+        container.params
+    }
 }
