@@ -83,11 +83,10 @@ class RolezGenerator implements IGenerator {
      */
     
     private def dispatch generateClass(NormalClass it) {'''
-        «if(!package.isEmpty)
-        '''
+        «IF !package.isEmpty»
         package «package»;
         
-        '''»
+        «ENDIF»
         public class «simpleName» extends «superclass.generateName» {
             « fields.map[gen].join»
             «constrs.map[gen].join»
@@ -96,11 +95,10 @@ class RolezGenerator implements IGenerator {
     '''}
     
     private def dispatch generateClass(SingletonClass it) {'''
-        «if(!package.isEmpty)
-        '''
+        «IF !package.isEmpty»
         package «package»;
         
-        '''»
+        «ENDIF»
         public final class «simpleName» extends «superclass.generateName» {
             
             public static final «simpleName» INSTANCE = new «simpleName»();
@@ -113,54 +111,39 @@ class RolezGenerator implements IGenerator {
     
     private def gen(Field it) {'''
         
-        public «kind.gen»«type.gen» «name»«
-            if(initializer != null) ''' = «initializer.gen»'''
-            else ''''''
-        »;
+        public «kind.gen»«type.gen» «name»«IF initializer != null» = «initializer.gen»«ENDIF»;
     '''}
     
-    private def gen(Method it) {
-        val exceptionTypes = body.thrownExceptionTypes
-        val genBody =
-            if(exceptionTypes.isEmpty) body.gen
-            else '''
-                {
-                    try «body.gen»
-                    catch(«exceptionTypes.map[name].join(" | ")» e) {
-                        throw new java.lang.RuntimeException("ROLEZ EXCEPTION WRAPPER", e);
-                    }
-                }
-            '''
+    private def gen(Method it) {'''
         
-        return '''
-            
-            public «type.gen» «name»(«params.map[gen].join(", ")») «genBody»
-        '''
-    }
+        public «type.gen» «name»(«params.map[gen].join(", ")») «body.genWithTryCatch»
+    '''}
     
-    private def gen(Constr it) {
-        val exceptionTypes = body.thrownExceptionTypes
-        val genBody =
-            if(exceptionTypes.isEmpty) body.gen
-            else '''
+    private def gen(Constr it) {'''
+        
+        public «enclosingClass.simpleName»(«params.map[gen].join(", ")») «body.genWithTryCatch»
+    '''}
+    
+    private def genWithTryCatch(Block it) {
+        val exceptionTypes = thrownExceptionTypes
+        val isConstr = !stmts.isEmpty && stmts.head instanceof SuperConstrCall
+        if(exceptionTypes.isEmpty) gen
+        else '''
             {
-                «body.stmts.head.gen»
+                «IF isConstr»
+                «stmts.head.gen»
+                «ENDIF»
                 try {
-                    «body.stmts.drop(1).map[gen].join»
+                    «stmts.drop(if(isConstr) 1 else 0).map[gen].join»
                 }
                 catch(«exceptionTypes.map[name].join(" | ")» e) {
                     throw new java.lang.RuntimeException("ROLEZ EXCEPTION WRAPPER", e);
                 }
             }
-            '''
-        
-        return '''
-            
-            public «enclosingClass.simpleName»(«params.map[gen].join(", ")») «genBody»
         '''
     }
     
-    private def thrownExceptionTypes(Block it) {
+    private def thrownExceptionTypes(Stmt it) {
         val all = eAllContents.toIterable.map[switch(it) {
             MemberAccess case isMethodInvoke: method.checkedExceptionTypes
             New: constr.checkedExceptionTypes
@@ -180,14 +163,7 @@ class RolezGenerator implements IGenerator {
     private def genObjectMethod(Method it) { if(!isMapped) gen else '''
         
         public «type.gen» «name»(«params.map[gen].join(", ")») {
-            «
-            if(type instanceof Void) '''
-            «generateStaticCall»;
-            '''
-            else '''
-            return «generateStaticCall»;
-            '''
-            »
+            «if(!(type instanceof Void)) "return "»«generateStaticCall»;
         }
     '''}
     
@@ -197,7 +173,7 @@ class RolezGenerator implements IGenerator {
     
     private def gen(Param it) {'''«kind.gen»«type.gen» «name»'''}
     
-    private def gen(VarKind it) { if(it == VAL) "final " else "" }
+    private def gen(VarKind it) { if(it == VAL) "final " }
     
     /*
      * Statements
@@ -214,13 +190,9 @@ class RolezGenerator implements IGenerator {
         }
     '''}
     
-    private def dispatch generateStmt(LocalVarDecl it) {
-        if(initializer == null) '''
-            «variable.kind.gen»«variable.type.gen» «variable.name»;
-        ''' else '''
-            «variable.kind.gen»«variable.type.gen» «variable.name» = «initializer.gen»;
-        '''
-    }
+    private def dispatch generateStmt(LocalVarDecl it) {'''
+        «variable.kind.gen»«variable.type.gen» «variable.name»«IF initializer != null» = «initializer.gen»«ENDIF»;
+    '''}
     
     private def dispatch generateStmt(IfStmt it) {'''
         if(«condition.gen»)«thenPart.genIndent»
