@@ -84,7 +84,7 @@ class RolezGenerator implements IGenerator {
      * Class and members
      */
     
-    private def dispatch generateElement(NormalClass it) {'''
+    private def dispatch generateElement(NormalClass it) '''
         «IF !package.isEmpty»
         package «package»;
         
@@ -94,9 +94,9 @@ class RolezGenerator implements IGenerator {
             «constrs.map[gen].join»
             «methods.map[gen].join»
         }
-    '''}
+    '''
     
-    private def dispatch generateElement(SingletonClass it) {'''
+    private def dispatch generateElement(SingletonClass it) '''
         «IF !package.isEmpty»
         package «package»;
         
@@ -109,9 +109,9 @@ class RolezGenerator implements IGenerator {
             « fields.map[genObjectField ].join»
             «methods.map[genObjectMethod].join»
         }
-    '''}
+    '''
     
-    private def dispatch generateElement(Task it) {'''
+    private def dispatch generateElement(Task it) '''
         «IF !package.isEmpty»
         package «package»;
         
@@ -147,22 +147,22 @@ class RolezGenerator implements IGenerator {
                 «ENDIF»
             }
         }
-    '''}
+    '''
     
-    private def gen(Field it) {'''
+    private def gen(Field it) '''
         
         public «kind.gen»«type.gen» «name»«IF initializer != null» = «initializer.gen»«ENDIF»;
-    '''}
+    '''
     
-    private def gen(Method it) {'''
+    private def gen(Method it) '''
         
         public «type.gen» «name»(«params.map[gen].join(", ")») «body.genWithTryCatch»
-    '''}
+    '''
     
-    private def gen(Constr it) {'''
+    private def gen(Constr it) '''
         
         public «enclosingClass.simpleName»(«params.map[gen].join(", ")») «body.genWithTryCatch»
-    '''}
+    '''
     
     private def genWithTryCatch(Block it) {
         val exceptionTypes = thrownExceptionTypes
@@ -207,11 +207,10 @@ class RolezGenerator implements IGenerator {
         }
     '''}
     
-    private def generateStaticCall(Method it) {
+    private def generateStaticCall(Method it)
         '''«enclosingClass.javaClassName».«name»(«params.map[name].join(", ")»)'''
-    }
     
-    private def gen(Param it) {'''«kind.gen»«type.gen» «name»'''}
+    private def gen(Param it) '''«kind.gen»«type.gen» «name»'''
     
     private def gen(VarKind it) { if(it == VAL) "final " }
     
@@ -224,42 +223,42 @@ class RolezGenerator implements IGenerator {
     private def dispatch CharSequence genIndent(Block it) { " " + gen }
     private def dispatch CharSequence genIndent(Stmt it)  { "\n    " + gen }
     
-    private def dispatch generateStmt(Block it) {'''
+    private def dispatch generateStmt(Block it)'''
         {
             «stmts.map[gen].join»
         }
-    '''}
+    '''
     
-    private def dispatch generateStmt(LocalVarDecl it) {'''
+    private def dispatch generateStmt(LocalVarDecl it) '''
         «variable.kind.gen»«variable.type.gen» «variable.name»«IF initializer != null» = «initializer.gen»«ENDIF»;
-    '''}
+    '''
     
-    private def dispatch generateStmt(IfStmt it) {'''
+    private def dispatch generateStmt(IfStmt it) '''
         if(«condition.gen»)«thenPart.genIndent»
         else«elsePart.genIndent»
-    '''}
+    '''
     
-    private def dispatch generateStmt(WhileLoop it) {'''
+    private def dispatch generateStmt(WhileLoop it) '''
         while(«condition.gen»)«body.genIndent»
-    '''}
+    '''
     
-    private def dispatch generateStmt(SuperConstrCall it) {'''
+    private def dispatch generateStmt(SuperConstrCall it) '''
         super(«args.map[gen].join(", ")»);
-    '''}
+    '''
     
-    private def dispatch generateStmt(ReturnNothing _) {'''
+    private def dispatch generateStmt(ReturnNothing _) '''
         return;
-    '''}
+    '''
     
-    private def dispatch generateStmt(ReturnExpr it) {'''
+    private def dispatch generateStmt(ReturnExpr it) '''
         return «expr.gen»;
-    '''}
+    '''
     
     /* Java only allows certain kinds of "expression statements", so find
      * the corresponding expressions in the rolez expression tree */
-    private def dispatch generateStmt(ExprStmt it) {'''
+    private def dispatch generateStmt(ExprStmt it) '''
         «findSideFxExpr(expr).map[gen + ";\n"].join»
-    '''}
+    '''
     
     private def Iterable<Expr> findSideFxExpr(Expr it) {
         switch(it) {
@@ -287,14 +286,13 @@ class RolezGenerator implements IGenerator {
     private def CharSequence gen(Expr it) { generateExpr }
     
     private def dispatch CharSequence genNested(Assignment it) { gen }
-    private def dispatch CharSequence genNested(BinaryExpr it) { "(" + gen + ")" }
-    private def dispatch CharSequence genNested( UnaryExpr it) { "(" + gen + ")" }
-    private def dispatch CharSequence genNested(      Cast it) { "(" + gen + ")" }
+    private def dispatch CharSequence genNested(BinaryExpr it) '''(«gen»)'''
+    private def dispatch CharSequence genNested( UnaryExpr it) '''(«gen»)'''
+    private def dispatch CharSequence genNested(      Cast it) '''(«gen»)'''
     private def dispatch CharSequence genNested(      Expr it) { gen }
     
-    private def dispatch generateExpr(Assignment it) {
+    private def dispatch generateExpr(Assignment it)
         '''«left.gen» = «right.gen»'''
-    }
     
     private def dispatch generateExpr(BinaryExpr it) {
         val op = switch(it) {
@@ -306,17 +304,14 @@ class RolezGenerator implements IGenerator {
         '''«left.genNested» «op» «right.genNested»'''
     }
     
-    private def dispatch generateExpr(Cast it) {
+    private def dispatch generateExpr(Cast it)
         '''(«type.gen») «expr.genNested»'''
-    }
     
-    private def dispatch generateExpr(UnaryMinus it) {
+    private def dispatch generateExpr(UnaryMinus it)
         '''-«expr.genNested»'''
-    }
     
-    private def dispatch generateExpr(UnaryNot it) {
+    private def dispatch generateExpr(UnaryNot it)
         '''!«expr.genNested»'''
-    }
     
     private def dispatch generateExpr(MemberAccess it) {
         // TODO: guard
@@ -332,7 +327,7 @@ class RolezGenerator implements IGenerator {
         }
     }
     
-    private def dispatch generateExpr(This _) {'''this'''}
+    private def dispatch generateExpr(This _) '''this'''
     
     private def dispatch generateExpr(VarRef it) { variable.name }
     
@@ -348,9 +343,8 @@ class RolezGenerator implements IGenerator {
             '''new «classRef.gen»(«args.map[gen].join(", ")»)'''
     }
     
-    private def dispatch generateExpr(The it) {
+    private def dispatch generateExpr(The it)
         '''«classRef.gen».INSTANCE'''
-    }
     
     private def int arrayNesting(GenericClassRef it) {
         if(!clazz.isArrayClass)
@@ -378,11 +372,10 @@ class RolezGenerator implements IGenerator {
         }
     }
     
-    private def dispatch generateExpr(Start it) {
+    private def dispatch generateExpr(Start it)
         '''null /* TODO */'''
-    }
     
-    private def dispatch generateExpr(Parenthesized it) {'''«expr.gen»'''}
+    private def dispatch generateExpr(Parenthesized it) { expr.gen }
     
     private def dispatch generateExpr(    IntLiteral it) { value.toString }
     private def dispatch generateExpr( DoubleLiteral it) { value.toString }
@@ -396,7 +389,7 @@ class RolezGenerator implements IGenerator {
         "'" + value.toString.convertToJavaString + "'"
     }
     
-    private def dispatch generateExpr(NullLiteral _) {'''null'''}
+    private def dispatch generateExpr(NullLiteral _) '''null'''
     
     /*
      * Types and class refs
