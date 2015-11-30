@@ -1,13 +1,18 @@
 package ch.trick17.rolez.lang.validation
 
 import ch.trick17.rolez.lang.RolezExtensions
+import ch.trick17.rolez.lang.rolez.Boolean
+import ch.trick17.rolez.lang.rolez.Char
 import ch.trick17.rolez.lang.rolez.Constr
+import ch.trick17.rolez.lang.rolez.Double
 import ch.trick17.rolez.lang.rolez.Field
 import ch.trick17.rolez.lang.rolez.GenericClassRef
+import ch.trick17.rolez.lang.rolez.Int
 import ch.trick17.rolez.lang.rolez.Method
 import ch.trick17.rolez.lang.rolez.PrimitiveType
 import ch.trick17.rolez.lang.rolez.RoleType
 import ch.trick17.rolez.lang.rolez.Type
+import ch.trick17.rolez.lang.rolez.Void
 import java.lang.reflect.Executable
 import javax.inject.Inject
 
@@ -100,4 +105,14 @@ class JavaMapper {
     }
     
     def dispatch boolean mapsTo(Type it, java.lang.reflect.Type _) { false }
+    
+    def javaType(PrimitiveType it) {
+        switch(it) {
+            Int:     Integer.TYPE
+            Double:  java.lang.Double.TYPE
+            Boolean: java.lang.Boolean.TYPE
+            Char:    Character.TYPE
+            Void:    java.lang.Void.TYPE
+        }
+    }
 }

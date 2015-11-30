@@ -36,6 +36,7 @@ import org.eclipse.xtext.naming.IQualifiedNameProvider
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils
 
 import static ch.trick17.rolez.lang.Constants.*
+import ch.trick17.rolez.lang.rolez.Task
 
 /**
  * Extension methods for the Rolez language elements
@@ -46,6 +47,8 @@ class RolezExtensions {
     @Inject RolezUtils utils
     
     def Iterable<Class> classes(Program it) { elements.filter(Class) }
+    
+    def Iterable<Task> tasks(Program it) { elements.filter(Task) }
     
     def Iterable<Method> methods(Class it) { members.filter(Method) }
     

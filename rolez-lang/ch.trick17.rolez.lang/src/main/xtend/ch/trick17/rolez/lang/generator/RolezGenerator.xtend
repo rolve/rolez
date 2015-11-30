@@ -63,6 +63,8 @@ import org.eclipse.xtext.generator.IGenerator
 import static ch.trick17.rolez.lang.rolez.VarKind.VAL
 
 import static extension org.eclipse.xtext.util.Strings.convertToJavaString
+import ch.trick17.rolez.lang.rolez.Task
+import com.google.common.primitives.Primitives
 
 class RolezGenerator implements IGenerator {
     
@@ -72,9 +74,9 @@ class RolezGenerator implements IGenerator {
     
     override void doGenerate(Resource resource, IFileSystemAccess fsa) {
         val program = resource.contents.head as Program
-        for (c : program.classes.filter[!isMapped || isSingleton]) {
-            val name = c.qualifiedName.segments.join(File.separator) + ".java"
-            fsa.generateFile(name, c.generateClass)
+        for (e : program.classes.filter[!isMapped || isSingleton] + program.tasks) {
+            val name = e.qualifiedName.segments.join(File.separator) + ".java"
+            fsa.generateFile(name, e.generateElement)
         }
     }
     
@@ -82,7 +84,7 @@ class RolezGenerator implements IGenerator {
      * Class and members
      */
     
-    private def dispatch generateClass(NormalClass it) {'''
+    private def dispatch generateElement(NormalClass it) {'''
         «IF !package.isEmpty»
         package «package»;
         
@@ -94,7 +96,7 @@ class RolezGenerator implements IGenerator {
         }
     '''}
     
-    private def dispatch generateClass(SingletonClass it) {'''
+    private def dispatch generateElement(SingletonClass it) {'''
         «IF !package.isEmpty»
         package «package»;
         
@@ -106,6 +108,22 @@ class RolezGenerator implements IGenerator {
             private «simpleName»() {}
             « fields.map[genObjectField ].join»
             «methods.map[genObjectMethod].join»
+        }
+    '''}
+    
+    private def dispatch generateElement(Task it) {'''
+        «IF !package.isEmpty»
+        package «package»;
+        
+        «ENDIF»
+        public final class «simpleName» implements java.util.concurrent.Callable<«type.genGeneric»> {
+            
+            public «type.genGeneric» call() throws java.lang.Exception {
+                «body.stmts.map[gen].join»
+                «IF type instanceof Void»
+                return null;
+                «ENDIF»
+            }
         }
     '''}
     
@@ -363,6 +381,11 @@ class RolezGenerator implements IGenerator {
      */
     
     private def CharSequence gen(Type it) { generateType }
+    
+    private def CharSequence genGeneric(Type it) {
+        if(it instanceof PrimitiveType) Primitives.wrap(javaType).name
+        else generateType
+    }
     
     private def dispatch generateType(PrimitiveType it) { string }
     

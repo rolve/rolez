@@ -160,9 +160,6 @@ class GeneratorTest {
     
     @Test def testMappedSingletonClass() {
         parse('''
-            mapped class rolez.io.PrintStream {
-                mapped new(s: pure String)
-            }
             mapped object rolez.lang.System {
                 mapped val out: readonly rolez.io.PrintStream
                 mapped def readonly exit(status: int):
@@ -185,6 +182,46 @@ class GeneratorTest {
                 
                 public java.lang.String lineSeparator() {
                     return java.lang.System.lineSeparator();
+                }
+            }
+        ''')
+    }
+    
+    @Test def testTask() {
+        parse('''
+            task Main: pure Base {
+                return new Base;
+            }
+        ''', classes).generate.assertEqualsJava('''
+            public final class Main implements java.util.concurrent.Callable<Base> {
+                
+                public Base call() throws java.lang.Exception {
+                    return new Base();
+                }
+            }
+        ''')
+        parse('''
+            task Main: int {
+                return 42;
+            }
+        ''', classes).generate.assertEqualsJava('''
+            public final class Main implements java.util.concurrent.Callable<java.lang.Integer> {
+                
+                public java.lang.Integer call() throws java.lang.Exception {
+                    return 42;
+                }
+            }
+        ''')
+        parse('''
+            task Main: {
+                new Base;
+            }
+        ''', classes).generate.assertEqualsJava('''
+            public final class Main implements java.util.concurrent.Callable<java.lang.Void> {
+                
+                public java.lang.Void call() throws java.lang.Exception {
+                    new Base();
+                    return null;
                 }
             }
         ''')
