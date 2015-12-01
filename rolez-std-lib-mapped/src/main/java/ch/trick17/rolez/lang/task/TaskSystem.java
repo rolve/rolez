@@ -1,9 +1,9 @@
 package ch.trick17.rolez.lang.task;
 
 import java.io.Serializable;
+import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentLinkedDeque;
 
 public abstract class TaskSystem implements Serializable {
     
@@ -15,24 +15,22 @@ public abstract class TaskSystem implements Serializable {
     final transient ThreadLocal<Deque<Task<?>>> localStack = new ThreadLocal<Deque<Task<?>>>() {
         @Override
         protected Deque<Task<?>> initialValue() {
-            return new ConcurrentLinkedDeque<Task<?>>();
+            return new ArrayDeque<>();
         }
     };
-    
-    public Task<Void> start(final Runnable runnable) {
-        return start(new Task<Void>(runnable, this));
-    }
+    // IMPROVE: Could replace thread-local variable with "current" task variable
+    // that is passed to all generated methods. Wouldn't support call-backs
+    // from mapped methods though...
     
     public <V> Task<V> start(final Callable<V> callable) {
         return start(new Task<>(callable, this));
     }
     
-    public void run(final Runnable runnable) {
-        new Task<>(runnable, this).run();
-    }
-    
     public <V> void run(final Callable<V> callable) {
-        new Task<>(callable, this).run();
+        Task<V> task = new Task<>(callable, this);
+        task.run();
+        /* Propagate exceptions */
+        task.get();
     }
     
     private <V> Task<V> start(final Task<V> task) {

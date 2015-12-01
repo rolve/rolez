@@ -29,7 +29,7 @@ public class GuardingTest extends JpfParallelismTest {
     
     // TODO: Change all tests to use implicit exception propagation using this
     // method:
-    void verify(final int[][] seqGroups, final Runnable test) {
+    void verify(final int[][] seqGroups, final RunnableCallable test) {
         if(verify(mode, seqGroups)) {
             s.run(test);
         }

@@ -42,7 +42,7 @@ public class TaskSystemTest extends JpfParallelismTest {
         if(verifyNoPropertyViolation()) {
             flag = false;
             final Thread original = Thread.currentThread();
-            system.start(new Runnable() {
+            system.start(new RunnableCallable() {
                 public void run() {
                     flag = true;
                     LockSupport.unpark(original);
@@ -58,7 +58,7 @@ public class TaskSystemTest extends JpfParallelismTest {
         if(verifyDeadlock()) {
             flag = false;
             final Thread original = Thread.currentThread();
-            system.start(new Runnable() {
+            system.start(new RunnableCallable() {
                 public void run() {
                     // Not setting the flag will result in a deadlock:
                     // flag = true;
@@ -75,11 +75,11 @@ public class TaskSystemTest extends JpfParallelismTest {
         if(verifyNoPropertyViolation()) {
             flag = false;
             final Thread original = Thread.currentThread();
-            system.start(new Runnable() {
+            system.start(new RunnableCallable() {
                 public void run() {
-                    system.start(new Runnable() {
+                    system.start(new RunnableCallable() {
                         public void run() {
-                            system.start(new Runnable() {
+                            system.start(new RunnableCallable() {
                                 public void run() {
                                     flag = true;
                                     LockSupport.unpark(original);
@@ -98,11 +98,11 @@ public class TaskSystemTest extends JpfParallelismTest {
     @Test
     public void testRunTaskWaiting() {
         if(verifyNoPropertyViolation()) {
-            system.start(new Runnable() {
+            system.start(new RunnableCallable() {
                 public void run() {
                     flag = false;
                     final Thread original = Thread.currentThread();
-                    system.start(new Runnable() {
+                    system.start(new RunnableCallable() {
                         public void run() {
                             flag = true;
                             LockSupport.unpark(original);
@@ -118,9 +118,9 @@ public class TaskSystemTest extends JpfParallelismTest {
     @Test
     public void testExceptionInTask() {
         if(verifyUnhandledException("java.lang.RuntimeException", "Hello")) {
-            system.run(new Runnable() {
+            system.run(new RunnableCallable() {
                 public void run() {
-                    system.start(new Runnable() {
+                    system.start(new RunnableCallable() {
                         public void run() {
                             throw new RuntimeException("Hello");
                         }
@@ -148,13 +148,13 @@ public class TaskSystemTest extends JpfParallelismTest {
     public void testNestedParallelism() {
         assumeMultithreaded();
         if(verifyParallelExcept()) {
-            system.start(new Runnable() {
+            system.start(new RunnableCallable() {
                 public void run() {
                     /* Task 1 */
-                    final Task<Void> task = system.start(new Runnable() {
+                    final Task<Void> task = system.start(new RunnableCallable() {
                         public void run() {
                             /* Task 2 */
-                            system.start(new Runnable() {
+                            system.start(new RunnableCallable() {
                                 public void run() {
                                     /* Task 3 */
                                     region(0);
