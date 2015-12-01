@@ -22,8 +22,9 @@ public final class ThreadPoolTaskSystem extends TaskSystem {
      * this: http://coopsoft.com/ar/CalamityArticle.html */
     
     private final int baseSize;
-    private final Set<Worker> idleWorkers = newSetFromMap(new ConcurrentHashMap<Worker, Boolean>());
-    
+    private final Set<Worker> idleWorkers = newSetFromMap(
+            new ConcurrentHashMap<Worker, Boolean>());
+            
     public ThreadPoolTaskSystem() {
         this(Runtime.getRuntime().availableProcessors());
     }
@@ -74,20 +75,25 @@ public final class ThreadPoolTaskSystem extends TaskSystem {
         
         @Override
         public void run() {
-            while(true) {
-                final Task<?> current = currentTask.get();
-                if(current == null)
-                    LockSupport.park();
-                else {
-                    current.run();
-                    currentTask.set(null);
-                    if(idleWorkers.size() < baseSize)
-                        /* Keep this worker */
-                        idleWorkers.add(this);
-                    else
-                        /* Kill this worker */
-                        break;
+            try {
+                while(true) {
+                    final Task<?> current = currentTask.get();
+                    if(current == null)
+                        LockSupport.park();
+                    else {
+                        current.run();
+                        currentTask.set(null);
+                        if(idleWorkers.size() < baseSize)
+                            /* Keep this worker */
+                            idleWorkers.add(this);
+                        else
+                            /* Kill this worker */
+                            break;
+                    }
                 }
+            } catch(Throwable t) {
+                /* Exceptions and errors should be caught by task */
+                throw new AssertionError("Uncaught exception", t);
             }
         }
     }
