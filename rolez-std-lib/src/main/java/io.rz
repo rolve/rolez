@@ -1,12 +1,14 @@
 package rolez.io
 
 mapped class PrintStream {
-    mapped def readonly println(val i: int):
-    mapped def readonly println(val b: boolean):
-    mapped def readonly println(val c: char):
-    mapped def readonly println(val d: double):
-    mapped def readonly println(val o: readonly Object):
-    mapped def readonly println(val s: readonly String):
+    mapped new(file: readonly String)
+    
+    mapped def readonly println(i: int):
+    mapped def readonly println(b: boolean):
+    mapped def readonly println(c: char):
+    mapped def readonly println(d: double):
+    mapped def readonly println(o: readonly Object):
+    mapped def readonly println(s: readonly String):
     
     mapped def readonly close:
 }
