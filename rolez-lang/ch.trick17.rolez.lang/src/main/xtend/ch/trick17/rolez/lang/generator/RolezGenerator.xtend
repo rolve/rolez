@@ -119,7 +119,7 @@ class RolezGenerator implements IGenerator {
         public final class «simpleName» implements java.util.concurrent.Callable<«type.genGeneric»> {
             «IF isMain»
             
-            public static void main(final String[] args) throws java.lang.Exception {
+            public static void main(final String[] args) {
                 «IF params.isEmpty»
                 new «simpleName»().call();
                 «ELSE»
@@ -140,8 +140,8 @@ class RolezGenerator implements IGenerator {
             }
             «ENDIF»
             
-            public «type.genGeneric» call() throws java.lang.Exception {
-                «body.stmts.map[gen].join»
+            public «type.genGeneric» call() {
+                «body.genStmtsWithTryCatch»
                 «IF type instanceof Void»
                 return null;
                 «ENDIF»
@@ -156,29 +156,33 @@ class RolezGenerator implements IGenerator {
     
     private def gen(Method it) '''
         
-        public «type.gen» «name»(«params.map[gen].join(", ")») «body.genWithTryCatch»
+        public «type.gen» «name»(«params.map[gen].join(", ")») {
+            «body.genStmtsWithTryCatch»
+        }
     '''
     
     private def gen(Constr it) '''
         
-        public «enclosingClass.simpleName»(«params.map[gen].join(", ")») «body.genWithTryCatch»
+        public «enclosingClass.simpleName»(«params.map[gen].join(", ")») {
+            «body.genStmtsWithTryCatch»
+        }
     '''
     
-    private def genWithTryCatch(Block it) {
+    private def genStmtsWithTryCatch(Block it) {
         val exceptionTypes = thrownExceptionTypes
         val isConstr = !stmts.isEmpty && stmts.head instanceof SuperConstrCall
-        if(exceptionTypes.isEmpty) gen
+        if(exceptionTypes.isEmpty) '''
+            «stmts.map[gen].join»
+        '''
         else '''
-            {
-                «IF isConstr»
-                «stmts.head.gen»
-                «ENDIF»
-                try {
-                    «stmts.drop(if(isConstr) 1 else 0).map[gen].join»
-                }
-                catch(«exceptionTypes.map[name].join(" | ")» e) {
-                    throw new java.lang.RuntimeException("ROLEZ EXCEPTION WRAPPER", e);
-                }
+            «IF isConstr»
+            «stmts.head.gen»
+            «ENDIF»
+            try {
+                «stmts.drop(if(isConstr) 1 else 0).map[gen].join»
+            }
+            catch(«exceptionTypes.map[name].join(" | ")» e) {
+                throw new java.lang.RuntimeException("ROLEZ EXCEPTION WRAPPER", e);
             }
         '''
     }

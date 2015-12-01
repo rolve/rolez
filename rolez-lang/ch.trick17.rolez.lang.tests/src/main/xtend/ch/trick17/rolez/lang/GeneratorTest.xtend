@@ -195,7 +195,7 @@ class GeneratorTest {
         ''', classes).generate.assertEqualsJava('''
             public final class Main implements java.util.concurrent.Callable<Base> {
                 
-                public Base call() throws java.lang.Exception {
+                public Base call() {
                     return new Base();
                 }
             }
@@ -207,7 +207,7 @@ class GeneratorTest {
         ''', classes).generate.assertEqualsJava('''
             public final class Main implements java.util.concurrent.Callable<java.lang.Integer> {
                 
-                public java.lang.Integer call() throws java.lang.Exception {
+                public java.lang.Integer call() {
                     return 42;
                 }
             }
@@ -227,7 +227,7 @@ class GeneratorTest {
                     this.j = j;
                 }
                 
-                public java.lang.Void call() throws java.lang.Exception {
+                public java.lang.Void call() {
                     new foo.bar.Base(i + j);
                     return null;
                 }
@@ -239,11 +239,11 @@ class GeneratorTest {
         ''', classes).generate.assertEqualsJava('''
             public final class Main implements java.util.concurrent.Callable<java.lang.Void> {
                 
-                public static void main(final String[] args) throws java.lang.Exception {
+                public static void main(final String[] args) {
                     new Main().call();
                 }
                 
-                public java.lang.Void call() throws java.lang.Exception {
+                public java.lang.Void call() {
                     return null;
                 }
             }
@@ -255,7 +255,7 @@ class GeneratorTest {
         ''', classes).generate.assertEqualsJava('''
             public final class Main implements java.util.concurrent.Callable<java.lang.Void> {
                 
-                public static void main(final String[] args) throws java.lang.Exception {
+                public static void main(final String[] args) {
                     new Main(args).call();
                 }
                 
@@ -265,7 +265,7 @@ class GeneratorTest {
                     this.args = args;
                 }
                 
-                public java.lang.Void call() throws java.lang.Exception {
+                public java.lang.Void call() {
                     args[0].length();
                     return null;
                 }
