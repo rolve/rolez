@@ -57,11 +57,6 @@ class RolezExtensions {
     def qualifiedName(ClassLike it) { nameProvider.getFullyQualifiedName(it) }
     def qualifiedName(   Member it) { nameProvider.getFullyQualifiedName(it) }
     
-    def getPackage(ClassLike it) {
-        val segments = qualifiedName.segments
-        segments.takeWhile[it != segments.last].join(".")
-    }
-    
     def Iterable<Member> allMembers(Class it) {
         members +
             if(superclass == null) emptyList

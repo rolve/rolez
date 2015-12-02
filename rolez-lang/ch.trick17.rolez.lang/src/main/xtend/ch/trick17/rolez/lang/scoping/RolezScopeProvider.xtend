@@ -46,7 +46,6 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
                 if(maxSpecific.size <= 1)
                     scopeFor(maxSpecific)
                 else {
-                    // TODO: Check if errorHandler could be used instead
                     validator.delayedError("Method invoke is ambiguous", it, ref, AMBIGUOUS_CALL)
                     scopeFor(maxSpecific)
                 }

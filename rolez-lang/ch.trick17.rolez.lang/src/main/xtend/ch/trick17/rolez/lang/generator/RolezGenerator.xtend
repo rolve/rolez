@@ -87,7 +87,7 @@ class RolezGenerator implements IGenerator {
      */
     
     private def dispatch generateElement(NormalClass it) '''
-        «IF !package.isEmpty»
+        «IF !safePackage.isEmpty»
         package «safePackage»;
         
         «ENDIF»
@@ -99,7 +99,7 @@ class RolezGenerator implements IGenerator {
     '''
     
     private def dispatch generateElement(SingletonClass it) '''
-        «IF !package.isEmpty»
+        «IF !safePackage.isEmpty»
         package «safePackage»;
         
         «ENDIF»
@@ -114,7 +114,7 @@ class RolezGenerator implements IGenerator {
     '''
     
     private def dispatch generateElement(Task it) '''
-        «IF !package.isEmpty»
+        «IF !safePackage.isEmpty»
         package «safePackage»;
         
         «ENDIF»
