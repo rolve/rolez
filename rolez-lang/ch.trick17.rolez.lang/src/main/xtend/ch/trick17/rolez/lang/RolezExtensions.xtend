@@ -62,10 +62,6 @@ class RolezExtensions {
         segments.takeWhile[it != segments.last].join(".")
     }
     
-    def simpleName(ClassLike it) {
-        nameProvider.getFullyQualifiedName(it).lastSegment
-    }
-    
     def Iterable<Member> allMembers(Class it) {
         members +
             if(superclass == null) emptyList

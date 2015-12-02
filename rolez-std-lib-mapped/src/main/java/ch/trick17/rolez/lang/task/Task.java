@@ -84,11 +84,11 @@ public class Task<V> implements Runnable {
         }
         
         void awaitDone() {
-            acquireShared(-1);
+            acquireShared(IGNORED);
         }
         
         void done() {
-            releaseShared(-1);
+            releaseShared(IGNORED);
         }
         
         @Override
@@ -97,9 +97,11 @@ public class Task<V> implements Runnable {
         }
         
         @Override
-        protected boolean tryReleaseShared(int arg) {
+        protected boolean tryReleaseShared(int ignored) {
             setState(DONE);
             return true;
         }
+        
+        private static final int IGNORED = 0;
     }
 }

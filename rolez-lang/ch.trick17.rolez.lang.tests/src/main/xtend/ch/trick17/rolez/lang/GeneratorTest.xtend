@@ -452,6 +452,72 @@ class GeneratorTest {
         // TODO: Test implicit constr referring to exception-throwing constr
     }
     
+    @Test def testJavaKeywords() {
+        parse('''
+            package foo.static.native
+            
+            class final {
+                def pure strictfp(volatile: int): int {
+                    val synchronized: int = 2 * volatile;
+                    val _synchronized: int = 42;
+                    return synchronized + _synchronized;
+                }
+                
+                def pure transient: {
+                    val protected: readwrite final = new (foo.static.native.final);
+                    protected.strictfp(protected.toString.length);
+                }
+            }
+        ''', classes).generate.assertEqualsJava('''
+            package foo._static._native;
+            
+            public class _final extends java.lang.Object {
+                
+                public _final() {
+                    super();
+                }
+                
+                public int _strictfp(final int _volatile) {
+                    final int _synchronized = 2 * _volatile;
+                    final int __synchronized = 42;
+                    return _synchronized + __synchronized;
+                }
+                
+                public void _transient() {
+                    final foo._static._native._final _protected = new foo._static._native._final();
+                    _protected._strictfp(_protected.toString().length());
+                }
+            }
+        ''')
+        
+        parse('''
+            package foo.static.native
+            main task final(do: readonly Array[pure String]): {
+                do.get(0).length;
+            }
+        ''', classes).generate.assertEqualsJava('''
+            package foo._static._native;
+            
+            public final class _final implements java.util.concurrent.Callable<java.lang.Void> {
+                
+                public static void main(final String[] args) {
+                    new _final(args).call();
+                }
+                
+                private final java.lang.String[] _do;
+                
+                public _final(final java.lang.String[] _do) {
+                    this._do = _do;
+                }
+                
+                public java.lang.Void call() {
+                    _do[0].length();
+                    return null;
+                }
+            }
+        ''')
+    }
+    
     @Test def testBlock() {
         parse('''
             {

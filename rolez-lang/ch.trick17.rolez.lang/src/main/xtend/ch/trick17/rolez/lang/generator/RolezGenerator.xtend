@@ -10,6 +10,7 @@ import ch.trick17.rolez.lang.rolez.BooleanLiteral
 import ch.trick17.rolez.lang.rolez.Cast
 import ch.trick17.rolez.lang.rolez.CharLiteral
 import ch.trick17.rolez.lang.rolez.Class
+import ch.trick17.rolez.lang.rolez.ClassLike
 import ch.trick17.rolez.lang.rolez.ClassRef
 import ch.trick17.rolez.lang.rolez.Constr
 import ch.trick17.rolez.lang.rolez.DoubleLiteral
@@ -24,6 +25,7 @@ import ch.trick17.rolez.lang.rolez.LocalVarDecl
 import ch.trick17.rolez.lang.rolez.LogicalExpr
 import ch.trick17.rolez.lang.rolez.MemberAccess
 import ch.trick17.rolez.lang.rolez.Method
+import ch.trick17.rolez.lang.rolez.Named
 import ch.trick17.rolez.lang.rolez.New
 import ch.trick17.rolez.lang.rolez.NormalClass
 import ch.trick17.rolez.lang.rolez.Null
@@ -86,10 +88,10 @@ class RolezGenerator implements IGenerator {
     
     private def dispatch generateElement(NormalClass it) '''
         «IF !package.isEmpty»
-        package «package»;
+        package «safePackage»;
         
         «ENDIF»
-        public class «simpleName» extends «superclass.generateName» {
+        public class «safeSimpleName» extends «superclass.generateName» {
             « fields.map[gen].join»
             «constrs.map[gen].join»
             «methods.map[gen].join»
@@ -98,14 +100,14 @@ class RolezGenerator implements IGenerator {
     
     private def dispatch generateElement(SingletonClass it) '''
         «IF !package.isEmpty»
-        package «package»;
+        package «safePackage»;
         
         «ENDIF»
-        public final class «simpleName» extends «superclass.generateName» {
+        public final class «safeSimpleName» extends «superclass.generateName» {
             
-            public static final «simpleName» INSTANCE = new «simpleName»();
+            public static final «safeSimpleName» INSTANCE = new «safeSimpleName»();
             
-            private «simpleName»() {}
+            private «safeSimpleName»() {}
             « fields.map[genObjectField ].join»
             «methods.map[genObjectMethod].join»
         }
@@ -113,29 +115,29 @@ class RolezGenerator implements IGenerator {
     
     private def dispatch generateElement(Task it) '''
         «IF !package.isEmpty»
-        package «package»;
+        package «safePackage»;
         
         «ENDIF»
-        public final class «simpleName» implements java.util.concurrent.Callable<«type.genGeneric»> {
+        public final class «safeSimpleName» implements java.util.concurrent.Callable<«type.genGeneric»> {
             «IF isMain»
             
             public static void main(final String[] args) {
                 «IF params.isEmpty»
-                new «simpleName»().call();
+                new «safeSimpleName»().call();
                 «ELSE»
-                new «simpleName»(args).call();
+                new «safeSimpleName»(args).call();
                 «ENDIF»
             }
             «ENDIF»
             «IF !params.isEmpty»
             
             «FOR p : params»
-            private final «p.type.gen» «p.name»;
+            private final «p.type.gen» «p.safeName»;
             «ENDFOR»
             
-            public «simpleName»(«params.map[gen].join(", ")») {
+            public «safeSimpleName»(«params.map[gen].join(", ")») {
                 «FOR p : params»
-                this.«p.name» = «p.name»;
+                this.«p.safeName» = «p.safeName»;
                 «ENDFOR»
             }
             «ENDIF»
@@ -151,19 +153,19 @@ class RolezGenerator implements IGenerator {
     
     private def gen(Field it) '''
         
-        public «kind.gen»«type.gen» «name»«IF initializer != null» = «initializer.gen»«ENDIF»;
+        public «kind.gen»«type.gen» «safeName»«IF initializer != null» = «initializer.gen»«ENDIF»;
     '''
     
     private def gen(Method it) '''
         
-        public «type.gen» «name»(«params.map[gen].join(", ")») {
+        public «type.gen» «safeName»(«params.map[gen].join(", ")») {
             «body.genStmtsWithTryCatch»
         }
     '''
     
     private def gen(Constr it) '''
         
-        public «enclosingClass.simpleName»(«params.map[gen].join(", ")») {
+        public «enclosingClass.safeSimpleName»(«params.map[gen].join(", ")») {
             «body.genStmtsWithTryCatch»
         }
     '''
@@ -199,22 +201,22 @@ class RolezGenerator implements IGenerator {
         ].toSet
     }
     
-    private def genObjectField(Field it) { if(!isMapped) gen else '''
+    private def genObjectField(Field it) { if(isMapped) '''
         
         public «kind.gen»«type.gen» «name» = «enclosingClass.javaClassName».«name»;
-    '''}
+    ''' else gen }
     
-    private def genObjectMethod(Method it) { if(!isMapped) gen else '''
+    private def genObjectMethod(Method it) { if(isMapped) '''
         
         public «type.gen» «name»(«params.map[gen].join(", ")») {
             «if(!(type instanceof Void)) "return "»«generateStaticCall»;
         }
-    '''}
+    ''' else gen }
     
     private def generateStaticCall(Method it)
-        '''«enclosingClass.javaClassName».«name»(«params.map[name].join(", ")»)'''
+        '''«enclosingClass.javaClassName».«name»(«params.map[safeName].join(", ")»)'''
     
-    private def gen(Param it) '''«kind.gen»«type.gen» «name»'''
+    private def gen(Param it) '''«kind.gen»«type.gen» «safeName»'''
     
     private def gen(VarKind it) { if(it == VAL) "final " }
     
@@ -234,7 +236,7 @@ class RolezGenerator implements IGenerator {
     '''
     
     private def dispatch generateStmt(LocalVarDecl it) '''
-        «variable.kind.gen»«variable.type.gen» «variable.name»«IF initializer != null» = «initializer.gen»«ENDIF»;
+        «variable.kind.gen»«variable.type.gen» «variable.safeName»«IF initializer != null» = «initializer.gen»«ENDIF»;
     '''
     
     private def dispatch generateStmt(IfStmt it) '''
@@ -325,15 +327,15 @@ class RolezGenerator implements IGenerator {
             case isMethodInvoke && method.isArraySet:
                 '''«target.gen»[«args.get(0).gen»] = «args.get(1).gen»'''
             case isMethodInvoke:
-                '''«target.genNested».«method.name»(«args.map[gen].join(", ")»)'''
+                '''«target.genNested».«method.safeName»(«args.map[gen].join(", ")»)'''
             case isFieldAccess:
-                '''«target.genNested».«field.name»'''
+                '''«target.genNested».«field.safeName»'''
         }
     }
     
     private def dispatch generateExpr(This _) '''this'''
     
-    private def dispatch generateExpr(VarRef it) { variable.name }
+    private def dispatch generateExpr(VarRef it) { variable.safeName }
     
     private def dispatch generateExpr(New it) {
         if(classRef.clazz.isArrayClass) {
@@ -435,7 +437,42 @@ class RolezGenerator implements IGenerator {
             if(name == null) throw new AssertionError
             name
         }
+        else safeQualifiedName
+    }
+    
+    /*
+     * Safe Java names
+     */
+     
+    static val javaKeywords = #{
+        "abstract", "assert", "boolean", "break", "byte", "case", "catch", 
+        "char", "class", "const", "continue", "default", "do", "double", "else",
+        "enum", "extends", "final", "finally", "float", "for", "goto", "if",
+        "implements", "import", "instanceof", "int", "interface", "long",
+        "native", "new", "package", "private", "protected", "public", "return",
+        "short", "static", "strictfp", "super", "switch", "synchronized", "this",
+        "throw", "throws", "transient", "try", "void", "volatile", "while"}
+    
+    private def safe(String name) {
+        if(javaKeywords.contains(name) ||
+                (name.startsWith("_") && javaKeywords.contains(name.substring(1))))
+            "_" + name
         else
-            qualifiedName.toString
+            name
+    }
+    
+    private def safeName(Named it) { safe(name) }
+    
+    private def safeQualifiedName(ClassLike it) {
+        qualifiedName.segments.map[safe].join(".")
+    }
+    
+    private def safeSimpleName(ClassLike it) {
+        safe(qualifiedName.lastSegment)
+    }
+    
+    private def safePackage(ClassLike it) {
+        val segments = qualifiedName.segments
+        segments.takeWhile[it != segments.last].map[safe].join(".")
     }
 }
