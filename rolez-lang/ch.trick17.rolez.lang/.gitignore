@@ -1,2 +1,6 @@
-/target/
-/model/
+/src-gen
+/target
+/xtend-gen
+/xsemantics-gen
+/plugin.xml_gen
+/model/generated

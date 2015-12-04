@@ -1,16 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.0"?>
-
 <plugin>
-
-  <extension point="org.eclipse.emf.ecore.generated_package">
-    <package 
-       uri = "http://trick17.ch/rolez/lang/Rolez" 
-       class = "ch.trick17.rolez.lang.rolez.RolezPackage"
-       genModel = "model/generated/Rolez.genmodel" /> 
-	
-  </extension>
-
-
-
+	<extension point="org.eclipse.emf.ecore.generated_package">
+		<package 
+			uri = "http://trick17.ch/rolez/lang/Rolez"
+			class = "ch.trick17.rolez.lang.rolez.RolezPackage"
+			genModel = "model/generated/Rolez.genmodel" />
+	</extension>
 </plugin>

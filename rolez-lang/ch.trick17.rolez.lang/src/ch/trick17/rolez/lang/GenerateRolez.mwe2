@@ -1,0 +1,42 @@
+module ch.trick17.rolez.lang.GenerateRolez
+
+import org.eclipse.xtext.xtext.generator.*
+import org.eclipse.xtext.xtext.generator.model.project.*
+
+var rootPath = ".."
+
+Workflow {
+	
+	component = XtextGenerator {
+		configuration = {
+			project = StandardProjectConfig {
+				baseName = "ch.trick17.rolez.lang"
+				rootPath = rootPath
+				runtimeTest = {
+					enabled = true
+				}
+				eclipsePlugin = {
+					enabled = true
+				}
+				eclipsePluginTest = {
+					enabled = true
+				}
+				createEclipseMetaData = true
+			}
+			code = {
+				encoding = "UTF-8"
+			}
+		}
+		language = StandardLanguage {
+			name = "ch.trick17.rolez.lang.Rolez"
+			fileExtensions = "rz,rolez"
+
+			serializer = {
+				generateStub = false
+			}
+			validator = {
+				// composedCheck = "org.eclipse.xtext.validation.NamesAreUniqueValidator"
+			}
+		}
+	}
+}
