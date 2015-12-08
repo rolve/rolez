@@ -1,5 +1,8 @@
-package ch.trick17.rolez.lang
+package ch.trick17.rolez.lang.tests
 
+import ch.trick17.rolez.lang.RolezExtensions
+import ch.trick17.rolez.lang.RolezStandaloneSetup
+import ch.trick17.rolez.lang.RolezUtils
 import ch.trick17.rolez.lang.rolez.Block
 import ch.trick17.rolez.lang.rolez.Class
 import ch.trick17.rolez.lang.rolez.ClassRef
@@ -16,6 +19,7 @@ import ch.trick17.rolez.lang.rolez.SimpleClassRef
 import ch.trick17.rolez.lang.rolez.Task
 import ch.trick17.rolez.lang.rolez.Type
 import ch.trick17.rolez.lang.typesystem.RolezSystem
+import java.util.Random
 import javax.inject.Inject
 import org.eclipse.emf.common.util.URI
 import org.eclipse.emf.ecore.resource.ResourceSet
@@ -30,7 +34,6 @@ import org.hamcrest.Matcher
 import static org.hamcrest.Matchers.*
 
 import static extension org.hamcrest.MatcherAssert.assertThat
-import java.util.Random
 
 class TestUtilz {
     

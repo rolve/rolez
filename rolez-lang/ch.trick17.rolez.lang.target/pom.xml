@@ -8,8 +8,4 @@
 	</parent>
 	<artifactId>ch.trick17.rolez.lang.target</artifactId>
 	<packaging>eclipse-target-definition</packaging>
-
-
-	<dependencies>
-	</dependencies>
 </project>

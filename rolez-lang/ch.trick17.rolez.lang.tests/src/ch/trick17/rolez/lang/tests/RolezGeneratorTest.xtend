@@ -1,8 +1,7 @@
-package ch.trick17.rolez.lang
+package ch.trick17.rolez.lang.tests
 
 import ch.trick17.rolez.lang.generator.RolezGenerator
 import ch.trick17.rolez.lang.rolez.Program
-import ch.trick17.rolez.lang.tests.RolezInjectorProvider
 import com.google.common.io.ByteStreams
 import com.google.common.io.CharStreams
 import java.net.URI
@@ -32,7 +31,7 @@ import static extension org.junit.Assert.*
 
 @RunWith(XtextRunner)
 @InjectWith(RolezInjectorProvider)
-class GeneratorTest {
+class RolezGeneratorTest {
     
     @Inject extension ParseHelper<Program>
     @Inject extension ValidationTestHelper

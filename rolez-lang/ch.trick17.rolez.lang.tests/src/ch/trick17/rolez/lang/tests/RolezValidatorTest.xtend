@@ -1,4 +1,4 @@
-package ch.trick17.rolez.lang
+package ch.trick17.rolez.lang.tests
 
 import ch.trick17.rolez.lang.rolez.Program
 import javax.inject.Inject
@@ -11,11 +11,10 @@ import org.junit.runner.RunWith
 
 import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
 import static ch.trick17.rolez.lang.validation.RolezValidator.*
-import ch.trick17.rolez.lang.tests.RolezInjectorProvider
 
 @RunWith(XtextRunner)
 @InjectWith(RolezInjectorProvider)
-class ValidatorTest {
+class RolezValidatorTest {
     
     @Inject extension ParseHelper<Program>
     @Inject extension ValidationTestHelper

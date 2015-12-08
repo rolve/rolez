@@ -1,5 +1,7 @@
-package ch.trick17.rolez.lang
+package ch.trick17.rolez.lang.tests
 
+import ch.trick17.rolez.lang.RolezExtensions
+import ch.trick17.rolez.lang.RolezUtils
 import ch.trick17.rolez.lang.rolez.Boolean
 import ch.trick17.rolez.lang.rolez.Char
 import ch.trick17.rolez.lang.rolez.Double
@@ -29,11 +31,10 @@ import static org.eclipse.xtext.diagnostics.Diagnostic.*
 import static org.hamcrest.Matchers.*
 
 import static extension org.hamcrest.MatcherAssert.assertThat
-import ch.trick17.rolez.lang.tests.RolezInjectorProvider
 
 @RunWith(XtextRunner)
 @InjectWith(RolezInjectorProvider)
-class TypeSystemTest {
+class RolezTypeSystemTest {
     
     @Inject RolezSystem system
     @Inject extension RolezExtensions
@@ -1822,3 +1823,4 @@ class TypeSystemTest {
         ''').assertError(CAST, SUBTYPEEXPR, "pure A", "readonly A")
     }
 }
+					

@@ -5,7 +5,6 @@ Bundle-Version: 1.0.0.qualifier
 Bundle-SymbolicName: ch.trick17.rolez.lang.tests; singleton:=true
 Bundle-ActivationPolicy: lazy
 Require-Bundle: ch.trick17.rolez.lang,
- org.junit;bundle-version="4.7.0",
  org.eclipse.xtext.junit4,
  org.eclipse.xtext.xbase.junit,
  org.eclipse.xtext.xbase.lib,
@@ -17,5 +16,4 @@ Import-Package: org.junit;version="4.5.0",
  org.junit.runner.manipulation;version="4.5.0",
  org.junit.runner.notification;version="4.5.0",
  org.junit.runners;version="4.5.0",
- org.junit.runners.model;version="4.5.0",
- org.hamcrest.core
+ org.junit.runners.model;version="4.5.0"

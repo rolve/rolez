@@ -1,5 +1,6 @@
-package ch.trick17.rolez.lang
+package ch.trick17.rolez.lang.tests
 
+import ch.trick17.rolez.lang.RolezUtils
 import ch.trick17.rolez.lang.cfg.CfgProvider
 import ch.trick17.rolez.lang.cfg.ControlFlowGraph
 import ch.trick17.rolez.lang.cfg.ExitNode
@@ -26,7 +27,6 @@ import static org.hamcrest.Matchers.*
 
 import static extension org.hamcrest.MatcherAssert.assertThat
 import static extension org.junit.Assert.assertEquals
-import ch.trick17.rolez.lang.tests.RolezInjectorProvider
 
 @RunWith(XtextRunner)
 @InjectWith(RolezInjectorProvider)
