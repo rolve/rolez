@@ -424,4 +424,17 @@
 			type="text">
 		</fileTypes>
 	</extension>
+    <extension point="org.eclipse.jdt.ui.classpathContainerPage">
+        <classpathContainerPage
+            id="ch.trick17.rolez.lang.ROLEZ_CONTAINER"
+            name="Rolez Standard Library"
+            class="ch.trick17.rolez.lang.ui.buildpath.RolezStdLibPage">
+        </classpathContainerPage>
+    </extension>
+    <extension point="org.eclipse.jdt.core.classpathContainerInitializer">
+        <classpathContainerInitializer
+            id="ch.trick17.rolez.lang.ROLEZ_CONTAINER"
+            class="ch.trick17.rolez.lang.ui.buildpath.RolezStdLibInitializer">
+        </classpathContainerInitializer>
+    </extension>
 </plugin>
