@@ -21,6 +21,8 @@
         <module>ch.trick17.rolez.lang.target</module>
         <module>ch.trick17.rolez.lang.tests</module>
         <module>ch.trick17.rolez.lang.ui.tests</module>
+        <module>ch.trick17.rolez.lang.repository</module>
+        <module>ch.trick17.rolez.lang.feature</module>
     </modules>
     <build>
         <plugins>
