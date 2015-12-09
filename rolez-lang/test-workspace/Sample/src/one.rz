@@ -3,11 +3,11 @@ package foo
 import rolez.io.PrintStream
 
 class Person {
-	val name: pure String
-	val surname: pure String
+	val name: readonly String
+	val surname: readonly String
 	var address: readonly Address
 	
-	new(name: pure String, surname: pure String, address: readonly Address) {
+	new(name: readonly String, surname: readonly String, address: readonly Address) {
 		this.name = name;
 		this.surname = surname;
 		this.address = address;
@@ -26,7 +26,7 @@ class Person {
 	
 	def readonly bar(k: int): {
 		var fives: int = -555555555;
-		val j: pure String = "Hi";
+		val j: readonly String = "Hi";
 		
 		val s: readonly String = "Hi" + 'c' + null + 5 + null + this.surname.length;
 		

@@ -18,10 +18,15 @@ mapped class Array[T] {
 }
 
 mapped class String {
+    mapped new(chars: readonly Array[char])
+    
     mapped def readonly length: int
     mapped def readonly charAt(position: int): char
+    mapped def readonly trim: readonly String
 }
 
 mapped object System {
     mapped val out: readonly PrintStream
+    
+    mapped def readonly exit(code: int):
 }
