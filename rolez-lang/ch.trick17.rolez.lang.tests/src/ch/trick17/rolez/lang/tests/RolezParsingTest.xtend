@@ -29,8 +29,8 @@ class RolezParsingTest{
     
     @Test def testQualifiedClassRef() {
         parse('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.Array[T] {
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
                 mapped new(length: int)
                 mapped val length: int
             }
@@ -46,7 +46,7 @@ class RolezParsingTest{
     
     @Test def testNewAndMemberAccess() {
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 var i: int
                 def pure f: {}
@@ -83,8 +83,8 @@ class RolezParsingTest{
     
     @Test def testStringLiteral() {
         val program = parse('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.String
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.String mapped to java.lang.String
             task Main: {
                 "Hello World!";
                 "\"";

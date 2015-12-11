@@ -36,6 +36,7 @@ Workflow {
 			validator = {
 				// composedCheck = "org.eclipse.xtext.validation.NamesAreUniqueValidator"
 			}
+			fragment = types.TypesGeneratorFragment2 {}
 		}
 	}
 }

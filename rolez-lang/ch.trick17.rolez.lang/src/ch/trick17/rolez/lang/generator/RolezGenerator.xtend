@@ -57,7 +57,6 @@ import ch.trick17.rolez.lang.rolez.VarRef
 import ch.trick17.rolez.lang.rolez.Void
 import ch.trick17.rolez.lang.rolez.WhileLoop
 import ch.trick17.rolez.lang.validation.JavaMapper
-import com.google.common.primitives.Primitives
 import java.io.File
 import javax.inject.Inject
 import org.eclipse.emf.ecore.resource.Resource
@@ -77,7 +76,7 @@ class RolezGenerator extends AbstractGenerator {
     
     override void doGenerate(Resource resource, IFileSystemAccess2 fsa, IGeneratorContext context) {
         val program = resource.contents.head as Program
-        for (e : program.classes.filter[!isMapped || isSingleton] + program.tasks) {
+        for (e : program.classes.filter[!mapped || isSingleton] + program.tasks) {
             val name = e.qualifiedName.segments.join(File.separator) + ".java"
             fsa.generateFile(name, e.generateElement)
         }
@@ -184,7 +183,7 @@ class RolezGenerator extends AbstractGenerator {
             try {
                 «stmts.drop(if(isConstr) 1 else 0).map[gen].join»
             }
-            catch(«exceptionTypes.map[name].join(" | ")» e) {
+            catch(«exceptionTypes.map[qualifiedName].join(" | ")» e) {
                 throw new java.lang.RuntimeException("ROLEZ EXCEPTION WRAPPER", e);
             }
         '''
@@ -198,13 +197,13 @@ class RolezGenerator extends AbstractGenerator {
         }].flatten.toSet
         
         all.filter[sub |
-            !all.exists[supr | sub !== supr && supr.isAssignableFrom(sub)]
+            !all.exists[supr | sub !== supr && sub.isSubclassOf(supr)]
         ].toSet
     }
     
     private def genObjectField(Field it) { if(isMapped) '''
         
-        public «kind.gen»«type.gen» «name» = «enclosingClass.javaClassName».«name»;
+        public «kind.gen»«type.gen» «name» = «enclosingClass.jvmClass.qualifiedName».«name»;
     ''' else gen }
     
     private def genObjectMethod(Method it) { if(isMapped) '''
@@ -215,7 +214,7 @@ class RolezGenerator extends AbstractGenerator {
     ''' else gen }
     
     private def generateStaticCall(Method it)
-        '''«enclosingClass.javaClassName».«name»(«params.map[safeName].join(", ")»)'''
+        '''«enclosingClass.jvmClass.qualifiedName».«name»(«params.map[safeName].join(", ")»)'''
     
     private def gen(Param it) '''«kind.gen»«type.gen» «safeName»'''
     
@@ -405,7 +404,7 @@ class RolezGenerator extends AbstractGenerator {
     private def CharSequence gen(Type it) { generateType }
     
     private def CharSequence genGeneric(Type it) {
-        if(it instanceof PrimitiveType) Primitives.wrap(javaType).name
+        if(it instanceof PrimitiveType) jvmWrapperTypeName
         else generateType
     }
     
@@ -417,7 +416,10 @@ class RolezGenerator extends AbstractGenerator {
         throw new AssertionError("Null type usage not checked")
     }
     
-    private def dispatch generateType(TypeParamRef _) { throw new AssertionError }
+    private def dispatch generateType(TypeParamRef _) {
+        // TODO
+        throw new AssertionError
+    }
     
     private def gen(ClassRef it) { generateClassRef }
     
@@ -434,7 +436,7 @@ class RolezGenerator extends AbstractGenerator {
     
     private def generateName(Class it) {
         if(mapped && !isSingleton) {
-            val name = javaClassName
+            val name = jvmClass.qualifiedName
             if(name == null) throw new AssertionError
             name
         }

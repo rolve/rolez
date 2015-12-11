@@ -5,10 +5,11 @@ Bundle-Version: 1.0.0.qualifier
 Bundle-SymbolicName: ch.trick17.rolez.lang; singleton:=true
 Bundle-ActivationPolicy: lazy
 Require-Bundle: org.eclipse.xtext,
+ org.eclipse.xtext.common.types,
  org.eclipse.xtext.xbase,
+ org.eclipse.xtext.xbase.lib,
  org.eclipse.equinox.common;bundle-version="3.5.0",
  org.eclipse.emf.ecore,
- org.eclipse.xtext.xbase.lib,
  org.antlr.runtime,
  org.eclipse.xtext.util,
  org.eclipse.xtend.lib,
@@ -31,3 +32,4 @@ Export-Package: ch.trick17.rolez.lang,
  ch.trick17.rolez.lang.typesystem.validation,
  ch.trick17.rolez.lang.validation
 Import-Package: org.apache.log4j
+Bundle-Vendor: Michael Faes

@@ -65,8 +65,8 @@ class CfgBuilderTest {
         ''') // Note there's a node for every stmt (incl. blocks) and for every expr
         
         parse('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.String
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.String mapped to java.lang.String
             task Main: {
                 0;
                 return;

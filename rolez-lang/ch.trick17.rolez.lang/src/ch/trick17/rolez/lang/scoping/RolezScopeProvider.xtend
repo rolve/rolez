@@ -2,6 +2,7 @@ package ch.trick17.rolez.lang.scoping
 
 import ch.trick17.rolez.lang.RolezExtensions
 import ch.trick17.rolez.lang.RolezUtils
+import ch.trick17.rolez.lang.rolez.Constr
 import ch.trick17.rolez.lang.rolez.Field
 import ch.trick17.rolez.lang.rolez.MemberAccess
 import ch.trick17.rolez.lang.rolez.Method
@@ -11,9 +12,11 @@ import ch.trick17.rolez.lang.rolez.RoleType
 import ch.trick17.rolez.lang.rolez.SuperConstrCall
 import ch.trick17.rolez.lang.rolez.VarRef
 import ch.trick17.rolez.lang.typesystem.RolezSystem
+import ch.trick17.rolez.lang.validation.JavaMapper
 import ch.trick17.rolez.lang.validation.RolezValidator
 import javax.inject.Inject
 import org.eclipse.emf.ecore.EReference
+import org.eclipse.xtext.common.types.JvmVisibility
 import org.eclipse.xtext.naming.QualifiedName
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils
 import org.eclipse.xtext.scoping.IScope
@@ -26,6 +29,7 @@ import static org.eclipse.xtext.scoping.Scopes.scopeFor
 class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     
     @Inject extension RolezExtensions
+    @Inject extension JavaMapper
     @Inject RolezSystem system
     @Inject RolezValidator validator
     @Inject RolezUtils utils
@@ -80,6 +84,36 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
             validator.delayedError("Constructor call is ambiguous", it, ref, AMBIGUOUS_CALL)
             scopeFor(maxSpecific)
         }
+    }
+    
+    def scope_Field_jvmField(Field it, EReference ref) {
+        val candidates = enclosingClass.jvmClass.declaredFields.filter[f |
+            f.simpleName == name && f.visibility == JvmVisibility.PUBLIC
+                && f.isStatic == enclosingClass.isSingleton
+        ]
+        scopeFor(candidates, [QualifiedName.create("mapped")], IScope.NULLSCOPE)
+    }
+    
+    def scope_Method_jvmMethod(Method it, EReference ref) {
+        val candidates = enclosingClass.jvmClass.declaredOperations.filter[m |
+            val javaParams = m.parameters.iterator
+            m.simpleName == name
+                && m.visibility == JvmVisibility.PUBLIC
+                && m.isStatic == enclosingClass.isSingleton
+                && params.size == m.parameters.size
+                && params.forall[type.mapsTo(javaParams.next.parameterType)]
+        ]
+        scopeFor(candidates, [QualifiedName.create("mapped")], IScope.NULLSCOPE)
+    }
+    
+    def scope_Constr_jvmConstr(Constr it, EReference ref) {
+        val candidates = enclosingClass.jvmClass.declaredConstructors.filter[c |
+            val javaParams = c.parameters.iterator
+            c.visibility == JvmVisibility.PUBLIC
+                && params.size == c.parameters.size
+                && params.forall[type.mapsTo(javaParams.next.parameterType)]
+        ]
+        scopeFor(candidates, [QualifiedName.create("mapped")], IScope.NULLSCOPE)
     }
     
     private def memberName(MemberAccess it) {

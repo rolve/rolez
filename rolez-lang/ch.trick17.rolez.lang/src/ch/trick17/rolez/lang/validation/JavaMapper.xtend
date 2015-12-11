@@ -5,114 +5,81 @@ import ch.trick17.rolez.lang.rolez.Boolean
 import ch.trick17.rolez.lang.rolez.Char
 import ch.trick17.rolez.lang.rolez.Constr
 import ch.trick17.rolez.lang.rolez.Double
-import ch.trick17.rolez.lang.rolez.Field
 import ch.trick17.rolez.lang.rolez.GenericClassRef
 import ch.trick17.rolez.lang.rolez.Int
 import ch.trick17.rolez.lang.rolez.Method
+import ch.trick17.rolez.lang.rolez.Null
 import ch.trick17.rolez.lang.rolez.PrimitiveType
 import ch.trick17.rolez.lang.rolez.RoleType
-import ch.trick17.rolez.lang.rolez.Type
+import ch.trick17.rolez.lang.rolez.TypeParamRef
 import ch.trick17.rolez.lang.rolez.Void
-import java.lang.reflect.Executable
 import javax.inject.Inject
-
-import static ch.trick17.rolez.lang.Constants.*
-import static java.util.Collections.unmodifiableSet
+import org.eclipse.emf.ecore.EObject
+import org.eclipse.xtext.common.types.JvmDeclaredType
+import org.eclipse.xtext.common.types.JvmExecutable
+import org.eclipse.xtext.common.types.JvmGenericArrayTypeReference
+import org.eclipse.xtext.common.types.JvmType
+import org.eclipse.xtext.common.types.JvmTypeParameter
+import org.eclipse.xtext.common.types.JvmTypeReference
+import org.eclipse.xtext.common.types.access.IJvmTypeProvider
 
 class JavaMapper {
     
     @Inject extension RolezExtensions
-    
-    static val mappedClasses = #{
-        objectClassName      -> "java.lang.Object",
-        stringClassName      -> "java.lang.String",
-        arrayClassName       -> null,
-        systemClassName      -> "java.lang.System",
-        printStreamClassName -> "java.io.PrintStream"
-    }
-    
-    def mappedClasses() { unmodifiableSet(mappedClasses.keySet) }
-    
-    def javaClassName(ch.trick17.rolez.lang.rolez.Class it) {
-        mappedClasses.get(qualifiedName)
-    }
-    
-    def javaClass(ch.trick17.rolez.lang.rolez.Class it) {
-        Class.forName(javaClassName)
-    }
-    
-    def javaField(Field it) throws NoSuchFieldException {
-        enclosingClass.javaClass.getField(name)
-    }
-    
-    def javaMethod(Method it) throws NoSuchMethodException {
-        val matching = enclosingClass.javaClass.methods.filter[m |
-            val javaParamTypes = m.genericParameterTypes.iterator
-            name == m.name
-                && params.size == m.parameterTypes.length
-                && params.forall[type.mapsTo(javaParamTypes.next)]
-        ]
-        switch(matching.size) {
-            case 0 : throw new NoSuchMethodException
-            case 1 : return matching.head
-            default: throw new AssertionError("So, this can happen...")
-        }
-    }
-    
-    def javaConstr(Constr it) throws NoSuchMethodException {
-        val matching = enclosingClass.javaClass.constructors.filter[c |
-            val javaParamTypes = c.genericParameterTypes.iterator
-            params.size == c.parameterTypes.length
-                && params.forall[type.mapsTo(javaParamTypes.next)]
-        ]
-        switch(matching.size) {
-            case 0 : throw new NoSuchMethodException
-            case 1 : return matching.head
-            default: throw new AssertionError("So, this can happen...")
-        }
-    }
+    @Inject IJvmTypeProvider.Factory jvmTypesFactory
     
     def checkedExceptionTypes(Method it) {
         if(enclosingClass.isArrayClass) emptyList
         else if(!isMapped) emptyList
-        else javaMethod.checkedExceptionTypes
+        else jvmMethod.checkedExceptionTypes(it)
     }
     
     def checkedExceptionTypes(Constr it) {
         if(enclosingClass.isArrayClass) emptyList
         else if(!isMapped) emptyList
-        else javaConstr.checkedExceptionTypes
+        else jvmConstr.checkedExceptionTypes(it)
     }
     
-    private def checkedExceptionTypes(Executable it) {
-        exceptionTypes.filter[isCheckedException].map[it as Class<? extends Exception>]
+    private def checkedExceptionTypes(JvmExecutable it, EObject context) {
+        exceptions.map[type].filter(JvmDeclaredType).filter[isCheckedException(context)]
     }
     
-    private def isCheckedException(Class<?> it) {
-        Exception.isAssignableFrom(it) && !RuntimeException.isAssignableFrom(it)
+    private def isCheckedException(JvmDeclaredType it, EObject context) {
+        val jvmTypes = jvmTypesFactory.findOrCreateTypeProvider(context.eResource.resourceSet)
+        val exceptionType = jvmTypes.findTypeByName("java.lang.Exception");
+        val runtimeExceptionType = jvmTypes.findTypeByName("java.lang.RuntimeException")
+        isSubclassOf(exceptionType) && !isSubclassOf(runtimeExceptionType)
     }
     
-    def dispatch boolean mapsTo(PrimitiveType it, Class<?> javaType) {
-        javaType.isPrimitive && name == javaType.name
+    def boolean isSubclassOf(JvmDeclaredType it, JvmType other) {
+        // IMPROVE: Find an existing method that does this
+        if(it == other) true
+        else if(extendedClass == null) false
+        else (extendedClass.type as JvmDeclaredType).isSubclassOf(other)
     }
     
-    def dispatch boolean mapsTo(RoleType it, Class<?> javaType) {
+    def dispatch boolean mapsTo(PrimitiveType it, JvmTypeReference other) {
+        name == other.type.qualifiedName
+    }
+    
+    def dispatch boolean mapsTo(RoleType it, JvmTypeReference other) {
         val base = base
         if(base instanceof GenericClassRef)
-            javaType.isArray && base.typeArg.mapsTo(javaType.componentType)
+            other instanceof JvmGenericArrayTypeReference
+                && base.typeArg.mapsTo((other as JvmGenericArrayTypeReference).componentType)
         else
-            base.clazz.javaClassName == javaType.name
+            base.clazz.jvmClass.qualifiedName == other.qualifiedName
     }
     
-    def dispatch boolean mapsTo(Type it, java.lang.reflect.Type _) { false }
-    
-    def javaType(PrimitiveType it) {
-        switch(it) {
-            Int:     Integer.TYPE
-            Double:  java.lang.Double.TYPE
-            Boolean: java.lang.Boolean.TYPE
-            Char:    Character.TYPE
-            Void:    java.lang.Void.TYPE
-        }
+    def dispatch boolean mapsTo(TypeParamRef it, JvmTypeReference other) {
+        other.type instanceof JvmTypeParameter && other.type.simpleName == param.name
     }
+    
+    def dispatch boolean mapsTo(Null it, JvmTypeReference _) { false }
+    
+    def dispatch jvmWrapperTypeName(    Int _) { "java.lang.Integer"   }
+    def dispatch jvmWrapperTypeName( Double _) { "java.lang.Double"    }
+    def dispatch jvmWrapperTypeName(Boolean _) { "java.lang.Boolean"   }
+    def dispatch jvmWrapperTypeName(   Char _) { "java.lang.Character" }
+    def dispatch jvmWrapperTypeName(   Void _) { "java.lang.Void"      }
 }

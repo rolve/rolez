@@ -57,18 +57,18 @@ class RolezExtensions {
     def qualifiedName(ClassLike it) { nameProvider.getFullyQualifiedName(it) }
     def qualifiedName(   Member it) { nameProvider.getFullyQualifiedName(it) }
     
-    def Iterable<Member> allMembers(Class it) {
-        members +
-            if(superclass == null) emptyList
-            else superclass.allMembers.filter[m | !overrides(m)]
-    }
-    
     def isSingleton(Class it) { it instanceof SingletonClass }
     
     def isObjectClass(Class it) { qualifiedName == objectClassName }
     def isArrayClass (Class it) { qualifiedName ==  arrayClassName }
     def isStringClass(Class it) { qualifiedName == stringClassName }
     def isTaskClass  (Class it) { qualifiedName ==   taskClassName }
+    
+    def Iterable<Member> allMembers(Class it) {
+        members +
+            if(superclass == null) emptyList
+            else superclass.allMembers.filter[m | !overrides(m)]
+    }
     
     def dispatch clazz( SimpleClassRef it) { clazz }
     def dispatch clazz(GenericClassRef it) { clazz }
@@ -141,6 +141,10 @@ class RolezExtensions {
         enclosingClass.qualifiedName == arrayClassName && name == "set" && mapped
     }
     
+    def isMapped(Constr it) { jvmConstr != null }
+    def isMapped( Field it) { jvmField  != null }
+    def isMapped(Method it) { jvmMethod != null }
+    
     /*
      * toString() replacements:
      */
@@ -179,9 +183,9 @@ class RolezExtensions {
         r.clazz.qualifiedName + "[" + r.typeArg.string + "]"
     }
     
-    def dispatch name(Int _)     { "int" }
-    def dispatch name(Double _)  { "double" }
+    def dispatch name(    Int _) { "int"     }
+    def dispatch name( Double _) { "double"  }
     def dispatch name(Boolean _) { "boolean" }
-    def dispatch name(Char _)    { "char" }
-    def dispatch name(Void _)    { "void" }
+    def dispatch name(   Char _) { "char"    }
+    def dispatch name(   Void _) { "void"    }
 }

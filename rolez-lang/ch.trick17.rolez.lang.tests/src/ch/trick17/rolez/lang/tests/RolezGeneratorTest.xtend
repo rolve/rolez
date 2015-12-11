@@ -40,21 +40,21 @@ class RolezGeneratorTest {
     
     def classes() {
         newResourceSet.with('''
-            mapped class rolez.lang.Object {
+            class rolez.lang.Object mapped to java.lang.Object {
                 mapped def readonly equals(o: readonly Object): boolean
                 mapped def readonly hashCode: int
                 mapped def readonly toString: pure String
             }
-            mapped class rolez.lang.String {
+            class rolez.lang.String mapped to java.lang.String {
                 mapped def pure length: int
                 mapped def pure substring(b: int, e: int): pure String
             }
-            mapped class rolez.lang.Array[T] {
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
                 mapped new(i: int)
                 mapped def readonly  get(i: int): T
                 mapped def readwrite set(i: int, o: T):
             }
-            mapped class rolez.io.PrintStream {
+            class rolez.io.PrintStream mapped to java.io.PrintStream {
                 mapped new(file: readonly String)
             }
             class Base {
@@ -70,7 +70,7 @@ class RolezGeneratorTest {
     
     @Test def testFiles() {
         var program = parse('''
-            mapped class rolez.io.PrintStream {
+            class rolez.io.PrintStream mapped to java.io.PrintStream {
                 mapped new(s: pure String)
             }
             class A
@@ -88,7 +88,7 @@ class RolezGeneratorTest {
             class foo.B
             class foo.bar.C
             object D
-            mapped object rolez.lang.System
+            object rolez.lang.System mapped to java.lang.System
         ''', classes)
         program.assertNoErrors
         fsa = new InMemoryFileSystemAccess
@@ -159,7 +159,7 @@ class RolezGeneratorTest {
     
     @Test def testMappedSingletonClass() {
         parse('''
-            mapped object rolez.lang.System {
+            object rolez.lang.System mapped to java.lang.System {
                 mapped val out: readonly rolez.io.PrintStream
                 mapped def readonly exit(status: int):
                 mapped def readonly lineSeparator: pure String

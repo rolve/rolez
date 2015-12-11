@@ -1,14 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<?pde version="3.8"?><target name="ch.trick17.rolez.lang.target" sequenceNumber="8">
+<?pde version="3.8"?><target name="ch.trick17.rolez.lang.target" sequenceNumber="10">
 <locations>
-<location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="false" type="InstallableUnit">
-<unit id="org.eclipse.emf.mwe2.launcher.feature.group" version="0.0.0"/>
-<repository location="http://download.eclipse.org/modeling/emft/mwe/updates/releases/2.8.1/"/>
-</location>
-<location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="false" type="InstallableUnit">
-<unit id="org.eclipse.xtext.sdk.feature.group" version="0.0.0"/>
-<repository location="http://download.eclipse.org/modeling/tmf/xtext/updates/releases/2.9.0/"/>
-</location>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="false" type="InstallableUnit">
 <unit id="it.xsemantics.runtime.feature.feature.group" version="0.0.0"/>
 <repository location="http://sourceforge.net/projects/xsemantics/files/updates/releases/1.9"/>
@@ -16,6 +8,14 @@
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="false" type="InstallableUnit">
 <unit id="org.eclipse.emf.sdk.feature.group" version="2.11.0.v20150601-0402"/>
 <repository location="http://download.eclipse.org/releases/mars/201506241002/"/>
+</location>
+<location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="false" type="InstallableUnit">
+<unit id="org.eclipse.emf.mwe2.launcher.feature.group" version="0.0.0"/>
+<repository location="http://download.eclipse.org/modeling/emft/mwe/updates/releases/2.8.1/"/>
+</location>
+<location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="false" type="InstallableUnit">
+<unit id="org.eclipse.xtext.sdk.feature.group" version="2.9.1.v201512101138"/>
+<repository location="file:/D:/Data/Dokumente/Doktorat/Research/Projects/parallel-roles/code/rolez-lang/repositories/xtext-2.9.1.201512101138/"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="false" type="InstallableUnit">
 <unit id="org.eclipse.platform.ide" version="4.5.1.M20150904-0015"/>

@@ -1,0 +1,34 @@
+package rolez.lang
+
+import rolez.io.*
+
+class Object mapped to java.lang.Object {
+    mapped def readonly equals(other: readonly Object): boolean
+    mapped def readonly hashCode: int
+    mapped def readonly toString: readonly String
+}
+
+class Array[T] mapped to rolez.lang.Array {
+    mapped val length: int
+    
+    mapped new(length: int)
+    
+    mapped def readonly  get(index: int): T
+    mapped def readwrite set(index: int, element: T):
+}
+
+class String mapped to java.lang.String {
+    mapped new(chars: readonly Array[char])
+    
+    mapped def readonly length: int
+    mapped def readonly charAt(position: int): char
+    mapped def readonly trim: readonly String
+}
+
+class Task mapped to rolez.lang.Task
+
+object System mapped to java.lang.System {
+    mapped val out: readonly PrintStream
+    
+    mapped def readonly exit(code: int):
+}

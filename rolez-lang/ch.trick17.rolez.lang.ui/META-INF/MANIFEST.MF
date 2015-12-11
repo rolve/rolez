@@ -6,6 +6,7 @@ Bundle-SymbolicName: ch.trick17.rolez.lang.ui; singleton:=true
 Bundle-ActivationPolicy: lazy
 Require-Bundle: ch.trick17.rolez.lang,
  ch.trick17.rolez.lang.ide,
+ org.eclipse.xtext.common.types.ui,
  org.eclipse.xtext.ui,
  org.eclipse.xtext.ui.shared,
  org.eclipse.xtext.ui.codetemplates.ui,
@@ -28,3 +29,4 @@ Export-Package: ch.trick17.rolez.lang.ui.buildpath,
  ch.trick17.rolez.lang.ui.outline,
  ch.trick17.rolez.lang.ui.quickfix
 Bundle-Activator: ch.trick17.rolez.lang.ui.internal.LangActivator
+Bundle-Vendor: Michael Faes

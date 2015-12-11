@@ -1,6 +1,7 @@
 grammar ch.trick17.rolez.lang.Rolez with org.eclipse.xtext.common.Terminals
 
 import "http://www.eclipse.org/emf/2002/Ecore"
+import "http://www.eclipse.org/xtext/common/JavaVMTypes" as jvmTypes
 
 generate rolez "http://trick17.ch/rolez/lang/Rolez"
 
@@ -25,15 +26,17 @@ Class:
     NormalClass | SingletonClass;
 
 NormalClass:
-    mapped?='mapped'? 'class' name=QualifiedName
+    'class' name=QualifiedName
     ('[' typeParam=TypeParam ']')?
+    (mapped?='mapped' 'to' jvmClass=[jvmTypes::JvmGenericType|QualifiedName])?
     ('extends' superclass=[NormalClass|QualifiedName])?
     ('{'
         (constrs+=Constr | members+=Member)+
     '}')?;
 
 SingletonClass:
-    mapped?='mapped'? 'object' name=QualifiedName
+    'object' name=QualifiedName
+    (mapped?='mapped' 'to' jvmClass=[jvmTypes::JvmGenericType|QualifiedName])?
     ('extends' superclass=[NormalClass|QualifiedName])?
     ('{'
         members+=Member+
@@ -49,22 +52,27 @@ Member:
     Field | Method;
 
 Constr:
-    {Constr} mapped?='mapped'? 'new' ('(' params+=Param (',' params+=Param)* ')')?
+    {Constr} jvmConstr=[jvmTypes::JvmConstructor|MappedKeyword]?
+    'new' ('(' params+=Param (',' params+=Param)* ')')?
     body=Block?;
 
+
 Field:
-    mapped?='mapped'? kind=VarKind name=ID ':' type=Type
+    jvmField=[jvmTypes::JvmField|MappedKeyword]?
+    kind=VarKind name=ID ':' type=Type
     ('=' initializer=Expr)?;
 
 enum VarKind:
     VAL='val' | VAR='var';
 
 Method:
-    mapped?='mapped'? (overriding?='override' | 'def')
-    thisRole=Role name=ID
+    jvmMethod=[jvmTypes::JvmOperation|MappedKeyword]?
+    (overriding?='override' | 'def') thisRole=Role name=ID
     ('(' params+=Param (',' params+=Param)* ')')?
     ':' type=Type
     body=Block?;
+
+MappedKeyword: 'mapped';
 
 Param:
     name=ID ':' type=Type;
@@ -273,7 +281,7 @@ Var:
     LocalVar | {Param};
 
 Named:
-    ClassLike | Typed;
+    ClassLike | Typed | TypeParam;
 
 Typed:
     TypedBody | Field | {Var};

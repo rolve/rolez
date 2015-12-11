@@ -14,7 +14,6 @@ import ch.trick17.rolez.lang.rolez.ExprStmt
 import ch.trick17.rolez.lang.rolez.Field
 import ch.trick17.rolez.lang.rolez.GenericClassRef
 import ch.trick17.rolez.lang.rolez.IfStmt
-import ch.trick17.rolez.lang.rolez.Int
 import ch.trick17.rolez.lang.rolez.LocalVar
 import ch.trick17.rolez.lang.rolez.LocalVarDecl
 import ch.trick17.rolez.lang.rolez.MemberAccess
@@ -31,7 +30,6 @@ import ch.trick17.rolez.lang.rolez.SuperConstrCall
 import ch.trick17.rolez.lang.rolez.Task
 import ch.trick17.rolez.lang.rolez.This
 import ch.trick17.rolez.lang.rolez.Type
-import ch.trick17.rolez.lang.rolez.TypeParamRef
 import ch.trick17.rolez.lang.rolez.TypedBody
 import ch.trick17.rolez.lang.rolez.VarRef
 import ch.trick17.rolez.lang.rolez.Void
@@ -56,7 +54,7 @@ class RolezValidator extends RolezSystemValidator {
     public static val DUPLICATE_TOP_LEVEL_ELEMENT = "duplicate top-level element"
     public static val CIRCULAR_INHERITANCE = "circular inheritance"
     public static val INCORRECT_MAIN_TASK = "incorrect main task"
-    public static val INCORRECT_TYPE_PARAM = "incorrect type variable"
+    public static val INCORRECT_TYPE_PARAM = "incorrect type parameter"
     public static val MISSING_TYPE_PARAM = "missing type parameter"
     public static val DUPLICATE_FIELD = "duplicate field"
     public static val DUPLICATE_METHOD = "duplicate method"
@@ -92,11 +90,8 @@ class RolezValidator extends RolezSystemValidator {
     public static val NON_MAPPED_CONSTR = "non-mapped constructor"
     public static val MAPPED_WITH_BODY = "mapped with body"
     public static val MISSING_BODY = "missing body"
-    public static val UNKNOWN_MAPPED_CLASS = "unknown mapped class"
-    public static val UNKNOWN_MAPPED_FIELD = "unknown mapped field"
-    public static val UNKNOWN_MAPPED_METHOD = "unknown mapped method"
-    public static val UNKNOWN_MAPPED_CONSTR = "unknown mapped constructor"
     public static val CLASS_ACTUALLY_MAPPED = "class actually mapped"
+    public static val INCORRECT_MAPPED_CLASS = "incorrect mapped class"
     public static val INCORRECT_MAPPED_SUPERCLASS = "incorrect mapped superclass"
     public static val INCORRECT_MAPPED_CLASS_KIND = "incorrect mapped class kind"
     public static val INCORRECT_MAPPED_FIELD = "incorrect mapped field"
@@ -160,8 +155,8 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkTypeParam(NormalClass it) {
-        if(!isArrayClass && typeParam != null)
-            error("Only " + arrayClassName + " may declare a type parameter",
+        if(typeParam != null && !isMapped)
+            error("Only mapped classes may declare a type parameter",
                 NORMAL_CLASS__TYPE_PARAM, INCORRECT_TYPE_PARAM)
     }
     
@@ -355,7 +350,7 @@ class RolezValidator extends RolezSystemValidator {
     def checkFieldInitializer(Field it) {
         if(initializer == null) return;
         
-        if(mapped)
+        if(isMapped)
             error("Mapped fields cannot have an initializer", initializer,
                 null, MAPPED_FIELD_WITH_INIT)
         for(t : initializer.all(This))
@@ -444,21 +439,40 @@ class RolezValidator extends RolezSystemValidator {
     }
     
     @Check
+    def checkMappedClass(Class it) {
+        if(!isMapped) return;
+        
+        if(it instanceof NormalClass) {
+            if(!jvmClass.typeParameters.isEmpty) {
+                if(jvmClass.typeParameters.size > 1)
+                    error("Cannot map to a class with multiple type parameters",
+                        CLASS__JVM_CLASS, INCORRECT_MAPPED_CLASS)
+                else if(typeParam == null)
+                    error("Missing type parameter for mapped class",
+                        NAMED__NAME, MISSING_TYPE_PARAM)
+                else if(typeParam.name != jvmClass.typeParameters.head.name)
+                    error("Incorrect type parameter name for mapped class: expected " + jvmClass.typeParameters.head.name,
+                        typeParam, NAMED__NAME, INCORRECT_TYPE_PARAM)
+            }
+            else if(typeParam != null)
+                error(qualifiedName + " must not declare a type parameter",
+                    typeParam, NAMED__NAME, INCORRECT_TYPE_PARAM)
+        }
+    }
+    
+    @Check
     def checkMappedField(Field it) {
-        if(mapped) {
+        if(isMapped) {
             if(!enclosingClass.mapped)
                 error("mapped fields are allowed in mapped classes only",
-                    FIELD__MAPPED, MAPPED_IN_NORMAL_CLASS)
+                    FIELD__JVM_FIELD, MAPPED_IN_NORMAL_CLASS)
             
-            val javaField =
-                try javaMapper.javaField(it)
-                catch(NoSuchFieldException _) {
-                    error("Unknown mapped field", NAMED__NAME, UNKNOWN_MAPPED_FIELD)
-                    return
-                }
-            if(!type.mapsTo(javaField.genericType))
+            if((kind == VAL) != jvmField.isFinal)
+                error("Incorrect field kind for mapped field: expected " + if(jvmField.isFinal) "val" else "var",
+                    FIELD__KIND, INCORRECT_MAPPED_FIELD)
+            if(!type.mapsTo(jvmField.type))
                 error("Incorrect type for mapped field: should map to "
-                    + javaField.genericType, type, null, INCORRECT_MAPPED_FIELD)
+                    + jvmField.type, type, null, INCORRECT_MAPPED_FIELD)
         }
         else if(enclosingClass.mapped)
             error("Fields of mapped classes must be mapped",
@@ -470,19 +484,13 @@ class RolezValidator extends RolezSystemValidator {
         if(mapped) {
             if(!enclosingClass.mapped)
                 error("mapped methods are allowed in mapped classes only",
-                    METHOD__MAPPED, MAPPED_IN_NORMAL_CLASS)
+                    METHOD__JVM_METHOD, MAPPED_IN_NORMAL_CLASS)
             if(body != null)
                 error("mapped methods cannot have a body", body, null, MAPPED_WITH_BODY)
             
-            val javaMethod = 
-                try javaMapper.javaMethod(it)
-                catch(NoSuchMethodException _) {
-                    error("Unknown mapped method", NAMED__NAME, UNKNOWN_MAPPED_METHOD)
-                    return
-                }
-            if(!type.mapsTo(javaMethod.genericReturnType))
+            if(!type.mapsTo(jvmMethod.returnType))
                 error("Incorrect type for mapped method: should map to "
-                    + javaMethod.genericReturnType, type, null, INCORRECT_MAPPED_METHOD)
+                    + jvmMethod.returnType, type, null, INCORRECT_MAPPED_METHOD)
         }
         else {
             if(enclosingClass.mapped)
@@ -495,18 +503,12 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkMappedConstr(Constr it) {
-        if(mapped) {
+        if(isMapped) {
             if(!enclosingClass.mapped)
                 error("mapped constructors are allowed in mapped classes only",
-                    CONSTR__MAPPED, MAPPED_IN_NORMAL_CLASS)
+                    CONSTR__JVM_CONSTR, MAPPED_IN_NORMAL_CLASS)
             if(body != null)
                 error("mapped constructors cannot have a body", body, null, MAPPED_WITH_BODY)
-            
-            try javaMapper.javaConstr(it)
-            catch(NoSuchMethodException _) {
-                error("Unknown mapped constr", null, UNKNOWN_MAPPED_CONSTR)
-                return
-            }
         }
         else {
             if(enclosingClass.mapped)
@@ -518,20 +520,11 @@ class RolezValidator extends RolezSystemValidator {
     }
     
     @Check
-    def checkMappedClass(Class it) {
-        if(mappedClasses.contains(qualifiedName)) {
-            if(!mapped)
-                error("Class must be declared as mapped", NAMED__NAME, CLASS_ACTUALLY_MAPPED)
-        }
-        else if(mapped)
-            error("Unknown mapped class " + qualifiedName, NAMED__NAME, UNKNOWN_MAPPED_CLASS)
-    }
-    
-    @Check
     def checkObjectClass(Class it) {
         if(!isObjectClass) return;
         
         checkClassKind(false)
+        checkMapped
         if(superclass != null)
            error(qualifiedName + " must not have a superclass",
                CLASS__SUPERCLASS, INCORRECT_MAPPED_SUPERCLASS)
@@ -542,6 +535,7 @@ class RolezValidator extends RolezSystemValidator {
         if(!isStringClass) return;
         
         checkClassKind(false)
+        checkMapped
         checkSuperclass(objectClassName)
     }
     
@@ -550,99 +544,7 @@ class RolezValidator extends RolezSystemValidator {
         if(!isArrayClass) return;
         
         checkClassKind(false)
-        checkSuperclass(objectClassName)
-        
-        if(it instanceof NormalClass) {
-            if(typeParam == null)
-                error(qualifiedName + " must declare a type parameter",
-                    NAMED__NAME, MISSING_TYPE_PARAM)
-            
-            if(constrs.size != 1)
-               error(qualifiedName + " must have exactly one constructor",
-                   null, INCORRECT_MAPPED_CONSTR)
-            constrs.head => [
-                if(!mapped)
-                   error("Constructor must be declared as mapped",
-                       it, null, INCORRECT_MAPPED_CONSTR)
-                else if(params.size != 1)
-                   error("Constructor must have a single parameter",
-                       it, null, INCORRECT_MAPPED_CONSTR)
-                else if(!(params.head.type instanceof Int))
-                   error("Constructor parameter must be of type int",
-                       params.head.type, null, INCORRECT_MAPPED_CONSTR)
-            ]
-            
-            for(f : fields.filter[name == "length"]) {
-                if(!f.mapped)
-                    error("This field must be declared as mapped", f,
-                        NAMED__NAME, INCORRECT_MAPPED_FIELD)
-                if(f.kind != VAL)
-                    error("This field must be a value field", f,
-                        FIELD__KIND, INCORRECT_MAPPED_FIELD)
-                if(!(f.type instanceof Int))
-                    error("The type of this field must be int", f.type,
-                        null, INCORRECT_MAPPED_FIELD)
-            }
-            for(f : fields.filter[isMapped && name != "length"])
-                error("Unknown mapped field " + f.name, f,
-                    NAMED__NAME, UNKNOWN_MAPPED_FIELD)
-            
-            for(m : methods.filter[name == "get"]) {
-                if(!m.mapped)
-                    error("This method must be declared as mapped", m,
-                        NAMED__NAME, INCORRECT_MAPPED_METHOD)
-                val type = m.type
-                switch(type) {
-                    TypeParamRef case type.param == typeParam: {}
-                    default: error("The return type of this method must be "
-                        + typeParam.name, m, NAMED__NAME, INCORRECT_MAPPED_METHOD)
-                }
-                if(m.params.size != 1)
-                    error("This method must have a single int parameter", m,
-                        NAMED__NAME, INCORRECT_MAPPED_METHOD)
-                else if(!(m.params.head.type instanceof Int))
-                    error("This parameter's type must be int", m.params.head.type,
-                        null, INCORRECT_MAPPED_METHOD)
-            }
-            for(m : methods.filter[name == "set"]) {
-                if(!m.mapped)
-                    error("This method must be declared as mapped", m,
-                        NAMED__NAME, INCORRECT_MAPPED_METHOD)
-                if(!(m.type instanceof Void))
-                    error("The return type of this method must be void", m.type,
-                        null, INCORRECT_MAPPED_METHOD)
-                
-                if(m.params.size != 2)
-                    error("This method must have two parameters", m,
-                        NAMED__NAME, INCORRECT_MAPPED_METHOD)
-                else {
-                    if(!(m.params.get(0).type instanceof Int))
-                        error("This parameter's type must be int", m.params.get(0).type,
-                            null, INCORRECT_MAPPED_METHOD)
-                    if(!(m.params.get(1).type instanceof TypeParamRef))
-                        error("This parameter's type must be " + typeParam.name,
-                            m.params.get(1).type, null, INCORRECT_MAPPED_METHOD)
-                }
-            }
-            for(m : methods.filter[isMapped && name != "get" && name != "set"])
-                error("unknown mapped method " + m.name, m,
-                    NAMED__NAME, UNKNOWN_MAPPED_METHOD)
-        }
-    }
-    
-    @Check
-    def checkTaskClass(Class it) {
-        if(!isTaskClass) return;
-        
-        checkClassKind(false)
-        checkSuperclass(objectClassName)
-    }
-    
-    @Check
-    def checkSystemClass(Class it) {
-        if(qualifiedName != systemClassName) return;
-        
-        checkClassKind(true)
+        checkMapped
         checkSuperclass(objectClassName)
     }
     
@@ -650,6 +552,11 @@ class RolezValidator extends RolezSystemValidator {
         if(isSingleton != expectSingleton)
             error(qualifiedName + " must " + (if(expectSingleton) "" else "not ")
                 + "be a singleton class", NAMED__NAME, INCORRECT_MAPPED_CLASS_KIND)
+    }
+    
+    private def checkMapped(Class it) {
+        if(!mapped)
+            error("Class must be declared as mapped", NAMED__NAME, CLASS_ACTUALLY_MAPPED)
     }
     
     private def checkSuperclass(Class it, QualifiedName expected) {

@@ -45,7 +45,7 @@ class RolezTypeSystemTest {
     
     @Test def testTAssignment() {
         val program = parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A
             class B extends A 
             task Main: {
@@ -76,7 +76,7 @@ class RolezTypeSystemTest {
             }
         ''').assertError(INT_LITERAL, AEXPR, "assign", "5")
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 def pure foo: {}
             }
@@ -93,7 +93,7 @@ class RolezTypeSystemTest {
         ''').assertError(VAR_REF, AVARREF, "assign", "value")
         
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 val x: int
                 def readwrite foo: {
@@ -136,7 +136,7 @@ class RolezTypeSystemTest {
         parse("task Main: { 5 != 3; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
 
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A
             task Main: {
                 new Object == new A;
@@ -155,7 +155,7 @@ class RolezTypeSystemTest {
     
     @Test def testTEqualityExprIncompatibleTypes() {
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A
             class B
             task Main: { new A == new B; }
@@ -186,7 +186,7 @@ class RolezTypeSystemTest {
     
     @Test def testTRelationalExprIncompatibleTypes() {
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             task Main: { new Object < new Object; }
         ''').assertError(RELATIONAL_EXPR, null, "compare", "Object")
         
@@ -208,24 +208,24 @@ class RolezTypeSystemTest {
         parse("task Main: { -99 %  3; }").main.lastExpr.type.assertThat(instanceOf(Int))
         
         var program = parse('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.String
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.String mapped to java.lang.String
             task Main: { "Hi" + " World"; }
         ''')
         program.main.lastExpr.type.assertThat(
             isRoleType(READWRITE, newClassRef(program.findClass(stringClassName))))
             
         program = parse('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.String
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.String mapped to java.lang.String
             task Main: { "" + '5'; }
         ''')
         program.main.lastExpr.type.assertThat(
             isRoleType(READWRITE, newClassRef(program.findClass(stringClassName))))
             
         program = parse('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.String
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.String mapped to java.lang.String
             task Main: { null + " "; }
         ''')
         program.main.lastExpr.type.assertThat(
@@ -247,34 +247,34 @@ class RolezTypeSystemTest {
     
     @Test def testTArtithmeticExprTypeMismatch() {
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             task Main: { new Object + new Object; }
         ''').assertError(ARITHMETIC_BINARY_EXPR, null, "operator", "undefined", "object")
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A
             class B
             task Main: { new A - new B; }
         ''').assertError(ARITHMETIC_BINARY_EXPR, null, "operator", "undefined", "A", "B")
         
         parse('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.String
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.String mapped to java.lang.String
             task Main: { "Hello" - "World"; }
         ''').assertError(ARITHMETIC_BINARY_EXPR, null, "operator", "undefined", "String")
         parse('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.String
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.String mapped to java.lang.String
             task Main: { "Hello" * new Object; }
         ''').assertError(ARITHMETIC_BINARY_EXPR, null, "operator", "undefined", "String", "Object")
         parse('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.String
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.String mapped to java.lang.String
             task Main: { 5 / "World"; }
         ''').assertError(ARITHMETIC_BINARY_EXPR, null, "operator", "undefined", "int", "String")
         parse('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.String
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.String mapped to java.lang.String
             task Main: { null % "World"; }
         ''').assertError(ARITHMETIC_BINARY_EXPR, null, "operator", "undefined", "null", "String")
         
@@ -294,15 +294,15 @@ class RolezTypeSystemTest {
         parse("task Main: { true as boolean; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
         
         var program = parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             task Main: { new Object as readwrite Object; }
         ''')
         program.main.lastExpr.type.assertThat(isRoleType(READWRITE, newClassRef(program.findClass(objectClassName))))
         
         // Upcasts
         program = parse('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.Array[T] {
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
                 mapped new(length: int)
             }
             class A
@@ -328,7 +328,7 @@ class RolezTypeSystemTest {
         
         // Downcasts
         program = parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A
             task Main: { new Object as readwrite A; }
         ''')
@@ -351,39 +351,39 @@ class RolezTypeSystemTest {
             .assertError(CAST, null, "cast", "int", "void")
         
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             task Main: { 5 as readwrite Object; }
         ''').assertError(CAST, null, "cast", "readwrite rolez.lang.Object", "int")
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             task Main: { new Object as int; }
         ''').assertError(CAST, null, "cast", "readwrite rolez.lang.Object", "int")
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A
             task Main: { new A as readonly A as readwrite A; }
         ''').assertError(CAST, null, "cast", "readwrite A", "readonly A")
         
         parse('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.Array[T]
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array
             task Main: { new Array[boolean] as readwrite Array[int]; }
         ''').assertError(CAST, null, "cast", "readwrite rolez.lang.Array[boolean]", "readwrite rolez.lang.Array[int]")
         parse('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.Array[T]
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array
             class A
             task Main: { new Array[pure Object] as readwrite Array[pure A]; }
         ''').assertError(CAST, null, "cast", "readwrite rolez.lang.Array[pure rolez.lang.Object]", "readwrite rolez.lang.Array[pure A]")
         parse('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.Array[T]
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array
             class A
             task Main: { new Array[readwrite A] as readwrite Array[pure A]; }
         ''').assertError(CAST, null, "cast", "readwrite rolez.lang.Array[readwrite A]", "readwrite rolez.lang.Array[pure A]")
         parse('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.Array[T]
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array
             class A
             task Main: { new Array[pure A] as readwrite Array[readwrite A]; }
         ''').assertError(CAST, null, "cast", "readwrite rolez.lang.Array[pure A]", "readwrite rolez.lang.Array[readwrite A]")
@@ -404,12 +404,12 @@ class RolezTypeSystemTest {
     
     @Test def testTUnaryMinusTypeMismatch() {
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             task Main: { -new Object; }
         ''').assertError(NEW, SUBTYPEEXPR, "Object", "int")
         parse('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.String
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.String mapped to java.lang.String
             task Main: { -"Hello"; }
         ''').assertError(STRING_LITERAL, SUBTYPEEXPR, "String", "int")
         
@@ -439,12 +439,12 @@ class RolezTypeSystemTest {
     
     @Test def testTUnaryNotTypeMismatch() {
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             task Main: { !new Object; }
         ''').assertError(NEW, SUBTYPEEXPR, "Object", "boolean")
         parse('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.String
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.String mapped to java.lang.String
             task Main: { !"Hello"; }
         ''').assertError(STRING_LITERAL, SUBTYPEEXPR, "String", "boolean")
         
@@ -468,14 +468,14 @@ class RolezTypeSystemTest {
     
     @Test def testTMemberAccessField() {
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 var x: int
             }
             task Main: { new A.x; }
         ''').main.lastExpr.type.assertThat(instanceOf(Int))
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 var x: int
             }
@@ -486,7 +486,7 @@ class RolezTypeSystemTest {
         ''').main.lastExpr.type.assertThat(instanceOf(Int))
         
         val program = parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 var a: readwrite A
             }
@@ -499,7 +499,7 @@ class RolezTypeSystemTest {
             .assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
         
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 var a: readwrite A
             }
@@ -509,7 +509,7 @@ class RolezTypeSystemTest {
             }
         ''').main.lastExpr.type.asRoleType.role.assertThat(is(READONLY))
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 var a: readonly A
             }
@@ -519,7 +519,7 @@ class RolezTypeSystemTest {
             }
         ''').main.lastExpr.type.asRoleType.role.assertThat(is(READONLY))
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 var a: pure A
             }
@@ -529,7 +529,7 @@ class RolezTypeSystemTest {
             }
         ''').main.lastExpr.type.asRoleType.role.assertThat(is(PURE))
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 var a: pure A
             }
@@ -542,7 +542,7 @@ class RolezTypeSystemTest {
     
     @Test def testTMemberAccessFieldRoleMismatch() {
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A { var x: int }
             task Main: {
                 val a: pure A = new A;
@@ -556,7 +556,7 @@ class RolezTypeSystemTest {
         for(expected : Role.values) {
             for(actual : Role.values.filter[system.subroleSucceeded(it, expected)]) {
                 parse('''
-                    mapped class rolez.lang.Object
+                    class rolez.lang.Object mapped to java.lang.Object
                     class A {
                         def «expected» x: int { return 42; }
                     }
@@ -569,7 +569,7 @@ class RolezTypeSystemTest {
         }
         
         var program = parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 def readwrite a: readonly A { return null; }
             }
@@ -579,8 +579,8 @@ class RolezTypeSystemTest {
             .assertThat(isRoleType(READONLY, newClassRef(program.findClass("A"))))
         
         val lib = newResourceSet.with('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.Array[T] {
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
                 mapped new(length: int)
                 mapped def readonly  get(i: int): T
                 mapped def readwrite set(i: int, o: T):
@@ -615,7 +615,7 @@ class RolezTypeSystemTest {
             .assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
         
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A
             class B {
                 def readwrite foo(a: readonly A, b: readwrite B,
@@ -626,7 +626,7 @@ class RolezTypeSystemTest {
         ''').assertNoErrors
         
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 def readwrite foo: {}
             }
@@ -639,7 +639,7 @@ class RolezTypeSystemTest {
     
     @Test def testTMemberAccessMethodErrorInArg() {
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 def pure foo(i: int): {}
                 def pure bar: { this.foo(!5); }
@@ -650,7 +650,7 @@ class RolezTypeSystemTest {
         // linking somehow works differently...
         val set = newResourceSet.with("class A { def pure foo(i: int): {} }")
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class B {
                 def pure bar: { new A.foo(!5); }
             }
@@ -661,7 +661,7 @@ class RolezTypeSystemTest {
         for(expected : Role.values) {
             for(actual : Role.values.filter[!system.subroleSucceeded(it, expected)]) {
                 parse('''
-                    mapped class rolez.lang.Object
+                    class rolez.lang.Object mapped to java.lang.Object
                     class A {
                         def «expected» x: int { return 42; }
                     }
@@ -675,7 +675,7 @@ class RolezTypeSystemTest {
         }
         
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 def readwrite foo: {}
                 def readonly  bar: { this.foo; }
@@ -685,45 +685,45 @@ class RolezTypeSystemTest {
     
     @Test def testTMemberAccessMethodTypeMismatch() {
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A { def readwrite foo: {} }
             task Main: { new A.foo(5); }
         ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A { def readwrite foo(c: char): {} }
             task Main: { new A.foo(5, false); }
         ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A { def readwrite foo(i: int): {} }
             task Main: { new A.foo(); }
         ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A { def readwrite foo(i: int, a: readwrite A): {} }
             task Main: { new A.foo(false); }
         ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
         
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A { def readwrite foo(i: int): {} }
             task Main: { new A.foo(false); }
         ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A { def readwrite foo(a: readwrite A): {} }
             task Main: { new A.foo(new Object); }
         ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A { def readwrite foo(a: readwrite A): {} }
             task Main: { new A.foo(new A as readonly A); }
         ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
         
         parse('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.Array[T] {
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
                 mapped new(i: int)
                 mapped def readwrite set(i: int, o: T):
             }
@@ -732,8 +732,8 @@ class RolezTypeSystemTest {
             }
         ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "set")
         parse('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.Array[T] {
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
                 mapped new(i: int)
                 mapped def readwrite set(i: int, o: T):
             }
@@ -747,7 +747,7 @@ class RolezTypeSystemTest {
     
     @Test def testTMemberAccessOverloading() {
         var program = parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 def readwrite foo: int { return 0; }
                 def readwrite foo(a: boolean): boolean { return false; }
@@ -761,7 +761,7 @@ class RolezTypeSystemTest {
         program.main.expr(1).type.assertThat(instanceOf(Boolean))
         
         program = parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 var foo: int
                 def readwrite foo(a: boolean): boolean { return false; }
@@ -775,7 +775,7 @@ class RolezTypeSystemTest {
         program.main.expr(1).type.assertThat(instanceOf(Boolean))
         
         program = parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 def readwrite foo(a: int): int { return 0; }
                 def readwrite foo(a: boolean): boolean { return false; }
@@ -789,7 +789,7 @@ class RolezTypeSystemTest {
         program.main.expr(1).type.assertThat(instanceOf(Boolean))
         
         program = parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 def readwrite foo(a: readwrite A): int { return 0; }
                 def readwrite foo(a: readonly  A): boolean { return false; }
@@ -804,7 +804,7 @@ class RolezTypeSystemTest {
         
         // (Switch order of declaration to rule out accidental selection of the correct one)
         program = parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 def readwrite foo(a: readonly  A): boolean { return false; }
                 def readwrite foo(a: readwrite A): int { return 0; }
@@ -818,7 +818,7 @@ class RolezTypeSystemTest {
         program.main.expr(1).type.assertThat(instanceOf(Boolean))
         
         program = parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 def readwrite foo(a: readonly  A, b: readonly  A): boolean { return false; }
                 def readwrite foo(a: readwrite A, b: readwrite A): int { return 0; }
@@ -836,7 +836,7 @@ class RolezTypeSystemTest {
         program.main.expr(1).type.assertThat(instanceOf(Boolean))
         
         program = parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 def readwrite foo(a: readwrite A, b: readwrite A): int { return 0; }
                 def readwrite foo(a: readonly  A, b: readonly  A): boolean { return false; }
@@ -858,7 +858,7 @@ class RolezTypeSystemTest {
     
     @Test def testTMemberAccessMethodAmbiguous() {
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 def readwrite foo(a: readonly  A, b: readwrite A): {}
                 def readwrite foo(a: readwrite A, b: readonly  A): {}
@@ -869,7 +869,7 @@ class RolezTypeSystemTest {
         ''').assertError(MEMBER_ACCESS, AMBIGUOUS_CALL)
         
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 def readwrite foo(a: readwrite Object, b: readwrite A): {}
                 def readwrite foo(a: readwrite A, b: readwrite Object): {}
@@ -885,7 +885,7 @@ class RolezTypeSystemTest {
     @Test def testTThis() {
         for(expected : Role.values) {
             val program = parse('''
-                mapped class rolez.lang.Object
+                class rolez.lang.Object mapped to java.lang.Object
                 class A {
                     def «expected» foo: { this; }
                 }
@@ -895,7 +895,7 @@ class RolezTypeSystemTest {
         }
         
         val program = parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 new { this; }
             }
@@ -920,7 +920,7 @@ class RolezTypeSystemTest {
             }
         ''').main.lastExpr.type.assertThat(instanceOf(Int))
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 def pure foo(i: int): {
                     i;
@@ -930,7 +930,7 @@ class RolezTypeSystemTest {
         ''').findClass("A").methods.head.lastExpr.type.assertThat(instanceOf(Int))
         
         var program = parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A
             task Main: {
                 val a: readonly A = new A;
@@ -943,7 +943,7 @@ class RolezTypeSystemTest {
     
     @Test def testTNew() {
         var program = parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A
             task Main: { new A; }
         ''')
@@ -951,8 +951,8 @@ class RolezTypeSystemTest {
             .assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
         
         program = parse('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.Array[T] {
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
                 mapped new(length: int)
             }
             task Main: { new Array[int](100); }
@@ -961,9 +961,9 @@ class RolezTypeSystemTest {
             .assertThat(isRoleType(READWRITE, newClassRef(program.findNormalClass(arrayClassName), newIntType)))
         
         program = parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A
-            mapped class rolez.lang.Array[T] {
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
                 mapped new(length: int)
             }
             task Main: { new Array[readonly A](10); }
@@ -973,9 +973,9 @@ class RolezTypeSystemTest {
                 newRoleType(READONLY, newClassRef(program.findClass("A"))))))
         
         program = parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A
-            mapped class rolez.lang.Array[T] {
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
                 mapped new(length: int)
             }
             task Main: { new Array[pure Array[readwrite A]](1000); }
@@ -991,7 +991,7 @@ class RolezTypeSystemTest {
     
     @Test def testTNewErrorInArg() {
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 new(i: int) {}
                 def pure foo(i: int): { new A(!5); }
@@ -1001,33 +1001,33 @@ class RolezTypeSystemTest {
     
     @Test def testTNewTypeMismatch() {
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A
             task Main: { new A(5); }
         ''').assertError(NEW, LINKING_DIAGNOSTIC)
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A { new {} }
             task Main: { new A(5); }
         ''').assertError(NEW, LINKING_DIAGNOSTIC)
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A { new(c: char) {} }
             task Main: { new A(5, false); }
         ''').assertError(NEW, LINKING_DIAGNOSTIC)
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A { new(i: int) {} }
             task Main: { new A; }
         ''').assertError(NEW, LINKING_DIAGNOSTIC)
         
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A { new(i: int) {} }
             task Main: { new A(false); }
         ''').assertError(NEW, LINKING_DIAGNOSTIC)
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A { new(a: readwrite A) {} }
             task Main: { new A(new Object); }
         ''').assertError(NEW, LINKING_DIAGNOSTIC)
@@ -1037,7 +1037,7 @@ class RolezTypeSystemTest {
     
     @Test def testTNewOverloading() {
         var program = parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 new(a: int) {}
                 new(a: boolean) {}
@@ -1051,7 +1051,7 @@ class RolezTypeSystemTest {
         (program.main.expr(1) as New).constr.params.head.type.assertThat(instanceOf(Boolean))
         
         program = parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A
             class B {
                 new(a: readwrite A) {}
@@ -1067,7 +1067,7 @@ class RolezTypeSystemTest {
         
         // (Switch order of declaration to rule out accidental selection of the correct one)
         program = parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A
             class B {
                 new(a: readonly  A) {}
@@ -1086,7 +1086,7 @@ class RolezTypeSystemTest {
     
     @Test def testTNewAmbiguous() {
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A
             class B {
                 new(a: readonly  A, b: readwrite A) {}
@@ -1098,7 +1098,7 @@ class RolezTypeSystemTest {
         ''').assertError(NEW, AMBIGUOUS_CALL)
         
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A
             class B {
                 new(a: readwrite Object, b: readwrite A) {}
@@ -1114,8 +1114,8 @@ class RolezTypeSystemTest {
     
     @Test def testTThe() {
         val program = parse('''
-            mapped class rolez.lang.Object
-            mapped object rolez.lang.System
+            class rolez.lang.Object mapped to java.lang.Object
+            object rolez.lang.System mapped to java.lang.System
             task Main: {
                 the System;
             }
@@ -1125,7 +1125,7 @@ class RolezTypeSystemTest {
     
     @Test def testTStart() {
         var program = parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.Task
             task T: int { return 0; }
             task Main: { start T; }
@@ -1134,7 +1134,7 @@ class RolezTypeSystemTest {
             .assertThat(isRoleType(PURE, newClassRef(program.findNormalClass(taskClassName), newIntType)))
         
         program = parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.Task
             task T: {}
             task Main: { start T; }
@@ -1143,7 +1143,7 @@ class RolezTypeSystemTest {
             .assertThat(isRoleType(PURE, newClassRef(program.findNormalClass(taskClassName), newVoidType)))
         
         program = parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.Task
             class A
             task T: readwrite A { return null; }
@@ -1154,13 +1154,13 @@ class RolezTypeSystemTest {
                 newRoleType(READWRITE, newClassRef(program.findClass("A"))))))
         
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.Task
             task T(i: int): {}
             task Main: { start T(5); }
         ''').assertNoErrors
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.Task
             class A
             task T(a: pure A): {}
@@ -1172,7 +1172,7 @@ class RolezTypeSystemTest {
             }
         ''').assertNoErrors
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.Task
             class A
             task T(i: int, c: char, a: readwrite A): {}
@@ -1184,7 +1184,7 @@ class RolezTypeSystemTest {
     
     @Test def testTStartTaskClassNotDefined() {
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             task T: {}
             task Main: { start T; }
         ''').assertError(START, TSTART, "task class", "not defined")
@@ -1192,7 +1192,7 @@ class RolezTypeSystemTest {
     
     @Test def testTStartErrorInArg() {
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.Task
             task T(i: int): {}
             task Main: { start T(!5); }
@@ -1201,20 +1201,20 @@ class RolezTypeSystemTest {
     
     @Test def testTStartTypeMismatch() {
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.Task
             task T: int {}
             task Main: { start T(5); }
         ''').assertError(START, null, "too many arguments")
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.Task
             task T(i: int): int {}
             task Main: { start T; }
         ''').assertError(START, null, "too few arguments")
         
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.Task
             task T(i: int): int {}
             task Main: { start T(true); }
@@ -1223,7 +1223,7 @@ class RolezTypeSystemTest {
     
     @Test def testTParenthesized() {
         val program = parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A
             task Main: {
                 (5);
@@ -1248,8 +1248,8 @@ class RolezTypeSystemTest {
     
     @Test def testTStringLiteral() {
         val program = parse('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.String
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.String mapped to java.lang.String
             task Main: { "Hi"; }
         ''')
         program.main.lastExpr.type.assertThat(
@@ -1258,7 +1258,7 @@ class RolezTypeSystemTest {
     
     @Test def testTStringLiteralStringClassNotDefined() {
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             task Main: { "Hi"; }
         ''').assertError(STRING_LITERAL, TSTRINGLITERAL, "rolez.lang.String class", "not defined")
     }
@@ -1295,7 +1295,7 @@ class RolezTypeSystemTest {
     
     @Test def testWBlock() {
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             task Main: {
                 new Object;
                 {
@@ -1320,7 +1320,7 @@ class RolezTypeSystemTest {
             }
         ''').assertError(CAST, null, "cannot cast", "boolean", "int")
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             task Main: {
                 {
                     new Object;
@@ -1337,7 +1337,7 @@ class RolezTypeSystemTest {
     
     @Test def testWLocalVarDecl() {
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A
             task Main: {
                 val i: int = 1;
@@ -1353,13 +1353,13 @@ class RolezTypeSystemTest {
             }
         ''').assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "boolean", "int")
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             task Main: {
                 val o: readwrite Object = new Object as pure Object;
             }
         ''').assertError(CAST, SUBTYPEEXPR, "pure rolez.lang.Object", "readwrite rolez.lang.Object")
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A
             task Main: {
                 val o: pure A = new A as pure Object;
@@ -1369,7 +1369,7 @@ class RolezTypeSystemTest {
     
     @Test def testWIfStmt() {
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             task Main: {
                 if(true)
                     new Object;
@@ -1389,7 +1389,7 @@ class RolezTypeSystemTest {
         ''').assertNoErrors
         
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             task Main: {
                 if(5)
                     new Object;
@@ -1412,7 +1412,7 @@ class RolezTypeSystemTest {
     
     @Test def testWWhileLoop() {
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             task Main: {
                 while(true)
                     new Object;
@@ -1425,7 +1425,7 @@ class RolezTypeSystemTest {
         ''').assertNoErrors
         
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             task Main: {
                 while(5)
                     new Object;
@@ -1441,7 +1441,7 @@ class RolezTypeSystemTest {
     
     @Test def testWSuperConstrCall() {
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A
             class B extends A {
                 new {}
@@ -1468,7 +1468,7 @@ class RolezTypeSystemTest {
     
     @Test def testWSuperConstrCallErrorInArg() {
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 new(i: int) {}
             }
@@ -1480,20 +1480,20 @@ class RolezTypeSystemTest {
     
     @Test def testWSuperConstrCallTypeMismatch() {
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A
             class B extends A {
                 new { super(5); }
             }
         ''').assertError(SUPER_CONSTR_CALL, LINKING_DIAGNOSTIC)
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 new { super(5); }
             }
         ''').assertError(SUPER_CONSTR_CALL, LINKING_DIAGNOSTIC)
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 new {}
             }
@@ -1502,7 +1502,7 @@ class RolezTypeSystemTest {
             }
         ''').assertError(SUPER_CONSTR_CALL, LINKING_DIAGNOSTIC)
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 new(c: char) {}
             }
@@ -1511,7 +1511,7 @@ class RolezTypeSystemTest {
             }
         ''').assertError(SUPER_CONSTR_CALL, LINKING_DIAGNOSTIC)
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 new(i: int) {}
             }
@@ -1521,7 +1521,7 @@ class RolezTypeSystemTest {
         ''').assertError(SUPER_CONSTR_CALL, LINKING_DIAGNOSTIC)
         
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 new(i: int) {}
             }
@@ -1530,7 +1530,7 @@ class RolezTypeSystemTest {
             }
         ''').assertError(SUPER_CONSTR_CALL, LINKING_DIAGNOSTIC)
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 new(a: readwrite A) {}
             }
@@ -1542,7 +1542,7 @@ class RolezTypeSystemTest {
     
     @Test def testWSuperConstrCallOverloading() {
         val classB = (parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 new(a: int) {}
                 new(a: boolean) {}
@@ -1558,7 +1558,7 @@ class RolezTypeSystemTest {
             .constr.params.head.type.assertThat(instanceOf(Boolean))
         
         var classC = (parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A
             class B {
                 new(a: readwrite A) {}
@@ -1576,7 +1576,7 @@ class RolezTypeSystemTest {
         
         // (Switch order of declaration to rule out accidental selection of the correct one)
         classC = (parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A
             class B {
                 new(a: readonly  A) {}
@@ -1595,7 +1595,7 @@ class RolezTypeSystemTest {
     
     @Test def testWSuperConstrCallAmbiguous() {
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A
             class B {
                 new(a: readonly  A, b: readwrite A) {}
@@ -1607,7 +1607,7 @@ class RolezTypeSystemTest {
         ''').assertError(SUPER_CONSTR_CALL, AMBIGUOUS_CALL)
         
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A
             class B {
                 new(a: readwrite Object, b: readwrite A) {}
@@ -1621,7 +1621,7 @@ class RolezTypeSystemTest {
     
     @Test def testWReturn() {
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 def pure a: {}
                 def pure b: {
@@ -1643,7 +1643,7 @@ class RolezTypeSystemTest {
         ''').assertNoErrors
         
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 def pure a: {
                     return 1;
@@ -1656,7 +1656,7 @@ class RolezTypeSystemTest {
             }
         ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "void")
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 def pure a: int {
                     return false;
@@ -1664,7 +1664,7 @@ class RolezTypeSystemTest {
             }
         ''').assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "boolean", "int")
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 def pure a: readwrite A {
                     return new A as pure A;
@@ -1675,8 +1675,8 @@ class RolezTypeSystemTest {
     
     @Test def testSubtype() {
         parse('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.Array[T] {
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
                 mapped new(length: int)
             }
             class A
@@ -1735,7 +1735,7 @@ class RolezTypeSystemTest {
     
     @Test def testSubtypeSimpleClassMismatch() {
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A
             task Main: {
                 val a: readwrite A = new Object;
@@ -1745,53 +1745,53 @@ class RolezTypeSystemTest {
     
     @Test def testSubtypeGenericClassMismatch() {
         parse('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.Array[T]
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array
             task Main: {
                 val a: pure Array[int] = new Array[boolean];
             }
         ''').assertError(NEW, SUBTYPEEXPR, "readwrite rolez.lang.Array[boolean]", "pure rolez.lang.Array[int]")
         parse('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.Array[T]
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array
             task Main: {
                 val a: pure Array[int] = new Array[pure Object];
             }
         ''').assertError(NEW, SUBTYPEEXPR, "readwrite rolez.lang.Array[pure rolez.lang.Object]", "pure rolez.lang.Array[int]")
         parse('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.Array[T]
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array
             task Main: {
                 val a: pure Array[pure Object] = new Array[int];
             }
         ''').assertError(NEW, SUBTYPEEXPR, "readwrite rolez.lang.Array[int]", "pure rolez.lang.Array[pure rolez.lang.Object]")
         parse('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.Array[T]
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array
             class A
             task Main: {
                 val a: pure Array[pure Object] = new Array[pure A];
             }
         ''').assertError(NEW, SUBTYPEEXPR, "readwrite rolez.lang.Array[pure A]", "pure rolez.lang.Array[pure rolez.lang.Object]")
         parse('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.Array[T]
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array
             class A
             task Main: {
                 val a: pure Array[pure A] = new Array[pure Object];
             }
         ''').assertError(NEW, SUBTYPEEXPR, "readwrite rolez.lang.Array[pure rolez.lang.Object]", "pure rolez.lang.Array[pure A]")
         parse('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.Array[T]
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array
             class A
             task Main: {
                 val a: pure Array[pure A] = new Array[readwrite A];
             }
         ''').assertError(NEW, SUBTYPEEXPR, "readwrite rolez.lang.Array[readwrite A]", "pure rolez.lang.Array[pure A]")
         parse('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.Array[T]
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array
             class A
             task Main: {
                 val a: pure Array[readwrite A] = new Array[pure A];
@@ -1801,21 +1801,21 @@ class RolezTypeSystemTest {
     
     @Test def testSubtypeRoleMismatch() {
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A
             task Main: {
                 val a: readwrite A = new A as readonly A;
             }
         ''').assertError(CAST, SUBTYPEEXPR, "readonly A", "readwrite A")
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A
             task Main: {
                 val a: readwrite A = new A as pure A;
             }
         ''').assertError(CAST, SUBTYPEEXPR, "pure A", "readwrite A")
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A
             task Main: {
                 val a: readonly A = new A as pure A;

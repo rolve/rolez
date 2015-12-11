@@ -10,4 +10,5 @@ Require-Bundle: ch.trick17.rolez.lang,
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: ch.trick17.rolez.lang.ide.contentassist.antlr.internal,
  ch.trick17.rolez.lang.ide.contentassist.antlr
+Bundle-Vendor: Michael Faes
 

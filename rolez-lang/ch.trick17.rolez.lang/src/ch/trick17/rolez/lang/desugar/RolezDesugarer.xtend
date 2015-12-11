@@ -33,9 +33,9 @@ class RolezDesugarer extends AbstractDeclarativeDesugarer {
     def void addDefaultConstr(NormalClass it) {
         if(constrs.isEmpty) {
             val c = createConstr
-            if(isMapped) c.mapped = true
-            else c.body = createBlock
             constrs += c
+            if(mapped) c.createAndSetProxy(CONSTR__JVM_CONSTR, "mapped")
+            else c.body = createBlock
         }
     }
     

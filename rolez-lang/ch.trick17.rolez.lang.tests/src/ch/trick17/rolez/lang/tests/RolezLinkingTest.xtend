@@ -21,20 +21,20 @@ class RolezLinkingTest {
     @Inject extension TestUtilz
     
     @Test def testMultipleResources() {
-        val set = newResourceSet.with("mapped class rolez.lang.Object").with("class A")
+        val set = newResourceSet.with("class rolez.lang.Object mapped to java.lang.Object").with("class A")
         parse("class B extends A", set).assertNoErrors
     }
     
     @Test def testPackagesAndImports() {
         // "Unpackaged" classes are visible from everywhere
-        var set = newResourceSet.with("mapped class rolez.lang.Object").with("class A")
+        var set = newResourceSet.with("class rolez.lang.Object mapped to java.lang.Object").with("class A")
         parse('''
             package foo.bar
             class B extends A
         ''', set).assertNoErrors
         
         // Classes in same package are visible
-        set = newResourceSet.with("mapped class rolez.lang.Object").with('''
+        set = newResourceSet.with("class rolez.lang.Object mapped to java.lang.Object").with('''
             package foo.bar
             class A
         ''')
@@ -44,7 +44,7 @@ class RolezLinkingTest {
         ''', set).assertNoErrors
         
         // Classes can specify package directly in declaration
-        set = newResourceSet.with("mapped class rolez.lang.Object").with('''
+        set = newResourceSet.with("class rolez.lang.Object mapped to java.lang.Object").with('''
             class foo.bar.A
         ''')
         parse('''
@@ -53,7 +53,7 @@ class RolezLinkingTest {
         ''', set).assertNoErrors
         
         // Also partially
-        set = newResourceSet.with("mapped class rolez.lang.Object").with('''
+        set = newResourceSet.with("class rolez.lang.Object mapped to java.lang.Object").with('''
             package foo
             class bar.A
         ''')
@@ -63,7 +63,7 @@ class RolezLinkingTest {
         ''', set).assertNoErrors
         
         // Classes can be referred to using their fully qualified name
-        set = newResourceSet.with("mapped class rolez.lang.Object").with('''
+        set = newResourceSet.with("class rolez.lang.Object mapped to java.lang.Object").with('''
             package foo.bar
             class A
         ''')
@@ -77,7 +77,7 @@ class RolezLinkingTest {
         ''', set).assertNoErrors
         
         // Classes can be imported
-        set = newResourceSet.with("mapped class rolez.lang.Object").with('''
+        set = newResourceSet.with("class rolez.lang.Object mapped to java.lang.Object").with('''
             package foo.bar
             class A
         ''')
@@ -88,7 +88,7 @@ class RolezLinkingTest {
         ''', set).assertNoErrors
         
         // Also with wildcards
-        set = newResourceSet.with("mapped class rolez.lang.Object").with('''
+        set = newResourceSet.with("class rolez.lang.Object mapped to java.lang.Object").with('''
             package foo.bar
             class A
         ''')
@@ -99,7 +99,7 @@ class RolezLinkingTest {
         ''', set).assertNoErrors
         
         // Class in same package is chosen, not "unpackaged" class
-        set = newResourceSet.with("mapped class rolez.lang.Object").with('''
+        set = newResourceSet.with("class rolez.lang.Object mapped to java.lang.Object").with('''
             class A
         ''').with('''
             package foo.bar
@@ -116,8 +116,8 @@ class RolezLinkingTest {
         
         // Classes in rolez.lang are always visible
         set = newResourceSet.with('''
-            mapped class rolez.lang.Object
-            mapped class rolez.lang.A
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.A
         ''')
         parse('''
             package foo.bar
@@ -125,7 +125,7 @@ class RolezLinkingTest {
             class C extends rolez.lang.A
         ''', set).assertNoErrors
         
-        set = newResourceSet.with("mapped class rolez.lang.Object").with('''
+        set = newResourceSet.with("class rolez.lang.Object mapped to java.lang.Object").with('''
             package foo.bar
             class A
         ''')
@@ -133,7 +133,7 @@ class RolezLinkingTest {
             package a.b
             class B extends A
         ''', set).assertError(CLASS, LINKING_DIAGNOSTIC)
-        set = newResourceSet.with("mapped class rolez.lang.Object").with('''
+        set = newResourceSet.with("class rolez.lang.Object mapped to java.lang.Object").with('''
             package foo.bar
             class A
         ''')
@@ -145,7 +145,7 @@ class RolezLinkingTest {
     
     @Test def testSuperClass() {
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A extends B
         ''').assertError(CLASS, LINKING_DIAGNOSTIC)
         parse('''
@@ -155,14 +155,14 @@ class RolezLinkingTest {
     
     @Test def testSuperConstrCall() {
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 new(i: int) {}
             }
             class B extends A
         ''').assertError(SUPER_CONSTR_CALL, LINKING_DIAGNOSTIC)
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 new(i: int) {}
             }
@@ -180,7 +180,7 @@ class RolezLinkingTest {
             }
         ''').assertNoErrors
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 def pure foo(i: int): {
                     i;
@@ -207,11 +207,134 @@ class RolezLinkingTest {
     
     @Test def testNewClassRef() {
         parse('''
-            mapped class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             object A
             task Main: {
                 new A;
             }
         ''').assertError(NEW, LINKING_DIAGNOSTIC)
+    }
+    
+    @Test def testJvmClass() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Objectionable
+        ''').assertError(CLASS, LINKING_DIAGNOSTIC)
+    }
+    
+    @Test def testJvmField() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.String mapped to java.lang.String
+            class rolez.io.PrintStream mapped to java.io.PrintStream {
+                mapped new(s: readonly String)
+            }
+            object rolez.lang.System mapped to java.lang.System {
+                mapped val out: readonly rolez.io.PrintStream
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object {
+                mapped val thisFieldDoesNotExist: int
+            }
+        ''').assertError(FIELD, LINKING_DIAGNOSTIC)
+    }
+    
+    @Test def testJvmMethod() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object {
+                mapped def readonly hashCode: int
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object {
+                mapped def readonly someMethodThatCertainlyDoesNotExist: int
+            }
+        ''').assertError(METHOD, LINKING_DIAGNOSTIC)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
+                mapped new(i: int)
+                mapped def readwrite set(i: int, element: readonly Object):
+            }
+        ''').assertError(METHOD, LINKING_DIAGNOSTIC)
+    }
+    
+    @Test def testJvmConstr() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+        ''').assertNoErrors
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object {
+                mapped new
+            }
+            class rolez.lang.String mapped to java.lang.String {
+                mapped new(s: readonly String)
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object {
+                mapped new(i: int)
+            }
+        ''').assertError(CONSTR, LINKING_DIAGNOSTIC)
+        
+        // TODO: Test implicit constructor with a Java class that doesn't have a no-arg constructor
+    }
+    
+    @Test def testArrayClass() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
+                mapped val length: int
+                mapped new(length: int)
+                mapped def readonly  get(i: int): T
+                mapped def readwrite set(i: int, element: T):
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
+                mapped new(length: int)
+                mapped val foo: int
+            }
+        ''').assertError(FIELD, LINKING_DIAGNOSTIC)
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
+                mapped new(length: int)
+                mapped def pure foo: int
+            }
+        ''').assertError(METHOD, LINKING_DIAGNOSTIC)
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array
+        ''').assertError(CONSTR, LINKING_DIAGNOSTIC)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
+                mapped new {}
+            }
+        ''').assertError(CONSTR, LINKING_DIAGNOSTIC)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
+                mapped new(i: int, j: int) {}
+            }
+        ''').assertError(CONSTR, LINKING_DIAGNOSTIC)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
+                mapped new(i: double) {}
+            }
+        ''').assertError(CONSTR, LINKING_DIAGNOSTIC)
     }
 }

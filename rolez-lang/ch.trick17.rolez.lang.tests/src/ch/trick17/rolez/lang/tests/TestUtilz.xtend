@@ -1,7 +1,6 @@
 package ch.trick17.rolez.lang.tests
 
 import ch.trick17.rolez.lang.RolezExtensions
-import ch.trick17.rolez.lang.RolezStandaloneSetup
 import ch.trick17.rolez.lang.RolezUtils
 import ch.trick17.rolez.lang.rolez.Block
 import ch.trick17.rolez.lang.rolez.Class
@@ -21,6 +20,7 @@ import ch.trick17.rolez.lang.rolez.Type
 import ch.trick17.rolez.lang.typesystem.RolezSystem
 import java.util.Random
 import javax.inject.Inject
+import javax.inject.Provider
 import org.eclipse.emf.common.util.URI
 import org.eclipse.emf.ecore.resource.ResourceSet
 import org.eclipse.xtext.junit4.validation.ValidationTestHelper
@@ -41,13 +41,11 @@ class TestUtilz {
     @Inject extension RolezExtensions
     @Inject extension RolezUtils
     @Inject extension ValidationTestHelper
+    @Inject Provider<XtextResourceSet> resourceSetProvider
     
     private val r = new Random
 
-    def newResourceSet() {
-        new RolezStandaloneSetup().createInjectorAndDoEMFRegistration
-            .getInstance(XtextResourceSet)
-    }
+    def newResourceSet() { resourceSetProvider.get }
     
     def with(ResourceSet it, String program) {
         createResource(URI.createURI((1..12).map[r.nextInt(10)].join + ".rz"))
