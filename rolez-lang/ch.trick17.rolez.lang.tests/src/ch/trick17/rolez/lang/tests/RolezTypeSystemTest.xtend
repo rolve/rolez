@@ -1115,12 +1115,13 @@ class RolezTypeSystemTest {
     @Test def testTThe() {
         val program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            object rolez.lang.System mapped to java.lang.System
+            object A
             task Main: {
-                the System;
+                the A;
             }
         ''')
-        program.main.lastExpr.type.assertThat(isRoleType(READONLY, newClassRef(program.findClass(systemClassName))))
+        program.main.lastExpr.type.assertThat(
+            isRoleType(READONLY, newClassRef(program.findClass("A"))))
     }
     
     @Test def testTStart() {
