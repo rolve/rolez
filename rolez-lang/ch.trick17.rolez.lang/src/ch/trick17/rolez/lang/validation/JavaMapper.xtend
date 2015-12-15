@@ -76,6 +76,7 @@ class JavaMapper {
     }
     
     def dispatch boolean mapsTo(Null it, JvmTypeReference _) { false }
+    def dispatch boolean mapsTo(java.lang.Void it, JvmTypeReference _) { false } // To avoid NPEs
     
     def dispatch jvmWrapperTypeName(    Int _) { "java.lang.Integer"   }
     def dispatch jvmWrapperTypeName( Double _) { "java.lang.Double"    }

@@ -41,6 +41,8 @@ import javax.inject.Inject
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.EStructuralFeature
 import org.eclipse.xtext.naming.QualifiedName
+import org.eclipse.xtext.util.Exceptions
+import org.eclipse.xtext.validation.AbstractDeclarativeValidator
 import org.eclipse.xtext.validation.Check
 
 import static ch.trick17.rolez.lang.Constants.*
@@ -463,7 +465,7 @@ class RolezValidator extends RolezSystemValidator {
     @Check
     def checkMappedField(Field it) {
         if(isMapped) {
-            if(!enclosingClass.mapped)
+            if(!enclosingClass.isMapped)
                 error("mapped fields are allowed in mapped classes only",
                     FIELD__JVM_FIELD, MAPPED_IN_NORMAL_CLASS)
             
@@ -474,15 +476,15 @@ class RolezValidator extends RolezSystemValidator {
                 error("Incorrect type for mapped field: should map to "
                     + jvmField.type, type, null, INCORRECT_MAPPED_FIELD)
         }
-        else if(enclosingClass.mapped)
+        else if(enclosingClass.isMapped)
             error("Fields of mapped classes must be mapped",
                 NAMED__NAME, NON_MAPPED_FIELD)
     }
     
     @Check
     def checkMappedMethod(Method it) {
-        if(mapped) {
-            if(!enclosingClass.mapped)
+        if(isMapped) {
+            if(!enclosingClass.isMapped)
                 error("mapped methods are allowed in mapped classes only",
                     METHOD__JVM_METHOD, MAPPED_IN_NORMAL_CLASS)
             if(body != null)
@@ -493,7 +495,7 @@ class RolezValidator extends RolezSystemValidator {
                     + jvmMethod.returnType, type, null, INCORRECT_MAPPED_METHOD)
         }
         else {
-            if(enclosingClass.mapped)
+            if(enclosingClass.isMapped)
                 error("Methods of mapped classes must be mapped",
                     NAMED__NAME, NON_MAPPED_METHOD)
             if(body == null)
@@ -504,14 +506,14 @@ class RolezValidator extends RolezSystemValidator {
     @Check
     def checkMappedConstr(Constr it) {
         if(isMapped) {
-            if(!enclosingClass.mapped)
+            if(!enclosingClass.isMapped)
                 error("mapped constructors are allowed in mapped classes only",
                     CONSTR__JVM_CONSTR, MAPPED_IN_NORMAL_CLASS)
             if(body != null)
                 error("mapped constructors cannot have a body", body, null, MAPPED_WITH_BODY)
         }
         else {
-            if(enclosingClass.mapped)
+            if(enclosingClass.isMapped)
                 error("Constructors of mapped classes must be mapped",
                     null, NON_MAPPED_CONSTR)
             if(body == null)
@@ -603,5 +605,23 @@ class RolezValidator extends RolezSystemValidator {
         delayedErrors.filter[source.enclosingProgram == p].forEach[
             error(message, source, feature, code, issueData)
         ]
+    }
+    
+    /*
+     * Custom MethodWrapper
+     */
+    
+    override protected createMethodWrapper(AbstractDeclarativeValidator validator, java.lang.reflect.Method m) {
+        super.createMethodWrapper(validator, m)
+    }
+    
+    private static class MethodWrapper extends AbstractDeclarativeValidator.MethodWrapper {
+        new(AbstractDeclarativeValidator instance, java.lang.reflect.Method m) {
+            super(instance, m)
+        }
+        
+        override protected handleInvocationTargetException(Throwable e, State state) {
+            Exceptions.throwUncheckedException(e)
+        }
     }
 }
