@@ -15,6 +15,8 @@ import ch.trick17.rolez.lang.rolez.SuperConstrCall
 import javax.inject.Inject
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.EcoreUtil2
+import org.eclipse.xtext.common.types.JvmGenericType
+import org.eclipse.xtext.common.types.JvmVisibility
 import org.eclipse.xtext.linking.lazy.SyntheticLinkingSupport
 import org.eclipse.xtext.nodemodel.INode
 
@@ -31,12 +33,16 @@ class RolezDesugarer extends AbstractDeclarativeDesugarer {
 
     @Rule
     def void addDefaultConstr(NormalClass it) {
-        if(constrs.isEmpty) {
+        if(constrs.isEmpty && (!isMapped || jvmClass.hasNoArgConstr)) {
             val c = createConstr
             constrs += c
             if(mapped) c.createAndSetProxy(CONSTR__JVM_CONSTR, "mapped")
             else c.body = createBlock
         }
+    }
+    
+    private def hasNoArgConstr(JvmGenericType it) {
+        declaredConstructors.exists[visibility == JvmVisibility.PUBLIC && parameters.isEmpty]
     }
     
     @Rule

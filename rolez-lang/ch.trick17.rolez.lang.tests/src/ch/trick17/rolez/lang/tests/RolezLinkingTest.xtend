@@ -316,10 +316,6 @@ class RolezLinkingTest {
         
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.Array[T] mapped to rolez.lang.Array
-        ''').assertError(CONSTR, LINKING_DIAGNOSTIC)
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.Array[T] mapped to rolez.lang.Array {
                 mapped new {}
             }

@@ -1747,55 +1747,69 @@ class RolezTypeSystemTest {
     @Test def testSubtypeGenericClassMismatch() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.Array[T] mapped to rolez.lang.Array
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
+                mapped new(length: int)
+            }
             task Main: {
-                val a: pure Array[int] = new Array[boolean];
+                val a: pure Array[int] = new Array[boolean](0);
             }
         ''').assertError(NEW, SUBTYPEEXPR, "readwrite rolez.lang.Array[boolean]", "pure rolez.lang.Array[int]")
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.Array[T] mapped to rolez.lang.Array
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
+                mapped new(length: int)
+            }
             task Main: {
-                val a: pure Array[int] = new Array[pure Object];
+                val a: pure Array[int] = new Array[pure Object](0);
             }
         ''').assertError(NEW, SUBTYPEEXPR, "readwrite rolez.lang.Array[pure rolez.lang.Object]", "pure rolez.lang.Array[int]")
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.Array[T] mapped to rolez.lang.Array
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
+                mapped new(length: int)
+            }
             task Main: {
-                val a: pure Array[pure Object] = new Array[int];
+                val a: pure Array[pure Object] = new Array[int](0);
             }
         ''').assertError(NEW, SUBTYPEEXPR, "readwrite rolez.lang.Array[int]", "pure rolez.lang.Array[pure rolez.lang.Object]")
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.Array[T] mapped to rolez.lang.Array
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
+                mapped new(length: int)
+            }
             class A
             task Main: {
-                val a: pure Array[pure Object] = new Array[pure A];
+                val a: pure Array[pure Object] = new Array[pure A](0);
             }
         ''').assertError(NEW, SUBTYPEEXPR, "readwrite rolez.lang.Array[pure A]", "pure rolez.lang.Array[pure rolez.lang.Object]")
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.Array[T] mapped to rolez.lang.Array
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
+                mapped new(length: int)
+            }
             class A
             task Main: {
-                val a: pure Array[pure A] = new Array[pure Object];
+                val a: pure Array[pure A] = new Array[pure Object](0);
             }
         ''').assertError(NEW, SUBTYPEEXPR, "readwrite rolez.lang.Array[pure rolez.lang.Object]", "pure rolez.lang.Array[pure A]")
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.Array[T] mapped to rolez.lang.Array
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
+                mapped new(length: int)
+            }
             class A
             task Main: {
-                val a: pure Array[pure A] = new Array[readwrite A];
+                val a: pure Array[pure A] = new Array[readwrite A](0);
             }
         ''').assertError(NEW, SUBTYPEEXPR, "readwrite rolez.lang.Array[readwrite A]", "pure rolez.lang.Array[pure A]")
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.Array[T] mapped to rolez.lang.Array
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
+                mapped new(length: int)
+            }
             class A
             task Main: {
-                val a: pure Array[readwrite A] = new Array[pure A];
+                val a: pure Array[readwrite A] = new Array[pure A](0);
             }
         ''').assertError(NEW, SUBTYPEEXPR, "readwrite rolez.lang.Array[pure A]", "pure rolez.lang.Array[readwrite A]")
     }
