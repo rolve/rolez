@@ -8,19 +8,40 @@
     <properties>
         <maven.compiler.source>1.7</maven.compiler.source>
         <maven.compiler.target>1.7</maven.compiler.target>
-        <rolezOutputDir>${project.build.directory}/rolez-gen</rolezOutputDir>
+        <rolezSourceDir>src/main/rolez</rolezSourceDir>
+        <rolezGenDir>${project.build.directory}/rolez-gen</rolezGenDir>
     </properties>
 
     <build>
         <resources>
             <resource>
-                <directory>src/main/java</directory>
+                <directory>${rolezSourceDir}</directory>
                 <includes>
                     <include>**/*.rz</include>
                 </includes>
             </resource>
         </resources>
         <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>1.10</version>
+                <executions>
+                    <execution>
+                        <id>add-source</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${rolezSourceDir}</source>
+                                <source>${rolezGenDir}</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.eclipse.xtext</groupId>
                 <artifactId>xtext-maven-plugin</artifactId>
@@ -31,7 +52,7 @@
                             <setup>ch.trick17.rolez.lang.RolezStandaloneSetup</setup>
                             <outputConfigurations>
                                 <outputConfiguration>
-                                    <outputDirectory>${rolezOutputDir}</outputDirectory>
+                                    <outputDirectory>${rolezGenDir}</outputDirectory>
                                 </outputConfiguration>
                             </outputConfigurations>
                         </language>
@@ -51,25 +72,6 @@
                         <version>1.0.0-SNAPSHOT</version>
                     </dependency>
                 </dependencies>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <version>1.10</version>
-                <executions>
-                    <execution>
-                        <id>add-source</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>add-source</goal>
-                        </goals>
-                        <configuration>
-                            <sources>
-                                <source>${rolezOutputDir}</source>
-                            </sources>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
