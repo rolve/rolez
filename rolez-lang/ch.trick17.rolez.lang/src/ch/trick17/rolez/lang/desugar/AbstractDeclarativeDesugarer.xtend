@@ -1,12 +1,16 @@
 package ch.trick17.rolez.lang.desugar
 
 import java.lang.reflect.Method
+import java.util.ArrayList
 import java.util.List
 import java.util.Optional
 import org.eclipse.emf.ecore.EObject
+import org.eclipse.emf.ecore.EReference
 import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.emf.ecore.util.EObjectEList
 import org.eclipse.xtext.util.SimpleCache
+import org.eclipse.xtext.util.Triple
+import org.eclipse.xtext.util.Tuples
 
 abstract class AbstractDeclarativeDesugarer implements IDesugarer {
     
@@ -15,6 +19,8 @@ abstract class AbstractDeclarativeDesugarer implements IDesugarer {
     val methodsForType = new SimpleCache<Class<?>, List<Method>>([type |
         ruleMethods.filter[parameterTypes.get(0).isAssignableFrom(type)].toList
     ])
+    
+    var List<Triple<EObject, EReference, String>> desugarRefs
     
     new() {
         ruleMethods = class.methods.filter[!isBridge && isAnnotationPresent(Rule)].toList
@@ -30,6 +36,7 @@ abstract class AbstractDeclarativeDesugarer implements IDesugarer {
     
     override desugar(Resource it) {
         var prevContents = emptyList
+        desugarRefs = new ArrayList
         
         // Repeat as long as contents change
         while(allContents.toList != prevContents) {
@@ -42,6 +49,8 @@ abstract class AbstractDeclarativeDesugarer implements IDesugarer {
                 contents.get(i).desugarChildren
             }
         }
+        
+        return desugarRefs;
     }
     
     private def void desugarChildren(EObject it) {
@@ -76,5 +85,9 @@ abstract class AbstractDeclarativeDesugarer implements IDesugarer {
                 return Optional.of(repl)
             }
         Optional.empty
+    }
+    
+    protected def void createReference(EObject object, EReference ref, String text) {
+        desugarRefs.add(Tuples.create(object, ref, text))
     }
 }

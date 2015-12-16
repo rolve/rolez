@@ -154,6 +154,7 @@ class RolezExtensions {
     def string(Role it)     { literal }
     def string(ClassRef it) { classRefString }
     def string(Instr it)    {
+        // IMPROVE: Not a good idea for synthetic instructions
         NodeModelUtils.findActualNodeFor(it).text.trim.replaceAll("\\s+", " ")
     }
     

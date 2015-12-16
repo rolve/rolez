@@ -73,11 +73,6 @@ class Address {
 	}
 }
 
-main task Main(args: readonly Array[pure String]): {
-	for(var i: int = 0; i < args.length; i += 1)
-		the System.out.println("Hello " + args.get(i) + "!");
-}
-
 object Test {
 	
 	val a: readonly Object = new Object

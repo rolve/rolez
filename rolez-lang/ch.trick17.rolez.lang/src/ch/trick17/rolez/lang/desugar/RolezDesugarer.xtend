@@ -17,7 +17,6 @@ import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.EcoreUtil2
 import org.eclipse.xtext.common.types.JvmGenericType
 import org.eclipse.xtext.common.types.JvmVisibility
-import org.eclipse.xtext.linking.lazy.SyntheticLinkingSupport
 import org.eclipse.xtext.nodemodel.INode
 
 import static ch.trick17.rolez.lang.rolez.OpArithmetic.*
@@ -29,14 +28,13 @@ class RolezDesugarer extends AbstractDeclarativeDesugarer {
 
     extension RolezFactory = RolezFactory.eINSTANCE
     @Inject extension RolezExtensions
-    @Inject extension SyntheticLinkingSupport
 
     @Rule
     def void addDefaultConstr(NormalClass it) {
         if(constrs.isEmpty && (!isMapped || jvmClass.hasNoArgConstr)) {
             val c = createConstr
             constrs += c
-            if(mapped) c.createAndSetProxy(CONSTR__JVM_CONSTR, "mapped")
+            if(mapped) c.createReference(CONSTR__JVM_CONSTR, "mapped")
             else c.body = createBlock
         }
     }
@@ -51,14 +49,14 @@ class RolezDesugarer extends AbstractDeclarativeDesugarer {
                 && !enclosingClass.isObjectClass) {
             val supr = createSuperConstrCall
             body.stmts.add(0, supr)
-            supr.createAndSetProxy(SUPER_CONSTR_CALL__CONSTR, "super")
+            supr.createReference(SUPER_CONSTR_CALL__CONSTR, "super")
         }
     }
     
     @Rule
     def addSuperClass(Class it) {
         if(superclass == null && !isObjectClass)
-            createAndSetProxy(CLASS__SUPERCLASS, "rolez.lang.Object")
+            createReference(CLASS__SUPERCLASS, "rolez.lang.Object")
     }
     
     @Rule

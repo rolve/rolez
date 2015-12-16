@@ -1,0 +1,19 @@
+package foo
+
+import rolez.util.Scanner
+
+main task Main(args: readonly Array[pure String]): {
+	val scanner: readwrite Scanner = new Scanner(the System.in);
+	
+	var continue: boolean = true;
+	while(continue) {
+		val line: readonly String = scanner.nextLine;
+		if(line.equals("stop"))
+			continue = false;
+		else
+			the System.out.println("Hello " + line + "!");
+	}
+	
+	for(var i: int = 0; i < 10; i += 1)
+		the System.out.println("Good bye!".length);
+}
