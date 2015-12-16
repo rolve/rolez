@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
-      id="ch.trick17.rolez.lang.feature"
+      id="ch.trick17.rolez.lang.sdk"
       label="Rolez SDK"
       version="1.0.0.qualifier"
       provider-name="Michael Faes">

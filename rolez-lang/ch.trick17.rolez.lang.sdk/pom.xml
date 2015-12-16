@@ -6,6 +6,6 @@
         <artifactId>ch.trick17.rolez.lang.parent</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
-    <artifactId>ch.trick17.rolez.lang.feature</artifactId>
+    <artifactId>ch.trick17.rolez.lang.sdk</artifactId>
     <packaging>eclipse-feature</packaging>
 </project>

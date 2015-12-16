@@ -22,7 +22,7 @@
         <module>ch.trick17.rolez.lang.tests</module>
         <module>ch.trick17.rolez.lang.ui.tests</module>
         <module>ch.trick17.rolez.lang.repository</module>
-        <module>ch.trick17.rolez.lang.feature</module>
+        <module>ch.trick17.rolez.lang.sdk</module>
     </modules>
     <build>
         <plugins>
