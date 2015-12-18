@@ -1,0 +1,37 @@
+package rolez.util
+
+import rolez.io.InputStream
+
+// TODO: Port to Rolez
+
+class Scanner mapped to java.util.Scanner {
+    mapped new(source: readonly InputStream)
+    mapped new(source: readonly InputStream, charset: readonly String)
+    mapped new(source: readonly String)
+    
+    mapped def readonly radix: int
+    mapped def readwrite useRadix(radix: int): readonly Scanner
+    mapped def readwrite useDelimiter(pattern: readonly String): readonly Scanner
+    
+    mapped def readonly hasNext: boolean
+    mapped def readonly hasNext(pattern: readonly String): boolean
+    mapped def readonly hasNextLine: boolean
+    mapped def readonly hasNextBoolean: boolean
+    mapped def readonly hasNextInt: boolean
+    mapped def readonly hasNextInt(radix: int): boolean
+    mapped def readonly hasNextDouble: boolean
+    
+    mapped def readwrite next: readonly String
+    mapped def readwrite next(pattern: readonly String): readonly String
+    mapped def readwrite nextLine: readonly String
+    mapped def readwrite nextBoolean: boolean
+    mapped def readwrite nextInt: int
+    mapped def readwrite nextInt(radix: int): int
+    mapped def readwrite nextDouble: double
+    
+    mapped def readwrite findInLine(pattern: readonly String): readonly String
+    mapped def readwrite findWithinHorizon(pattern: readonly String, horizon: int): readonly String
+    mapped def readwrite skip(pattern: readonly String): readonly Scanner
+    
+    mapped def readwrite close:
+}

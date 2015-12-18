@@ -1,5 +1,11 @@
 package rolez.io
 
+class InputStream mapped to java.io.InputStream {
+    mapped def readonly read: int
+    
+    mapped def readonly close:
+}
+
 class PrintStream mapped to java.io.PrintStream {
     mapped new(file: readonly String)
     

@@ -1,6 +1,7 @@
 package rolez.lang
 
-import rolez.io.*
+import rolez.io.InputStream
+import rolez.io.PrintStream
 
 class Object mapped to java.lang.Object {
     mapped def readonly equals(other: readonly Object): boolean
@@ -25,10 +26,14 @@ class String mapped to java.lang.String {
     mapped def readonly trim: readonly String
 }
 
-class Task mapped to rolez.lang.Task
+class Task[V] mapped to rolez.lang.Task {
+    mapped def pure get: V
+}
 
 object System mapped to java.lang.System {
+    mapped val  in: readonly InputStream
     mapped val out: readonly PrintStream
+    mapped val err: readonly PrintStream
     
     mapped def readonly exit(code: int):
 }
