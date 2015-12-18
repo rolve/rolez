@@ -3,6 +3,7 @@ package ch.trick17.rolez.lang
 import ch.trick17.rolez.lang.desugar.DesugaringLazyLinkingResource
 import ch.trick17.rolez.lang.desugar.IDesugarer
 import ch.trick17.rolez.lang.desugar.RolezDesugarer
+import ch.trick17.rolez.lang.rolez.RolezFactory
 import ch.trick17.rolez.lang.scoping.RolezImportedNamespaceScopeProvider
 import ch.trick17.rolez.lang.typesystem.RolezValidatorFilter
 import com.google.inject.Binder
@@ -43,5 +44,9 @@ class RolezRuntimeModule extends AbstractRolezRuntimeModule {
     
     def Class<? extends XsemanticsValidatorFilter> bindValidatorFilter() {
         RolezValidatorFilter;
+    }
+    
+    def RolezFactory bindRolezFactoryToInstance() {
+        return RolezFactory.eINSTANCE;
     }
 }

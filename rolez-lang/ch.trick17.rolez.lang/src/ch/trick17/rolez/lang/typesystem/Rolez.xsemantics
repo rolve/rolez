@@ -34,6 +34,7 @@ import ch.trick17.rolez.lang.rolez.ReturnExpr
 import ch.trick17.rolez.lang.rolez.ReturnNothing
 import ch.trick17.rolez.lang.rolez.Role
 import ch.trick17.rolez.lang.rolez.RoleType
+import ch.trick17.rolez.lang.rolez.RolezFactory
 import ch.trick17.rolez.lang.rolez.SimpleClassRef
 import ch.trick17.rolez.lang.rolez.Start
 import ch.trick17.rolez.lang.rolez.Stmt
@@ -66,8 +67,9 @@ system ch.trick17.rolez.lang.typesystem.RolezSystem
 
 validatorExtends AbstractRolezValidator
 
-inject extension RolezExtensions _
-inject extension RolezUtils __
+inject extension RolezFactory _
+inject extension RolezExtensions __
+inject extension RolezUtils ___
 
 auxiliary {
     leastCommonSuperrole(Role r1, Role r2): Role
@@ -140,14 +142,14 @@ from {
 }
 
 rule TLogicalExpr
-    G |- LogicalExpr e : newBooleanType
+    G |- LogicalExpr e : createBoolean
 from {
-    G |- e.left  <| newBooleanType
-    G |- e.right <| newBooleanType
+    G |- e.left  <| createBoolean
+    G |- e.right <| createBoolean
 }
 
 rule TEqualityExpr
-    G |- EqualityExpr e : newBooleanType
+    G |- EqualityExpr e : createBoolean
 from {
     G |- e.left  : var Type leftType
     G |- e.right : var Type rightType
@@ -160,17 +162,17 @@ from {
 }
 
 rule TRelationalExpr
-    G |- RelationalExpr e : newBooleanType
+    G |- RelationalExpr e : createBoolean
 from {
     G |- e.left  : var Type leftType
     G |- e.right : var Type rightType
     
     {
-        G |- leftType  <: newIntType
-        G |- rightType <: newIntType
+        G |- leftType  <: createInt
+        G |- rightType <: createInt
     } or {
-        G |- leftType  <: newCharType
-        G |- rightType <: newCharType
+        G |- leftType  <: createChar
+        G |- rightType <: createChar
     } or fail
         error "Cannot compare " + leftType.string + " to " + rightType.string
         source e
@@ -189,9 +191,9 @@ from {
         G |- leftType <: stringType or G |- rightType <: stringType     
         t = stringType
     } or {
-        G |- leftType  <: newIntType
-        G |- rightType <: newIntType
-        t = newIntType
+        G |- leftType  <: createInt
+        G |- rightType <: createInt
+        t = createInt
     } or fail
         error "The operator + is undefined for the argument types "
             + leftType.string + ", " + rightType.string
@@ -218,15 +220,15 @@ from {
 }
 
 rule TUnaryMinus
-    G |- UnaryMinus m : newIntType
+    G |- UnaryMinus m : createInt
 from {
-    G |- m.expr <| newIntType
+    G |- m.expr <| createInt
 }
 
 rule TUnaryNot
-    G |- UnaryNot n : newBooleanType
+    G |- UnaryNot n : createBoolean
 from {
-    G |- n.expr <| newBooleanType
+    G |- n.expr <| createBoolean
 }
 
 rule TMemberAccess
@@ -318,19 +320,19 @@ from {
 }
 
 axiom TNullLiteral
-    G |- NullLiteral __ : newNullType
+    G |- NullLiteral __ : createNull
 
 axiom TIntLiteral
-    G |- IntLiteral __ : newIntType
+    G |- IntLiteral __ : createInt
 
 axiom TDoubleLiteral
-    G |- DoubleLiteral __ : newDoubleType
+    G |- DoubleLiteral __ : createDouble
 
 axiom TBooleanLiteral
-    G |- BooleanLiteral __ : newBooleanType
+    G |- BooleanLiteral __ : createBoolean
 
 axiom TCharLiteral
-    G |- CharLiteral __ : newCharType
+    G |- CharLiteral __ : createChar
 
 
 rule WBlock
@@ -350,7 +352,7 @@ from {
 rule WIfStmt
     G |- IfStmt ifStmt
 from {
-    G |- ifStmt.^condition <| newBooleanType
+    G |- ifStmt.^condition <| createBoolean
     G |- ifStmt.thenPart
     G |- ifStmt.elsePart
 }
@@ -358,7 +360,7 @@ from {
 rule WWhileLoop
     G |- WhileLoop l
 from {
-    G |- l.^condition <| newBooleanType
+    G |- l.^condition <| createBoolean
     G |- l.body
 }
 

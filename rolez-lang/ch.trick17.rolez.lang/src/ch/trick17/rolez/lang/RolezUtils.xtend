@@ -42,23 +42,23 @@ import static extension org.eclipse.emf.ecore.util.EcoreUtil.resolve
  */
 class RolezUtils {
     
+    @Inject extension RolezFactory
     @Inject extension RolezExtensions
     @Inject RolezSystem system
     @Inject IScopeProvider scopeProvider
-    val factory = RolezFactory.eINSTANCE
     
     def newRoleType(Role r, ClassRef base) {
         if(base.eContainer != null)
             throw new IllegalArgumentException("base must not be contained")
         
-        val result = factory.createRoleType()
+        val result = createRoleType
         result.role = r
         result.base = base
         result
     }
     
     def newClassRef(Class c) {
-        val result = factory.createSimpleClassRef
+        val result = createSimpleClassRef
         result.clazz = c
         result
     }
@@ -67,18 +67,11 @@ class RolezUtils {
         if(arg.eContainer != null)
             throw new IllegalArgumentException("arg must not be contained")
         
-        val result = factory.createGenericClassRef
+        val result = createGenericClassRef
         result.clazz = c
         result.typeArg = arg
         result
     }
-
-    def newIntType()     { factory.createInt     }
-    def newDoubleType()  { factory.createDouble  }
-    def newBooleanType() { factory.createBoolean }
-    def newCharType()    { factory.createChar    }
-    def newVoidType()    { factory.createVoid    }
-    def newNullType()    { factory.createNull    }
     
     def envFor(EObject o) {
         val body = o.enclosingBody

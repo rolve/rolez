@@ -12,6 +12,7 @@ import ch.trick17.rolez.lang.rolez.Null
 import ch.trick17.rolez.lang.rolez.Program
 import ch.trick17.rolez.lang.rolez.Role
 import ch.trick17.rolez.lang.rolez.RoleType
+import ch.trick17.rolez.lang.rolez.RolezFactory
 import ch.trick17.rolez.lang.rolez.SuperConstrCall
 import ch.trick17.rolez.lang.typesystem.RolezSystem
 import javax.inject.Inject
@@ -37,6 +38,7 @@ import static extension org.hamcrest.MatcherAssert.assertThat
 class RolezTypeSystemTest {
     
     @Inject RolezSystem system
+    @Inject extension RolezFactory
     @Inject extension RolezExtensions
     @Inject extension RolezUtils
     @Inject extension TestUtilz
@@ -322,7 +324,7 @@ class RolezTypeSystemTest {
         program.main.expr(3).type.assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
         program.main.expr(4).type.assertThat(isRoleType(READONLY,  newClassRef(program.findClass("A"))))
         program.main.expr(5).type.assertThat(isRoleType(READONLY,
-                newClassRef(program.findNormalClass(arrayClassName), newIntType)))
+                newClassRef(program.findNormalClass(arrayClassName), createInt)))
         program.main.expr(6).type.assertThat(isRoleType(READONLY,
             newClassRef(program.findNormalClass(arrayClassName), newRoleType(PURE, newClassRef(program.findClass("A"))))))
         
@@ -958,7 +960,7 @@ class RolezTypeSystemTest {
             task Main: { new Array[int](100); }
         ''')
         program.main.lastExpr.type
-            .assertThat(isRoleType(READWRITE, newClassRef(program.findNormalClass(arrayClassName), newIntType)))
+            .assertThat(isRoleType(READWRITE, newClassRef(program.findNormalClass(arrayClassName), createInt)))
         
         program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -1132,7 +1134,7 @@ class RolezTypeSystemTest {
             task Main: { start T; }
         ''')
         program.main.lastExpr.type
-            .assertThat(isRoleType(PURE, newClassRef(program.findNormalClass(taskClassName), newIntType)))
+            .assertThat(isRoleType(PURE, newClassRef(program.findNormalClass(taskClassName), createInt)))
         
         program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -1141,7 +1143,7 @@ class RolezTypeSystemTest {
             task Main: { start T; }
         ''')
         program.main.lastExpr.type
-            .assertThat(isRoleType(PURE, newClassRef(program.findNormalClass(taskClassName), newVoidType)))
+            .assertThat(isRoleType(PURE, newClassRef(program.findNormalClass(taskClassName), createVoid)))
         
         program = parse('''
             class rolez.lang.Object mapped to java.lang.Object

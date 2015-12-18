@@ -26,7 +26,7 @@ import static ch.trick17.rolez.lang.rolez.RolezPackage.Literals.*
 
 class RolezDesugarer extends AbstractDeclarativeDesugarer {
 
-    extension RolezFactory = RolezFactory.eINSTANCE
+    @Inject extension RolezFactory
     @Inject extension RolezExtensions
 
     @Rule
