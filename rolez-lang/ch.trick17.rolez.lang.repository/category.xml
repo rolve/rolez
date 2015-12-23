@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<site>
-   <feature url="features/ch.trick17.rolez.lang.sdk_1.0.0.qualifier.jar" id="ch.trick17.rolez.lang.sdk" version="1.0.0.qualifier">
-      <category name="ch.trick17.rolez.lang.sdk"/>
-   </feature>
-   <category-def name="ch.trick17.rolez.lang.sdk" label="Rolez SDK"/>
-</site>

@@ -49,7 +49,7 @@
                 <configuration>
                     <languages>
                         <language>
-                            <setup>ch.trick17.rolez.lang.RolezStandaloneSetup</setup>
+                            <setup>ch.trick17.rolez.RolezStandaloneSetup</setup>
                             <outputConfigurations>
                                 <outputConfiguration>
                                     <outputDirectory>${rolezGenDir}</outputDirectory>
@@ -67,8 +67,8 @@
                 </executions>
                 <dependencies>
                     <dependency>
-                        <groupId>ch.trick17.rolez.lang</groupId>
-                        <artifactId>ch.trick17.rolez.lang</artifactId>
+                        <groupId>ch.trick17.rolez</groupId>
+                        <artifactId>ch.trick17.rolez</artifactId>
                         <version>1.0.0-SNAPSHOT</version>
                     </dependency>
                 </dependencies>

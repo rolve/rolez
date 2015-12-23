@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature
+      id="ch.trick17.rolez.sdk"
+      label="Rolez SDK"
+      version="1.0.0.qualifier"
+      provider-name="Michael Faes">
+
+   <plugin
+         id="ch.trick17.rolez"
+         download-size="0"
+         install-size="0"
+         version="1.0.0.qualifier"
+         unpack="false"/>
+
+   <plugin
+         id="ch.trick17.rolez.ide"
+         download-size="0"
+         install-size="0"
+         version="1.0.0.qualifier"
+         unpack="false"/>
+
+   <plugin
+         id="ch.trick17.rolez.ui"
+         download-size="0"
+         install-size="0"
+         version="1.0.0.qualifier"
+         unpack="false"/>
+
+</feature>

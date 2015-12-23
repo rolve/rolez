@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+   <feature url="features/ch.trick17.rolez.sdk_1.0.0.qualifier.jar" id="ch.trick17.rolez.sdk" version="1.0.0.qualifier">
+      <category name="ch.trick17.rolez.sdk"/>
+   </feature>
+   <category-def name="ch.trick17.rolez.sdk" label="Rolez SDK"/>
+</site>
