@@ -17,6 +17,7 @@
     <modules>
         <module>ch.trick17.rolez</module>
         <module>ch.trick17.rolez.ide</module>
+        <module>ch.trick17.rolez.lib</module>
         <module>ch.trick17.rolez.ui</module>
         <module>ch.trick17.rolez.target</module>
         <module>ch.trick17.rolez.tests</module>

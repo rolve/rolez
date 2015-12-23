@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: ch.trick17.rolez.lib
+Bundle-SymbolicName: ch.trick17.rolez.lib;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-Vendor: Michael Faes
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-ActivationPolicy: lazy

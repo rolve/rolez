@@ -1,47 +1,30 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>ch.trick17.rolez</groupId>
-    <artifactId>rolez-std-lib</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <parent>
+        <groupId>ch.trick17.rolez</groupId>
+        <artifactId>rolez-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>ch.trick17.rolez.lib</artifactId>
+    <packaging>eclipse-plugin</packaging>
 
     <properties>
         <maven.compiler.source>1.7</maven.compiler.source>
         <maven.compiler.target>1.7</maven.compiler.target>
-        <rolezSourceDir>src/main/rolez</rolezSourceDir>
-        <rolezGenDir>${project.build.directory}/rolez-gen</rolezGenDir>
+        <rolezGenDir>rolez-gen</rolezGenDir>
     </properties>
 
     <build>
         <resources>
             <resource>
-                <directory>${rolezSourceDir}</directory>
+                <directory>src</directory>
                 <includes>
                     <include>**/*.rz</include>
                 </includes>
             </resource>
         </resources>
         <plugins>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <version>1.10</version>
-                <executions>
-                    <execution>
-                        <id>add-source</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>add-source</goal>
-                        </goals>
-                        <configuration>
-                            <sources>
-                                <source>${rolezSourceDir}</source>
-                                <source>${rolezGenDir}</source>
-                            </sources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <groupId>org.eclipse.xtext</groupId>
                 <artifactId>xtext-maven-plugin</artifactId>
