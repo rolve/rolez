@@ -5,6 +5,7 @@ Bundle-Version: 1.0.0.qualifier
 Bundle-SymbolicName: ch.trick17.rolez.tests;singleton:=true
 Bundle-ActivationPolicy: lazy
 Require-Bundle: ch.trick17.rolez,
+ ch.trick17.rolez.lib,
  org.eclipse.xtext.junit4,
  org.eclipse.xtext.xbase.junit,
  org.eclipse.xtext.xbase.lib,

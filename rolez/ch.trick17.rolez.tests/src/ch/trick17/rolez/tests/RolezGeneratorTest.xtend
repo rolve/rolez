@@ -45,17 +45,25 @@ class RolezGeneratorTest {
                 mapped def readonly hashCode: int
                 mapped def readonly toString: pure String
             }
-            class rolez.lang.String mapped to java.lang.String {
-                mapped def pure length: int
-                mapped def pure substring(b: int, e: int): pure String
-            }
             class rolez.lang.Array[T] mapped to rolez.lang.Array {
                 mapped new(i: int)
                 mapped def readonly  get(i: int): T
                 mapped def readwrite set(i: int, o: T):
             }
+            class rolez.lang.String mapped to java.lang.String {
+                mapped def pure length: int
+                mapped def pure substring(b: int, e: int): pure String
+            }
+            class rolez.lang.Task[V] mapped to rolez.lang.Task {
+                mapped def pure get: V
+            }
+            object rolez.lang.System mapped to java.lang.System {
+                mapped val out: readonly rolez.io.PrintStream
+            }
             class rolez.io.PrintStream mapped to java.io.PrintStream {
                 mapped new(file: readonly String)
+                mapped def readonly println(i: int)
+                mapped def readonly println(s: pure String):
             }
             class Base {
                 var foo: int
@@ -65,6 +73,8 @@ class RolezGeneratorTest {
                 new(i: int) {}
                 new(i: int, j: int) {}
             }
+            task VoidTask: {}
+            task SumTask(i: int, j: int): int { return i + j; }
         ''')
     }
     
@@ -239,7 +249,7 @@ class RolezGeneratorTest {
             public final class Main implements java.util.concurrent.Callable<java.lang.Void> {
                 
                 public static void main(final String[] args) {
-                    new Main().call();
+                    rolez.lang.TaskSystem.getDefault().run(new Main());
                 }
                 
                 public java.lang.Void call() {
@@ -255,7 +265,7 @@ class RolezGeneratorTest {
             public final class Main implements java.util.concurrent.Callable<java.lang.Void> {
                 
                 public static void main(final String[] args) {
-                    new Main(args).call();
+                    rolez.lang.TaskSystem.getDefault().run(new Main(args));
                 }
                 
                 private final java.lang.String[] args;
@@ -500,7 +510,7 @@ class RolezGeneratorTest {
             public final class _final implements java.util.concurrent.Callable<java.lang.Void> {
                 
                 public static void main(final String[] args) {
-                    new _final(args).call();
+                    rolez.lang.TaskSystem.getDefault().run(new _final(args));
                 }
                 
                 private final java.lang.String[] _do;
@@ -824,6 +834,34 @@ class RolezGeneratorTest {
             new foo.bar.Base((3 * 2) + 2);
             new foo.bar.Base("Hello".length(), 0);
             java.lang.Object a = new int[10 * 10];
+        '''.withJavaFrame)
+    }
+    
+    @Test def void testThe() {
+        parse('''
+            the System.out.println("Hello World!");
+        '''.withFrame, classes).generate.assertEqualsJava('''
+            rolez.lang.System.INSTANCE.out.println("Hello World!");
+        '''.withJavaFrame)
+    }
+    
+    @Test def void testStart() {
+        parse('''
+            start VoidTask;
+        '''.withFrame, classes).generate.assertEqualsJava('''
+            rolez.lang.TaskSystem.getDefault().start(new VoidTask());
+        '''.withJavaFrame)
+        
+        parse('''
+            val sum: pure Task[int] = start SumTask(1, 2);
+            the System.out.println("Parallelism!");
+            the System.out.println("The sum: " + sum.get);
+            the System.out.println("Twice the sum!: " + (2 * sum.get));
+        '''.withFrame, classes).generate.assertEqualsJava('''
+            final rolez.lang.Task<java.lang.Integer> sum = rolez.lang.TaskSystem.getDefault().start(new SumTask(1, 2));
+            rolez.lang.System.INSTANCE.out.println("Parallelism!");
+            rolez.lang.System.INSTANCE.out.println("The sum: " + sum.get());
+            rolez.lang.System.INSTANCE.out.println("Twice the sum!: " + (2 * sum.get()));
         '''.withJavaFrame)
     }
     

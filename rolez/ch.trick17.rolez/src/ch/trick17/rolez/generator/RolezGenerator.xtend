@@ -45,6 +45,7 @@ import ch.trick17.rolez.rolez.Stmt
 import ch.trick17.rolez.rolez.StringLiteral
 import ch.trick17.rolez.rolez.SuperConstrCall
 import ch.trick17.rolez.rolez.Task
+import ch.trick17.rolez.rolez.TaskRef
 import ch.trick17.rolez.rolez.The
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.Type
@@ -67,6 +68,7 @@ import org.eclipse.xtext.generator.IGeneratorContext
 import static ch.trick17.rolez.rolez.VarKind.VAL
 
 import static extension org.eclipse.xtext.util.Strings.convertToJavaString
+import static extension java.util.Objects.requireNonNull
 
 class RolezGenerator extends AbstractGenerator {
     
@@ -122,11 +124,7 @@ class RolezGenerator extends AbstractGenerator {
             «IF isMain»
             
             public static void main(final String[] args) {
-                «IF params.isEmpty»
-                new «safeSimpleName»().call();
-                «ELSE»
-                new «safeSimpleName»(args).call();
-                «ENDIF»
+                rolez.lang.TaskSystem.getDefault().run(new «safeSimpleName»(«IF !params.isEmpty»args«ENDIF»));
             }
             «ENDIF»
             «IF !params.isEmpty»
@@ -349,8 +347,10 @@ class RolezGenerator extends AbstractGenerator {
             '''new «classRef.gen»(«args.map[gen].join(", ")»)'''
     }
     
-    private def dispatch generateExpr(The it)
-        '''«classRef.gen».INSTANCE'''
+    private def dispatch generateExpr(The it) '''«classRef.gen».INSTANCE'''
+    
+    private def dispatch generateExpr(Start it)
+        '''rolez.lang.TaskSystem.getDefault().start(new «taskRef.gen»(«args.map[gen].join(", ")»))'''
     
     private def int arrayNesting(GenericClassRef it) {
         if(!clazz.isArrayClass)
@@ -377,9 +377,6 @@ class RolezGenerator extends AbstractGenerator {
                 arg
         }
     }
-    
-    private def dispatch generateExpr(Start it)
-        '''null /* TODO */'''
     
     private def dispatch generateExpr(Parenthesized it) { expr.gen }
     
@@ -431,22 +428,22 @@ class RolezGenerator extends AbstractGenerator {
         if(clazz.isArrayClass)
             '''«typeArg.gen»[]'''
         else
-            '''«clazz.generateName»<«typeArg.gen»>'''
+            '''«clazz.generateName»<«typeArg.genGeneric»>'''
     }
     
     private def generateName(Class it) {
-        if(mapped && !isSingleton) {
-            val name = jvmClass.qualifiedName
-            if(name == null) throw new AssertionError
-            name
-        }
-        else safeQualifiedName
+        if(mapped && !isSingleton)
+            jvmClass.qualifiedName.requireNonNull
+        else
+            safeQualifiedName
     }
+    
+    private def gen(TaskRef it) { task.safeQualifiedName }
     
     /*
      * Safe Java names
      */
-     
+    
     static val javaKeywords = #{
         "abstract", "assert", "boolean", "break", "byte", "case", "catch", 
         "char", "class", "const", "continue", "default", "do", "double", "else",
@@ -455,14 +452,6 @@ class RolezGenerator extends AbstractGenerator {
         "native", "new", "package", "private", "protected", "public", "return",
         "short", "static", "strictfp", "super", "switch", "synchronized", "this",
         "throw", "throws", "transient", "try", "void", "volatile", "while"}
-    
-    private def safe(String name) {
-        if(javaKeywords.contains(name) ||
-                (name.startsWith("_") && javaKeywords.contains(name.substring(1))))
-            "_" + name
-        else
-            name
-    }
     
     private def safeName(Named it) { safe(name) }
     
@@ -477,5 +466,13 @@ class RolezGenerator extends AbstractGenerator {
     private def safePackage(ClassLike it) {
         val segments = qualifiedName.segments
         segments.takeWhile[it != segments.last].map[safe].join(".")
+    }
+    
+    private def safe(String name) {
+        if(javaKeywords.contains(name) ||
+                (name.startsWith("_") && javaKeywords.contains(name.substring(1))))
+            "_" + name
+        else
+            name
     }
 }
