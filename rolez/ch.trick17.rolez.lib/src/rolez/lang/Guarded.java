@@ -4,11 +4,9 @@ import java.util.Set;
 
 public abstract class Guarded {
     
-    private volatile Guard guard; // IMPROVE: volatile necessary? Task system
-                                  // should guarantee happens-before.
-    final Object viewLock = new Object();
+    private Guard guard;
     
-    public Guarded() {}
+    final Object viewLock = new Object();
     
     public void share() {
         getGuard().share(this);
@@ -49,7 +47,7 @@ public abstract class Guarded {
             guard.guardReadWrite(this);
     }
     
-    final void processAll(final GuardOp op, final Set<Guarded> processed,
+    final void processAll(final Guard.Op op, final Set<Guarded> processed,
             final boolean lockViews) {
         if(processed.add(this)) {
             /* First, process references, otherwise "parent" task may replace
@@ -73,14 +71,14 @@ public abstract class Guarded {
         }
     }
     
-    final void processViews(final GuardOp op, final Set<Guarded> processed) {
+    final void processViews(final Guard.Op op, final Set<Guarded> processed) {
         // Same as processViewsRecursive, except "this" is not processed
         for(final Guarded view : views())
             if(view != null)
                 view.processViewsRecursive(op, processed);
     }
     
-    private void processViewsRecursive(final GuardOp op,
+    private void processViewsRecursive(final Guard.Op op,
             final Set<Guarded> processed) {
         if(processed.add(this)) {
             for(final Guarded view : views())
@@ -93,7 +91,7 @@ public abstract class Guarded {
     
     /**
      * Returns all references to mutable and therefore guarded objects that are
-     * reachable from this. This may exclude internal objects of the PEPPL
+     * reachable from this. This may exclude internal objects of the Rolez
      * library.
      * 
      * @return All references to mutable objects reachable from this. To

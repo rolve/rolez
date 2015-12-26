@@ -12,7 +12,7 @@ class Guard {
     
     private volatile Thread owner = Thread.currentThread();
     private final Deque<Thread> prevOwners = new ArrayDeque<>();
-    // IMPROVE: *Extend* AtomicInteger instead to save a pointer
+    // IMPROVE: Use Unsafe CAS or, once Java 9 is out (:D), standard API to CAS an int field directly
     private final AtomicInteger sharedCount = new AtomicInteger(0);
     
     private final Deque<Set<Guarded>> prevReachables = new ArrayDeque<>();
@@ -26,11 +26,16 @@ class Guard {
     
     /* Object state operations */
     
+    static abstract class Op {
+        abstract void process(Guarded guarded);
+    }
+    
     void share(final Guarded guarded) {
         guarded.processAll(SHARE, newIdentitySet(), false);
     }
     
-    private static final GuardOp SHARE = new GuardOp() {
+    private static final Op SHARE = new Op() {
+        @Override
         public void process(final Guarded guarded) {
             jpfWorkaround();
             guarded.getGuard().guardRead(guarded);
@@ -44,7 +49,8 @@ class Guard {
         prevReachables.addFirst(processed);
     }
     
-    private static final GuardOp PASS = new GuardOp() {
+    private static final Op PASS = new Op() {
+        @Override
         public void process(final Guarded guarded) {
             jpfWorkaround();
             GUARD_READ_WRITE.process(guarded);
@@ -59,7 +65,8 @@ class Guard {
         guarded.processAll(REGISTER_OWNER, newIdentitySet(), false);
     }
     
-    private static final GuardOp REGISTER_OWNER = new GuardOp() {
+    private static final Op REGISTER_OWNER = new Op() {
+        @Override
         public void process(final Guarded guarded) {
             jpfWorkaround();
             final Guard guard = guarded.getGuard();
@@ -74,11 +81,11 @@ class Guard {
         guarded.processAll(RELEASE_SHARED, newIdentitySet(), true);
     }
     
-    private static final GuardOp RELEASE_SHARED = new GuardOp() {
+    private static final Op RELEASE_SHARED = new Op() {
+        @Override
         public void process(final Guarded guarded) {
             jpfWorkaround();
             final Guard guard = guarded.getGuard();
-            assert guard.isShared();
             final int count = guard.sharedCount.decrementAndGet();
             if(count == 0)
                 LockSupport.unpark(guard.owner);
@@ -96,7 +103,8 @@ class Guard {
          * owner of newly reachable objects */
         final Thread parent = prevOwners.peekFirst();
         assert parent != null;
-        final GuardOp transferOwner = new GuardOp() {
+        final Op transferOwner = new Op() {
+            @Override
             public void process(final Guarded g) {
                 jpfWorkaround();
                 final Guard guard = g.getGuard();
@@ -114,7 +122,8 @@ class Guard {
         prevReachables.removeFirst();
     }
     
-    private static final GuardOp RELEASE_PASSED = new GuardOp() {
+    private static final Op RELEASE_PASSED = new Op() {
+        @Override
         public void process(final Guarded guarded) {
             jpfWorkaround();
             final Guard guard = guarded.getGuard();
@@ -133,15 +142,15 @@ class Guard {
         guarded.processViews(GUARD_READ, newIdentitySet());
     }
     
-    private static final GuardOp GUARD_READ = new GuardOp() {
+    private static final Op GUARD_READ = new Op() {
+        @Override
         public void process(final Guarded guarded) {
             jpfWorkaround();
-            /* isMutable() and isShared() read volatile (atomic) fields written
-             * by releasePassed and releaseShared. Therefore, there is a
+            /* mayRead() reads the volatile owner field written by
+             * releasePassed() and releaseShared(). Therefore, there is a
              * happens-before relationship between
              * releasePassed()/releaseShared() and guardRead(). */
-            final Guard guard = guarded.getGuard();
-            while(!(guard.isMutable() || guard.isShared()))
+            while(!guarded.getGuard().mayRead())
                 LockSupport.park();
         }
     };
@@ -151,33 +160,33 @@ class Guard {
         guarded.processViews(GUARD_READ_WRITE, newIdentitySet());
     }
     
-    private static final GuardOp GUARD_READ_WRITE = new GuardOp() {
+    private static final Op GUARD_READ_WRITE = new Op() {
+        @Override
         public void process(final Guarded guarded) {
             jpfWorkaround();
-            /* isMutable() reads the volatile owner field written by
-             * releasePassed. Therefore, there is a happens-before relationship
-             * between releasePassed() and guardReadWrite(). */
-            while(!guarded.getGuard().isMutable())
+            /* mayWrite() reads the volatile owner field written by
+             * releasePassed(). Therefore, there is a happens-before
+             * relationship between releasePassed() and guardReadWrite(). */
+            while(!guarded.getGuard().mayWrite())
                 LockSupport.park();
         }
     };
     
     /* Implementation methods */
     
-    private boolean isMutable() {
-        return owner == Thread.currentThread() && !isShared();
+    private boolean mayRead() {
+        return owner == Thread.currentThread() || sharedCount.get() > 0;
     }
     
-    private boolean isShared() {
-        return sharedCount.get() > 0;
+    private boolean mayWrite() {
+        return owner == Thread.currentThread() && !(sharedCount.get() > 0);
     }
     
     private boolean amOriginalOwner() {
         return prevOwners.isEmpty();
     }
     
-    private void processReachables(final GuardOp op,
-            final Set<Guarded> processed) {
+    private void processReachables(final Op op, final Set<Guarded> processed) {
         final Set<Guarded> reachables = prevReachables.peekFirst();
         assert reachables != null;
         
@@ -187,8 +196,8 @@ class Guard {
     }
     
     private static Set<Guarded> newIdentitySet() {
-        return Collections
-                .newSetFromMap(new IdentityHashMap<Guarded, Boolean>());
+        return Collections.newSetFromMap(
+                new IdentityHashMap<Guarded, Boolean>());
     }
     
     /**

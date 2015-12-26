@@ -21,9 +21,9 @@ class Array[T] mapped to rolez.lang.Array {
 class String mapped to java.lang.String {
     mapped new(chars: readonly Array[char])
     
-    mapped def readonly length: int
-    mapped def readonly charAt(position: int): char
-    mapped def readonly trim: readonly String
+    mapped def pure length: int
+    mapped def pure charAt(position: int): char
+    mapped def pure trim: readonly String
 }
 
 class Task[V] mapped to rolez.lang.Task {
