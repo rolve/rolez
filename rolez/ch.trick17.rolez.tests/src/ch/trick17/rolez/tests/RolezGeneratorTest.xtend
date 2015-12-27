@@ -75,6 +75,7 @@ class RolezGeneratorTest {
             }
             task VoidTask: {}
             task SumTask(i: int, j: int): int { return i + j; }
+            task FooTask(o1: readwrite Object, o2: readonly Object, o3: pure Object): {}
         ''')
     }
     
@@ -862,6 +863,18 @@ class RolezGeneratorTest {
             rolez.lang.System.INSTANCE.out.println("Parallelism!");
             rolez.lang.System.INSTANCE.out.println("The sum: " + sum.get());
             rolez.lang.System.INSTANCE.out.println("Twice the sum!: " + (2 * sum.get()));
+        '''.withJavaFrame)
+        
+        parse('''
+            val o1: readwrite Object = new Object;
+            val o2: readonly Object = new Object;
+            val o3: pure Object = new Object;
+            start FooTask(o1, o2, o3);
+        '''.withFrame, classes).generate.assertEqualsJava('''
+            final java.lang.Object o1 = new java.lang.Object();
+            final java.lang.Object o2 = new java.lang.Object();
+            final java.lang.Object o3 = new java.lang.Object();
+            rolez.lang.TaskSystem.getDefault().start(new FooTask(o1.pass(), o2.share(), o3));
         '''.withJavaFrame)
     }
     

@@ -37,6 +37,7 @@ import ch.trick17.rolez.rolez.Program
 import ch.trick17.rolez.rolez.RelationalExpr
 import ch.trick17.rolez.rolez.ReturnExpr
 import ch.trick17.rolez.rolez.ReturnNothing
+import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.SimpleClassRef
 import ch.trick17.rolez.rolez.SingletonClass
@@ -67,8 +68,8 @@ import org.eclipse.xtext.generator.IGeneratorContext
 
 import static ch.trick17.rolez.rolez.VarKind.VAL
 
-import static extension org.eclipse.xtext.util.Strings.convertToJavaString
 import static extension java.util.Objects.requireNonNull
+import static extension org.eclipse.xtext.util.Strings.convertToJavaString
 
 class RolezGenerator extends AbstractGenerator {
     
@@ -148,6 +149,7 @@ class RolezGenerator extends AbstractGenerator {
             }
         }
     '''
+    // TODO: transitions
     
     private def gen(Field it) '''
         
@@ -318,17 +320,42 @@ class RolezGenerator extends AbstractGenerator {
         '''!«expr.genNested»'''
     
     private def dispatch generateExpr(MemberAccess it) {
-        // TODO: guard
         switch(it) {
-            case isMethodInvoke && method.isArrayGet:
-                '''«target.gen»[«args.get(0).gen»]'''
-            case isMethodInvoke && method.isArraySet:
-                '''«target.gen»[«args.get(0).gen»] = «args.get(1).gen»'''
-            case isMethodInvoke:
-                '''«target.genNested».«method.safeName»(«args.map[gen].join(", ")»)'''
-            case isFieldAccess:
-                '''«target.genNested».«field.safeName»'''
+            case isMethodInvoke && method.isArrayGet: generateArrayGet
+            case isMethodInvoke && method.isArraySet: generateArraySet
+            case isMethodInvoke:                      generateMethodInvoke
+            case isFieldAccess:                       generateFieldAccess
         }
+    }
+    
+    private def generateArrayGet(MemberAccess it) {
+        // TODO: guarding
+        '''«target.gen»[«args.get(0).gen»]'''
+    }
+    
+    private def generateArraySet(MemberAccess it) {
+        // TODO: guarding
+        '''«target.gen»[«args.get(0).gen»] = «args.get(1).gen»'''
+    }
+    
+    private def generateMethodInvoke(MemberAccess it) {
+        // TODO: simple guard elimination
+        val guard = switch(method.thisRole) {
+            case READWRITE: "guardReadWrite()."
+            case  READONLY: "guardReadOnly()."
+            case      PURE: ""
+        }
+        '''«target.genNested».«guard»«method.safeName»(«args.map[gen].join(", ")»)'''
+    }
+    
+    private def generateFieldAccess(MemberAccess it) {
+        // TODO: simple guard elimination
+        val guard = if(isFieldWrite) "guardReadWrite()." else "guardReadOnly()."
+        '''«target.genNested».«guard»«field.safeName»'''
+    }
+    
+    private def isFieldWrite(MemberAccess it) {
+        eContainer instanceof Assignment && it === (eContainer as Assignment).left
     }
     
     private def dispatch generateExpr(This _) '''this'''
@@ -349,8 +376,18 @@ class RolezGenerator extends AbstractGenerator {
     
     private def dispatch generateExpr(The it) '''«classRef.gen».INSTANCE'''
     
-    private def dispatch generateExpr(Start it)
-        '''rolez.lang.TaskSystem.getDefault().start(new «taskRef.gen»(«args.map[gen].join(", ")»))'''
+    private def dispatch generateExpr(Start it) {
+        val transitionedArgs = args.map[gen].indexed.map[pair |
+            val paramType = taskRef.task.params.get(pair.key).type
+            val transition = switch(paramType) {
+                RoleType case paramType.role == Role.READWRITE: ".pass()"
+                RoleType case paramType.role == Role.READONLY:  ".share()"
+                default: ""
+            }
+            pair.value + transition
+        ].join(", ")
+        '''rolez.lang.TaskSystem.getDefault().start(new «taskRef.gen»(«transitionedArgs»))'''
+    }
     
     private def int arrayNesting(GenericClassRef it) {
         if(!clazz.isArrayClass)

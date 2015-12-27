@@ -15,7 +15,7 @@ class Guard {
     // IMPROVE: Use Unsafe CAS or, once Java 9 is out (:D), standard API to CAS an int field directly
     private final AtomicInteger sharedCount = new AtomicInteger(0);
     
-    private final Deque<Set<Guarded>> prevReachables = new ArrayDeque<>();
+    private final Deque<Set<Guarded<?>>> prevReachables = new ArrayDeque<>();
     
     void initializeViewGuard(final Guard viewGuard) {
         viewGuard.owner = owner;
@@ -27,31 +27,31 @@ class Guard {
     /* Object state operations */
     
     static abstract class Op {
-        abstract void process(Guarded guarded);
+        abstract void process(Guarded<?> guarded);
     }
     
-    void share(final Guarded guarded) {
+    void share(final Guarded<?> guarded) {
         guarded.processAll(SHARE, newIdentitySet(), false);
     }
     
     private static final Op SHARE = new Op() {
         @Override
-        public void process(final Guarded guarded) {
+        public void process(final Guarded<?> guarded) {
             jpfWorkaround();
-            guarded.getGuard().guardRead(guarded);
+            guarded.getGuard().guardReadOnly(guarded);
             guarded.getGuard().sharedCount.incrementAndGet();
         }
     };
     
-    void pass(final Guarded guarded) {
-        final Set<Guarded> processed = newIdentitySet();
+    void pass(final Guarded<?> guarded) {
+        final Set<Guarded<?>> processed = newIdentitySet();
         guarded.processAll(PASS, processed, false);
         prevReachables.addFirst(processed);
     }
     
     private static final Op PASS = new Op() {
         @Override
-        public void process(final Guarded guarded) {
+        public void process(final Guarded<?> guarded) {
             jpfWorkaround();
             GUARD_READ_WRITE.process(guarded);
             /* First step of passing */
@@ -61,13 +61,13 @@ class Guard {
         }
     };
     
-    void registerNewOwner(final Guarded guarded) {
+    void registerNewOwner(final Guarded<?> guarded) {
         guarded.processAll(REGISTER_OWNER, newIdentitySet(), false);
     }
     
     private static final Op REGISTER_OWNER = new Op() {
         @Override
-        public void process(final Guarded guarded) {
+        public void process(final Guarded<?> guarded) {
             jpfWorkaround();
             final Guard guard = guarded.getGuard();
             assert guard.owner == null;
@@ -77,13 +77,13 @@ class Guard {
         }
     };
     
-    void releaseShared(final Guarded guarded) {
+    void releaseShared(final Guarded<?> guarded) {
         guarded.processAll(RELEASE_SHARED, newIdentitySet(), true);
     }
     
     private static final Op RELEASE_SHARED = new Op() {
         @Override
-        public void process(final Guarded guarded) {
+        public void process(final Guarded<?> guarded) {
             jpfWorkaround();
             final Guard guard = guarded.getGuard();
             final int count = guard.sharedCount.decrementAndGet();
@@ -92,10 +92,10 @@ class Guard {
         }
     };
     
-    void releasePassed(final Guarded guarded) {
+    void releasePassed(final Guarded<?> guarded) {
         /* First, make sure all reachable and previously reachable objects are
          * mutable */
-        final Set<Guarded> guardProcessed = newIdentitySet();
+        final Set<Guarded<?>> guardProcessed = newIdentitySet();
         guarded.processAll(GUARD_READ_WRITE, guardProcessed, false);
         processReachables(GUARD_READ_WRITE, guardProcessed);
         
@@ -105,7 +105,7 @@ class Guard {
         assert parent != null;
         final Op transferOwner = new Op() {
             @Override
-            public void process(final Guarded g) {
+            public void process(final Guarded<?> g) {
                 jpfWorkaround();
                 final Guard guard = g.getGuard();
                 if(guard.amOriginalOwner())
@@ -114,7 +114,7 @@ class Guard {
                     RELEASE_PASSED.process(g);
             }
         };
-        final Set<Guarded> processed = newIdentitySet();
+        final Set<Guarded<?>> processed = newIdentitySet();
         guarded.processAll(transferOwner, processed, true);
         
         /* Finally, release rest of the originally reachable objects and views */
@@ -124,7 +124,7 @@ class Guard {
     
     private static final Op RELEASE_PASSED = new Op() {
         @Override
-        public void process(final Guarded guarded) {
+        public void process(final Guarded<?> guarded) {
             jpfWorkaround();
             final Guard guard = guarded.getGuard();
             assert !guard.amOriginalOwner();
@@ -137,14 +137,14 @@ class Guard {
     
     /* Guarding methods */
     
-    void guardRead(final Guarded guarded) {
-        GUARD_READ.process(guarded);
-        guarded.processViews(GUARD_READ, newIdentitySet());
+    void guardReadOnly(final Guarded<?> guarded) {
+        GUARD_READ_ONLY.process(guarded);
+        guarded.processViews(GUARD_READ_ONLY, newIdentitySet());
     }
     
-    private static final Op GUARD_READ = new Op() {
+    private static final Op GUARD_READ_ONLY = new Op() {
         @Override
-        public void process(final Guarded guarded) {
+        public void process(final Guarded<?> guarded) {
             jpfWorkaround();
             /* mayRead() reads the volatile owner field written by
              * releasePassed() and releaseShared(). Therefore, there is a
@@ -155,14 +155,14 @@ class Guard {
         }
     };
     
-    void guardReadWrite(final Guarded guarded) {
+    void guardReadWrite(final Guarded<?> guarded) {
         GUARD_READ_WRITE.process(guarded);
         guarded.processViews(GUARD_READ_WRITE, newIdentitySet());
     }
     
     private static final Op GUARD_READ_WRITE = new Op() {
         @Override
-        public void process(final Guarded guarded) {
+        public void process(final Guarded<?> guarded) {
             jpfWorkaround();
             /* mayWrite() reads the volatile owner field written by
              * releasePassed(). Therefore, there is a happens-before
@@ -186,18 +186,19 @@ class Guard {
         return prevOwners.isEmpty();
     }
     
-    private void processReachables(final Op op, final Set<Guarded> processed) {
-        final Set<Guarded> reachables = prevReachables.peekFirst();
+    private void processReachables(final Op op,
+            final Set<Guarded<?>> processed) {
+        final Set<Guarded<?>> reachables = prevReachables.peekFirst();
         assert reachables != null;
         
-        for(final Guarded guarded : reachables)
+        for(final Guarded<?> guarded : reachables)
             if(!processed.contains(guarded))
                 op.process(guarded);
     }
     
-    private static Set<Guarded> newIdentitySet() {
+    private static Set<Guarded<?>> newIdentitySet() {
         return Collections.newSetFromMap(
-                new IdentityHashMap<Guarded, Boolean>());
+                new IdentityHashMap<Guarded<?>, Boolean>());
     }
     
     /**

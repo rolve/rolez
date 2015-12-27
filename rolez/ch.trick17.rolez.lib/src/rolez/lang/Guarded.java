@@ -2,18 +2,64 @@ package rolez.lang;
 
 import java.util.Set;
 
-public abstract class Guarded {
+/**
+ * Superclass of all guarded objects
+ * 
+ * @author Michael Faes
+ * @param <S>
+ *            The self type
+ */
+public abstract class Guarded<S extends Guarded<S>> {
     
     private Guard guard;
     
     final Object viewLock = new Object();
     
-    public void share() {
+    @SuppressWarnings("unchecked")
+    public final S share() {
         getGuard().share(this);
+        return (S) this;
     }
     
-    public void pass() {
+    @SuppressWarnings("unchecked")
+    public final S pass() {
         getGuard().pass(this);
+        return (S) this;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public final S registerNewOwner() {
+        assert guard != null;
+        guard.registerNewOwner(this);
+        return (S) this;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public final S releaseShared() {
+        assert guard != null;
+        guard.releaseShared(this);
+        return (S) this;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public final S releasePassed() {
+        assert guard != null;
+        guard.releasePassed(this);
+        return (S) this;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public final S guardReadOnly() {
+        if(guard != null)
+            guard.guardReadOnly(this);
+        return (S) this;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public final S guardReadWrite() {
+        if(guard != null)
+            guard.guardReadWrite(this);
+        return (S) this;
     }
     
     final Guard getGuard() {
@@ -22,37 +68,12 @@ public abstract class Guarded {
         return guard;
     }
     
-    public void registerNewOwner() {
-        assert guard != null;
-        guard.registerNewOwner(this);
-    }
-    
-    public void releaseShared() {
-        assert guard != null;
-        guard.releaseShared(this);
-    }
-    
-    public void releasePassed() {
-        assert guard != null;
-        guard.releasePassed(this);
-    }
-    
-    public void guardRead() {
-        if(guard != null)
-            guard.guardRead(this);
-    }
-    
-    public void guardReadWrite() {
-        if(guard != null)
-            guard.guardReadWrite(this);
-    }
-    
-    final void processAll(final Guard.Op op, final Set<Guarded> processed,
+    final void processAll(final Guard.Op op, final Set<Guarded<?>> processed,
             final boolean lockViews) {
         if(processed.add(this)) {
             /* First, process references, otherwise "parent" task may replace
              * them through a view that has already been released. */
-            for(final Guarded ref : guardedRefs())
+            for(final Guarded<?> ref : guardedRefs())
                 if(ref != null)
                     ref.processAll(op, processed, lockViews);
                     
@@ -71,17 +92,18 @@ public abstract class Guarded {
         }
     }
     
-    final void processViews(final Guard.Op op, final Set<Guarded> processed) {
+    final void processViews(final Guard.Op op,
+            final Set<Guarded<?>> processed) {
         // Same as processViewsRecursive, except "this" is not processed
-        for(final Guarded view : views())
+        for(final Guarded<?> view : views())
             if(view != null)
                 view.processViewsRecursive(op, processed);
     }
     
     private void processViewsRecursive(final Guard.Op op,
-            final Set<Guarded> processed) {
+            final Set<Guarded<?>> processed) {
         if(processed.add(this)) {
-            for(final Guarded view : views())
+            for(final Guarded<?> view : views())
                 if(view != null)
                     view.processViewsRecursive(op, processed);
                     
@@ -98,7 +120,7 @@ public abstract class Guarded {
      *         simplify the implementation of this method, the {@link Iterable}
      *         may return <code>null</code> references.
      */
-    protected abstract Iterable<? extends Guarded> guardedRefs();
+    protected abstract Iterable<? extends Guarded<?>> guardedRefs();
     
     /**
      * Returns all views of this object. Views are (guarded) objects that
@@ -108,5 +130,5 @@ public abstract class Guarded {
      *         method, the {@link Iterable} may return <code>null</code>
      *         references.
      */
-    protected abstract Iterable<? extends Guarded> views();
+    protected abstract Iterable<? extends Guarded<?>> views();
 }
