@@ -29,26 +29,25 @@ class JavaMapper {
     @Inject IJvmTypeProvider.Factory jvmTypesFactory
     
     def checkedExceptionTypes(Method it) {
-        if(enclosingClass.isArrayClass) emptyList
-        else if(!isMapped) emptyList
+        if(!isMapped) emptyList
         else jvmMethod.checkedExceptionTypes(it)
     }
     
     def checkedExceptionTypes(Constr it) {
-        if(enclosingClass.isArrayClass) emptyList
-        else if(!isMapped) emptyList
+        if(!isMapped) emptyList
         else jvmConstr.checkedExceptionTypes(it)
     }
     
     private def checkedExceptionTypes(JvmExecutable it, EObject context) {
-        exceptions.map[type].filter(JvmDeclaredType).filter[isCheckedException(context)]
+        exceptions.map[type].filter(JvmDeclaredType).filter[
+            isSubclassOf("java.lang.Exception", context)
+                && !isSubclassOf("java.lang.RuntimeException", context)
+        ]
     }
     
-    private def isCheckedException(JvmDeclaredType it, EObject context) {
+    def isSubclassOf(JvmDeclaredType it, String otherName, EObject context) {
         val jvmTypes = jvmTypesFactory.findOrCreateTypeProvider(context.eResource.resourceSet)
-        val exceptionType = jvmTypes.findTypeByName("java.lang.Exception");
-        val runtimeExceptionType = jvmTypes.findTypeByName("java.lang.RuntimeException")
-        isSubclassOf(exceptionType) && !isSubclassOf(runtimeExceptionType)
+        isSubclassOf(jvmTypes.findTypeByName(otherName))
     }
     
     def boolean isSubclassOf(JvmDeclaredType it, JvmType other) {

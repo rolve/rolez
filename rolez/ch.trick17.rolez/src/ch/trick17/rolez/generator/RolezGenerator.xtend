@@ -97,18 +97,46 @@ class RolezGenerator extends AbstractGenerator {
         package «safePackage»;
         
         «ENDIF»
-        public class «safeSimpleName» extends «superclass.generateName» {
+        import static rolez.lang.Guarded.*;
+        
+        public class «safeSimpleName» extends «generateSuperclassName» {
             « fields.map[gen].join»
             «constrs.map[gen].join»
             «methods.map[gen].join»
+            «IF !guardedFields.isEmpty»
+            
+            @java.lang.Override
+            protected java.lang.Iterable<?> guardedRefs() {
+                return java.util.Arrays.asList(«guardedFields.map[name].join(", ")»);
+            }
+            «ENDIF»
         }
     '''
+    
+    private def generateSuperclassName(NormalClass it) {
+        if(superclass.isObjectClass) "rolez.lang.Guarded"
+        else superclass.generateName
+    }
+    
+    private def guardedFields(NormalClass it) {
+        allMembers.filter(Field).filter[
+            type instanceof RoleType && (type as RoleType).base.clazz.isGuarded
+        ]
+    }
+    
+    private def isGuarded(Class it) {
+        it instanceof NormalClass && (!isMapped
+            || jvmClass.isSubclassOf("rolez.lang.Guarded", it)
+            || isObjectClass)
+    }
     
     private def dispatch generateElement(SingletonClass it) '''
         «IF !safePackage.isEmpty»
         package «safePackage»;
         
         «ENDIF»
+        import static rolez.lang.Guarded.*;
+        
         public final class «safeSimpleName» extends «superclass.generateName» {
             
             public static final «safeSimpleName» INSTANCE = new «safeSimpleName»();
@@ -124,6 +152,8 @@ class RolezGenerator extends AbstractGenerator {
         package «safePackage»;
         
         «ENDIF»
+        import static rolez.lang.Guarded.*;
+        
         public final class «safeSimpleName» implements java.util.concurrent.Callable<«type.genGeneric»> {
             «IF isMain»
             
@@ -346,14 +376,15 @@ class RolezGenerator extends AbstractGenerator {
     }
     
     private def generateMethodInvoke(MemberAccess it) {
-        val guard =
-            if(system.subroleSucceeded(target.dynamicRole, method.thisRole)) ""
+        val guardedTarget =
+            if(system.subroleSucceeded(target.dynamicRole, method.thisRole))
+                target.genNested
             else switch(method.thisRole) {
-                case READWRITE: "guardReadWrite()."
-                case  READONLY: "guardReadOnly()."
-                case      PURE: ""
+                case READWRITE: "guardReadWrite(" + target.gen + ")"
+                case  READONLY: "guardReadOnly("  + target.gen + ")"
+                case      PURE:                     target.genNested
             }
-        '''«target.genNested».«guard»«method.safeName»(«args.map[gen].join(", ")»)'''
+        '''«guardedTarget».«method.safeName»(«args.map[gen].join(", ")»)'''
     }
     
     private def generateFieldAccess(MemberAccess it) {
@@ -361,11 +392,13 @@ class RolezGenerator extends AbstractGenerator {
             if(isFieldWrite)           READWRITE
             else if(field.kind == VAR) READONLY
             else                       PURE
-        val guard =
-            if(system.subroleSucceeded(target.dynamicRole, requiredRole)) ""
-            else if(requiredRole == READWRITE) "guardReadWrite()."
-            else "guardReadOnly()."
-        '''«target.genNested».«guard»«field.safeName»'''
+        val guardedTarget =
+            if(system.subroleSucceeded(target.dynamicRole, requiredRole))
+                target.genNested
+            else
+                if(requiredRole == READWRITE) "guardReadWrite(" + target.gen + ")"
+                else                          "guardReadOnly("  + target.gen + ")"
+        '''«guardedTarget».«field.safeName»'''
     }
     
     private def isFieldWrite(MemberAccess it) {
@@ -416,12 +449,11 @@ class RolezGenerator extends AbstractGenerator {
     private def dispatch generateExpr(Start it) {
         val transitionedArgs = args.map[gen].indexed.map[pair |
             val paramType = taskRef.task.params.get(pair.key).type
-            val transition = switch(paramType) {
-                RoleType case paramType.role == READWRITE: ".pass()"
-                RoleType case paramType.role == READONLY:  ".share()"
-                default: ""
+            switch(paramType) {
+                RoleType case paramType.role == READWRITE: "pass(" + pair.value + ")"
+                RoleType case paramType.role == READONLY: "share(" + pair.value + ")"
+                default: pair.value
             }
-            pair.value + transition
         ].join(", ")
         '''rolez.lang.TaskSystem.getDefault().start(new «taskRef.gen»(«transitionedArgs»))'''
     }

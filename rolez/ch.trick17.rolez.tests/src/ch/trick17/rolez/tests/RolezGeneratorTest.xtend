@@ -15,7 +15,10 @@ import javax.tools.ForwardingJavaFileObject
 import javax.tools.JavaFileManager.Location
 import javax.tools.JavaFileObject
 import javax.tools.SimpleJavaFileObject
+import javax.tools.StandardLocation
 import javax.tools.ToolProvider
+import org.eclipse.core.runtime.FileLocator
+import org.eclipse.core.runtime.Platform
 import org.eclipse.xtext.generator.InMemoryFileSystemAccess
 import org.eclipse.xtext.junit4.InjectWith
 import org.eclipse.xtext.junit4.XtextRunner
@@ -79,6 +82,12 @@ class RolezGeneratorTest {
         ''')
     }
     
+    def javaClasses() {
+        val fsa = new InMemoryFileSystemAccess
+        generator.doGenerate(classes.resources.head, fsa, null)
+        fsa.textFiles.values
+    }
+    
     @Test def testFiles() {
         var program = parse('''
             class rolez.io.PrintStream mapped to java.io.PrintStream {
@@ -113,7 +122,9 @@ class RolezGeneratorTest {
         parse('''
             class A
         ''', classes).generate.assertEqualsJava('''
-            public class A extends java.lang.Object {
+            import static rolez.lang.Guarded.*;
+            
+            public class A extends rolez.lang.Guarded {
                 
                 public A() {
                     super();
@@ -125,7 +136,9 @@ class RolezGeneratorTest {
         ''', classes).generate.assertEqualsJava('''
             package foo.bar;
             
-            public class A extends java.lang.Object {
+            import static rolez.lang.Guarded.*;
+            
+            public class A extends rolez.lang.Guarded {
                 
                 public A() {
                     super();
@@ -136,6 +149,8 @@ class RolezGeneratorTest {
         parse('''
             class A extends Base
         ''', classes).generate.assertEqualsJava('''
+            import static rolez.lang.Guarded.*;
+            
             public class A extends Base {
                 
                 public A() {
@@ -146,6 +161,8 @@ class RolezGeneratorTest {
         parse('''
             class A extends foo.bar.Base
         ''', classes).generate.assertEqualsJava('''
+            import static rolez.lang.Guarded.*;
+            
             public class A extends foo.bar.Base {
                 
                 public A() {
@@ -159,6 +176,8 @@ class RolezGeneratorTest {
         parse('''
             object A
         ''', classes).generate.assertEqualsJava('''
+            import static rolez.lang.Guarded.*;
+            
             public final class A extends java.lang.Object {
                 
                 public static final A INSTANCE = new A();
@@ -170,7 +189,7 @@ class RolezGeneratorTest {
     
     @Test def testMappedSingletonClass() {
         parse('''
-            object rolez.lang.System mapped to java.lang.System {
+            object rolez.lang.System2 mapped to java.lang.System {
                 mapped val out: readonly rolez.io.PrintStream
                 mapped def readonly exit(status: int):
                 mapped def readonly lineSeparator: pure String
@@ -178,11 +197,13 @@ class RolezGeneratorTest {
         ''', classes).generate.assertEqualsJava('''
             package rolez.lang;
             
-            public final class System extends java.lang.Object {
+            import static rolez.lang.Guarded.*;
+            
+            public final class System2 extends java.lang.Object {
                 
-                public static final System INSTANCE = new System();
+                public static final System2 INSTANCE = new System2();
                 
-                private System() {}
+                private System2() {}
                 
                 public final java.io.PrintStream out = java.lang.System.out;
                 
@@ -203,6 +224,8 @@ class RolezGeneratorTest {
                 return new Base;
             }
         ''', classes).generate.assertEqualsJava('''
+            import static rolez.lang.Guarded.*;
+            
             public final class Main implements java.util.concurrent.Callable<Base> {
                 
                 public Base call() {
@@ -215,6 +238,8 @@ class RolezGeneratorTest {
                 return 42;
             }
         ''', classes).generate.assertEqualsJava('''
+            import static rolez.lang.Guarded.*;
+            
             public final class Main implements java.util.concurrent.Callable<java.lang.Integer> {
                 
                 public java.lang.Integer call() {
@@ -227,6 +252,8 @@ class RolezGeneratorTest {
                 new (foo.bar.Base)(i + j);
             }
         ''', classes).generate.assertEqualsJava('''
+            import static rolez.lang.Guarded.*;
+            
             public final class Main implements java.util.concurrent.Callable<java.lang.Void> {
                 
                 private final int i;
@@ -247,6 +274,8 @@ class RolezGeneratorTest {
         parse('''
             main task Main: {}
         ''', classes).generate.assertEqualsJava('''
+            import static rolez.lang.Guarded.*;
+            
             public final class Main implements java.util.concurrent.Callable<java.lang.Void> {
                 
                 public static void main(final String[] args) {
@@ -263,6 +292,8 @@ class RolezGeneratorTest {
                 args.get(0).length;
             }
         ''', classes).generate.assertEqualsJava('''
+            import static rolez.lang.Guarded.*;
+            
             public final class Main implements java.util.concurrent.Callable<java.lang.Void> {
                 
                 public static void main(final String[] args) {
@@ -298,7 +329,9 @@ class RolezGeneratorTest {
         ''', classes).generate.assertEqualsJava('''
             package foo;
             
-            public class A extends java.lang.Object {
+            import static rolez.lang.Guarded.*;
+            
+            public class A extends rolez.lang.Guarded {
                 
                 public final int i;
                 
@@ -312,6 +345,11 @@ class RolezGeneratorTest {
                     super();
                     this.i = 0;
                 }
+                
+                @java.lang.Override
+                protected java.lang.Iterable<?> guardedRefs() {
+                    return java.util.Arrays.asList(a);
+                }
             }
         ''')
         
@@ -320,6 +358,8 @@ class RolezGeneratorTest {
                 val j: int = 0
             }
         ''', classes).generate.assertEqualsJava('''
+            import static rolez.lang.Guarded.*;
+            
             public final class A extends java.lang.Object {
                 
                 public static final A INSTANCE = new A();
@@ -338,7 +378,9 @@ class RolezGeneratorTest {
                 def readwrite foo(i: int): int { return i; }
             }
         ''', classes).generate.assertEqualsJava('''
-            public class A extends java.lang.Object {
+            import static rolez.lang.Guarded.*;
+            
+            public class A extends rolez.lang.Guarded {
                 
                 public A() {
                     super();
@@ -358,6 +400,8 @@ class RolezGeneratorTest {
                 def pure foo: {}
             }
         ''', classes).generate.assertEqualsJava('''
+            import static rolez.lang.Guarded.*;
+            
             public final class A extends java.lang.Object {
                 
                 public static final A INSTANCE = new A();
@@ -410,7 +454,9 @@ class RolezGeneratorTest {
         ''', classes).generate.assertEqualsJava('''
             package foo;
             
-            public class A extends java.lang.Object {
+            import static rolez.lang.Guarded.*;
+            
+            public class A extends rolez.lang.Guarded {
                 
                 public A() {
                     super();
@@ -426,7 +472,9 @@ class RolezGeneratorTest {
         ''', classes).generate.assertEqualsJava('''
             package foo;
             
-            public class A extends java.lang.Object {
+            import static rolez.lang.Guarded.*;
+            
+            public class A extends rolez.lang.Guarded {
                 
                 public A() {
                     super();
@@ -445,7 +493,9 @@ class RolezGeneratorTest {
                 }
             }
         ''', classes).generate.assertEqualsJava('''
-            public class A extends java.lang.Object {
+            import static rolez.lang.Guarded.*;
+            
+            public class A extends rolez.lang.Guarded {
                 
                 public A() {
                     super();
@@ -481,7 +531,9 @@ class RolezGeneratorTest {
         ''', classes).generate.assertEqualsJava('''
             package foo._static._native;
             
-            public class _final extends java.lang.Object {
+            import static rolez.lang.Guarded.*;
+            
+            public class _final extends rolez.lang.Guarded {
                 
                 public _final() {
                     super();
@@ -507,6 +559,8 @@ class RolezGeneratorTest {
             }
         ''', classes).generate.assertEqualsJava('''
             package foo._static._native;
+            
+            import static rolez.lang.Guarded.*;
             
             public final class _final implements java.util.concurrent.Callable<java.lang.Void> {
                 
@@ -625,6 +679,8 @@ class RolezGeneratorTest {
                 new { super; }
             }
         ''', classes).generate.assertEqualsJava('''
+            import static rolez.lang.Guarded.*;
+            
             public class A extends Base {
                 
                 public A() {
@@ -638,6 +694,8 @@ class RolezGeneratorTest {
                 new { super(42); }
             }
         ''', classes).generate.assertEqualsJava('''
+            import static rolez.lang.Guarded.*;
+            
             public class A extends foo.bar.Base {
                 
                 public A() {
@@ -658,7 +716,9 @@ class RolezGeneratorTest {
                 }
             }
         ''', classes).generate.assertEqualsJava('''
-            public class A extends java.lang.Object {
+            import static rolez.lang.Guarded.*;
+            
+            public class A extends rolez.lang.Guarded {
                 
                 public A() {
                     super();
@@ -839,7 +899,9 @@ class RolezGeneratorTest {
                 }
             }
         ''', classes).generate.assertEqualsJava('''
-            public class A extends java.lang.Object {
+            import static rolez.lang.Guarded.*;
+            
+            public class A extends rolez.lang.Guarded {
                 
                 public int i = 0;
                 
@@ -859,12 +921,12 @@ class RolezGeneratorTest {
                 }
                 
                 public int test(final A a1, final A a2, final A a3, final A a4, final A a5, final A a6) {
-                    a1.guardReadWrite().foo();
-                    a2.guardReadOnly().bar();
+                    guardReadWrite(a1).foo();
+                    guardReadOnly(a2).bar();
                     a3.baz();
                     new A().foo();
-                    a4.guardReadWrite().i = 2;
-                    return a5.guardReadOnly().i + a6.j;
+                    guardReadWrite(a4).i = 2;
+                    return guardReadOnly(a5).i + a6.j;
                 }
             }
         ''')
@@ -914,15 +976,15 @@ class RolezGeneratorTest {
         '''.withJavaFrame)
         
         parse('''
-            val o1: readwrite Object = new Object;
-            val o2: readonly Object = new Object;
-            val o3: pure Object = new Object;
+            val o1: readwrite Base = new Base;
+            val o2: readonly Base = new Base;
+            val o3: pure Base = new Base;
             start FooTask(o1, o2, o3);
         '''.withFrame, classes).generate.assertEqualsJava('''
-            final java.lang.Object o1 = new java.lang.Object();
-            final java.lang.Object o2 = new java.lang.Object();
-            final java.lang.Object o3 = new java.lang.Object();
-            rolez.lang.TaskSystem.getDefault().start(new FooTask(o1.pass(), o2.share(), o3));
+            final Base o1 = new Base();
+            final Base o2 = new Base();
+            final Base o3 = new Base();
+            rolez.lang.TaskSystem.getDefault().start(new FooTask(pass(o1), share(o2), o3));
         '''.withJavaFrame)
     }
     
@@ -993,7 +1055,9 @@ class RolezGeneratorTest {
     '''}
     
     private def withJavaFrame(CharSequence it) {'''
-        public class A extends java.lang.Object {
+        import static rolez.lang.Guarded.*;
+        
+        public class A extends rolez.lang.Guarded {
             
             public A() {
                 super();
@@ -1013,34 +1077,38 @@ class RolezGeneratorTest {
     }
     
     private def assertEqualsJava(CharSequence it, CharSequence javaCode) {
-        javaCode.assertCompilable
+        assertCompilable(#[javaCode] + javaClasses)
         javaCode.toString.assertEquals(it.toString)
     }
     
     static val className = Pattern.compile("public (final )?class (\\w+) ")
-    static val filterMsg = Pattern.compile("cannot find symbol|package (\\w|\\.)+ does not exist")
-    
-    private def assertCompilable(CharSequence code) {
-        val matcher = className.matcher(code)
-        matcher.find.assertTrue
-        
-        val uri = URI.create("string:///" + matcher.group(2) + ".java")
-        val src = new SimpleJavaFileObject(uri, JavaFileObject.Kind.SOURCE) {
-            override getCharContent(boolean _) { code }
-        }
+
+    private def assertCompilable(Iterable<CharSequence> sources) {
+        val compilationUnits = sources.map[ code |
+            val matcher = className.matcher(code)
+            matcher.find.assertTrue
+            
+            val uri = URI.create("string:///" + matcher.group(2) + ".java")
+            new SimpleJavaFileObject(uri, JavaFileObject.Kind.SOURCE) {
+                override getCharContent(boolean _) { code }
+            }
+        ]
         
         // Collect errors
         val errors = new StringBuilder
         val listener = new DiagnosticListener<JavaFileObject> {
             override report(Diagnostic<? extends JavaFileObject> it) {
-                if(!filterMsg.matcher(getMessage(null)).find)
-                    errors.append(it)
+                errors.append(it)
             }
         }
         
-        // Discard compiler output
         val compiler = ToolProvider.systemJavaCompiler
-        val fileMgr = new ForwardingJavaFileManager(compiler.getStandardFileManager(null, null, null)) {
+        val stdFileMgr = compiler.getStandardFileManager(null, null, null)
+        
+        val libBundle = Platform.getBundle("ch.trick17.rolez.lib")
+        if(libBundle != null)
+            stdFileMgr.setLocation(StandardLocation.CLASS_PATH, #[FileLocator.getBundleFile(libBundle)])
+        val fileMgr = new ForwardingJavaFileManager(stdFileMgr) {
             override getJavaFileForOutput(Location l, String c, JavaFileObject.Kind k, FileObject s) {
                 new ForwardingJavaFileObject(super.getJavaFileForOutput(l, c, k, s)) {
                     override openOutputStream() { ByteStreams.nullOutputStream }
@@ -1049,7 +1117,7 @@ class RolezGeneratorTest {
             }
         }
         
-        compiler.getTask(null, fileMgr, listener, null, null, #[src]).call
+        compiler.getTask(null, fileMgr, listener, null, null, compilationUnits).call
         "".assertEquals(errors.toString)
     }
 }
