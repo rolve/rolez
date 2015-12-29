@@ -166,6 +166,10 @@ class RolezGenerator extends AbstractGenerator {
         }
     '''
     
+    // TODO: Insert readwrite guard at the end of the constructor if we cannot
+    // guarantee that the object is not still readwrite (this allows starting
+    // tasks in constructors, but still guarantees that an object is readwrite
+    // after its constructor returns)
     private def gen(Constr it) '''
         
         public «enclosingClass.safeSimpleName»(«params.map[gen].join(", ")») {
@@ -366,27 +370,26 @@ class RolezGenerator extends AbstractGenerator {
     }
     
     // IMPROVE: Write this in Xsemantics?
-    private def dispatch Role dynamicRole(MemberAccess it) {
+    private def dispatch Role dynamicRole(MemberAccess it)  {
         if(isGlobal) READONLY else PURE
+    }
+    private def dispatch Role dynamicRole(This it) {
+        val body = enclosingBody
+        val mayStartTask = body.eAllContents.exists[it instanceof Start ||
+            (it instanceof MemberAccess && (it as MemberAccess).isMethodInvoke)]
+        if(body instanceof Constr && !mayStartTask) READWRITE else PURE
     }
     private def dispatch Role dynamicRole(Cast it)          { expr.dynamicRole }
     private def dispatch Role dynamicRole(Parenthesized it) { expr.dynamicRole }
     private def dispatch Role dynamicRole(New _)            { READWRITE }
     private def dispatch Role dynamicRole(The _)            { READONLY }
-    private def dispatch Role dynamicRole(This it) {
-        val body = enclosingBody
-        switch(body) {
-            Method: body.thisRole
-            Constr: READWRITE
-        }
-    }
-    private def dispatch Role dynamicRole(StringLiteral _) { READONLY }
-    private def dispatch Role dynamicRole(Expr _)          { PURE }
+    private def dispatch Role dynamicRole(StringLiteral _)  { READONLY }
+    private def dispatch Role dynamicRole(Expr _)           { PURE }
     
     private def dispatch boolean isGlobal(MemberAccess it) {
         isFieldAccess && target.isGlobal
     }
-    private def dispatch boolean isGlobal(The _) { true }
+    private def dispatch boolean isGlobal(The _)  { true }
     private def dispatch boolean isGlobal(Expr _) { false }
     
     private def dispatch generateExpr(This _) '''this'''
