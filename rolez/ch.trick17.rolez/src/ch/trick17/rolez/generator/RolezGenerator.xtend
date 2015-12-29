@@ -68,7 +68,7 @@ import org.eclipse.xtext.generator.IFileSystemAccess2
 import org.eclipse.xtext.generator.IGeneratorContext
 
 import static ch.trick17.rolez.rolez.Role.*
-import static ch.trick17.rolez.rolez.VarKind.VAL
+import static ch.trick17.rolez.rolez.VarKind.*
 
 import static extension java.util.Objects.requireNonNull
 import static extension org.eclipse.xtext.util.Strings.convertToJavaString
@@ -357,7 +357,10 @@ class RolezGenerator extends AbstractGenerator {
     }
     
     private def generateFieldAccess(MemberAccess it) {
-        val requiredRole = if(isFieldWrite) READWRITE else READONLY
+        val requiredRole =
+            if(isFieldWrite)           READWRITE
+            else if(field.kind == VAR) READONLY
+            else                       PURE
         val guard =
             if(system.subroleSucceeded(target.dynamicRole, requiredRole)) ""
             else if(requiredRole == READWRITE) "guardReadWrite()."

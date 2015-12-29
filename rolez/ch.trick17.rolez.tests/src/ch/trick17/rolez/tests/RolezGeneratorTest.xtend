@@ -820,6 +820,54 @@ class RolezGeneratorTest {
             aa[1 - 1] = a;
             int l = aa[0][0];
         '''.withJavaFrame)
+        
+        parse('''
+            class A {
+                var i: int = 0
+                val j: int = 0
+                def readwrite foo: {}
+                def readonly  bar: {}
+                def pure      baz: {}
+                def readwrite test(a1: readwrite A, a2: readwrite A, a3: readwrite A,
+                        a4: readwrite A, a5: readwrite A, a6: readwrite A): int {
+                    a1.foo;
+                    a2.bar;
+                    a3.baz;
+                    new A.foo;
+                    a4.i = 2;
+                    return a5.i + a6.j;
+                }
+            }
+        ''', classes).generate.assertEqualsJava('''
+            public class A extends java.lang.Object {
+                
+                public int i = 0;
+                
+                public final int j = 0;
+                
+                public A() {
+                    super();
+                }
+                
+                public void foo() {
+                }
+                
+                public void bar() {
+                }
+                
+                public void baz() {
+                }
+                
+                public int test(final A a1, final A a2, final A a3, final A a4, final A a5, final A a6) {
+                    a1.guardReadWrite().foo();
+                    a2.guardReadOnly().bar();
+                    a3.baz();
+                    new A().foo();
+                    a4.guardReadWrite().i = 2;
+                    return a5.guardReadOnly().i + a6.j;
+                }
+            }
+        ''')
     }
     
     @Test def testNew() {
