@@ -12,6 +12,7 @@ import ch.trick17.rolez.rolez.GenericClassRef
 import ch.trick17.rolez.rolez.Instr
 import ch.trick17.rolez.rolez.Int
 import ch.trick17.rolez.rolez.LocalVar
+import ch.trick17.rolez.rolez.LocalVarDecl
 import ch.trick17.rolez.rolez.Member
 import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.Method
@@ -26,6 +27,7 @@ import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.SimpleClassRef
 import ch.trick17.rolez.rolez.SingletonClass
 import ch.trick17.rolez.rolez.Stmt
+import ch.trick17.rolez.rolez.Task
 import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.TypeParamRef
 import ch.trick17.rolez.rolez.VarKind
@@ -36,7 +38,6 @@ import org.eclipse.xtext.naming.IQualifiedNameProvider
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils
 
 import static ch.trick17.rolez.Constants.*
-import ch.trick17.rolez.rolez.Task
 
 /**
  * Extension methods for the Rolez language elements
@@ -126,6 +127,8 @@ class RolezExtensions {
             default: container?.enclosingBody
         }
     }
+    
+    def decl(LocalVar it) { enclosingStmt as LocalVarDecl }
     
     def isFieldAccess (MemberAccess it) { member instanceof Field  }
     def isMethodInvoke(MemberAccess it) { member instanceof Method }

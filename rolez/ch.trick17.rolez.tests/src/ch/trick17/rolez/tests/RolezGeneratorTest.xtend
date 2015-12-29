@@ -475,7 +475,7 @@ class RolezGeneratorTest {
                 
                 def pure transient: {
                     val protected: readwrite final = new (foo.static.native.final);
-                    protected.strictfp(protected.toString.length);
+                    protected.strictfp(5);
                 }
             }
         ''', classes).generate.assertEqualsJava('''
@@ -495,7 +495,7 @@ class RolezGeneratorTest {
                 
                 public void _transient() {
                     final foo._static._native._final _protected = new foo._static._native._final();
-                    _protected._strictfp(_protected.toString().length());
+                    _protected._strictfp(5);
                 }
             }
         ''')

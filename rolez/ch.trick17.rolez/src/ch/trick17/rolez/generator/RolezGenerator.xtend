@@ -58,6 +58,7 @@ import ch.trick17.rolez.rolez.VarKind
 import ch.trick17.rolez.rolez.VarRef
 import ch.trick17.rolez.rolez.Void
 import ch.trick17.rolez.rolez.WhileLoop
+import ch.trick17.rolez.typesystem.RolezSystem
 import ch.trick17.rolez.validation.JavaMapper
 import java.io.File
 import javax.inject.Inject
@@ -66,6 +67,7 @@ import org.eclipse.xtext.generator.AbstractGenerator
 import org.eclipse.xtext.generator.IFileSystemAccess2
 import org.eclipse.xtext.generator.IGeneratorContext
 
+import static ch.trick17.rolez.rolez.Role.*
 import static ch.trick17.rolez.rolez.VarKind.VAL
 
 import static extension java.util.Objects.requireNonNull
@@ -76,6 +78,7 @@ class RolezGenerator extends AbstractGenerator {
     @Inject extension RolezExtensions
     @Inject extension JavaMapper
     @Inject RolezUtils utils
+    @Inject RolezSystem system
     
     override void doGenerate(Resource resource, IFileSystemAccess2 fsa, IGeneratorContext context) {
         val program = resource.contents.head as Program
@@ -339,24 +342,52 @@ class RolezGenerator extends AbstractGenerator {
     }
     
     private def generateMethodInvoke(MemberAccess it) {
-        // TODO: simple guard elimination
-        val guard = switch(method.thisRole) {
-            case READWRITE: "guardReadWrite()."
-            case  READONLY: "guardReadOnly()."
-            case      PURE: ""
-        }
+        val guard =
+            if(system.subroleSucceeded(target.dynamicRole, method.thisRole)) ""
+            else switch(method.thisRole) {
+                case READWRITE: "guardReadWrite()."
+                case  READONLY: "guardReadOnly()."
+                case      PURE: ""
+            }
         '''«target.genNested».«guard»«method.safeName»(«args.map[gen].join(", ")»)'''
     }
     
     private def generateFieldAccess(MemberAccess it) {
-        // TODO: simple guard elimination
-        val guard = if(isFieldWrite) "guardReadWrite()." else "guardReadOnly()."
+        val requiredRole = if(isFieldWrite) READWRITE else READONLY
+        val guard =
+            if(system.subroleSucceeded(target.dynamicRole, requiredRole)) ""
+            else if(requiredRole == READWRITE) "guardReadWrite()."
+            else "guardReadOnly()."
         '''«target.genNested».«guard»«field.safeName»'''
     }
     
     private def isFieldWrite(MemberAccess it) {
         eContainer instanceof Assignment && it === (eContainer as Assignment).left
     }
+    
+    // IMPROVE: Write this in Xsemantics?
+    private def dispatch Role dynamicRole(MemberAccess it) {
+        if(isGlobal) READONLY else PURE
+    }
+    private def dispatch Role dynamicRole(Cast it)          { expr.dynamicRole }
+    private def dispatch Role dynamicRole(Parenthesized it) { expr.dynamicRole }
+    private def dispatch Role dynamicRole(New _)            { READWRITE }
+    private def dispatch Role dynamicRole(The _)            { READONLY }
+    private def dispatch Role dynamicRole(This it) {
+        val body = enclosingBody
+        switch(body) {
+            Method: body.thisRole
+            Constr: READWRITE
+        }
+    }
+    private def dispatch Role dynamicRole(StringLiteral _) { READONLY }
+    private def dispatch Role dynamicRole(Expr _)          { PURE }
+    
+    private def dispatch boolean isGlobal(MemberAccess it) {
+        isFieldAccess && target.isGlobal
+    }
+    private def dispatch boolean isGlobal(The _) { true }
+    private def dispatch boolean isGlobal(Expr _) { false }
     
     private def dispatch generateExpr(This _) '''this'''
     
@@ -380,8 +411,8 @@ class RolezGenerator extends AbstractGenerator {
         val transitionedArgs = args.map[gen].indexed.map[pair |
             val paramType = taskRef.task.params.get(pair.key).type
             val transition = switch(paramType) {
-                RoleType case paramType.role == Role.READWRITE: ".pass()"
-                RoleType case paramType.role == Role.READONLY:  ".share()"
+                RoleType case paramType.role == READWRITE: ".pass()"
+                RoleType case paramType.role == READONLY:  ".share()"
                 default: ""
             }
             pair.value + transition
