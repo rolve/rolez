@@ -92,38 +92,35 @@ public abstract class Guarded {
         return emptyList();
     }
     
-    /* The following methods are static so that they can return the guarded
+    /* Role transition methods */
+    
+    public final void share() {
+        getGuard().share(this);
+    }
+    
+    public final void pass() {
+        getGuard().pass(this);
+    }
+    
+    public final void registerNewOwner() {
+        assert guard != null;
+        guard.registerNewOwner(this);
+    }
+    
+    public final void releaseShared() {
+        assert guard != null;
+        guard.releaseShared(this);
+    }
+    
+    public final void releasePassed() {
+        assert guard != null;
+        guard.releasePassed(this);
+    }
+    
+    /* Guarding methods. These are static so that they can return the guarded
      * object with the precise type (which is not possible with instance
      * methods, due to the lack of self types). This simplifies code generation
      * a lot, since guarding can be done within an expression. */
-    
-    public static <G extends Guarded> G share(G guarded) {
-        guarded.getGuard().share(guarded);
-        return guarded;
-    }
-    
-    public static <G extends Guarded> G pass(G guarded) {
-        guarded.getGuard().pass(guarded);
-        return guarded;
-    }
-    
-    public static <G extends Guarded> G registerNewOwner(G guarded) {
-        assert ((Guarded) guarded).guard != null;
-        ((Guarded) guarded).guard.registerNewOwner(guarded);
-        return guarded;
-    }
-    
-    public static <G extends Guarded> G releaseShared(G guarded) {
-        assert ((Guarded) guarded).guard != null;
-        ((Guarded) guarded).guard.releaseShared(guarded);
-        return guarded;
-    }
-    
-    public static <G extends Guarded> G releasePassed(G guarded) {
-        assert ((Guarded) guarded).guard != null;
-        ((Guarded) guarded).guard.releasePassed(guarded);
-        return guarded;
-    }
     
     public static <G extends Guarded> G guardReadOnly(G guarded) {
         if(((Guarded) guarded).guard != null)

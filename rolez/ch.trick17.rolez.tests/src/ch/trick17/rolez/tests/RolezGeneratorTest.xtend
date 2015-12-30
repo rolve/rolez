@@ -78,7 +78,6 @@ class RolezGeneratorTest {
             }
             task VoidTask: {}
             task SumTask(i: int, j: int): int { return i + j; }
-            task FooTask(o1: readwrite Object, o2: readonly Object, o3: pure Object): {}
         ''')
     }
     
@@ -312,6 +311,39 @@ class RolezGeneratorTest {
                 }
             }
         ''')
+        
+        parse('''
+            task Foo(o1: readwrite Base, o2: readonly Base, o3: pure Base): {
+                the System.out.println("Hello World!");
+            }
+        ''', classes).generate.assertEqualsJava('''
+            import static rolez.lang.Guarded.*;
+            
+            public final class Foo implements java.util.concurrent.Callable<java.lang.Void> {
+                
+                private final Base o1;
+                private final Base o2;
+                private final Base o3;
+                
+                public Foo(final Base o1, final Base o2, final Base o3) {
+                    o1.pass();
+                    o2.share();
+                    this.o1 = o1;
+                    this.o2 = o2;
+                    this.o3 = o3;
+                }
+                
+                public java.lang.Void call() {
+                    o1.registerNewOwner();
+                    rolez.lang.System.INSTANCE.out.println("Hello World!");
+                    o1.releasePassed();
+                    o2.releaseShared();
+                    return null;
+                }
+            }
+        ''')
+        
+        // TODO: How to handle main class regarding transitions of the args array?
     }
     
     @Test def testField() {
@@ -973,18 +1005,6 @@ class RolezGeneratorTest {
             rolez.lang.System.INSTANCE.out.println("Parallelism!");
             rolez.lang.System.INSTANCE.out.println("The sum: " + sum.get());
             rolez.lang.System.INSTANCE.out.println("Twice the sum!: " + (2 * sum.get()));
-        '''.withJavaFrame)
-        
-        parse('''
-            val o1: readwrite Base = new Base;
-            val o2: readonly Base = new Base;
-            val o3: pure Base = new Base;
-            start FooTask(o1, o2, o3);
-        '''.withFrame, classes).generate.assertEqualsJava('''
-            final Base o1 = new Base();
-            final Base o2 = new Base();
-            final Base o3 = new Base();
-            rolez.lang.TaskSystem.getDefault().start(new FooTask(pass(o1), share(o2), o3));
         '''.withJavaFrame)
     }
     

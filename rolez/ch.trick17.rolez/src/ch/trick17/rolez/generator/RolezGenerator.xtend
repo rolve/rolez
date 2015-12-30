@@ -119,9 +119,11 @@ class RolezGenerator extends AbstractGenerator {
     }
     
     private def guardedFields(NormalClass it) {
-        allMembers.filter(Field).filter[
-            type instanceof RoleType && (type as RoleType).base.clazz.isGuarded
-        ]
+        allMembers.filter(Field).filter[type.isGuarded]
+    }
+    
+    private def isGuarded(Type it) {
+        it instanceof RoleType && (it as RoleType).base.clazz.isGuarded
     }
     
     private def isGuarded(Class it) {
@@ -168,6 +170,9 @@ class RolezGenerator extends AbstractGenerator {
             «ENDFOR»
             
             public «safeSimpleName»(«params.map[gen].join(", ")») {
+                «FOR p : params.filter[needsTransition]»
+                «p.genTransition»
+                «ENDFOR»
                 «FOR p : params»
                 this.«p.safeName» = «p.safeName»;
                 «ENDFOR»
@@ -175,14 +180,33 @@ class RolezGenerator extends AbstractGenerator {
             «ENDIF»
             
             public «type.genGeneric» call() {
+                «FOR p : params.filter[type instanceof RoleType && (type as RoleType).role == READWRITE]»
+                «p.safeName».registerNewOwner();
+                «ENDFOR»
                 «body.genStmtsWithTryCatch»
+                «FOR p : params.filter[needsTransition]»
+                «p.genRelease»
+                «ENDFOR»
                 «IF type instanceof Void»
                 return null;
                 «ENDIF»
             }
         }
     '''
-    // TODO: transitions
+    
+    private def needsTransition(Param it) {
+        type.isGuarded && (type as RoleType).role != PURE
+    }
+    
+    private def genTransition(Param it) {
+        val kind = if((type as RoleType).role == READWRITE) "pass" else "share"
+        '''«safeName».«kind»();'''
+    }
+    
+    private def genRelease(Param it) {
+        val kind = if((type as RoleType).role == READWRITE) "Passed" else "Shared"
+        '''«safeName».release«kind»();'''
+    }
     
     private def gen(Field it) '''
         
@@ -446,17 +470,8 @@ class RolezGenerator extends AbstractGenerator {
     
     private def dispatch generateExpr(The it) '''«classRef.gen».INSTANCE'''
     
-    private def dispatch generateExpr(Start it) {
-        val transitionedArgs = args.map[gen].indexed.map[pair |
-            val paramType = taskRef.task.params.get(pair.key).type
-            switch(paramType) {
-                RoleType case paramType.role == READWRITE: "pass(" + pair.value + ")"
-                RoleType case paramType.role == READONLY: "share(" + pair.value + ")"
-                default: pair.value
-            }
-        ].join(", ")
-        '''rolez.lang.TaskSystem.getDefault().start(new «taskRef.gen»(«transitionedArgs»))'''
-    }
+    private def dispatch generateExpr(Start it)
+        '''rolez.lang.TaskSystem.getDefault().start(new «taskRef.gen»(«args.map[gen].join(", ")»))'''
     
     private def int arrayNesting(GenericClassRef it) {
         if(!clazz.isArrayClass)
