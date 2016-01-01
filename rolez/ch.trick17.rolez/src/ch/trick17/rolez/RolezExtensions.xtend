@@ -144,6 +144,10 @@ class RolezExtensions {
         enclosingClass.qualifiedName == arrayClassName && name == "set" && mapped
     }
     
+    def isArrayLength(Field it) {
+        enclosingClass.qualifiedName == arrayClassName && name == "length" && mapped
+    }
+    
     def isMapped(Constr it) { jvmConstr != null }
     def isMapped( Field it) { jvmField  != null }
     def isMapped(Method it) { jvmMethod != null }

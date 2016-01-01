@@ -6,13 +6,16 @@ import ch.trick17.rolez.rolez.ArithmeticBinaryExpr
 import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.BinaryExpr
 import ch.trick17.rolez.rolez.Block
+import ch.trick17.rolez.rolez.Boolean
 import ch.trick17.rolez.rolez.BooleanLiteral
 import ch.trick17.rolez.rolez.Cast
+import ch.trick17.rolez.rolez.Char
 import ch.trick17.rolez.rolez.CharLiteral
 import ch.trick17.rolez.rolez.Class
 import ch.trick17.rolez.rolez.ClassLike
 import ch.trick17.rolez.rolez.ClassRef
 import ch.trick17.rolez.rolez.Constr
+import ch.trick17.rolez.rolez.Double
 import ch.trick17.rolez.rolez.DoubleLiteral
 import ch.trick17.rolez.rolez.EqualityExpr
 import ch.trick17.rolez.rolez.Expr
@@ -20,6 +23,7 @@ import ch.trick17.rolez.rolez.ExprStmt
 import ch.trick17.rolez.rolez.Field
 import ch.trick17.rolez.rolez.GenericClassRef
 import ch.trick17.rolez.rolez.IfStmt
+import ch.trick17.rolez.rolez.Int
 import ch.trick17.rolez.rolez.IntLiteral
 import ch.trick17.rolez.rolez.LocalVarDecl
 import ch.trick17.rolez.rolez.LogicalExpr
@@ -31,6 +35,7 @@ import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.Null
 import ch.trick17.rolez.rolez.NullLiteral
 import ch.trick17.rolez.rolez.Param
+import ch.trick17.rolez.rolez.ParameterizedBody
 import ch.trick17.rolez.rolez.Parenthesized
 import ch.trick17.rolez.rolez.PrimitiveType
 import ch.trick17.rolez.rolez.Program
@@ -159,8 +164,8 @@ class RolezGenerator extends AbstractGenerator {
         public final class «safeSimpleName» implements java.util.concurrent.Callable<«type.genGeneric»> {
             «IF isMain»
             
-            public static void main(final String[] args) {
-                rolez.lang.TaskSystem.getDefault().run(new «safeSimpleName»(«IF !params.isEmpty»args«ENDIF»));
+            public static void main(final java.lang.String[] args) {
+                rolez.lang.TaskSystem.getDefault().run(new «safeSimpleName»(«IF !params.isEmpty»new rolez.lang.ObjectArray<>(args)«ENDIF»));
             }
             «ENDIF»
             «IF !params.isEmpty»
@@ -382,22 +387,34 @@ class RolezGenerator extends AbstractGenerator {
     
     private def dispatch generateExpr(MemberAccess it) {
         switch(it) {
-            case isMethodInvoke && method.isArrayGet: generateArrayGet
-            case isMethodInvoke && method.isArraySet: generateArraySet
-            case isMethodInvoke:                      generateMethodInvoke
-            case isFieldAccess:                       generateFieldAccess
+            case isMethodInvoke && method.isArrayGet:  generateArrayGet
+            case isMethodInvoke && method.isArraySet:  generateArraySet
+            case isMethodInvoke:                       generateMethodInvoke
+            case isFieldAccess && field.isArrayLength: generateArrayLength
+            case isFieldAccess:                        generateFieldAccess
         }
     }
     
     private def generateArrayGet(MemberAccess it) {
-        // TODO: guarding
-        '''«target.gen»[«args.get(0).gen»]'''
+        val guardedTarget =
+            if(system.subroleSucceeded(target.dynamicRole, READONLY))
+                target.genNested
+            else
+                "guardReadOnly(" + target.gen + ")"
+        '''«guardedTarget».data[«args.get(0).gen»]'''
     }
     
     private def generateArraySet(MemberAccess it) {
-        // TODO: guarding
-        '''«target.gen»[«args.get(0).gen»] = «args.get(1).gen»'''
+        val guardedTarget =
+            if(system.subroleSucceeded(target.dynamicRole, READWRITE))
+                target.genNested
+            else
+                "guardReadWrite(" + target.gen + ")"
+        '''«guardedTarget».data[«args.get(0).gen»] = «args.get(1).gen»'''
     }
+    
+    private def generateArrayLength(MemberAccess it)
+        '''«target.genNested».data.length'''
     
     private def generateMethodInvoke(MemberAccess it) {
         val guardedTarget =
@@ -433,11 +450,17 @@ class RolezGenerator extends AbstractGenerator {
     private def dispatch Role dynamicRole(MemberAccess it)  {
         if(isGlobal) READONLY else PURE
     }
+    private def dispatch Role dynamicRole(VarRef it) {
+        if(variable instanceof Param && enclosingBody instanceof Task && !enclosingBody.mayStartTask)
+            (variable.type as RoleType).role
+        else
+            PURE
+    }
     private def dispatch Role dynamicRole(This it) {
-        val body = enclosingBody
-        val mayStartTask = body.eAllContents.exists[it instanceof Start ||
-            (it instanceof MemberAccess && (it as MemberAccess).isMethodInvoke)]
-        if(body instanceof Constr && !mayStartTask) READWRITE else PURE
+        if(enclosingBody instanceof Constr && !enclosingBody.mayStartTask)
+            READWRITE
+        else
+            PURE
     }
     private def dispatch Role dynamicRole(Cast it)          { expr.dynamicRole }
     private def dispatch Role dynamicRole(Parenthesized it) { expr.dynamicRole }
@@ -452,21 +475,22 @@ class RolezGenerator extends AbstractGenerator {
     private def dispatch boolean isGlobal(The _)  { true }
     private def dispatch boolean isGlobal(Expr _) { false }
     
+    private def boolean mayStartTask(ParameterizedBody it) {
+        body.eAllContents.exists[
+            it instanceof Start
+                || (it instanceof New && !(it as New).constr.isMapped)
+                || (it instanceof MemberAccess
+                    && (it as MemberAccess).isMethodInvoke
+                    && !(it as MemberAccess).method.isMapped)
+        ]
+    }
+    
     private def dispatch generateExpr(This _) '''this'''
     
     private def dispatch generateExpr(VarRef it) { variable.safeName }
     
-    private def dispatch generateExpr(New it) {
-        if(classRef.clazz.isArrayClass) {
-            if(args.size != 1) throw new AssertionError
-            
-            val ref = classRef as GenericClassRef
-            val emptyBrackets = (1 ..< arrayNesting(ref)).map["[]"].join
-            '''new «elemType(ref).gen»[«args.head.gen»]«emptyBrackets»'''
-        }
-        else
-            '''new «classRef.gen»(«args.map[gen].join(", ")»)'''
-    }
+    private def dispatch generateExpr(New it)
+        '''new «classRef.gen»(«args.map[gen].join(", ")»)'''
     
     private def dispatch generateExpr(The it) '''«classRef.gen».INSTANCE'''
     
@@ -547,7 +571,13 @@ class RolezGenerator extends AbstractGenerator {
     
     private def dispatch generateClassRef(GenericClassRef it) {
         if(clazz.isArrayClass)
-            '''«typeArg.gen»[]'''
+            switch(typeArg) {
+                Int:     '''rolez.lang.IntArray'''
+                Double:  '''rolez.lang.DoubleArray'''
+                Char:    '''rolez.lang.CharArray'''
+                Boolean: '''rolez.lang.BooleanArray'''
+                default: '''rolez.lang.ObjectArray<«typeArg.gen»>'''
+            }
         else
             '''«clazz.generateName»<«typeArg.genGeneric»>'''
     }

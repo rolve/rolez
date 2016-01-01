@@ -49,6 +49,7 @@ class RolezGeneratorTest {
                 mapped def readonly toString: pure String
             }
             class rolez.lang.Array[T] mapped to rolez.lang.Array {
+                mapped val length: int
                 mapped new(i: int)
                 mapped def readonly  get(i: int): T
                 mapped def readwrite set(i: int, o: T):
@@ -277,7 +278,7 @@ class RolezGeneratorTest {
             
             public final class Main implements java.util.concurrent.Callable<java.lang.Void> {
                 
-                public static void main(final String[] args) {
+                public static void main(final java.lang.String[] args) {
                     rolez.lang.TaskSystem.getDefault().run(new Main());
                 }
                 
@@ -295,18 +296,20 @@ class RolezGeneratorTest {
             
             public final class Main implements java.util.concurrent.Callable<java.lang.Void> {
                 
-                public static void main(final String[] args) {
-                    rolez.lang.TaskSystem.getDefault().run(new Main(args));
+                public static void main(final java.lang.String[] args) {
+                    rolez.lang.TaskSystem.getDefault().run(new Main(new rolez.lang.ObjectArray<>(args)));
                 }
                 
-                private final java.lang.String[] args;
+                private final rolez.lang.ObjectArray<java.lang.String> args;
                 
-                public Main(final java.lang.String[] args) {
+                public Main(final rolez.lang.ObjectArray<java.lang.String> args) {
+                    args.share();
                     this.args = args;
                 }
                 
                 public java.lang.Void call() {
-                    args[0].length();
+                    args.data[0].length();
+                    args.releaseShared();
                     return null;
                 }
             }
@@ -342,8 +345,6 @@ class RolezGeneratorTest {
                 }
             }
         ''')
-        
-        // TODO: How to handle main class regarding transitions of the args array?
     }
     
     @Test def testField() {
@@ -596,18 +597,20 @@ class RolezGeneratorTest {
             
             public final class _final implements java.util.concurrent.Callable<java.lang.Void> {
                 
-                public static void main(final String[] args) {
-                    rolez.lang.TaskSystem.getDefault().run(new _final(args));
+                public static void main(final java.lang.String[] args) {
+                    rolez.lang.TaskSystem.getDefault().run(new _final(new rolez.lang.ObjectArray<>(args)));
                 }
                 
-                private final java.lang.String[] _do;
+                private final rolez.lang.ObjectArray<java.lang.String> _do;
                 
-                public _final(final java.lang.String[] _do) {
+                public _final(final rolez.lang.ObjectArray<java.lang.String> _do) {
+                    _do.share();
                     this._do = _do;
                 }
                 
                 public java.lang.Void call() {
-                    _do[0].length();
+                    _do.data[0].length();
+                    _do.releaseShared();
                     return null;
                 }
             }
@@ -892,9 +895,10 @@ class RolezGeneratorTest {
             "Hello".substring(1, 3);
             this.bar;
             
-            var a: readwrite Array[int] = new Array[int](2);
+            val a: readwrite Array[int] = new Array[int](2);
             a.set(0, 42);
             var j: int = a.get(0);
+            j = a.length;
             var aa: readwrite Array[readwrite Array[int]] = new Array[readwrite Array[int]](1);
             aa.set(1 - 1, a);
             var l: int = aa.get(0).get(0);
@@ -905,13 +909,15 @@ class RolezGeneratorTest {
             ((java.lang.Object) new Base()).hashCode();
             "Hello".substring(1, 3);
             this.bar();
-            int[] a = new int[2];
-            a[0] = 42;
-            int j = a[0];
-            int[][] aa = new int[1][];
-            aa[1 - 1] = a;
-            int l = aa[0][0];
+            final rolez.lang.IntArray a = new rolez.lang.IntArray(2);
+            guardReadWrite(a).data[0] = 42;
+            int j = guardReadOnly(a).data[0];
+            j = a.data.length;
+            rolez.lang.ObjectArray<rolez.lang.IntArray> aa = new rolez.lang.ObjectArray<rolez.lang.IntArray>(1);
+            guardReadWrite(aa).data[1 - 1] = a;
+            int l = guardReadOnly(guardReadOnly(aa).data[0]).data[0];
         '''.withJavaFrame)
+        // TODO: Eliminate above guards
         
         parse('''
             class A {
@@ -976,7 +982,7 @@ class RolezGeneratorTest {
             new foo.bar.Base(0);
             new foo.bar.Base((3 * 2) + 2);
             new foo.bar.Base("Hello".length(), 0);
-            java.lang.Object a = new int[10 * 10];
+            java.lang.Object a = new rolez.lang.IntArray(10 * 10);
         '''.withJavaFrame)
     }
     
