@@ -3,7 +3,6 @@ package ch.trick17.rolez.desugar
 import java.lang.reflect.Method
 import java.util.ArrayList
 import java.util.List
-import java.util.Optional
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.EReference
 import org.eclipse.emf.ecore.resource.Resource
@@ -44,8 +43,8 @@ abstract class AbstractDeclarativeDesugarer implements IDesugarer {
             for(var i = 0; i < contents.size; i++) {
                 val orig = contents.get(i)
                 val repl = orig.desugar
-                if(repl.isPresent && repl.get !== orig)
-                    contents.set(i, repl.get)
+                if(repl != null && repl !== orig)
+                    contents.set(i, repl)
                 contents.get(i).desugarChildren
             }
         }
@@ -58,23 +57,23 @@ abstract class AbstractDeclarativeDesugarer implements IDesugarer {
             val value = eGet(ref)
             if(value instanceof EObject) {
                 val repl = value.desugar
-                if(repl.isPresent && repl.get !== value)
-                    eSet(ref, repl.get)
+                if(repl != null && repl !== value)
+                    eSet(ref, repl)
                 (eGet(ref) as EObject).desugarChildren
             }
             else if(value instanceof EObjectEList<?>) {
                 for(var i = 0; i < value.size; i++) {
                     val orig = value.get(i) as EObject
                     val repl = orig.desugar
-                    if(repl.isPresent && repl.get !== orig)
-                        (value as EObjectEList<EObject>).set(i, repl.get)
+                    if(repl != null && repl !== orig)
+                        (value as EObjectEList<EObject>).set(i, repl)
                     (value.get(i) as EObject).desugarChildren
                 }
             }
         }
     }
     
-    private def Optional<EObject> desugar(EObject it) {
+    private def EObject desugar(EObject it) {
         for(m : methodsForType.get(class))
             if(m.returnType == void)
                 m.invoke(this, it)
@@ -82,9 +81,9 @@ abstract class AbstractDeclarativeDesugarer implements IDesugarer {
                 val repl = m.invoke(this, it) as EObject
                 if(repl == null)
                     throw new AssertionError("A @Rule method must not return null")
-                return Optional.of(repl)
+                return repl
             }
-        Optional.empty
+        null
     }
     
     protected def void createReference(EObject object, EReference ref, String text) {

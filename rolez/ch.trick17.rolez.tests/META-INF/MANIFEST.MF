@@ -10,7 +10,7 @@ Require-Bundle: ch.trick17.rolez,
  org.eclipse.xtext.xbase.junit,
  org.eclipse.xtext.xbase.lib,
  it.xsemantics.runtime
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Export-Package: ch.trick17.rolez.tests
 Import-Package: org.junit;version="4.5.0",
  org.junit.runner;version="4.5.0",

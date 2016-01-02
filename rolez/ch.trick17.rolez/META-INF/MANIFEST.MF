@@ -16,7 +16,7 @@ Require-Bundle: org.eclipse.xtext,
  org.eclipse.emf.common,
  it.xsemantics.runtime,
  org.eclipse.core.runtime
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Export-Package: ch.trick17.rolez,
  ch.trick17.rolez.cfg,
  ch.trick17.rolez.desugar,
