@@ -10,9 +10,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>ch.trick17.rolez</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>ch.trick17.rolez.lib</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>ch.trick17.simple-jpf</groupId>
@@ -20,4 +20,9 @@
             <version>1139.0.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
+    
+    <build>
+        <sourceDirectory>src</sourceDirectory>
+        <testSourceDirectory>src</testSourceDirectory>
+    </build>
 </project>

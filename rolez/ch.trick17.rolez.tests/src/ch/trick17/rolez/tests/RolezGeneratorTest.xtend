@@ -15,10 +15,7 @@ import javax.tools.ForwardingJavaFileObject
 import javax.tools.JavaFileManager.Location
 import javax.tools.JavaFileObject
 import javax.tools.SimpleJavaFileObject
-import javax.tools.StandardLocation
 import javax.tools.ToolProvider
-import org.eclipse.core.runtime.FileLocator
-import org.eclipse.core.runtime.Platform
 import org.eclipse.xtext.generator.InMemoryFileSystemAccess
 import org.eclipse.xtext.junit4.InjectWith
 import org.eclipse.xtext.junit4.XtextRunner
@@ -29,7 +26,6 @@ import org.junit.runner.RunWith
 
 import static org.hamcrest.Matchers.*
 
-import static extension org.hamcrest.MatcherAssert.assertThat
 import static extension org.junit.Assert.*
 
 @RunWith(XtextRunner)
@@ -1131,9 +1127,6 @@ class RolezGeneratorTest {
         val compiler = ToolProvider.systemJavaCompiler
         val stdFileMgr = compiler.getStandardFileManager(null, null, null)
         
-        val libBundle = Platform.getBundle("ch.trick17.rolez.lib")
-        if(libBundle != null)
-            stdFileMgr.setLocation(StandardLocation.CLASS_PATH, #[FileLocator.getBundleFile(libBundle)])
         val fileMgr = new ForwardingJavaFileManager(stdFileMgr) {
             override getJavaFileForOutput(Location l, String c, JavaFileObject.Kind k, FileObject s) {
                 new ForwardingJavaFileObject(super.getJavaFileForOutput(l, c, k, s)) {

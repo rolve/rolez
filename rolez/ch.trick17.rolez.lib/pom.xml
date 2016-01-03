@@ -48,9 +48,9 @@
                 </executions>
                 <dependencies>
                     <dependency>
-                        <groupId>ch.trick17.rolez</groupId>
+                        <groupId>${project.groupId}</groupId>
                         <artifactId>ch.trick17.rolez</artifactId>
-                        <version>1.0.0-SNAPSHOT</version>
+                        <version>${project.version}</version>
                     </dependency>
                 </dependencies>
             </plugin>

@@ -10,12 +10,10 @@ import com.google.inject.Binder
 import com.google.inject.name.Names
 import it.xsemantics.runtime.StringRepresentation
 import it.xsemantics.runtime.validation.XsemanticsValidatorFilter
-import org.eclipse.core.runtime.Platform
 import org.eclipse.xtext.conversion.IValueConverterService
 import org.eclipse.xtext.resource.XtextResource
 import org.eclipse.xtext.scoping.IScopeProvider
 import org.eclipse.xtext.scoping.impl.AbstractDeclarativeScopeProvider
-import org.osgi.framework.wiring.BundleWiring
 
 /**
  * Use this class to register components to be used at runtime / without the Equinox extension registry.
@@ -51,12 +49,4 @@ class RolezRuntimeModule extends AbstractRolezRuntimeModule {
     def RolezFactory bindRolezFactoryToInstance() {
         return RolezFactory.eINSTANCE;
     }
-    
-    override bindClassLoaderToInstance() {
-        val bundle = Platform.getBundle("ch.trick17.rolez.tests")
-        if(bundle != null)
-            bundle.adapt(BundleWiring).classLoader
-        else
-            super.bindClassLoaderToInstance
-    }    
 }
