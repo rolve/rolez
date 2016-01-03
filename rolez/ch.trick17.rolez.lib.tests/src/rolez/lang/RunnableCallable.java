@@ -1,4 +1,4 @@
-package ch.trick17.rolez;
+package rolez.lang;
 
 import java.util.concurrent.Callable;
 
