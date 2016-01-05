@@ -35,14 +35,12 @@ import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.Null
 import ch.trick17.rolez.rolez.NullLiteral
 import ch.trick17.rolez.rolez.Param
-import ch.trick17.rolez.rolez.ParameterizedBody
 import ch.trick17.rolez.rolez.Parenthesized
 import ch.trick17.rolez.rolez.PrimitiveType
 import ch.trick17.rolez.rolez.Program
 import ch.trick17.rolez.rolez.RelationalExpr
 import ch.trick17.rolez.rolez.ReturnExpr
 import ch.trick17.rolez.rolez.ReturnNothing
-import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.SimpleClassRef
 import ch.trick17.rolez.rolez.SingletonClass
@@ -82,6 +80,7 @@ class RolezGenerator extends AbstractGenerator {
     
     @Inject extension RolezExtensions
     @Inject extension JavaMapper
+    @Inject extension RoleAnalysis
     @Inject RolezUtils utils
     @Inject RolezSystem system
     
@@ -185,8 +184,8 @@ class RolezGenerator extends AbstractGenerator {
             «ENDIF»
             
             public «type.genGeneric» call() {
-                «FOR p : params.filter[type instanceof RoleType && (type as RoleType).role == READWRITE]»
-                «p.safeName».registerNewOwner();
+                «FOR p : params.filter[needsRegisterNewOwner]»
+                «p.genRegisterNewOwner»
                 «ENDFOR»
                 «body.genStmtsWithTryCatch»
                 «FOR p : params.filter[needsTransition]»
@@ -205,12 +204,38 @@ class RolezGenerator extends AbstractGenerator {
     
     private def genTransition(Param it) {
         val kind = if((type as RoleType).role == READWRITE) "pass" else "share"
-        '''«safeName».«kind»();'''
+        if((type as RoleType).base.clazz.isObjectClass)
+            '''
+            if(«safeName» instanceof rolez.lang.Guarded)
+                ((rolez.lang.Guarded) «safeName»).pass();
+            '''
+        else
+            '''«safeName».«kind»();'''
+    }
+    
+    private def needsRegisterNewOwner(Param it) {
+        type.isGuarded && (type as RoleType).role == READWRITE
+    }
+    
+    private def genRegisterNewOwner(Param it) {
+        if((type as RoleType).base.clazz.isObjectClass)
+            '''
+            if(«safeName» instanceof rolez.lang.Guarded)
+                ((rolez.lang.Guarded) «safeName»).registerNewOwner();
+            '''
+        else
+            '''«safeName».registerNewOwner();'''
     }
     
     private def genRelease(Param it) {
         val kind = if((type as RoleType).role == READWRITE) "Passed" else "Shared"
-        '''«safeName».release«kind»();'''
+        if((type as RoleType).base.clazz.isObjectClass)
+            '''
+            if(«safeName» instanceof rolez.lang.Guarded)
+                ((rolez.lang.Guarded) «safeName»).release«kind»();
+            '''
+        else
+            '''«safeName».release«kind»();'''
     }
     
     private def gen(Field it) '''
@@ -225,33 +250,41 @@ class RolezGenerator extends AbstractGenerator {
         }
     '''
     
-    // TODO: Insert readwrite guard at the end of the constructor if we cannot
-    // guarantee that the object is not still readwrite (this allows starting
-    // tasks in constructors, but still guarantees that an object is readwrite
-    // after its constructor returns)
-    private def gen(Constr it) '''
-        
-        public «enclosingClass.safeSimpleName»(«params.map[gen].join(", ")») {
-            «body.genStmtsWithTryCatch»
-        }
-    '''
+    private def gen(Constr it) {
+        val guardThis = dynamicThisRoleAtExit != READWRITE
+        '''
+            
+            public «enclosingClass.safeSimpleName»(«params.map[gen].join(", ")») {
+                «body.genStmtsWithTryCatch(guardThis)»
+                «IF guardThis»
+                finally {
+                    guardReadWrite(this);
+                }
+                «ENDIF»
+            }
+        '''
+    }
     
-    private def genStmtsWithTryCatch(Block it) {
+    private def genStmtsWithTryCatch(Block it) { genStmtsWithTryCatch(false) }
+    
+    private def genStmtsWithTryCatch(Block it, boolean forceTry) {
         val exceptionTypes = thrownExceptionTypes
         val isConstr = !stmts.isEmpty && stmts.head instanceof SuperConstrCall
-        if(exceptionTypes.isEmpty) '''
-            «stmts.map[gen].join»
-        '''
-        else '''
+        if(!exceptionTypes.isEmpty || forceTry) '''
             «IF isConstr»
             «stmts.head.gen»
             «ENDIF»
             try {
                 «stmts.drop(if(isConstr) 1 else 0).map[gen].join»
             }
+            «IF !exceptionTypes.isEmpty»
             catch(«exceptionTypes.map[qualifiedName].join(" | ")» e) {
                 throw new java.lang.RuntimeException("ROLEZ EXCEPTION WRAPPER", e);
             }
+            «ENDIF»
+        '''
+        else '''
+            «stmts.map[gen].join»
         '''
     }
     
@@ -420,74 +453,45 @@ class RolezGenerator extends AbstractGenerator {
         '''«target.genNested».data.length'''
     
     private def generateMethodInvoke(MemberAccess it) {
+        val targetType = system.type(utils.createEnv(it), target).value
+        val needsGuard = !system.subroleSucceeded(target.dynamicRole, method.thisRole)
         val guardedTarget =
-            if(!system.type(utils.createEnv(it), target).value.isGuarded
-                    || system.subroleSucceeded(target.dynamicRole, method.thisRole))
+            if(targetType.isGuarded && needsGuard)
+                if((targetType as RoleType).base.clazz.isObjectClass)
+                    switch(method.thisRole) {
+                        case READWRITE: "guardReadWriteIfNeeded(" + target.gen + ")"
+                        case  READONLY: "guardReadOnlyIfNeeded("  + target.gen + ")"
+                        case      PURE:                     target.genNested
+                    }
+                else
+                    switch(method.thisRole) {
+                        case READWRITE: "guardReadWrite(" + target.gen + ")"
+                        case  READONLY: "guardReadOnly("  + target.gen + ")"
+                        case      PURE:                     target.genNested
+                    }
+            else 
                 target.genNested
-            else switch(method.thisRole) {
-                case READWRITE: "guardReadWrite(" + target.gen + ")"
-                case  READONLY: "guardReadOnly("  + target.gen + ")"
-                case      PURE:                     target.genNested
-            }
         '''«guardedTarget».«method.safeName»(«args.map[gen].join(", ")»)'''
     }
     
     private def generateFieldAccess(MemberAccess it) {
+        val targetType = system.type(utils.createEnv(it), target).value
         val requiredRole =
             if(isFieldWrite)           READWRITE
             else if(field.kind == VAR) READONLY
             else                       PURE
+        val needsGuard = !system.subroleSucceeded(target.dynamicRole, requiredRole)
         val guardedTarget =
-            if(!system.type(utils.createEnv(it), target).value.isGuarded
-                    || system.subroleSucceeded(target.dynamicRole, requiredRole))
-                target.genNested
-            else
+            if(targetType.isGuarded && needsGuard)
                 if(requiredRole == READWRITE) "guardReadWrite(" + target.gen + ")"
                 else                          "guardReadOnly("  + target.gen + ")"
+            else
+                target.genNested
         '''«guardedTarget».«field.safeName»'''
     }
     
     private def isFieldWrite(MemberAccess it) {
         eContainer instanceof Assignment && it === (eContainer as Assignment).left
-    }
-    
-    // IMPROVE: Write this in Xsemantics?
-    private def dispatch Role dynamicRole(MemberAccess it)  {
-        if(isGlobal) READONLY else PURE
-    }
-    private def dispatch Role dynamicRole(VarRef it) {
-        if(variable instanceof Param && enclosingBody instanceof Task && !enclosingBody.mayStartTask)
-            (variable.type as RoleType).role
-        else
-            PURE
-    }
-    private def dispatch Role dynamicRole(This it) {
-        if(enclosingBody instanceof Constr && !enclosingBody.mayStartTask)
-            READWRITE
-        else
-            PURE
-    }
-    private def dispatch Role dynamicRole(Cast it)          { expr.dynamicRole }
-    private def dispatch Role dynamicRole(Parenthesized it) { expr.dynamicRole }
-    private def dispatch Role dynamicRole(New _)            { READWRITE }
-    private def dispatch Role dynamicRole(The _)            { READONLY }
-    private def dispatch Role dynamicRole(StringLiteral _)  { READONLY }
-    private def dispatch Role dynamicRole(Expr _)           { PURE }
-    
-    private def dispatch boolean isGlobal(MemberAccess it) {
-        isFieldAccess && target.isGlobal
-    }
-    private def dispatch boolean isGlobal(The _)  { true }
-    private def dispatch boolean isGlobal(Expr _) { false }
-    
-    private def boolean mayStartTask(ParameterizedBody it) {
-        body.eAllContents.exists[
-            it instanceof Start
-                || (it instanceof New && !(it as New).constr.isMapped)
-                || (it instanceof MemberAccess
-                    && (it as MemberAccess).isMethodInvoke
-                    && !(it as MemberAccess).method.isMapped)
-        ]
     }
     
     private def dispatch generateExpr(This _) '''this'''

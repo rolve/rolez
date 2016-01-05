@@ -74,6 +74,7 @@ class RolezGeneratorTest {
                 new(i: int, j: int) {}
             }
             task VoidTask: {}
+            task ReadWriteTask(o: readwrite Object): {}
             task SumTask(i: int, j: int): int { return i + j; }
         ''')
     }
@@ -341,6 +342,34 @@ class RolezGeneratorTest {
                 }
             }
         ''')
+        
+        parse('''
+            task Foo(o: readwrite Object): {
+                the System.out.println(o.toString);
+            }
+        ''', classes).generate.assertEqualsJava('''
+            import static rolez.lang.Guarded.*;
+            
+            public final class Foo implements java.util.concurrent.Callable<java.lang.Void> {
+                
+                private final java.lang.Object o;
+                
+                public Foo(final java.lang.Object o) {
+                    if(o instanceof rolez.lang.Guarded)
+                        ((rolez.lang.Guarded) o).pass();
+                    this.o = o;
+                }
+                
+                public java.lang.Void call() {
+                    if(o instanceof rolez.lang.Guarded)
+                        ((rolez.lang.Guarded) o).registerNewOwner();
+                    rolez.lang.System.INSTANCE.out.println(o.toString());
+                    if(o instanceof rolez.lang.Guarded)
+                        ((rolez.lang.Guarded) o).releasePassed();
+                    return null;
+                }
+            }
+        ''')
     }
     
     @Test def testField() {
@@ -533,6 +562,29 @@ class RolezGeneratorTest {
                     }
                     catch(java.io.FileNotFoundException e) {
                         «throwExceptionWrapper("e")»
+                    }
+                }
+            }
+        ''')
+        
+        parse('''
+            class A {
+                new {
+                    start ReadWriteTask(this);
+                }
+            }
+        ''', classes).generate.assertEqualsJava('''
+            import static rolez.lang.Guarded.*;
+            
+            public class A extends rolez.lang.Guarded {
+                
+                public A() {
+                    super();
+                    try {
+                        rolez.lang.TaskSystem.getDefault().start(new ReadWriteTask(this));
+                    }
+                    finally {
+                        guardReadWrite(this);
                     }
                 }
             }
@@ -961,6 +1013,27 @@ class RolezGeneratorTest {
                     new A().foo();
                     guardReadWrite(a4).i = 2;
                     return guardReadOnly(a5).i + a6.j;
+                }
+            }
+        ''')
+        
+        parse('''
+            class A {
+                def readwrite test(o: readwrite Object): {
+                    o.toString;
+                }
+            }
+        ''', classes).generate.assertEqualsJava('''
+            import static rolez.lang.Guarded.*;
+            
+            public class A extends rolez.lang.Guarded {
+                
+                public A() {
+                    super();
+                }
+                
+                public void test(final java.lang.Object o) {
+                    guardReadOnlyIfNeeded(o).toString();
                 }
             }
         ''')

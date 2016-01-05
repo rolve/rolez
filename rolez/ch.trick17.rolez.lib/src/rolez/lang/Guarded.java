@@ -133,4 +133,19 @@ public abstract class Guarded {
             ((Guarded) guarded).guard.guardReadWrite(guarded);
         return guarded;
     }
+    
+    /* The following two are required for expressions of type java.lang.Object,
+     * for which it is only known at runtime whether guarding is needed */
+    
+    public static <G> G guardReadOnlyIfNeeded(G guarded) {
+        if(guarded instanceof Guarded)
+            guardReadOnly((Guarded) guarded);
+        return guarded;
+    }
+    
+    public static <G> G guardReadWriteIfNeeded(G guarded) {
+        if(guarded instanceof Guarded)
+            guardReadWrite((Guarded) guarded);
+        return guarded;
+    }
 }
