@@ -175,7 +175,7 @@ class RolezLinkingTest {
     @Test def testVarRef() {
         parse('''
             task Main: {
-                val i: int = 5;
+                val i = 5;
                 i;
             }
         ''').assertNoErrors
@@ -192,13 +192,13 @@ class RolezLinkingTest {
         parse('''
             task Main: {
                 i;
-                val i: int = 0;
+                val i = 0;
             }
         ''').assertError(VAR_REF, LINKING_DIAGNOSTIC, "var", "i")
         parse('''
             task Main: {
                 {
-                    val i: int = 0;
+                    val i = 0;
                 }
                 i;
             }

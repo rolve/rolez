@@ -520,13 +520,13 @@ class RolezValidatorTest {
             class rolez.lang.Object mapped to java.lang.Object
             class A {
                 def readwrite foo(i: int, b: boolean): {
-                    val j: int = 0;
+                    val j = 0;
                     var a: boolean;
                     {
-                        var k: int = 42;
+                        var k = 42;
                     }
                     {
-                        var k: int = 0;
+                        var k = 0;
                     }
                 }
             }
@@ -565,9 +565,9 @@ class RolezValidatorTest {
         ''').assertError(LOCAL_VAR, DUPLICATE_VARIABLE)
         parse('''
             task Main: {
-                val i: int = 5;
+                val i = 5;
                 {
-                    val i: boolean = true;
+                    val i = true;
                     i;
                 }
                 i;
@@ -857,8 +857,8 @@ class RolezValidatorTest {
             class rolez.lang.Object mapped to java.lang.Object
             class A {
                 def pure foo: {
-                    val i: int = 4;
-                    var j: int = 0;
+                    val i = 4;
+                    var j = 0;
                 }
             }
         ''').assertNoErrors
@@ -878,7 +878,7 @@ class RolezValidatorTest {
             class rolez.lang.Object mapped to java.lang.Object
             class A {
                 def pure foo(x: int): int {
-                    var i: int = 0;
+                    var i = 0;
                     var j: int;
                     j = 0;
                     var k: int;
@@ -890,7 +890,7 @@ class RolezValidatorTest {
                 }
                 
                 def pure bar: {
-                    var i: int = 0;
+                    var i = 0;
                     while(this.foo(5) > i)
                         this.bar;
                 }
@@ -1068,7 +1068,7 @@ class RolezValidatorTest {
                 mapped def pure length: int
             }
             task Main: {
-                val s: pure String = new String;
+                val s = new String;
                 2 * s.length();
             }
         ''').assertWarning(ARITHMETIC_BINARY_EXPR, OUTER_EXPR_NO_SIDE_FX)
@@ -1093,13 +1093,13 @@ class RolezValidatorTest {
             class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.String mapped to java.lang.String
             task Main: {
-                val s: pure String = "Hello";
+                val s = "Hello";
                 s as pure Object;
             }
         ''').assertWarning(CAST, OUTER_EXPR_NO_SIDE_FX)
         parse('''
             task Main: {
-                val i: int = 5;
+                val i = 5;
                 i;
             }
         ''').assertWarning(VAR_REF, OUTER_EXPR_NO_SIDE_FX)

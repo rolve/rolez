@@ -443,9 +443,9 @@ class RolezGeneratorTest {
         ''')
         
         parse('''
-            val j: int = 0;
+            val j = 0;
             val o: pure Object = new (rolez.io.PrintStream)("foo.txt");
-            val k: int = 0;
+            val k = 0;
         '''.withFrame, classes).generate.assertEqualsJava('''
             try {
                 final int j = 0;
@@ -547,13 +547,13 @@ class RolezGeneratorTest {
             
             class final {
                 def pure strictfp(volatile: int): int {
-                    val synchronized: int = 2 * volatile;
-                    val _synchronized: int = 42;
+                    val synchronized = 2 * volatile;
+                    val _synchronized = 42;
                     return synchronized + _synchronized;
                 }
                 
                 def pure transient: {
-                    val protected: readwrite final = new (foo.static.native.final);
+                    val protected = new (foo.static.native.final);
                     protected.strictfp(5);
                 }
             }
@@ -644,7 +644,7 @@ class RolezGeneratorTest {
     @Test def testLocalVarDecl() {
         parse('''
             var j: int;
-            var k: int = 4;
+            var k = 4;
             val a: pure A = null;
         '''.withFrame, classes).generate.assertEqualsJava('''
             int j;
@@ -691,7 +691,7 @@ class RolezGeneratorTest {
     
     @Test def testForLoop() {
         parse('''
-            for(var n: int = 0; n < 10; n += 1)
+            for(var n = 0; n < 10; n += 1)
                 this.bar;
         '''.withFrame, classes).generate.assertEqualsJava('''
             {
@@ -808,10 +808,10 @@ class RolezGeneratorTest {
         '''.withJavaFrame)
         
         parse('''
-            var a: boolean = false;
+            var a = false;
             a |= true;
             a &= false;
-            var j: int = 42;
+            var j = 42;
             j += 2;
             j -= 1;
             j *= 2;
@@ -832,15 +832,15 @@ class RolezGeneratorTest {
     
     @Test def testBinaryExpr() {
         parse('''
-            var c: boolean = true || new Base.equals(new Base);
-            var d: boolean = b && false || true;
-            var e: boolean = true && (b || true);
-            var f: boolean = 2 < 3 || 3 < i;
+            var c = true || new Base.equals(new Base);
+            var d = b && false || true;
+            var e = true && (b || true);
+            var f = 2 < 3 || 3 < i;
             
-            var j: int = 3 + 3 + 3;
-            var k: int = 3 - 2 - 1;
-            var l: int = 3 - (2 - 1);
-            var m: int = (1 + 2) * (3 + 4);
+            var j = 3 + 3 + 3;
+            var k = 3 - 2 - 1;
+            var l = 3 - (2 - 1);
+            var m = (1 + 2) * (3 + 4);
         '''.withFrame, classes).generate.assertEqualsJava('''
             boolean c = true || new Base().equals(new Base());
             boolean d = (b && false) || true;
@@ -855,7 +855,7 @@ class RolezGeneratorTest {
     
     @Test def testCast() {
         parse('''
-            var o: pure Object = new Base as readonly Object;
+            var o = new Base as readonly Object;
             o = ("Hi " + "World!") as readonly Object;
         '''.withFrame, classes).generate.assertEqualsJava('''
             java.lang.Object o = (java.lang.Object) new Base();
@@ -865,13 +865,13 @@ class RolezGeneratorTest {
     
     @Test def testUnaryExpr() {
         parse('''
-            var c: boolean = !false;
-            var d: boolean = !(b && false);
-            var e: boolean = !new Base.equals(new Base);
+            var c = !false;
+            var d = !(b && false);
+            var e = !new Base.equals(new Base);
             
-            var j: int = -3;
-            var k: int = -(3 - 2);
-            var l: int = -new Base.hashCode;
+            var j = -3;
+            var k = -(3 - 2);
+            var l = -new Base.hashCode;
         '''.withFrame, classes).generate.assertEqualsJava('''
             boolean c = !false;
             boolean d = !(b && false);
@@ -891,13 +891,13 @@ class RolezGeneratorTest {
             "Hello".substring(1, 3);
             this.bar;
             
-            val a: readwrite Array[int] = new Array[int](2);
+            val a = new Array[int](2);
             a.set(0, 42);
-            var j: int = a.get(0);
+            var j = a.get(0);
             j = a.length;
-            var aa: readwrite Array[readwrite Array[int]] = new Array[readwrite Array[int]](1);
+            var aa = new Array[readwrite Array[int]](1);
             aa.set(1 - 1, a);
-            var l: int = aa.get(0).get(0);
+            var l = aa.get(0).get(0);
         '''.withFrame, classes).generate.assertEqualsJava('''
             "Hello".toString().length();
             "Hello".equals("Hi");
@@ -998,7 +998,7 @@ class RolezGeneratorTest {
         '''.withJavaFrame)
         
         parse('''
-            val sum: pure Task[int] = start SumTask(1, 2);
+            val sum = start SumTask(1, 2);
             the System.out.println("Parallelism!");
             the System.out.println("The sum: " + sum.get);
             the System.out.println("Twice the sum!: " + (2 * sum.get));
@@ -1012,8 +1012,8 @@ class RolezGeneratorTest {
     
     @Test def testParenthesized() {
         parse('''
-            var j: int = (0);
-            var k: int = (2 + 2) * 3;
+            var j = (0);
+            var k = (2 + 2) * 3;
         '''.withFrame, classes).generate.assertEqualsJava('''
             int j = 0;
             int k = (2 + 2) * 3;
@@ -1022,7 +1022,7 @@ class RolezGeneratorTest {
     
     @Test def testStringLiteral() {
         parse('''
-            var s: pure String = "Hello World!";
+            var s = "Hello World!";
             s = "";
             s = "'";
             s = "\'";
@@ -1042,7 +1042,7 @@ class RolezGeneratorTest {
     
     @Test def testCharLiteral() {
         parse('''
-            var c: char = 'H';
+            var c = 'H';
             c = '\'';
             c = '\n';
             c = '"';

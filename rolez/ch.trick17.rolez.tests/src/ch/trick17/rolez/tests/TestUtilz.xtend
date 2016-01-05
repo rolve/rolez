@@ -8,6 +8,7 @@ import ch.trick17.rolez.rolez.ClassRef
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.ExprStmt
 import ch.trick17.rolez.rolez.GenericClassRef
+import ch.trick17.rolez.rolez.LocalVarDecl
 import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.ParameterizedBody
 import ch.trick17.rolez.rolez.PrimitiveType
@@ -17,6 +18,7 @@ import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.SimpleClassRef
 import ch.trick17.rolez.rolez.Task
 import ch.trick17.rolez.rolez.Type
+import ch.trick17.rolez.rolez.Var
 import ch.trick17.rolez.typesystem.RolezSystem
 import java.util.Random
 import javax.inject.Inject
@@ -93,7 +95,7 @@ class TestUtilz {
         result
     }
     
-    def expr(ParameterizedBody b, int i) { expr(b.body, i) }
+    def expr(ParameterizedBody b, int i) { b.body.expr(i) }
     
     def expr(Block b, int i) {
         b.assertNoErrors;
@@ -107,15 +109,28 @@ class TestUtilz {
         b.stmts.filter(ExprStmt).last.expr
     }
     
-    def type(Expr expr) {
-        val result = system.type(createEnv(expr), expr)
+    def type(Expr e) {
+        val result = system.type(createEnv(e), e)
         result.failed.assertThat(is(false))
         result.value
     }
     
-    def asRoleType(Type type) {
-        type.assertThat(instanceOf(RoleType))
-        type as RoleType
+    def variable(ParameterizedBody b, int i) { b.body.variable(i) }
+    
+    def variable(Block b, int i) {
+        b.assertNoErrors
+        b.stmts.filter(LocalVarDecl).get(i).variable
+    }
+    
+    def varType(Var v) {
+        val result = system.varType(createEnv(v), v)
+        result.failed.assertThat(is(false))
+        result.value
+    }
+    
+    def asRoleType(Type t) {
+        t.assertThat(instanceOf(RoleType))
+        t as RoleType
     }
     
     def Matcher<Type> isRoleType(Role role, ClassRef base) {

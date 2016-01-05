@@ -301,9 +301,12 @@ class RolezGenerator extends AbstractGenerator {
         }
     '''
     
-    private def dispatch generateStmt(LocalVarDecl it) '''
-        «variable.kind.gen»«variable.type.gen» «variable.safeName»«IF initializer != null» = «initializer.gen»«ENDIF»;
-    '''
+    private def dispatch generateStmt(LocalVarDecl it) {
+        val type = system.varType(utils.createEnv(it), variable).value
+        '''
+            «variable.kind.gen»«type.gen» «variable.safeName»«IF initializer != null» = «initializer.gen»«ENDIF»;
+        '''
+    }
     
     private def dispatch generateStmt(IfStmt it) '''
         if(«condition.gen»)«thenPart.genIndent»

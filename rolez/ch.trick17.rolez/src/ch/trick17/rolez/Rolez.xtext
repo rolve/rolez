@@ -87,7 +87,7 @@ LocalVarDecl:
     variable=LocalVar ('=' initializer=Expr)? ';';
 
 LocalVar:
-    kind=VarKind name=ID ':' type=Type;
+    kind=VarKind name=ID (':' type=Type)?;
 
 IfStmt:
     'if' '(' condition=Expr ')' thenPart=Stmt

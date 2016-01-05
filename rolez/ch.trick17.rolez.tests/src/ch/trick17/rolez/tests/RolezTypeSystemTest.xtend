@@ -426,7 +426,7 @@ class RolezTypeSystemTest {
     @Test def testTUnaryNot() {
         parse("task Main: { !true; }").main.lastExpr.type
             .assertThat(instanceOf(Boolean))
-        parse("task Main: { val a: boolean = false; !a; }").main.lastExpr.type
+        parse("task Main: { val a = false; !a; }").main.lastExpr.type
             .assertThat(instanceOf(Boolean))
         parse("task Main: { !(true || false); }").main.lastExpr.type
             .assertThat(instanceOf(Boolean))
@@ -493,7 +493,7 @@ class RolezTypeSystemTest {
                 var a: readwrite A
             }
             task Main: {
-                val a: readwrite A = new A;
+                val a = new A;
                 a.a;
             }
         ''')
@@ -516,7 +516,7 @@ class RolezTypeSystemTest {
                 var a: readonly A
             }
             task Main: {
-                val a: readwrite A = new A;
+                val a = new A;
                 a.a;
             }
         ''').main.lastExpr.type.asRoleType.role.assertThat(is(READONLY))
@@ -526,7 +526,7 @@ class RolezTypeSystemTest {
                 var a: pure A
             }
             task Main: {
-                val a: readwrite A = new A;
+                val a = new A;
                 a.a;
             }
         ''').main.lastExpr.type.asRoleType.role.assertThat(is(PURE))
@@ -590,7 +590,7 @@ class RolezTypeSystemTest {
         ''')
         parse('''
             task Main: {
-                val a: readwrite Array[int] = new Array[int](1);
+                val a = new Array[int](1);
                 a.set(0, 42);
                 a.get(0);
             }
@@ -598,7 +598,7 @@ class RolezTypeSystemTest {
         program = parse('''
             class A
             task Main: {
-                val a: readwrite Array[readwrite A] = new Array[readwrite A](1);
+                val a = new Array[readwrite A](1);
                 a.set(0, new A);
                 a.get(0);
             }
@@ -608,7 +608,7 @@ class RolezTypeSystemTest {
         program = parse('''
             class A
             task Main: {
-                val a: readwrite Array[pure A] = new Array[pure A](1);
+                val a = new Array[pure A](1);
                 a.set(0, new A);
                 a.get(0);
             }
@@ -917,7 +917,7 @@ class RolezTypeSystemTest {
     @Test def testTVarRef() {
         parse('''
             task Main: {
-                val i: int = 5;
+                val i = 5;
                 i;
             }
         ''').main.lastExpr.type.assertThat(instanceOf(Int))
@@ -1294,6 +1294,77 @@ class RolezTypeSystemTest {
         parse('''
             task Main: { 'c'; }
         ''').main.lastExpr.type.assertThat(instanceOf(Char))
+    }
+    
+    @Test def testVParam() {
+        var program = parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A
+            task Main(i: int, a: readwrite A, o: pure Object): {}
+        ''')
+        program.main.params.get(0).varType.assertThat(instanceOf(Int))
+        program.main.params.get(1).varType.assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
+        program.main.params.get(2).varType.assertThat(isRoleType(PURE, newClassRef(program.findClass(objectClassName))))
+    }
+    
+    @Test def testVLocalVar() {
+        var program = parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A
+            task Main: {
+                var i: int;
+                var a: readwrite A;
+                var o: pure Object;
+            }
+        ''')
+        program.main.variable(0).varType.assertThat(instanceOf(Int))
+        program.main.variable(1).varType.assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
+        program.main.variable(2).varType.assertThat(isRoleType(PURE, newClassRef(program.findClass(objectClassName))))
+        
+        program = parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A
+            task Main: {
+                var a: readonly A = new A;
+                var o: pure Object = null;
+            }
+        ''')
+        program.main.variable(0).varType.assertThat(isRoleType(READONLY, newClassRef(program.findClass("A"))))
+        program.main.variable(1).varType.assertThat(isRoleType(PURE, newClassRef(program.findClass(objectClassName))))
+        
+        program = parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A
+            task Main: {
+                val i = 1;
+                val a = new A;
+                val n = null;
+            }
+        ''')
+        program.main.variable(0).varType.assertThat(instanceOf(Int))
+        program.main.variable(1).varType.assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
+        program.main.variable(2).varType.assertThat(instanceOf(Null))
+        
+        program = parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A
+            task Main: {
+                var i = 1;
+                var a = new A;
+                var n = null;
+            }
+        ''')
+        program.main.variable(0).varType.assertThat(instanceOf(Int))
+        program.main.variable(1).varType.assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
+        program.main.variable(2).varType.assertThat(instanceOf(Null))
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A
+            task Main: {
+                var i;
+            }
+        ''').assertError(LOCAL_VAR, VLOCALVAR)
     }
     
     @Test def testWBlock() {
