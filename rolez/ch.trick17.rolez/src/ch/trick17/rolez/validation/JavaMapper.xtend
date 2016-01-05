@@ -67,7 +67,7 @@ class JavaMapper {
             other instanceof JvmGenericArrayTypeReference
                 && base.typeArg.mapsTo((other as JvmGenericArrayTypeReference).componentType)
         else
-            base.clazz.jvmClass.qualifiedName == other.qualifiedName
+            base.clazz.jvmClass.qualifiedName == other.type.qualifiedName
     }
     
     def dispatch boolean mapsTo(TypeParamRef it, JvmTypeReference other) {

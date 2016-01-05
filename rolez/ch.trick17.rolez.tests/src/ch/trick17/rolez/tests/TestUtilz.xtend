@@ -55,58 +55,50 @@ class TestUtilz {
         it
     }
     
-    def main(Program p) {
-        p.elements.filter(Task).filter[name == "Main"].head
+    def main(Program it) {
+        elements.filter(Task).filter[name == "Main"].head
     }
     
-    def findClass(Program program, String name) {
-        program.assertNoErrors
-        name.assertThat(not(containsString(".")))
-        val result = program.classes.findFirst[it.name == name]
+    def findClass(Program it, String name) {
+        findClass(QualifiedName.create(name.split("\\.")))
+    }
+    
+    def findClass(Program it, QualifiedName name) {
+        assertNoErrors
+        val result = classes.findFirst[qualifiedName == name]
         result.assertThat(notNullValue)
         result
     }
     
-    def findClass(Program program, QualifiedName name) {
-        program.assertNoErrors
-        val result = program.classes.findFirst[qualifiedName == name]
+    def findNormalClass(Program it, String name) {
+        findNormalClass(QualifiedName.create(name.split("\\.")))
+    }
+    
+    def findNormalClass(Program it, QualifiedName name) {
+        assertNoErrors
+        val result = classes.filter(NormalClass).findFirst[qualifiedName == name]
         result.assertThat(notNullValue)
         result
     }
     
-    def findNormalClass(Program program, String name) {
-        program.assertNoErrors
-        name.assertThat(not(containsString(".")))
-        val result = program.classes.filter(NormalClass).findFirst[it.name == name]
+    def findMethod(Class it, String name) {
+        val result = methods.findFirst[it.name == name]
         result.assertThat(notNullValue)
         result
     }
     
-    def findNormalClass(Program program, QualifiedName name) {
-        program.assertNoErrors
-        val result = program.classes.filter(NormalClass).findFirst[qualifiedName == name]
-        result.assertThat(notNullValue)
-        result
+    def expr(ParameterizedBody it, int i) { body.expr(i) }
+    
+    def expr(Block it, int i) {
+        assertNoErrors;
+        stmts.filter(ExprStmt).get(i).expr
     }
     
-    def findMethod(Class clazz, String name) {
-        val result = clazz.methods.findFirst[it.name == name]
-        result.assertThat(notNullValue)
-        result
-    }
+    def lastExpr(ParameterizedBody it) { body.lastExpr }
     
-    def expr(ParameterizedBody b, int i) { b.body.expr(i) }
-    
-    def expr(Block b, int i) {
-        b.assertNoErrors;
-        b.stmts.filter(ExprStmt).get(i).expr
-    }
-    
-    def lastExpr(ParameterizedBody b) { b.body.lastExpr }
-    
-    def lastExpr(Block b) {
-        b.assertNoErrors;
-        b.stmts.filter(ExprStmt).last.expr
+    def lastExpr(Block it) {
+        assertNoErrors;
+        stmts.filter(ExprStmt).last.expr
     }
     
     def type(Expr e) {
