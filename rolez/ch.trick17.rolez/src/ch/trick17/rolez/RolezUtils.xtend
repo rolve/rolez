@@ -26,7 +26,10 @@ import it.xsemantics.runtime.RuleEnvironment
 import it.xsemantics.runtime.RuleEnvironmentEntry
 import javax.inject.Inject
 import org.eclipse.emf.ecore.EObject
+import org.eclipse.emf.ecore.EReference
+import org.eclipse.emf.ecore.InternalEObject
 import org.eclipse.emf.ecore.util.EcoreUtil
+import org.eclipse.xtext.linking.lazy.LazyLinkingResource
 import org.eclipse.xtext.naming.QualifiedName
 import org.eclipse.xtext.scoping.IScopeProvider
 
@@ -73,8 +76,8 @@ class RolezUtils {
         result
     }
     
-    def envFor(EObject o) {
-        val body = o.enclosingBody
+    def createEnv(EObject context) {
+        val body = context.enclosingBody
         switch(body) {
             case null: new RuleEnvironment
             Task: new RuleEnvironment
@@ -126,7 +129,7 @@ class RolezUtils {
     def maximallySpecific(Iterable<? extends ParameterizedBody> candidates,
             Argumented args) {
         val applicable = candidates.filter[
-            system.validArgsSucceeded(envFor(args), args, it)
+            system.validArgsSucceeded(createEnv(args), args, it)
         ].toList
         
         applicable.filter[p |
@@ -143,7 +146,7 @@ class RolezUtils {
     private def moreSpecificThan(ParameterizedBody target, ParameterizedBody other) {
         // Assume both targets have the same number of parameters
         val i = other.params.iterator
-        target.params.forall[system.subtypeSucceeded(envFor(target), it.type, i.next.type)]
+        target.params.forall[system.subtypeSucceeded(createEnv(target), it.type, i.next.type)]
     }
     
     /**
@@ -181,5 +184,12 @@ class RolezUtils {
     
     def dispatch Iterable<? extends Var> varsAbove(ParameterizedBody container, Stmt s) {
         container.params
+    }
+    
+    def crossRefText(EObject it, EReference ref) {
+        val proxy = eGet(ref, false) as InternalEObject
+        val fragment = proxy.eProxyURI.fragment
+        val node = (eResource as LazyLinkingResource).encoder.decode(eResource, fragment).third
+        node.text
     }
 }

@@ -18,11 +18,9 @@ import javax.inject.Inject
 import org.eclipse.emf.ecore.EReference
 import org.eclipse.xtext.common.types.JvmVisibility
 import org.eclipse.xtext.naming.QualifiedName
-import org.eclipse.xtext.nodemodel.util.NodeModelUtils
 import org.eclipse.xtext.scoping.IScope
 import org.eclipse.xtext.scoping.impl.AbstractDeclarativeScopeProvider
 
-import static ch.trick17.rolez.rolez.RolezPackage.Literals.*
 import static ch.trick17.rolez.validation.RolezValidator.*
 import static org.eclipse.xtext.scoping.Scopes.scopeFor
 
@@ -35,7 +33,8 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     @Inject RolezUtils utils
     
     def scope_MemberAccess_member(MemberAccess it, EReference ref) {
-        val targetType = system.type(utils.envFor(it), target).value
+        val targetType = system.type(utils.createEnv(it), target).value
+        val memberName = utils.crossRefText(it, ref)
         
         if(targetType instanceof RoleType) {
             val fields = targetType.base.clazz.allMembers.filter(Field)
@@ -114,10 +113,6 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
                 && params.forall[type.mapsTo(javaParams.next.parameterType)]
         ]
         scopeFor(candidates, [QualifiedName.create("mapped")], IScope.NULLSCOPE)
-    }
-    
-    private def memberName(MemberAccess it) {
-        NodeModelUtils.findNodesForFeature(it, MEMBER_ACCESS__MEMBER).get(0).text
     }
     
     def IScope scope_VarRef_variable(VarRef varRef, EReference eRef) {

@@ -245,7 +245,7 @@ class RolezValidator extends RolezSystemValidator {
 	    if(matching.size > 0) {
 	        if(overriding) {
                 for(match : matching) {
-                    if(system.subtype(utils.envFor(it), type, match.type).failed)
+                    if(system.subtype(utils.createEnv(it), type, match.type).failed)
                         error("The return type is incompatible with overridden method" + match,
                             TYPED__TYPE, INCOMPATIBLE_RETURN_TYPE)
                     if(system.subrole(match.thisRole, thisRole).failed)

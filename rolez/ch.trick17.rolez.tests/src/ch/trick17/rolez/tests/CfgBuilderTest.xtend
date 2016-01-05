@@ -431,7 +431,7 @@ class CfgBuilderTest {
                 node.assertThat(instanceOf(InstrNode))
                 val instr = (node as InstrNode).instr
                 instr.assertThat(instanceOf(Expr))
-                system.type(utils.envFor(instr), instr as Expr).value
+                system.type(utils.createEnv(instr), instr as Expr).value
                     .assertThat(instanceOf(Boolean))
             }
             else

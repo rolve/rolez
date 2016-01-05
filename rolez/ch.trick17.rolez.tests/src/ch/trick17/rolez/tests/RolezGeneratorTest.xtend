@@ -558,25 +558,25 @@ class RolezGeneratorTest {
                 }
             }
         ''', classes).generate.assertEqualsJava('''
-            package foo._static._native;
+            package foo.$static.$native;
             
             import static rolez.lang.Guarded.*;
             
-            public class _final extends rolez.lang.Guarded {
+            public class $final extends rolez.lang.Guarded {
                 
-                public _final() {
+                public $final() {
                     super();
                 }
                 
-                public int _strictfp(final int _volatile) {
-                    final int _synchronized = 2 * _volatile;
-                    final int __synchronized = 42;
-                    return _synchronized + __synchronized;
+                public int $strictfp(final int $volatile) {
+                    final int $synchronized = 2 * $volatile;
+                    final int _synchronized = 42;
+                    return $synchronized + _synchronized;
                 }
                 
-                public void _transient() {
-                    final foo._static._native._final _protected = new foo._static._native._final();
-                    _protected._strictfp(5);
+                public void $transient() {
+                    final foo.$static.$native.$final $protected = new foo.$static.$native.$final();
+                    $protected.$strictfp(5);
                 }
             }
         ''')
@@ -587,26 +587,26 @@ class RolezGeneratorTest {
                 do.get(0).length;
             }
         ''', classes).generate.assertEqualsJava('''
-            package foo._static._native;
+            package foo.$static.$native;
             
             import static rolez.lang.Guarded.*;
             
-            public final class _final implements java.util.concurrent.Callable<java.lang.Void> {
+            public final class $final implements java.util.concurrent.Callable<java.lang.Void> {
                 
                 public static void main(final java.lang.String[] args) {
-                    rolez.lang.TaskSystem.getDefault().run(new _final(new rolez.lang.ObjectArray<>(args)));
+                    rolez.lang.TaskSystem.getDefault().run(new $final(new rolez.lang.ObjectArray<>(args)));
                 }
                 
-                private final rolez.lang.ObjectArray<java.lang.String> _do;
+                private final rolez.lang.ObjectArray<java.lang.String> $do;
                 
-                public _final(final rolez.lang.ObjectArray<java.lang.String> _do) {
-                    _do.share();
-                    this._do = _do;
+                public $final(final rolez.lang.ObjectArray<java.lang.String> $do) {
+                    $do.share();
+                    this.$do = $do;
                 }
                 
                 public java.lang.Void call() {
-                    _do.data[0].length();
-                    _do.releaseShared();
+                    $do.data[0].length();
+                    $do.releaseShared();
                     return null;
                 }
             }
@@ -1103,7 +1103,7 @@ class RolezGeneratorTest {
         javaCode.toString.assertEquals(it.toString)
     }
     
-    static val className = Pattern.compile("public (final )?class (\\w+) ")
+    static val className = Pattern.compile("public (final )?class ([A-Za-z0-9_$]+) ")
 
     private def assertCompilable(Iterable<CharSequence> sources) {
         val compilationUnits = sources.map[ code |

@@ -418,7 +418,8 @@ class RolezGenerator extends AbstractGenerator {
     
     private def generateMethodInvoke(MemberAccess it) {
         val guardedTarget =
-            if(system.subroleSucceeded(target.dynamicRole, method.thisRole))
+            if(!system.type(utils.createEnv(it), target).value.isGuarded
+                    || system.subroleSucceeded(target.dynamicRole, method.thisRole))
                 target.genNested
             else switch(method.thisRole) {
                 case READWRITE: "guardReadWrite(" + target.gen + ")"
@@ -434,7 +435,8 @@ class RolezGenerator extends AbstractGenerator {
             else if(field.kind == VAR) READONLY
             else                       PURE
         val guardedTarget =
-            if(system.subroleSucceeded(target.dynamicRole, requiredRole))
+            if(!system.type(utils.createEnv(it), target).value.isGuarded
+                    || system.subroleSucceeded(target.dynamicRole, requiredRole))
                 target.genNested
             else
                 if(requiredRole == READWRITE) "guardReadWrite(" + target.gen + ")"
@@ -620,9 +622,8 @@ class RolezGenerator extends AbstractGenerator {
     }
     
     private def safe(String name) {
-        if(javaKeywords.contains(name) ||
-                (name.startsWith("_") && javaKeywords.contains(name.substring(1))))
-            "_" + name
+        if(javaKeywords.contains(name))
+            "$" + name
         else
             name
     }

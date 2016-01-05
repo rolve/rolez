@@ -108,7 +108,7 @@ class TestUtilz {
     }
     
     def type(Expr expr) {
-        val result = system.type(envFor(expr), expr)
+        val result = system.type(createEnv(expr), expr)
         result.failed.assertThat(is(false))
         result.value
     }
