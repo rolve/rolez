@@ -7,6 +7,7 @@ import ch.trick17.rolez.rolez.ClassLike
 import ch.trick17.rolez.rolez.ClassRef
 import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.Double
+import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.Field
 import ch.trick17.rolez.rolez.GenericClassRef
 import ch.trick17.rolez.rolez.Instr
@@ -129,6 +130,12 @@ class RolezExtensions {
     }
     
     def decl(LocalVar it) { enclosingStmt as LocalVarDecl }
+    
+    def destParam(Expr it) {
+        val access = eContainer as MemberAccess
+        val index = access.args.indexOf(it)
+        access.method.params.get(index)
+    }
     
     def isFieldAccess (MemberAccess it) { member instanceof Field  }
     def isMethodInvoke(MemberAccess it) { member instanceof Method }

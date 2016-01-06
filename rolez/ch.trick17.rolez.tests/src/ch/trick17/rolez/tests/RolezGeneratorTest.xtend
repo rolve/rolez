@@ -23,7 +23,9 @@ import org.eclipse.xtext.junit4.util.ParseHelper
 import org.eclipse.xtext.junit4.validation.ValidationTestHelper
 import org.junit.Test
 import org.junit.runner.RunWith
+import rolez.lang.Guarded
 
+import static ch.trick17.rolez.Constants.*
 import static org.hamcrest.Matchers.*
 
 import static extension org.junit.Assert.*
@@ -62,7 +64,7 @@ class RolezGeneratorTest {
             }
             class rolez.io.PrintStream mapped to java.io.PrintStream {
                 mapped new(file: readonly String)
-                mapped def readonly println(i: int)
+                mapped def readonly println(i: int):
                 mapped def readonly println(s: pure String):
             }
             class Base {
@@ -119,9 +121,9 @@ class RolezGeneratorTest {
         parse('''
             class A
         ''', classes).generate.assertEqualsJava('''
-            import static rolez.lang.Guarded.*;
+            import static «jvmGuardedClassName».*;
             
-            public class A extends rolez.lang.Guarded {
+            public class A extends «jvmGuardedClassName» {
                 
                 public A() {
                     super();
@@ -133,9 +135,9 @@ class RolezGeneratorTest {
         ''', classes).generate.assertEqualsJava('''
             package foo.bar;
             
-            import static rolez.lang.Guarded.*;
+            import static «jvmGuardedClassName».*;
             
-            public class A extends rolez.lang.Guarded {
+            public class A extends «jvmGuardedClassName» {
                 
                 public A() {
                     super();
@@ -146,7 +148,7 @@ class RolezGeneratorTest {
         parse('''
             class A extends Base
         ''', classes).generate.assertEqualsJava('''
-            import static rolez.lang.Guarded.*;
+            import static «jvmGuardedClassName».*;
             
             public class A extends Base {
                 
@@ -158,7 +160,7 @@ class RolezGeneratorTest {
         parse('''
             class A extends foo.bar.Base
         ''', classes).generate.assertEqualsJava('''
-            import static rolez.lang.Guarded.*;
+            import static «jvmGuardedClassName».*;
             
             public class A extends foo.bar.Base {
                 
@@ -173,7 +175,7 @@ class RolezGeneratorTest {
         parse('''
             object A
         ''', classes).generate.assertEqualsJava('''
-            import static rolez.lang.Guarded.*;
+            import static «jvmGuardedClassName».*;
             
             public final class A extends java.lang.Object {
                 
@@ -194,7 +196,7 @@ class RolezGeneratorTest {
         ''', classes).generate.assertEqualsJava('''
             package rolez.lang;
             
-            import static rolez.lang.Guarded.*;
+            import static «jvmGuardedClassName».*;
             
             public final class System2 extends java.lang.Object {
                 
@@ -221,7 +223,7 @@ class RolezGeneratorTest {
                 return new Base;
             }
         ''', classes).generate.assertEqualsJava('''
-            import static rolez.lang.Guarded.*;
+            import static «jvmGuardedClassName».*;
             
             public final class Main implements java.util.concurrent.Callable<Base> {
                 
@@ -235,7 +237,7 @@ class RolezGeneratorTest {
                 return 42;
             }
         ''', classes).generate.assertEqualsJava('''
-            import static rolez.lang.Guarded.*;
+            import static «jvmGuardedClassName».*;
             
             public final class Main implements java.util.concurrent.Callable<java.lang.Integer> {
                 
@@ -249,7 +251,7 @@ class RolezGeneratorTest {
                 new (foo.bar.Base)(i + j);
             }
         ''', classes).generate.assertEqualsJava('''
-            import static rolez.lang.Guarded.*;
+            import static «jvmGuardedClassName».*;
             
             public final class Main implements java.util.concurrent.Callable<java.lang.Void> {
                 
@@ -271,7 +273,7 @@ class RolezGeneratorTest {
         parse('''
             main task Main: {}
         ''', classes).generate.assertEqualsJava('''
-            import static rolez.lang.Guarded.*;
+            import static «jvmGuardedClassName».*;
             
             public final class Main implements java.util.concurrent.Callable<java.lang.Void> {
                 
@@ -289,7 +291,7 @@ class RolezGeneratorTest {
                 args.get(0).length;
             }
         ''', classes).generate.assertEqualsJava('''
-            import static rolez.lang.Guarded.*;
+            import static «jvmGuardedClassName».*;
             
             public final class Main implements java.util.concurrent.Callable<java.lang.Void> {
                 
@@ -317,7 +319,7 @@ class RolezGeneratorTest {
                 the System.out.println("Hello World!");
             }
         ''', classes).generate.assertEqualsJava('''
-            import static rolez.lang.Guarded.*;
+            import static «jvmGuardedClassName».*;
             
             public final class Foo implements java.util.concurrent.Callable<java.lang.Void> {
                 
@@ -348,24 +350,24 @@ class RolezGeneratorTest {
                 the System.out.println(o.toString);
             }
         ''', classes).generate.assertEqualsJava('''
-            import static rolez.lang.Guarded.*;
+            import static «jvmGuardedClassName».*;
             
             public final class Foo implements java.util.concurrent.Callable<java.lang.Void> {
                 
                 private final java.lang.Object o;
                 
                 public Foo(final java.lang.Object o) {
-                    if(o instanceof rolez.lang.Guarded)
-                        ((rolez.lang.Guarded) o).pass();
+                    if(o instanceof «jvmGuardedClassName»)
+                        ((«jvmGuardedClassName») o).pass();
                     this.o = o;
                 }
                 
                 public java.lang.Void call() {
-                    if(o instanceof rolez.lang.Guarded)
-                        ((rolez.lang.Guarded) o).registerNewOwner();
+                    if(o instanceof «jvmGuardedClassName»)
+                        ((«jvmGuardedClassName») o).registerNewOwner();
                     rolez.lang.System.INSTANCE.out.println(o.toString());
-                    if(o instanceof rolez.lang.Guarded)
-                        ((rolez.lang.Guarded) o).releasePassed();
+                    if(o instanceof «jvmGuardedClassName»)
+                        ((«jvmGuardedClassName») o).releasePassed();
                     return null;
                 }
             }
@@ -387,9 +389,9 @@ class RolezGeneratorTest {
         ''', classes).generate.assertEqualsJava('''
             package foo;
             
-            import static rolez.lang.Guarded.*;
+            import static «jvmGuardedClassName».*;
             
-            public class A extends rolez.lang.Guarded {
+            public class A extends «jvmGuardedClassName» {
                 
                 public final int i;
                 
@@ -416,7 +418,7 @@ class RolezGeneratorTest {
                 val j: int = 0
             }
         ''', classes).generate.assertEqualsJava('''
-            import static rolez.lang.Guarded.*;
+            import static «jvmGuardedClassName».*;
             
             public final class A extends java.lang.Object {
                 
@@ -436,9 +438,9 @@ class RolezGeneratorTest {
                 def readwrite foo(i: int): int { return i; }
             }
         ''', classes).generate.assertEqualsJava('''
-            import static rolez.lang.Guarded.*;
+            import static «jvmGuardedClassName».*;
             
-            public class A extends rolez.lang.Guarded {
+            public class A extends «jvmGuardedClassName» {
                 
                 public A() {
                     super();
@@ -458,7 +460,7 @@ class RolezGeneratorTest {
                 def pure foo: {}
             }
         ''', classes).generate.assertEqualsJava('''
-            import static rolez.lang.Guarded.*;
+            import static «jvmGuardedClassName».*;
             
             public final class A extends java.lang.Object {
                 
@@ -512,9 +514,9 @@ class RolezGeneratorTest {
         ''', classes).generate.assertEqualsJava('''
             package foo;
             
-            import static rolez.lang.Guarded.*;
+            import static «jvmGuardedClassName».*;
             
-            public class A extends rolez.lang.Guarded {
+            public class A extends «jvmGuardedClassName» {
                 
                 public A() {
                     super();
@@ -530,9 +532,9 @@ class RolezGeneratorTest {
         ''', classes).generate.assertEqualsJava('''
             package foo;
             
-            import static rolez.lang.Guarded.*;
+            import static «jvmGuardedClassName».*;
             
-            public class A extends rolez.lang.Guarded {
+            public class A extends «jvmGuardedClassName» {
                 
                 public A() {
                     super();
@@ -551,9 +553,9 @@ class RolezGeneratorTest {
                 }
             }
         ''', classes).generate.assertEqualsJava('''
-            import static rolez.lang.Guarded.*;
+            import static «jvmGuardedClassName».*;
             
-            public class A extends rolez.lang.Guarded {
+            public class A extends «jvmGuardedClassName» {
                 
                 public A() {
                     super();
@@ -574,9 +576,9 @@ class RolezGeneratorTest {
                 }
             }
         ''', classes).generate.assertEqualsJava('''
-            import static rolez.lang.Guarded.*;
+            import static «jvmGuardedClassName».*;
             
-            public class A extends rolez.lang.Guarded {
+            public class A extends «jvmGuardedClassName» {
                 
                 public A() {
                     super();
@@ -612,9 +614,9 @@ class RolezGeneratorTest {
         ''', classes).generate.assertEqualsJava('''
             package foo.$static.$native;
             
-            import static rolez.lang.Guarded.*;
+            import static «jvmGuardedClassName».*;
             
-            public class $final extends rolez.lang.Guarded {
+            public class $final extends «jvmGuardedClassName» {
                 
                 public $final() {
                     super();
@@ -641,7 +643,7 @@ class RolezGeneratorTest {
         ''', classes).generate.assertEqualsJava('''
             package foo.$static.$native;
             
-            import static rolez.lang.Guarded.*;
+            import static «jvmGuardedClassName».*;
             
             public final class $final implements java.util.concurrent.Callable<java.lang.Void> {
                 
@@ -762,7 +764,7 @@ class RolezGeneratorTest {
                 new { super; }
             }
         ''', classes).generate.assertEqualsJava('''
-            import static rolez.lang.Guarded.*;
+            import static «jvmGuardedClassName».*;
             
             public class A extends Base {
                 
@@ -777,7 +779,7 @@ class RolezGeneratorTest {
                 new { super(42); }
             }
         ''', classes).generate.assertEqualsJava('''
-            import static rolez.lang.Guarded.*;
+            import static «jvmGuardedClassName».*;
             
             public class A extends foo.bar.Base {
                 
@@ -799,9 +801,9 @@ class RolezGeneratorTest {
                 }
             }
         ''', classes).generate.assertEqualsJava('''
-            import static rolez.lang.Guarded.*;
+            import static «jvmGuardedClassName».*;
             
-            public class A extends rolez.lang.Guarded {
+            public class A extends «jvmGuardedClassName» {
                 
                 public A() {
                     super();
@@ -942,14 +944,6 @@ class RolezGeneratorTest {
             (new Base as readonly Object).hashCode;
             "Hello".substring(1, 3);
             this.bar;
-            
-            val a = new Array[int](2);
-            a.set(0, 42);
-            var j = a.get(0);
-            j = a.length;
-            var aa = new Array[readwrite Array[int]](1);
-            aa.set(1 - 1, a);
-            var l = aa.get(0).get(0);
         '''.withFrame, classes).generate.assertEqualsJava('''
             "Hello".toString().length();
             "Hello".equals("Hi");
@@ -957,16 +951,9 @@ class RolezGeneratorTest {
             ((java.lang.Object) new Base()).hashCode();
             "Hello".substring(1, 3);
             this.bar();
-            final rolez.lang.IntArray a = new rolez.lang.IntArray(2);
-            guardReadWrite(a).data[0] = 42;
-            int j = guardReadOnly(a).data[0];
-            j = a.data.length;
-            rolez.lang.ObjectArray<rolez.lang.IntArray> aa = new rolez.lang.ObjectArray<rolez.lang.IntArray>(1);
-            guardReadWrite(aa).data[1 - 1] = a;
-            int l = guardReadOnly(guardReadOnly(aa).data[0]).data[0];
         '''.withJavaFrame)
-        // TODO: Eliminate above guards
         
+        // Field access is guarded, method calls are not (in case this is not obvious...)
         parse('''
             class A {
                 var i: int = 0
@@ -979,15 +966,15 @@ class RolezGeneratorTest {
                     a1.foo;
                     a2.bar;
                     a3.baz;
-                    new A.foo;
+                    new A.i = 1;
                     a4.i = 2;
                     return a5.i + a6.j;
                 }
             }
         ''', classes).generate.assertEqualsJava('''
-            import static rolez.lang.Guarded.*;
+            import static «jvmGuardedClassName».*;
             
-            public class A extends rolez.lang.Guarded {
+            public class A extends «jvmGuardedClassName» {
                 
                 public int i = 0;
                 
@@ -1007,36 +994,93 @@ class RolezGeneratorTest {
                 }
                 
                 public int test(final A a1, final A a2, final A a3, final A a4, final A a5, final A a6) {
-                    guardReadWrite(a1).foo();
-                    guardReadOnly(a2).bar();
+                    a1.foo();
+                    a2.bar();
                     a3.baz();
-                    new A().foo();
+                    new A().i = 1;
                     guardReadWrite(a4).i = 2;
                     return guardReadOnly(a5).i + a6.j;
                 }
             }
         ''')
         
+        // Same for mapped classes (only Guarded mapped classes can have var fields)
         parse('''
             class A {
-                def readwrite test(o: readwrite Object): {
-                    o.toString;
+                def pure test(c1: readwrite IntContainer, c2: readwrite IntContainer, c3: readwrite IntContainer, c4: readwrite IntContainer, c5: readwrite IntContainer): int {
+                    c1.set(42);
+                    c2.get;
+                    c3.value = 2;
+                    return c4.value + c5.fortyTwo;
                 }
             }
-        ''', classes).generate.assertEqualsJava('''
-            import static rolez.lang.Guarded.*;
+        ''', classes.with('''
+            class IntContainer mapped to ch.trick17.rolez.tests.RolezGeneratorTest.IntContainer {
+                mapped val fortyTwo: int
+                mapped var value: int
+                mapped def readonly get: int
+                mapped def readwrite set(newValue: int):
+            }
+        ''')).generate.assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
             
-            public class A extends rolez.lang.Guarded {
+            public class A extends «jvmGuardedClassName» {
                 
                 public A() {
                     super();
                 }
                 
-                public void test(final java.lang.Object o) {
-                    guardReadOnlyIfNeeded(o).toString();
+                public int test(final ch.trick17.rolez.tests.RolezGeneratorTest.IntContainer c1, final ch.trick17.rolez.tests.RolezGeneratorTest.IntContainer c2, final ch.trick17.rolez.tests.RolezGeneratorTest.IntContainer c3, final ch.trick17.rolez.tests.RolezGeneratorTest.IntContainer c4, final ch.trick17.rolez.tests.RolezGeneratorTest.IntContainer c5) {
+                    c1.set(42);
+                    c2.get();
+                    guardReadWrite(c3).value = 2;
+                    return guardReadOnly(c4).value + c5.fortyTwo;
                 }
             }
         ''')
+        
+        // Access to array elements is guarded, access to length field is not
+        parse('''
+            class A {
+                def pure getFirst(a: readwrite Array[int]): int {
+                    return a.get(0);
+                }
+                def pure setFirst(a: readwrite Array[int]): {
+                    a.set(0, 42);
+                }
+                def pure length(a: readwrite Array[int]): int {
+                    return a.length;
+                }
+            }
+        ''', classes).generate.assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
+            
+            public class A extends «jvmGuardedClassName» {
+                
+                public A() {
+                    super();
+                }
+                
+                public int getFirst(final rolez.lang.IntArray a) {
+                    return guardReadOnly(a).data[0];
+                }
+                
+                public void setFirst(final rolez.lang.IntArray a) {
+                    guardReadWrite(a).data[0] = 42;
+                }
+                
+                public int length(final rolez.lang.IntArray a) {
+                    return a.data.length;
+                }
+            }
+        ''')
+    }
+    
+    static class IntContainer extends Guarded {
+        public val fortyTwo = 42
+        public var value = 0
+        def int get() { value }
+        def void set(int newValue) { value = newValue }
     }
     
     @Test def testNew() {
@@ -1150,9 +1194,9 @@ class RolezGeneratorTest {
     '''}
     
     private def withJavaFrame(CharSequence it) {'''
-        import static rolez.lang.Guarded.*;
+        import static «jvmGuardedClassName».*;
         
-        public class A extends rolez.lang.Guarded {
+        public class A extends «jvmGuardedClassName» {
             
             public A() {
                 super();

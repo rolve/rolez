@@ -8,6 +8,7 @@ import org.eclipse.xtext.junit4.util.ParseHelper
 import org.eclipse.xtext.junit4.validation.ValidationTestHelper
 import org.junit.Test
 import org.junit.runner.RunWith
+import rolez.lang.Guarded
 
 import static ch.trick17.rolez.rolez.RolezPackage.Literals.*
 import static ch.trick17.rolez.validation.RolezValidator.*
@@ -1168,12 +1169,14 @@ class RolezValidatorTest {
     @Test def testMappedField() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.Array[T] mapped to rolez.lang.Array {
-                mapped val length: int
-                mapped new(length: int)
-            }
             class A {
                 var length: int
+            }
+            class Mapped mapped to ch.trick17.rolez.tests.RolezValidatorTest.Mapped {
+                mapped val i: int
+            }
+            class MappedGuarded mapped to ch.trick17.rolez.tests.RolezValidatorTest.MappedGuarded {
+                mapped var i: int
             }
         ''').assertNoErrors
         
@@ -1190,11 +1193,31 @@ class RolezValidatorTest {
         ''').assertError(FIELD, NON_MAPPED_FIELD)
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.Array[T] mapped to rolez.lang.Array {
-                mapped new(length: int)
-                mapped var length: int
+            class Mapped mapped to ch.trick17.rolez.tests.RolezValidatorTest.Mapped {
+                mapped val i: double
+            }
+        ''').assertError(DOUBLE, INCORRECT_MAPPED_FIELD)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class MappedGuarded mapped to ch.trick17.rolez.tests.RolezValidatorTest.MappedGuarded {
+                mapped val i: int
             }
         ''').assertError(FIELD, INCORRECT_MAPPED_FIELD)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class Mapped mapped to ch.trick17.rolez.tests.RolezValidatorTest.Mapped {
+                mapped var j: int
+            }
+        ''').assertError(FIELD, NON_GUARDED_MAPPED_VAR_FIELD)
+    }
+    
+    static class Mapped {
+        public final int i = 42;
+        public int j;
+    }
+    
+    static class MappedGuarded extends Guarded {
+        public int i;
     }
     
     @Test def testMappedMethod() {

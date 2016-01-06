@@ -31,6 +31,7 @@ import ch.trick17.rolez.rolez.Task
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.TypedBody
+import ch.trick17.rolez.rolez.VarKind
 import ch.trick17.rolez.rolez.VarRef
 import ch.trick17.rolez.rolez.Void
 import ch.trick17.rolez.typesystem.RolezSystem
@@ -97,6 +98,7 @@ class RolezValidator extends RolezSystemValidator {
     public static val INCORRECT_MAPPED_SUPERCLASS = "incorrect mapped superclass"
     public static val INCORRECT_MAPPED_CLASS_KIND = "incorrect mapped class kind"
     public static val INCORRECT_MAPPED_FIELD = "incorrect mapped field"
+    public static val NON_GUARDED_MAPPED_VAR_FIELD = "non-guarded mapped var field"
     public static val INCORRECT_MAPPED_METHOD = "incorrect mapped method"
     public static val INCORRECT_MAPPED_CONSTR = "incorrect mapped constructor"
     
@@ -470,7 +472,7 @@ class RolezValidator extends RolezSystemValidator {
     def checkMappedField(Field it) {
         if(isMapped) {
             if(!enclosingClass.isMapped)
-                error("mapped fields are allowed in mapped classes only",
+                error("Mapped fields are allowed in mapped classes only",
                     FIELD__JVM_FIELD, MAPPED_IN_NORMAL_CLASS)
             
             if((kind == VAL) != jvmField.isFinal)
@@ -479,6 +481,9 @@ class RolezValidator extends RolezSystemValidator {
             if(!type.mapsTo(jvmField.type))
                 error("Incorrect type for mapped field: should map to "
                     + jvmField.type, type, null, INCORRECT_MAPPED_FIELD)
+            if(kind == VarKind.VAR && !enclosingClass.jvmClass.isSubclassOf(jvmGuardedClassName, it))
+                error("Cannot map to non-final field of non-Guarded class",
+                    null, NON_GUARDED_MAPPED_VAR_FIELD)
         }
         else if(enclosingClass.isMapped)
             error("Fields of mapped classes must be mapped",
@@ -489,10 +494,10 @@ class RolezValidator extends RolezSystemValidator {
     def checkMappedMethod(Method it) {
         if(isMapped) {
             if(!enclosingClass.isMapped)
-                error("mapped methods are allowed in mapped classes only",
+                error("Mapped methods are allowed in mapped classes only",
                     METHOD__JVM_METHOD, MAPPED_IN_NORMAL_CLASS)
             if(body != null)
-                error("mapped methods cannot have a body", body, null, MAPPED_WITH_BODY)
+                error("Mapped methods cannot have a body", body, null, MAPPED_WITH_BODY)
             
             if(!type.mapsTo(jvmMethod.returnType))
                 error("Incorrect type for mapped method: should map to "
@@ -511,10 +516,10 @@ class RolezValidator extends RolezSystemValidator {
     def checkMappedConstr(Constr it) {
         if(isMapped) {
             if(!enclosingClass.isMapped)
-                error("mapped constructors are allowed in mapped classes only",
+                error("Mapped constructors are allowed in mapped classes only",
                     CONSTR__JVM_CONSTR, MAPPED_IN_NORMAL_CLASS)
             if(body != null)
-                error("mapped constructors cannot have a body", body, null, MAPPED_WITH_BODY)
+                error("Mapped constructors cannot have a body", body, null, MAPPED_WITH_BODY)
         }
         else {
             if(enclosingClass.isMapped)

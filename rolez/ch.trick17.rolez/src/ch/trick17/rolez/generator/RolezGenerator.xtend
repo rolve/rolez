@@ -41,6 +41,7 @@ import ch.trick17.rolez.rolez.Program
 import ch.trick17.rolez.rolez.RelationalExpr
 import ch.trick17.rolez.rolez.ReturnExpr
 import ch.trick17.rolez.rolez.ReturnNothing
+import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.SimpleClassRef
 import ch.trick17.rolez.rolez.SingletonClass
@@ -70,6 +71,7 @@ import org.eclipse.xtext.generator.AbstractGenerator
 import org.eclipse.xtext.generator.IFileSystemAccess2
 import org.eclipse.xtext.generator.IGeneratorContext
 
+import static ch.trick17.rolez.Constants.*
 import static ch.trick17.rolez.rolez.Role.*
 import static ch.trick17.rolez.rolez.VarKind.*
 
@@ -101,7 +103,7 @@ class RolezGenerator extends AbstractGenerator {
         package «safePackage»;
         
         «ENDIF»
-        import static rolez.lang.Guarded.*;
+        import static «jvmGuardedClassName».*;
         
         public class «safeSimpleName» extends «generateSuperclassName» {
             « fields.map[gen].join»
@@ -118,7 +120,7 @@ class RolezGenerator extends AbstractGenerator {
     '''
     
     private def generateSuperclassName(NormalClass it) {
-        if(superclass.isObjectClass) "rolez.lang.Guarded"
+        if(superclass.isObjectClass) jvmGuardedClassName
         else superclass.generateName
     }
     
@@ -132,7 +134,7 @@ class RolezGenerator extends AbstractGenerator {
     
     private def isGuarded(Class it) {
         it instanceof NormalClass && (!isMapped
-            || jvmClass.isSubclassOf("rolez.lang.Guarded", it)
+            || jvmClass.isSubclassOf(jvmGuardedClassName, it)
             || isObjectClass)
     }
     
@@ -141,7 +143,7 @@ class RolezGenerator extends AbstractGenerator {
         package «safePackage»;
         
         «ENDIF»
-        import static rolez.lang.Guarded.*;
+        import static «jvmGuardedClassName».*;
         
         public final class «safeSimpleName» extends «superclass.generateName» {
             
@@ -158,7 +160,7 @@ class RolezGenerator extends AbstractGenerator {
         package «safePackage»;
         
         «ENDIF»
-        import static rolez.lang.Guarded.*;
+        import static «jvmGuardedClassName».*;
         
         public final class «safeSimpleName» implements java.util.concurrent.Callable<«type.genGeneric»> {
             «IF isMain»
@@ -206,8 +208,8 @@ class RolezGenerator extends AbstractGenerator {
         val kind = if((type as RoleType).role == READWRITE) "pass" else "share"
         if((type as RoleType).base.clazz.isObjectClass)
             '''
-            if(«safeName» instanceof rolez.lang.Guarded)
-                ((rolez.lang.Guarded) «safeName»).pass();
+            if(«safeName» instanceof «jvmGuardedClassName»)
+                ((«jvmGuardedClassName») «safeName»).pass();
             '''
         else
             '''«safeName».«kind»();'''
@@ -220,8 +222,8 @@ class RolezGenerator extends AbstractGenerator {
     private def genRegisterNewOwner(Param it) {
         if((type as RoleType).base.clazz.isObjectClass)
             '''
-            if(«safeName» instanceof rolez.lang.Guarded)
-                ((rolez.lang.Guarded) «safeName»).registerNewOwner();
+            if(«safeName» instanceof «jvmGuardedClassName»)
+                ((«jvmGuardedClassName») «safeName»).registerNewOwner();
             '''
         else
             '''«safeName».registerNewOwner();'''
@@ -231,8 +233,8 @@ class RolezGenerator extends AbstractGenerator {
         val kind = if((type as RoleType).role == READWRITE) "Passed" else "Shared"
         if((type as RoleType).base.clazz.isObjectClass)
             '''
-            if(«safeName» instanceof rolez.lang.Guarded)
-                ((rolez.lang.Guarded) «safeName»).release«kind»();
+            if(«safeName» instanceof «jvmGuardedClassName»)
+                ((«jvmGuardedClassName») «safeName»).release«kind»();
             '''
         else
             '''«safeName».release«kind»();'''
@@ -432,68 +434,44 @@ class RolezGenerator extends AbstractGenerator {
     }
     
     private def generateArrayGet(MemberAccess it) {
-        val guardedTarget =
-            if(system.subroleSucceeded(target.dynamicRole, READONLY))
-                target.genNested
-            else
-                "guardReadOnly(" + target.gen + ")"
-        '''«guardedTarget».data[«args.get(0).gen»]'''
+        '''«target.genGuarded(READONLY)».data[«args.get(0).gen»]'''
     }
     
     private def generateArraySet(MemberAccess it) {
-        val guardedTarget =
-            if(system.subroleSucceeded(target.dynamicRole, READWRITE))
-                target.genNested
-            else
-                "guardReadWrite(" + target.gen + ")"
-        '''«guardedTarget».data[«args.get(0).gen»] = «args.get(1).gen»'''
+        '''«target.genGuarded(READWRITE)».data[«args.get(0).gen»] = «args.get(1).gen»'''
     }
     
     private def generateArrayLength(MemberAccess it)
         '''«target.genNested».data.length'''
     
-    private def generateMethodInvoke(MemberAccess it) {
-        // TODO: Guarding methods is not necessary, except when it is mapped!
-        // (Then it's also necessary to guard the arguments!)
-        val targetType = system.type(utils.createEnv(it), target).value
-        val needsGuard = !system.subroleSucceeded(target.dynamicRole, method.thisRole)
-        val guardedTarget =
-            if(targetType.isGuarded && needsGuard)
-                if((targetType as RoleType).base.clazz.isObjectClass)
-                    switch(method.thisRole) {
-                        case READWRITE: "guardReadWriteIfNeeded(" + target.gen + ")"
-                        case  READONLY: "guardReadOnlyIfNeeded("  + target.gen + ")"
-                        case      PURE:                     target.genNested
-                    }
-                else
-                    switch(method.thisRole) {
-                        case READWRITE: "guardReadWrite(" + target.gen + ")"
-                        case  READONLY: "guardReadOnly("  + target.gen + ")"
-                        case      PURE:                     target.genNested
-                    }
-            else 
-                target.genNested
-        '''«guardedTarget».«method.safeName»(«args.map[gen].join(", ")»)'''
-    }
+    private def generateMethodInvoke(MemberAccess it)
+        '''«target.genNested».«method.safeName»(«args.map[gen].join(", ")»)'''
     
     private def generateFieldAccess(MemberAccess it) {
-        val targetType = system.type(utils.createEnv(it), target).value
         val requiredRole =
             if(isFieldWrite)           READWRITE
             else if(field.kind == VAR) READONLY
             else                       PURE
-        val needsGuard = !system.subroleSucceeded(target.dynamicRole, requiredRole)
-        val guardedTarget =
-            if(targetType.isGuarded && needsGuard)
-                if(requiredRole == READWRITE) "guardReadWrite(" + target.gen + ")"
-                else                          "guardReadOnly("  + target.gen + ")"
-            else
-                target.genNested
-        '''«guardedTarget».«field.safeName»'''
+        '''«target.genGuarded(requiredRole)».«field.safeName»'''
     }
     
     private def isFieldWrite(MemberAccess it) {
         eContainer instanceof Assignment && it === (eContainer as Assignment).left
+    }
+    
+    private def genGuarded(Expr it, Role requiredRole) {
+        val type = system.type(utils.createEnv(it), it).value
+        val needsGuard = !system.subroleSucceeded(dynamicRole, requiredRole)
+        if(type.isGuarded && needsGuard)
+            switch(requiredRole) {
+                case READWRITE: "guardReadWrite(" + gen + ")"
+                case  READONLY: "guardReadOnly("  + gen + ")"
+                case      PURE: genNested
+            }
+        else
+            genNested
+        
+        // IMPROVE: Better syntax (and performance?) when using type system
     }
     
     private def dispatch generateExpr(This _) '''this'''
@@ -595,7 +573,7 @@ class RolezGenerator extends AbstractGenerator {
     
     private def generateName(Class it) {
         if(mapped && !isSingleton)
-            jvmClass.qualifiedName.requireNonNull
+            jvmClass.getQualifiedName(".").requireNonNull
         else
             safeQualifiedName
     }
