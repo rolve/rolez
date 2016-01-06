@@ -86,6 +86,9 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     }
     
     def scope_Field_jvmField(Field it, EReference ref) {
+        if(enclosingClass.jvmClass == null)
+            return IScope.NULLSCOPE
+        
         val candidates = enclosingClass.jvmClass.declaredFields.filter[f |
             f.simpleName == name && f.visibility == JvmVisibility.PUBLIC
                 && f.isStatic == enclosingClass.isSingleton
@@ -94,6 +97,9 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     }
     
     def scope_Method_jvmMethod(Method it, EReference ref) {
+        if(enclosingClass.jvmClass == null)
+            return IScope.NULLSCOPE
+        
         val candidates = enclosingClass.jvmClass.declaredOperations.filter[m |
             val javaParams = m.parameters.iterator
             m.simpleName == name
@@ -106,6 +112,9 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     }
     
     def scope_Constr_jvmConstr(Constr it, EReference ref) {
+        if(enclosingClass.jvmClass == null)
+            return IScope.NULLSCOPE
+        
         val candidates = enclosingClass.jvmClass.declaredConstructors.filter[c |
             val javaParams = c.parameters.iterator
             c.visibility == JvmVisibility.PUBLIC
