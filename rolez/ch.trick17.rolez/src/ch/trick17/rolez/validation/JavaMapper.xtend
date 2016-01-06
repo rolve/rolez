@@ -72,6 +72,7 @@ class JavaMapper {
     
     def dispatch boolean mapsTo(TypeParamRef it, JvmTypeReference other) {
         other.type instanceof JvmTypeParameter && other.type.simpleName == param.name
+        // TODO: Check declaring class of param?
     }
     
     def dispatch boolean mapsTo(Null it, JvmTypeReference _) { false }

@@ -453,6 +453,8 @@ class RolezGenerator extends AbstractGenerator {
         '''«target.genNested».data.length'''
     
     private def generateMethodInvoke(MemberAccess it) {
+        // TODO: Guarding methods is not necessary, except when it is mapped!
+        // (Then it's also necessary to guard the arguments!)
         val targetType = system.type(utils.createEnv(it), target).value
         val needsGuard = !system.subroleSucceeded(target.dynamicRole, method.thisRole)
         val guardedTarget =
