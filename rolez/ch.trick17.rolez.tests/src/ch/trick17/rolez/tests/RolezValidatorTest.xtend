@@ -1141,7 +1141,7 @@ class RolezValidatorTest {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class HashMap mapped to java.util.HashMap
-        ''').assertError(CLASS, INCORRECT_MAPPED_CLASS)
+        ''').assertError(CLASS, INCORRECT_MAPPED_CLASS, "multiple type parameters")
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.Array mapped to rolez.lang.Array {
@@ -1157,6 +1157,12 @@ class RolezValidatorTest {
         parse('''
             class rolez.lang.Object[T] mapped to java.lang.Object
         ''').assertError(TYPE_PARAM, INCORRECT_TYPE_PARAM)
+        
+        parse('''
+            class rolez.lang.Object
+            class NonMapped
+            class System mapped to java.lang.System extends NonMapped
+        ''').assertError(CLASS, INCORRECT_MAPPED_CLASS)
     }
     
     @Test def testMappedField() {

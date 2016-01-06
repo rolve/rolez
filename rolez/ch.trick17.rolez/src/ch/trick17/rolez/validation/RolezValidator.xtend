@@ -459,6 +459,10 @@ class RolezValidator extends RolezSystemValidator {
             else if(typeParam != null)
                 error(qualifiedName + " must not declare a type parameter",
                     typeParam, NAMED__NAME, INCORRECT_TYPE_PARAM)
+            
+            if(superclass != null && !superclass.isMapped)
+                error("A mapped class cannot extend a non-mapped class",
+                    CLASS__SUPERCLASS, INCORRECT_MAPPED_CLASS)
         }
     }
     
