@@ -166,7 +166,7 @@ class RolezGenerator extends AbstractGenerator {
             «IF isMain»
             
             public static void main(final java.lang.String[] args) {
-                rolez.lang.TaskSystem.getDefault().run(new «safeSimpleName»(«IF !params.isEmpty»new rolez.lang.ObjectArray<>(args)«ENDIF»));
+                «jvmTaskSystemClassName».getDefault().run(new «safeSimpleName»(«IF !params.isEmpty»new rolez.lang.ObjectArray<>(args)«ENDIF»));
             }
             «ENDIF»
             «IF !params.isEmpty»
@@ -484,7 +484,7 @@ class RolezGenerator extends AbstractGenerator {
     private def dispatch generateExpr(The it) '''«classRef.gen».INSTANCE'''
     
     private def dispatch generateExpr(Start it)
-        '''rolez.lang.TaskSystem.getDefault().start(new «taskRef.gen»(«args.map[gen].join(", ")»))'''
+        '''«jvmTaskSystemClassName».getDefault().start(new «taskRef.gen»(«args.map[gen].join(", ")»))'''
     
     private def int arrayNesting(GenericClassRef it) {
         if(!clazz.isArrayClass)
