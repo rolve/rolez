@@ -11,6 +11,7 @@ import ch.trick17.rolez.rolez.Method
 import ch.trick17.rolez.rolez.Null
 import ch.trick17.rolez.rolez.PrimitiveType
 import ch.trick17.rolez.rolez.RoleType
+import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.TypeParamRef
 import ch.trick17.rolez.rolez.Void
 import javax.inject.Inject
@@ -18,6 +19,7 @@ import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.common.types.JvmDeclaredType
 import org.eclipse.xtext.common.types.JvmExecutable
 import org.eclipse.xtext.common.types.JvmGenericArrayTypeReference
+import org.eclipse.xtext.common.types.JvmParameterizedTypeReference
 import org.eclipse.xtext.common.types.JvmType
 import org.eclipse.xtext.common.types.JvmTypeParameter
 import org.eclipse.xtext.common.types.JvmTypeReference
@@ -58,16 +60,30 @@ class JavaMapper {
     }
     
     def dispatch boolean mapsTo(PrimitiveType it, JvmTypeReference other) {
-        name == other.type.qualifiedName
+        name == other.type.qualifiedName || jvmWrapperTypeName == other.type.qualifiedName
     }
     
-    def dispatch boolean mapsTo(RoleType it, JvmTypeReference other) {
+    def dispatch boolean mapsTo(RoleType it, JvmGenericArrayTypeReference other) {
+        base.clazz.isArrayClass && base instanceof GenericClassRef
+            && (base as GenericClassRef).typeArg.mapsTo(other.componentType)
+    }
+    
+    def dispatch boolean mapsTo(RoleType it, JvmParameterizedTypeReference other) {
         val base = base
-        if(base instanceof GenericClassRef)
-            other instanceof JvmGenericArrayTypeReference
-                && base.typeArg.mapsTo((other as JvmGenericArrayTypeReference).componentType)
-        else
-            base.clazz.jvmClass.qualifiedName == other.type.qualifiedName
+        switch(base) {
+            GenericClassRef case base.clazz.isArrayClass: switch(base.typeArg) {
+                RoleType: other.type.qualifiedName == "rolez.lang.ObjectArray"
+                    && other.arguments.size == 1 && base.typeArg.mapsTo(other.arguments.head)
+                PrimitiveType:
+                    other.type.qualifiedName == "rolez.lang." + base.typeArg.string.toFirstUpper + "Array"
+                default: false
+            }
+            GenericClassRef:
+                base.clazz.jvmClass.qualifiedName == other.type.qualifiedName
+                    && other.arguments.size == 1
+                    && base.typeArg.mapsTo(other.arguments.head)
+            default: base.clazz.jvmClass.qualifiedName == other.type.qualifiedName
+        }
     }
     
     def dispatch boolean mapsTo(TypeParamRef it, JvmTypeReference other) {
@@ -77,6 +93,7 @@ class JavaMapper {
     
     def dispatch boolean mapsTo(Null it, JvmTypeReference _) { false }
     def dispatch boolean mapsTo(java.lang.Void it, JvmTypeReference _) { false } // To avoid NPEs
+    def dispatch boolean mapsTo(Type it, java.lang.Void _) { false }             // To avoid NPEs
     
     def dispatch jvmWrapperTypeName(    Int _) { "java.lang.Integer"   }
     def dispatch jvmWrapperTypeName( Double _) { "java.lang.Double"    }
