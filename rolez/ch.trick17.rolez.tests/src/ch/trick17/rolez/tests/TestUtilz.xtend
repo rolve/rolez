@@ -35,6 +35,8 @@ import org.hamcrest.Matcher
 
 import static org.hamcrest.Matchers.*
 
+import static extension org.junit.Assert.assertEquals
+
 import static extension org.hamcrest.MatcherAssert.assertThat
 
 class TestUtilz {
@@ -50,8 +52,9 @@ class TestUtilz {
     def newResourceSet() { resourceSetProvider.get }
     
     def with(ResourceSet it, String program) {
-        createResource(URI.createURI((1..12).map[r.nextInt(10)].join + ".rz"))
-            .load(new StringInputStream(program), emptyMap)
+        val res = createResource(URI.createURI((1..12).map[r.nextInt(10)].join + ".rz"))
+        res.load(new StringInputStream(program), emptyMap)
+        res.errors.forEach["".assertEquals(toString)]
         it
     }
     
