@@ -87,6 +87,7 @@ class RolezValidator extends RolezSystemValidator {
     public static val UNCATCHABLE_CHECKED_EXCEPTION = "uncatchable checked exception"
     public static val OUTER_EXPR_NO_SIDE_FX = "outer expr no side effects"
     public static val NULL_TYPE_USED = "null type used"
+    public static val VOID_NOT_RETURN_TYPE = "void not return type"
     public static val MAPPED_IN_NORMAL_CLASS = "mapped member in normal class"
     public static val NON_MAPPED_FIELD = "non-mapped field"
     public static val NON_MAPPED_METHOD = "non-mapped method"
@@ -438,8 +439,14 @@ class RolezValidator extends RolezSystemValidator {
     }
     
     @Check
-    def checkNullTypeUsed(Null it) {
-        error("The null type cannot be used explicitly", it, null, NULL_TYPE_USED)
+    def checkNull(Null it) {
+        error("The null type cannot be used explicitly", null, NULL_TYPE_USED)
+    }
+    
+    @Check
+    def checkVoid(Void it) {
+        if(!(eContainer instanceof TypedBody) || it !== (eContainer as TypedBody).type)
+            error("The void type can only be used as a return type", null, VOID_NOT_RETURN_TYPE)
     }
     
     @Check

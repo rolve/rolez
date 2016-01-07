@@ -1132,10 +1132,53 @@ class RolezValidatorTest {
         ''').assertWarning(NULL_LITERAL, OUTER_EXPR_NO_SIDE_FX)
     }
     
-    @Test def testNullTypeUsed() {
+    @Test def testNull() {
         parse('''
             task Main: Null { return null; }
         ''').assertError(NULL, NULL_TYPE_USED)
+    }
+    
+    @Test def testVoid() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            task A: void {}
+            task B: {}
+            class C {
+                def pure foo: void {}
+                def pure bar: {}
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            task Main(v: void): {}
+        ''').assertError(VOID, VOID_NOT_RETURN_TYPE)
+        parse('''
+            task Main(v:): {}
+        ''').assertError(VOID, VOID_NOT_RETURN_TYPE)
+        parse('''
+            class A {
+                val v: void
+            }
+        ''').assertError(VOID, VOID_NOT_RETURN_TYPE)
+        parse('''
+            class A {
+                def pure foo(v: void): {}
+            }
+        ''').assertError(VOID, VOID_NOT_RETURN_TYPE)
+        parse('''
+            class A {
+                def pure foo: {
+                    var v: void;
+                }
+            }
+        ''').assertError(VOID, VOID_NOT_RETURN_TYPE)
+        parse('''
+            class A {
+                def pure foo: {
+                    var v = this as void;
+                }
+            }
+        ''').assertError(VOID, VOID_NOT_RETURN_TYPE)
     }
     
     @Test def testMappedClass() {
