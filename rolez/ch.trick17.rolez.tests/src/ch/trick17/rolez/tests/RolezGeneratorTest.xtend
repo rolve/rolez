@@ -296,12 +296,12 @@ class RolezGeneratorTest {
             public final class Main implements java.util.concurrent.Callable<java.lang.Void> {
                 
                 public static void main(final java.lang.String[] args) {
-                    rolez.lang.TaskSystem.getDefault().run(new Main(new rolez.lang.ObjectArray<>(args)));
+                    rolez.lang.TaskSystem.getDefault().run(new Main(rolez.lang.GuardedArray.<java.lang.String[]>wrap(args)));
                 }
                 
-                private final rolez.lang.ObjectArray<java.lang.String> args;
+                private final rolez.lang.GuardedArray<java.lang.String[]> args;
                 
-                public Main(final rolez.lang.ObjectArray<java.lang.String> args) {
+                public Main(final rolez.lang.GuardedArray<java.lang.String[]> args) {
                     args.share();
                     this.args = args;
                 }
@@ -648,12 +648,12 @@ class RolezGeneratorTest {
             public final class $final implements java.util.concurrent.Callable<java.lang.Void> {
                 
                 public static void main(final java.lang.String[] args) {
-                    rolez.lang.TaskSystem.getDefault().run(new $final(new rolez.lang.ObjectArray<>(args)));
+                    rolez.lang.TaskSystem.getDefault().run(new $final(rolez.lang.GuardedArray.<java.lang.String[]>wrap(args)));
                 }
                 
-                private final rolez.lang.ObjectArray<java.lang.String> $do;
+                private final rolez.lang.GuardedArray<java.lang.String[]> $do;
                 
-                public $final(final rolez.lang.ObjectArray<java.lang.String> $do) {
+                public $final(final rolez.lang.GuardedArray<java.lang.String[]> $do) {
                     $do.share();
                     this.$do = $do;
                 }
@@ -1039,7 +1039,7 @@ class RolezGeneratorTest {
             }
         ''')
         
-        // Access to array elements is guarded, access to length field is not
+        // Access to array components is guarded, access to length field is not
         parse('''
             class A {
                 def pure getFirst(a: readwrite Array[int]): int {
@@ -1061,19 +1061,54 @@ class RolezGeneratorTest {
                     super();
                 }
                 
-                public int getFirst(final rolez.lang.IntArray a) {
+                public int getFirst(final rolez.lang.GuardedArray<int[]> a) {
                     return guardReadOnly(a).data[0];
                 }
                 
-                public void setFirst(final rolez.lang.IntArray a) {
+                public void setFirst(final rolez.lang.GuardedArray<int[]> a) {
                     guardReadWrite(a).data[0] = 42;
                 }
                 
-                public int length(final rolez.lang.IntArray a) {
+                public int length(final rolez.lang.GuardedArray<int[]> a) {
                     return a.data.length;
                 }
             }
         ''')
+        
+        // Coercion of "native" arrays
+        parse('''
+            var ia: pure Array[int] = new Array[int](0);
+            val c = new ClassWithArrays(ia);
+            ia = c.returnsIntArray;
+            c.takesIntArray(ia);
+            
+            var iaa = c.returnsIntArrayArray;
+            c.takesIntArrayArray(iaa);
+            
+            var sa = c.returnsStringArray;
+            c.takesStringArray(sa);
+        '''.withFrame, classes.with('''
+            class ClassWithArrays mapped to ch.trick17.rolez.tests.RolezGeneratorTest.ClassWithArrays {
+                mapped new(a: pure Array[int]) {}
+                
+                mapped def pure      takesIntArray(a: pure Array[int]            ):
+                mapped def pure takesIntArrayArray(a: pure Array[pure Array[int]]):
+                mapped def pure   takesStringArray(a: pure Array[pure String]    ):
+                
+                mapped def pure      returnsIntArray: pure Array[int]
+                mapped def pure returnsIntArrayArray: pure Array[pure Array[int]]
+                mapped def pure   returnsStringArray: pure Array[pure String]
+            }
+        ''')).generate.assertEqualsJava('''
+            rolez.lang.GuardedArray<int[]> ia = new rolez.lang.GuardedArray<int[]>(new int[0]);
+            final ch.trick17.rolez.tests.RolezGeneratorTest.ClassWithArrays c = new ch.trick17.rolez.tests.RolezGeneratorTest.ClassWithArrays(rolez.lang.GuardedArray.unwrap(ia, int[].class));
+            ia = rolez.lang.GuardedArray.<int[]>wrap(c.returnsIntArray());
+            c.takesIntArray(rolez.lang.GuardedArray.unwrap(ia, int[].class));
+            rolez.lang.GuardedArray<rolez.lang.GuardedArray<int[]>[]> iaa = rolez.lang.GuardedArray.<rolez.lang.GuardedArray<int[]>[]>wrap(c.returnsIntArrayArray());
+            c.takesIntArrayArray(rolez.lang.GuardedArray.unwrap(iaa, int[][].class));
+            rolez.lang.GuardedArray<java.lang.String[]> sa = rolez.lang.GuardedArray.<java.lang.String[]>wrap(c.returnsStringArray());
+            c.takesStringArray(rolez.lang.GuardedArray.unwrap(sa, java.lang.String[].class));
+        '''.withJavaFrame)
     }
     
     static class IntContainer extends Guarded {
@@ -1083,19 +1118,35 @@ class RolezGeneratorTest {
         def void set(int newValue) { value = newValue }
     }
     
+    static class ClassWithArrays {
+        new(int[] a) {}
+        
+        def void      takesIntArray(   int[] a) {}
+        def void takesIntArrayArray( int[][] a) {}
+        def void   takesStringArray(String[] a) {}
+        
+        def    int[]      returnsIntArray() { null }
+        def  int[][] returnsIntArrayArray() { null }
+        def String[]   returnsStringArray() { null }
+    }
+    
     @Test def testNew() {
         parse('''
             new Base;
             new (foo.bar.Base)(0);
             new (foo.bar.Base)(3 * 2 + 2);
             new (foo.bar.Base)("Hello".length, 0);
-            var a: pure Object = new Array[int](10 * 10);
+            var ai : pure Object = new Array[int](10 * 10);
+            var ab : pure Object = new Array[pure Base](42);
+            var aai: pure Object = new Array[pure Array[int]](0);
         '''.withFrame, classes).generate.assertEqualsJava('''
             new Base();
             new foo.bar.Base(0);
             new foo.bar.Base((3 * 2) + 2);
             new foo.bar.Base("Hello".length(), 0);
-            java.lang.Object a = new rolez.lang.IntArray(10 * 10);
+            java.lang.Object ai = new rolez.lang.GuardedArray<int[]>(new int[10 * 10]);
+            java.lang.Object ab = new rolez.lang.GuardedArray<Base[]>(new Base[42]);
+            java.lang.Object aai = new rolez.lang.GuardedArray<rolez.lang.GuardedArray<int[]>[]>(new rolez.lang.GuardedArray[0]);
         '''.withJavaFrame)
     }
     

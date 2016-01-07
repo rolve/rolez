@@ -51,8 +51,7 @@ public abstract class Guarded {
                 view.processViewsRecursive(op, processed);
     }
     
-    private void processViewsRecursive(final Guard.Op op,
-            final Set<Guarded> processed) {
+    private void processViewsRecursive(final Guard.Op op, final Set<Guarded> processed) {
         if(processed.add(this)) {
             for(final Guarded view : views())
                 if(view != null)

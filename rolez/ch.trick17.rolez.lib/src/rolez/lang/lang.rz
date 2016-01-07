@@ -15,7 +15,7 @@ class Array[T] mapped to rolez.lang.Array {
     mapped new(length: int)
     
     mapped def readonly  get(index: int): T
-    mapped def readwrite set(index: int, element: T):
+    mapped def readwrite set(index: int, component: T):
 }
 
 class String mapped to java.lang.String {

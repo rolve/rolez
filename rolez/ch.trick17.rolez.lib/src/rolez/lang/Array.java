@@ -2,9 +2,8 @@ package rolez.lang;
 
 /**
  * This class represents the Java array class in the Rolez compiler, but is not
- * actually used in Rolez programs. Instead the classes {@link ObjectArray},
- * {@link IntArray}, {@link DoubleArray}, {@link CharArray} , and
- * {@link BooleanArray} are used.
+ * actually used in Rolez programs. Instead the {@link GuardedArray} class is
+ * used.
  * 
  * @author Michael Faes
  */
@@ -17,5 +16,5 @@ public class Array<T> extends Guarded {
     
     public native T get(final int i);
     
-    public native void set(final int i, final T element);
+    public native void set(final int i, final T component);
 }

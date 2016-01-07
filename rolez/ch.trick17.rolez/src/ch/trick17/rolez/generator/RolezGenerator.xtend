@@ -6,16 +6,13 @@ import ch.trick17.rolez.rolez.ArithmeticBinaryExpr
 import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.BinaryExpr
 import ch.trick17.rolez.rolez.Block
-import ch.trick17.rolez.rolez.Boolean
 import ch.trick17.rolez.rolez.BooleanLiteral
 import ch.trick17.rolez.rolez.Cast
-import ch.trick17.rolez.rolez.Char
 import ch.trick17.rolez.rolez.CharLiteral
 import ch.trick17.rolez.rolez.Class
 import ch.trick17.rolez.rolez.ClassLike
 import ch.trick17.rolez.rolez.ClassRef
 import ch.trick17.rolez.rolez.Constr
-import ch.trick17.rolez.rolez.Double
 import ch.trick17.rolez.rolez.DoubleLiteral
 import ch.trick17.rolez.rolez.EqualityExpr
 import ch.trick17.rolez.rolez.Expr
@@ -23,7 +20,6 @@ import ch.trick17.rolez.rolez.ExprStmt
 import ch.trick17.rolez.rolez.Field
 import ch.trick17.rolez.rolez.GenericClassRef
 import ch.trick17.rolez.rolez.IfStmt
-import ch.trick17.rolez.rolez.Int
 import ch.trick17.rolez.rolez.IntLiteral
 import ch.trick17.rolez.rolez.LocalVarDecl
 import ch.trick17.rolez.rolez.LogicalExpr
@@ -67,6 +63,7 @@ import ch.trick17.rolez.validation.JavaMapper
 import java.io.File
 import javax.inject.Inject
 import org.eclipse.emf.ecore.resource.Resource
+import org.eclipse.xtext.common.types.JvmArrayType
 import org.eclipse.xtext.generator.AbstractGenerator
 import org.eclipse.xtext.generator.IFileSystemAccess2
 import org.eclipse.xtext.generator.IGeneratorContext
@@ -85,6 +82,8 @@ class RolezGenerator extends AbstractGenerator {
     @Inject extension RoleAnalysis
     @Inject RolezUtils utils
     @Inject RolezSystem system
+    
+    // TODO: Use ImportManager
     
     override void doGenerate(Resource resource, IFileSystemAccess2 fsa, IGeneratorContext context) {
         val program = resource.contents.head as Program
@@ -166,7 +165,7 @@ class RolezGenerator extends AbstractGenerator {
             «IF isMain»
             
             public static void main(final java.lang.String[] args) {
-                «jvmTaskSystemClassName».getDefault().run(new «safeSimpleName»(«IF !params.isEmpty»new rolez.lang.ObjectArray<>(args)«ENDIF»));
+                «jvmTaskSystemClassName».getDefault().run(new «safeSimpleName»(«IF !params.isEmpty»«jvmGuardedArrayClassName».<java.lang.String[]>wrap(args)«ENDIF»));
             }
             «ENDIF»
             «IF !params.isEmpty»
@@ -444,8 +443,29 @@ class RolezGenerator extends AbstractGenerator {
     private def generateArrayLength(MemberAccess it)
         '''«target.genNested».data.length'''
     
-    private def generateMethodInvoke(MemberAccess it)
-        '''«target.genNested».«method.safeName»(«args.map[gen].join(", ")»)'''
+    private def generateMethodInvoke(MemberAccess it) {
+        if(method.isMapped) {
+            val genInvoke = '''«target.genNested».«method.safeName»(«args.map[genCoerced].join(", ")»)'''
+            if(method.jvmMethod.returnType.type instanceof JvmArrayType) {
+                val componentType = ((method.type as RoleType).base as GenericClassRef).typeArg
+                '''«jvmGuardedArrayClassName».<«componentType.gen»[]>wrap(«genInvoke»)'''
+            }
+            else
+                genInvoke
+        }
+        else
+            '''«target.genNested».«method.safeName»(«args.map[gen].join(", ")»)'''
+    }
+    
+    private def genCoerced(Expr it) {
+        val paramType = destParam.jvmParam.parameterType.type
+        if(paramType instanceof JvmArrayType)
+            '''«jvmGuardedArrayClassName».unwrap(«genNested», «paramType.gen».class)'''
+        else
+            gen
+    }
+    
+    private def gen(JvmArrayType it) { toString.substring(14) } // Yes, this is magic...
     
     private def generateFieldAccess(MemberAccess it) {
         val requiredRole =
@@ -478,8 +498,18 @@ class RolezGenerator extends AbstractGenerator {
     
     private def dispatch generateExpr(VarRef it) { variable.safeName }
     
-    private def dispatch generateExpr(New it)
-        '''new «classRef.gen»(«args.map[gen].join(", ")»)'''
+    private def dispatch generateExpr(New it) {
+        val genArgs = 
+            if(classRef.clazz.isArrayClass) {
+                val componentType = (classRef as GenericClassRef).typeArg
+                '''new «componentType.genErased»[«args.head.gen»]'''
+            }
+            else if(constr.isMapped)
+                args.map[genCoerced].join(", ")
+            else
+                args.map[gen].join(", ")
+        '''new «classRef.gen»(«genArgs»)'''
+    }
     
     private def dispatch generateExpr(The it) '''«classRef.gen».INSTANCE'''
     
@@ -496,19 +526,6 @@ class RolezGenerator extends AbstractGenerator {
                 arrayNesting(arg.base as GenericClassRef) + 1
             default:
                 1
-        }
-    }
-    
-    private def Type elemType(GenericClassRef it) {
-        if(!clazz.isArrayClass)
-            throw new AssertionError
-        
-        val arg = typeArg
-        switch(arg) {
-            RoleType case arg.base instanceof GenericClassRef:
-                elemType(arg.base as GenericClassRef)
-            default:
-                arg
         }
     }
     
@@ -534,11 +551,6 @@ class RolezGenerator extends AbstractGenerator {
     
     private def CharSequence gen(Type it) { generateType }
     
-    private def CharSequence genGeneric(Type it) {
-        if(it instanceof PrimitiveType) jvmWrapperTypeName
-        else generateType
-    }
-    
     private def dispatch generateType(PrimitiveType it) { string }
     
     private def dispatch generateType(RoleType it) { base.gen }
@@ -560,13 +572,7 @@ class RolezGenerator extends AbstractGenerator {
     
     private def dispatch generateClassRef(GenericClassRef it) {
         if(clazz.isArrayClass)
-            switch(typeArg) {
-                Int:     '''rolez.lang.IntArray'''
-                Double:  '''rolez.lang.DoubleArray'''
-                Char:    '''rolez.lang.CharArray'''
-                Boolean: '''rolez.lang.BooleanArray'''
-                default: '''rolez.lang.ObjectArray<«typeArg.gen»>'''
-            }
+            '''«jvmGuardedArrayClassName»<«typeArg.gen»[]>'''
         else
             '''«clazz.generateName»<«typeArg.genGeneric»>'''
     }
@@ -579,6 +585,18 @@ class RolezGenerator extends AbstractGenerator {
     }
     
     private def gen(TaskRef it) { task.safeQualifiedName }
+    
+    private def dispatch CharSequence genGeneric(PrimitiveType it) { jvmWrapperTypeName }
+    private def dispatch CharSequence genGeneric(         Type it) { generateType }
+    
+    private def dispatch genErased(RoleType it) { base.generateClassRefErased }
+    private def dispatch genErased(    Type it) { generateType }
+    
+    private def dispatch generateClassRefErased(GenericClassRef it) {
+        if(clazz.isArrayClass) jvmGuardedArrayClassName
+        else clazz.generateName
+    }
+    private def dispatch generateClassRefErased(ClassRef it) { generateClassRef }
     
     /*
      * Safe Java names

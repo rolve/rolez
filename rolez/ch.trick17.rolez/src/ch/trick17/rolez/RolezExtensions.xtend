@@ -1,5 +1,6 @@
 package ch.trick17.rolez
 
+import ch.trick17.rolez.rolez.Argumented
 import ch.trick17.rolez.rolez.Boolean
 import ch.trick17.rolez.rolez.Char
 import ch.trick17.rolez.rolez.Class
@@ -17,6 +18,7 @@ import ch.trick17.rolez.rolez.LocalVarDecl
 import ch.trick17.rolez.rolez.Member
 import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.Method
+import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.Null
 import ch.trick17.rolez.rolez.Param
@@ -27,6 +29,7 @@ import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.SimpleClassRef
 import ch.trick17.rolez.rolez.SingletonClass
+import ch.trick17.rolez.rolez.Start
 import ch.trick17.rolez.rolez.Stmt
 import ch.trick17.rolez.rolez.Task
 import ch.trick17.rolez.rolez.Type
@@ -65,6 +68,9 @@ class RolezExtensions {
     def isArrayClass (Class it) { qualifiedName ==  arrayClassName }
     def isStringClass(Class it) { qualifiedName == stringClassName }
     def isTaskClass  (Class it) { qualifiedName ==   taskClassName }
+    
+    def dispatch isArrayType(RoleType it) { base.clazz.isArrayClass }
+    def dispatch isArrayType(    Type it) { false }
     
     def Iterable<Member> allMembers(Class it) {
         members +
@@ -132,16 +138,31 @@ class RolezExtensions {
     def decl(LocalVar it) { enclosingStmt as LocalVarDecl }
     
     def destParam(Expr it) {
-        val access = eContainer as MemberAccess
-        val index = access.args.indexOf(it)
-        access.method.params.get(index)
+        val argumented = eContainer as Argumented
+        val index = argumented.args.indexOf(it)
+        argumented.body.params.get(index)
     }
+    
+    def jvmParam(Param it) {
+        val body = enclosingBody
+        val index = body.params.indexOf(it)
+        body.jvmBody.parameters.get(index)
+    }
+    
+    def dispatch jvmBody(Method it) { jvmMethod }
+    def dispatch jvmBody(Constr it) { jvmConstr }
     
     def isFieldAccess (MemberAccess it) { member instanceof Field  }
     def isMethodInvoke(MemberAccess it) { member instanceof Method }
     
     def field (MemberAccess it) { member as Field  }
     def method(MemberAccess it) { member as Method }
+    
+    def body(Argumented it) { switch(it) {
+        MemberAccess: method
+        New         : constr
+        Start       : taskRef.task
+    }}
     
     def isArrayGet(Method it) {
         enclosingClass.qualifiedName == arrayClassName && name == "get" && mapped

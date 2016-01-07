@@ -8,6 +8,7 @@ class Constants {
     public static val  arrayClassName = QualifiedName.create("rolez", "lang", "Array")
     public static val   taskClassName = QualifiedName.create("rolez", "lang", "Task")
     
-    public static val    jvmGuardedClassName = "rolez.lang.Guarded"
-    public static val jvmTaskSystemClassName = "rolez.lang.TaskSystem"
+    public static val      jvmGuardedClassName = "rolez.lang.Guarded"
+    public static val jvmGuardedArrayClassName = "rolez.lang.GuardedArray"
+    public static val   jvmTaskSystemClassName = "rolez.lang.TaskSystem"
 }

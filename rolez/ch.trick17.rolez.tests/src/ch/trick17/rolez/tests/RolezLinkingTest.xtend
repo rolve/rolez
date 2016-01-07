@@ -260,7 +260,7 @@ class RolezLinkingTest {
             class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.Array[T] mapped to rolez.lang.Array {
                 mapped new(i: int)
-                mapped def readwrite set(i: int, element: readonly Object):
+                mapped def readwrite set(i: int, component: readonly Object):
             }
         ''').assertError(METHOD, LINKING_DIAGNOSTIC)
     }
@@ -294,7 +294,7 @@ class RolezLinkingTest {
                 mapped val length: int
                 mapped new(length: int)
                 mapped def readonly  get(i: int): T
-                mapped def readwrite set(i: int, element: T):
+                mapped def readwrite set(i: int, component: T):
             }
         ''').assertNoErrors
         

@@ -25,6 +25,8 @@ import org.eclipse.xtext.common.types.JvmTypeParameter
 import org.eclipse.xtext.common.types.JvmTypeReference
 import org.eclipse.xtext.common.types.access.IJvmTypeProvider
 
+import static ch.trick17.rolez.Constants.*
+
 class JavaMapper {
     
     @Inject extension RolezExtensions
@@ -71,13 +73,10 @@ class JavaMapper {
     def dispatch boolean mapsTo(RoleType it, JvmParameterizedTypeReference other) {
         val base = base
         switch(base) {
-            GenericClassRef case base.clazz.isArrayClass: switch(base.typeArg) {
-                RoleType: other.type.qualifiedName == "rolez.lang.ObjectArray"
-                    && other.arguments.size == 1 && base.typeArg.mapsTo(other.arguments.head)
-                PrimitiveType:
-                    other.type.qualifiedName == "rolez.lang." + base.typeArg.string.toFirstUpper + "Array"
-                default: false
-            }
+            GenericClassRef case base.clazz.isArrayClass:
+                other.type.qualifiedName == jvmGuardedArrayClassName
+                    && other.arguments.size == 1 && other.arguments.head instanceof JvmGenericArrayTypeReference
+                    && base.typeArg.mapsTo((other.arguments.head as JvmGenericArrayTypeReference).componentType)
             GenericClassRef:
                 base.clazz.jvmClass.qualifiedName == other.type.qualifiedName
                     && other.arguments.size == 1

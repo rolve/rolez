@@ -2,7 +2,9 @@ package ch.trick17.rolez.tests
 
 import ch.trick17.rolez.RolezUtils
 import ch.trick17.rolez.rolez.Program
+import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RolezFactory
+import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.validation.JavaMapper
 import javax.inject.Inject
 import org.eclipse.xtext.common.types.JvmDeclaredType
@@ -13,15 +15,12 @@ import org.eclipse.xtext.junit4.XtextRunner
 import org.eclipse.xtext.junit4.util.ParseHelper
 import org.junit.Test
 import org.junit.runner.RunWith
-import rolez.lang.IntArray
-import rolez.lang.ObjectArray
+import rolez.lang.GuardedArray
 import rolez.lang.Task
 
 import static ch.trick17.rolez.rolez.Role.*
 
 import static extension org.junit.Assert.*
-import ch.trick17.rolez.rolez.Role
-import ch.trick17.rolez.rolez.Type
 
 @RunWith(XtextRunner)
 @InjectWith(RolezInjectorProvider)
@@ -35,20 +34,20 @@ class JavaMapperTest {
     @Inject IJvmTypeProvider.Factory jvmTypesFactory
     
     static interface Methods<T> {
-        def                   int            intMethod()
-        def                double         doubleMethod()
-        def               boolean        booleanMethod()
-        def                  char           charMethod()
-        def                  void           voidMethod()
-        def                Object         ObjectMethod()
-        def                 int[]       intArrayMethod()
-        def             boolean[]   booleanArrayMethod()
-        def              IntArray       IntArrayMethod()
-        def               int[][]  intArrayArrayMethod()
-        def              char[][] charArrayArrayMethod()
-        def ObjectArray<IntArray>  IntArrayArrayMethod()
-        def         Task<Integer>        intTaskMethod()
-        def                     T              TMethod()
+        def                                 int            intMethod()
+        def                              double         doubleMethod()
+        def                             boolean        booleanMethod()
+        def                                char           charMethod()
+        def                                void           voidMethod()
+        def                              Object         ObjectMethod()
+        def                               int[]       intArrayMethod()
+        def                           boolean[]   booleanArrayMethod()
+        def                 GuardedArray<int[]>       IntArrayMethod()
+        def                             int[][]  intArrayArrayMethod()
+        def                            char[][] charArrayArrayMethod()
+        def GuardedArray<GuardedArray<int[]>[]>  IntArrayArrayMethod()
+        def                       Task<Integer>        intTaskMethod()
+        def                                   T              TMethod()
     }
     
     @Test def mapsToPrimitiveTypes() {
