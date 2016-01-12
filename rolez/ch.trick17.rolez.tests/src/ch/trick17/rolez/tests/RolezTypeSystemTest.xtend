@@ -487,7 +487,7 @@ class RolezTypeSystemTest {
             }
         ''').main.lastExpr.type.assertThat(instanceOf(Int))
         
-        val program = parse('''
+        var program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
                 var a: readwrite A
@@ -540,6 +540,28 @@ class RolezTypeSystemTest {
                 a.a;
             }
         ''').main.lastExpr.type.asRoleType.role.assertThat(is(PURE))
+        
+        program = parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A
+            class Container[E] mapped to «Container.canonicalName» {
+                mapped val e: E
+            }
+            task Main: {
+                new Container[int].e;
+                new Container[readwrite A].e;
+                new Container[readonly A].e;
+                (new Container[readwrite A] as readonly Container[readwrite A]).e;
+            }
+        ''')
+        program.main.expr(0).type.assertThat(instanceOf(Int))
+        program.main.expr(1).type.asRoleType.role.assertThat(is(READWRITE))
+        program.main.expr(2).type.asRoleType.role.assertThat(is(READONLY))
+        program.main.expr(2).type.asRoleType.role.assertThat(is(READONLY))
+    }
+    
+    static class Container<E> {
+        public val E e = null
     }
     
     @Test def testTMemberAccessFieldRoleMismatch() {

@@ -228,14 +228,17 @@ from {
                     + targetType.role.string + " target"
                 source a.target
             var fieldType = a.field.type
-            switch(fieldType) {
+            fieldType = switch(fieldType) {
+                TypeParamRef: typeParamMap(a, G).get(fieldType.param)
+                default: fieldType
+            }
+            t = switch(fieldType) {
                 RoleType: {
                     val role = leastCommonSuperrole(targetType.role, fieldType.role)
-                    t = newRoleType(role, fieldType.base.copy)
+                    newRoleType(role, fieldType.base.copy)
                 }
-                default: { t = fieldType }
+                default: fieldType
             }
-            // TODO: Generic fields
         }
         else { // method invoke
             // First, check if args are well-typed

@@ -59,6 +59,7 @@ class TestUtilz {
     }
     
     def main(Program it) {
+        assertNoErrors
         elements.filter(Task).filter[name == "Main"].head
     }
     
@@ -93,14 +94,12 @@ class TestUtilz {
     def expr(ParameterizedBody it, int i) { body.expr(i) }
     
     def expr(Block it, int i) {
-        assertNoErrors;
         stmts.filter(ExprStmt).get(i).expr
     }
     
     def lastExpr(ParameterizedBody it) { body.lastExpr }
     
     def lastExpr(Block it) {
-        assertNoErrors;
         stmts.filter(ExprStmt).last.expr
     }
     
@@ -113,7 +112,6 @@ class TestUtilz {
     def variable(ParameterizedBody b, int i) { b.body.variable(i) }
     
     def variable(Block b, int i) {
-        b.assertNoErrors
         b.stmts.filter(LocalVarDecl).get(i).variable
     }
     
@@ -175,6 +173,5 @@ class TestUtilz {
         override describeMismatch(Object actual, Description description) {
             description.appendText(actual.stringRep)
         }
-        
     }
 }
