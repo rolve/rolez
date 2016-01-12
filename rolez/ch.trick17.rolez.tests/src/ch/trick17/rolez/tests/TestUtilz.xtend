@@ -42,7 +42,7 @@ import static extension org.hamcrest.MatcherAssert.assertThat
 class TestUtilz {
     
     @Inject RolezSystem system
-    @Inject extension RolezExtensions
+    @Inject extension RolezExtensions extensions
     @Inject extension RolezUtils
     @Inject extension ValidationTestHelper
     @Inject Provider<XtextResourceSet> resourceSetProvider
@@ -127,16 +127,16 @@ class TestUtilz {
     }
     
     def Matcher<Type> isRoleType(Role role, ClassRef base) {
-        new RoleTypeMatcher(system, newRoleType(role, base))
+        new RoleTypeMatcher(extensions, newRoleType(role, base))
     }
     
     static class RoleTypeMatcher extends BaseMatcher<Type> {
         
-        extension RolezSystem system
+        extension RolezExtensions extensions
         val RoleType expected
     
-        new(RolezSystem system, RoleType expected) {
-            this.system = system
+        new(RolezExtensions extensions, RoleType expected) {
+            this.extensions = extensions
             this.expected = expected
         }
         
@@ -147,8 +147,7 @@ class TestUtilz {
         private def dispatch boolean equalTo(RoleType _, Object __) { false }
         
         private def dispatch boolean equalTo(RoleType it, RoleType other) {
-            role.equals(other.role)
-            base.equalTo(other.base)
+            role.equals(other.role) && base.equalTo(other.base)
         }
         
         private def dispatch boolean equalTo(PrimitiveType it, PrimitiveType other) {
@@ -167,11 +166,12 @@ class TestUtilz {
         }
         
         override describeTo(Description description) {
-            description.appendText(expected.stringRep)
+            description.appendText(expected.string)
         }
         
         override describeMismatch(Object actual, Description description) {
-            description.appendText(actual.stringRep)
+            if(actual instanceof Type) description.appendText(actual.string)
+            else description.appendValue(actual)
         }
     }
 }
