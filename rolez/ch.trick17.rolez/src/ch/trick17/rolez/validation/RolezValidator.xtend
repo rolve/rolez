@@ -571,6 +571,9 @@ class RolezValidator extends RolezSystemValidator {
         checkClassKind(false)
         checkMapped
         checkSuperclass(objectClassName)
+        
+        // TODO: Introduce final classes and make array final, so that it cannot be extended
+        // (although, it would be cool if the array class could be extended...)
     }
     
     private def checkClassKind(Class it, boolean expectSingleton) {

@@ -22,6 +22,7 @@ import org.eclipse.xtext.junit4.util.ParseHelper
 import org.eclipse.xtext.junit4.validation.ValidationTestHelper
 import org.junit.Test
 import org.junit.runner.RunWith
+import rolez.lang.Guarded
 
 import static ch.trick17.rolez.Constants.*
 import static ch.trick17.rolez.rolez.Role.*
@@ -558,10 +559,29 @@ class RolezTypeSystemTest {
         program.main.expr(1).type.asRoleType.role.assertThat(is(READWRITE))
         program.main.expr(2).type.asRoleType.role.assertThat(is(READONLY))
         program.main.expr(2).type.asRoleType.role.assertThat(is(READONLY))
+        
+        program = parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class Container[E] mapped to «Container.canonicalName» {
+                mapped var e: E
+            }
+            class A extends Container[int] {
+                def foo: int {
+                    return this.e;
+                }
+            }
+            task Main: {
+                new A.e;
+            }
+        ''')
+        program.assertNoErrors
+        program.main.lastExpr.type.assertThat(instanceOf(Int))
     }
     
-    static class Container<E> {
-        public val E e = null
+    static class Container<E> extends Guarded {
+        public var E e = null
+        def E get() { e }
+        def set(E e) { this.e = e }
     }
     
     @Test def testTMemberAccessFieldRoleMismatch() {
@@ -601,6 +621,29 @@ class RolezTypeSystemTest {
         ''')
         p.main.lastExpr.type.assertThat(isRoleType(READONLY, newClassRef(p.findClass("A"))))
         
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A
+            class B {
+                def readwrite foo(a: readonly A, b: readwrite B,
+                        c: readwrite C, d: int): {}
+            }
+            class C extends B
+            task Main: { new C.foo(new A, new C, null, 5); }
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def readwrite foo: {}
+            }
+            class B extends A {
+                override readwrite foo: {}
+            }
+            task Main: { new B.foo; }
+        ''').assertNoErrors
+        
+        // Generic methods
         val lib = newResourceSet.with('''
             class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.Array[T] mapped to rolez.lang.Array {
@@ -608,7 +651,13 @@ class RolezTypeSystemTest {
                 mapped def readonly  get(i: int): T
                 mapped def readwrite set(i: int, o: T):
             }
+            class Container[E] mapped to «Container.canonicalName» {
+                mapped var e: E
+                mapped def readonly  get: E
+                mapped def readwrite set(e: E):
+            }
         ''')
+        
         parse('''
             task Main: {
                 val a = new Array[int](1);
@@ -634,27 +683,39 @@ class RolezTypeSystemTest {
             }
         ''', lib)
         p.main.lastExpr.type.assertThat(isRoleType(PURE, newClassRef(p.findClass("A"))))
-        
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
+        p = parse('''
             class A
-            class B {
-                def readwrite foo(a: readonly A, b: readwrite B,
-                        c: readwrite C, d: int): {}
+            task Main: {
+                val a = new Array[readwrite A](1) as readonly Array[readwrite A];
+                a.get(0);
             }
-            class C extends B
-            task Main: { new C.foo(new A, new C, null, 5); }
-        ''').assertNoErrors
+        ''', lib)
+        p.main.lastExpr.type.assertThat(isRoleType(READONLY, newClassRef(p.findClass("A"))))
         
         parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class A {
-                def readwrite foo: {}
+            class A extends Container[int]
+            task Main: {
+                val a = new A;
+                a.set(42);
+                a.get;
             }
-            class B extends A {
-                override readwrite foo: {}
+        ''', lib).main.lastExpr.type.assertThat(instanceOf(Int))
+        p = parse('''
+            class A extends Container[readwrite Object]
+            task Main: {
+                val a = new A;
+                a.set(new Object);
+                a.get;
+                (a as readonly A).get;
             }
-            task Main: { new B.foo; }
+        ''', lib)
+        p.main.expr(2).type.assertThat(isRoleType(READWRITE, newClassRef(p.findClass(objectClassName))))
+        p.main.expr(3).type.assertThat(isRoleType(READONLY, newClassRef(p.findClass(objectClassName))))
+        
+        parse('''
+            class A extends Container[int] {
+                def myGet: int ( return this.get; }
+            }
         ''').assertNoErrors
     }
     

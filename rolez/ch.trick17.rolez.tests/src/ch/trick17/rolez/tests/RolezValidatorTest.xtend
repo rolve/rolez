@@ -144,6 +144,44 @@ class RolezValidatorTest {
             class A {                def readwrite foo: {} }
             class B extends A { override readonly  foo: {} }
         ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {                def readwrite foo: {} }
+            class B extends A { override readonly  foo: {} }
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class GenericClass[T] mapped to «GenericClass.canonicalName» {
+                mapped def pure foo(t: T):
+                mapped def pure foo(t1: T, t2: T):
+                mapped def pure foo: T
+            }
+            class A extends GenericClass[int] {
+                def      pure foo(t: double): {}
+                override pure foo(t: int   ): {}
+                override pure foo(t1: int, t2: int): {}
+                override pure foo: int { return 0; }
+            }
+            class B extends GenericClass[readwrite Object] {
+                def      pure foo(t: readonly  Object): {}
+                override pure foo(t: readwrite Object): {}
+                override pure foo(t1: readwrite Object, t2: readwrite Object): {}
+                override pure foo: readwrite Object { return null; }
+            }
+            class C extends GenericClass[readwrite Object] {
+                override pure foo: readonly Object { return null; }
+            }
+        ''').assertNoErrors
+    }
+    
+    static class GenericClass<T> {
+        new(T t) {}
+        new(T t, int i) {}
+        def foo(T t) {}
+        def foo(T t1, T t2) {}
+        def T foo() { null }
     }
     
     @Test def testMissingOverride() {
@@ -176,6 +214,43 @@ class RolezValidatorTest {
             class rolez.lang.Object mapped to java.lang.Object
             class A {           def readwrite foo(a: readwrite A): {} }
             class B extends A { def readwrite foo(b: readwrite A): {} }
+        ''').assertError(METHOD, MISSING_OVERRIDE)
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class GenericClass[T] mapped to «GenericClass.canonicalName» {
+                mapped def pure foo(t: T):
+            }
+            class A extends GenericClass[int] {
+                def pure foo(t: int): {}
+            }
+        ''').assertError(METHOD, MISSING_OVERRIDE)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class GenericClass[T] mapped to «GenericClass.canonicalName» {
+                mapped def pure foo(t: T):
+            }
+            class A extends GenericClass[readwrite Object] {
+                def pure foo(t1: readwrite Object, t2: readwrite Object): {}
+            }
+        ''').assertError(METHOD, MISSING_OVERRIDE)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class GenericClass[T] mapped to «GenericClass.canonicalName» {
+                mapped def pure foo(t: T):
+            }
+            class A extends GenericClass[readwrite Object] {
+                override pure foo: readwrite Object { return null; }
+            }
+        ''').assertError(METHOD, MISSING_OVERRIDE)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class GenericClass[T] mapped to «GenericClass.canonicalName» {
+                mapped def pure foo(t: T):
+            }
+            class A extends GenericClass[readwrite Object] {
+                override pure foo: readonly Object { return null; }
+            }
         ''').assertError(METHOD, MISSING_OVERRIDE)
     }
     
@@ -214,6 +289,34 @@ class RolezValidatorTest {
             class rolez.lang.Object mapped to java.lang.Object
             class A {                def readwrite foo(a: readwrite B): {} }
             class B extends A { override readwrite foo(a: readwrite A): {} }
+        ''').assertError(METHOD, INCORRECT_OVERRIDE)
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class GenericClass[T] mapped to «GenericClass.canonicalName» {
+                mapped def pure foo(t: T):
+            }
+            class A extends GenericClass[int] {
+                override pure foo(t: double): {}
+            }
+        ''').assertError(METHOD, INCORRECT_OVERRIDE)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class GenericClass[T] mapped to «GenericClass.canonicalName» {
+                mapped def pure foo(t: T):
+            }
+            class A extends GenericClass[readwrite Object] {
+                override pure foo(t: readonly Object): {}
+            }
+        ''').assertError(METHOD, INCORRECT_OVERRIDE)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class GenericClass[T] mapped to «GenericClass.canonicalName» {
+                mapped def pure foo(t: T):
+            }
+            class A extends GenericClass[readonly Object] {
+                override pure foo(t: readwrite Object): {}
+            }
         ''').assertError(METHOD, INCORRECT_OVERRIDE)
     }
     
@@ -972,6 +1075,29 @@ class RolezValidatorTest {
                         this.bar;
                 }
                 def pure bar: {}
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class GenericClass[T] mapped to «GenericClass.canonicalName» {
+                mapped new(t: T)
+            }
+            class A extends GenericClass[int] {
+                new {
+                    super(0);
+                }
+            }
+        ''').assertNoErrors
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class GenericClass[T] mapped to «GenericClass.canonicalName» {
+                mapped new(t: T, int i)
+            }
+            class A extends GenericClass[readwrite Object] {
+                new {
+                    super(new Object, 8);
+                }
             }
         ''').assertNoErrors
         

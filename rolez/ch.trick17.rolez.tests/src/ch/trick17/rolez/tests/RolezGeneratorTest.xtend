@@ -487,6 +487,28 @@ class RolezGeneratorTest {
         ''')
         
         parse('''
+            class A {
+                def pure foo(o: readwrite Object): {}
+                def pure foo(o: readonly  Object): {}
+            }
+        ''', classes).generate.assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
+            
+            public class A extends «jvmGuardedClassName» {
+                
+                public A() {
+                    super();
+                }
+                
+                public void foo(final java.lang.Object o) {
+                }
+                
+                //public void foo(final java.lang.Object o) {
+                //}
+            }
+        ''')
+        
+        parse('''
             val j = 0;
             val o: pure Object = new (rolez.io.PrintStream)("foo.txt");
             val k = 0;
