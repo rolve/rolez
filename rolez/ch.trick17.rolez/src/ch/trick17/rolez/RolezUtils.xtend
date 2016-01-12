@@ -105,7 +105,7 @@ class RolezUtils {
     /**
      * Returns <code>true</code> if the name and the types of the parameters of
      * the two given methods are the same. Note that the "this role" is ignored,
-     * just as is the containing class.
+     * just as is the return type and the containing class.
      */
     def equalSignature(Method left, Method right) {
         left.name == right.name && equalParams(left, right)

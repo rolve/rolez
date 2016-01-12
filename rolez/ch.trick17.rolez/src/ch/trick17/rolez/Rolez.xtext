@@ -99,7 +99,7 @@ WhileLoop:
 ForLoop:
     'for' '(' initializer=Stmt condition=Expr ';' step=Expr ')' body=Stmt;
 
-// TODO: for-each and maybe parallel for-each
+// IMPROVE: for-each and maybe parallel for-each
 
 SuperConstrCall:
     {SuperConstrCall} constr=[Constr|SuperKeyword] ('(' args+=Expr (',' args+=Expr)* ')')? ';';
@@ -170,7 +170,7 @@ UnaryNot returns Expr:
 
 MemberAccess returns Expr:
     SimpleExpr ({MemberAccess.target=current} '.' member=[Member] ('(' args+=Expr (',' args+=Expr)* ')')? )*;
-    // TODO: Allow member accesses without "this"
+    // IMPROVE: Allow member accesses without "this"
 
 SimpleExpr returns Expr:
     {This} 'this' | VarRef | New | The | Start | Parenthesized | Literal;

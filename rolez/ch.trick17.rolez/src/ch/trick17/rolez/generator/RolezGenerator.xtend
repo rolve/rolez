@@ -83,7 +83,7 @@ class RolezGenerator extends AbstractGenerator {
     @Inject RolezUtils utils
     @Inject RolezSystem system
     
-    // TODO: Use ImportManager
+    // IMPROVE: Use some kind of import manager (note: the Xtext one is incorrect when using the default pkg)
     
     override void doGenerate(Resource resource, IFileSystemAccess2 fsa, IGeneratorContext context) {
         val program = resource.contents.head as Program
@@ -465,7 +465,7 @@ class RolezGenerator extends AbstractGenerator {
             gen
     }
     
-    private def gen(JvmArrayType it) { toString.substring(14) } // Yes, this is magic...
+    private def gen(JvmArrayType it) { toString.substring(14) } // IMPROVE: A little less magic, a little more robustness, please
     
     private def generateFieldAccess(MemberAccess it) {
         val requiredRole =
@@ -560,7 +560,8 @@ class RolezGenerator extends AbstractGenerator {
     }
     
     private def dispatch generateType(TypeParamRef _) {
-        // TODO
+        // So far, only mapped non-singleton classes can declare a type parameter and no code is
+        // generated for these classes
         throw new AssertionError
     }
     

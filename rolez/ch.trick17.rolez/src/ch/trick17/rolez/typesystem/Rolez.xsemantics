@@ -253,6 +253,7 @@ from {
                 }
                 default: { t = fieldType }
             }
+            // TODO: Generic fields
         }
         else { // method invoke
             // First, check if args are well-typed
@@ -360,9 +361,10 @@ from {
 rule WBlock
     G |- Block b
 from {
-    for(s : b.stmts) {
-        G |- s
-    }
+    // No need to check blocks, as all stmts are checked individually anyway
+    // for(s : b.stmts) {
+    //     G |- s
+    // }
 }
 
 rule WLocalVarDecl
