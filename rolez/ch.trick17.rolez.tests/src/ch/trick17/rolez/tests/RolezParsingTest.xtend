@@ -27,6 +27,21 @@ class RolezParsingTest{
     @Inject extension ValidationTestHelper
     @Inject extension TestUtilz
     
+    @Test def testGenericSuperclassRef() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
+                mapped new(length: int)
+                mapped val length: int
+            }
+            class IntArray extends Array[int] {
+                new(length: int) {
+                    super(length);
+                }
+            }
+        ''').assertNoErrors
+    }
+    
     @Test def testQualifiedClassRef() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object

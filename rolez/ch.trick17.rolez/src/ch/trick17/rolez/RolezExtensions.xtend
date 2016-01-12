@@ -36,10 +36,13 @@ import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.TypeParamRef
 import ch.trick17.rolez.rolez.VarKind
 import ch.trick17.rolez.rolez.Void
+import java.util.HashSet
+import java.util.Set
 import javax.inject.Inject
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.naming.IQualifiedNameProvider
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils
+import org.eclipse.xtext.util.OnChangeEvictingCache
 
 import static ch.trick17.rolez.Constants.*
 
@@ -76,6 +79,30 @@ class RolezExtensions {
         members +
             if(superclass == null) emptyList
             else superclass.allMembers.filter[m | !overrides(m)]
+    }
+    
+    val superclassesCache = new OnChangeEvictingCache
+    
+    def superclass(Class it) {
+        val clazz = superclassRef?.clazz
+        if(clazz instanceof NormalClass) clazz else null
+    }
+    
+    def strictSuperclasses(Class it) {
+        superclassesCache.get(it, eResource, [
+            val result = new HashSet
+            collectSuperclasses(result)
+            
+            val object = utils.findClass(objectClassName, it)
+            if(it != object && object != null)
+                result += object
+            result
+        ])
+    }
+    
+    private def void collectSuperclasses(Class it, Set<Class> classes) {
+        if(classes += it)
+            superclass?.collectSuperclasses(classes)
     }
     
     def dispatch clazz( SimpleClassRef it) { clazz }

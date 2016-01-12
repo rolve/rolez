@@ -56,6 +56,19 @@ class RolezValidatorTest {
         ''').assertError(CLASS, CIRCULAR_INHERITANCE)
     }
     
+    @Test def testSingletonSuperclass() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A extends Object
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            object A
+            class B extends A
+        ''').assertError(CLASS, SINGLETON_SUPERCLASS)
+    }
+    
     @Test def testMainTask() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object

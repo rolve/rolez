@@ -50,12 +50,14 @@ import static ch.trick17.rolez.Constants.*
 import static ch.trick17.rolez.rolez.Role.*
 import static ch.trick17.rolez.rolez.RolezPackage.Literals.*
 import static ch.trick17.rolez.rolez.VarKind.*
+import ch.trick17.rolez.rolez.SingletonClass
 
 class RolezValidator extends RolezSystemValidator {
 
     public static val INVALID_NAME = "invalid name"
     public static val DUPLICATE_TOP_LEVEL_ELEMENT = "duplicate top-level element"
     public static val CIRCULAR_INHERITANCE = "circular inheritance"
+    public static val SINGLETON_SUPERCLASS = "singleton superclass"
     public static val INCORRECT_MAIN_TASK = "incorrect main task"
     public static val INCORRECT_TYPE_PARAM = "incorrect type parameter"
     public static val MISSING_TYPE_PARAM = "missing type parameter"
@@ -129,7 +131,21 @@ class RolezValidator extends RolezSystemValidator {
     @Check
     def checkCircularInheritance(Class it) {
         if(findSuperclass(it))
-            error("Circular inheritance", CLASS__SUPERCLASS, CIRCULAR_INHERITANCE)
+            error("Circular inheritance", CLASS__SUPERCLASS_REF, CIRCULAR_INHERITANCE)
+    }
+    
+    private def boolean findSuperclass(Class it, Class c) {
+        switch(superclass) {
+            case null: false
+            case c   : true
+            default  : findSuperclass(superclass, c)
+        }
+    }
+    
+    @Check
+    def checkSingletonSuperclass(Class it) {
+        if(superclassRef != null && superclassRef.clazz instanceof SingletonClass)
+            error("Singleton classes cannot be extended", CLASS__SUPERCLASS_REF, SINGLETON_SUPERCLASS)
     }
     
     @Check
@@ -163,15 +179,6 @@ class RolezValidator extends RolezSystemValidator {
         if(typeParam != null && !isMapped)
             error("Only mapped classes may declare a type parameter",
                 NORMAL_CLASS__TYPE_PARAM, INCORRECT_TYPE_PARAM)
-    }
-    
-    private def boolean findSuperclass(Class it, Class c) {
-        switch(superclass) {
-            case null: false
-            case c: true
-            default:
-                findSuperclass(superclass, c)
-        }
     }
     
     @Check
@@ -471,7 +478,7 @@ class RolezValidator extends RolezSystemValidator {
             
             if(superclass != null && !superclass.isMapped)
                 error("A mapped class cannot extend a non-mapped class",
-                    CLASS__SUPERCLASS, INCORRECT_MAPPED_CLASS)
+                    CLASS__SUPERCLASS_REF, INCORRECT_MAPPED_CLASS)
         }
     }
     
@@ -545,7 +552,7 @@ class RolezValidator extends RolezSystemValidator {
         checkMapped
         if(superclass != null)
            error(qualifiedName + " must not have a superclass",
-               CLASS__SUPERCLASS, INCORRECT_MAPPED_SUPERCLASS)
+               CLASS__SUPERCLASS_REF, INCORRECT_MAPPED_SUPERCLASS)
     }
     
     @Check
@@ -580,7 +587,7 @@ class RolezValidator extends RolezSystemValidator {
     private def checkSuperclass(Class it, QualifiedName expected) {
         if(superclass.qualifiedName != expected)
            error("The superclass of " + qualifiedName + " must be " + expected,
-               CLASS__SUPERCLASS, INCORRECT_MAPPED_SUPERCLASS)
+               CLASS__SUPERCLASS_REF, INCORRECT_MAPPED_SUPERCLASS)
     }
     
     /*

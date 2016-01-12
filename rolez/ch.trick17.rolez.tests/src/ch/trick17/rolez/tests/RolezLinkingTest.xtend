@@ -132,7 +132,7 @@ class RolezLinkingTest {
         parse('''
             package a.b
             class B extends A
-        ''', set).assertError(CLASS, LINKING_DIAGNOSTIC)
+        ''', set).assertError(SIMPLE_CLASS_REF, LINKING_DIAGNOSTIC)
         set = newResourceSet.with("class rolez.lang.Object mapped to java.lang.Object").with('''
             package foo.bar
             class A
@@ -140,17 +140,17 @@ class RolezLinkingTest {
         parse('''
             package a.b
             class B extends A
-        ''', set).assertError(CLASS, LINKING_DIAGNOSTIC)
+        ''', set).assertError(SIMPLE_CLASS_REF, LINKING_DIAGNOSTIC)
     }
     
     @Test def testSuperClass() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A extends B
-        ''').assertError(CLASS, LINKING_DIAGNOSTIC)
+        ''').assertError(SIMPLE_CLASS_REF, LINKING_DIAGNOSTIC)
         parse('''
             class A
-        ''').assertError(CLASS, LINKING_DIAGNOSTIC)
+        ''').assertError(SIMPLE_CLASS_REF, LINKING_DIAGNOSTIC)
     }
     
     @Test def testSuperConstrCall() {

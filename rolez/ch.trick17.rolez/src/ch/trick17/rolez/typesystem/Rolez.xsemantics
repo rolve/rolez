@@ -7,7 +7,6 @@ import ch.trick17.rolez.rolez.Block
 import ch.trick17.rolez.rolez.BooleanLiteral
 import ch.trick17.rolez.rolez.Cast
 import ch.trick17.rolez.rolez.CharLiteral
-import ch.trick17.rolez.rolez.Class
 import ch.trick17.rolez.rolez.ClassRef
 import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.DoubleLiteral
@@ -58,11 +57,9 @@ import ch.trick17.rolez.rolez.WhileLoop
 import ch.trick17.rolez.validation.AbstractRolezValidator
 import it.xsemantics.runtime.RuleEnvironment
 import java.util.Map
-import java.util.Set
 
 import static ch.trick17.rolez.Constants.*
 import static ch.trick17.rolez.rolez.Role.*
-import static ch.trick17.rolez.rolez.RolezPackage.Literals.*
 
 import static extension org.eclipse.emf.ecore.util.EcoreUtil.copy
 
@@ -76,7 +73,6 @@ inject extension RolezUtils ___
 
 auxiliary {
     leastCommonSuperrole(Role r1, Role r2): Role
-    strictSuperclasses(Class clazz): Set<Class> cached
     typeParamMap(Argumented a, RuleEnvironment G): Map<TypeParam, Type>
 }
 
@@ -108,25 +104,11 @@ auxiliary leastCommonSuperrole(Role r1, Role r2) {
     if(r1.value > r2.value) r1 else r2 // Very simple so far
 }
 
-auxiliary strictSuperclasses(Class c) {
-    val result = getAll(
-        c,
-        CLASS__SUPERCLASS,
-        CLASS__SUPERCLASS,
-        Class
-    ).toSet
-    
-    val object = findClass(objectClassName, c)
-    if(c != object && object != null)
-        result.add(object)
-    result
-}
-
-auxiliary typeParamMap(MemberAccess a, RuleEnvironment G) {
-    G |- a.target : var RoleType targetType
-    val base = targetType.base
-    switch(base) {
-        GenericClassRef: #{base.clazz.typeParam -> base.typeArg}
+auxiliary typeParamMap(MemberAccess it, RuleEnvironment G) {
+    G |- target : var RoleType targetType
+    val ref = targetType.base
+    switch(ref) {
+        GenericClassRef: #{ref.clazz.typeParam -> ref.typeArg}
         default: emptyMap
     }
 }

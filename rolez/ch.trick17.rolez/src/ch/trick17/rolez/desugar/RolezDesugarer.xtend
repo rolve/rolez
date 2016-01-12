@@ -42,6 +42,14 @@ class RolezDesugarer extends AbstractDeclarativeDesugarer {
     }
     
     @Rule
+    def addSuperClassRef(Class it) {
+        if(superclassRef == null && !isObjectClass)
+            superclassRef = createSimpleClassRef => [
+                createReference(SIMPLE_CLASS_REF__CLAZZ, objectClassName.toString)
+            ]
+    }
+    
+    @Rule
     def addSuperConstrCall(Constr it) {
         if(body != null && !(body.stmts.head instanceof SuperConstrCall)
                 && !enclosingClass.isObjectClass) {
@@ -49,12 +57,6 @@ class RolezDesugarer extends AbstractDeclarativeDesugarer {
             body.stmts.add(0, supr)
             supr.createReference(SUPER_CONSTR_CALL__CONSTR, "super")
         }
-    }
-    
-    @Rule
-    def addSuperClass(Class it) {
-        if(superclass == null && !isObjectClass)
-            createReference(CLASS__SUPERCLASS, objectClassName.toString)
     }
     
     @Rule

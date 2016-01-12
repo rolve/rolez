@@ -29,7 +29,7 @@ NormalClass:
     'class' name=QualifiedName
     ('[' typeParam=TypeParam ']')?
     (mapped?='mapped' 'to' jvmClass=[jvmTypes::JvmGenericType|QualifiedName])?
-    ('extends' superclass=[NormalClass|QualifiedName])?
+    ('extends' superclassRef=ClassRef)?
     ('{'
         (constrs+=Constr | members+=Member)+
     '}')?;
@@ -37,7 +37,7 @@ NormalClass:
 SingletonClass:
     'object' name=QualifiedName
     (mapped?='mapped' 'to' jvmClass=[jvmTypes::JvmGenericType|QualifiedName])?
-    ('extends' superclass=[NormalClass|QualifiedName])?
+    ('extends' superclassRef=ClassRef)?
     ('{'
         members+=Member+
     '}')?;
