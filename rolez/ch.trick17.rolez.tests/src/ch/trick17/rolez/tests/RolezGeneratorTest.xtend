@@ -75,10 +75,23 @@ class RolezGeneratorTest {
                 new(i: int) {}
                 new(i: int, j: int) {}
             }
+            class Container[E] mapped to «Container.canonicalName» {
+                mapped var e: E
+                mapped new
+                mapped def readonly  get: E
+                mapped def readwrite set(e: E):
+            }
             task VoidTask: {}
             task ReadWriteTask(o: readwrite Object): {}
             task SumTask(i: int, j: int): int { return i + j; }
         ''')
+    }
+    
+    static class Container<E> {
+        public var E e
+        new() {}
+        def E get() { e }
+        def set(E e) { this.e = e }
     }
     
     def javaClasses() {
@@ -1139,6 +1152,7 @@ class RolezGeneratorTest {
             var ai : pure Object = new Array[int](10 * 10);
             var ab : pure Object = new Array[pure Base](42);
             var aai: pure Object = new Array[pure Array[int]](0);
+            new Container[int];
         '''.withFrame, classes).generate.assertEqualsJava('''
             new Base();
             new foo.bar.Base(0);
@@ -1147,6 +1161,7 @@ class RolezGeneratorTest {
             java.lang.Object ai = new rolez.lang.GuardedArray<int[]>(new int[10 * 10]);
             java.lang.Object ab = new rolez.lang.GuardedArray<Base[]>(new Base[42]);
             java.lang.Object aai = new rolez.lang.GuardedArray<rolez.lang.GuardedArray<int[]>[]>(new rolez.lang.GuardedArray[0]);
+            new «Container.canonicalName»<java.lang.Integer>();
         '''.withJavaFrame)
     }
     
