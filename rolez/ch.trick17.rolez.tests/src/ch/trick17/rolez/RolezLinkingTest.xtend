@@ -216,6 +216,126 @@ class RolezLinkingTest {
         ''').assertError(NEW, LINKING_DIAGNOSTIC)
     }
     
+    
+    @Test def testOverriddenMethod() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {                def readwrite foo: {} }
+            class B extends A { override readwrite foo: {} }
+        ''').assertNoErrors
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {                def readwrite foo(i: int): {} }
+            class B extends A { override readwrite foo(i: int): {} }
+        ''').assertNoErrors
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {                def readwrite foo(i: int): int { return 0; } }
+            class B extends A { override readwrite foo(j: int): int { return 0; } }
+        ''').assertNoErrors
+    }
+    
+    @Test def testOverriddenMethodGeneric() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class GenericClass[T] mapped to «GenericClass.canonicalName» {
+                mapped new(t: T)
+                mapped def pure foo(t: T):
+                mapped def pure foo(t1: T, t2: T):
+                mapped def pure foo: T
+            }
+            class A extends GenericClass[int] {
+                new(i: int) { super(i); }
+                def      pure foo(t: double): {}
+                override pure foo(t: int   ): {}
+                override pure foo(t1: int, t2: int): {}
+                override pure foo: int { return 0; }
+            }
+            class B extends GenericClass[readwrite Object] {
+                new(o: readwrite Object) { super(o); }
+                def      pure foo(t: readonly  Object): {}
+                override pure foo(t: readwrite Object): {}
+                override pure foo(t1: readwrite Object, t2: readwrite Object): {}
+                override pure foo: readwrite Object { return null; }
+            }
+            class C extends GenericClass[readonly Object] {
+                new(o: readonly Object) { super(o); }
+                override pure foo: readwrite Object { return null; }
+            }
+        ''').assertNoErrors
+    }
+    
+    @Test def testOverriddenMethodFail() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {                def readwrite foo: {} }
+            class B extends A { override readwrite foo(i: int): {} }
+        ''').assertError(METHOD, LINKING_DIAGNOSTIC)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {                def readwrite foo(i: int): {} }
+            class B extends A { override readwrite foo(c: char): {} }
+        ''').assertError(METHOD, LINKING_DIAGNOSTIC)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {                def readwrite foo(a: readonly  A): {} }
+            class B extends A { override readwrite foo(a: readwrite A): {} }
+        ''').assertError(METHOD, LINKING_DIAGNOSTIC)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {                def readwrite foo(a: readwrite A): {} }
+            class B extends A { override readwrite foo(a: readonly  A): {} }
+        ''').assertError(METHOD, LINKING_DIAGNOSTIC)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {                def readwrite foo(a: readwrite A): {} }
+            class B extends A { override readwrite foo(a: readwrite B): {} }
+        ''').assertError(METHOD, LINKING_DIAGNOSTIC)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {                def readwrite foo(a: readwrite B): {} }
+            class B extends A { override readwrite foo(a: readwrite A): {} }
+        ''').assertError(METHOD, LINKING_DIAGNOSTIC)
+    }
+    
+    @Test def testOverridddenMethodGenericFail() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class GenericClass[T] mapped to «GenericClass.canonicalName» {
+                mapped def pure foo(t: T):
+            }
+            class A extends GenericClass[int] {
+                override pure foo(t: double): {}
+            }
+        ''').assertError(METHOD, LINKING_DIAGNOSTIC)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class GenericClass[T] mapped to «GenericClass.canonicalName» {
+                mapped def pure foo(t: T):
+            }
+            class A extends GenericClass[readwrite Object] {
+                override pure foo(t: readonly Object): {}
+            }
+        ''').assertError(METHOD, LINKING_DIAGNOSTIC)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class GenericClass[T] mapped to «GenericClass.canonicalName» {
+                mapped def pure foo(t: T):
+            }
+            class A extends GenericClass[readonly Object] {
+                override pure foo(t: readwrite Object): {}
+            }
+        ''').assertError(METHOD, LINKING_DIAGNOSTIC)
+    }
+    
+    static class GenericClass<T> {
+        new(T t) {}
+        new(T t, int i) {}
+        def void foo(T t) {}
+        def void foo(T t1, T t2) {}
+        def T foo() { null }
+    }
+    
     @Test def testJvmClass() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object

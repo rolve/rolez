@@ -44,7 +44,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
             else {
                 val candidates = targetType.base.parameterizedClass.allMembers.filter(Method)
                     .filter[m | m.name == memberName]
-                val maxSpecific = utils.maximallySpecific(candidates, it)
+                val maxSpecific = utils.maximallySpecific(candidates, it).toList
                 
                 if(maxSpecific.size <= 1)
                     scopeFor(maxSpecific)
@@ -61,7 +61,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     def scope_New_constr(New it, EReference ref) {
         val clazz = classRef.parameterizedClass
         if(clazz instanceof NormalClass) {
-            val maxSpecific = utils.maximallySpecific(clazz.constrs, it)
+            val maxSpecific = utils.maximallySpecific(clazz.constrs, it).toList
             
             if(maxSpecific.size <= 1)
                 scopeFor(maxSpecific, [QualifiedName.create("new")], IScope.NULLSCOPE)
@@ -75,14 +75,22 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     }
     
     def scope_SuperConstrCall_constr(SuperConstrCall it, EReference ref) {
-        val maxSpecific = utils.maximallySpecific(enclosingClass.parameterizedSuperclass.constrs, it)
+        val maxSpecific =
+            utils.maximallySpecific(enclosingClass.parameterizedSuperclass.constrs, it).toList
         
-        if(maxSpecific.size <= 1)
-            scopeFor(maxSpecific, [QualifiedName.create("super")], IScope.NULLSCOPE)
-        else {
+        if(maxSpecific.size > 1)
             validator.delayedError("Constructor call is ambiguous", it, ref, AMBIGUOUS_CALL)
-            scopeFor(maxSpecific)
-        }
+        
+        // IMPROVE: Better error message if no constructor is found
+        scopeFor(maxSpecific, [QualifiedName.create("super")], IScope.NULLSCOPE)
+    }
+    
+    def scope_Method_overriddenMethod(Method it, EReference ref) {
+        val superMethods = enclosingClass.parameterizedSuperclass.allMembers.filter(Method)
+        val matching = superMethods.filter[m | utils.equalSignature(m, it)].toList
+        
+        // IMPROVE: Better error message if no matching method found
+        scopeFor(matching, [QualifiedName.create("override")], IScope.NULLSCOPE)
     }
     
     def scope_Field_jvmField(Field it, EReference ref) {
@@ -93,6 +101,8 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
             f.simpleName == name && f.visibility == JvmVisibility.PUBLIC
                 && f.isStatic == enclosingClass.isSingleton
         ]
+        
+        // IMPROVE: Better error message if no field is found
         scopeFor(candidates, [QualifiedName.create("mapped")], IScope.NULLSCOPE)
     }
     
@@ -108,6 +118,8 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
                 && params.size == m.parameters.size
                 && params.forall[type.mapsTo(javaParams.next.parameterType)]
         ]
+        
+        // IMPROVE: Better error message if no method is found
         scopeFor(candidates, [QualifiedName.create("mapped")], IScope.NULLSCOPE)
     }
     
@@ -121,6 +133,8 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
                 && params.size == c.parameters.size
                 && params.forall[type.mapsTo(javaParams.next.parameterType)]
         ]
+        
+        // IMPROVE: Better error message if no constructor is found
         scopeFor(candidates, [QualifiedName.create("mapped")], IScope.NULLSCOPE)
     }
     

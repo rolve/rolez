@@ -113,22 +113,7 @@ class RolezValidatorTest {
         ''').assertError(TYPE_PARAM, INCORRECT_TYPE_PARAM)
     }
     
-    @Test def testOverride() {
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class A {                def readwrite foo: {} }
-            class B extends A { override readwrite foo: {} }
-        ''').assertNoErrors
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class A {                def readwrite foo(i: int): {} }
-            class B extends A { override readwrite foo(i: int): {} }
-        ''').assertNoErrors
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class A {                def readwrite foo(i: int): int { return 0; } }
-            class B extends A { override readwrite foo(j: int): int { return 0; } }
-        ''').assertNoErrors
+    @Test def testIncompatibleReturnType() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {                def readwrite foo: readwrite A { return new A; } }
@@ -142,51 +127,33 @@ class RolezValidatorTest {
         
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class A {                def readwrite foo: {} }
-            class B extends A { override readonly  foo: {} }
-        ''').assertNoErrors
-        
+            class A {                def pure foo: int    {} }
+            class B extends A { override pure foo: double {} }
+        ''').assertError(METHOD, INCOMPATIBLE_RETURN_TYPE)
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class A {                def readwrite foo: {} }
-            class B extends A { override readonly  foo: {} }
-        ''').assertNoErrors
-        
+            class A {                def pure foo: pure B {} }
+            class B extends A { override pure foo: pure A {} }
+        ''').assertError(METHOD, INCOMPATIBLE_RETURN_TYPE)
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class GenericClass[T] mapped to «GenericClass.canonicalName» {
-                mapped new(t: T)
-                mapped def pure foo(t: T):
-                mapped def pure foo(t1: T, t2: T):
-                mapped def pure foo: T
-            }
-            class A extends GenericClass[int] {
-                new(i: int) { super(i); }
-                def      pure foo(t: double): {}
-                override pure foo(t: int   ): {}
-                override pure foo(t1: int, t2: int): {}
-                override pure foo: int { return 0; }
-            }
-            class B extends GenericClass[readwrite Object] {
-                new(o: readwrite Object) { super(o); }
-                def      pure foo(t: readonly  Object): {}
-                override pure foo(t: readwrite Object): {}
-                override pure foo(t1: readwrite Object, t2: readwrite Object): {}
-                override pure foo: readwrite Object { return null; }
-            }
-            class C extends GenericClass[readonly Object] {
-                new(o: readonly Object) { super(o); }
-                override pure foo: readwrite Object { return null; }
-            }
-        ''').assertNoErrors
+            class A {                def pure foo: readwrite Object {} }
+            class B extends A { override pure foo: readonly  Object {} }
+        ''').assertError(METHOD, INCOMPATIBLE_RETURN_TYPE)
     }
     
-    static class GenericClass<T> {
-        new(T t) {}
-        new(T t, int i) {}
-        def void foo(T t) {}
-        def void foo(T t1, T t2) {}
-        def T foo() { null }
+    @Test def testIncompatibleThisRole() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {                def readwrite foo: {} }
+            class B extends A { override readonly  foo: {} }
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {                def readonly  foo: {} }
+            class B extends A { override readwrite foo: {} }
+        ''').assertError(METHOD, INCOMPATIBLE_THIS_ROLE)
     }
     
     @Test def testMissingOverride() {
@@ -220,7 +187,9 @@ class RolezValidatorTest {
             class A {           def readwrite foo(a: readwrite A): {} }
             class B extends A { def readwrite foo(b: readwrite A): {} }
         ''').assertError(METHOD, MISSING_OVERRIDE)
-        
+    }
+    
+    @Test def testMissingOverrideGeneric() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class GenericClass[T] mapped to «GenericClass.canonicalName» {
@@ -267,70 +236,12 @@ class RolezValidatorTest {
         ''').assertError(METHOD, MISSING_OVERRIDE)
     }
     
-    @Test def testIncorrectOverride() {
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class A {                def readonly  foo: {} }
-            class B extends A { override readwrite foo: {} }
-        ''').assertError(METHOD, INCOMPATIBLE_THIS_ROLE)
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class A {                def readwrite foo: {} }
-            class B extends A { override readwrite foo(i: int): {} }
-        ''').assertError(METHOD, INCORRECT_OVERRIDE)
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class A {                def readwrite foo(i: int): {} }
-            class B extends A { override readwrite foo(c: char): {} }
-        ''').assertError(METHOD, INCORRECT_OVERRIDE)
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class A {                def readwrite foo(a: readonly  A): {} }
-            class B extends A { override readwrite foo(a: readwrite A): {} }
-        ''').assertError(METHOD, INCORRECT_OVERRIDE)
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class A {                def readwrite foo(a: readwrite A): {} }
-            class B extends A { override readwrite foo(a: readonly  A): {} }
-        ''').assertError(METHOD, INCORRECT_OVERRIDE)
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class A {                def readwrite foo(a: readwrite A): {} }
-            class B extends A { override readwrite foo(a: readwrite B): {} }
-        ''').assertError(METHOD, INCORRECT_OVERRIDE)
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class A {                def readwrite foo(a: readwrite B): {} }
-            class B extends A { override readwrite foo(a: readwrite A): {} }
-        ''').assertError(METHOD, INCORRECT_OVERRIDE)
-        
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class GenericClass[T] mapped to «GenericClass.canonicalName» {
-                mapped def pure foo(t: T):
-            }
-            class A extends GenericClass[int] {
-                override pure foo(t: double): {}
-            }
-        ''').assertError(METHOD, INCORRECT_OVERRIDE)
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class GenericClass[T] mapped to «GenericClass.canonicalName» {
-                mapped def pure foo(t: T):
-            }
-            class A extends GenericClass[readwrite Object] {
-                override pure foo(t: readonly Object): {}
-            }
-        ''').assertError(METHOD, INCORRECT_OVERRIDE)
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class GenericClass[T] mapped to «GenericClass.canonicalName» {
-                mapped def pure foo(t: T):
-            }
-            class A extends GenericClass[readonly Object] {
-                override pure foo(t: readwrite Object): {}
-            }
-        ''').assertError(METHOD, INCORRECT_OVERRIDE)
+    static class GenericClass<T> {
+        new(T t) {}
+        new(T t, int i) {}
+        def void foo(T t) {}
+        def void foo(T t1, T t2) {}
+        def T foo() { null }
     }
     
     @Test def testReturn() {

@@ -26,6 +26,7 @@ import ch.trick17.rolez.rolez.Program
 import ch.trick17.rolez.rolez.ReturnExpr
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.SimpleClassRef
+import ch.trick17.rolez.rolez.SingletonClass
 import ch.trick17.rolez.rolez.SuperConstrCall
 import ch.trick17.rolez.rolez.Task
 import ch.trick17.rolez.rolez.This
@@ -34,6 +35,7 @@ import ch.trick17.rolez.rolez.TypedBody
 import ch.trick17.rolez.rolez.VarKind
 import ch.trick17.rolez.rolez.VarRef
 import ch.trick17.rolez.rolez.Void
+import ch.trick17.rolez.scoping.RolezScopeProvider
 import ch.trick17.rolez.typesystem.RolezSystem
 import ch.trick17.rolez.typesystem.validation.RolezSystemValidator
 import java.util.HashSet
@@ -50,7 +52,6 @@ import static ch.trick17.rolez.Constants.*
 import static ch.trick17.rolez.rolez.Role.*
 import static ch.trick17.rolez.rolez.RolezPackage.Literals.*
 import static ch.trick17.rolez.rolez.VarKind.*
-import ch.trick17.rolez.rolez.SingletonClass
 
 class RolezValidator extends RolezSystemValidator {
 
@@ -240,36 +241,33 @@ class RolezValidator extends RolezSystemValidator {
                 error("Duplicate parameter " + p.name, p, NAMED__NAME, DUPLICATE_VARIABLE)
     }
 	
+	/* To reuse the code that finds overridden methods */
+	@Inject RolezScopeProvider scopeProvider
+	
 	/**
-	 * Checks that overriding methods actually override a method in a super
-	 * class and that the return type is co- and the <code>this</code> role is
-	 * contravariant. Note that covariance for the <code>this</code> role would
-	 * be unsafe.
+	 * For overriding methods, checks that the return type is co- and the <code>this</code> role is
+	 * contravariant. Note that covariance for the <code>this</code> role would be unsafe.
+	 * <p>
+	 * For non-overriding methods, checks that they're actually not overriding a method from the
+	 * superclass.
 	 */
 	@Check
 	def checkOverrides(Method it) {
-	    val superMethods = enclosingClass.parameterizedSuperclass.allMembers.filter(Method)
-        val matching = superMethods.filter[m | utils.equalSignature(m, it)]
-	    
-	    if(matching.size > 0) {
-	        if(overriding) {
-                for(match : matching) {
-                    if(system.subtype(utils.createEnv(it), type, match.type).failed)
-                        error("The return type is incompatible with overridden method " + match.string,
-                            TYPED__TYPE, INCOMPATIBLE_RETURN_TYPE)
-                    if(system.subrole(match.thisRole, thisRole).failed)
-                        error("This role of \"this\" is incompatible with overridden method" + match.string,
-                            TYPED__TYPE, INCOMPATIBLE_THIS_ROLE)
-                }
-            }
-            else
+        if(overriding) {
+            if(system.subtype(utils.createEnv(it), type, overriddenMethod.type).failed)
+                error("The return type is incompatible with overridden method " + overriddenMethod.string,
+                    TYPED__TYPE, INCOMPATIBLE_RETURN_TYPE)
+            if(system.subrole(overriddenMethod.thisRole, thisRole).failed)
+                error("This role of \"this\" is incompatible with overridden method" + overriddenMethod.string,
+                    TYPED__TYPE, RolezValidator.INCOMPATIBLE_THIS_ROLE)
+        }
+        else {
+            val scope = scopeProvider.scope_Method_overriddenMethod(it, METHOD__OVERRIDDEN_METHOD)
+            if(!scope.allElements.isEmpty)
                 error("Method must be declared with \"override\" since it
                         actually overrides a superclass method",
                     NAMED__NAME, MISSING_OVERRIDE)
         }
-        else if(overriding)
-           error("Method must override a superclass method",
-               NAMED__NAME, INCORRECT_OVERRIDE)
 	}
 	
 	@Check

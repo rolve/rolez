@@ -219,6 +219,8 @@ class RolezExtensions {
     def isMapped( Field it) { jvmField  != null }
     def isMapped(Method it) { jvmMethod != null }
     
+    def isOverriding(Method it) { overriddenMethod != null }
+    
     /*
      * toString() replacements:
      */

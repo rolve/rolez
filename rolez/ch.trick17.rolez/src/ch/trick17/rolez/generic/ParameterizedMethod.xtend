@@ -18,13 +18,13 @@ package class ParameterizedMethod extends ParameterizedEObject<Method> implement
         super(eObject, eContainer, typeArgs)
     }
     
-    override getJvmMethod() { eObject.jvmMethod }
-    override getThisRole()  { eObject.thisRole }
-    override isOverriding() { eObject.isOverriding }
-    override getName()      { eObject.name }
-    override getParams()    { eObject.parameterizedParams }
-    override getType()      { eObject.type.parameterized }
-    override getBody()      { eObject.body }
+    override getJvmMethod()        { eObject.jvmMethod }
+    override getThisRole()         { eObject.thisRole }
+    override getOverriddenMethod() { eObject.overriddenMethod }
+    override getName()             { eObject.name }
+    override getParams()           { eObject.parameterizedParams }
+    override getType()             { eObject.type.parameterized }
+    override getBody()             { eObject.body }
     
     override eGet(EStructuralFeature feature) {
         if(feature === PARAMETERIZED_BODY__PARAMS) params
@@ -32,10 +32,10 @@ package class ParameterizedMethod extends ParameterizedEObject<Method> implement
         else eObject.eGet(feature)
     }
     
-    override setJvmMethod(JvmOperation value) { throw new AssertionError }
-    override setOverriding(    boolean value) { throw new AssertionError }
-    override setThisRole(         Role value) { throw new AssertionError }
-    override setName(           String value) { throw new AssertionError }
-    override setType(             Type value) { throw new AssertionError }
-    override setBody(            Block value) { throw new AssertionError }
+    override setJvmMethod( JvmOperation value) { throw new AssertionError }
+    override setOverriddenMethod(Method value) { throw new AssertionError }
+    override setThisRole(          Role value) { throw new AssertionError }
+    override setName(            String value) { throw new AssertionError }
+    override setType(              Type value) { throw new AssertionError }
+    override setBody(             Block value) { throw new AssertionError }
 }
