@@ -1,11 +1,12 @@
-package ch.trick17.rolez.tests
+package ch.trick17.rolez.validation
 
 import ch.trick17.rolez.RolezUtils
+import ch.trick17.rolez.TestUtils
 import ch.trick17.rolez.rolez.Program
 import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RolezFactory
 import ch.trick17.rolez.rolez.Type
-import ch.trick17.rolez.validation.JavaMapper
+import ch.trick17.rolez.tests.RolezInjectorProvider
 import javax.inject.Inject
 import org.eclipse.xtext.common.types.JvmDeclaredType
 import org.eclipse.xtext.common.types.JvmOperation
@@ -30,7 +31,7 @@ class JavaMapperTest {
     @Inject extension RolezFactory
     @Inject extension RolezUtils
     @Inject extension ParseHelper<Program>
-    @Inject extension TestUtilz
+    @Inject extension TestUtils
     @Inject IJvmTypeProvider.Factory jvmTypesFactory
     
     static interface Methods<T> {
@@ -130,7 +131,7 @@ class JavaMapperTest {
     
     private def jvmTypeRef(String name) {
         (jvmTypesFactory.findOrCreateTypeProvider(newResourceSet)
-            .findTypeByName("ch.trick17.rolez.tests.JavaMapperTest$Methods") as JvmDeclaredType)
+            .findTypeByName(Methods.name) as JvmDeclaredType)
             .method(name + "Method").returnType
     }
     

@@ -1,7 +1,8 @@
-package ch.trick17.rolez.tests
+package ch.trick17.rolez.generator
 
-import ch.trick17.rolez.generator.RolezGenerator
+import ch.trick17.rolez.TestUtils
 import ch.trick17.rolez.rolez.Program
+import ch.trick17.rolez.tests.RolezInjectorProvider
 import com.google.common.io.ByteStreams
 import com.google.common.io.CharStreams
 import java.net.URI
@@ -36,7 +37,7 @@ class RolezGeneratorTest {
     
     @Inject extension ParseHelper<Program>
     @Inject extension ValidationTestHelper
-    @Inject extension TestUtilz
+    @Inject extension TestUtils
     @Inject RolezGenerator generator
     
     def classes() {
@@ -1050,7 +1051,7 @@ class RolezGeneratorTest {
                 }
             }
         ''', classes.with('''
-            class IntContainer mapped to ch.trick17.rolez.tests.RolezGeneratorTest.IntContainer {
+            class IntContainer mapped to «IntContainer.canonicalName» {
                 mapped val fortyTwo: int
                 mapped var value: int
                 mapped def readonly get: int
@@ -1065,7 +1066,7 @@ class RolezGeneratorTest {
                     super();
                 }
                 
-                public int test(final ch.trick17.rolez.tests.RolezGeneratorTest.IntContainer c1, final ch.trick17.rolez.tests.RolezGeneratorTest.IntContainer c2, final ch.trick17.rolez.tests.RolezGeneratorTest.IntContainer c3, final ch.trick17.rolez.tests.RolezGeneratorTest.IntContainer c4, final ch.trick17.rolez.tests.RolezGeneratorTest.IntContainer c5) {
+                public int test(final «IntContainer.canonicalName» c1, final «IntContainer.canonicalName» c2, final «IntContainer.canonicalName» c3, final «IntContainer.canonicalName» c4, final «IntContainer.canonicalName» c5) {
                     c1.set(42);
                     c2.get();
                     guardReadWrite(c3).value = 2;
@@ -1123,7 +1124,7 @@ class RolezGeneratorTest {
             var sa = c.returnsStringArray;
             c.takesStringArray(sa);
         '''.withFrame, classes.with('''
-            class ClassWithArrays mapped to ch.trick17.rolez.tests.RolezGeneratorTest.ClassWithArrays {
+            class ClassWithArrays mapped to «ClassWithArrays.canonicalName» {
                 mapped new(a: pure Array[int]) {}
                 
                 mapped def pure      takesIntArray(a: pure Array[int]            ):
@@ -1136,7 +1137,7 @@ class RolezGeneratorTest {
             }
         ''')).generate.assertEqualsJava('''
             rolez.lang.GuardedArray<int[]> ia = new rolez.lang.GuardedArray<int[]>(new int[0]);
-            final ch.trick17.rolez.tests.RolezGeneratorTest.ClassWithArrays c = new ch.trick17.rolez.tests.RolezGeneratorTest.ClassWithArrays(rolez.lang.GuardedArray.unwrap(ia, int[].class));
+            final «ClassWithArrays.canonicalName» c = new «ClassWithArrays.canonicalName»(rolez.lang.GuardedArray.unwrap(ia, int[].class));
             ia = rolez.lang.GuardedArray.<int[]>wrap(c.returnsIntArray());
             c.takesIntArray(rolez.lang.GuardedArray.unwrap(ia, int[].class));
             rolez.lang.GuardedArray<rolez.lang.GuardedArray<int[]>[]> iaa = rolez.lang.GuardedArray.<rolez.lang.GuardedArray<int[]>[]>wrap(c.returnsIntArrayArray());

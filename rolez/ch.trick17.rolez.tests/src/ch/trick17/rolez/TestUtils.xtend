@@ -1,4 +1,4 @@
-package ch.trick17.rolez.tests
+package ch.trick17.rolez
 
 import ch.trick17.rolez.RolezExtensions
 import ch.trick17.rolez.RolezUtils
@@ -39,7 +39,7 @@ import static extension org.junit.Assert.assertEquals
 
 import static extension org.hamcrest.MatcherAssert.assertThat
 
-class TestUtilz {
+class TestUtils {
     
     @Inject RolezSystem system
     @Inject extension RolezExtensions extensions

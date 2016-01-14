@@ -1,17 +1,14 @@
-package ch.trick17.rolez.tests
+package ch.trick17.rolez.cfg
 
 import ch.trick17.rolez.RolezUtils
-import ch.trick17.rolez.cfg.CfgProvider
-import ch.trick17.rolez.cfg.ControlFlowGraph
-import ch.trick17.rolez.cfg.ExitNode
-import ch.trick17.rolez.cfg.InstrNode
-import ch.trick17.rolez.cfg.Node
+import ch.trick17.rolez.TestUtils
 import ch.trick17.rolez.rolez.Boolean
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.IfStmt
 import ch.trick17.rolez.rolez.LogicalExpr
 import ch.trick17.rolez.rolez.ParameterizedBody
 import ch.trick17.rolez.rolez.Program
+import ch.trick17.rolez.tests.RolezInjectorProvider
 import ch.trick17.rolez.typesystem.RolezSystem
 import java.util.HashSet
 import java.util.Set
@@ -35,7 +32,7 @@ class CfgBuilderTest {
     @Inject RolezSystem system
     @Inject RolezUtils utils
     @Inject extension CfgProvider
-    @Inject extension TestUtilz
+    @Inject extension TestUtils
     @Inject extension ParseHelper<Program>
     @Inject extension ValidationTestHelper
     

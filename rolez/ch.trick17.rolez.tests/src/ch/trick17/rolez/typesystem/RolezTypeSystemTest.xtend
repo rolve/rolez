@@ -1,7 +1,8 @@
-package ch.trick17.rolez.tests
+package ch.trick17.rolez.typesystem
 
 import ch.trick17.rolez.RolezExtensions
 import ch.trick17.rolez.RolezUtils
+import ch.trick17.rolez.TestUtils
 import ch.trick17.rolez.rolez.Boolean
 import ch.trick17.rolez.rolez.Char
 import ch.trick17.rolez.rolez.Double
@@ -14,7 +15,7 @@ import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
 import ch.trick17.rolez.rolez.SuperConstrCall
-import ch.trick17.rolez.typesystem.RolezSystem
+import ch.trick17.rolez.tests.RolezInjectorProvider
 import javax.inject.Inject
 import org.eclipse.xtext.junit4.InjectWith
 import org.eclipse.xtext.junit4.XtextRunner
@@ -42,7 +43,7 @@ class RolezTypeSystemTest {
     @Inject extension RolezFactory
     @Inject extension RolezExtensions
     @Inject extension RolezUtils
-    @Inject extension TestUtilz
+    @Inject extension TestUtils
     @Inject extension ParseHelper<Program>
     @Inject extension ValidationTestHelper
     

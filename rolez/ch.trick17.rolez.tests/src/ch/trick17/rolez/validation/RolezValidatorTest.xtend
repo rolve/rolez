@@ -1,6 +1,7 @@
-package ch.trick17.rolez.tests
+package ch.trick17.rolez.validation
 
 import ch.trick17.rolez.rolez.Program
+import ch.trick17.rolez.tests.RolezInjectorProvider
 import javax.inject.Inject
 import org.eclipse.xtext.junit4.InjectWith
 import org.eclipse.xtext.junit4.XtextRunner
@@ -1366,10 +1367,10 @@ class RolezValidatorTest {
             class A {
                 var length: int
             }
-            class Mapped mapped to ch.trick17.rolez.tests.RolezValidatorTest.Mapped {
+            class Mapped mapped to «Mapped.canonicalName» {
                 mapped val i: int
             }
-            class MappedGuarded mapped to ch.trick17.rolez.tests.RolezValidatorTest.MappedGuarded {
+            class MappedGuarded mapped to «MappedGuarded.canonicalName» {
                 mapped var i: int
             }
         ''').assertNoErrors
@@ -1387,19 +1388,19 @@ class RolezValidatorTest {
         ''').assertError(FIELD, NON_MAPPED_FIELD)
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class Mapped mapped to ch.trick17.rolez.tests.RolezValidatorTest.Mapped {
+            class Mapped mapped to «Mapped.canonicalName» {
                 mapped val i: double
             }
         ''').assertError(DOUBLE, INCORRECT_MAPPED_FIELD)
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class MappedGuarded mapped to ch.trick17.rolez.tests.RolezValidatorTest.MappedGuarded {
+            class MappedGuarded mapped to «MappedGuarded.canonicalName» {
                 mapped val i: int
             }
         ''').assertError(FIELD, INCORRECT_MAPPED_FIELD)
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class Mapped mapped to ch.trick17.rolez.tests.RolezValidatorTest.Mapped {
+            class Mapped mapped to «Mapped.canonicalName» {
                 mapped var j: int
             }
         ''').assertError(FIELD, NON_GUARDED_MAPPED_VAR_FIELD)

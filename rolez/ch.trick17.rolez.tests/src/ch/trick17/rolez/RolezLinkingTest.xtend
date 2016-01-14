@@ -1,6 +1,7 @@
-package ch.trick17.rolez.tests
+package ch.trick17.rolez
 
 import ch.trick17.rolez.rolez.Program
+import ch.trick17.rolez.tests.RolezInjectorProvider
 import javax.inject.Inject
 import org.eclipse.xtext.junit4.InjectWith
 import org.eclipse.xtext.junit4.XtextRunner
@@ -18,7 +19,7 @@ class RolezLinkingTest {
     
     @Inject extension ParseHelper<Program>
     @Inject extension ValidationTestHelper
-    @Inject extension TestUtilz
+    @Inject extension TestUtils
     
     @Test def testMultipleResources() {
         val set = newResourceSet.with("class rolez.lang.Object mapped to java.lang.Object").with("class A")
