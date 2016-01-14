@@ -134,7 +134,7 @@ class RolezUtils {
         
         applicable.filter[p |
             applicable.forall[
-                p == it || !it.strictlyMoreSpecificThan(p)
+                p === it || !it.strictlyMoreSpecificThan(p)
             ]
         ]
     }
