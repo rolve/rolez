@@ -24,13 +24,13 @@ abstract class Parameterized {
     
     package val Map<TypeParam, Type> typeArgs
     
-    new(Map<TypeParam, Type> typeArgs) {
+    package new(Map<TypeParam, Type> typeArgs) {
         if(typeArgs == null)
             throw new NullPointerException
         this.typeArgs = typeArgs
     }
     
-    new(Parameterized base) {
+    package new(Parameterized base) {
         this.typeArgs = base.typeArgs
     }
     

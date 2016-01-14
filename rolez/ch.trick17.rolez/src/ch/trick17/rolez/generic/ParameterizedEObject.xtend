@@ -29,7 +29,7 @@ abstract class ParameterizedEObject<E extends EObject>
     package val E eObject
     val EObject eContainer
     
-    new(E eObject, EObject eContainer, Map<TypeParam, Type> typeArgs) {
+    package new(E eObject, EObject eContainer, Map<TypeParam, Type> typeArgs) {
         super(typeArgs)
         if(eObject == null || eContainer == null) throw new NullPointerException
         this.eObject = eObject;

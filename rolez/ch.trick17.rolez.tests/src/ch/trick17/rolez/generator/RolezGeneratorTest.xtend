@@ -607,6 +607,30 @@ class RolezGeneratorTest {
         ''')
     }
     
+    @Test def testMethodOverrideGeneric() {
+        parse('''
+            class IntContainer extends Container[int] {
+                override readwrite set(i: int): {
+                    this.e = i;
+                }
+            }
+        ''', classes).generate.assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
+            
+            public class IntContainer extends «Container.canonicalName»<java.lang.Integer> {
+                
+                public IntContainer() {
+                    super();
+                }
+                
+                @java.lang.Override
+                public void set(final java.lang.Integer i) {
+                    guardReadWrite(this).e = i;
+                }
+            }
+        ''')
+    }
+    
     @Test def testConstr() {
         parse('''
             package foo

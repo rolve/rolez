@@ -176,17 +176,9 @@ class RolezExtensions {
     
     def decl(LocalVar it) { enclosingStmt as LocalVarDecl }
     
-    def destParam(Expr it) {
-        val argumented = eContainer as Argumented
-        val index = argumented.args.indexOf(it)
-        argumented.body.params.get(index)
-    }
+    def destParam(Expr it) { (eContainer as Argumented).body.params.get(argIndex) }
     
-    def jvmParam(Param it) {
-        val body = enclosingBody
-        val index = body.params.indexOf(it)
-        body.jvmBody.parameters.get(index)
-    }
+    def jvmParam(Param it) { enclosingBody.jvmBody.parameters.get(paramIndex) }
     
     def dispatch jvmBody(Method it) { jvmMethod }
     def dispatch jvmBody(Constr it) { jvmConstr }
@@ -220,6 +212,9 @@ class RolezExtensions {
     def isMapped(Method it) { jvmMethod != null }
     
     def isOverriding(Method it) { overriddenMethod != null }
+    
+    def paramIndex(Param it) { enclosingBody.params.indexOf(it) }
+    def   argIndex( Expr it) { (eContainer as Argumented).args.indexOf(it) }
     
     /*
      * toString() replacements:

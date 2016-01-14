@@ -2,6 +2,7 @@ package ch.trick17.rolez.generator
 
 import ch.trick17.rolez.RolezExtensions
 import ch.trick17.rolez.RolezUtils
+import ch.trick17.rolez.generic.ParameterizedMethod
 import ch.trick17.rolez.rolez.ArithmeticBinaryExpr
 import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.BinaryExpr
@@ -319,7 +320,18 @@ class RolezGenerator extends AbstractGenerator {
     private def generateStaticCall(Method it)
         '''«enclosingClass.jvmClass.qualifiedName».«name»(«params.map[safeName].join(", ")»)'''
     
-    private def gen(Param it) '''«kind.gen»«type.gen» «safeName»'''
+    private def gen(Param it) {
+        // Use the boxed version of a primitive param type if the "overridden" param is a
+        // type parameter (e.g., T)
+        val superMethod = enclosingMethod?.overriddenMethod
+        val genType =
+            if(superMethod instanceof ParameterizedMethod && (superMethod as ParameterizedMethod)
+                    .genericEObject.params.get(paramIndex).type instanceof TypeParamRef)
+                type.genGeneric
+            else
+                type.gen
+        '''«kind.gen»«genType» «safeName»'''
+    }
     
     private def gen(VarKind it) { if(it == VAL) "final " }
     

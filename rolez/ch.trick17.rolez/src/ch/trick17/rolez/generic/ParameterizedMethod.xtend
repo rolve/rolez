@@ -12,9 +12,9 @@ import org.eclipse.emf.ecore.EStructuralFeature
 
 import static ch.trick17.rolez.rolez.RolezPackage.Literals.*
 
-package class ParameterizedMethod extends ParameterizedEObject<Method> implements Method {
+class ParameterizedMethod extends ParameterizedEObject<Method> implements Method {
     
-    new(Method eObject, EObject eContainer, Map<TypeParam, Type> typeArgs) {
+    package new(Method eObject, EObject eContainer, Map<TypeParam, Type> typeArgs) {
         super(eObject, eContainer, typeArgs)
     }
     
