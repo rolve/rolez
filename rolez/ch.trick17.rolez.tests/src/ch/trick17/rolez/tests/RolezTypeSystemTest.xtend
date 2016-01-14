@@ -546,7 +546,7 @@ class RolezTypeSystemTest {
             class rolez.lang.Object mapped to java.lang.Object
             class A
             class Container[E] mapped to «Container.canonicalName» {
-                mapped val e: E
+                mapped var e: E
             }
             task Main: {
                 new Container[int].e;
@@ -566,7 +566,7 @@ class RolezTypeSystemTest {
                 mapped var e: E
             }
             class A extends Container[int] {
-                def foo: int {
+                def readonly foo: int {
                     return this.e;
                 }
             }

@@ -2,7 +2,12 @@ package foo
 
 import rolez.util.Scanner
 
-main task Main(args: readonly Array[pure String]): {
+main task Main(args: readonly Array[readonly String]): {
+	the System.out.println("args:");
+	for(var i = 0; i < args.length; i += 1)
+		the System.out.println("  " + args.get(i));	
+	
+	the System.out.println("\nNow type your name:");
 	val scanner = new Scanner(the System.in);
 	
 	var continue = true;
@@ -13,7 +18,4 @@ main task Main(args: readonly Array[pure String]): {
 		else
 			the System.out.println("Hello " + line + "!");
 	}
-	
-	for(var i = 0; i < 10; i += 1)
-		the System.out.println("Good bye!".length);
 }
