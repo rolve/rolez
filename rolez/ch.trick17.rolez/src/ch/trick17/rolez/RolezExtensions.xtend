@@ -46,6 +46,8 @@ import org.eclipse.xtext.util.OnChangeEvictingCache
 
 import static ch.trick17.rolez.Constants.*
 
+import static extension ch.trick17.rolez.generic.Parameterized.*
+
 /**
  * Extension methods for the Rolez language elements
  */
@@ -78,13 +80,18 @@ class RolezExtensions {
     def Iterable<Member> allMembers(Class it) {
         members +
             if(superclass == null) emptyList
-            else superclass.allMembers.filter[m | !overrides(m)]
+            else parameterizedSuperclass.allMembers.filter[m | !overrides(m)]
     }
     
     val superclassesCache = new OnChangeEvictingCache
     
     def superclass(Class it) {
         val clazz = superclassRef?.clazz
+        if(clazz instanceof NormalClass) clazz else null
+    }
+    
+    def parameterizedSuperclass(Class it) {
+        val clazz = superclassRef?.parameterizedClass
         if(clazz instanceof NormalClass) clazz else null
     }
     
@@ -107,6 +114,11 @@ class RolezExtensions {
     
     def dispatch clazz( SimpleClassRef it) { clazz }
     def dispatch clazz(GenericClassRef it) { clazz }
+    
+    def dispatch parameterizedClass( SimpleClassRef it) { clazz }
+    def dispatch parameterizedClass(GenericClassRef it) {
+        clazz.parameterizedWith(#{clazz.typeParam -> typeArg})
+    }
     
     private def overrides(Class it, Member m) {
         switch(m) {

@@ -45,7 +45,6 @@ import ch.trick17.rolez.rolez.Task
 import ch.trick17.rolez.rolez.The
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.Type
-import ch.trick17.rolez.rolez.TypeParam
 import ch.trick17.rolez.rolez.TypeParamRef
 import ch.trick17.rolez.rolez.TypedBody
 import ch.trick17.rolez.rolez.UnaryMinus
@@ -55,8 +54,6 @@ import ch.trick17.rolez.rolez.VarKind
 import ch.trick17.rolez.rolez.VarRef
 import ch.trick17.rolez.rolez.WhileLoop
 import ch.trick17.rolez.validation.AbstractRolezValidator
-import it.xsemantics.runtime.RuleEnvironment
-import java.util.Map
 
 import static ch.trick17.rolez.Constants.*
 import static ch.trick17.rolez.rolez.Role.*
@@ -73,7 +70,6 @@ inject extension RolezUtils ___
 
 auxiliary {
     leastCommonSuperrole(Role r1, Role r2): Role
-    typeParamMap(Argumented a, RuleEnvironment G): Map<TypeParam, Type>
 }
 
 judgments {
@@ -103,20 +99,6 @@ judgments {
 auxiliary leastCommonSuperrole(Role r1, Role r2) {
     if(r1.value > r2.value) r1 else r2 // Very simple so far
 }
-
-auxiliary typeParamMap(MemberAccess it, RuleEnvironment G) {
-    G |- target : var RoleType targetType
-    val ref = targetType.base
-    switch(ref) {
-        GenericClassRef: #{ref.clazz.typeParam -> ref.typeArg}
-        default: emptyMap
-    }
-}
-
-auxiliary typeParamMap(Argumented _, RuleEnvironment G) {
-    emptyMap // TODO: Support for new, start and super(...)
-}
-
 
 rule TAssignment
     G |- Assignment a : Type t
@@ -228,10 +210,6 @@ from {
                     + targetType.role.string + " target"
                 source a.target
             var fieldType = a.field.type
-            fieldType = switch(fieldType) {
-                TypeParamRef: typeParamMap(a, G).get(fieldType.param)
-                default: fieldType
-            }
             t = switch(fieldType) {
                 RoleType: {
                     val role = leastCommonSuperrole(targetType.role, fieldType.role)
@@ -249,11 +227,7 @@ from {
                 error "Role mismatch: Cannot call method " + a.method.string
                     +" on a " + targetType.role.string + " target"
                 source a
-            val returnType = a.method.type
-            t = switch(returnType) {
-                TypeParamRef: typeParamMap(a, G).get(returnType.param)
-                default: returnType
-            }
+            t = a.method.type
         }
     }
     else {
@@ -413,15 +387,8 @@ from {
     a.args.size == p.params.size
         or fail error "Too many arguments" source a
     
-    val paramTypes = p.params.map[
-        val t = type
-        switch(t) {
-            TypeParamRef: typeParamMap(a, G).get(t.param)
-            default: t
-        }
-    ]
     val i = a.args.iterator
-    for(t : paramTypes) {
+    for(t : p.params.map[type]) {
         G |- i.next <| t
     }
 }

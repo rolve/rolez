@@ -1,6 +1,5 @@
 package ch.trick17.rolez
 
-import ch.trick17.rolez.desugar.DesugaringLazyLinkingResource
 import ch.trick17.rolez.desugar.IDesugarer
 import ch.trick17.rolez.desugar.RolezDesugarer
 import ch.trick17.rolez.rolez.RolezFactory
@@ -35,7 +34,7 @@ class RolezRuntimeModule extends AbstractRolezRuntimeModule {
     }
     
     override Class<? extends XtextResource> bindXtextResource() {
-        DesugaringLazyLinkingResource;
+        RolezResource;
     }
     
     def Class<? extends StringRepresentation> bindStringRepresentation() {

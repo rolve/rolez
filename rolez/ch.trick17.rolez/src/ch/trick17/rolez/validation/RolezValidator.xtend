@@ -248,8 +248,7 @@ class RolezValidator extends RolezSystemValidator {
 	 */
 	@Check
 	def checkOverrides(Method it) {
-	    val superMethods = enclosingClass.superclass
-	           .allMembers.filter(Method)
+	    val superMethods = enclosingClass.parameterizedSuperclass.allMembers.filter(Method)
         val matching = superMethods.filter[m | utils.equalSignature(m, it)]
 	    
 	    if(matching.size > 0) {

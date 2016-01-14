@@ -37,12 +37,12 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
         val memberName = utils.crossRefText(it, ref)
         
         if(targetType instanceof RoleType) {
-            val fields = targetType.base.clazz.allMembers.filter(Field)
+            val fields = targetType.base.parameterizedClass.allMembers.filter(Field)
                 .filter[f | f.name == memberName]
             if(args.isEmpty && !fields.isEmpty)
                 scopeFor(fields)
             else {
-                val candidates = targetType.base.clazz.allMembers.filter(Method)
+                val candidates = targetType.base.parameterizedClass.allMembers.filter(Method)
                     .filter[m | m.name == memberName]
                 val maxSpecific = utils.maximallySpecific(candidates, it)
                 
@@ -59,7 +59,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     }
     
     def scope_New_constr(New it, EReference ref) {
-        val clazz = classRef.clazz
+        val clazz = classRef.parameterizedClass
         if(clazz instanceof NormalClass) {
             val maxSpecific = utils.maximallySpecific(clazz.constrs, it)
             
@@ -75,7 +75,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     }
     
     def scope_SuperConstrCall_constr(SuperConstrCall it, EReference ref) {
-        val maxSpecific = utils.maximallySpecific(enclosingClass.superclass.constrs, it)
+        val maxSpecific = utils.maximallySpecific(enclosingClass.parameterizedSuperclass.constrs, it)
         
         if(maxSpecific.size <= 1)
             scopeFor(maxSpecific, [QualifiedName.create("super")], IScope.NULLSCOPE)
