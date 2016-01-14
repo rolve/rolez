@@ -120,7 +120,7 @@ class RolezGenerator extends AbstractGenerator {
     
     private def generateSuperclassName(NormalClass it) {
         if(superclass.isObjectClass) jvmGuardedClassName
-        else superclass.generateName
+        else superclassRef.gen
     }
     
     private def guardedFields(NormalClass it) {
@@ -144,7 +144,7 @@ class RolezGenerator extends AbstractGenerator {
         «ENDIF»
         import static «jvmGuardedClassName».*;
         
-        public final class «safeSimpleName» extends «superclass.generateName» {
+        public final class «safeSimpleName» extends «superclassRef.gen» {
             
             public static final «safeSimpleName» INSTANCE = new «safeSimpleName»();
             
@@ -246,6 +246,9 @@ class RolezGenerator extends AbstractGenerator {
     
     private def gen(Method it) '''
         
+        «IF isOverriding»
+        @java.lang.Override
+        «ENDIF»
         public «type.gen» «safeName»(«params.map[gen].join(", ")») {
             «body.genStmtsWithTryCatch»
         }

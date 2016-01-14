@@ -158,7 +158,9 @@ class RolezGeneratorTest {
                 }
             }
         ''')
-        
+    }
+    
+    @Test def testNormalClassWithSuperclass() {
         parse('''
             class A extends Base
         ''', classes).generate.assertEqualsJava('''
@@ -185,6 +187,25 @@ class RolezGeneratorTest {
         ''')
     }
     
+    @Test def testNormalClassWithGenericSuperclass() {
+        parse('''
+            class IntContainer extends Container[int]
+        ''', classes.with('''
+            class Container[E] mapped to «Container.canonicalName» {
+                mapped new
+            }
+        ''')).generate.assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
+            
+            public class IntContainer extends «Container.canonicalName»<java.lang.Integer> {
+                
+                public IntContainer() {
+                    super();
+                }
+            }
+        ''')
+    }
+    
     @Test def testSingletonClass() {
         parse('''
             object A
@@ -200,7 +221,22 @@ class RolezGeneratorTest {
         ''')
     }
     
-    @Test def testMappedSingletonClass() {
+    @Test def testSingletonClassWithSuperclass() {
+        parse('''
+            object A extends Base
+        ''', classes).generate.assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
+            
+            public final class A extends Base {
+                
+                public static final A INSTANCE = new A();
+                
+                private A() {}
+            }
+        ''')
+    }
+    
+    @Test def testSingletonClassMapped() {
         parse('''
             object rolez.lang.System2 mapped to java.lang.System {
                 mapped val out: readonly rolez.io.PrintStream
@@ -468,7 +504,9 @@ class RolezGeneratorTest {
                 }
             }
         ''')
-        
+    }
+    
+    @Test def testMethodSingletonClass() {
         parse('''
             object A {
                 def pure foo: {}
@@ -486,7 +524,9 @@ class RolezGeneratorTest {
                 }
             }
         ''')
-        
+    }
+    
+    @Test def testMethodRoleOverloading() {
         parse('''
             class A {
                 def pure foo(o: readwrite Object): {}
@@ -508,7 +548,9 @@ class RolezGeneratorTest {
                 //}
             }
         ''')
-        
+    }
+    
+    @Test def testMethodCheckedExceptions() {
         parse('''
             val j = 0;
             val o: pure Object = new (rolez.io.PrintStream)("foo.txt");
@@ -541,6 +583,28 @@ class RolezGeneratorTest {
         '''.withJavaFrame)
         
         // TODO: Test with multiple types of exceptions, with RuntimeException(s), and with methods that throw exceptions
+    }
+    
+    @Test def testMethodOverride() {
+        parse('''
+            class A {
+                override readonly equals(o: readonly Object): boolean { return true; }
+            }
+        ''', classes).generate.assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
+            
+            public class A extends «jvmGuardedClassName» {
+                
+                public A() {
+                    super();
+                }
+                
+                @java.lang.Override
+                public boolean equals(final java.lang.Object o) {
+                    return true;
+                }
+            }
+        ''')
     }
     
     @Test def testConstr() {
