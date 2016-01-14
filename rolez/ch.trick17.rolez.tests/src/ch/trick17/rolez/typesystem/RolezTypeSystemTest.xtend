@@ -582,7 +582,7 @@ class RolezTypeSystemTest {
     static class Container<E> extends Guarded {
         public var E e = null
         def E get() { e }
-        def set(E e) { this.e = e }
+        def void set(E e) { this.e = e }
     }
     
     @Test def testTMemberAccessFieldRoleMismatch() {
@@ -731,9 +731,11 @@ class RolezTypeSystemTest {
         
         // Apparently, when the method is defined in another resource,
         // linking somehow works differently...
-        val set = newResourceSet.with("class A { def pure foo(i: int): {} }")
-        parse('''
+        val set = newResourceSet.with('''
             class rolez.lang.Object mapped to java.lang.Object
+            class A { def pure foo(i: int): {} }
+        ''')
+        parse('''
             class B {
                 def pure bar: { new A.foo(!5); }
             }

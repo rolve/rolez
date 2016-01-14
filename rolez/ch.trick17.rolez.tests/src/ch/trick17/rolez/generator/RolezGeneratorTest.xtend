@@ -88,11 +88,11 @@ class RolezGeneratorTest {
         ''')
     }
     
-    static class Container<E> {
+    static class Container<E> extends Guarded {
         public var E e
         new() {}
         def E get() { e }
-        def set(E e) { this.e = e }
+        def void set(E e) { this.e = e }
     }
     
     def javaClasses() {
@@ -1189,7 +1189,7 @@ class RolezGeneratorTest {
             c.takesStringArray(sa);
         '''.withFrame, classes.with('''
             class ClassWithArrays mapped to «ClassWithArrays.canonicalName» {
-                mapped new(a: pure Array[int]) {}
+                mapped new(a: pure Array[int])
                 
                 mapped def pure      takesIntArray(a: pure Array[int]            ):
                 mapped def pure takesIntArrayArray(a: pure Array[pure Array[int]]):
@@ -1390,7 +1390,7 @@ class RolezGeneratorTest {
         val errors = new StringBuilder
         val listener = new DiagnosticListener<JavaFileObject> {
             override report(Diagnostic<? extends JavaFileObject> it) {
-                errors.append(it)
+                errors.append(it).append("\n\n")
             }
         }
         
