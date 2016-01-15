@@ -1107,7 +1107,9 @@ class RolezGeneratorTest {
             "Hello".substring(1, 3);
             this.bar();
         '''.withJavaFrame)
-        
+    }
+    
+    @Test def testMemberAccessGuarded() {
         // Field access is guarded, method calls are not (in case this is not obvious...)
         parse('''
             class A {
@@ -1158,8 +1160,10 @@ class RolezGeneratorTest {
                 }
             }
         ''')
-        
-        // Same for mapped classes (only Guarded mapped classes can have var fields)
+    }
+    
+    @Test def testMemberAccessGuardedMapped() {
+        // Only Guarded mapped classes can have var fields
         parse('''
             class A {
                 def pure test(c1: readwrite IntContainer, c2: readwrite IntContainer, c3: readwrite IntContainer, c4: readwrite IntContainer, c5: readwrite IntContainer): int {
@@ -1193,7 +1197,9 @@ class RolezGeneratorTest {
                 }
             }
         ''')
-        
+    }
+    
+    @Test def testMemberAccessArray() {
         // Access to array components is guarded, access to length field is not
         parse('''
             class A {
@@ -1229,8 +1235,9 @@ class RolezGeneratorTest {
                 }
             }
         ''')
-        
-        // Coercion of "native" arrays
+    }
+    
+    @Test def testMemberAccessArrayCoercion() {
         parse('''
             var ia: pure Array[int] = new Array[int](0);
             val c = new ClassWithArrays(ia);
