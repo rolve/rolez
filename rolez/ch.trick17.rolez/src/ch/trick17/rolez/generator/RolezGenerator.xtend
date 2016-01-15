@@ -330,7 +330,7 @@ class RolezGenerator extends AbstractGenerator {
     }
     
     private def boolean overridesGenericParam(Param it) {
-        val superMethod = enclosingMethod?.overriddenMethod
+        val superMethod = enclosingMethod?.superMethod
         val superParam = 
             if(superMethod instanceof ParameterizedMethod)
                 superMethod.genericEObject.params.get(paramIndex)
@@ -347,10 +347,11 @@ class RolezGenerator extends AbstractGenerator {
     }
     
     private def boolean overridesGenericReturnType(Method it) {
-        val superMethod = overriddenMethod
         val superReturnType = 
-            if(superMethod instanceof ParameterizedMethod) superMethod.genericEObject.type
-            else superMethod?.type
+            if(superMethod instanceof ParameterizedMethod)
+                (superMethod as ParameterizedMethod).genericEObject.type
+            else
+                superMethod?.type
         
         superReturnType instanceof TypeParamRef
             || superMethod != null && superMethod.overridesGenericReturnType

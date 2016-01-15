@@ -211,7 +211,7 @@ class RolezExtensions {
     def isMapped( Field it) { jvmField  != null }
     def isMapped(Method it) { jvmMethod != null }
     
-    def isOverriding(Method it) { overriddenMethod != null }
+    def isOverriding(Method it) { superMethod != null }
     
     def paramIndex(Param it) { enclosingBody.params.indexOf(it) }
     def   argIndex( Expr it) { (eContainer as Argumented).args.indexOf(it) }

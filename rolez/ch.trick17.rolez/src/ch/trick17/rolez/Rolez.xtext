@@ -67,7 +67,7 @@ enum VarKind:
 
 Method:
     jvmMethod=[jvmTypes::JvmOperation|MappedKeyword]?
-    (overriddenMethod=[Method|OverrideKeyword] | 'def') thisRole=Role name=ID
+    (superMethod=[Method|OverrideKeyword] | 'def') thisRole=Role name=ID
     ('(' params+=Param (',' params+=Param)* ')')?
     ':' type=Type
     body=Block?;

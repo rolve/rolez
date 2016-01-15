@@ -254,15 +254,15 @@ class RolezValidator extends RolezSystemValidator {
 	@Check
 	def checkOverrides(Method it) {
         if(overriding) {
-            if(system.subtype(utils.createEnv(it), type, overriddenMethod.type).failed)
-                error("The return type is incompatible with overridden method " + overriddenMethod.string,
+            if(system.subtype(utils.createEnv(it), type, superMethod.type).failed)
+                error("The return type is incompatible with overridden method " + superMethod.string,
                     TYPED__TYPE, INCOMPATIBLE_RETURN_TYPE)
-            if(system.subrole(overriddenMethod.thisRole, thisRole).failed)
-                error("This role of \"this\" is incompatible with overridden method" + overriddenMethod.string,
+            if(system.subrole(superMethod.thisRole, thisRole).failed)
+                error("This role of \"this\" is incompatible with overridden method " + superMethod.string,
                     TYPED__TYPE, RolezValidator.INCOMPATIBLE_THIS_ROLE)
         }
         else {
-            val scope = scopeProvider.scope_Method_overriddenMethod(it, METHOD__OVERRIDDEN_METHOD)
+            val scope = scopeProvider.scope_Method_superMethod(it, METHOD__SUPER_METHOD)
             if(!scope.allElements.isEmpty)
                 error("Method must be declared with \"override\" since it
                         actually overrides a superclass method",

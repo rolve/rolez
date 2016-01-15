@@ -85,9 +85,9 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
         scopeFor(maxSpecific, [QualifiedName.create("super")], IScope.NULLSCOPE)
     }
     
-    def scope_Method_overriddenMethod(Method it, EReference ref) {
-        val superMethods = enclosingClass.parameterizedSuperclass.allMembers.filter(Method)
-        val matching = superMethods.filter[m | utils.equalSignature(m, it)].toList
+    def scope_Method_superMethod(Method it, EReference ref) {
+        val allMethods = enclosingClass.parameterizedSuperclass.allMembers.filter(Method)
+        val matching = allMethods.filter[m | utils.equalSignature(m, it)].toList
         
         // IMPROVE: Better error message if no matching method found
         scopeFor(matching, [QualifiedName.create("override")], IScope.NULLSCOPE)
