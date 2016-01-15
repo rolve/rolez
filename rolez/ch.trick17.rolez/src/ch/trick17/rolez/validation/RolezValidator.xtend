@@ -71,6 +71,7 @@ class RolezValidator extends RolezSystemValidator {
     public static val INCORRECT_OVERRIDE = "incorrect override"
     public static val INCOMPATIBLE_RETURN_TYPE = "incompatible return type"
     public static val INCOMPATIBLE_THIS_ROLE = "incompatible \"this\" role"
+    public static val INCOMPATIBLE_PARAM_TYPE = "incompatible param type"
     public static val MISSING_RETURN_EXPR = "missing return statement"
     public static val AMBIGUOUS_CALL = "ambiguous call"
     public static val MISSING_TYPE_ARG = "missing type argument"
@@ -192,21 +193,21 @@ class RolezValidator extends RolezSystemValidator {
     }
 	
 	/**
-	 * Checks that there are no other methods in the same class with the same
-	 * signature. The signature does not comprise the role of <code>this</code>,
-	 * therefore <code>this</code>-role-based overloading is not possible.
+	 * Checks that there are no other methods in the same class with the same signature. The
+	 * signature does not comprise roles, therefore <code>this</code>-role-based overloading is not
+	 * possible, which greatly simplifies code generation.
 	 * <p>
-	 * The reason for this is that it might be surprising to programmers if
-	 * methods are virtually dispatched based on the class of the target, but
+	 * An additional reason for ignoring the "this" role is that it might be surprising to
+	 * programmers if methods are virtually dispatched based on the class of the target, but
 	 * statically dispatched based on its role.
 	 */
     @Check
     def checkNoDuplicateMethods(Method it) {
-        val matching = enclosingClass.methods.filter[m | utils.equalSignature(m, it)]
+        val matching = enclosingClass.methods.filter[m | utils.equalSignatureWithoutRoles(m, it)]
         if(matching.size < 1)
            throw new AssertionError
         if(matching.size > 1)
-           error("Duplicate method " + name + "("+ params.map[type.string].join(", ") + ")",
+           error("Duplicate method " + name + "("+ params.map[type.stringWithoutRoles].join(", ") + ")",
                NAMED__NAME, DUPLICATE_METHOD)
     }
     
@@ -220,7 +221,7 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkNoDuplicateConstrs(Constr it) {
-        val matching = enclosingClass.constrs.filter[c | utils.equalParams(c, it)]
+        val matching = enclosingClass.constrs.filter[c | utils.equalParamsWithoutRoles(c, it)]
         if(matching.size < 1)
            throw new AssertionError
         if(matching.size > 1)
@@ -241,33 +242,47 @@ class RolezValidator extends RolezSystemValidator {
                 error("Duplicate parameter " + p.name, p, NAMED__NAME, DUPLICATE_VARIABLE)
     }
 	
-	/* To reuse the code that finds overridden methods */
-	@Inject RolezScopeProvider scopeProvider
-	
 	/**
-	 * For overriding methods, checks that the return type is co- and the <code>this</code> role is
-	 * contravariant. Note that covariance for the <code>this</code> role would be unsafe.
-	 * <p>
-	 * For non-overriding methods, checks that they're actually not overriding a method from the
-	 * superclass.
+	 * For overriding methods, checks that the return type is co- and the parameter types and the
+	 * "this" role are contravariant. Note that the parameter types are already guaranteed to be
+	 * equal to the corresponding types in the overridden method, except for the roles (including
+	 * roles of type arguments).
 	 */
 	@Check
-	def checkOverrides(Method it) {
-        if(overriding) {
-            if(system.subtype(utils.createEnv(it), type, superMethod.type).failed)
-                error("The return type is incompatible with overridden method " + superMethod.string,
-                    TYPED__TYPE, INCOMPATIBLE_RETURN_TYPE)
-            if(system.subrole(superMethod.thisRole, thisRole).failed)
-                error("This role of \"this\" is incompatible with overridden method " + superMethod.string,
-                    TYPED__TYPE, RolezValidator.INCOMPATIBLE_THIS_ROLE)
+	def checkValidOverride(Method it) {
+        if(!overriding) return;
+        
+        if(system.subtype(utils.createEnv(it), type, superMethod.type).failed)
+            error("The return type is incompatible with overridden method " + superMethod.string,
+                TYPED__TYPE, INCOMPATIBLE_RETURN_TYPE)
+        if(system.subrole(superMethod.thisRole, thisRole).failed)
+            error("The role of \"this\" is incompatible with overridden method " + superMethod.string,
+                TYPED__TYPE, RolezValidator.INCOMPATIBLE_THIS_ROLE)
+        
+        for(p : params) {
+            val superParamType = superMethod.params.get(p.paramIndex).type
+            if(system.subtype(utils.createEnv(it), superParamType, p.type).failed)
+                error("This parameter type is incompatible with overridden method "
+                    + superMethod.string, p, TYPED__TYPE, RolezValidator.INCOMPATIBLE_PARAM_TYPE)
         }
-        else {
-            val scope = scopeProvider.scope_Method_superMethod(it, METHOD__SUPER_METHOD)
-            if(!scope.allElements.isEmpty)
-                error("Method must be declared with \"override\" since it
-                        actually overrides a superclass method",
-                    NAMED__NAME, MISSING_OVERRIDE)
-        }
+	}
+    
+    /* To reuse the code that finds overridden methods */
+    @Inject RolezScopeProvider scopeProvider
+    
+	/**
+     * For non-overriding methods, checks that they are not actually overriding a method from the
+     * superclass.
+	 */
+	@Check
+	def checkMissingOverride(Method it) {
+	    if(overriding) return
+	    
+        val scope = scopeProvider.scope_Method_superMethod(it, METHOD__SUPER_METHOD)
+        if(!scope.allElements.isEmpty)
+            error("Method must be declared with \"override\" since it
+                    actually overrides a superclass method",
+                NAMED__NAME, MISSING_OVERRIDE)
 	}
 	
 	@Check

@@ -526,30 +526,6 @@ class RolezGeneratorTest {
         ''')
     }
     
-    @Test def testMethodRoleOverloading() {
-        parse('''
-            class A {
-                def pure foo(o: readwrite Object): {}
-                def pure foo(o: readonly  Object): {}
-            }
-        ''', classes).generate.assertEqualsJava('''
-            import static «jvmGuardedClassName».*;
-            
-            public class A extends «jvmGuardedClassName» {
-                
-                public A() {
-                    super();
-                }
-                
-                public void foo(final java.lang.Object o) {
-                }
-                
-                //public void foo(final java.lang.Object o) {
-                //}
-            }
-        ''')
-    }
-    
     @Test def testMethodCheckedExceptions() {
         parse('''
             val j = 0;

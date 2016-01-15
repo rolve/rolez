@@ -113,7 +113,12 @@ class RolezValidatorTest {
         ''').assertError(TYPE_PARAM, INCORRECT_TYPE_PARAM)
     }
     
-    @Test def testIncompatibleReturnType() {
+    @Test def testValidOverride() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {                def readwrite foo: readwrite A { return new A; } }
+            class B extends A { override readwrite foo: readwrite A { return new A; } }
+        ''').assertNoErrors
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {                def readwrite foo: readwrite A { return new A; } }
@@ -125,6 +130,84 @@ class RolezValidatorTest {
             class B extends A { override readwrite foo: readwrite A { return new A; } }
         ''').assertNoErrors
         
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {                def readwrite foo: {} }
+            class B extends A { override readonly  foo: {} }
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {                def pure foo(o: readwrite Object): {} }
+            class B extends A { override pure foo(o: readwrite Object): {} }
+        ''').assertNoErrors
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {                def pure foo(o: readwrite Object): {} }
+            class B extends A { override pure foo(o: readonly  Object): {} }
+        ''').assertNoErrors
+    }
+    
+    @Test def testValidOverrideGeneric() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class GenericClass[T] mapped to «GenericClass.canonicalName» {
+                mapped new(t: T)
+                mapped def pure foo: T
+            }
+            class A extends GenericClass[readwrite Object] {
+                new { super(null); }
+                override pure foo: readwrite Object { return null; }
+            }
+        ''').assertNoErrors
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class GenericClass[T] mapped to «GenericClass.canonicalName» {
+                mapped new(t: T)
+                mapped def pure foo: T
+            }
+            class A extends GenericClass[readwrite Object] {
+                new { super(null); }
+                override pure foo: readwrite A { return null; }
+            }
+        ''').assertNoErrors
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class GenericClass[T] mapped to «GenericClass.canonicalName» {
+                mapped new(t: T)
+                mapped def pure foo: T
+            }
+            class A extends GenericClass[readonly Object] {
+                new { super(null); }
+                override pure foo: readwrite Object { return null; }
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class GenericClass[T] mapped to «GenericClass.canonicalName» {
+                mapped new(t: T)
+                mapped def pure foo(t: T):
+            }
+            class A extends GenericClass[readwrite Object] {
+                new { super(null); }
+                override pure foo(t: readwrite Object): {}
+            }
+        ''').assertNoErrors
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class GenericClass[T] mapped to «GenericClass.canonicalName» {
+                mapped new(t: T)
+                mapped def pure foo(t: T):
+            }
+            class A extends GenericClass[readwrite Object] {
+                new { super(null); }
+                override pure foo(t: readonly Object): {}
+            }
+        ''').assertNoErrors
+    }
+    
+    @Test def testValidOverrideIncompatibleReturnType() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {                def pure foo: int    {} }
@@ -142,18 +225,36 @@ class RolezValidatorTest {
         ''').assertError(METHOD, INCOMPATIBLE_RETURN_TYPE)
     }
     
-    @Test def testIncompatibleThisRole() {
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class A {                def readwrite foo: {} }
-            class B extends A { override readonly  foo: {} }
-        ''').assertNoErrors
-        
+    @Test def testValidOverrideIncompatibleThisRole() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {                def readonly  foo: {} }
             class B extends A { override readwrite foo: {} }
         ''').assertError(METHOD, INCOMPATIBLE_THIS_ROLE)
+    }
+    
+    @Test def testValidOverrideIncompatibleParamType() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {                def pure foo(o: readonly  Object): {} }
+            class B extends A { override pure foo(o: readwrite Object): {} }
+        ''').assertError(PARAM, INCOMPATIBLE_PARAM_TYPE)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
+                mapped new(length: int)
+            }
+            class A {                def pure foo(a: pure Array[readwrite Object]): {} }
+            class B extends A { override pure foo(a: pure Array[readonly  Object]): {} }
+        ''').assertError(PARAM, INCOMPATIBLE_PARAM_TYPE)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
+                mapped new(length: int)
+            }
+            class A {                def pure foo(a: pure Array[readonly  Object]): {} }
+            class B extends A { override pure foo(a: pure Array[readwrite Object]): {} }
+        ''').assertError(PARAM, INCOMPATIBLE_PARAM_TYPE)
     }
     
     @Test def testMissingOverride() {
@@ -392,14 +493,15 @@ class RolezValidatorTest {
     @Test def testMethodOverloading() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
+                mapped new(length: int)
+            }
             class A {
                 def readwrite foo: {}
                 def readwrite foo(i: int): {}
                 def readwrite foo(c: char): {}
                 def readwrite foo(o: readonly Object): {}
-                def readwrite foo(o: readwrite Object): {}
                 def readwrite foo(a: readonly A): {}
-                def readwrite foo(a: readwrite A): {}
                 def readwrite foo(a: readwrite A, b: readwrite A): {}
             }
         ''').assertNoErrors
@@ -408,13 +510,10 @@ class RolezValidatorTest {
             class rolez.lang.Object mapped to java.lang.Object
             class A {
                 def readwrite foo(a: readwrite A): {}
-                def readwrite bar(a: readonly  A): {}
             }
             class B extends A {
-                def readwrite foo(a: readonly  A): {}
                 def readwrite foo(a: readwrite B): {}
                 def readwrite foo(a: readwrite Object): {}
-                def readwrite bar(a: readwrite A): {}
             }
             class C extends B {
                 def readwrite foo(i: int): {}
@@ -428,39 +527,6 @@ class RolezValidatorTest {
                 }
             }
         ''').assertNoErrors
-    }
-    
-    @Test def testFieldWithSameName() {
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class A {
-                var foo: int
-                def readwrite foo(i: int): {}
-                def readwrite foo(c: char): {}
-                def readwrite foo(o: readonly Object): {}
-                def readwrite foo(o: readwrite Object): {}
-                def readwrite foo(a: readonly A): {}
-                def readwrite foo(a: readwrite A): {}
-                def readwrite foo(a: readwrite A, b: readwrite A): {}
-            }
-        ''').assertNoErrors
-        
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class A {
-                var foo: int
-                def readwrite foo: {}
-            }
-        ''').assertError(METHOD, FIELD_WITH_SAME_NAME)
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class A {
-                var foo: int
-            }
-            class B extends A {
-                def readwrite foo: {}
-            }
-        ''').assertError(METHOD, FIELD_WITH_SAME_NAME)
     }
     
     @Test def testDuplicateMethods() {
@@ -510,9 +576,50 @@ class RolezValidatorTest {
             class rolez.lang.Object mapped to java.lang.Object
             class A {
                 def readwrite foo(a: readwrite A): {}
-                def readwrite foo(b: readwrite A): {}
+                def readwrite foo(b: readonly  A): {}
             }
         ''').assertError(METHOD, DUPLICATE_METHOD)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
+                mapped new(length: int)
+            }
+            class A {
+                def readwrite foo(a: readwrite Array[readwrite Object]): {}
+                def readwrite foo(b: readonly  Array[readonly  Object]): {}
+            }
+        ''').assertError(METHOD, DUPLICATE_METHOD)
+    }
+    
+    @Test def testFieldWithSameName() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                var foo: int
+                def readwrite foo(i: int): {}
+                def readwrite foo(c: char): {}
+                def readwrite foo(o: readonly Object): {}
+                def readwrite foo(a: readonly A): {}
+                def readwrite foo(a: readwrite A, b: readwrite A): {}
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                var foo: int
+                def readwrite foo: {}
+            }
+        ''').assertError(METHOD, FIELD_WITH_SAME_NAME)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                var foo: int
+            }
+            class B extends A {
+                def readwrite foo: {}
+            }
+        ''').assertError(METHOD, FIELD_WITH_SAME_NAME)
     }
     
     @Test def testConstrOverloading() {
@@ -523,9 +630,7 @@ class RolezValidatorTest {
                 new {}
                 new(i: int) {}
                 new(c: char) {}
-                new(o: readonly Object) {}
                 new(o: readwrite Object) {}
-                new(a: readonly A) {}
                 new(a: readwrite A) {}
                 new(a: readwrite A, b: readwrite A) {}
             }
@@ -551,6 +656,13 @@ class RolezValidatorTest {
             class rolez.lang.Object mapped to java.lang.Object
             class A {
                 new(a: readwrite A) {}
+                new(b: readwrite A) {}
+            }
+        ''').assertError(CONSTR, DUPLICATE_CONSTR)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                new(a: readonly  A) {}
                 new(b: readwrite A) {}
             }
         ''').assertError(CONSTR, DUPLICATE_CONSTR)

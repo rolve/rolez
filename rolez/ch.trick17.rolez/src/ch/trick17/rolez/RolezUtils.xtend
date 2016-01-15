@@ -7,6 +7,7 @@ import ch.trick17.rolez.rolez.Class
 import ch.trick17.rolez.rolez.ClassRef
 import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.Expr
+import ch.trick17.rolez.rolez.GenericClassRef
 import ch.trick17.rolez.rolez.LocalVarDecl
 import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.Method
@@ -14,6 +15,7 @@ import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.ParameterizedBody
 import ch.trick17.rolez.rolez.Role
+import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
 import ch.trick17.rolez.rolez.Start
 import ch.trick17.rolez.rolez.Stmt
@@ -104,19 +106,30 @@ class RolezUtils {
     
     /**
      * Returns <code>true</code> if the name and the types of the parameters of
-     * the two given methods are the same. Note that the "this role" is ignored,
-     * just as is the return type and the containing class.
+     * the two given methods are the same, ignoring roles.
      */
-    def equalSignature(Method left, Method right) {
-        left.name == right.name && equalParams(left, right)
+    def equalSignatureWithoutRoles(Method it, Method other) {
+        name == other.name && equalParamsWithoutRoles(other)
     }
     
-    def equalParams(ParameterizedBody left, ParameterizedBody right) {
-        val i = right.params.map[type].iterator
-        left.params.size == right.params.size
-            && left.params.map[type].forall[
-                EcoreUtil.equals(it, i.next)
-            ]
+    def equalParamsWithoutRoles(ParameterizedBody it, ParameterizedBody other) {
+        val i = other.params.map[type].iterator
+        params.size == other.params.size
+            && params.map[type].forall[equalTypeWithoutRoles(i.next)]
+    }
+    
+    private def dispatch boolean equalTypeWithoutRoles(RoleType it, RoleType other) {
+        base.equalRefWithoutRoles(other.base)
+    }
+    private def dispatch boolean equalTypeWithoutRoles(Type it, Type other) {
+        EcoreUtil.equals(it, other)
+    }
+    
+    private def dispatch boolean equalRefWithoutRoles(GenericClassRef it, GenericClassRef other) {
+        clazz == other.clazz && typeArg.equalTypeWithoutRoles(other.typeArg)
+    }
+    private def dispatch boolean equalRefWithoutRoles(ClassRef it, ClassRef other) {
+        EcoreUtil.equals(it, other)
     }
     
     /**

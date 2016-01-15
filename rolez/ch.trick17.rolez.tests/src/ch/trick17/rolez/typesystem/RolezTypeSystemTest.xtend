@@ -877,11 +877,11 @@ class RolezTypeSystemTest {
             class rolez.lang.Object mapped to java.lang.Object
             class A {
                 def readwrite foo(a: readwrite A): int { return 0; }
-                def readwrite foo(a: readonly  A): boolean { return false; }
+                def readwrite foo(a: readwrite Object): boolean { return false; }
             }
             task Main: {
                 new A.foo(new A);
-                new A.foo(new A as readonly A);
+                new A.foo(new A as readwrite Object);
             }
         ''')
         program.main.expr(0).type.assertThat(instanceOf(Int))
@@ -891,12 +891,12 @@ class RolezTypeSystemTest {
         program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
-                def readwrite foo(a: readonly  A): boolean { return false; }
+                def readwrite foo(a: readwrite Object): boolean { return false; }
                 def readwrite foo(a: readwrite A): int { return 0; }
             }
             task Main: {
                 new A.foo(new A);
-                new A.foo(new A as readonly A);
+                new A.foo(new A as readwrite Object);
             }
         ''')
         program.main.expr(0).type.assertThat(instanceOf(Int))
@@ -905,14 +905,14 @@ class RolezTypeSystemTest {
         program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
-                def readwrite foo(a: readonly  A, b: readonly  A): boolean { return false; }
-                def readwrite foo(a: readwrite A, b: readwrite A): int { return 0; }
+                def readwrite foo(a: pure Object, b: pure Object): boolean { return false; }
+                def readwrite foo(a: pure      A, b: pure      A): int { return 0; }
             }
             task Main: {
                 new A.foo(new A, new A);
-                new A.foo(new A, new A as readonly A);
-                new A.foo(new A, new A as readonly A);
-                new A.foo(new A as readonly A, new A as readonly A);
+                new A.foo(new A, new A as readwrite Object);
+                new A.foo(new A, new A as readwrite Object);
+                new A.foo(new A as readwrite Object, new A as readwrite Object);
             }
         ''')
         program.main.expr(0).type.assertThat(instanceOf(Int))
@@ -923,14 +923,14 @@ class RolezTypeSystemTest {
         program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
-                def readwrite foo(a: readwrite A, b: readwrite A): int { return 0; }
-                def readwrite foo(a: readonly  A, b: readonly  A): boolean { return false; }
+                def readwrite foo(a: pure      A, b: pure      A): int { return 0; }
+                def readwrite foo(a: pure Object, b: pure Object): boolean { return false; }
             }
             task Main: {
                 new A.foo(new A, new A);
-                new A.foo(new A as readonly A, new A);
-                new A.foo(new A, new A as readonly A);
-                new A.foo(new A as readonly A, new A as readonly A);
+                new A.foo(new A, new A as readwrite Object);
+                new A.foo(new A, new A as readwrite Object);
+                new A.foo(new A as readwrite Object, new A as readwrite Object);
             }
         ''')
         program.main.expr(0).type.assertThat(instanceOf(Int))
@@ -1139,32 +1139,32 @@ class RolezTypeSystemTest {
             class rolez.lang.Object mapped to java.lang.Object
             class A
             class B {
+                new(a: readwrite Object) {}
                 new(a: readwrite A) {}
-                new(a: readonly  A) {}
             }
             task Main: {
                 new B(new A);
-                new B(new A as readonly A);
+                new B(new A as readwrite Object);
             }
         ''')
-        ((program.main.expr(0) as New).constr.params.head.type as RoleType).role.assertThat(is(READWRITE))
-        ((program.main.expr(1) as New).constr.params.head.type as RoleType).role.assertThat(is(READONLY))
+        ((program.main.expr(0) as New).constr.params.head.type as RoleType).base.clazz.name.assertThat(is("A"))
+        ((program.main.expr(1) as New).constr.params.head.type as RoleType).base.clazz.name.assertThat(is(objectClassName.toString))
         
         // (Switch order of declaration to rule out accidental selection of the correct one)
         program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A
             class B {
-                new(a: readonly  A) {}
                 new(a: readwrite A) {}
+                new(a: readwrite Object) {}
             }
             task Main: {
                 new B(new A);
-                new B(new A as readonly A);
+                new B(new A as readwrite Object);
             }
         ''')
-        ((program.main.expr(0) as New).constr.params.head.type as RoleType).role.assertThat(is(READWRITE))
-        ((program.main.expr(1) as New).constr.params.head.type as RoleType).role.assertThat(is(READONLY))
+        ((program.main.expr(0) as New).constr.params.head.type as RoleType).base.clazz.name.assertThat(is("A"))
+        ((program.main.expr(1) as New).constr.params.head.type as RoleType).base.clazz.name.assertThat(is(objectClassName.toString))
         
         // IMPROVE: test generic constructors, once  supported outside of the array class
     }

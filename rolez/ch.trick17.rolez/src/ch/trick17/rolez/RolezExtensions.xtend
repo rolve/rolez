@@ -123,7 +123,7 @@ class RolezExtensions {
     private def overrides(Class it, Member m) {
         switch(m) {
             Field: false
-            Method: methods.exists[utils.equalSignature(it, m)]
+            Method: methods.exists[utils.equalSignatureWithoutRoles(it, m)]
         }
     }
     
@@ -220,39 +220,40 @@ class RolezExtensions {
      * toString() replacements:
      */
     
-    def string(Member it)   { memberString }
-    def string(Type it)     { typeString }
-    def string(Role it)     { literal }
-    def string(ClassRef it) { classRefString }
-    def string(Instr it)    {
-        // IMPROVE: Not a good idea for synthetic instructions
-        NodeModelUtils.findActualNodeFor(it).text.trim.replaceAll("\\s+", " ")
-    }
-    
-    private def dispatch memberString(Method it) {
-        thisRole.string + " " + qualifiedName
+    def string(Member it) { switch(it) {
+        Method: thisRole.string + " " + qualifiedName
             + "(" + params.map[type.string].join(",") + ")"
             + ": " + type.string
-    }
+        Field: qualifiedName + ": " + type.string
+    }}
     
-    private def dispatch memberString(Field it) {
-        qualifiedName + ": " + type.string
-    }
+    def String string(Type it) { switch(it) {
+        PrimitiveType: name
+        Null         : "null"
+        RoleType     : role.string + " " + base.string
+        TypeParamRef : param.name
+    }}
     
-    private def dispatch typeString(PrimitiveType it) { name }
+    def String stringWithoutRoles(Type it) { switch(it) {
+        RoleType: base.stringWithoutRoles
+        default : string
+    }}
     
-    private def dispatch typeString(Null _)    { "null" }
+    def string(ClassRef it) { switch(it) {
+        SimpleClassRef : clazz.name
+        GenericClassRef: clazz.qualifiedName + "[" + typeArg.string + "]"
+    }}
     
-    private def dispatch String typeString(RoleType it) {
-        role.string + " " + base.string
-    }
+    def string(Role it) { literal }
     
-    private def dispatch typeString(TypeParamRef it) { param.name }
+    def stringWithoutRoles(ClassRef it) { switch(it) {
+        GenericClassRef: clazz.qualifiedName + "[" + typeArg.stringWithoutRoles + "]"
+        default        : string
+    }}
     
-    private def dispatch classRefString(SimpleClassRef r) { r.clazz.name }
-    
-    private def dispatch classRefString(GenericClassRef r) {
-        r.clazz.qualifiedName + "[" + r.typeArg.string + "]"
+    def string(Instr it) {
+        // IMPROVE: Not a good idea for synthetic instructions
+        NodeModelUtils.findActualNodeFor(it).text.trim.replaceAll("\\s+", " ")
     }
     
     def dispatch name(    Int _) { "int"     }
