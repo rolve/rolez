@@ -971,7 +971,7 @@ class RolezValidatorTest {
         ''').assertError(VAR_REF, VAR_NOT_INITIALIZED, "variable i")
     }
     
-    @Test def testSuperConstrCalls() {
+    @Test def testSuperConstrCall() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.String mapped to java.lang.String {
@@ -1001,7 +1001,9 @@ class RolezValidatorTest {
                 def pure bar: {}
             }
         ''').assertNoErrors
-        
+    }
+    
+    @Test def testSuperConstrCallGeneric() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class GenericClass[T] mapped to «GenericClass.canonicalName» {
@@ -1024,7 +1026,9 @@ class RolezValidatorTest {
                 }
             }
         ''').assertNoErrors
-        
+    }
+    
+    @Test def testSuperConstrCallFirst() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
@@ -1034,7 +1038,9 @@ class RolezValidatorTest {
                 }
             }
         ''').assertError(SUPER_CONSTR_CALL, SUPER_CONSTR_CALL_FIRST)
-        
+    }
+    
+    @Test def testSuperConstrCallThisBefore() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
@@ -1058,7 +1064,9 @@ class RolezValidatorTest {
                 }
             }
         ''').assertError(THIS, THIS_BEFORE_SUPER_CONSTR_CALL)
-        
+    }
+    
+    @Test def testSuperConstrCallIncorrect() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
@@ -1068,7 +1076,9 @@ class RolezValidatorTest {
         parse('''
             task Main: { super; }
         ''').assertError(SUPER_CONSTR_CALL, INCORRECT_SUPER_CONSTR_CALL)
-        
+    }
+    
+    @Test def testSuperConstrCallUncatchableException() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.String mapped to java.lang.String
@@ -1119,7 +1129,9 @@ class RolezValidatorTest {
                 new Array[int](1).set(0, 42);
             }
         ''').assertNoIssues
-        
+    }
+    
+    @Test def testExprStmtNoSideFx() {
         parse('''
             task Main: { true && 4 > 2; }
         ''').assertWarning(LOGICAL_EXPR, OUTER_EXPR_NO_SIDE_FX)
