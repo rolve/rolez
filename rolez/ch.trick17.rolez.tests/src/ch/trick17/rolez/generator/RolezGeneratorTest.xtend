@@ -610,9 +610,8 @@ class RolezGeneratorTest {
     @Test def testMethodOverrideGeneric() {
         val intContainer = '''
             class IntContainer extends Container[int] {
-                override readwrite set(i: int): {
-                    this.e = i;
-                }
+                override readwrite set(i: int): { this.e = i; }
+                override readonly get: int { return this.e; }
             }
         '''
         parse(intContainer, classes).generate.assertEqualsJava('''
@@ -628,14 +627,18 @@ class RolezGeneratorTest {
                 public void set(final java.lang.Integer i) {
                     guardReadWrite(this).e = i;
                 }
+                
+                @java.lang.Override
+                public java.lang.Integer get() {
+                    return guardReadOnly(this).e;
+                }
             }
         ''')
         
         parse('''
             class SpecialIntContainer extends IntContainer {
-                override readwrite set(i: int): {
-                    this.e = 2 * i;
-                }
+                override readwrite set(i: int): { this.e = 2 * i; }
+                override readonly get: int { return this.e / 2; }
             }
         ''', classes.with(intContainer)).generate.assertEqualsJava('''
             import static «jvmGuardedClassName».*;
@@ -649,6 +652,11 @@ class RolezGeneratorTest {
                 @java.lang.Override
                 public void set(final java.lang.Integer i) {
                     guardReadWrite(this).e = 2 * i;
+                }
+                
+                @java.lang.Override
+                public java.lang.Integer get() {
+                    return guardReadOnly(this).e / 2;
                 }
             }
         ''', parse(intContainer, classes).generate)

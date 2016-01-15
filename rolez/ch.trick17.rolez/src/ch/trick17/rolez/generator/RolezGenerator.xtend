@@ -250,7 +250,7 @@ class RolezGenerator extends AbstractGenerator {
         «IF isOverriding»
         @java.lang.Override
         «ENDIF»
-        public «type.gen» «safeName»(«params.map[gen].join(", ")») {
+        public «genReturnType» «safeName»(«params.map[gen].join(", ")») {
             «body.genStmtsWithTryCatch»
         }
     '''
@@ -312,7 +312,7 @@ class RolezGenerator extends AbstractGenerator {
     
     private def genObjectMethod(Method it) { if(isMapped) '''
         
-        public «type.gen» «name»(«params.map[gen].join(", ")») {
+        public «genReturnType» «name»(«params.map[gen].join(", ")») {
             «if(!(type instanceof Void)) "return "»«generateStaticCall»;
         }
     ''' else gen }
@@ -339,6 +339,21 @@ class RolezGenerator extends AbstractGenerator {
         
         superParam?.type instanceof TypeParamRef
             || superParam != null && superParam.overridesGenericParam
+    }
+    
+    private def genReturnType(Method it) {
+        if(overridesGenericReturnType) type.genGeneric
+        else                           type.gen
+    }
+    
+    private def boolean overridesGenericReturnType(Method it) {
+        val superMethod = overriddenMethod
+        val superReturnType = 
+            if(superMethod instanceof ParameterizedMethod) superMethod.genericEObject.type
+            else superMethod?.type
+        
+        superReturnType instanceof TypeParamRef
+            || superMethod != null && superMethod.overridesGenericReturnType
     }
     
     private def gen(VarKind it) { if(it == VAL) "final " }
