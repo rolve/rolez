@@ -321,16 +321,24 @@ class RolezGenerator extends AbstractGenerator {
         '''«enclosingClass.jvmClass.qualifiedName».«name»(«params.map[safeName].join(", ")»)'''
     
     private def gen(Param it) {
-        // Use the boxed version of a primitive param type if the "overridden" param is a
-        // type parameter (e.g., T)
-        val superMethod = enclosingMethod?.overriddenMethod
+        // Use the boxed version of a primitive param type if any of the "overridden"
+        // params is generic, i.e., its type is a type parameter reference (e.g., T)
         val genType =
-            if(superMethod instanceof ParameterizedMethod && (superMethod as ParameterizedMethod)
-                    .genericEObject.params.get(paramIndex).type instanceof TypeParamRef)
-                type.genGeneric
-            else
-                type.gen
+            if(overridesGenericParam)  type.genGeneric
+            else                       type.gen
         '''«kind.gen»«genType» «safeName»'''
+    }
+    
+    private def boolean overridesGenericParam(Param it) {
+        val superMethod = enclosingMethod?.overriddenMethod
+        val superParam = 
+            if(superMethod instanceof ParameterizedMethod)
+                superMethod.genericEObject.params.get(paramIndex)
+            else
+                superMethod?.params?.get(paramIndex)
+        
+        superParam?.type instanceof TypeParamRef
+            || superParam != null && superParam.overridesGenericParam
     }
     
     private def gen(VarKind it) { if(it == VAL) "final " }

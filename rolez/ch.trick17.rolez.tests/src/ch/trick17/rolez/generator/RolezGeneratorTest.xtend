@@ -608,13 +608,14 @@ class RolezGeneratorTest {
     }
     
     @Test def testMethodOverrideGeneric() {
-        parse('''
+        val intContainer = '''
             class IntContainer extends Container[int] {
                 override readwrite set(i: int): {
                     this.e = i;
                 }
             }
-        ''', classes).generate.assertEqualsJava('''
+        '''
+        parse(intContainer, classes).generate.assertEqualsJava('''
             import static «jvmGuardedClassName».*;
             
             public class IntContainer extends «Container.canonicalName»<java.lang.Integer> {
@@ -629,6 +630,28 @@ class RolezGeneratorTest {
                 }
             }
         ''')
+        
+        parse('''
+            class SpecialIntContainer extends IntContainer {
+                override readwrite set(i: int): {
+                    this.e = 2 * i;
+                }
+            }
+        ''', classes.with(intContainer)).generate.assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
+            
+            public class SpecialIntContainer extends IntContainer {
+                
+                public SpecialIntContainer() {
+                    super();
+                }
+                
+                @java.lang.Override
+                public void set(final java.lang.Integer i) {
+                    guardReadWrite(this).e = 2 * i;
+                }
+            }
+        ''', parse(intContainer, classes).generate)
     }
     
     @Test def testConstr() {
@@ -1392,8 +1415,8 @@ class RolezGeneratorTest {
         '''throw new java.lang.RuntimeException("ROLEZ EXCEPTION WRAPPER", «e»);'''
     }
     
-    private def assertEqualsJava(CharSequence it, CharSequence javaCode) {
-        assertCompilable(#[javaCode] + javaClasses)
+    private def assertEqualsJava(CharSequence it, CharSequence javaCode, CharSequence... moreJavaCode) {
+        assertCompilable(#[javaCode] + moreJavaCode + javaClasses)
         javaCode.toString.assertEquals(it.toString)
     }
     
