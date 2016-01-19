@@ -11,6 +11,7 @@ import ch.trick17.rolez.rolez.ParameterizedBody
 import ch.trick17.rolez.rolez.Parenthesized
 import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleType
+import ch.trick17.rolez.rolez.RolezFactory
 import ch.trick17.rolez.rolez.Start
 import ch.trick17.rolez.rolez.StringLiteral
 import ch.trick17.rolez.rolez.Task
@@ -19,44 +20,43 @@ import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.VarRef
 import javax.inject.Inject
 
-import static ch.trick17.rolez.rolez.Role.*
-
 class RoleAnalysis {
     
     @Inject extension RolezExtensions
+    @Inject extension RolezFactory
     
     def dispatch Role dynamicRole(MemberAccess it)  {
-        if(isGlobal) READONLY else PURE
+        if(isGlobal) createReadOnly else createPure
     }
     
     def dispatch Role dynamicRole(VarRef it) {
         if(variable instanceof Param && enclosingBody instanceof Task && !enclosingBody.mayStartTask)
             (variable.type as RoleType).role
         else
-            PURE
+            createPure
     }
     
     def dispatch Role dynamicRole(This it) {
         if(enclosingBody instanceof Constr && !enclosingBody.mayStartTask)
-            READWRITE
+            createReadWrite
         else
-            PURE
+            createPure
     }
     
     def dispatch Role dynamicRole(Cast it)          { expr.dynamicRole }
     
     def dispatch Role dynamicRole(Parenthesized it) { expr.dynamicRole }
     
-    def dispatch Role dynamicRole(New _)            { READWRITE }
+    def dispatch Role dynamicRole(New _)            { createReadWrite }
     
-    def dispatch Role dynamicRole(The _)            { READONLY }
+    def dispatch Role dynamicRole(The _)            { createReadOnly }
     
-    def dispatch Role dynamicRole(StringLiteral _)  { READONLY }
+    def dispatch Role dynamicRole(StringLiteral _)  { createReadOnly }
     
-    def dispatch Role dynamicRole(Expr _)           { PURE }
+    def dispatch Role dynamicRole(Expr _)           { createPure }
     
     def dynamicThisRoleAtExit(Constr it) {
-        if(mayStartTask) PURE else READWRITE
+        if(mayStartTask) createPure else createReadWrite
     }
     
     private def dispatch boolean isGlobal(MemberAccess it) {

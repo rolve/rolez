@@ -19,8 +19,6 @@ import org.junit.runner.RunWith
 import rolez.lang.GuardedArray
 import rolez.lang.Task
 
-import static ch.trick17.rolez.rolez.Role.*
-
 import static extension org.junit.Assert.*
 
 @RunWith(XtextRunner)
@@ -66,19 +64,19 @@ class JavaMapperTest {
             class rolez.lang.Task[V]  mapped to rolez.lang.Task
         ''')
         
-        p.newRoleType(READWRITE, "rolez.lang.Object").mapsTo(jvmTypeRef("Object")).assertTrue
-        p.newRoleType(READONLY , "rolez.lang.Object").mapsTo(jvmTypeRef("Object")).assertTrue
-        p.newRoleType(PURE     , "rolez.lang.Object").mapsTo(jvmTypeRef("Object")).assertTrue
+        p.newRoleType(createReadWrite, "rolez.lang.Object").mapsTo(jvmTypeRef("Object")).assertTrue
+        p.newRoleType(createReadOnly , "rolez.lang.Object").mapsTo(jvmTypeRef("Object")).assertTrue
+        p.newRoleType(createPure     , "rolez.lang.Object").mapsTo(jvmTypeRef("Object")).assertTrue
         
-        p.newRoleType(READWRITE, "rolez.lang.Array", createInt).mapsTo(jvmTypeRef("intArray")).assertTrue
-        p.newRoleType(READWRITE, "rolez.lang.Array", createInt).mapsTo(jvmTypeRef("IntArray")).assertTrue
+        p.newRoleType(createReadWrite, "rolez.lang.Array", createInt).mapsTo(jvmTypeRef("intArray")).assertTrue
+        p.newRoleType(createReadWrite, "rolez.lang.Array", createInt).mapsTo(jvmTypeRef("IntArray")).assertTrue
         
-        p.newRoleType(PURE, "rolez.lang.Array", p.newRoleType(READONLY, "rolez.lang.Array", createInt))
+        p.newRoleType(createPure, "rolez.lang.Array", p.newRoleType(createReadOnly, "rolez.lang.Array", createInt))
             .mapsTo(jvmTypeRef("intArrayArray")).assertTrue
-        p.newRoleType(PURE, "rolez.lang.Array", p.newRoleType(READONLY, "rolez.lang.Array", createInt))
+        p.newRoleType(createPure, "rolez.lang.Array", p.newRoleType(createReadOnly, "rolez.lang.Array", createInt))
             .mapsTo(jvmTypeRef("IntArrayArray")).assertTrue
         
-        p.newRoleType(PURE, "rolez.lang.Task", createInt).mapsTo(jvmTypeRef("intTask")).assertTrue
+        p.newRoleType(createPure, "rolez.lang.Task", createInt).mapsTo(jvmTypeRef("intTask")).assertTrue
     }
     
     @Test def mapsToTypeParamRef() {
@@ -100,24 +98,24 @@ class JavaMapperTest {
             class rolez.lang.Task[V]  mapped to rolez.lang.Task
         ''')
         
-        p.newRoleType(READWRITE, "rolez.lang.Object").mapsTo(jvmTypeRef("int"     )).assertFalse
-        p.newRoleType(READWRITE, "rolez.lang.Object").mapsTo(jvmTypeRef("void"    )).assertFalse
-        p.newRoleType(READWRITE, "rolez.lang.Object").mapsTo(jvmTypeRef("T"       )).assertFalse
-        p.newRoleType(READWRITE, "rolez.lang.Object").mapsTo(jvmTypeRef("intArray")).assertFalse
-        p.newRoleType(READWRITE, "rolez.lang.Object").mapsTo(jvmTypeRef("IntArray")).assertFalse
+        p.newRoleType(createReadWrite, "rolez.lang.Object").mapsTo(jvmTypeRef("int"     )).assertFalse
+        p.newRoleType(createReadWrite, "rolez.lang.Object").mapsTo(jvmTypeRef("void"    )).assertFalse
+        p.newRoleType(createReadWrite, "rolez.lang.Object").mapsTo(jvmTypeRef("T"       )).assertFalse
+        p.newRoleType(createReadWrite, "rolez.lang.Object").mapsTo(jvmTypeRef("intArray")).assertFalse
+        p.newRoleType(createReadWrite, "rolez.lang.Object").mapsTo(jvmTypeRef("IntArray")).assertFalse
         
-        p.newRoleType(READWRITE, "rolez.lang.Array", createInt).mapsTo(jvmTypeRef("int"          )).assertFalse
-        p.newRoleType(READWRITE, "rolez.lang.Array", createInt).mapsTo(jvmTypeRef("Object"       )).assertFalse
-        p.newRoleType(READWRITE, "rolez.lang.Array", createInt).mapsTo(jvmTypeRef("T"            )).assertFalse
-        p.newRoleType(READWRITE, "rolez.lang.Array", createInt).mapsTo(jvmTypeRef("booleanArray" )).assertFalse
-        p.newRoleType(READWRITE, "rolez.lang.Array", createInt).mapsTo(jvmTypeRef("intArrayArray")).assertFalse
-        p.newRoleType(READWRITE, "rolez.lang.Array", createInt).mapsTo(jvmTypeRef("IntArrayArray")).assertFalse
-        p.newRoleType(READWRITE, "rolez.lang.Array", createInt).mapsTo(jvmTypeRef("intTask"      )).assertFalse
+        p.newRoleType(createReadWrite, "rolez.lang.Array", createInt).mapsTo(jvmTypeRef("int"          )).assertFalse
+        p.newRoleType(createReadWrite, "rolez.lang.Array", createInt).mapsTo(jvmTypeRef("Object"       )).assertFalse
+        p.newRoleType(createReadWrite, "rolez.lang.Array", createInt).mapsTo(jvmTypeRef("T"            )).assertFalse
+        p.newRoleType(createReadWrite, "rolez.lang.Array", createInt).mapsTo(jvmTypeRef("booleanArray" )).assertFalse
+        p.newRoleType(createReadWrite, "rolez.lang.Array", createInt).mapsTo(jvmTypeRef("intArrayArray")).assertFalse
+        p.newRoleType(createReadWrite, "rolez.lang.Array", createInt).mapsTo(jvmTypeRef("IntArrayArray")).assertFalse
+        p.newRoleType(createReadWrite, "rolez.lang.Array", createInt).mapsTo(jvmTypeRef("intTask"      )).assertFalse
         
-        p.newRoleType(READWRITE, "rolez.lang.Task", createInt).mapsTo(jvmTypeRef("intArray")).assertFalse
-        p.newRoleType(READWRITE, "rolez.lang.Task", createInt).mapsTo(jvmTypeRef("IntArray")).assertFalse
+        p.newRoleType(createReadWrite, "rolez.lang.Task", createInt).mapsTo(jvmTypeRef("intArray")).assertFalse
+        p.newRoleType(createReadWrite, "rolez.lang.Task", createInt).mapsTo(jvmTypeRef("IntArray")).assertFalse
         
-        p.newRoleType(PURE, "rolez.lang.Array", p.newRoleType(READONLY, "rolez.lang.Array", createInt))
+        p.newRoleType(createPure, "rolez.lang.Array", p.newRoleType(createReadOnly, "rolez.lang.Array", createInt))
             .mapsTo(jvmTypeRef("charArrayArray")).assertFalse
     }
     

@@ -29,6 +29,9 @@ import ch.trick17.rolez.rolez.Param
 import ch.trick17.rolez.rolez.ParameterizedBody
 import ch.trick17.rolez.rolez.Parenthesized
 import ch.trick17.rolez.rolez.PrimitiveType
+import ch.trick17.rolez.rolez.Pure
+import ch.trick17.rolez.rolez.ReadOnly
+import ch.trick17.rolez.rolez.ReadWrite
 import ch.trick17.rolez.rolez.ReferenceType
 import ch.trick17.rolez.rolez.RelationalExpr
 import ch.trick17.rolez.rolez.ReturnExpr
@@ -56,7 +59,6 @@ import ch.trick17.rolez.rolez.WhileLoop
 import ch.trick17.rolez.validation.AbstractRolezValidator
 
 import static ch.trick17.rolez.Constants.*
-import static ch.trick17.rolez.rolez.Role.*
 
 import static extension org.eclipse.emf.ecore.util.EcoreUtil.copy
 
@@ -91,13 +93,14 @@ judgments {
     subclass |- ClassRef left <~ ClassRef right error "subclass"
     
     equalType |- Type left ~~ Type right error "equal type"
+    equalRole |~ Role left ~~ Role right error "equal role"
     
     assignable |= Expr e
         error "Cannot assign to " + e.string source e
 }
 
 auxiliary leastCommonSuperrole(Role r1, Role r2) {
-    if(r1.value > r2.value) r1 else r2 // Very simple so far
+    if(subroleSucceeded(r1, r2)) r2 else r1
 }
 
 rule TAssignment
@@ -158,7 +161,7 @@ from {
         t = createInt
     } or {
         e.op == OpArithmetic.PLUS;
-        val stringType = newRoleType(READONLY, newClassRef(findClass(stringClassName, e)))
+        val stringType = newRoleType(createReadOnly, newClassRef(findClass(stringClassName, e)))
         
         G |- leftType <: stringType or G |- rightType <: stringType
         t = stringType
@@ -177,7 +180,7 @@ from {
     or {
         // Downcasts only allowed if role stays the same and of there is a subclass relation
         c.type instanceof RoleType && exprType instanceof RoleType
-        (exprType as RoleType).role == (c.type as RoleType).role
+        G |~ (exprType as RoleType).role ~~ (c.type as RoleType).role
         G |- (c.type as RoleType).base <~ (exprType as RoleType).base
     } or fail
         error "Cannot cast " + exprType.string + " to " + c.type.string
@@ -205,7 +208,7 @@ from {
     G |- a.target : var Type targetType
     if(targetType instanceof RoleType) {
         if(a.isFieldAccess) {
-            G |- targetType.role <! READONLY or fail
+            G |- targetType.role <! createReadOnly or fail
                 error "Role mismatch: Cannot access field of a "
                     + targetType.role.string + " target"
                 source a.target
@@ -213,7 +216,7 @@ from {
             t = switch(fieldType) {
                 RoleType: {
                     val role = leastCommonSuperrole(targetType.role, fieldType.role)
-                    newRoleType(role, fieldType.base.copy)
+                    newRoleType(role.copy, fieldType.base.copy)
                 }
                 default: fieldType
             }
@@ -251,7 +254,7 @@ from {
 }
 
 rule TNew
-    G |- New n : newRoleType(READWRITE, n.classRef.copy)
+    G |- New n : newRoleType(createReadWrite, n.classRef.copy)
 from {
     for(arg : n.args) {
         G |- arg : var Type _
@@ -259,7 +262,7 @@ from {
 }
 
 axiom TThe
-    G |- The t : newRoleType(READONLY, t.classRef.copy)
+    G |- The t : newRoleType(createReadOnly, t.classRef.copy)
 
 rule TStart
     G |- Start s : Type t
@@ -268,7 +271,7 @@ from {
     val taskClass = findNormalClass(taskClassName, s)
     taskClass != null
     G |- s << s.taskRef.task
-    t = newRoleType(PURE, newClassRef(taskClass, s.taskRef.task.type.copy))
+    t = newRoleType(createPure, newClassRef(taskClass, s.taskRef.task.type.copy))
 }
 
 rule TParenthesized
@@ -283,7 +286,7 @@ rule TStringLiteral
 from {
     val stringClass = findClass(stringClassName, s)
     stringClass != null
-    t = newRoleType(READWRITE, newClassRef(stringClass))
+    t = newRoleType(createReadWrite, newClassRef(stringClass))
 }
 
 axiom TNullLiteral
@@ -432,7 +435,8 @@ from { fail }
 rule Subrole
     G |- Role left <! Role right
 from {
-    left.value <= right.value
+    left instanceof ReadWrite || right instanceof Pure
+        || left instanceof ReadOnly && right instanceof ReadOnly
 }
 
 
@@ -462,7 +466,7 @@ from {
 rule EqualTypeRoleTypes
     G |- RoleType left ~~ RoleType right
 from {
-    left.role == right.role
+    G |~ left.role ~~ right.role
     left.base.clazz == right.base.clazz // Is this correct?
     left.base instanceof GenericClassRef == right.base instanceof GenericClassRef
     
@@ -484,6 +488,13 @@ rule EqualTypeGeneral
 from { fail }
 
 
+rule EqualRole
+    G |~ Role left ~~ Role right
+from {
+    left.class == right.class
+}
+
+
 rule AVarRef
     G |= VarRef r
     error "Cannot assign to a value" source r
@@ -500,7 +511,7 @@ from {
         or fail error "Cannot assign to a value field" source a
     
     G |- a.target : var RoleType type
-    G |- type.role <! READWRITE
+    G |- type.role <! createReadWrite
         or fail error "Cannot assign to field of " + type.role + " object" source a
 }
 
@@ -515,11 +526,11 @@ from {
     val body = s.enclosingBody
     switch(body) {
         Method: {
-            val thisType = newRoleType(body.thisRole, newClassRef(s.enclosingClass))
+            val thisType = newRoleType(body.thisRole.copy, newClassRef(s.enclosingClass))
             "this" <- thisType |- s
         }
         Constr: {
-            val thisType = newRoleType(READWRITE, newClassRef(s.enclosingClass))
+            val thisType = newRoleType(createReadWrite, newClassRef(s.enclosingClass))
             "this" <- thisType |- s
         }
         Task: {

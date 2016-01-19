@@ -1,20 +1,24 @@
 package ch.trick17.rolez.typesystem
 
 import ch.trick17.rolez.RolezExtensions
-import ch.trick17.rolez.RolezUtils
 import ch.trick17.rolez.TestUtils
 import ch.trick17.rolez.rolez.Boolean
 import ch.trick17.rolez.rolez.Char
 import ch.trick17.rolez.rolez.Double
+import ch.trick17.rolez.rolez.GenericClassRef
 import ch.trick17.rolez.rolez.Int
 import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.Null
 import ch.trick17.rolez.rolez.Program
-import ch.trick17.rolez.rolez.Role
+import ch.trick17.rolez.rolez.Pure
+import ch.trick17.rolez.rolez.ReadOnly
+import ch.trick17.rolez.rolez.ReadWrite
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
+import ch.trick17.rolez.rolez.SimpleClassRef
 import ch.trick17.rolez.rolez.SuperConstrCall
+import ch.trick17.rolez.rolez.Void
 import ch.trick17.rolez.tests.RolezInjectorProvider
 import javax.inject.Inject
 import org.eclipse.xtext.junit4.InjectWith
@@ -26,7 +30,6 @@ import org.junit.runner.RunWith
 import rolez.lang.Guarded
 
 import static ch.trick17.rolez.Constants.*
-import static ch.trick17.rolez.rolez.Role.*
 import static ch.trick17.rolez.rolez.RolezPackage.Literals.*
 import static ch.trick17.rolez.typesystem.RolezSystem.*
 import static ch.trick17.rolez.validation.RolezValidator.*
@@ -42,13 +45,12 @@ class RolezTypeSystemTest {
     @Inject RolezSystem system
     @Inject extension RolezFactory
     @Inject extension RolezExtensions
-    @Inject extension RolezUtils
     @Inject extension TestUtils
     @Inject extension ParseHelper<Program>
     @Inject extension ValidationTestHelper
     
     @Test def testTAssignment() {
-        val program = parse('''
+        parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A
             class B extends A 
@@ -56,14 +58,11 @@ class RolezTypeSystemTest {
                 var a: readwrite A;
                 a = new B;
             }
-        ''')
-        program.main.lastExpr.type
-            .assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
+        ''').main.lastExpr.type.assertRoleType(ReadWrite, "A")
     }
     
     @Test def testTAssignmentErrorInOp() {
-        parse("task Main: { !5 = 5; }")
-            .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
+        parse("task Main: { !5 = 5; }").assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
         
         parse('''
             task Main: {
@@ -129,15 +128,13 @@ class RolezTypeSystemTest {
     }
     
     @Test def testTBooleanExprTypeMismatch() {
-        parse("task Main: { 5 || false; }")
-            .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
-        parse("task Main: { true || 5; }")
-            .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
+        parse("task Main: { 5 || false; }").assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
+        parse("task Main: { true  || 5; }").assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
     @Test def testTEqualityExpr() {
         parse("task Main: { true == false; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
-        parse("task Main: { 5 != 3; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
+        parse("task Main: {    5 !=     3; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
 
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -211,29 +208,23 @@ class RolezTypeSystemTest {
         parse("task Main: { 100 / -1; }").main.lastExpr.type.assertThat(instanceOf(Int))
         parse("task Main: { -99 %  3; }").main.lastExpr.type.assertThat(instanceOf(Int))
         
-        var program = parse('''
+        parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.String mapped to java.lang.String
             task Main: { "Hi" + " World"; }
-        ''')
-        program.main.lastExpr.type.assertThat(
-            isRoleType(READONLY, newClassRef(program.findClass(stringClassName))))
-            
-        program = parse('''
+        ''').main.lastExpr.type.assertRoleType(ReadOnly, stringClassName)
+        
+        parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.String mapped to java.lang.String
             task Main: { "" + '5'; }
-        ''')
-        program.main.lastExpr.type.assertThat(
-            isRoleType(READONLY, newClassRef(program.findClass(stringClassName))))
+        ''').main.lastExpr.type.assertRoleType(ReadOnly, stringClassName)
             
-        program = parse('''
+        parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.String mapped to java.lang.String
             task Main: { null + " "; }
-        ''')
-        program.main.lastExpr.type.assertThat(
-            isRoleType(READONLY, newClassRef(program.findClass(stringClassName))))
+        ''').main.lastExpr.type.assertRoleType(ReadOnly, stringClassName)
     }
     
     @Test def testTArithmeticExprErrorInOp() {
@@ -297,14 +288,13 @@ class RolezTypeSystemTest {
         parse("task Main: { 5 as int; }").main.lastExpr.type.assertThat(instanceOf(Int))
         parse("task Main: { true as boolean; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
         
-        var program = parse('''
+        parse('''
             class rolez.lang.Object mapped to java.lang.Object
             task Main: { new Object as readwrite Object; }
-        ''')
-        program.main.lastExpr.type.assertThat(isRoleType(READWRITE, newClassRef(program.findClass(objectClassName))))
+        ''').main.lastExpr.type.assertRoleType(ReadWrite, objectClassName)
         
         // Upcasts
-        program = parse('''
+        var program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.Array[T] mapped to rolez.lang.Array {
                 mapped new(length: int)
@@ -320,23 +310,29 @@ class RolezTypeSystemTest {
                 new Array[pure A](0) as readonly Array[pure A];
             }
         ''')
-        program.main.expr(0).type.assertThat(isRoleType(READWRITE, newClassRef(program.findClass(objectClassName))))
-        program.main.expr(1).type.assertThat(isRoleType(READONLY,  newClassRef(program.findClass("A"))))
-        program.main.expr(2).type.assertThat(isRoleType(PURE,      newClassRef(program.findClass("A"))))
-        program.main.expr(3).type.assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
-        program.main.expr(4).type.assertThat(isRoleType(READONLY,  newClassRef(program.findClass("A"))))
-        program.main.expr(5).type.assertThat(isRoleType(READONLY,
-                newClassRef(program.findNormalClass(arrayClassName), createInt)))
-        program.main.expr(6).type.assertThat(isRoleType(READONLY,
-            newClassRef(program.findNormalClass(arrayClassName), newRoleType(PURE, newClassRef(program.findClass("A"))))))
+        program.main.expr(0).type.assertRoleType(ReadWrite, objectClassName)
+        program.main.expr(1).type.assertRoleType(ReadOnly , "A")
+        program.main.expr(2).type.assertRoleType(Pure     , "A")
+        program.main.expr(3).type.assertRoleType(ReadWrite, "A")
+        program.main.expr(4).type.assertRoleType(ReadOnly, "A")
+        program.main.expr(5).type.assertRoleType(ReadOnly, arrayClassName, Int)
+        program.main.expr(6).type.assertInstanceOf(RoleType) => [
+            role.assertThat(instanceOf(ReadOnly))
+            base.assertInstanceOf(GenericClassRef) => [
+                clazz.name.assertThat(is(arrayClassName.toString))
+                typeArg.assertInstanceOf(RoleType) => [
+                    role.assertThat(instanceOf(Pure))
+                    base.assertInstanceOf(SimpleClassRef) => [ clazz.name.assertThat(is("A"))]
+                ]
+            ]
+        ]
         
         // Downcasts
-        program = parse('''
+        parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A
             task Main: { new Object as readwrite A; }
-        ''')
-        program.main.lastExpr.type.assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
+        ''').main.lastExpr.type.assertRoleType(ReadWrite, "A")
     }
     
     @Test def testTCastErrorInOp() {
@@ -489,7 +485,7 @@ class RolezTypeSystemTest {
             }
         ''').main.lastExpr.type.assertThat(instanceOf(Int))
         
-        var program = parse('''
+        parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
                 var a: readwrite A
@@ -498,9 +494,7 @@ class RolezTypeSystemTest {
                 val a = new A;
                 a.a;
             }
-        ''')
-        program.main.lastExpr.type
-            .assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
+        ''').main.lastExpr.type.assertRoleType(ReadWrite, "A")
         
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -511,7 +505,7 @@ class RolezTypeSystemTest {
                 val a: readonly A = new A;
                 a.a;
             }
-        ''').main.lastExpr.type.asRoleType.role.assertThat(is(READONLY))
+        ''').main.lastExpr.type.assertRoleType(ReadOnly, "A")
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
@@ -521,7 +515,7 @@ class RolezTypeSystemTest {
                 val a = new A;
                 a.a;
             }
-        ''').main.lastExpr.type.asRoleType.role.assertThat(is(READONLY))
+        ''').main.lastExpr.type.assertRoleType(ReadOnly, "A")
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
@@ -531,7 +525,7 @@ class RolezTypeSystemTest {
                 val a = new A;
                 a.a;
             }
-        ''').main.lastExpr.type.asRoleType.role.assertThat(is(PURE))
+        ''').main.lastExpr.type.assertRoleType(Pure, "A")
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
@@ -541,9 +535,9 @@ class RolezTypeSystemTest {
                 val a: readonly A = new A;
                 a.a;
             }
-        ''').main.lastExpr.type.asRoleType.role.assertThat(is(PURE))
+        ''').main.lastExpr.type.assertRoleType(Pure, "A")
         
-        program = parse('''
+        var program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A
             class Container[E] mapped to «Container.canonicalName» {
@@ -557,11 +551,11 @@ class RolezTypeSystemTest {
             }
         ''')
         program.main.expr(0).type.assertThat(instanceOf(Int))
-        program.main.expr(1).type.asRoleType.role.assertThat(is(READWRITE))
-        program.main.expr(2).type.asRoleType.role.assertThat(is(READONLY))
-        program.main.expr(2).type.asRoleType.role.assertThat(is(READONLY))
+        program.main.expr(1).type.assertRoleType(ReadWrite, "A")
+        program.main.expr(2).type.assertRoleType(ReadOnly, "A")
+        program.main.expr(2).type.assertRoleType(ReadOnly, "A")
         
-        program = parse('''
+        parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class Container[E] mapped to «Container.canonicalName» {
                 mapped var e: E
@@ -574,9 +568,7 @@ class RolezTypeSystemTest {
             task Main: {
                 new A.e;
             }
-        ''')
-        program.assertNoErrors
-        program.main.lastExpr.type.assertThat(instanceOf(Int))
+        ''').main.lastExpr.type.assertThat(instanceOf(Int))
     }
     
     static class Container<E> extends Guarded {
@@ -598,15 +590,16 @@ class RolezTypeSystemTest {
     }
     
     @Test def testTMemberAccessMethod() {
-        for(expected : Role.values) {
-            for(actual : Role.values.filter[system.subroleSucceeded(it, expected)]) {
+        val roles = #[createReadWrite, createReadOnly, createPure]
+        for(expected : roles) {
+            for(actual : roles.filter[system.subroleSucceeded(it, expected)]) {
                 parse('''
                     class rolez.lang.Object mapped to java.lang.Object
                     class A {
-                        def «expected» x: int { return 42; }
+                        def «expected.name» x: int { return 42; }
                     }
                     task Main: {
-                        val a: «actual» A = new A;
+                        val a: «actual.name» A = new A;
                         a.x;
                     }
                 ''').main.lastExpr.type.assertThat(instanceOf(Int))
@@ -620,7 +613,7 @@ class RolezTypeSystemTest {
             }
             task Main: { new A.a; }
         ''')
-        p.main.lastExpr.type.assertThat(isRoleType(READONLY, newClassRef(p.findClass("A"))))
+        p.main.lastExpr.type.assertRoleType(ReadOnly, "A")
         
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -674,7 +667,7 @@ class RolezTypeSystemTest {
                 a.get(0);
             }
         ''', lib)
-        p.main.lastExpr.type.assertThat(isRoleType(READWRITE, newClassRef(p.findClass("A"))))
+        p.main.lastExpr.type.assertRoleType(ReadWrite, "A")
         p = parse('''
             class A
             task Main: {
@@ -683,7 +676,7 @@ class RolezTypeSystemTest {
                 a.get(0);
             }
         ''', lib)
-        p.main.lastExpr.type.assertThat(isRoleType(PURE, newClassRef(p.findClass("A"))))
+        p.main.lastExpr.type.assertRoleType(Pure, "A")
         p = parse('''
             class A
             task Main: {
@@ -691,7 +684,7 @@ class RolezTypeSystemTest {
                 a.get(0);
             }
         ''', lib)
-        p.main.lastExpr.type.assertThat(isRoleType(READONLY, newClassRef(p.findClass("A"))))
+        p.main.lastExpr.type.assertRoleType(ReadOnly, "A")
         
         parse('''
             class A extends Container[int]
@@ -710,8 +703,8 @@ class RolezTypeSystemTest {
                 (a as readonly A).get;
             }
         ''', lib)
-        p.main.expr(2).type.assertThat(isRoleType(READWRITE, newClassRef(p.findClass(objectClassName))))
-        p.main.expr(3).type.assertThat(isRoleType(READONLY, newClassRef(p.findClass(objectClassName))))
+        p.main.expr(2).type.assertRoleType(ReadWrite, "A")
+        p.main.expr(3).type.assertRoleType(ReadOnly, "A")
         
         parse('''
             class A extends Container[int] {
@@ -743,19 +736,19 @@ class RolezTypeSystemTest {
     }
     
     @Test def testTMemberAccessMethodRoleMismatch() {
-        for(expected : Role.values) {
-            for(actual : Role.values.filter[!system.subroleSucceeded(it, expected)]) {
+        val roles = #[createReadWrite, createReadOnly, createPure]
+        for(expected : roles) {
+            for(actual : roles.filter[!system.subroleSucceeded(it, expected)]) {
                 parse('''
                     class rolez.lang.Object mapped to java.lang.Object
                     class A {
-                        def «expected» x: int { return 42; }
+                        def «expected.name» x: int { return 42; }
                     }
                     task Main: {
-                        val a: «actual» A = new A;
+                        val a: «actual.name» A = new A;
                         a.x;
                     }
-                ''').assertError(MEMBER_ACCESS, null,
-                        "Role", "mismatch", "method", actual.toString)
+                ''').assertError(MEMBER_ACCESS, null, "Role", "mismatch", "method", actual.name)
             }
         }
         
@@ -968,25 +961,21 @@ class RolezTypeSystemTest {
     }
     
     @Test def testTThis() {
-        for(expected : Role.values) {
-            val program = parse('''
+        val roles = #[createReadWrite, createReadOnly, createPure]
+        for(expected : roles)
+            parse('''
                 class rolez.lang.Object mapped to java.lang.Object
                 class A {
-                    def «expected» foo: { this; }
+                    def «expected.name» foo: { this; }
                 }
-            ''')
-            program.findClass("A").findMethod("foo").lastExpr.type
-                .assertThat(isRoleType(expected, newClassRef(program.findClass("A"))))
-        }
+            ''').findClass("A").findMethod("foo").lastExpr.type.assertRoleType(expected.class, "A")
         
-        val program = parse('''
+        parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
                 new { this; }
             }
-        ''')
-        program.findNormalClass("A").constrs.head.lastExpr.type
-            .assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
+        ''').findNormalClass("A").constrs.head.lastExpr.type.assertRoleType(ReadWrite, "A")
     }
     
     @Test def testTThisTask() {
@@ -1014,62 +1003,72 @@ class RolezTypeSystemTest {
             task Main: {}
         ''').findClass("A").methods.head.lastExpr.type.assertThat(instanceOf(Int))
         
-        var program = parse('''
+        parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A
             task Main: {
                 val a: readonly A = new A;
                 a;
             }
-        ''')
-        program.main.lastExpr.type
-            .assertThat(isRoleType(READONLY, newClassRef(program.findClass("A"))))
+        ''').main.lastExpr.type.assertRoleType(ReadOnly, "A")
     }
     
-    @Test def testTNew() {
-        var program = parse('''
+    @Test def void testTNew() {
+        parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A
             task Main: { new A; }
-        ''')
-        program.main.lastExpr.type
-            .assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
+        ''').main.lastExpr.type.assertRoleType(ReadWrite, "A")
         
-        program = parse('''
+        parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.Array[T] mapped to rolez.lang.Array {
                 mapped new(length: int)
             }
             task Main: { new Array[int](100); }
-        ''')
-        program.main.lastExpr.type
-            .assertThat(isRoleType(READWRITE, newClassRef(program.findNormalClass(arrayClassName), createInt)))
+        ''').main.lastExpr.type.assertRoleType(ReadWrite, arrayClassName, Int)
         
-        program = parse('''
+        parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A
             class rolez.lang.Array[T] mapped to rolez.lang.Array {
                 mapped new(length: int)
             }
             task Main: { new Array[readonly A](10); }
-        ''')
-        program.main.lastExpr.type
-            .assertThat(isRoleType(READWRITE, newClassRef(program.findNormalClass(arrayClassName),
-                newRoleType(READONLY, newClassRef(program.findClass("A"))))))
+        ''').main.lastExpr.type.assertInstanceOf(RoleType) => [
+            role.assertThat(instanceOf(ReadWrite))
+            base.assertInstanceOf(GenericClassRef) => [
+                clazz.name.assertThat(is(arrayClassName.toString))
+                typeArg.assertInstanceOf(RoleType) => [
+                    role.assertThat(instanceOf(ReadOnly))
+                    base.assertInstanceOf(SimpleClassRef) => [ clazz.name.assertThat(is("A"))]
+                ]
+            ]
+        ]
         
-        program = parse('''
+        parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A
             class rolez.lang.Array[T] mapped to rolez.lang.Array {
                 mapped new(length: int)
             }
             task Main: { new Array[pure Array[readwrite A]](1000); }
-        ''')
-        val array = program.findNormalClass(arrayClassName)
-        program.main.lastExpr.type
-            .assertThat(isRoleType(READWRITE, newClassRef(array,
-                newRoleType(PURE, newClassRef(array,
-                    newRoleType(READWRITE, newClassRef(program.findClass("A"))))))))
+        ''').main.lastExpr.type.assertInstanceOf(RoleType) => [
+            role.assertThat(instanceOf(ReadWrite))
+            base.assertInstanceOf(GenericClassRef) => [
+                clazz.name.assertThat(is(arrayClassName.toString))
+                typeArg.assertInstanceOf(RoleType) => [
+                    role.assertThat(instanceOf(Pure))
+                    base.assertInstanceOf(GenericClassRef) => [
+                        clazz.name.assertThat(is(arrayClassName.toString))
+                        typeArg.assertInstanceOf(RoleType) => [
+                            role.assertInstanceOf(ReadWrite)
+                            base.assertInstanceOf(SimpleClassRef) => [ clazz.name.assertThat(is("A"))]
+                        ]
+                    ]
+                ]
+            ]
+        ]
         
         // IMPROVE: test generic constructors, once  supported outside of the array class
     }
@@ -1198,46 +1197,46 @@ class RolezTypeSystemTest {
     }
     
     @Test def testTThe() {
-        val program = parse('''
+        parse('''
             class rolez.lang.Object mapped to java.lang.Object
             object A
             task Main: {
                 the A;
             }
-        ''')
-        program.main.lastExpr.type.assertThat(
-            isRoleType(READONLY, newClassRef(program.findClass("A"))))
+        ''').main.lastExpr.type.assertRoleType(ReadOnly, "A")
     }
     
     @Test def testTStart() {
-        var program = parse('''
+        parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.Task
             task T: int { return 0; }
             task Main: { start T; }
-        ''')
-        program.main.lastExpr.type
-            .assertThat(isRoleType(PURE, newClassRef(program.findNormalClass(taskClassName), createInt)))
+        ''').main.lastExpr.type.assertRoleType(Pure, taskClassName, Int)
         
-        program = parse('''
+        parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.Task
             task T: {}
             task Main: { start T; }
-        ''')
-        program.main.lastExpr.type
-            .assertThat(isRoleType(PURE, newClassRef(program.findNormalClass(taskClassName), createVoid)))
+        ''').main.lastExpr.type.assertRoleType(Pure, taskClassName, Void)
         
-        program = parse('''
+        parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.Task
             class A
             task T: readwrite A { return null; }
             task Main: { start T; }
-        ''')
-        program.main.lastExpr.type
-            .assertThat(isRoleType(PURE, newClassRef(program.findNormalClass(taskClassName),
-                newRoleType(READWRITE, newClassRef(program.findClass("A"))))))
+        ''').main.lastExpr.type.assertInstanceOf(RoleType) => [
+            role.assertThat(instanceOf(Pure))
+            base.assertInstanceOf(GenericClassRef) => [
+                clazz.name.assertThat(is(taskClassName.toString))
+                typeArg.assertInstanceOf(RoleType) => [
+                    role.assertThat(instanceOf(ReadWrite))
+                    base.assertInstanceOf(SimpleClassRef) => [ clazz.name.assertThat(is("A"))]
+                ]
+            ]
+        ]
         
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -1320,10 +1319,8 @@ class RolezTypeSystemTest {
         ''')
         program.main.expr(0).type.assertThat(instanceOf(Int))
         program.main.expr(1).type.assertThat(instanceOf(Char))
-        program.main.expr(2).type.assertThat(
-            isRoleType(READWRITE, newClassRef(program.findClass("A"))))
-        program.main.expr(3).type.assertThat(
-            isRoleType(PURE, newClassRef(program.findClass("A"))))
+        program.main.expr(2).type.assertRoleType(ReadWrite, "A")
+        program.main.expr(3).type.assertRoleType(Pure, "A")
     }
     
     @Test def testTParenthesizedErrorInExpr() {
@@ -1333,13 +1330,11 @@ class RolezTypeSystemTest {
     }
     
     @Test def testTStringLiteral() {
-        val program = parse('''
+        parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.String mapped to java.lang.String
             task Main: { "Hi"; }
-        ''')
-        program.main.lastExpr.type.assertThat(
-            isRoleType(READWRITE, newClassRef(program.findClass(stringClassName))))
+        ''').main.lastExpr.type.assertRoleType(ReadWrite, stringClassName)
     }
     
     @Test def testTStringLiteralStringClassNotDefined() {
@@ -1386,8 +1381,8 @@ class RolezTypeSystemTest {
             task Main(i: int, a: readwrite A, o: pure Object): {}
         ''')
         program.main.params.get(0).varType.assertThat(instanceOf(Int))
-        program.main.params.get(1).varType.assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
-        program.main.params.get(2).varType.assertThat(isRoleType(PURE, newClassRef(program.findClass(objectClassName))))
+        program.main.params.get(1).varType.assertRoleType(ReadWrite, "A")
+        program.main.params.get(2).varType.assertRoleType(Pure, objectClassName)
     }
     
     @Test def testVLocalVar() {
@@ -1401,8 +1396,8 @@ class RolezTypeSystemTest {
             }
         ''')
         program.main.variable(0).varType.assertThat(instanceOf(Int))
-        program.main.variable(1).varType.assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
-        program.main.variable(2).varType.assertThat(isRoleType(PURE, newClassRef(program.findClass(objectClassName))))
+        program.main.variable(1).varType.assertRoleType(ReadWrite, "A")
+        program.main.variable(2).varType.assertRoleType(Pure, objectClassName)
         
         program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -1412,8 +1407,8 @@ class RolezTypeSystemTest {
                 var o: pure Object = null;
             }
         ''')
-        program.main.variable(0).varType.assertThat(isRoleType(READONLY, newClassRef(program.findClass("A"))))
-        program.main.variable(1).varType.assertThat(isRoleType(PURE, newClassRef(program.findClass(objectClassName))))
+        program.main.variable(0).varType.assertRoleType(ReadOnly, "A")
+        program.main.variable(1).varType.assertRoleType(Pure, objectClassName)
         
         program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -1425,7 +1420,7 @@ class RolezTypeSystemTest {
             }
         ''')
         program.main.variable(0).varType.assertThat(instanceOf(Int))
-        program.main.variable(1).varType.assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
+        program.main.variable(1).varType.assertRoleType(ReadWrite, "A")
         program.main.variable(2).varType.assertThat(instanceOf(Null))
         
         program = parse('''
@@ -1438,7 +1433,7 @@ class RolezTypeSystemTest {
             }
         ''')
         program.main.variable(0).varType.assertThat(instanceOf(Int))
-        program.main.variable(1).varType.assertThat(isRoleType(READWRITE, newClassRef(program.findClass("A"))))
+        program.main.variable(1).varType.assertRoleType(ReadWrite, "A")
         program.main.variable(2).varType.assertThat(instanceOf(Null))
         
         parse('''
@@ -1727,9 +1722,9 @@ class RolezTypeSystemTest {
             }
         ''').classes.findFirst[name == "C"] as NormalClass)
         ((classC.constrs.findFirst[params.size == 0].body.stmts.head as SuperConstrCall)
-            .constr.params.head.type as RoleType).role.assertThat(is(READWRITE))
+            .constr.params.head.type as RoleType).role.assertThat(instanceOf(ReadWrite))
         ((classC.constrs.findFirst[params.size == 1].body.stmts.head as SuperConstrCall)
-            .constr.params.head.type as RoleType).role.assertThat(is(READONLY))
+            .constr.params.head.type as RoleType).role.assertThat(instanceOf(ReadOnly))
         
         // (Switch order of declaration to rule out accidental selection of the correct one)
         classC = (parse('''
@@ -1745,9 +1740,9 @@ class RolezTypeSystemTest {
             }
         ''').classes.findFirst[name == "C"] as NormalClass)
         ((classC.constrs.findFirst[params.size == 0].body.stmts.head as SuperConstrCall)
-            .constr.params.head.type as RoleType).role.assertThat(is(READWRITE))
+            .constr.params.head.type as RoleType).role.assertThat(instanceOf(ReadWrite))
         ((classC.constrs.findFirst[params.size == 1].body.stmts.head as SuperConstrCall)
-            .constr.params.head.type as RoleType).role.assertThat(is(READONLY))
+            .constr.params.head.type as RoleType).role.assertThat(instanceOf(ReadOnly))
     }
     
     @Test def testWSuperConstrCallAmbiguous() {

@@ -235,7 +235,6 @@ class RolezLinkingTest {
         ''').assertNoErrors
     }
     
-    
     @Test def testSuperMethodDifferentReturnType() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object

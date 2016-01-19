@@ -2,7 +2,6 @@ package ch.trick17.rolez
 
 import ch.trick17.rolez.rolez.Block
 import ch.trick17.rolez.rolez.Class
-import ch.trick17.rolez.rolez.ClassRef
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.ExprStmt
 import ch.trick17.rolez.rolez.GenericClassRef
@@ -27,9 +26,6 @@ import org.eclipse.xtext.junit4.validation.ValidationTestHelper
 import org.eclipse.xtext.naming.QualifiedName
 import org.eclipse.xtext.resource.XtextResourceSet
 import org.eclipse.xtext.util.StringInputStream
-import org.hamcrest.BaseMatcher
-import org.hamcrest.Description
-import org.hamcrest.Matcher
 
 import static org.hamcrest.Matchers.*
 
@@ -117,57 +113,33 @@ class TestUtils {
         result.value
     }
     
-    def asRoleType(Type t) {
-        t.assertThat(instanceOf(RoleType))
-        t as RoleType
+    def <T> assertInstanceOf(Object it, java.lang.Class<T> clazz) {
+        assertThat(instanceOf(clazz))
+        clazz.cast(it)
     }
     
-    def Matcher<Type> isRoleType(Role role, ClassRef base) {
-        new RoleTypeMatcher(extensions, newRoleType(role, base))
+    def void assertRoleType(Type it, java.lang.Class<? extends Role> r, String n) {
+        assertInstanceOf(RoleType) => [
+            role.assertThat(instanceOf(r))
+            base.assertInstanceOf(SimpleClassRef) => [ clazz.name.assertThat(is(n)) ]
+        ]
     }
     
-    static class RoleTypeMatcher extends BaseMatcher<Type> {
-        
-        extension RolezExtensions extensions
-        val RoleType expected
+    def void assertRoleType(Type it, java.lang.Class<? extends Role> r, QualifiedName n) {
+        assertRoleType(r, n.toString)
+    }
     
-        new(RolezExtensions extensions, RoleType expected) {
-            this.extensions = extensions
-            this.expected = expected
-        }
-        
-        override matches(Object actual) {
-            expected.equalTo(actual)
-        }
-        
-        private def dispatch boolean equalTo(RoleType _, Object __) { false }
-        
-        private def dispatch boolean equalTo(RoleType it, RoleType other) {
-            role.equals(other.role) && base.equalTo(other.base)
-        }
-        
-        private def dispatch boolean equalTo(PrimitiveType it, PrimitiveType other) {
-            class == other.class
-        }
-        
-        private def dispatch boolean equalTo(ClassRef _, Object __) { false }
-        
-        private def dispatch boolean equalTo(SimpleClassRef it, SimpleClassRef other) {
-            clazz.equals(other.clazz)
-        }
-        
-        private def dispatch boolean equalTo(GenericClassRef it, GenericClassRef other) {
-            clazz.equals(other.clazz)
-            typeArg.equalTo(other.typeArg)
-        }
-        
-        override describeTo(Description description) {
-            description.appendText(expected.string)
-        }
-        
-        override describeMismatch(Object actual, Description description) {
-            if(actual instanceof Type) description.appendText(actual.string)
-            else description.appendValue(actual)
-        }
+    def void assertRoleType(Type it, java.lang.Class<? extends Role> r, String n, java.lang.Class<? extends PrimitiveType> t) {
+        assertInstanceOf(RoleType) => [
+            role.assertThat(instanceOf(r))
+            base.assertInstanceOf(GenericClassRef) => [
+                clazz.name.assertThat(is(n))
+                typeArg.class == t
+            ]
+        ]
+    }
+    
+    def void assertRoleType(Type it, java.lang.Class<? extends Role> r, QualifiedName n, java.lang.Class<? extends PrimitiveType> t) {
+        assertRoleType(r, n.toString, t)
     }
 }

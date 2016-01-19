@@ -2,7 +2,9 @@ package ch.trick17.rolez
 
 import ch.trick17.rolez.rolez.CharLiteral
 import ch.trick17.rolez.rolez.IntLiteral
+import ch.trick17.rolez.rolez.Method
 import ch.trick17.rolez.rolez.Program
+import ch.trick17.rolez.rolez.Pure
 import ch.trick17.rolez.rolez.StringLiteral
 import ch.trick17.rolez.tests.RolezInjectorProvider
 import javax.inject.Inject
@@ -55,6 +57,15 @@ class RolezParsingTest{
                 }
             }
         ''').assertNoErrors
+    }
+    
+    @Test def testThisRole() {
+        (parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def pure f: {}
+            }
+        ''').findClass("A").members.head as Method).thisRole.assertThat(instanceOf(Pure))
     }
     
     @Test def testNewAndMemberAccess() {

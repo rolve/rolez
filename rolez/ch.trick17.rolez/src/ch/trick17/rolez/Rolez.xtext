@@ -56,7 +56,6 @@ Constr:
     'new' ('(' params+=Param (',' params+=Param)* ')')?
     body=Block?;
 
-
 Field:
     jvmField=[jvmTypes::JvmField|MappedKeyword]?
     kind=VarKind name=ID ':' type=Type
@@ -236,8 +235,8 @@ RoleType:
 
 terminal NULL_TYPE: 'Null';
 
-enum Role:
-    READWRITE='readwrite' | READONLY='readonly' | PURE='pure';
+Role:
+    {Pure} 'pure' | {ReadOnly} 'readonly' | {ReadWrite} 'readwrite';
 
 ClassRef:
     SimpleClassRef | GenericClassRef;
@@ -259,7 +258,6 @@ TheClassRef returns ClassRef:
 
 TaskRef:
     '(' task=[Task|QualifiedName] ')' | task=[Task];
-
 
 /* 
  * The following rules are only used to modify the type hierarchy. The

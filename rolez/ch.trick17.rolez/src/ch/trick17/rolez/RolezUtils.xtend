@@ -35,10 +35,10 @@ import org.eclipse.xtext.linking.lazy.LazyLinkingResource
 import org.eclipse.xtext.naming.QualifiedName
 import org.eclipse.xtext.scoping.IScopeProvider
 
-import static ch.trick17.rolez.rolez.Role.*
 import static ch.trick17.rolez.rolez.RolezPackage.Literals.*
 import static ch.trick17.rolez.rolez.VarKind.VAL
 
+import static extension org.eclipse.emf.ecore.util.EcoreUtil.copy
 import static extension org.eclipse.emf.ecore.util.EcoreUtil.resolve
 
 /** 
@@ -53,8 +53,8 @@ class RolezUtils {
     @Inject IScopeProvider scopeProvider
     
     def newRoleType(Role r, ClassRef base) {
-        if(base.eContainer != null)
-            throw new IllegalArgumentException("base must not be contained")
+        if(r.eContainer != null || base.eContainer != null)
+            throw new IllegalArgumentException("role or base must not be contained")
         
         val result = createRoleType
         result.role = r
@@ -84,11 +84,11 @@ class RolezUtils {
             case null: new RuleEnvironment
             Task: new RuleEnvironment
             Method: {
-                val thisType = newRoleType(body.thisRole, newClassRef(body.enclosingClass))
+                val thisType = newRoleType(body.thisRole.copy, newClassRef(body.enclosingClass))
                 new RuleEnvironment(new RuleEnvironmentEntry("this", thisType))
             }
             Constr: {
-                val thisType = newRoleType(READWRITE, newClassRef(body.enclosingClass))
+                val thisType = newRoleType(createReadWrite, newClassRef(body.enclosingClass))
                 new RuleEnvironment(new RuleEnvironmentEntry("this", thisType))
             }
         }

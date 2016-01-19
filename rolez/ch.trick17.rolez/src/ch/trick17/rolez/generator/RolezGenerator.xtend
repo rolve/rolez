@@ -35,11 +35,15 @@ import ch.trick17.rolez.rolez.Param
 import ch.trick17.rolez.rolez.Parenthesized
 import ch.trick17.rolez.rolez.PrimitiveType
 import ch.trick17.rolez.rolez.Program
+import ch.trick17.rolez.rolez.Pure
+import ch.trick17.rolez.rolez.ReadOnly
+import ch.trick17.rolez.rolez.ReadWrite
 import ch.trick17.rolez.rolez.RelationalExpr
 import ch.trick17.rolez.rolez.ReturnExpr
 import ch.trick17.rolez.rolez.ReturnNothing
 import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleType
+import ch.trick17.rolez.rolez.RolezFactory
 import ch.trick17.rolez.rolez.SimpleClassRef
 import ch.trick17.rolez.rolez.SingletonClass
 import ch.trick17.rolez.rolez.Start
@@ -70,7 +74,6 @@ import org.eclipse.xtext.generator.IFileSystemAccess2
 import org.eclipse.xtext.generator.IGeneratorContext
 
 import static ch.trick17.rolez.Constants.*
-import static ch.trick17.rolez.rolez.Role.*
 import static ch.trick17.rolez.rolez.VarKind.*
 
 import static extension java.util.Objects.requireNonNull
@@ -79,6 +82,7 @@ import static extension org.eclipse.xtext.util.Strings.convertToJavaString
 class RolezGenerator extends AbstractGenerator {
     
     @Inject extension RolezExtensions
+    @Inject extension RolezFactory
     @Inject extension JavaMapper
     @Inject extension RoleAnalysis
     @Inject RolezUtils utils
@@ -201,11 +205,11 @@ class RolezGenerator extends AbstractGenerator {
     '''
     
     private def needsTransition(Param it) {
-        type.isGuarded && (type as RoleType).role != PURE
+        type.isGuarded && !((type as RoleType).role instanceof Pure)
     }
     
     private def genTransition(Param it) {
-        val kind = if((type as RoleType).role == READWRITE) "pass" else "share"
+        val kind = if((type as RoleType).role instanceof ReadWrite) "pass" else "share"
         if((type as RoleType).base.clazz.isObjectClass)
             '''
             if(«safeName» instanceof «jvmGuardedClassName»)
@@ -216,7 +220,7 @@ class RolezGenerator extends AbstractGenerator {
     }
     
     private def needsRegisterNewOwner(Param it) {
-        type.isGuarded && (type as RoleType).role == READWRITE
+        type.isGuarded && (type as RoleType).role instanceof ReadWrite
     }
     
     private def genRegisterNewOwner(Param it) {
@@ -230,7 +234,7 @@ class RolezGenerator extends AbstractGenerator {
     }
     
     private def genRelease(Param it) {
-        val kind = if((type as RoleType).role == READWRITE) "Passed" else "Shared"
+        val kind = if((type as RoleType).role  instanceof ReadWrite) "Passed" else "Shared"
         if((type as RoleType).base.clazz.isObjectClass)
             '''
             if(«safeName» instanceof «jvmGuardedClassName»)
@@ -256,7 +260,7 @@ class RolezGenerator extends AbstractGenerator {
     '''
     
     private def gen(Constr it) {
-        val guardThis = dynamicThisRoleAtExit != READWRITE
+        val guardThis = !(dynamicThisRoleAtExit instanceof ReadWrite)
         '''
             
             public «enclosingClass.safeSimpleName»(«params.map[gen].join(", ")») {
@@ -323,6 +327,8 @@ class RolezGenerator extends AbstractGenerator {
     private def gen(Param it) {
         // Use the boxed version of a primitive param type if any of the "overridden"
         // params is generic, i.e., its type is a type parameter reference (e.g., T)
+        // IMPROVE: For some methods, it may make sense to generate primitive version too,
+        // to enable efficient passing of primitive values
         val genType =
             if(overridesGenericParam)  type.genGeneric
             else                       type.gen
@@ -472,11 +478,11 @@ class RolezGenerator extends AbstractGenerator {
     }
     
     private def generateArrayGet(MemberAccess it) {
-        '''«target.genGuarded(READONLY)».data[«args.get(0).gen»]'''
+        '''«target.genGuarded(createReadOnly)».data[«args.get(0).gen»]'''
     }
     
     private def generateArraySet(MemberAccess it) {
-        '''«target.genGuarded(READWRITE)».data[«args.get(0).gen»] = «args.get(1).gen»'''
+        '''«target.genGuarded(createReadWrite)».data[«args.get(0).gen»] = «args.get(1).gen»'''
     }
     
     private def generateArrayLength(MemberAccess it)
@@ -508,9 +514,9 @@ class RolezGenerator extends AbstractGenerator {
     
     private def generateFieldAccess(MemberAccess it) {
         val requiredRole =
-            if(isFieldWrite)           READWRITE
-            else if(field.kind == VAR) READONLY
-            else                       PURE
+            if(isFieldWrite)           createReadWrite
+            else if(field.kind == VAR) createReadOnly
+            else                       createPure
         '''«target.genGuarded(requiredRole)».«field.safeName»'''
     }
     
@@ -523,9 +529,9 @@ class RolezGenerator extends AbstractGenerator {
         val needsGuard = !system.subroleSucceeded(dynamicRole, requiredRole)
         if(type.isGuarded && needsGuard)
             switch(requiredRole) {
-                case READWRITE: "guardReadWrite(" + gen + ")"
-                case  READONLY: "guardReadOnly("  + gen + ")"
-                case      PURE: genNested
+                ReadWrite: "guardReadWrite(" + gen + ")"
+                ReadOnly : "guardReadOnly("  + gen + ")"
+                Pure     : genNested
             }
         else
             genNested

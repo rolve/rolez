@@ -25,6 +25,9 @@ import ch.trick17.rolez.rolez.Param
 import ch.trick17.rolez.rolez.ParameterizedBody
 import ch.trick17.rolez.rolez.PrimitiveType
 import ch.trick17.rolez.rolez.Program
+import ch.trick17.rolez.rolez.ReadOnly
+import ch.trick17.rolez.rolez.ReadWrite
+import ch.trick17.rolez.rolez.Pure
 import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.SimpleClassRef
@@ -211,7 +214,9 @@ class RolezExtensions {
     def isMapped( Field it) { jvmField  != null }
     def isMapped(Method it) { jvmMethod != null }
     
-    def isOverriding(Method it) { superMethod != null }
+    def isOverriding(Method it) {
+        superMethod != null && !superMethod.eIsProxy    // If superMethod could not be resolved,
+    }                                                   // don't do any overriding checks
     
     def paramIndex(Param it) { enclosingBody.params.indexOf(it) }
     def   argIndex( Expr it) { (eContainer as Argumented).args.indexOf(it) }
@@ -244,7 +249,13 @@ class RolezExtensions {
         GenericClassRef: clazz.qualifiedName + "[" + typeArg.string + "]"
     }}
     
-    def string(Role it) { literal }
+    def string(Role it) { name }
+    
+    def name(Role it) { switch(it) {
+        ReadWrite: "readwrite"
+        ReadOnly : "readonly"
+        Pure     : "pure"
+    }}
     
     def stringWithoutRoles(ClassRef it) { switch(it) {
         GenericClassRef: clazz.qualifiedName + "[" + typeArg.stringWithoutRoles + "]"
@@ -256,9 +267,11 @@ class RolezExtensions {
         NodeModelUtils.findActualNodeFor(it).text.trim.replaceAll("\\s+", " ")
     }
     
-    def dispatch name(    Int _) { "int"     }
-    def dispatch name( Double _) { "double"  }
-    def dispatch name(Boolean _) { "boolean" }
-    def dispatch name(   Char _) { "char"    }
-    def dispatch name(   Void _) { "void"    }
+    def name(PrimitiveType it) { switch(it) {
+        Int:     "int"
+        Double:  "double"
+        Boolean: "boolean"
+        Char:    "char"
+        Void:    "void"
+    }}
 }

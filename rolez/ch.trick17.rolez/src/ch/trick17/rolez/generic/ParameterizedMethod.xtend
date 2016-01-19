@@ -7,8 +7,8 @@ import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.TypeParam
 import java.util.Map
 import org.eclipse.emf.ecore.EObject
-import org.eclipse.xtext.common.types.JvmOperation
 import org.eclipse.emf.ecore.EStructuralFeature
+import org.eclipse.xtext.common.types.JvmOperation
 
 import static ch.trick17.rolez.rolez.RolezPackage.Literals.*
 

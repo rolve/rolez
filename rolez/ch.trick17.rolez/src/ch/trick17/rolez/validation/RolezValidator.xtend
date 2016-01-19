@@ -23,8 +23,10 @@ import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.Null
 import ch.trick17.rolez.rolez.ParameterizedBody
 import ch.trick17.rolez.rolez.Program
+import ch.trick17.rolez.rolez.ReadOnly
 import ch.trick17.rolez.rolez.ReturnExpr
 import ch.trick17.rolez.rolez.RoleType
+import ch.trick17.rolez.rolez.RolezFactory
 import ch.trick17.rolez.rolez.SimpleClassRef
 import ch.trick17.rolez.rolez.SingletonClass
 import ch.trick17.rolez.rolez.SuperConstrCall
@@ -49,7 +51,6 @@ import org.eclipse.xtext.validation.AbstractDeclarativeValidator
 import org.eclipse.xtext.validation.Check
 
 import static ch.trick17.rolez.Constants.*
-import static ch.trick17.rolez.rolez.Role.*
 import static ch.trick17.rolez.rolez.RolezPackage.Literals.*
 import static ch.trick17.rolez.rolez.VarKind.*
 
@@ -108,6 +109,7 @@ class RolezValidator extends RolezSystemValidator {
     public static val INCORRECT_MAPPED_CONSTR = "incorrect mapped constructor"
     
     @Inject extension RolezExtensions
+    @Inject extension RolezFactory
     @Inject extension CfgProvider
     @Inject extension JavaMapper javaMapper
     @Inject ValFieldsInitializedAnalysis.Provider valFieldsAnalysis
@@ -165,7 +167,7 @@ class RolezValidator extends RolezSystemValidator {
     
     private def isStringArray(Type it) {
         switch(it) {
-            RoleType case role == READONLY && base.clazz.isArrayClass: {
+            RoleType case role instanceof ReadOnly && base.clazz.isArrayClass: {
                 val arg = (base as GenericClassRef).typeArg
                 switch(arg) {
                     RoleType: arg.base.clazz.isStringClass
@@ -392,8 +394,8 @@ class RolezValidator extends RolezSystemValidator {
         
         val type = type
         if(type instanceof RoleType)
-            if(system.subrole(READONLY, type.role).failed) {
-                val effectiveRole = system.leastCommonSuperrole(READONLY, type.role);
+            if(system.subrole(createReadOnly, type.role).failed) {
+                val effectiveRole = system.leastCommonSuperrole(createReadOnly, type.role);
                 warning("Singleton objects are always readonly, therefore this field's effective role is " + effectiveRole,
                     type, ROLE_TYPE__ROLE, INEFFECTIVE_FIELD_ROLE)
             }
