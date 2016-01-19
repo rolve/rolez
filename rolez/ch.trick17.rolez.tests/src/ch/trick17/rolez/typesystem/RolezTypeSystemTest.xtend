@@ -606,111 +606,13 @@ class RolezTypeSystemTest {
             }
         }
         
-        var p = parse('''
+        parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
                 def readwrite a: readonly A { return null; }
             }
             task Main: { new A.a; }
-        ''')
-        p.main.lastExpr.type.assertRoleType(ReadOnly, "A")
-        
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class A
-            class B {
-                def readwrite foo(a: readonly A, b: readwrite B,
-                        c: readwrite C, d: int): {}
-            }
-            class C extends B
-            task Main: { new C.foo(new A, new C, null, 5); }
-        ''').assertNoErrors
-        
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class A {
-                def readwrite foo: {}
-            }
-            class B extends A {
-                override readwrite foo: {}
-            }
-            task Main: { new B.foo; }
-        ''').assertNoErrors
-        
-        // Generic methods
-        val lib = newResourceSet.with('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.Array[T] mapped to rolez.lang.Array {
-                mapped new(length: int)
-                mapped def readonly  get(i: int): T
-                mapped def readwrite set(i: int, o: T):
-            }
-            class Container[E] mapped to «Container.canonicalName» {
-                mapped var e: E
-                mapped def readonly  get: E
-                mapped def readwrite set(e: E):
-            }
-        ''')
-        
-        parse('''
-            task Main: {
-                val a = new Array[int](1);
-                a.set(0, 42);
-                a.get(0);
-            }
-        ''', lib).main.lastExpr.type.assertThat(instanceOf(Int))
-        p = parse('''
-            class A
-            task Main: {
-                val a = new Array[readwrite A](1);
-                a.set(0, new A);
-                a.get(0);
-            }
-        ''', lib)
-        p.main.lastExpr.type.assertRoleType(ReadWrite, "A")
-        p = parse('''
-            class A
-            task Main: {
-                val a = new Array[pure A](1);
-                a.set(0, new A);
-                a.get(0);
-            }
-        ''', lib)
-        p.main.lastExpr.type.assertRoleType(Pure, "A")
-        p = parse('''
-            class A
-            task Main: {
-                val a = new Array[readwrite A](1) as readonly Array[readwrite A];
-                a.get(0);
-            }
-        ''', lib)
-        p.main.lastExpr.type.assertRoleType(ReadOnly, "A")
-        
-        parse('''
-            class A extends Container[int]
-            task Main: {
-                val a = new A;
-                a.set(42);
-                a.get;
-            }
-        ''', lib).main.lastExpr.type.assertThat(instanceOf(Int))
-        p = parse('''
-            class A extends Container[readwrite Object]
-            task Main: {
-                val a = new A;
-                a.set(new Object);
-                a.get;
-                (a as readonly A).get;
-            }
-        ''', lib)
-        p.main.expr(2).type.assertRoleType(ReadWrite, "A")
-        p.main.expr(3).type.assertRoleType(ReadOnly, "A")
-        
-        parse('''
-            class A extends Container[int] {
-                def myGet: int ( return this.get; }
-            }
-        ''').assertNoErrors
+        ''').main.lastExpr.type.assertRoleType(ReadOnly, "A")
     }
     
     @Test def testTMemberAccessMethodErrorInArg() {
@@ -821,6 +723,104 @@ class RolezTypeSystemTest {
                 new Array[pure A](1).set(0, new B);
             }
         ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "set")
+    }
+    
+    @Test def testTMemberAccessMethodFromSuperclass() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A
+            class B {
+                def readwrite foo(a: readonly A, b: readwrite B, c: readwrite C, d: int): {}
+            }
+            class C extends B
+            task Main: { new C.foo(new A, new C, null, 5); }
+        ''').assertNoErrors
+    }
+    
+    @Test def testTMemberAccessMethodOverride() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def readwrite foo: pure A { return null; }
+            }
+            class B extends A {
+                override readwrite foo: pure B { return null; }
+            }
+            task Main: { new B.foo; }
+        ''').main.lastExpr.type.assertRoleType(Pure, "B")
+     }
+     
+     @Test def testTMemberAccessMethodGeneric() {
+        val lib = newResourceSet.with('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
+                mapped new(length: int)
+                mapped def [r includes readonly] r get(i: int): r T
+                mapped def readwrite set(i: int, o: T):
+            }
+            class Container[E] mapped to «Container.canonicalName» {
+                mapped var e: E
+                mapped def readonly  get: E
+                mapped def readwrite set(e: E):
+            }
+        ''')
+        
+        parse('''
+            task Main: {
+                val a = new Array[int](1);
+                a.set(0, 42);
+                a.get(0);
+            }
+        ''', lib).main.lastExpr.type.assertThat(instanceOf(Int))
+        parse('''
+            class A
+            task Main: {
+                val a = new Array[readwrite A](1);
+                a.set(0, new A);
+                a.get(0);
+            }
+        ''', lib).main.lastExpr.type.assertRoleType(ReadWrite, "A")
+        parse('''
+            class A
+            task Main: {
+                val a = new Array[pure A](1);
+                a.set(0, new A);
+                a.get(0);
+            }
+        ''', lib).main.lastExpr.type.assertRoleType(Pure, "A")
+        parse('''
+            class A
+            task Main: {
+                val a: readonly Array[readwrite A] = new Array[readwrite A](1);
+                a.get(0);
+            }
+        ''', lib).main.lastExpr.type.assertRoleType(ReadOnly, "A")
+        
+        parse('''
+            class A extends Container[int]
+            task Main: {
+                val a = new A;
+                a.set(42);
+                a.get;
+            }
+        ''', lib).main.lastExpr.type.assertThat(instanceOf(Int))
+        val p = parse('''
+            class A extends Container[readwrite Object]
+            task Main: {
+                val a = new A;
+                a.set(new Object);
+                a.get;
+                (a as readonly A).get;
+            }
+        ''', lib)
+        p.main.expr(2).type.assertRoleType(ReadWrite, "A")
+        p.main.expr(3).type.assertRoleType(ReadOnly, "A")
+        
+        parse('''
+            class A extends Container[int] {
+                def myGet: int ( return this.get; }
+            }
+        ''').assertNoErrors
     }
     
     @Test def testTMemberAccessOverloading() {
