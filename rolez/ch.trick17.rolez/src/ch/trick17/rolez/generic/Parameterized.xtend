@@ -1,11 +1,12 @@
 package ch.trick17.rolez.generic
 
+import ch.trick17.rolez.rolez.Method
 import ch.trick17.rolez.rolez.NormalClass
+import ch.trick17.rolez.rolez.Role
+import ch.trick17.rolez.rolez.RoleParam
 import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.TypeParam
 import java.util.Map
-import org.eclipse.emf.ecore.EObject
-import org.eclipse.emf.ecore.util.EcoreUtil
 
 /**
  * A parameterized program element, e.g., a parameterized method, represents an "instantiation" 
@@ -18,30 +19,39 @@ import org.eclipse.emf.ecore.util.EcoreUtil
 abstract class Parameterized {
     
     static def NormalClass parameterizedWith(NormalClass it, Map<TypeParam, Type> typeArgs) {
-        EcoreUtil.resolve(it, null as EObject)
-        new ParameterizedNormalClass(it, eContainer, typeArgs)
+        new ParameterizedNormalClass(it, eContainer, typeArgs, emptyMap)
+    }
+    
+    static def Method parameterizedWith(Method it, Map<RoleParam, Role> roleArgs) {
+        if(it instanceof ParameterizedMethod)
+            new ParameterizedMethod(genericEObject, eContainer, typeArgs, roleArgs)
+        else
+            new ParameterizedMethod(it, eContainer, emptyMap, roleArgs)
     }
     
     package val Map<TypeParam, Type> typeArgs
+    package val Map<RoleParam, Role> roleArgs
     
-    package new(Map<TypeParam, Type> typeArgs) {
-        if(typeArgs == null)
+    package new(Map<TypeParam, Type> typeArgs, Map<RoleParam, Role> roleArgs) {
+        if(typeArgs == null || roleArgs == null)
             throw new NullPointerException
         this.typeArgs = typeArgs
+        this.roleArgs = roleArgs
     }
     
     package new(Parameterized base) {
         this.typeArgs = base.typeArgs
+        this.roleArgs = base.roleArgs
     }
     
     override equals(Object other) {
         if(this === other)
             true
         else if(other instanceof Parameterized)
-            typeArgs == other.typeArgs
+            typeArgs == other.typeArgs && roleArgs == other.roleArgs
         else
             false
     }
     
-    override hashCode() { typeArgs.hashCode + 1 }
+    override hashCode() { typeArgs.hashCode + roleArgs.hashCode + 1 }
 }

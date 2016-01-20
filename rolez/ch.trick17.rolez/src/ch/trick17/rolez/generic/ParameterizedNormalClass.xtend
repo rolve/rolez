@@ -2,19 +2,21 @@ package ch.trick17.rolez.generic
 
 import ch.trick17.rolez.rolez.ClassRef
 import ch.trick17.rolez.rolez.NormalClass
+import ch.trick17.rolez.rolez.Role
+import ch.trick17.rolez.rolez.RoleParam
 import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.TypeParam
 import java.util.Map
-import org.eclipse.xtext.common.types.JvmGenericType
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.EStructuralFeature
+import org.eclipse.xtext.common.types.JvmGenericType
 
 import static ch.trick17.rolez.rolez.RolezPackage.Literals.*
 
 package class ParameterizedNormalClass extends ParameterizedEObject<NormalClass> implements NormalClass {
     
-    new(NormalClass eObject, EObject eContainer, Map<TypeParam, Type> typeArgs) {
-        super(eObject, eContainer, typeArgs)
+    new(NormalClass eObject, EObject eContainer, Map<TypeParam, Type> typeArgs, Map<RoleParam, Role> roleArgs) {
+        super(eObject, eContainer, typeArgs, roleArgs)
     }
     
     override getName()          { eObject.name }
@@ -22,8 +24,8 @@ package class ParameterizedNormalClass extends ParameterizedEObject<NormalClass>
     override isMapped()         { eObject.isMapped }
     override getJvmClass()      { eObject.jvmClass }
     override getSuperclassRef() { /* TODO: Is this correct? */  eObject.superclassRef.parameterized }
-    override getConstrs()       { new ParameterizedConstrList(eObject.constrs, this, typeArgs) }
-    override getMembers()       { new ParameterizedMemberList(eObject.members, this, typeArgs) }
+    override getConstrs()       { new ParameterizedConstrList(eObject.constrs, this, typeArgs, roleArgs) }
+    override getMembers()       { new ParameterizedMemberList(eObject.members, this, typeArgs, roleArgs) }
     
     override eGet(EStructuralFeature feature) {
         if(feature === CLASS__SUPERCLASS_REF) superclassRef

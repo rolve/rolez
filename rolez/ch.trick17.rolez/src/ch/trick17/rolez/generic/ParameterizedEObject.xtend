@@ -1,10 +1,15 @@
 package ch.trick17.rolez.generic
 
+import ch.trick17.rolez.RolezResource
+import ch.trick17.rolez.rolez.BuiltInRole
 import ch.trick17.rolez.rolez.ClassRef
 import ch.trick17.rolez.rolez.GenericClassRef
 import ch.trick17.rolez.rolez.Null
 import ch.trick17.rolez.rolez.ParameterizedBody
 import ch.trick17.rolez.rolez.PrimitiveType
+import ch.trick17.rolez.rolez.Role
+import ch.trick17.rolez.rolez.RoleParam
+import ch.trick17.rolez.rolez.RoleParamRef
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.SimpleClassRef
 import ch.trick17.rolez.rolez.Type
@@ -29,8 +34,8 @@ abstract class ParameterizedEObject<E extends EObject>
     package val E eObject
     val EObject eContainer
     
-    package new(E eObject, EObject eContainer, Map<TypeParam, Type> typeArgs) {
-        super(typeArgs)
+    package new(E eObject, EObject eContainer, Map<TypeParam, Type> typeArgs, Map<RoleParam, Role> roleArgs) {
+        super(typeArgs, roleArgs)
         if(eObject == null || eContainer == null) throw new NullPointerException
         this.eObject = eObject;
         this.eContainer = eContainer
@@ -40,20 +45,42 @@ abstract class ParameterizedEObject<E extends EObject>
     
     /* Helper methods for subclasses */
     
-    def parameterized(Type it) { switch(it) {
-        RoleType     : new ParameterizedRoleType(it, this, typeArgs)
-        Null         : it
-        PrimitiveType: it
-        TypeParamRef : typeArgs.get(param) ?: it
+    def Type parameterized(Type it) { switch(it) {
+        RoleType             : new ParameterizedRoleType(it, this, typeArgs, roleArgs)
+        Null                 : it
+        PrimitiveType        : it
+        TypeParamRef         : {
+            if(!typeArgs.containsKey(param)) throw new AssertionError
+            val type = typeArgs.get(param)
+            // If the type parameter reference has a restricting role ("with"), return a new
+            // role type with the least common superrole
+            switch(type) {
+                RoleType case restrictingRole != null:
+                    utils.newRoleType(system.leastCommonSuperrole(type.role, restrictingRole.parameterized), type.base) 
+                default:
+                    type
+            }
+        }
+    }}
+    
+    private def system() { (eResource as RolezResource).rolezSystem  }
+    private def utils () { (eResource as RolezResource).rolezUtils }
+    
+    def parameterized(Role it) { switch(it) {
+        BuiltInRole : it
+        RoleParamRef: {
+            if(!roleArgs.containsKey(param)) throw new AssertionError
+            roleArgs.get(param)
+        }
     }}
     
     def ClassRef parameterized(ClassRef it) { switch(it) {
-        SimpleClassRef : new ParameterizedSimpleClassRef (it, this, typeArgs)
-        GenericClassRef: new ParameterizedGenericClassRef(it, this, typeArgs)
+        SimpleClassRef : new ParameterizedSimpleClassRef (it, this, typeArgs, roleArgs)
+        GenericClassRef: new ParameterizedGenericClassRef(it, this, typeArgs, roleArgs)
     }}
     
     def parameterizedParams(ParameterizedBody it) {
-        new ParameterizedParamList(params, this as ParameterizedBody, typeArgs)
+        new ParameterizedParamList(params, this as ParameterizedBody, typeArgs, roleArgs)
     }
     
     /* (Partially) supported eMethods */

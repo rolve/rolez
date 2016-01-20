@@ -1,23 +1,24 @@
 package ch.trick17.rolez.generic
 
-import ch.trick17.rolez.generic.ParameterizedEObject
 import ch.trick17.rolez.rolez.GenericClassRef
-import java.util.Map
+import ch.trick17.rolez.rolez.NormalClass
+import ch.trick17.rolez.rolez.Role
+import ch.trick17.rolez.rolez.RoleParam
 import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.TypeParam
-import ch.trick17.rolez.rolez.NormalClass
+import java.util.Map
 import org.eclipse.emf.ecore.EObject
+import org.eclipse.emf.ecore.EStructuralFeature
 
 import static ch.trick17.rolez.rolez.RolezPackage.Literals.*
-import org.eclipse.emf.ecore.EStructuralFeature
 
 package class ParameterizedGenericClassRef extends ParameterizedEObject<GenericClassRef> implements GenericClassRef {
     
-    new(GenericClassRef eObject, EObject eContainer, Map<TypeParam, Type> typeArgs) {
-        super(eObject, eContainer, typeArgs)
+    new(GenericClassRef eObject, EObject eContainer, Map<TypeParam, Type> typeArgs, Map<RoleParam, Role> roleArgs) {
+        super(eObject, eContainer, typeArgs, roleArgs)
     }
     
-    override getClazz()   { new ParameterizedNormalClass(eObject.clazz, this, typeArgs) }
+    override getClazz()   { new ParameterizedNormalClass(eObject.clazz, this, typeArgs, roleArgs) }
     override getTypeArg() { eObject.typeArg.parameterized }
     
     override eGet(EStructuralFeature feature) {

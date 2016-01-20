@@ -5,6 +5,7 @@ import ch.trick17.rolez.rolez.ArithmeticBinaryExpr
 import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.Block
 import ch.trick17.rolez.rolez.BooleanLiteral
+import ch.trick17.rolez.rolez.BuiltInRole
 import ch.trick17.rolez.rolez.Cast
 import ch.trick17.rolez.rolez.CharLiteral
 import ch.trick17.rolez.rolez.ClassRef
@@ -37,6 +38,7 @@ import ch.trick17.rolez.rolez.RelationalExpr
 import ch.trick17.rolez.rolez.ReturnExpr
 import ch.trick17.rolez.rolez.ReturnNothing
 import ch.trick17.rolez.rolez.Role
+import ch.trick17.rolez.rolez.RoleParamRef
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
 import ch.trick17.rolez.rolez.SimpleClassRef
@@ -59,8 +61,7 @@ import ch.trick17.rolez.rolez.WhileLoop
 import ch.trick17.rolez.validation.AbstractRolezValidator
 
 import static ch.trick17.rolez.Constants.*
-
-import static extension org.eclipse.emf.ecore.util.EcoreUtil.copy
+import static ch.trick17.rolez.rolez.RolezPackage.Literals.*
 
 system ch.trick17.rolez.typesystem.RolezSystem
 
@@ -216,21 +217,36 @@ from {
             t = switch(fieldType) {
                 RoleType: {
                     val role = leastCommonSuperrole(targetType.role, fieldType.role)
-                    newRoleType(role.copy, fieldType.base.copy)
+                    newRoleType(role, fieldType.base)
                 }
                 default: fieldType
             }
         }
         else { // method invoke
-            // First, check if args are well-typed
+            // Check if args are well-typed
             for(arg : a.args) {
                 G |- arg : var Type _
             }
-            G |- targetType.role <! a.method.thisRole or fail
+            // Check number of role args
+            val roleParams = a.method.roleParams
+            a.roleArgs.size == roleParams.size or fail
+                error "Wrong number of role arguments: expected " + roleParams.size + " but was " + a.roleArgs.size
+                source a
+                feature MEMBER_ACCESS__ROLE_ARGS
+            // Check if role args respect bounds of role params
+            for(roleArg : a.roleArgs) {
+                if(roleArg.destRoleParam.upperBound != null)
+                    G |- roleArg <! roleArg.destRoleParam.upperBound or fail
+                        error "Bound mismatch: the role " + roleArg.string + " is not a valid substitute "
+                            + "for the bounded role parameter " + roleArg.destRoleParam.string
+                        source a
+                        feature MEMBER_ACCESS__MEMBER
+            }
+            G |- targetType.role <! a.parameterizedMethod.thisRole or fail
                 error "Role mismatch: Cannot call method " + a.method.string
                     +" on a " + targetType.role.string + " target"
                 source a
-            t = a.method.type
+            t = a.parameterizedMethod.type
         }
     }
     else {
@@ -254,7 +270,7 @@ from {
 }
 
 rule TNew
-    G |- New n : newRoleType(createReadWrite, n.classRef.copy)
+    G |- New n : newRoleType(createReadWrite, n.classRef)
 from {
     for(arg : n.args) {
         G |- arg : var Type _
@@ -262,7 +278,7 @@ from {
 }
 
 axiom TThe
-    G |- The t : newRoleType(createReadOnly, t.classRef.copy)
+    G |- The t : newRoleType(createReadOnly, t.classRef)
 
 rule TStart
     G |- Start s : Type t
@@ -271,7 +287,7 @@ from {
     val taskClass = findNormalClass(taskClassName, s)
     taskClass != null
     G |- s << s.taskRef.task
-    t = newRoleType(createPure, newClassRef(taskClass, s.taskRef.task.type.copy))
+    t = newRoleType(createPure, newClassRef(taskClass, s.taskRef.task.type))
 }
 
 rule TParenthesized
@@ -432,13 +448,28 @@ rule SubtypeGeneral
 from { fail }
 
 
-rule Subrole
-    G |- Role left <! Role right
+rule SubroleBuiltInRole
+    G |- BuiltInRole left <! BuiltInRole right
 from {
     left instanceof ReadWrite || right instanceof Pure
         || left instanceof ReadOnly && right instanceof ReadOnly
 }
 
+rule SubroleRoleParamRef
+    G |- RoleParamRef left <! RoleParamRef right
+from {
+    left.param === right.param
+}
+
+rule SubroleRoleParamRefBuiltInRole
+    G |- RoleParamRef left <! BuiltInRole right
+from {
+    G |- left.param.upperBound <! right
+}
+
+rule SubroleGeneral
+    G |- Role left <! Role right
+from { fail }
 
 rule SubclassSimple
     G |- ClassRef left <~ SimpleClassRef right
@@ -526,7 +557,7 @@ from {
     val body = s.enclosingBody
     switch(body) {
         Method: {
-            val thisType = newRoleType(body.thisRole.copy, newClassRef(s.enclosingClass))
+            val thisType = newRoleType(body.thisRole, newClassRef(s.enclosingClass))
             "this" <- thisType |- s
         }
         Constr: {

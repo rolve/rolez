@@ -1,20 +1,22 @@
 package ch.trick17.rolez.generic
 
-import ch.trick17.rolez.rolez.Constr
-import java.util.Map
-import ch.trick17.rolez.rolez.TypeParam
-import ch.trick17.rolez.rolez.Type
-import org.eclipse.xtext.common.types.JvmConstructor
 import ch.trick17.rolez.rolez.Block
+import ch.trick17.rolez.rolez.Constr
+import ch.trick17.rolez.rolez.Role
+import ch.trick17.rolez.rolez.RoleParam
+import ch.trick17.rolez.rolez.Type
+import ch.trick17.rolez.rolez.TypeParam
+import java.util.Map
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.EStructuralFeature
+import org.eclipse.xtext.common.types.JvmConstructor
 
 import static ch.trick17.rolez.rolez.RolezPackage.Literals.PARAMETERIZED_BODY__PARAMS
 
 class ParameterizedConstr extends ParameterizedEObject<Constr> implements Constr {
     
-    new(Constr eObject, EObject eContainer, Map<TypeParam, Type> typeArgs) {
-        super(eObject, eContainer, typeArgs)
+    new(Constr eObject, EObject eContainer, Map<TypeParam, Type> typeArgs, Map<RoleParam, Role> roleArgs) {
+        super(eObject, eContainer, typeArgs, roleArgs)
     }
     
     override getJvmConstr() { eObject.jvmConstr }

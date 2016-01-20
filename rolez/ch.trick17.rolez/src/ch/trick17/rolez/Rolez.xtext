@@ -66,7 +66,9 @@ enum VarKind:
 
 Method:
     jvmMethod=[jvmTypes::JvmOperation|MappedKeyword]?
-    (superMethod=[Method|OverrideKeyword] | 'def') thisRole=Role name=ID
+    (superMethod=[Method|OverrideKeyword] | 'def')
+    ('[' roleParams+=RoleParam (',' roleParams+=RoleParam)* ']')?
+    thisRole=Role name=ID
     ('(' params+=Param (',' params+=Param)* ')')?
     ':' type=Type
     body=Block?;
@@ -74,6 +76,9 @@ Method:
 MappedKeyword: 'mapped';
 
 OverrideKeyword: 'override';
+
+RoleParam:
+    name=ID ('includes' upperBound=BuiltInRole)?; // IMPROVE: Allow role parameter refs as upper bounds
 
 Param:
     name=ID ':' type=Type;
@@ -170,7 +175,12 @@ UnaryNot returns Expr:
     MemberAccess | {UnaryNot} '!' expr=MemberAccess;
 
 MemberAccess returns Expr:
-    SimpleExpr ({MemberAccess.target=current} '.' member=[Member] ('(' args+=Expr (',' args+=Expr)* ')')? )*;
+    SimpleExpr (
+        {MemberAccess.target=current}
+        '.' member=[Member]
+        ('('     args+=Expr (','     args+=Expr)* ')')?
+        ('[' roleArgs+=Role (',' roleArgs+=Role)* ']')?
+    )*;
     // IMPROVE: Allow member accesses without "this"
 
 SimpleExpr returns Expr:
@@ -228,7 +238,7 @@ PrimitiveType:
     {Int} 'int' | {Double} 'double' | {Boolean} 'boolean' | {Char} 'char' | {Void} 'void'?;
 
 TypeParamRef:
-    param=[TypeParam];
+    param=[TypeParam] ('with' restrictingRole=Role)?;
 
 RoleType:
     role=Role base=ClassRef;
@@ -236,6 +246,12 @@ RoleType:
 terminal NULL_TYPE: 'Null';
 
 Role:
+    RoleParamRef | BuiltInRole;
+
+RoleParamRef:
+    param=[RoleParam];
+
+BuiltInRole:
     {Pure} 'pure' | {ReadOnly} 'readonly' | {ReadWrite} 'readwrite';
 
 ClassRef:
@@ -248,13 +264,12 @@ GenericClassRef:
     clazz=[NormalClass|QualifiedName] '[' typeArg=Type ']';
 
 NewClassRef returns ClassRef:
-    {SimpleClassRef} '(' clazz=[NormalClass|QualifiedName] ')'
-    | {SimpleClassRef} clazz=[NormalClass]
-    | GenericClassRef;
+    {SimpleClassRef} (clazz=[NormalClass] | '(' clazz=[NormalClass|QualifiedName] ')')
+    | {GenericClassRef} (clazz=[NormalClass] | '(' clazz=[NormalClass|QualifiedName] ')') '[' typeArg=Type ']';
 
 TheClassRef returns ClassRef:
-    {SimpleClassRef} '(' clazz=[SingletonClass|QualifiedName] ')'
-    | {SimpleClassRef} clazz=[SingletonClass];
+    {SimpleClassRef} clazz=[SingletonClass]
+    | {SimpleClassRef} '(' clazz=[SingletonClass|QualifiedName] ')';
 
 TaskRef:
     '(' task=[Task|QualifiedName] ')' | task=[Task];

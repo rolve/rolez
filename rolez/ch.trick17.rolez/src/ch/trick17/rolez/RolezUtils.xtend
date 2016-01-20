@@ -38,7 +38,6 @@ import org.eclipse.xtext.scoping.IScopeProvider
 import static ch.trick17.rolez.rolez.RolezPackage.Literals.*
 import static ch.trick17.rolez.rolez.VarKind.VAL
 
-import static extension org.eclipse.emf.ecore.util.EcoreUtil.copy
 import static extension org.eclipse.emf.ecore.util.EcoreUtil.resolve
 
 /** 
@@ -53,12 +52,9 @@ class RolezUtils {
     @Inject IScopeProvider scopeProvider
     
     def newRoleType(Role r, ClassRef base) {
-        if(r.eContainer != null || base.eContainer != null)
-            throw new IllegalArgumentException("role or base must not be contained")
-        
         val result = createRoleType
-        result.role = r
-        result.base = base
+        result.role = r.copyIfNecessary
+        result.base = base.copyIfNecessary
         result
     }
     
@@ -69,13 +65,14 @@ class RolezUtils {
     }
     
     def newClassRef(NormalClass c, Type arg) {
-        if(arg.eContainer != null)
-            throw new IllegalArgumentException("arg must not be contained")
-        
         val result = createGenericClassRef
         result.clazz = c
-        result.typeArg = arg
+        result.typeArg = arg.copyIfNecessary
         result
+    }
+    
+    private def <T extends EObject> copyIfNecessary(T it) {
+        if(eContainer == null) it else EcoreUtil.copy(it)
     }
     
     def createEnv(EObject context) {
@@ -84,7 +81,7 @@ class RolezUtils {
             case null: new RuleEnvironment
             Task: new RuleEnvironment
             Method: {
-                val thisType = newRoleType(body.thisRole.copy, newClassRef(body.enclosingClass))
+                val thisType = newRoleType(body.thisRole, newClassRef(body.enclosingClass))
                 new RuleEnvironment(new RuleEnvironmentEntry("this", thisType))
             }
             Constr: {

@@ -35,7 +35,7 @@ class ParameterizedParamListTest {
     }
     
     @Test def testStuff() {
-        val list = new ParameterizedParamList(orig, createMethod, emptyMap)
+        val list = new ParameterizedParamList(orig, createMethod, emptyMap, emptyMap)
         
         list.size.assertThat(is(5))
         list.isEmpty.assertThat(is(false))
@@ -51,26 +51,26 @@ class ParameterizedParamListTest {
     }
     
     @Test(expected=AssertionError) def void testSet() {
-        new ParameterizedParamList(orig, createMethod, emptyMap).set(0, null)
+        new ParameterizedParamList(orig, createMethod, emptyMap, emptyMap).set(0, null)
     }
     
     @Test(expected=AssertionError) def void testAdd() {
-        new ParameterizedParamList(orig, createMethod, emptyMap).add(null)
+        new ParameterizedParamList(orig, createMethod, emptyMap, emptyMap).add(null)
     }
     
     @Test(expected=AssertionError) def void testRemove() {
-        new ParameterizedParamList(orig, createMethod, emptyMap).remove(0)
+        new ParameterizedParamList(orig, createMethod, emptyMap, emptyMap).remove(0)
     }
     
     @Test(expected=AssertionError) def testListIteratorSet() {
-        new ParameterizedParamList(orig, createMethod, emptyMap).listIterator.set(null)
+        new ParameterizedParamList(orig, createMethod, emptyMap, emptyMap).listIterator.set(null)
     }
     
     @Test(expected=AssertionError) def testListIteratorAdd() {
-        new ParameterizedParamList(orig, createMethod, emptyMap).listIterator.add(null)
+        new ParameterizedParamList(orig, createMethod, emptyMap, emptyMap).listIterator.add(null)
     }
     
     @Test(expected=AssertionError) def testListIteratorRemove() {
-        new ParameterizedParamList(orig, createMethod, emptyMap).listIterator.remove
+        new ParameterizedParamList(orig, createMethod, emptyMap, emptyMap).listIterator.remove
     }
 }

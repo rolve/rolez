@@ -2,6 +2,8 @@ package ch.trick17.rolez.generic
 
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.Field
+import ch.trick17.rolez.rolez.Role
+import ch.trick17.rolez.rolez.RoleParam
 import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.TypeParam
 import ch.trick17.rolez.rolez.VarKind
@@ -14,8 +16,8 @@ import static ch.trick17.rolez.rolez.RolezPackage.Literals.TYPED__TYPE
 
 package class ParameterizedField extends ParameterizedEObject<Field> implements Field {
     
-    new(Field eObject, EObject eContainer, Map<TypeParam, Type> typeArgs) {
-        super(eObject, eContainer, typeArgs)
+    new(Field eObject, EObject eContainer, Map<TypeParam, Type> typeArgs, Map<RoleParam, Role> roleArgs) {
+        super(eObject, eContainer, typeArgs, roleArgs)
     }
     
     override getJvmField()    { eObject.jvmField }

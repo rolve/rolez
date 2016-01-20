@@ -348,6 +348,42 @@ class RolezLinkingTest {
         def T foo() { null }
     }
     
+    @Test def testTypeParam() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class GenericClass[T] mapped to «GenericClass.canonicalName» {
+                mapped new(t: T)
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class GenericClass[T] mapped to «GenericClass.canonicalName» {
+                mapped new(t: T)
+            }
+            class A {
+                def pure foo: T { return null; }
+            }
+        ''').assertError(TYPE_PARAM_REF, LINKING_DIAGNOSTIC)
+    }
+    
+    @Test def testRoleParam() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def [r] r getThis: r A { return this; }
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def [r] r getThis: r A { return this; }
+                def     r getThat: r A { return this; }
+            }
+        ''').assertError(ROLE_PARAM_REF, LINKING_DIAGNOSTIC)
+    }
+    
     @Test def testJvmClass() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object

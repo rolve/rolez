@@ -1,6 +1,8 @@
 package ch.trick17.rolez.generic
 
 import ch.trick17.rolez.rolez.Class
+import ch.trick17.rolez.rolez.Role
+import ch.trick17.rolez.rolez.RoleParam
 import ch.trick17.rolez.rolez.SimpleClassRef
 import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.TypeParam
@@ -12,8 +14,8 @@ import static ch.trick17.rolez.rolez.RolezPackage.Literals.SIMPLE_CLASS_REF__CLA
 
 package class ParameterizedSimpleClassRef extends ParameterizedEObject<SimpleClassRef> implements SimpleClassRef {
     
-    new(SimpleClassRef eObject, EObject eContainer, Map<TypeParam, Type> typeArgs) {
-        super(eObject, eContainer, typeArgs)
+    new(SimpleClassRef eObject, EObject eContainer, Map<TypeParam, Type> typeArgs, Map<RoleParam, Role> roleArgs) {
+        super(eObject, eContainer, typeArgs, roleArgs)
     }
     
     override getClazz() { eObject.clazz }

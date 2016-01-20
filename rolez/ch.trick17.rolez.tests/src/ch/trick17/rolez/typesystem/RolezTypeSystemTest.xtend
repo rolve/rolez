@@ -25,8 +25,10 @@ import org.eclipse.xtext.junit4.InjectWith
 import org.eclipse.xtext.junit4.XtextRunner
 import org.eclipse.xtext.junit4.util.ParseHelper
 import org.eclipse.xtext.junit4.validation.ValidationTestHelper
+import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.junit.runners.MethodSorters
 import rolez.lang.Guarded
 
 import static ch.trick17.rolez.Constants.*
@@ -40,6 +42,7 @@ import static extension org.hamcrest.MatcherAssert.assertThat
 
 @RunWith(XtextRunner)
 @InjectWith(RolezInjectorProvider)
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class RolezTypeSystemTest {
     
     @Inject RolezSystem system
@@ -283,7 +286,7 @@ class RolezTypeSystemTest {
             .assertError(ARITHMETIC_BINARY_EXPR, null, "operator", "undefined", "boolean", "char")
     }
     
-    @Test def testCast() {
+    @Test def testTCast() {
         // Redundant casts
         parse("task Main: { 5 as int; }").main.lastExpr.type.assertThat(instanceOf(Int))
         parse("task Main: { true as boolean; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
@@ -750,17 +753,67 @@ class RolezTypeSystemTest {
         ''').main.lastExpr.type.assertRoleType(Pure, "B")
      }
      
-     @Test def testTMemberAccessMethodGeneric() {
+    @Test def testTMemberAccessMethodWithRoleParam() {
+        val p = parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A
+            class AContainer {
+                var a: readwrite A
+                def [r includes readonly] r get: r A { return this.a; }
+            }
+            task Main: {
+                new AContainer.get[readwrite];
+                new AContainer.get[readonly];
+            }
+        ''')
+        p.main.expr(0).type.assertRoleType(ReadWrite, "A")
+        p.main.expr(1).type.assertRoleType(ReadOnly , "A")
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def [r] pure foo: {}
+            }
+            task Main: {
+                new A.foo[pure, pure]
+            }
+        ''').assertError(MEMBER_ACCESS, null, "number of role arguments")
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def [r1, r2] pure foo: {}
+            }
+            task Main: {
+                new A.foo[pure]
+            }
+        ''').assertError(MEMBER_ACCESS, null, "number of role arguments")
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A
+            class AContainer {
+                var a: readwrite A
+                def [r includes readonly] r get: r A { return this.a; }
+            }
+            task Main: {
+                new AContainer.get[pure];
+            }
+        ''').assertError(MEMBER_ACCESS, null, "bound mismatch", "pure", "r includes readonly")
+         
+        // TODO: Role arg inference
+    }
+    
+    @Test def testTMemberAccessMethodGeneric() {
         val lib = newResourceSet.with('''
             class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.Array[T] mapped to rolez.lang.Array {
                 mapped new(length: int)
-                mapped def [r includes readonly] r get(i: int): r T
+                mapped def [r includes readonly] r get(i: int): T with r
                 mapped def readwrite set(i: int, o: T):
             }
             class Container[E] mapped to «Container.canonicalName» {
                 mapped var e: E
-                mapped def readonly  get: E
+                mapped def [r includes readonly] r get: E with r
                 mapped def readwrite set(e: E):
             }
         ''')
@@ -769,7 +822,7 @@ class RolezTypeSystemTest {
             task Main: {
                 val a = new Array[int](1);
                 a.set(0, 42);
-                a.get(0);
+                a.get(0)[readwrite];
             }
         ''', lib).main.lastExpr.type.assertThat(instanceOf(Int))
         parse('''
@@ -777,7 +830,7 @@ class RolezTypeSystemTest {
             task Main: {
                 val a = new Array[readwrite A](1);
                 a.set(0, new A);
-                a.get(0);
+                a.get(0)[readwrite];
             }
         ''', lib).main.lastExpr.type.assertRoleType(ReadWrite, "A")
         parse('''
@@ -785,14 +838,14 @@ class RolezTypeSystemTest {
             task Main: {
                 val a = new Array[pure A](1);
                 a.set(0, new A);
-                a.get(0);
+                a.get(0)[readwrite];
             }
         ''', lib).main.lastExpr.type.assertRoleType(Pure, "A")
         parse('''
             class A
             task Main: {
                 val a: readonly Array[readwrite A] = new Array[readwrite A](1);
-                a.get(0);
+                a.get(0)[readonly];
             }
         ''', lib).main.lastExpr.type.assertRoleType(ReadOnly, "A")
         
@@ -801,7 +854,7 @@ class RolezTypeSystemTest {
             task Main: {
                 val a = new A;
                 a.set(42);
-                a.get;
+                a.get[readwrite];
             }
         ''', lib).main.lastExpr.type.assertThat(instanceOf(Int))
         val p = parse('''
@@ -809,18 +862,20 @@ class RolezTypeSystemTest {
             task Main: {
                 val a = new A;
                 a.set(new Object);
-                a.get;
-                (a as readonly A).get;
+                a.get[readwrite];
+                (a as readonly A).get[readonly];
             }
         ''', lib)
-        p.main.expr(2).type.assertRoleType(ReadWrite, "A")
-        p.main.expr(3).type.assertRoleType(ReadOnly, "A")
+        p.main.expr(1).type.assertRoleType(ReadWrite, objectClassName)
+        p.main.expr(2).type.assertRoleType(ReadOnly , objectClassName)
         
         parse('''
             class A extends Container[int] {
-                def myGet: int ( return this.get; }
+                def readonly myGet: int { return this.get[readonly]; }
             }
-        ''').assertNoErrors
+        ''', lib).assertNoErrors
+        
+        // TODO: Role arg inference
     }
     
     @Test def testTMemberAccessOverloading() {

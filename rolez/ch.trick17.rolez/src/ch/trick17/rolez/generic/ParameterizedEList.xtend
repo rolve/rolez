@@ -1,5 +1,7 @@
 package ch.trick17.rolez.generic
 
+import ch.trick17.rolez.rolez.Role
+import ch.trick17.rolez.rolez.RoleParam
 import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.TypeParam
 import com.google.common.collect.ForwardingListIterator
@@ -7,17 +9,17 @@ import java.util.Collection
 import java.util.List
 import java.util.Map
 import org.eclipse.emf.common.util.EList
+import org.eclipse.emf.ecore.EObject
 
 import static extension com.google.common.collect.Iterators.advance
-import org.eclipse.emf.ecore.EObject
 
 package abstract class ParameterizedEList<E extends EObject, C extends EObject> extends Parameterized implements EList<E> {
     
     package val List<E> list
     package val C eContainer
     
-    new(List<E> list, C eContainer, Map<TypeParam, Type> typeArgs) {
-        super(typeArgs)
+    new(List<E> list, C eContainer, Map<TypeParam, Type> typeArgs, Map<RoleParam, Role> roleArgs) {
+        super(typeArgs, roleArgs)
         if(list == null || eContainer == null)
             throw new NullPointerException
         this.list = list

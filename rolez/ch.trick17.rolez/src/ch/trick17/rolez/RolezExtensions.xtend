@@ -25,10 +25,12 @@ import ch.trick17.rolez.rolez.Param
 import ch.trick17.rolez.rolez.ParameterizedBody
 import ch.trick17.rolez.rolez.PrimitiveType
 import ch.trick17.rolez.rolez.Program
+import ch.trick17.rolez.rolez.Pure
 import ch.trick17.rolez.rolez.ReadOnly
 import ch.trick17.rolez.rolez.ReadWrite
-import ch.trick17.rolez.rolez.Pure
 import ch.trick17.rolez.rolez.Role
+import ch.trick17.rolez.rolez.RoleParam
+import ch.trick17.rolez.rolez.RoleParamRef
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.SimpleClassRef
 import ch.trick17.rolez.rolez.SingletonClass
@@ -93,10 +95,7 @@ class RolezExtensions {
         if(clazz instanceof NormalClass) clazz else null
     }
     
-    def parameterizedSuperclass(Class it) {
-        val clazz = superclassRef?.parameterizedClass
-        if(clazz instanceof NormalClass) clazz else null
-    }
+    def parameterizedSuperclass(Class it) { superclassRef?.parameterizedClass as NormalClass }
     
     def strictSuperclasses(Class it) {
         superclassesCache.get(it, eResource, [
@@ -179,7 +178,8 @@ class RolezExtensions {
     
     def decl(LocalVar it) { enclosingStmt as LocalVarDecl }
     
-    def destParam(Expr it) { (eContainer as Argumented).body.params.get(argIndex) }
+    def     destParam(Expr it) { (eContainer as Argumented).body.params.get(argIndex) }
+    def destRoleParam(Role it) { (eContainer as MemberAccess).method.roleParams.get(roleArgIndex) }
     
     def jvmParam(Param it) { enclosingBody.jvmBody.parameters.get(paramIndex) }
     
@@ -191,6 +191,11 @@ class RolezExtensions {
     
     def field (MemberAccess it) { member as Field  }
     def method(MemberAccess it) { member as Method }
+    
+    def parameterizedMethod(MemberAccess it) {
+        if(roleArgs.isEmpty) method
+        else method.parameterizedWith(roleArgs.toMap[destRoleParam])
+    }
     
     def body(Argumented it) { switch(it) {
         MemberAccess: method
@@ -218,8 +223,9 @@ class RolezExtensions {
         superMethod != null && !superMethod.eIsProxy    // If superMethod could not be resolved,
     }                                                   // don't do any overriding checks
     
-    def paramIndex(Param it) { enclosingBody.params.indexOf(it) }
-    def   argIndex( Expr it) { (eContainer as Argumented).args.indexOf(it) }
+    def   paramIndex(Param it) { enclosingBody.params.indexOf(it) }
+    def     argIndex( Expr it) { (eContainer as Argumented).args.indexOf(it) }
+    def roleArgIndex( Role it) { (eContainer as MemberAccess).roleArgs.indexOf(it) }
     
     /*
      * toString() replacements:
@@ -252,10 +258,15 @@ class RolezExtensions {
     def string(Role it) { name }
     
     def name(Role it) { switch(it) {
-        ReadWrite: "readwrite"
-        ReadOnly : "readonly"
-        Pure     : "pure"
+        ReadWrite   : "readwrite"
+        ReadOnly    : "readonly"
+        Pure        : "pure"
+        RoleParamRef: param.name
     }}
+    
+    def string(RoleParam it) {
+        name + if(upperBound != null) " includes " + upperBound.string else ""
+    }
     
     def stringWithoutRoles(ClassRef it) { switch(it) {
         GenericClassRef: clazz.qualifiedName + "[" + typeArg.stringWithoutRoles + "]"
