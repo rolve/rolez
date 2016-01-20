@@ -1343,16 +1343,19 @@ class RolezValidatorTest {
             task Main(v:): {}
         ''').assertError(VOID, VOID_NOT_RETURN_TYPE)
         parse('''
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 val v: void
             }
         ''').assertError(VOID, VOID_NOT_RETURN_TYPE)
         parse('''
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 def pure foo(v: void): {}
             }
         ''').assertError(VOID, VOID_NOT_RETURN_TYPE)
         parse('''
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 def pure foo: {
                     var v: void;
@@ -1360,6 +1363,7 @@ class RolezValidatorTest {
             }
         ''').assertError(VOID, VOID_NOT_RETURN_TYPE)
         parse('''
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 def pure foo: {
                     var v = this as void;
