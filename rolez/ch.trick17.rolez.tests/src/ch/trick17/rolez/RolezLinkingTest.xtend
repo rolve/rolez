@@ -1,5 +1,6 @@
 package ch.trick17.rolez
 
+import ch.trick17.rolez.rolez.Boolean
 import ch.trick17.rolez.rolez.Int
 import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.New
@@ -15,8 +16,10 @@ import org.eclipse.xtext.junit4.InjectWith
 import org.eclipse.xtext.junit4.XtextRunner
 import org.eclipse.xtext.junit4.util.ParseHelper
 import org.eclipse.xtext.junit4.validation.ValidationTestHelper
+import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.junit.runners.MethodSorters
 
 import static ch.trick17.rolez.Constants.*
 import static ch.trick17.rolez.rolez.RolezPackage.Literals.*
@@ -28,6 +31,7 @@ import static extension org.hamcrest.MatcherAssert.assertThat
 
 @RunWith(XtextRunner)
 @InjectWith(RolezInjectorProvider)
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class RolezLinkingTest {
     
     @Inject extension RolezExtensions
@@ -182,7 +186,7 @@ class RolezLinkingTest {
             class B3 extends A3 { new { super(0); } }
             
             class A4 { new(a: readwrite A4) {} }
-            class B4 extends A4 { new { super(new A4(null)); }
+            class B4 extends A4 { new { super(new A4(null)); } }
         ''').assertNoErrors
         
         parse('''
@@ -375,7 +379,7 @@ class RolezLinkingTest {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
-                val i: int
+                var i: int
                 def pure foo: {}
             }
             task Main: {
@@ -520,7 +524,7 @@ class RolezLinkingTest {
                 override readwrite foo: {}
             }
             task Main: { new B.foo; }
-        ''').main.lastExpr as MemberAccess).method.enclosingClass.name.assertThat(is("A"))
+        ''').main.lastExpr as MemberAccess).method.enclosingClass.name.assertThat(is("B"))
      }
     
     @Test def testMemberAccessMethodTypeMismatch() {
@@ -615,7 +619,7 @@ class RolezLinkingTest {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A
-            class B { new: {} }
+            class B { new {} }
             class C { new(i: int) {} }
             class D { new(a: readonly A, b: readwrite B) {} }
             task Main: {
