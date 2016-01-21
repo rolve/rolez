@@ -21,10 +21,11 @@ import org.eclipse.xtext.naming.QualifiedName
 import org.eclipse.xtext.scoping.IScope
 import org.eclipse.xtext.scoping.impl.AbstractDeclarativeScopeProvider
 
-import static ch.trick17.rolez.validation.RolezValidator.*
 import static org.eclipse.xtext.scoping.Scopes.scopeFor
 
 class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
+    
+    public static val AMBIGUOUS_CALL = "ambiguous call"
     
     @Inject extension RolezExtensions
     @Inject extension JavaMapper

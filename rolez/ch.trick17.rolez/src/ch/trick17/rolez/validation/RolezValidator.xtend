@@ -74,7 +74,6 @@ class RolezValidator extends RolezSystemValidator {
     public static val INCOMPATIBLE_THIS_ROLE = "incompatible \"this\" role"
     public static val INCOMPATIBLE_PARAM_TYPE = "incompatible param type"
     public static val MISSING_RETURN_EXPR = "missing return statement"
-    public static val AMBIGUOUS_CALL = "ambiguous call"
     public static val MISSING_TYPE_ARG = "missing type argument"
     public static val INCORRECT_TYPE_ARG = "incorrect type argument"
     public static val VAL_FIELD_NOT_INITIALIZED = "val field not initialized"

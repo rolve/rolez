@@ -1,6 +1,14 @@
 package ch.trick17.rolez
 
+import ch.trick17.rolez.rolez.Int
+import ch.trick17.rolez.rolez.MemberAccess
+import ch.trick17.rolez.rolez.New
+import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.Program
+import ch.trick17.rolez.rolez.ReadOnly
+import ch.trick17.rolez.rolez.ReadWrite
+import ch.trick17.rolez.rolez.RoleType
+import ch.trick17.rolez.rolez.SuperConstrCall
 import ch.trick17.rolez.tests.RolezInjectorProvider
 import javax.inject.Inject
 import org.eclipse.xtext.junit4.InjectWith
@@ -10,13 +18,19 @@ import org.eclipse.xtext.junit4.validation.ValidationTestHelper
 import org.junit.Test
 import org.junit.runner.RunWith
 
+import static ch.trick17.rolez.Constants.*
 import static ch.trick17.rolez.rolez.RolezPackage.Literals.*
+import static ch.trick17.rolez.scoping.RolezScopeProvider.AMBIGUOUS_CALL
 import static org.eclipse.xtext.diagnostics.Diagnostic.*
+import static org.hamcrest.Matchers.*
+
+import static extension org.hamcrest.MatcherAssert.assertThat
 
 @RunWith(XtextRunner)
 @InjectWith(RolezInjectorProvider)
 class RolezLinkingTest {
     
+    @Inject extension RolezExtensions
     @Inject extension ParseHelper<Program>
     @Inject extension ValidationTestHelper
     @Inject extension TestUtils
@@ -157,6 +171,164 @@ class RolezLinkingTest {
     @Test def testSuperConstrCall() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
+            
+            class A1
+            class B1 extends A1
+            
+            class A2 { new {} }
+            class B2 extends A2
+            
+            class A3 { new(i: int) {} }
+            class B3 extends A3 { new { super(0); } }
+            
+            class A4 { new(a: readwrite A4) {} }
+            class B4 extends A4 { new { super(new A4(null)); }
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A
+            class B extends A {
+                new {}
+            }
+            class C extends B
+            class D extends C {
+                new(i: int) { 2; }
+            }
+            class E extends D {
+                new {
+                    super(0);
+                    5;
+                }
+                new(a: readonly A, b: pure B) { super(1); }
+            }
+            class F extends E {
+                new(a: readwrite A) { super(a, new B); }
+            }
+            class G {
+                new { super; }
+            }
+        ''').assertNoErrors
+    }
+    
+    @Test def testSuperConstrCallOverloading() {
+        val classB = (parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                new(a: int) {}
+                new(a: boolean) {}
+            }
+            class B extends A {
+                new             { super(4); }
+                new(b: boolean) { super(b); }
+            }
+        ''').classes.findFirst[name == "B"] as NormalClass)
+        (classB.constrs.findFirst[params.size == 0].body.stmts.head as SuperConstrCall)
+            .constr.params.head.type.assertThat(instanceOf(Int))
+        (classB.constrs.findFirst[params.size == 1].body.stmts.head as SuperConstrCall)
+            .constr.params.head.type.assertThat(instanceOf(Boolean))
+        
+        var classC = (parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A
+            class B {
+                new(a: readwrite A) {}
+                new(a: readonly  A) {}
+            }
+            class C extends B {
+                new         { super(new A); }
+                new(i: int) { super(new A as readonly A); }
+            }
+        ''').classes.findFirst[name == "C"] as NormalClass)
+        ((classC.constrs.findFirst[params.size == 0].body.stmts.head as SuperConstrCall)
+            .constr.params.head.type as RoleType).role.assertThat(instanceOf(ReadWrite))
+        ((classC.constrs.findFirst[params.size == 1].body.stmts.head as SuperConstrCall)
+            .constr.params.head.type as RoleType).role.assertThat(instanceOf(ReadOnly))
+        
+        // (Switch order of declaration to rule out accidental selection of the correct one)
+        classC = (parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A
+            class B {
+                new(a: readonly  A) {}
+                new(a: readwrite A) {}
+            }
+            class C extends B {
+                new         { super(new A); }
+                new(i: int) { super(new A as readonly A); }
+            }
+        ''').classes.findFirst[name == "C"] as NormalClass)
+        ((classC.constrs.findFirst[params.size == 0].body.stmts.head as SuperConstrCall)
+            .constr.params.head.type as RoleType).role.assertThat(instanceOf(ReadWrite))
+        ((classC.constrs.findFirst[params.size == 1].body.stmts.head as SuperConstrCall)
+            .constr.params.head.type as RoleType).role.assertThat(instanceOf(ReadOnly))
+    }
+    
+    @Test def testSuperConstrCallTypeMismatch() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A
+            class B extends A {
+                new { super(5); }
+            }
+        ''').assertError(SUPER_CONSTR_CALL, LINKING_DIAGNOSTIC)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                new { super(5); }
+            }
+        ''').assertError(SUPER_CONSTR_CALL, LINKING_DIAGNOSTIC)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                new {}
+            }
+            class B extends A {
+                new { super(5); }
+            }
+        ''').assertError(SUPER_CONSTR_CALL, LINKING_DIAGNOSTIC)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                new(c: char) {}
+            }
+            class B extends A {
+                new { super(5, false); }
+            }
+        ''').assertError(SUPER_CONSTR_CALL, LINKING_DIAGNOSTIC)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                new(i: int) {}
+            }
+            class B extends A { 
+                new { super(); }
+            }
+        ''').assertError(SUPER_CONSTR_CALL, LINKING_DIAGNOSTIC)
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                new(i: int) {}
+            }
+            class B extends A {
+                new { super(false); }
+            }
+        ''').assertError(SUPER_CONSTR_CALL, LINKING_DIAGNOSTIC)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                new(a: readwrite A) {}
+            }
+            class B extends A {
+                new { super(new Object); }
+            }
+        ''').assertError(SUPER_CONSTR_CALL, LINKING_DIAGNOSTIC)
+    }
+    
+    @Test def testSuperConstrCallTypeMismatchImplicit() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
             class A {
                 new(i: int) {}
             }
@@ -171,6 +343,424 @@ class RolezLinkingTest {
                 new {}
             }
         ''').assertError(SUPER_CONSTR_CALL, LINKING_DIAGNOSTIC)
+    }
+    
+    @Test def testSuperConstrCallAmbiguous() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A
+            class B {
+                new(a: readonly  A, b: readwrite A) {}
+                new(a: readwrite A, b: readonly  A) {}
+            }
+            class C extends B {
+                new { super(new A, new A); }
+            }
+        ''').assertError(SUPER_CONSTR_CALL, AMBIGUOUS_CALL)
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A
+            class B {
+                new(a: readwrite Object, b: readwrite A) {}
+                new(a: readwrite A, b: readwrite Object) {}
+            }
+            class C extends B {
+                new { super(new A, new A); }
+            }
+        ''').assertError(SUPER_CONSTR_CALL, AMBIGUOUS_CALL)
+    }
+    
+    @Test def testMemberAccess() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                val i: int
+                def pure foo: {}
+            }
+            task Main: {
+                new A.i;
+                new A.foo;
+            }
+        ''').assertNoErrors
+    }
+    
+    @Test def testMemberAccessOverloading() {
+        var program = parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def readwrite foo: int { return 0; }
+                def readwrite foo(a: boolean): boolean { return false; }
+            }
+            task Main: {
+                new A.foo;
+                new A.foo(true);
+            }
+        ''')
+        program.main.expr(0).type.assertThat(instanceOf(Int))
+        program.main.expr(1).type.assertThat(instanceOf(Boolean))
+        
+        program = parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def readwrite foo(a: int): int { return 0; }
+                def readwrite foo(a: boolean): boolean { return false; }
+            }
+            task Main: {
+                new A.foo(4);
+                new A.foo(true);
+            }
+        ''')
+        program.main.expr(0).type.assertThat(instanceOf(Int))
+        program.main.expr(1).type.assertThat(instanceOf(Boolean))
+        
+        program = parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def readwrite foo(a: readwrite A): int { return 0; }
+                def readwrite foo(a: readwrite Object): boolean { return false; }
+            }
+            task Main: {
+                new A.foo(new A);
+                new A.foo(new A as readwrite Object);
+            }
+        ''')
+        program.main.expr(0).type.assertThat(instanceOf(Int))
+        program.main.expr(1).type.assertThat(instanceOf(Boolean))
+        
+        // (Switch order of declaration to rule out accidental selection of the correct one)
+        program = parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def readwrite foo(a: readwrite Object): boolean { return false; }
+                def readwrite foo(a: readwrite A): int { return 0; }
+            }
+            task Main: {
+                new A.foo(new A);
+                new A.foo(new A as readwrite Object);
+            }
+        ''')
+        program.main.expr(0).type.assertThat(instanceOf(Int))
+        program.main.expr(1).type.assertThat(instanceOf(Boolean))
+        
+        program = parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def readwrite foo(a: pure Object, b: pure Object): boolean { return false; }
+                def readwrite foo(a: pure      A, b: pure      A): int { return 0; }
+            }
+            task Main: {
+                new A.foo(new A, new A);
+                new A.foo(new A, new A as readwrite Object);
+                new A.foo(new A, new A as readwrite Object);
+                new A.foo(new A as readwrite Object, new A as readwrite Object);
+            }
+        ''')
+        program.main.expr(0).type.assertThat(instanceOf(Int))
+        program.main.expr(1).type.assertThat(instanceOf(Boolean))
+        program.main.expr(1).type.assertThat(instanceOf(Boolean))
+        program.main.expr(1).type.assertThat(instanceOf(Boolean))
+        
+        program = parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def readwrite foo(a: pure      A, b: pure      A): int { return 0; }
+                def readwrite foo(a: pure Object, b: pure Object): boolean { return false; }
+            }
+            task Main: {
+                new A.foo(new A, new A);
+                new A.foo(new A, new A as readwrite Object);
+                new A.foo(new A, new A as readwrite Object);
+                new A.foo(new A as readwrite Object, new A as readwrite Object);
+            }
+        ''')
+        program.main.expr(0).type.assertThat(instanceOf(Int))
+        program.main.expr(1).type.assertThat(instanceOf(Boolean))
+        program.main.expr(1).type.assertThat(instanceOf(Boolean))
+        program.main.expr(1).type.assertThat(instanceOf(Boolean))
+        
+        // TODO: test generic methods
+    }
+    
+    @Test def testMemberAccessFieldAndMethod() {
+        var program = parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                var foo: int
+                def readwrite foo(a: boolean): boolean { return false; }
+            }
+            task Main: {
+                new A.foo;
+                new A.foo(true);
+            }
+        ''')
+        program.main.expr(0).type.assertThat(instanceOf(Int))
+        program.main.expr(1).type.assertThat(instanceOf(Boolean))
+    }
+    
+    @Test def testMemberAccessMethodFromSuperclass() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A
+            class B {
+                def readwrite foo(a: readonly A, b: readwrite B, c: readwrite C, d: int): {}
+            }
+            class C extends B
+            task Main: { new C.foo(new A, new C, null, 5); }
+        ''').assertNoErrors
+    }
+    
+    @Test def testMemberAccessMethodOverride() {
+       (parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def readwrite foo: {}
+            }
+            class B extends A {
+                override readwrite foo: {}
+            }
+            task Main: { new B.foo; }
+        ''').main.lastExpr as MemberAccess).method.enclosingClass.name.assertThat(is("A"))
+     }
+    
+    @Test def testMemberAccessMethodTypeMismatch() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A { def readwrite foo: {} }
+            task Main: { new A.foo(5); }
+        ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A { def readwrite foo(c: char): {} }
+            task Main: { new A.foo(5, false); }
+        ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A { def readwrite foo(i: int): {} }
+            task Main: { new A.foo(); }
+        ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A { def readwrite foo(i: int, a: readwrite A): {} }
+            task Main: { new A.foo(false); }
+        ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A { def readwrite foo(i: int): {} }
+            task Main: { new A.foo(false); }
+        ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A { def readwrite foo(a: readwrite A): {} }
+            task Main: { new A.foo(new Object); }
+        ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A { def readwrite foo(a: readwrite A): {} }
+            task Main: { new A.foo(new A as readonly A); }
+        ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
+                mapped new(i: int)
+                mapped def readwrite set(i: int, o: T):
+            }
+            task Main: {
+                new Array[int](1).set(0, true);
+            }
+        ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "set")
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
+                mapped new(i: int)
+                mapped def readwrite set(i: int, o: T):
+            }
+            class A
+            class B
+            task Main: {
+                new Array[pure A](1).set(0, new B);
+            }
+        ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "set")
+    }
+    
+    @Test def testMemberAccessMethodAmbiguous() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def readwrite foo(a: readonly  A, b: readwrite A): {}
+                def readwrite foo(a: readwrite A, b: readonly  A): {}
+            }
+            task Main: {
+                new A.foo(new A, new A);
+            }
+        ''').assertError(MEMBER_ACCESS, AMBIGUOUS_CALL)
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def readwrite foo(a: readwrite Object, b: readwrite A): {}
+                def readwrite foo(a: readwrite A, b: readwrite Object): {}
+            }
+            task Main: {
+                new A.foo(new A, new A);
+            }
+        ''').assertError(MEMBER_ACCESS, AMBIGUOUS_CALL)
+        
+        // TODO: test generic methods
+    }
+    
+    @Test def testNew() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A
+            class B { new: {} }
+            class C { new(i: int) {} }
+            class D { new(a: readonly A, b: readwrite B) {} }
+            task Main: {
+                new A;
+                new B;
+                new C(0);
+                new D(new A, new B);
+            }
+        ''').assertNoErrors
+    }
+    
+    @Test def testNewGeneric() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
+                mapped new(length: int)
+            }
+            task Main: {
+                new Array[int](10);
+                new Array[readonly Object](0);
+            }
+        ''').assertNoErrors
+    }
+    
+    @Test def testNewOverloading() {
+        var program = parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                new(a: int) {}
+                new(a: boolean) {}
+            }
+            task Main: {
+                new A(4);
+                new A(true);
+            }
+        ''')
+        (program.main.expr(0) as New).constr.params.head.type.assertThat(instanceOf(Int))
+        (program.main.expr(1) as New).constr.params.head.type.assertThat(instanceOf(Boolean))
+        
+        program = parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A
+            class B {
+                new(a: readwrite Object) {}
+                new(a: readwrite A) {}
+            }
+            task Main: {
+                new B(new A);
+                new B(new A as readwrite Object);
+            }
+        ''')
+        ((program.main.expr(0) as New).constr.params.head.type as RoleType).base.clazz.name.assertThat(is("A"))
+        ((program.main.expr(1) as New).constr.params.head.type as RoleType).base.clazz.name.assertThat(is(objectClassName.toString))
+        
+        // (Switch order of declaration to rule out accidental selection of the correct one)
+        program = parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A
+            class B {
+                new(a: readwrite A) {}
+                new(a: readwrite Object) {}
+            }
+            task Main: {
+                new B(new A);
+                new B(new A as readwrite Object);
+            }
+        ''')
+        ((program.main.expr(0) as New).constr.params.head.type as RoleType).base.clazz.name.assertThat(is("A"))
+        ((program.main.expr(1) as New).constr.params.head.type as RoleType).base.clazz.name.assertThat(is(objectClassName.toString))
+        
+        // IMPROVE: test generic constructors, once  supported outside of the array class
+    }
+    
+    @Test def testNewTypeMismatch() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A
+            task Main: { new A(5); }
+        ''').assertError(NEW, LINKING_DIAGNOSTIC)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A { new {} }
+            task Main: { new A(5); }
+        ''').assertError(NEW, LINKING_DIAGNOSTIC)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A { new(c: char) {} }
+            task Main: { new A(5, false); }
+        ''').assertError(NEW, LINKING_DIAGNOSTIC)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A { new(i: int) {} }
+            task Main: { new A; }
+        ''').assertError(NEW, LINKING_DIAGNOSTIC)
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A { new(i: int) {} }
+            task Main: { new A(false); }
+        ''').assertError(NEW, LINKING_DIAGNOSTIC)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A { new(a: readwrite A) {} }
+            task Main: { new A(new Object); }
+        ''').assertError(NEW, LINKING_DIAGNOSTIC)
+        
+        // TODO: test generic constructors
+    }
+    
+    @Test def testNewAmbiguous() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A
+            class B {
+                new(a: readonly  A, b: readwrite A) {}
+                new(a: readwrite A, b: readonly  A) {}
+            }
+            task Main: {
+                new B(new A, new A);
+            }
+        ''').assertError(NEW, AMBIGUOUS_CALL)
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A
+            class B {
+                new(a: readwrite Object, b: readwrite A) {}
+                new(a: readwrite A, b: readwrite Object) {}
+            }
+            task Main: {
+                new B(new A, new A);
+            }
+        ''').assertError(NEW, AMBIGUOUS_CALL)
+        
+        // TODO: test generic constructors
+    }
+    
+    @Test def testNewObjectClassRef() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            object A
+            task Main: {
+                new A;
+            }
+        ''').assertError(NEW, LINKING_DIAGNOSTIC)
     }
     
     @Test def testVarRef() {
@@ -205,17 +795,6 @@ class RolezLinkingTest {
             }
         ''').assertError(VAR_REF, LINKING_DIAGNOSTIC, "var", "i")
     }
-    
-    @Test def testNewClassRef() {
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            object A
-            task Main: {
-                new A;
-            }
-        ''').assertError(NEW, LINKING_DIAGNOSTIC)
-    }
-    
     
     @Test def testSuperMethod() {
         parse('''
