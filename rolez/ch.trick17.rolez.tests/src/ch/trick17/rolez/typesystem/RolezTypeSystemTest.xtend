@@ -671,7 +671,7 @@ class RolezTypeSystemTest {
             class A
             class AContainer {
                 var a: readwrite A
-                def [r includes readonly] r get: r A { return this.a; }
+                def r get[r includes readonly]: r A { return this.a; }
             }
             task Main: {
                 new AContainer.get[readwrite];
@@ -686,7 +686,7 @@ class RolezTypeSystemTest {
             class A
             class AContainer {
                 var a: readwrite A
-                def [r includes readonly] r get: r A { return this.a; }
+                def r get[r includes readonly]: r A { return this.a; }
             }
             task Main: {
                 new AContainer.get[pure];
@@ -701,12 +701,12 @@ class RolezTypeSystemTest {
             class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.Array[T] mapped to rolez.lang.Array {
                 mapped new(length: int)
-                mapped def [r includes readonly] r get(i: int): T with r
+                mapped def r get[r includes readonly](i: int): T with r
                 mapped def readwrite set(i: int, o: T):
             }
             class Container[E] mapped to «Container.canonicalName» {
                 mapped var e: E
-                mapped def [r includes readonly] r get: E with r
+                mapped def r get[r includes readonly]: E with r
                 mapped def readwrite set(e: E):
             }
         ''')
@@ -715,7 +715,7 @@ class RolezTypeSystemTest {
             task Main: {
                 val a = new Array[int](1);
                 a.set(0, 42);
-                a.get(0)[readwrite];
+                a.get[readwrite](0);
             }
         ''', lib).main.lastExpr.type.assertThat(instanceOf(Int))
         parse('''
@@ -723,7 +723,7 @@ class RolezTypeSystemTest {
             task Main: {
                 val a = new Array[readwrite A](1);
                 a.set(0, new A);
-                a.get(0)[readwrite];
+                a.get[readwrite](0);
             }
         ''', lib).main.lastExpr.type.assertRoleType(ReadWrite, "A")
         parse('''
@@ -731,14 +731,14 @@ class RolezTypeSystemTest {
             task Main: {
                 val a = new Array[pure A](1);
                 a.set(0, new A);
-                a.get(0)[readwrite];
+                a.get[readwrite](0);
             }
         ''', lib).main.lastExpr.type.assertRoleType(Pure, "A")
         parse('''
             class A
             task Main: {
                 val a: readonly Array[readwrite A] = new Array[readwrite A](1);
-                a.get(0)[readonly];
+                a.get[readonly](0);
             }
         ''', lib).main.lastExpr.type.assertRoleType(ReadOnly, "A")
         

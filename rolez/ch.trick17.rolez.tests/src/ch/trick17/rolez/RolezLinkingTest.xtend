@@ -395,7 +395,7 @@ class RolezLinkingTest {
             class rolez.lang.String mapped to java.lang.String
             class StringContainer {
                 var s: readwrite String
-                def [r includes readonly] r get: r String { return this.s; }
+                def r get[r includes readonly]: r String { return this.s; }
             }
             task Main: {
                 new StringContainer.get[readwrite];
@@ -407,15 +407,15 @@ class RolezLinkingTest {
             class rolez.lang.String mapped to java.lang.String
             class StringContainer {
                 var s: readwrite String
-                def [r includes readonly] r get: r String { return this.s; }
+                def r get[r includes readonly]: r String { return this.s; }
             }
             class StringContainerGetter {
-                def [r includes readonly] pure getFrom(c: r StringContainer): r String {
+                def pure getFrom[r includes readonly](c: r StringContainer): r String {
                     return c.get[r];
                 }
             }
             task Main: {
-                new StringContainerGetter.getFrom(new StringContainer)[readwrite];
+                new StringContainerGetter.getFrom[readwrite](new StringContainer);
             }
         ''').assertNoErrors
     }
@@ -424,7 +424,7 @@ class RolezLinkingTest {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
-                def [r] pure foo: {}
+                def pure foo[r]: {}
             }
             task Main: {
                 new A.foo[pure, pure];
@@ -433,7 +433,7 @@ class RolezLinkingTest {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
-                def [r1, r2] pure foo: {}
+                def pure foo[r1, r2]: {}
             }
             task Main: {
                 new A.foo[pure];
@@ -1014,15 +1014,15 @@ class RolezLinkingTest {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
-                def [r] r getThis: r A { return this; }
+                def r getThis[r]: r A { return this; }
             }
         ''').assertNoErrors
         
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
-                def [r] r getThis: r A { return this; }
-                def     r getThat: r A { return this; }
+                def r getThis[r]: r A { return this; }
+                def r getThat   : r A { return this; }
             }
         ''').assertError(ROLE_PARAM_REF, LINKING_DIAGNOSTIC)
     }

@@ -54,6 +54,7 @@ import org.eclipse.xtext.util.OnChangeEvictingCache
 import static ch.trick17.rolez.Constants.*
 
 import static extension ch.trick17.rolez.generic.Parameterized.*
+import org.eclipse.xtext.naming.QualifiedName
 
 /**
  * Extension methods for the Rolez language elements
@@ -71,12 +72,12 @@ class RolezExtensions {
     
     def Iterable<Field> fields(Class it) { members.filter(Field) }
     
-    def qualifiedName(ClassLike it) { switch(it) {
+    def QualifiedName qualifiedName(ClassLike it) { switch(it) {
         ParameterizedNormalClass: nameProvider.getFullyQualifiedName(genericEObject)
         default                  :nameProvider.getFullyQualifiedName(it)
     }}
     
-    def qualifiedName(   Member it) { switch(it) {
+    def QualifiedName qualifiedName(   Member it) { switch(it) {
         ParameterizedMethod: nameProvider.getFullyQualifiedName(genericEObject)
         default            : nameProvider.getFullyQualifiedName(it)
     }}

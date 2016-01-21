@@ -66,10 +66,9 @@ enum VarKind:
 
 Method:
     jvmMethod=[jvmTypes::JvmOperation|MappedKeyword]?
-    (superMethod=[Method|OverrideKeyword] | 'def')
+    (superMethod=[Method|OverrideKeyword] | 'def') thisRole=Role name=ID
     ('[' roleParams+=RoleParam (',' roleParams+=RoleParam)* ']')?
-    thisRole=Role name=ID
-    ('(' params+=Param (',' params+=Param)* ')')?
+    ('('     params+=    Param (','     params+=    Param)* ')')?
     ':' type=Type
     body=Block?;
 
@@ -178,8 +177,8 @@ MemberAccess returns Expr:
     SimpleExpr (
         {MemberAccess.target=current}
         '.' member=[Member]
-        ('('     args+=Expr (','     args+=Expr)* ')')?
         ('[' roleArgs+=Role (',' roleArgs+=Role)* ']')?
+        ('('     args+=Expr (','     args+=Expr)* ')')?
     )*;
     // IMPROVE: Allow member accesses without "this"
 
