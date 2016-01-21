@@ -22,6 +22,7 @@ import org.eclipse.xtext.scoping.IScope
 import org.eclipse.xtext.scoping.impl.AbstractDeclarativeScopeProvider
 
 import static org.eclipse.xtext.scoping.Scopes.scopeFor
+import static extension ch.trick17.rolez.generic.Parameterized.parameterizedWith
 
 class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     
@@ -40,11 +41,12 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
         if(targetType instanceof RoleType) {
             val fields = targetType.base.parameterizedClass.allMembers.filter(Field)
                 .filter[f | f.name == memberName]
-            if(args.isEmpty && !fields.isEmpty)
+            if(args.isEmpty && roleArgs.isEmpty && !fields.isEmpty)
                 scopeFor(fields)
             else {
                 val candidates = targetType.base.parameterizedClass.allMembers.filter(Method)
-                    .filter[m | m.name == memberName]
+                    .filter[m | m.name == memberName && m.roleParams.size == roleArgs.size]
+                    .map[m | m.parameterizedWith(roleArgs.toMap[m.roleParams.get(roleArgIndex)])]
                 val maxSpecific = utils.maximallySpecific(candidates, it).toList
                 
                 if(maxSpecific.size <= 1)

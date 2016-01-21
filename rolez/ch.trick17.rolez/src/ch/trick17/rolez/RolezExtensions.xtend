@@ -1,5 +1,7 @@
 package ch.trick17.rolez
 
+import ch.trick17.rolez.generic.ParameterizedMethod
+import ch.trick17.rolez.generic.ParameterizedNormalClass
 import ch.trick17.rolez.rolez.Argumented
 import ch.trick17.rolez.rolez.Boolean
 import ch.trick17.rolez.rolez.Char
@@ -69,8 +71,15 @@ class RolezExtensions {
     
     def Iterable<Field> fields(Class it) { members.filter(Field) }
     
-    def qualifiedName(ClassLike it) { nameProvider.getFullyQualifiedName(it) }
-    def qualifiedName(   Member it) { nameProvider.getFullyQualifiedName(it) }
+    def qualifiedName(ClassLike it) { switch(it) {
+        ParameterizedNormalClass: nameProvider.getFullyQualifiedName(genericEObject)
+        default                  :nameProvider.getFullyQualifiedName(it)
+    }}
+    
+    def qualifiedName(   Member it) { switch(it) {
+        ParameterizedMethod: nameProvider.getFullyQualifiedName(genericEObject)
+        default            : nameProvider.getFullyQualifiedName(it)
+    }}
     
     def isSingleton(Class it) { it instanceof SingletonClass }
     

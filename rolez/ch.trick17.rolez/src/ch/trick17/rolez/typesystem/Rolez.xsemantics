@@ -89,8 +89,8 @@ judgments {
         // failure once issue code are supported:
         // https://github.com/LorenzoBettini/xsemantics/issues/58
     
-    subtype  |- Type  left <: Type  right error "subtype" // Apparently, an error message is necessary for sensible error message selection
-    subrole  |- Role  left <! Role  right error "subrole"
+    subtype  |-     Type left <:     Type right error "subtype" // Apparently, an error message is necessary for sensible error message selection
+    subrole  |-     Role left <!     Role right error "subrole"
     subclass |- ClassRef left <~ ClassRef right error "subclass"
     
     equalType |- Type left ~~ Type right error "equal type"
@@ -227,12 +227,6 @@ from {
             for(arg : a.args) {
                 G |- arg : var Type _
             }
-            // Check number of role args
-            val roleParams = a.method.roleParams
-            a.roleArgs.size == roleParams.size or fail
-                error "Wrong number of role arguments: expected " + roleParams.size + " but was " + a.roleArgs.size
-                source a
-                feature MEMBER_ACCESS__ROLE_ARGS
             // Check if role args respect bounds of role params
             for(roleArg : a.roleArgs) {
                 if(roleArg.destRoleParam.upperBound != null)
@@ -480,7 +474,7 @@ from {
 rule SubclassGeneric
     G |- GenericClassRef left <~ GenericClassRef right
 from {
-    left.clazz == right.clazz || strictSuperclasses(left.clazz).contains(right.clazz)
+    left.clazz.qualifiedName == right.clazz.qualifiedName || strictSuperclasses(left.clazz).contains(right.clazz)
     G |- left.typeArg ~~ right.typeArg
 }
 

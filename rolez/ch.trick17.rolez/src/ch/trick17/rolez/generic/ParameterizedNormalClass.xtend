@@ -13,7 +13,7 @@ import org.eclipse.xtext.common.types.JvmGenericType
 
 import static ch.trick17.rolez.rolez.RolezPackage.Literals.*
 
-package class ParameterizedNormalClass extends ParameterizedEObject<NormalClass> implements NormalClass {
+class ParameterizedNormalClass extends ParameterizedEObject<NormalClass> implements NormalClass {
     
     new(NormalClass eObject, EObject eContainer, Map<TypeParam, Type> typeArgs, Map<RoleParam, Role> roleArgs) {
         super(eObject, eContainer, typeArgs, roleArgs)

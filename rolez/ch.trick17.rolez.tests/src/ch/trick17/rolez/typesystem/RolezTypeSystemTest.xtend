@@ -652,7 +652,7 @@ class RolezTypeSystemTest {
                         val a: «actual.name» A = new A;
                         a.x;
                     }
-                ''').assertError(MEMBER_ACCESS, null, "Role", "mismatch", "method", actual.name)
+                ''').assertError(MEMBER_ACCESS, null, "role mismatch", "method", actual.name)
             }
         }
         
@@ -662,11 +662,9 @@ class RolezTypeSystemTest {
                 def readwrite foo: {}
                 def readonly  bar: { this.foo; }
             }
-        ''').assertError(MEMBER_ACCESS, null, "Role", "mismatch", "method", "readonly")
-        
-        // TODO: mismatch for param roles
+        ''').assertError(MEMBER_ACCESS, null, "role mismatch", "method", "readonly")
     }
-     
+    
     @Test def testTMemberAccessMethodWithRoleParam() {
         val p = parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -682,25 +680,6 @@ class RolezTypeSystemTest {
         ''')
         p.main.expr(0).type.assertRoleType(ReadWrite, "A")
         p.main.expr(1).type.assertRoleType(ReadOnly , "A")
-        
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class A {
-                def [r] pure foo: {}
-            }
-            task Main: {
-                new A.foo[pure, pure]
-            }
-        ''').assertError(MEMBER_ACCESS, null, "number of role arguments")
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class A {
-                def [r1, r2] pure foo: {}
-            }
-            task Main: {
-                new A.foo[pure]
-            }
-        ''').assertError(MEMBER_ACCESS, null, "number of role arguments")
         
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -1025,6 +1004,15 @@ class RolezTypeSystemTest {
             task T(i: int): int {}
             task Main: { start T(true); }
         ''').assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "boolean", "int")
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Task[V] mapped to rolez.lang.Task
+            task A(o: readwrite Object): {}
+            task Main: {
+                start A(new Object as readonly Object);
+            }
+        ''').assertError(CAST, SUBTYPEEXPR, "readonly rolez.lang.Object", "readwrite rolez.lang.Object")
     }
     
     @Test def testTParenthesized() {

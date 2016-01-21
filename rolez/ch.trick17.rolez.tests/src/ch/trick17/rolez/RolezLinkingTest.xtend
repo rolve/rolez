@@ -389,6 +389,58 @@ class RolezLinkingTest {
         ''').assertNoErrors
     }
     
+    @Test def testMemberAccessRoleGeneric() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.String mapped to java.lang.String
+            class StringContainer {
+                var s: readwrite String
+                def [r includes readonly] r get: r String { return this.s; }
+            }
+            task Main: {
+                new StringContainer.get[readwrite];
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.String mapped to java.lang.String
+            class StringContainer {
+                var s: readwrite String
+                def [r includes readonly] r get: r String { return this.s; }
+            }
+            class StringContainerGetter {
+                def [r includes readonly] pure getFrom(c: r StringContainer): r String {
+                    return c.get[r];
+                }
+            }
+            task Main: {
+                new StringContainerGetter.getFrom(new StringContainer)[readwrite];
+            }
+        ''').assertNoErrors
+    }
+    
+    @Test def testMemberAccessWrongNumberOfRoleArgs() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def [r] pure foo: {}
+            }
+            task Main: {
+                new A.foo[pure, pure];
+            }
+        ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def [r1, r2] pure foo: {}
+            }
+            task Main: {
+                new A.foo[pure];
+            }
+        ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC)
+    }
+    
     @Test def testMemberAccessOverloading() {
         var program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -564,7 +616,9 @@ class RolezLinkingTest {
             class A { def readwrite foo(a: readwrite A): {} }
             task Main: { new A.foo(new A as readonly A); }
         ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
-        
+    }
+    
+    @Test def testMemberAccessMethodTypeMismatchGeneric() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.Array[T] mapped to rolez.lang.Array {
@@ -724,6 +778,12 @@ class RolezLinkingTest {
             class rolez.lang.Object mapped to java.lang.Object
             class A { new(a: readwrite A) {} }
             task Main: { new A(new Object); }
+        ''').assertError(NEW, LINKING_DIAGNOSTIC)
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A { new(o: readwrite Object) {} }
+            task Main: { new A(new Object as readonly Object); }
         ''').assertError(NEW, LINKING_DIAGNOSTIC)
         
         // TODO: test generic constructors
