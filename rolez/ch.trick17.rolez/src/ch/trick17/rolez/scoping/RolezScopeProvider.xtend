@@ -2,12 +2,14 @@ package ch.trick17.rolez.scoping
 
 import ch.trick17.rolez.RolezExtensions
 import ch.trick17.rolez.RolezUtils
+import ch.trick17.rolez.rolez.Argumented
 import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.Field
 import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.Method
 import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.NormalClass
+import ch.trick17.rolez.rolez.ParameterizedBody
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.SuperConstrCall
 import ch.trick17.rolez.rolez.VarRef
@@ -15,13 +17,17 @@ import ch.trick17.rolez.typesystem.RolezSystem
 import ch.trick17.rolez.validation.JavaMapper
 import ch.trick17.rolez.validation.RolezValidator
 import javax.inject.Inject
+import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.EReference
+import org.eclipse.emf.ecore.InternalEObject
 import org.eclipse.xtext.common.types.JvmVisibility
+import org.eclipse.xtext.linking.lazy.LazyLinkingResource
 import org.eclipse.xtext.naming.QualifiedName
 import org.eclipse.xtext.scoping.IScope
 import org.eclipse.xtext.scoping.impl.AbstractDeclarativeScopeProvider
 
 import static org.eclipse.xtext.scoping.Scopes.scopeFor
+
 import static extension ch.trick17.rolez.generic.Parameterized.parameterizedWith
 
 class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
@@ -36,7 +42,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     
     def scope_MemberAccess_member(MemberAccess it, EReference ref) {
         val targetType = system.type(utils.createEnv(it), target).value
-        val memberName = utils.crossRefText(it, ref)
+        val memberName = crossRefText(it, ref)
         
         if(targetType instanceof RoleType) {
             val fields = targetType.base.parameterizedClass.allMembers.filter(Field)
@@ -47,7 +53,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
                 val candidates = targetType.base.parameterizedClass.allMembers.filter(Method)
                     .filter[m | m.name == memberName && m.roleParams.size == roleArgs.size]
                     .map[m | m.parameterizedWith(roleArgs.toMap[m.roleParams.get(roleArgIndex)])]
-                val maxSpecific = utils.maximallySpecific(candidates, it).toList
+                val maxSpecific = maxSpecific(candidates, it).toList
                 
                 if(maxSpecific.size <= 1)
                     scopeFor(maxSpecific)
@@ -64,7 +70,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     def scope_New_constr(New it, EReference ref) {
         val clazz = classRef.parameterizedClass
         if(clazz instanceof NormalClass) {
-            val maxSpecific = utils.maximallySpecific(clazz.constrs, it).toList
+            val maxSpecific = maxSpecific(clazz.constrs, it).toList
             
             if(maxSpecific.size <= 1)
                 scopeFor(maxSpecific, [QualifiedName.create("new")], IScope.NULLSCOPE)
@@ -78,8 +84,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     }
     
     def scope_SuperConstrCall_constr(SuperConstrCall it, EReference ref) {
-        val maxSpecific =
-            utils.maximallySpecific(enclosingClass.parameterizedSuperclass.constrs, it).toList
+        val maxSpecific = maxSpecific(enclosingClass.parameterizedSuperclass.constrs, it).toList
         
         if(maxSpecific.size > 1)
             validator.delayedError("Constructor call is ambiguous", it, ref, AMBIGUOUS_CALL)
@@ -144,5 +149,38 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     def IScope scope_VarRef_variable(VarRef varRef, EReference eRef) {
         val stmt = varRef.enclosingStmt
         scopeFor(utils.varsAbove(stmt.eContainer, stmt))
+    }
+    
+    /**
+     * Finds the maximally specific methods/constructors for the given argument list, following
+     * <a href="http://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.12.2">
+     * http://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.12.2
+     * </a>.
+     */
+    private def maxSpecific(Iterable<? extends ParameterizedBody> candidates, Argumented args) {
+        val applicable = candidates.filter[
+            system.validArgsSucceeded(utils.createEnv(args), args, it)
+        ].toList
+        
+        applicable.filter[p |
+            applicable.forall[p === it || !strictlyMoreSpecificThan(p)]
+        ]
+    }
+    
+    private def strictlyMoreSpecificThan(ParameterizedBody target, ParameterizedBody other) {
+        target.moreSpecificThan(other) && !other.moreSpecificThan(target)
+    }
+    
+    private def moreSpecificThan(ParameterizedBody target, ParameterizedBody other) {
+        // Assume both targets have the same number of parameters
+        val i = other.params.iterator
+        target.params.forall[system.subtypeSucceeded(utils.createEnv(target), it.type, i.next.type)]
+    }
+    
+    private def crossRefText(EObject it, EReference ref) {
+        val proxy = eGet(ref, false) as InternalEObject
+        val fragment = proxy.eProxyURI.fragment
+        val node = (eResource as LazyLinkingResource).encoder.decode(eResource, fragment).third
+        node.text
     }
 }

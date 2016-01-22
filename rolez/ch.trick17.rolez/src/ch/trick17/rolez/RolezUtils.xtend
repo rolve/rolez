@@ -1,6 +1,5 @@
 package ch.trick17.rolez
 
-import ch.trick17.rolez.rolez.Argumented
 import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.Block
 import ch.trick17.rolez.rolez.Class
@@ -23,15 +22,11 @@ import ch.trick17.rolez.rolez.Task
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.Var
-import ch.trick17.rolez.typesystem.RolezSystem
 import it.xsemantics.runtime.RuleEnvironment
 import it.xsemantics.runtime.RuleEnvironmentEntry
 import javax.inject.Inject
 import org.eclipse.emf.ecore.EObject
-import org.eclipse.emf.ecore.EReference
-import org.eclipse.emf.ecore.InternalEObject
 import org.eclipse.emf.ecore.util.EcoreUtil
-import org.eclipse.xtext.linking.lazy.LazyLinkingResource
 import org.eclipse.xtext.naming.QualifiedName
 import org.eclipse.xtext.scoping.IScopeProvider
 
@@ -48,7 +43,6 @@ class RolezUtils {
     
     @Inject extension RolezFactory
     @Inject extension RolezExtensions
-    @Inject RolezSystem system
     @Inject IScopeProvider scopeProvider
     
     def newRoleType(Role r, ClassRef base) {
@@ -130,36 +124,6 @@ class RolezUtils {
     }
     
     /**
-     * Finds the maximally specific methods/constructors for the given argument
-     * list, following
-     * <a href="http://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.12.2">
-     * http://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.12.2
-     * </a>.
-     */
-    def maximallySpecific(Iterable<? extends ParameterizedBody> candidates,
-            Argumented args) {
-        val applicable = candidates.filter[
-            system.validArgsSucceeded(createEnv(args), args, it)
-        ].toList
-        
-        applicable.filter[p |
-            applicable.forall[
-                p === it || !it.strictlyMoreSpecificThan(p)
-            ]
-        ]
-    }
-    
-    private def strictlyMoreSpecificThan(ParameterizedBody target, ParameterizedBody other) {
-        target.moreSpecificThan(other) && !other.moreSpecificThan(target)
-    }
-    
-    private def moreSpecificThan(ParameterizedBody target, ParameterizedBody other) {
-        // Assume both targets have the same number of parameters
-        val i = other.params.iterator
-        target.params.forall[system.subtypeSucceeded(createEnv(target), it.type, i.next.type)]
-    }
-    
-    /**
      * Returns <code>true</code> iff the given expression is a kind of
      * expression that may have side effects, i.e., an assignment, a non-array
      * object instantiation, a task creation or a method invocation that is
@@ -194,12 +158,5 @@ class RolezUtils {
     
     def dispatch Iterable<? extends Var> varsAbove(ParameterizedBody container, Stmt s) {
         container.params
-    }
-    
-    def crossRefText(EObject it, EReference ref) {
-        val proxy = eGet(ref, false) as InternalEObject
-        val fragment = proxy.eProxyURI.fragment
-        val node = (eResource as LazyLinkingResource).encoder.decode(eResource, fragment).third
-        node.text
     }
 }
