@@ -206,47 +206,41 @@ from {
 rule TMemberAccess
     G |- MemberAccess a : Type t
 from {
-    G |- a.target : var Type targetType
-    if(targetType instanceof RoleType) {
-        if(a.isFieldAccess) {
-            G |- targetType.role <! createReadOnly or fail
-                error "Role mismatch: Cannot access field of a "
-                    + targetType.role.string + " target"
-                source a.target
-            var fieldType = a.field.type
-            t = switch(fieldType) {
-                RoleType: {
-                    val role = leastCommonSuperrole(targetType.role, fieldType.role)
-                    newRoleType(role, fieldType.base)
-                }
-                default: fieldType
+    G |- a.target : var RoleType targetType
+    
+    val targetRole = targetType.role
+    if(a.isFieldAccess) {
+        G |- targetRole <! createReadOnly or fail
+            error "Role mismatch: Cannot access field of a " + targetRole.string + " target"
+            source a.target
+        var fieldType = a.field.type
+        t = switch(fieldType) {
+            RoleType: {
+                val role = leastCommonSuperrole(targetRole, fieldType.role)
+                newRoleType(role, fieldType.base)
             }
-        }
-        else { // method invoke
-            // Check if args are well-typed
-            for(arg : a.args) {
-                G |- arg : var Type _
-            }
-            // Check if role args respect bounds of role params
-            for(roleArg : a.roleArgs) {
-                if(roleArg.destRoleParam.upperBound != null)
-                    G |- roleArg <! roleArg.destRoleParam.upperBound or fail
-                        error "Bound mismatch: the role " + roleArg.string + " is not a valid substitute "
-                            + "for the bounded role parameter " + roleArg.destRoleParam.string
-                        source a
-                        feature MEMBER_ACCESS__MEMBER
-            }
-            G |- targetType.role <! a.parameterizedMethod.thisRole or fail
-                error "Role mismatch: Cannot call method " + a.method.string
-                    +" on a " + targetType.role.string + " target"
-                source a
-            t = a.parameterizedMethod.type
+            default: fieldType
         }
     }
-    else {
-        fail
-        error "Illegal target type for member access: " + targetType.string
-        source a.target
+    else { // method invoke
+        // Check if args are well-typed
+        for(arg : a.args) {
+            G |- arg : var Type _
+        }
+        // Check if role args respect bounds of role params
+        for(roleArg : a.roleArgs) {
+            if(roleArg.destRoleParam.upperBound != null)
+                G |- roleArg <! roleArg.destRoleParam.upperBound or fail
+                    error "Bound mismatch: the role " + roleArg.string + " is not a valid substitute "
+                        + "for the bounded role parameter " + roleArg.destRoleParam.string
+                    source a
+                    feature MEMBER_ACCESS__MEMBER
+        }
+        G |- targetRole <! a.parameterizedMethod.thisRole or fail
+            error "Role mismatch: Cannot call method " + a.method.string
+                + " on a " + targetRole.string + " target"
+            source a
+        t = a.parameterizedMethod.type
     }
 }
 

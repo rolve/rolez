@@ -459,11 +459,6 @@ class RolezTypeSystemTest {
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
-    @Test def testTMemberAccessIllegalTarget() {
-        parse('''task Main: { 5.5.a; }''')
-            .assertError(DOUBLE_LITERAL, null, "Illegal", "target", "access")
-    }
-    
     @Test def testTMemberAccessField() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -694,7 +689,7 @@ class RolezTypeSystemTest {
                 new AContainer.get[pure];
             }
         ''').assertError(MEMBER_ACCESS, null, "bound mismatch", "pure", "r includes readonly")
-         
+        
         // TODO: Role arg inference
     }
     

@@ -389,7 +389,17 @@ class RolezLinkingTest {
         ''').assertNoErrors
     }
     
-    @Test def testMemberAccessRoleGeneric() {
+    @Test def testMemberAccessNoMember() {
+        parse('''
+            task Main: { 5.5.a; }
+        ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            task Main: { new Object.a; }
+        ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC)
+    }
+    
+    @Test def testMemberAccessMethodRoleGeneric() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.String mapped to java.lang.String
@@ -420,7 +430,7 @@ class RolezLinkingTest {
         ''').assertNoErrors
     }
     
-    @Test def testMemberAccessWrongNumberOfRoleArgs() {
+    @Test def testMemberAccessMethodWrongNumberOfRoleArgs() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
