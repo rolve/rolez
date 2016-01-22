@@ -1,5 +1,6 @@
 import ch.trick17.rolez.RolezExtensions
 import ch.trick17.rolez.RolezUtils
+import ch.trick17.rolez.generic.ParameterizedMethod
 import ch.trick17.rolez.rolez.Argumented
 import ch.trick17.rolez.rolez.ArithmeticBinaryExpr
 import ch.trick17.rolez.rolez.Assignment
@@ -38,6 +39,7 @@ import ch.trick17.rolez.rolez.RelationalExpr
 import ch.trick17.rolez.rolez.ReturnExpr
 import ch.trick17.rolez.rolez.ReturnNothing
 import ch.trick17.rolez.rolez.Role
+import ch.trick17.rolez.rolez.RoleParam
 import ch.trick17.rolez.rolez.RoleParamRef
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
@@ -59,6 +61,9 @@ import ch.trick17.rolez.rolez.VarKind
 import ch.trick17.rolez.rolez.VarRef
 import ch.trick17.rolez.rolez.WhileLoop
 import ch.trick17.rolez.validation.AbstractRolezValidator
+import it.xsemantics.runtime.RuleEnvironment
+import java.util.HashMap
+import java.util.Map
 
 import static ch.trick17.rolez.Constants.*
 import static ch.trick17.rolez.rolez.RolezPackage.Literals.*
@@ -73,6 +78,7 @@ inject extension RolezUtils ___
 
 auxiliary {
     leastCommonSuperrole(Role r1, Role r2): Role
+    inferRoleArgs(RuleEnvironment G, MemberAccess a, Method m): Map<RoleParam, Role>
 }
 
 judgments {
@@ -102,6 +108,30 @@ judgments {
 
 auxiliary leastCommonSuperrole(Role r1, Role r2) {
     if(subroleSucceeded(r1, r2)) r2 else r1
+}
+
+auxiliary inferRoleArgs(RuleEnvironment G, MemberAccess a, Method m) {
+    if(!a.roleArgs.isEmpty)
+        return a.roleArgs.toMap[m.roleParams.get(roleArgIndex)];
+    
+    val roleArgs = new HashMap<RoleParam, Role>
+    val thisRole = m.thisRole
+    if(thisRole instanceof RoleParamRef) {
+        G |- a.target : var RoleType targetType
+        roleArgs.put(thisRole.param, targetType.role)
+    }
+    for(var i = 0; i< m.params.size; i++) {
+        val paramType = m.params.get(i).type
+        if(paramType instanceof RoleType) {
+            val paramRole = paramType.role
+            if(paramRole instanceof RoleParamRef) {
+                G |- a.args.get(i) : var RoleType argType
+                roleArgs.put(paramRole.param,
+                    leastCommonSuperrole(roleArgs.get(paramRole.param) ?: argType.role, argType.role))
+            }
+        }
+    }
+    roleArgs
 }
 
 rule TAssignment
@@ -228,11 +258,15 @@ from {
             G |- arg : var Type _
         }
         // Check if role args respect bounds of role params
-        for(roleArg : a.roleArgs) {
-            if(roleArg.destRoleParam.upperBound != null)
-                G |- roleArg <! roleArg.destRoleParam.upperBound or fail
-                    error "Bound mismatch: the role " + roleArg.string + " is not a valid substitute "
-                        + "for the bounded role parameter " + roleArg.destRoleParam.string
+        val originalMethod =
+            if(a.method instanceof ParameterizedMethod) (a.method as ParameterizedMethod).genericEObject
+            else a.method
+        val roleArgs = inferRoleArgs(G, a, originalMethod)
+        for(entry : roleArgs.entrySet) {
+            if(entry.key.upperBound != null)
+                G |- entry.value <! entry.key.upperBound or fail
+                    error "Bound mismatch: the role " + entry.value.string + " is not a valid substitute "
+                        + "for the bounded role parameter " + entry.key.string
                     source a
                     feature MEMBER_ACCESS__MEMBER
         }

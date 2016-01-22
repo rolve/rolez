@@ -51,8 +51,12 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
                 scopeFor(fields)
             else {
                 val candidates = targetType.base.parameterizedClass.allMembers.filter(Method)
-                    .filter[m | m.name == memberName && m.roleParams.size == roleArgs.size]
-                    .map[m | m.parameterizedWith(roleArgs.toMap[m.roleParams.get(roleArgIndex)])]
+                    .filter[m | m.name == memberName]
+                    .map[m |
+                        val roleArgs = system.inferRoleArgs(utils.createEnv(it), it, m)
+                        if(roleArgs.size == m.roleParams.size) m.parameterizedWith(roleArgs)
+                        else null
+                    ].filterNull
                 val maxSpecific = maxSpecific(candidates, it).toList
                 
                 if(maxSpecific.size <= 1)

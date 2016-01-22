@@ -188,9 +188,6 @@ class RolezExtensions {
     
     def decl(LocalVar it) { enclosingStmt as LocalVarDecl }
     
-    def     destParam(Expr it) { (eContainer as Argumented).body.params.get(argIndex) }
-    def destRoleParam(Role it) { (eContainer as MemberAccess).method.roleParams.get(roleArgIndex) }
-    
     def jvmParam(Param it) { enclosingBody.jvmBody.parameters.get(paramIndex) }
     
     def dispatch jvmBody(Method it) { jvmMethod }
@@ -203,8 +200,7 @@ class RolezExtensions {
     def method(MemberAccess it) { member as Method }
     
     def parameterizedMethod(MemberAccess it) {
-        if(roleArgs.isEmpty) method
-        else method.parameterizedWith(roleArgs.toMap[destRoleParam])
+        method.parameterizedWith(roleArgs.toMap[destRoleParam])
     }
     
     def body(Argumented it) { switch(it) {
@@ -233,9 +229,13 @@ class RolezExtensions {
         superMethod != null && !superMethod.eIsProxy    // If superMethod could not be resolved,
     }                                                   // don't do any overriding checks
     
-    def   paramIndex(Param it) { enclosingBody.params.indexOf(it) }
-    def     argIndex( Expr it) { (eContainer as Argumented).args.indexOf(it) }
-    def roleArgIndex( Role it) { (eContainer as MemberAccess).roleArgs.indexOf(it) }
+    def     destParam(Expr it) { (eContainer as Argumented).body.params.get(argIndex) }
+    def destRoleParam(Role it) { (eContainer as MemberAccess).method.roleParams.get(roleArgIndex) }
+    
+    def     paramIndex(    Param it) { enclosingBody.params.indexOf(it) }
+    def roleParamIndex(RoleParam it) { enclosingMethod.roleParams.indexOf(it) }
+    def       argIndex(     Expr it) { (eContainer as Argumented).args.indexOf(it) }
+    def   roleArgIndex(     Role it) { (eContainer as MemberAccess).roleArgs.indexOf(it) }
     
     /*
      * toString() replacements:
@@ -243,6 +243,7 @@ class RolezExtensions {
     
     def string(Member it) { switch(it) {
         Method: thisRole.string + " " + qualifiedName
+            + "[" + roleParams.map[]
             + "(" + params.map[type.string].join(",") + ")"
             + ": " + type.string
         Field: qualifiedName + ": " + type.string

@@ -68,10 +68,7 @@ abstract class ParameterizedEObject<E extends EObject>
     
     def parameterized(Role it) { switch(it) {
         BuiltInRole : it
-        RoleParamRef: {
-            if(!roleArgs.containsKey(param)) throw new AssertionError
-            roleArgs.get(param)
-        }
+        RoleParamRef: roleArgs.get(param) ?: it
     }}
     
     def ClassRef parameterized(ClassRef it) { switch(it) {

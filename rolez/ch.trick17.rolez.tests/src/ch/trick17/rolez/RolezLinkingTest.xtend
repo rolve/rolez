@@ -446,7 +446,7 @@ class RolezLinkingTest {
             }
             task Main: {
                 new StringContainer.get;
-                (new StringContainer as readonly StringContainer).get
+                (new StringContainer as readonly StringContainer).get;
             }
         ''')
         program.main.expr(0).type.assertRoleType(ReadWrite, stringClassName)
@@ -471,6 +471,23 @@ class RolezLinkingTest {
         ''')
         program.main.expr(0).type.assertRoleType(ReadWrite, stringClassName)
         program.main.expr(1).type.assertRoleType(ReadOnly , stringClassName)
+        
+        program = parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def r better[r includes readonly](other: r A): r A { return null; }
+            }
+            task Main: {
+                new A.better(new A);
+                new A.better(new A as readonly A);
+                (new A as readonly A).better(new A);
+                (new A as readonly A).better(new A as readonly A);
+            }
+        ''')
+        program.main.expr(0).type.assertRoleType(ReadWrite, "A")
+        program.main.expr(1).type.assertRoleType(ReadOnly , "A")
+        program.main.expr(2).type.assertRoleType(ReadOnly , "A")
+        program.main.expr(3).type.assertRoleType(ReadOnly , "A")
     }
     
     @Test def testMemberAccessMethodWrongNumberOfRoleArgs() {

@@ -19,13 +19,16 @@ import java.util.Map
 abstract class Parameterized {
     
     static def NormalClass parameterizedWith(NormalClass it, Map<TypeParam, Type> typeArgs) {
-        // TODO: return original if type args are empty
-        new ParameterizedNormalClass(it, eContainer, typeArgs, emptyMap)
+        if(typeArgs.isEmpty)
+            it
+        else
+            new ParameterizedNormalClass(it, eContainer, typeArgs, emptyMap)
     }
     
     static def Method parameterizedWith(Method it, Map<RoleParam, Role> roleArgs) {
-        // TODO: return original if role args are empty
-        if(it instanceof ParameterizedMethod)
+        if(roleArgs.isEmpty)
+            it
+        else if(it instanceof ParameterizedMethod)
             new ParameterizedMethod(genericEObject, eContainer, typeArgs, roleArgs)
         else
             new ParameterizedMethod(it, eContainer, emptyMap, roleArgs)
