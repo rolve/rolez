@@ -573,6 +573,8 @@ class RolezTypeSystemTest {
     
     static class Container<E> extends Guarded {
         public var E e = null
+        new() {}
+        new(E e) { this.e = e }
         def E get() { e }
         def void set(E e) { this.e = e }
     }
@@ -882,8 +884,6 @@ class RolezTypeSystemTest {
                 ]
             ]
         ]
-        
-        // IMPROVE: test generic constructors, once  supported outside of the array class
     }
     
     @Test def testTNewErrorInArg() {
@@ -894,6 +894,36 @@ class RolezTypeSystemTest {
                 def pure foo(i: int): { new A(!5); }
             }
         ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
+    }
+    
+    @Test def void testTNewGeneric() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class Container[E] mapped to «Container.canonicalName» {
+                mapped new(e: E)
+            }
+            task Main: { new Container[int](42); }
+        ''').main.lastExpr.type.assertRoleType(ReadWrite, "Container", Int)
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.String mapped to java.lang.String
+            class Container[E] mapped to «Container.canonicalName» {
+                mapped new(e: E)
+            }
+            task Main: { new Container[readonly String]("Hello World!"); }
+        ''').main.lastExpr.type.assertInstanceOf(RoleType) => [
+            role.assertThat(instanceOf(ReadWrite))
+            base.assertInstanceOf(GenericClassRef) => [
+                clazz.name.assertThat(is("Container"))
+                typeArg.assertInstanceOf(RoleType) => [
+                    role.assertThat(instanceOf(ReadOnly))
+                    base.assertInstanceOf(SimpleClassRef) => [
+                        clazz.name.assertThat(is(stringClassName.toString))
+                    ]
+                ]
+            ]
+        ]
     }
     
     @Test def testTThe() {
@@ -1401,7 +1431,7 @@ class RolezTypeSystemTest {
             }
         ''').assertNoErrors
         
-        // IMPROVE: Test type params, once they're supported outside the array class
+        // IMPROVE: Test type params, once supported outside mapped classes
     }
     
     @Test def testSubtypePrimitiveMismatch() {

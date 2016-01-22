@@ -744,7 +744,7 @@ class RolezLinkingTest {
         ((program.main.expr(0) as New).constr.params.head.type as RoleType).base.clazz.name.assertThat(is("A"))
         ((program.main.expr(1) as New).constr.params.head.type as RoleType).base.clazz.name.assertThat(is(objectClassName.toString))
         
-        // IMPROVE: test generic constructors, once  supported outside of the array class
+        // IMPROVE: test generic constructors
     }
     
     @Test def testNewTypeMismatch() {
@@ -1096,7 +1096,22 @@ class RolezLinkingTest {
             }
         ''').assertError(CONSTR, LINKING_DIAGNOSTIC)
         
-        // TODO: Test implicit constructor with a Java class that doesn't have a no-arg constructor
+        // Mapped classes can have no constr
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class NoNoArgConstr mapped to «NoNoArgConstr.canonicalName»
+        ''').assertNoErrors
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class NoNoArgConstr mapped to «NoNoArgConstr.canonicalName»
+            task Main: {
+                new NoNoArgConstr;
+            }
+        ''').assertError(NEW, LINKING_DIAGNOSTIC)
+    }
+    
+    static class NoNoArgConstr {
+        new(int i) {}
     }
     
     @Test def testArrayClass() {
