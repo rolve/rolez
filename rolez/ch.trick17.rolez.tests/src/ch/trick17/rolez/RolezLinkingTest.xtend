@@ -400,7 +400,7 @@ class RolezLinkingTest {
     }
     
     @Test def testMemberAccessMethodRoleGeneric() {
-        parse('''
+        var program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.String mapped to java.lang.String
             class StringContainer {
@@ -408,11 +408,14 @@ class RolezLinkingTest {
                 def r get[r includes readonly]: r String { return this.s; }
             }
             task Main: {
+                new StringContainer.get[readonly ];
                 new StringContainer.get[readwrite];
             }
-        ''').assertNoErrors
+        ''')
+        program.main.expr(0).type.assertRoleType(ReadOnly , stringClassName)
+        program.main.expr(1).type.assertRoleType(ReadWrite, stringClassName)
         
-        parse('''
+        program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.String mapped to java.lang.String
             class StringContainer {
@@ -425,9 +428,49 @@ class RolezLinkingTest {
                 }
             }
             task Main: {
+                new StringContainerGetter.getFrom[readonly ](new StringContainer);
                 new StringContainerGetter.getFrom[readwrite](new StringContainer);
             }
-        ''').assertNoErrors
+        ''')
+        program.main.expr(0).type.assertRoleType(ReadOnly , stringClassName)
+        program.main.expr(1).type.assertRoleType(ReadWrite, stringClassName)
+    }
+    
+    @Test def testMemberAccessMethodRoleInference() {
+        var program = parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.String mapped to java.lang.String
+            class StringContainer {
+                var s: readwrite String
+                def r get[r includes readonly]: r String { return this.s; }
+            }
+            task Main: {
+                new StringContainer.get;
+                (new StringContainer as readonly StringContainer).get
+            }
+        ''')
+        program.main.expr(0).type.assertRoleType(ReadWrite, stringClassName)
+        program.main.expr(1).type.assertRoleType(ReadOnly , stringClassName)
+        
+        program = parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.String mapped to java.lang.String
+            class StringContainer {
+                var s: readwrite String
+                def r get[r includes readonly]: r String { return this.s; }
+            }
+            class StringContainerGetter {
+                def pure getFrom[r includes readonly](c: r StringContainer): r String {
+                    return c.get;
+                }
+            }
+            task Main: {
+                new StringContainerGetter.getFrom(new StringContainer);
+                new StringContainerGetter.getFrom(new StringContainer as readonly StringContainer);
+            }
+        ''')
+        program.main.expr(0).type.assertRoleType(ReadWrite, stringClassName)
+        program.main.expr(1).type.assertRoleType(ReadOnly , stringClassName)
     }
     
     @Test def testMemberAccessMethodWrongNumberOfRoleArgs() {

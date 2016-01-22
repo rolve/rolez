@@ -662,22 +662,7 @@ class RolezTypeSystemTest {
         ''').assertError(MEMBER_ACCESS, null, "role mismatch", "method", "readonly")
     }
     
-    @Test def testTMemberAccessMethodWithRoleParam() {
-        val p = parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class A
-            class AContainer {
-                var a: readwrite A
-                def r get[r includes readonly]: r A { return this.a; }
-            }
-            task Main: {
-                new AContainer.get[readwrite];
-                new AContainer.get[readonly];
-            }
-        ''')
-        p.main.expr(0).type.assertRoleType(ReadWrite, "A")
-        p.main.expr(1).type.assertRoleType(ReadOnly , "A")
-        
+    @Test def testTMemberAccessMethodRoleBoundMismatch() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A
@@ -690,7 +675,17 @@ class RolezTypeSystemTest {
             }
         ''').assertError(MEMBER_ACCESS, null, "bound mismatch", "pure", "r includes readonly")
         
-        // TODO: Role arg inference
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A
+            class AContainer {
+                var a: readwrite A
+                def r get[r includes readonly]: r A { return this.a; }
+            }
+            task Main: {
+                (new AContainer as pure AContainer).get;
+            }
+        ''').assertError(MEMBER_ACCESS, null, "bound mismatch", "pure", "r includes readonly")
     }
     
     @Test def testTMemberAccessMethodGeneric() {
@@ -712,32 +707,27 @@ class RolezTypeSystemTest {
             task Main: {
                 val a = new Array[int](1);
                 a.set(0, 42);
-                a.get[readwrite](0);
+                a.get(0);
             }
-        ''', lib).main.lastExpr.type.assertThat(instanceOf(Int))
+        ''', lib).main.expr(1).type.assertThat(instanceOf(Int))
         parse('''
+            class A
+            task Main: {
+                new Array[pure A](1).get[readwrite](0);
+            }
+        ''', lib).main.lastExpr.type.assertRoleType(Pure, "A")
+        
+        var program = parse('''
             class A
             task Main: {
                 val a = new Array[readwrite A](1);
                 a.set(0, new A);
-                a.get[readwrite](0);
+                a.get(0);
+                (a as readonly Array[readwrite A]).get(0);
             }
-        ''', lib).main.lastExpr.type.assertRoleType(ReadWrite, "A")
-        parse('''
-            class A
-            task Main: {
-                val a = new Array[pure A](1);
-                a.set(0, new A);
-                a.get[readwrite](0);
-            }
-        ''', lib).main.lastExpr.type.assertRoleType(Pure, "A")
-        parse('''
-            class A
-            task Main: {
-                val a: readonly Array[readwrite A] = new Array[readwrite A](1);
-                a.get[readonly](0);
-            }
-        ''', lib).main.lastExpr.type.assertRoleType(ReadOnly, "A")
+        ''', lib)
+        program.main.expr(1).type.assertRoleType(ReadWrite, "A")
+        program.main.expr(2).type.assertRoleType(ReadOnly , "A")
         
         parse('''
             class A extends Container[int]
@@ -752,8 +742,8 @@ class RolezTypeSystemTest {
             task Main: {
                 val a = new A;
                 a.set(new Object);
-                a.get[readwrite];
-                (a as readonly A).get[readonly];
+                a.get;
+                (a as readonly A).get;
             }
         ''', lib)
         p.main.expr(1).type.assertRoleType(ReadWrite, objectClassName)
@@ -761,11 +751,9 @@ class RolezTypeSystemTest {
         
         parse('''
             class A extends Container[int] {
-                def readonly myGet: int { return this.get[readonly]; }
+                def readonly myGet: int { return this.get; }
             }
         ''', lib).assertNoErrors
-        
-        // TODO: Role arg inference
     }
     
     @Test def testTThis() {
