@@ -243,8 +243,8 @@ class RolezExtensions {
     
     def string(Member it) { switch(it) {
         Method: thisRole.string + " " + qualifiedName
-            + "[" + roleParams.map[]
-            + "(" + params.map[type.string].join(",") + ")"
+            + roleParams.join("[", ",", "]", [string])
+            + params.join("(", ",", ")", [type.string])
             + ": " + type.string
         Field: qualifiedName + ": " + type.string
     }}
@@ -253,7 +253,7 @@ class RolezExtensions {
         PrimitiveType: name
         Null         : "null"
         RoleType     : role.string + " " + base.string
-        TypeParamRef : param.name
+        TypeParamRef : param.name + if(restrictingRole != null) " with " + restrictingRole else ""
     }}
     
     def String stringWithoutRoles(Type it) { switch(it) {

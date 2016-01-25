@@ -1,5 +1,6 @@
 package ch.trick17.rolez.validation
 
+import ch.trick17.rolez.TestUtils
 import ch.trick17.rolez.rolez.Program
 import ch.trick17.rolez.tests.RolezInjectorProvider
 import javax.inject.Inject
@@ -20,6 +21,7 @@ class RolezValidatorTest {
     
     @Inject extension ParseHelper<Program>
     @Inject extension ValidationTestHelper
+    @Inject extension TestUtils
     
     @Test def testDuplicateTopLevelElems() {
         parse('''
@@ -205,6 +207,43 @@ class RolezValidatorTest {
                 override pure foo(t: readonly Object): {}
             }
         ''').assertNoErrors
+    }
+    
+    @Test def testValidOverrideRoleParams() {
+        val lib = newResourceSet.with('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.String mapped to java.lang.String
+            class Container[E] mapped to «Container.canonicalName» {
+                mapped var e: E
+                mapped def r get[r includes readonly]: E with r
+                mapped def readwrite set(e: E):
+            }
+        ''')
+        
+        parse('''
+            class IntContainer extends Container[int] {
+                override readonly get: int { return this.get; }
+            }
+        ''', lib).assertNoErrors
+        
+        parse('''
+            class StringContainer extends Container[readonly String] {
+                override readonly get: readonly String { return this.get; }
+            }
+        ''', lib).assertNoErrors
+        parse('''
+            class StringContainer extends Container[readwrite String] {
+                override r get[r includes readonly]: r String { return this.get; }
+            }
+        ''', lib).assertNoErrors
+    }
+    
+    static class Container<E> extends Guarded {
+        public var E e = null
+        new() {}
+        new(E e) { this.e = e }
+        def E get() { e }
+        def void set(E e) { this.e = e }
     }
     
     @Test def testValidOverrideIncompatibleReturnType() {

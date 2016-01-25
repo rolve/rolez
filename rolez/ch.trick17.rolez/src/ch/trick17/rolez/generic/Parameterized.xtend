@@ -6,6 +6,7 @@ import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleParam
 import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.TypeParam
+import java.util.HashMap
 import java.util.Map
 
 /**
@@ -18,20 +19,20 @@ import java.util.Map
  */
 abstract class Parameterized {
     
-    static def NormalClass parameterizedWith(NormalClass it, Map<TypeParam, Type> typeArgs) {
+    static def NormalClass parameterizedWith(NormalClass it, Map<TypeParam, ? extends Type> typeArgs) {
         if(typeArgs.isEmpty)
             it
         else
-            new ParameterizedNormalClass(it, eContainer, typeArgs, emptyMap)
+            new ParameterizedNormalClass(it, eContainer, new HashMap(typeArgs), emptyMap)
     }
     
-    static def Method parameterizedWith(Method it, Map<RoleParam, Role> roleArgs) {
+    static def Method parameterizedWith(Method it, Map<RoleParam, ? extends Role> roleArgs) {
         if(roleArgs.isEmpty)
             it
         else if(it instanceof ParameterizedMethod)
-            new ParameterizedMethod(genericEObject, eContainer, typeArgs, roleArgs)
+            new ParameterizedMethod(genericEObject, eContainer, typeArgs, new HashMap(roleArgs))
         else
-            new ParameterizedMethod(it, eContainer, emptyMap, roleArgs)
+            new ParameterizedMethod(it, eContainer, emptyMap, new HashMap(roleArgs))
     }
     
     package val Map<TypeParam, Type> typeArgs

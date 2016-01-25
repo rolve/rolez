@@ -691,6 +691,7 @@ class RolezTypeSystemTest {
     @Test def testTMemberAccessMethodGeneric() {
         val lib = newResourceSet.with('''
             class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.String mapped to java.lang.String
             class rolez.lang.Array[T] mapped to rolez.lang.Array {
                 mapped new(length: int)
                 mapped def r get[r includes readonly](i: int): T with r
@@ -730,28 +731,33 @@ class RolezTypeSystemTest {
         program.main.expr(2).type.assertRoleType(ReadOnly , "A")
         
         parse('''
-            class A extends Container[int]
+            class IntContainer extends Container[int]
             task Main: {
-                val a = new A;
-                a.set(42);
-                a.get[readwrite];
+                val c = new IntContainer;
+                c.set(42);
+                c.get;
             }
         ''', lib).main.lastExpr.type.assertThat(instanceOf(Int))
         val p = parse('''
-            class A extends Container[readwrite Object]
+            class ObjectContainer extends Container[readwrite Object]
             task Main: {
-                val a = new A;
-                a.set(new Object);
-                a.get;
-                (a as readonly A).get;
+                val c = new ObjectContainer;
+                c.set(new Object);
+                c.get;
+                (c as readonly ObjectContainer).get;
             }
         ''', lib)
         p.main.expr(1).type.assertRoleType(ReadWrite, objectClassName)
         p.main.expr(2).type.assertRoleType(ReadOnly , objectClassName)
         
         parse('''
-            class A extends Container[int] {
+            class IntContainer extends Container[int] {
                 def readonly myGet: int { return this.get; }
+            }
+        ''', lib).assertNoErrors
+        parse('''
+            class StringContainer extends Container[readwrite String] {
+                def r myGet[r includes readonly]: r String { return this.get; }
             }
         ''', lib).assertNoErrors
     }

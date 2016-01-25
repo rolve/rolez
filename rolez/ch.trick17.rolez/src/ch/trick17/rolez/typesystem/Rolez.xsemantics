@@ -48,7 +48,6 @@ import ch.trick17.rolez.rolez.Start
 import ch.trick17.rolez.rolez.Stmt
 import ch.trick17.rolez.rolez.StringLiteral
 import ch.trick17.rolez.rolez.SuperConstrCall
-import ch.trick17.rolez.rolez.Task
 import ch.trick17.rolez.rolez.The
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.Type
@@ -89,11 +88,8 @@ judgments {
     validArgs |- Argumented a << ParameterizedBody p
     
     subtypeExpr |- Expr left <| Type right
-        error "Type mismatch: " + left.type.value?.string + " is not a subtype of " + right.string
+        error "Type mismatch: " + type(createEnv(left), left).value?.string + " is not a subtype of " + right.string
         source left
-        // TODO: left.type could need an environment. Convert to explicit
-        // failure once issue code are supported:
-        // https://github.com/LorenzoBettini/xsemantics/issues/58
     
     subtype  |-     Type left <:     Type right error "subtype" // Apparently, an error message is necessary for sensible error message selection
     subrole  |-     Role left <!     Role right error "subrole"
@@ -107,7 +103,12 @@ judgments {
 }
 
 auxiliary leastCommonSuperrole(Role r1, Role r2) {
-    if(subroleSucceeded(r1, r2)) r2 else r1
+    if(subroleSucceeded(r1, r2))
+        r2
+    else if(subroleSucceeded(r2, r1))
+        r1
+    else
+        createPure
 }
 
 auxiliary inferRoleArgs(RuleEnvironment G, MemberAccess a, Method m) {
@@ -462,7 +463,7 @@ axiom SubtypeNull
 rule SubtypeTypeVarRef
     G |- TypeParamRef left <: TypeParamRef right
 from {
-    left.param == right.param
+    left.param === right.param
 }
 
 rule SubtypeGeneral
@@ -489,6 +490,12 @@ from {
     G |- left.param.upperBound <! right
 }
 
+rule SubRoleBuiltInRoleRoleParamRef
+    G |- BuiltInRole left <! RoleParamRef right
+from {
+    left instanceof ReadWrite
+}
+
 rule SubroleGeneral
     G |- Role left <! Role right
 from { fail }
@@ -496,7 +503,7 @@ from { fail }
 rule SubclassSimple
     G |- ClassRef left <~ SimpleClassRef right
 from {
-    left.clazz == right.clazz || strictSuperclasses(left.clazz).contains(right.clazz)
+    left.clazz === right.clazz || strictSuperclasses(left.clazz).contains(right.clazz)
 }
 
 rule SubclassGeneric
@@ -513,7 +520,7 @@ from { fail }
 rule EqualTypePrimitiveTypes
     G |- PrimitiveType left ~~ PrimitiveType right
 from {
-    left.class == right.class
+    left.class === right.class
 }
 
 rule EqualTypeRoleTypes
@@ -576,18 +583,5 @@ from { fail }
 checkrule CheckStmt for
     Stmt s // Checked for all stmts individually, to get multiple error markers
 from {
-    val body = s.enclosingBody
-    switch(body) {
-        Method: {
-            val thisType = newRoleType(body.thisRole, newClassRef(s.enclosingClass))
-            "this" <- thisType |- s
-        }
-        Constr: {
-            val thisType = newRoleType(createReadWrite, newClassRef(s.enclosingClass))
-            "this" <- thisType |- s
-        }
-        Task: {
-            empty |- s
-        }
-    }
+    createEnv(s) |- s
 }

@@ -11,6 +11,7 @@ import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.ParameterizedBody
 import ch.trick17.rolez.rolez.RoleType
+import ch.trick17.rolez.rolez.RolezFactory
 import ch.trick17.rolez.rolez.SuperConstrCall
 import ch.trick17.rolez.rolez.VarRef
 import ch.trick17.rolez.typesystem.RolezSystem
@@ -36,6 +37,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     
     @Inject extension RolezExtensions
     @Inject extension JavaMapper
+    @Inject extension RolezFactory
     @Inject RolezSystem system
     @Inject RolezValidator validator
     @Inject RolezUtils utils
@@ -99,7 +101,17 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     
     def scope_Method_superMethod(Method it, EReference ref) {
         val allMethods = enclosingClass.parameterizedSuperclass.allMembers.filter(Method)
-        val matching = allMethods.filter[m | utils.equalSignatureWithoutRoles(m, it)].toList
+        val matching = allMethods.filter[m | utils.equalSignatureWithoutRoles(m, it)]
+            .filter[m | m.roleParams.size >= roleParams.size]
+            .map[m |
+                // Parameterize the super method with references to this method's role parameters
+                // IMPROVE: This could be problematic if the super method has more role params than
+                // this method, since the parameterization is position-based
+                val roleArgs = roleParams
+                    .toMap[m.roleParams.get(roleParamIndex)]
+                    .mapValues[p | createRoleParamRef => [param = p]]
+                m.parameterizedWith(roleArgs)
+            ].toList
         
         // IMPROVE: Better error message if no matching method found
         scopeFor(matching, [QualifiedName.create("override")], IScope.NULLSCOPE)
