@@ -1,18 +1,12 @@
-package ch.trick17.rolez.lang;
+package rolez.lang;
 
-import static java.lang.Math.*;
+import static java.lang.Math.abs;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 
-import java.lang.reflect.Array;
-
-import ch.trick17.rolez.lang.util.Math;
+// TODO: Convert to Rolez (requires Math, support for exceptions, and would profit from constants)
 
 public final class SliceRange {
-    
-    public static SliceRange forArray(final Object array) {
-        assert array.getClass().isArray();
-        final int length = Array.getLength(array);
-        return new SliceRange(0, length, 1);
-    }
     
     public static final SliceRange EMPTY = new SliceRange(0, 0, 1);
     
@@ -23,7 +17,7 @@ public final class SliceRange {
     public SliceRange(final int begin, final int end, final int step) {
         if(begin < 0 || end < begin || step < 1)
             throw new IllegalArgumentException();
-        
+            
         this.begin = begin;
         this.end = end;
         this.step = step;
@@ -39,26 +33,24 @@ public final class SliceRange {
     }
     
     /**
-     * Indicates whether this slice covers the given slice. A slice s1 covers a
-     * slice s2, iff the set of indices that s1 represents is a superset of the
-     * set of indices s2 represents. In particular, this mean that every slice
-     * covers every empty slice, regardless of the beginnings, ends or step
-     * sizes of the slices.
+     * Indicates whether this slice covers the given slice. A slice s1 covers a slice s2, iff the
+     * set of indices that s1 represents is a superset of the set of indices s2 represents. In
+     * particular, this mean that every slice covers every empty slice, regardless of the
+     * beginnings, ends or step sizes of the slices.
      * <p>
-     * Note that this contrasts with the semantics of {@link #equals(Object)
-     * equals()}, which is defined as the structural equality. This means that
-     * two slices that cover each other are not necessarily equal.
+     * Note that this contrasts with the semantics of {@link #equals(Object) equals()}, which is
+     * defined as the structural equality. This means that two slices that cover each other are not
+     * necessarily equal.
      * 
      * @param other
      *            The other slice
-     * @return <code>true</code> if this slice cover the given one,
-     *         <code>false</code> otherwise.
+     * @return <code>true</code> if this slice cover the given one, <code>false</code> otherwise.
      */
     public boolean covers(final SliceRange other) {
         final int otherSize = other.size();
         if(otherSize == 0)
             return true;
-        
+            
         if(begin > other.begin)
             return false;
         if((begin - other.begin) % step != 0)
@@ -68,8 +60,7 @@ public final class SliceRange {
             return other.begin < end;
         if(other.step % step != 0)
             return false;
-        if(begin + step * (size() - 1) < other.begin + other.step
-                * (otherSize - 1))
+        if(begin + step * (size() - 1) < other.begin + other.step * (otherSize - 1))
             return false;
         return true;
     }
@@ -79,21 +70,20 @@ public final class SliceRange {
             return other;
         if(other.covers(this))
             return this;
-        
+            
         final int minEnd = min(end, other.end);
         if(minEnd <= max(begin, other.begin))
             return EMPTY;
-        
-        /* A non-empty intersection requires the difference between first begin
-         * and second begin to be a multiple of the GCD (greatest common
-         * divisor) of the two step sizes. Reason: GCD divides all multiples of
-         * either step size and therefore also all differences between
-         * multiples. Any such difference between the two begins makes it
-         * possible for the two slices to have common elements. */
-        final int gcdStep = Math.gcd(step, other.step);
+            
+        /* A non-empty intersection requires the difference between first begin and second begin to
+         * be a multiple of the GCD (greatest common divisor) of the two step sizes. Reason: GCD
+         * divides all multiples of either step size and therefore also all differences between
+         * multiples. Any such difference between the two begins makes it possible for the two
+         * slices to have common elements. */
+        final int gcdStep = gcd(step, other.step);
         if(abs(begin - other.begin) % gcdStep != 0)
             return EMPTY;
-        
+            
         /* Common indices (possibly) exist, so try to find first */
         int i = begin;
         int j = other.begin;
@@ -106,16 +96,26 @@ public final class SliceRange {
                 return EMPTY;
         }
         
-        /* The step size of the intersection is the LCM (least common multiple)
-         * of the two step sizes, for rather obvious reasons. */
+        /* The step size of the intersection is the LCM (least common multiple) of the two step
+         * sizes, for rather obvious reasons. */
         final int lcmStep = (step / gcdStep) * other.step;
         return new SliceRange(i, minEnd, lcmStep);
     }
     
+    private static int gcd(int i1, int i2) {
+        int a = i1;
+        int b = i2;
+        while(b != 0) {
+            final int t = a % b;
+            a = b;
+            b = t;
+        }
+        return a;
+    }
+    
     @Override
     public String toString() {
-        return "SliceRange[begin=" + begin + ", end=" + end + ", step=" + step
-                + "]";
+        return "SliceRange[begin=" + begin + ", end=" + end + ", step=" + step + "]";
     }
     
     @Override
@@ -145,5 +145,4 @@ public final class SliceRange {
             return false;
         return true;
     }
-    
 }

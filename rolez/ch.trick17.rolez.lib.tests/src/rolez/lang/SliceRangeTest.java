@@ -1,4 +1,4 @@
-package ch.trick17.rolez.lang;
+package rolez.lang;
 
 import static org.junit.Assert.assertEquals;
 
@@ -14,8 +14,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
-
-import ch.trick17.rolez.lang.SliceRange;
 
 @RunWith(Parameterized.class)
 public class SliceRangeTest {
@@ -33,7 +31,7 @@ public class SliceRangeTest {
             for(final int size : SIZES)
                 for(final int step : STEPS)
                     ranges.add(new SliceRange(begin, begin + size, step));
-        
+                    
         /* May add more specific ranges later... */
         
         final ArrayList<SliceRange> rangesList = new ArrayList<>(ranges);
@@ -41,7 +39,7 @@ public class SliceRangeTest {
         for(int i = 0; i < rangesList.size(); i++)
             for(int j = i; j < rangesList.size(); j++)
                 params.add(new Object[]{rangesList.get(i), rangesList.get(j)});
-        
+                
         return params;
     }
     
@@ -70,10 +68,8 @@ public class SliceRangeTest {
         intersection.addAll(new SliceRangeSet(range1));
         intersection.retainAll(new SliceRangeSet(range2));
         
-        assertEquals(intersection, new SliceRangeSet(range1
-                .intersectWith(range2)));
-        assertEquals(intersection, new SliceRangeSet(range2
-                .intersectWith(range1)));
+        assertEquals(intersection, new SliceRangeSet(range1.intersectWith(range2)));
+        assertEquals(intersection, new SliceRangeSet(range2.intersectWith(range1)));
     }
     
     static class SliceRangeSet extends AbstractSet<Integer> {

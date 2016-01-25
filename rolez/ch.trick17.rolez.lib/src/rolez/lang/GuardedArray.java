@@ -1,24 +1,11 @@
 package rolez.lang;
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
-
 import java.lang.reflect.Array;
 
-public final class GuardedArray<A> extends Guarded {
+public final class GuardedArray<A> extends GuardedSlice<A> {
     
-    public final A data;
-    
-    public GuardedArray(Object array) {
-        this.data = (A) array;
-    }
-    
-    @Override
-    protected Iterable<?> guardedRefs() {
-        if(data instanceof Object[])
-            return asList((Object[]) data);
-        else
-            return emptyList();
+    public GuardedArray(A array) {
+        super(array, new SliceRange(0, Array.getLength(array), 1));
     }
     
     public static <A> GuardedArray<A> wrap(Object array) {
@@ -31,10 +18,10 @@ public final class GuardedArray<A> extends Guarded {
             GuardedArray<?>[] wrappedArray = new GuardedArray[origArray.length];
             for(int i = 0; i < origArray.length; i++)
                 wrappedArray[i] = wrap(origArray[i]);
-            return new GuardedArray<A>(wrappedArray);
+            return new GuardedArray<A>((A) wrappedArray);
         }
         else
-            return new GuardedArray<A>(array);
+            return new GuardedArray<A>((A) array);
     }
     
     public static <O> O unwrap(GuardedArray<?> wrapped, Class<O> arrayType) {

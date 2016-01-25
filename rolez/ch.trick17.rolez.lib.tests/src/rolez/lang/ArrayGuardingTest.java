@@ -1,6 +1,8 @@
-package ch.trick17.rolez.lang;
+package rolez.lang;
 
 import static org.junit.Assert.assertEquals;
+import static rolez.lang.Guarded.guardReadOnly;
+import static rolez.lang.Guarded.guardReadWrite;
 
 import java.util.Arrays;
 import java.util.List;
@@ -10,31 +12,19 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-import ch.trick17.rolez.lang.SomeClasses.Int;
-import ch.trick17.rolez.lang.SomeClasses.Ref;
-import ch.trick17.rolez.lang.guard.Array;
-import ch.trick17.rolez.lang.guard.FinalArray;
-import ch.trick17.rolez.lang.guard.FinalSlice;
-import ch.trick17.rolez.lang.guard.IntArray;
-import ch.trick17.rolez.lang.guard.IntSlice;
-import ch.trick17.rolez.lang.guard.Slice;
-import ch.trick17.rolez.lang.task.NewThreadTaskSystem;
-import ch.trick17.rolez.lang.task.SingleThreadTaskSystem;
-import ch.trick17.rolez.lang.task.Task;
-import ch.trick17.rolez.lang.task.TaskSystem;
-import ch.trick17.rolez.lang.task.ThreadPoolTaskSystem;
+import rolez.lang.SomeClasses.Int;
+import rolez.lang.SomeClasses.Ref;
 
 @RunWith(Parameterized.class)
 public class ArrayGuardingTest extends GuardingTest {
     
     @Parameters(name = "{0}, {1}")
     public static List<?> taskSystems() {
-        return Arrays.asList(new Object[][]{
-                {new NewThreadTaskSystem(), VerifyMode.CORRECTNESS},
-                {new ThreadPoolTaskSystem(), VerifyMode.CORRECTNESS},
-                {new SingleThreadTaskSystem(), VerifyMode.CORRECTNESS},
-                {new NewThreadTaskSystem(), VerifyMode.PARALLELISM},
-                {new ThreadPoolTaskSystem(3), VerifyMode.PARALLELISM}});
+        return Arrays.asList(new Object[][]{{new NewThreadTaskSystem(), VerifyMode.CORRECTNESS}, {
+                new ThreadPoolTaskSystem(), VerifyMode.CORRECTNESS}, {new SingleThreadTaskSystem(),
+                        VerifyMode.CORRECTNESS}, {new NewThreadTaskSystem(),
+                                VerifyMode.PARALLELISM}, {new ThreadPoolTaskSystem(3),
+                                        VerifyMode.PARALLELISM}});
     }
     
     public ArrayGuardingTest(final TaskSystem s, final VerifyMode mode) {
@@ -45,10 +35,10 @@ public class ArrayGuardingTest extends GuardingTest {
     public void testShareArray() {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
-            final Array<Int> a = new Array<>(new Int[3]);
+            final GuardedArray<Int[]> a = new GuardedArray<>(new Int[3]);
             for(int i = 0; i < a.data.length; i++)
                 a.data[i] = new Int(i);
-            
+                
             a.share();
             final Task<Void> task = s.start(new RunnableCallable() {
                 public void run() {
@@ -57,33 +47,8 @@ public class ArrayGuardingTest extends GuardingTest {
                 }
             });
             
-            a.guardRead();
-            a.data[2].guardReadWrite();
-            a.data[2].value = 1;
-            
-            task.get();
-        }
-    }
-    
-    @Test
-    public void testShareFinalArray() {
-        assumeVerifyCorrectness();
-        if(verifyNoPropertyViolation()) {
-            final FinalArray<Int> a = new FinalArray<>(new Int[3]);
-            // Initialization may be done right after array creation
-            for(int i = 0; i < a.data.length; i++)
-                a.data[i] = new Int(i);
-            
-            a.share();
-            final Task<Void> task = s.start(new RunnableCallable() {
-                public void run() {
-                    assertEquals(2, a.data[2].value);
-                    a.releaseShared();
-                }
-            });
-            
-            // No guard required for reading element
-            a.data[2].guardReadWrite();
+            guardReadOnly(a);
+            guardReadWrite(a.data[2]);
             a.data[2].value = 1;
             
             task.get();
@@ -94,7 +59,7 @@ public class ArrayGuardingTest extends GuardingTest {
     public void testSharePrimitiveArray() {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
-            final IntArray a = new IntArray(new int[]{0});
+            final GuardedArray<int[]> a = new GuardedArray<>(new int[]{0});
             
             a.share();
             final Task<Void> task = s.start(new RunnableCallable() {
@@ -104,7 +69,7 @@ public class ArrayGuardingTest extends GuardingTest {
                 }
             });
             
-            a.guardReadWrite();
+            guardReadWrite(a);
             a.data[0] = 1;
             task.get();
         }
@@ -114,10 +79,10 @@ public class ArrayGuardingTest extends GuardingTest {
     public void testPassArray() {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
-            final Array<Int> a = new Array<>(new Int[3]);
+            final GuardedArray<Int[]> a = new GuardedArray<>(new Int[3]);
             for(int i = 0; i < a.data.length; i++)
                 a.data[i] = new Int(i);
-            
+                
             a.pass();
             final Task<Void> task = s.start(new RunnableCallable() {
                 public void run() {
@@ -128,9 +93,9 @@ public class ArrayGuardingTest extends GuardingTest {
                 }
             });
             
-            a.guardRead();
+            guardReadOnly(a);
             for(int i = 0; i < a.data.length; i++) {
-                a.data[i].guardRead();
+                guardReadOnly(a.data[i]);
                 assertEquals(i + 1, a.data[i].value);
             }
             
@@ -142,7 +107,7 @@ public class ArrayGuardingTest extends GuardingTest {
     public void testPassPrimitiveArray() {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
-            final IntArray a = new IntArray(0, 1, 2);
+            final GuardedArray<int[]> a = new GuardedArray<>(new int[]{0, 1, 2});
             
             a.pass();
             final Task<Void> task = s.start(new RunnableCallable() {
@@ -154,7 +119,7 @@ public class ArrayGuardingTest extends GuardingTest {
                 }
             });
             
-            a.guardRead();
+            guardReadOnly(a);
             for(int i = 0; i < a.data.length; i++)
                 assertEquals(i + 1, a.data[i]);
             task.get();
@@ -166,7 +131,7 @@ public class ArrayGuardingTest extends GuardingTest {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
-            final Array<Int> a = new Array<>(i);
+            final GuardedArray<Int[]> a = new GuardedArray<>(new Int[]{i});
             
             i.share();
             final Task<Void> task1 = s.start(new RunnableCallable() {
@@ -192,7 +157,7 @@ public class ArrayGuardingTest extends GuardingTest {
                 }
             });
             
-            i.guardReadWrite();
+            guardReadWrite(i);
             i.value = 1;
             
             task1.get();
@@ -206,7 +171,7 @@ public class ArrayGuardingTest extends GuardingTest {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
-            final Array<Int> a = new Array<>(i);
+            final GuardedArray<Int[]> a = new GuardedArray<>(new Int[]{i});
             
             i.pass();
             final Task<Void> task1 = s.start(new RunnableCallable() {
@@ -235,7 +200,7 @@ public class ArrayGuardingTest extends GuardingTest {
                 }
             });
             
-            i.guardRead();
+            guardReadOnly(i);
             assertEquals(3, i.value);
             task1.get();
             task2.get();
@@ -248,7 +213,7 @@ public class ArrayGuardingTest extends GuardingTest {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
-            final Array<Int> a = new Array<>(i);
+            final GuardedArray<Int[]> a = new GuardedArray<>(new Int[]{i});
             
             a.pass();
             final Task<Void> task = s.start(new RunnableCallable() {
@@ -267,7 +232,7 @@ public class ArrayGuardingTest extends GuardingTest {
                         }
                     });
                     
-                    i2.guardReadWrite();
+                    guardReadWrite(i2);
                     assertEquals(2, i2.value);
                     i2.value++;
                     
@@ -276,8 +241,8 @@ public class ArrayGuardingTest extends GuardingTest {
                 }
             });
             
-            a.guardRead();
-            a.data[0].guardRead();
+            guardReadOnly(a);
+            guardReadOnly(a.data[0]);
             assertEquals(3, a.data[0].value);
             task.get();
         }
@@ -287,11 +252,11 @@ public class ArrayGuardingTest extends GuardingTest {
     public void testShareSlice() {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
-            final Array<Int> a = new Array<>(new Int[4]);
+            final GuardedArray<Int[]> a = new GuardedArray<>(new Int[4]);
             for(int i = 0; i < a.data.length; i++)
                 a.data[i] = new Int(i);
-            
-            final Slice<Int> slice = a.slice(0, 2, 1);
+                
+            final GuardedSlice<Int[]> slice = a.slice(0, 2, 1);
             slice.share();
             final Task<Void> task = s.start(new RunnableCallable() {
                 public void run() {
@@ -300,8 +265,8 @@ public class ArrayGuardingTest extends GuardingTest {
                 }
             });
             
-            a.guardRead();
-            a.data[1].guardReadWrite();
+            guardReadOnly(a);
+            guardReadWrite(a.data[1]);
             a.data[1].value = 0;
             
             task.get();
@@ -312,11 +277,11 @@ public class ArrayGuardingTest extends GuardingTest {
     public void testShareSliceModify() {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
-            final Array<Int> a = new Array<>(new Int[4]);
+            final GuardedArray<Int[]> a = new GuardedArray<>(new Int[4]);
             for(int i = 0; i < a.data.length; i++)
                 a.data[i] = new Int(i);
-            
-            final Slice<Int> slice = a.slice(0, 2, 1);
+                
+            final GuardedSlice<Int[]> slice = a.slice(0, 2, 1);
             slice.share();
             final Task<Void> task = s.start(new RunnableCallable() {
                 public void run() {
@@ -325,7 +290,7 @@ public class ArrayGuardingTest extends GuardingTest {
                 }
             });
             
-            a.guardReadWrite();
+            guardReadWrite(a);
             a.data[1] = new Int(100);
             
             task.get();
@@ -336,17 +301,17 @@ public class ArrayGuardingTest extends GuardingTest {
     public void testSliceSharedArray() {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
-            final Array<Int> a = new Array<>(new Int[4]);
+            final GuardedArray<Int[]> a = new GuardedArray<>(new Int[4]);
             for(int i = 0; i < a.data.length; i++)
                 a.data[i] = new Int(i);
-            
+                
             a.share();
             final Task<Void> task = s.start(new RunnableCallable() {
                 public void run() {
-                    final Slice<Int> slice = a.slice(0, 2, 1);
+                    final GuardedSlice<Int[]> slice = a.slice(0, 2, 1);
                     a.releaseShared();
-                    /* Use slice again to prevent incidental correct behavior
-                     * due to garbage collection */
+                    /* Use slice again to prevent incidental correct behavior due to garbage
+                     * collection */
                     slice.toString();
                 }
             });
@@ -359,10 +324,10 @@ public class ArrayGuardingTest extends GuardingTest {
     public void testSliceModifySharedArray() {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
-            final Array<Int> a = new Array<>(new Int[4]);
+            final GuardedArray<Int[]> a = new GuardedArray<>(new Int[4]);
             for(int i = 0; i < a.data.length; i++)
                 a.data[i] = new Int(i);
-            
+                
             a.share();
             final Task<Void> task = s.start(new RunnableCallable() {
                 public void run() {
@@ -371,8 +336,8 @@ public class ArrayGuardingTest extends GuardingTest {
                 }
             });
             
-            final Slice<Int> slice = a.slice(0, 2, 1);
-            slice.guardReadWrite();
+            final GuardedSlice<Int[]> slice = a.slice(0, 2, 1);
+            guardReadWrite(slice);
             slice.data[1] = new Int(0);
             
             task.get();
@@ -385,12 +350,12 @@ public class ArrayGuardingTest extends GuardingTest {
     public void testShareOverlappingSliceModify() {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
-            final Array<Int> a = new Array<>(new Int[4]);
+            final GuardedArray<Int[]> a = new GuardedArray<>(new Int[4]);
             for(int i = 0; i < a.data.length; i++)
                 a.data[i] = new Int(i);
-            
-            final Slice<Int> slice1 = a.slice(0, 3, 1);
-            final Slice<Int> slice2 = a.slice(1, 4, 1);
+                
+            final GuardedSlice<Int[]> slice1 = a.slice(0, 3, 1);
+            final GuardedSlice<Int[]> slice2 = a.slice(1, 4, 1);
             slice1.share();
             final Task<Void> task = s.start(new RunnableCallable() {
                 public void run() {
@@ -399,7 +364,7 @@ public class ArrayGuardingTest extends GuardingTest {
                 }
             });
             
-            slice2.guardReadWrite();
+            guardReadWrite(slice2);
             slice2.data[1] = new Int(100);
             
             task.get();
@@ -409,38 +374,12 @@ public class ArrayGuardingTest extends GuardingTest {
     // FIXME: Test guarding of striped slices
     
     @Test
-    public void testShareFinalSlice() {
-        assumeVerifyCorrectness();
-        if(verifyNoPropertyViolation()) {
-            final FinalArray<Int> a = new FinalArray<>(new Int[3]);
-            // Initialization may be done right after array creation
-            for(int i = 0; i < a.data.length; i++)
-                a.data[i] = new Int(i);
-            
-            final FinalSlice<Int> slice = a.slice(0, 2, 1);
-            slice.share();
-            final Task<Void> task = s.start(new RunnableCallable() {
-                public void run() {
-                    assertEquals(1, slice.data[1].value);
-                    slice.releaseShared();
-                }
-            });
-            
-            // No read required for reading element
-            a.data[1].guardReadWrite();
-            a.data[1].value = 0;
-            
-            task.get();
-        }
-    }
-    
-    @Test
     public void testSharePrimitiveSlice() {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
-            final IntArray a = new IntArray(0, 1);
+            final GuardedArray<int[]> a = new GuardedArray<>(new int[]{0, 1});
             
-            final IntSlice slice = a.slice(0, 1, 1);
+            final GuardedSlice<int[]> slice = a.slice(0, 1, 1);
             slice.share();
             final Task<Void> task = s.start(new RunnableCallable() {
                 public void run() {
@@ -449,7 +388,7 @@ public class ArrayGuardingTest extends GuardingTest {
                 }
             });
             
-            a.guardReadWrite();
+            guardReadWrite(a);
             a.data[0] = 1;
             task.get();
         }
@@ -459,21 +398,21 @@ public class ArrayGuardingTest extends GuardingTest {
     public void testShareReferencedPrimitiveSlice() {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
-            final IntArray a = new IntArray(0, 1, 2, 3);
+            final GuardedArray<int[]> a = new GuardedArray<>(new int[]{0, 1, 2, 3});
             
-            final IntSlice slice = a.slice(0, 2, 1);
-            final Ref<IntSlice> ref = new Ref<>(slice);
+            final GuardedSlice<int[]> slice = a.slice(0, 2, 1);
+            final Ref<GuardedSlice<int[]>> ref = new Ref<>(slice);
             ref.share();
             final Task<Void> task = s.start(new RunnableCallable() {
                 public void run() {
-                    final IntSlice slice2 = ref.o.slice(1, 2, 1);
+                    final GuardedSlice<int[]> slice2 = ref.o.slice(1, 2, 1);
                     assertEquals(1, slice2.data[1]);
                     ref.releaseShared();
                     slice2.toString();
                 }
             });
             
-            a.guardReadWrite();
+            guardReadWrite(a);
             a.data[1] = 0;
             
             task.get();
@@ -484,10 +423,10 @@ public class ArrayGuardingTest extends GuardingTest {
     public void testShareOverlappingPrimitiveSlice() {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
-            final IntArray a = new IntArray(0, 1, 2);
+            final GuardedArray<int[]> a = new GuardedArray<>(new int[]{0, 1, 2});
             
-            final IntSlice slice1 = a.slice(0, 2, 1);
-            final IntSlice slice2 = a.slice(1, 3, 1);
+            final GuardedSlice<int[]> slice1 = a.slice(0, 2, 1);
+            final GuardedSlice<int[]> slice2 = a.slice(1, 3, 1);
             slice1.share();
             final Task<Void> task = s.start(new RunnableCallable() {
                 public void run() {
@@ -496,7 +435,7 @@ public class ArrayGuardingTest extends GuardingTest {
                 }
             });
             
-            slice2.guardReadWrite();
+            guardReadWrite(slice2);
             slice2.data[1] = 2;
             task.get();
         }
@@ -506,15 +445,15 @@ public class ArrayGuardingTest extends GuardingTest {
     public void testShareSubslice() {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
-            final Array<Int> a = new Array<>(new Int[4]);
+            final GuardedArray<Int[]> a = new GuardedArray<>(new Int[4]);
             for(int i = 0; i < a.data.length; i++)
                 a.data[i] = new Int(i);
-            
-            Slice<Int> slice = a.slice(0, 3, 1);
-            final Slice<Int> subslice = slice.slice(0, 2, 1);
+                
+            GuardedSlice<Int[]> slice = a.slice(0, 3, 1);
+            final GuardedSlice<Int[]> subslice = slice.slice(0, 2, 1);
             
             slice = null; // slice is not referenced anymore!
-            System.gc();
+            java.lang.System.gc();
             
             subslice.share();
             final Task<Void> task = s.start(new RunnableCallable() {
@@ -524,7 +463,7 @@ public class ArrayGuardingTest extends GuardingTest {
                 }
             });
             
-            a.guardReadWrite();
+            guardReadWrite(a);
             a.data[0] = new Int(1);
             
             task.get();
@@ -535,11 +474,11 @@ public class ArrayGuardingTest extends GuardingTest {
     public void testPassSlice() {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
-            final Array<Int> a = new Array<>(new Int[10]);
+            final GuardedArray<Int[]> a = new GuardedArray<>(new Int[10]);
             for(int i = 0; i < a.data.length; i++)
                 a.data[i] = new Int(i);
-            
-            final Slice<Int> slice = a.slice(0, 5, 1);
+                
+            final GuardedSlice<Int[]> slice = a.slice(0, 5, 1);
             slice.pass();
             final Task<Void> task = s.start(new RunnableCallable() {
                 public void run() {
@@ -550,46 +489,13 @@ public class ArrayGuardingTest extends GuardingTest {
                 }
             });
             
-            a.guardRead();
+            guardReadOnly(a);
             for(int i = 0; i < slice.range.end; i++) {
-                a.data[i].guardRead();
+                guardReadOnly(a.data[i]);
                 assertEquals(i + 1, a.data[i].value);
             }
             for(int i = slice.range.end; i < a.data.length; i++) {
-                a.data[i].guardRead();
-                assertEquals(i, a.data[i].value);
-            }
-            task.get();
-        }
-    }
-    
-    @Test
-    public void testPassFinalSlice() {
-        assumeVerifyCorrectness();
-        if(verifyNoPropertyViolation()) {
-            final FinalArray<Int> a = new FinalArray<>(new Int[6]);
-            for(int i = 0; i < a.data.length; i++)
-                a.data[i] = new Int(i);
-            
-            final FinalSlice<Int> slice = a.slice(0, a.range.size() / 2, 1);
-            slice.pass();
-            final Task<Void> task = s.start(new RunnableCallable() {
-                public void run() {
-                    slice.registerNewOwner();
-                    for(int i = slice.range.begin; i < slice.range.end; i++)
-                        slice.data[i].value++;
-                    // IMPROVE: Find a way to release array elements separately
-                    // and earlier to allow more parallelism
-                    slice.releasePassed();
-                }
-            });
-            
-            for(int i = 0; i < slice.range.end; i++) {
-                a.data[i].guardRead();
-                assertEquals(i + 1, a.data[i].value);
-            }
-            for(int i = slice.range.end; i < a.data.length; i++) {
-                a.data[i].guardRead();
+                guardReadOnly(a.data[i]);
                 assertEquals(i, a.data[i].value);
             }
             task.get();
@@ -600,9 +506,10 @@ public class ArrayGuardingTest extends GuardingTest {
     public void testPassPrimitiveSlice() {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
-            final IntArray a = new IntArray(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
-            
-            final IntSlice slice = a.slice(0, 5, 1);
+            final GuardedArray<int[]> a = new GuardedArray<>(new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8,
+                    9});
+                    
+            final GuardedSlice<int[]> slice = a.slice(0, 5, 1);
             slice.pass();
             final Task<Void> task = s.start(new RunnableCallable() {
                 public void run() {
@@ -613,7 +520,7 @@ public class ArrayGuardingTest extends GuardingTest {
                 }
             });
             
-            a.guardRead();
+            guardReadOnly(a);
             for(int i = 0; i < slice.range.end; i++)
                 assertEquals(i + 1, a.data[i]);
             for(int i = slice.range.end; i < a.data.length; i++)
@@ -626,15 +533,16 @@ public class ArrayGuardingTest extends GuardingTest {
     public void testPassReferencedPrimitiveSlice() {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
-            final IntArray a = new IntArray(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
-            
-            final IntSlice slice = a.slice(0, 5, 1);
-            final Ref<IntSlice> ref = new Ref<>(slice);
+            final GuardedArray<int[]> a = new GuardedArray<>(new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8,
+                    9});
+                    
+            final GuardedSlice<int[]> slice = a.slice(0, 5, 1);
+            final Ref<GuardedSlice<int[]>> ref = new Ref<>(slice);
             ref.pass();
             final Task<Void> task = s.start(new RunnableCallable() {
                 public void run() {
                     ref.registerNewOwner();
-                    final IntSlice slice2 = ref.o.slice(0, 5, 1);
+                    final GuardedSlice<int[]> slice2 = ref.o.slice(0, 5, 1);
                     for(int i = slice2.range.begin; i < slice2.range.end; i++)
                         slice2.data[i]++;
                     ref.releasePassed();
@@ -642,7 +550,7 @@ public class ArrayGuardingTest extends GuardingTest {
                 }
             });
             
-            a.guardRead();
+            guardReadOnly(a);
             for(int i = 0; i < slice.range.end; i++)
                 assertEquals(i + 1, a.data[i]);
             for(int i = slice.range.end; i < a.data.length; i++)
@@ -656,8 +564,8 @@ public class ArrayGuardingTest extends GuardingTest {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
-            final Array<Int> a = new Array<>(i);
-            final Slice<Int> slice = a.slice(0, 1, 1);
+            final GuardedArray<Int[]> a = new GuardedArray<>(new Int[]{i});
+            final GuardedSlice<Int[]> slice = a.slice(0, 1, 1);
             
             slice.share();
             final Task<Void> task1 = s.start(new RunnableCallable() {
@@ -683,7 +591,7 @@ public class ArrayGuardingTest extends GuardingTest {
                 }
             });
             
-            i.guardReadWrite();
+            guardReadWrite(i);
             i.value = 1;
             
             task1.get();
@@ -697,8 +605,8 @@ public class ArrayGuardingTest extends GuardingTest {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
             final Int i = new Int();
-            final Array<Int> a = new Array<>(i);
-            final Slice<Int> slice = a.slice(0, 1, 1);
+            final GuardedArray<Int[]> a = new GuardedArray<>(new Int[]{i});
+            final GuardedSlice<Int[]> slice = a.slice(0, 1, 1);
             
             slice.pass();
             final Task<Void> task1 = s.start(new RunnableCallable() {
@@ -727,7 +635,7 @@ public class ArrayGuardingTest extends GuardingTest {
                 }
             });
             
-            i.guardRead();
+            guardReadOnly(i);
             assertEquals(3, i.value);
             task1.get();
             task2.get();
@@ -738,13 +646,12 @@ public class ArrayGuardingTest extends GuardingTest {
     @Test
     public void testPassDifferentSlices() {
         if(verify(mode)) {
-            final Array<Int> a = new Array<>(new Int[10]);
+            final GuardedArray<Int[]> a = new GuardedArray<>(new Int[10]);
             for(int i = 0; i < a.data.length; i++)
                 a.data[i] = new Int(i);
-            
-            final Slice<Int> slice1 = a.slice(0, 5, 1);
-            final Slice<Int> slice2 =
-                    a.slice(slice1.range.end, a.data.length, 1);
+                
+            final GuardedSlice<Int[]> slice1 = a.slice(0, 5, 1);
+            final GuardedSlice<Int[]> slice2 = a.slice(slice1.range.end, a.data.length, 1);
             
             slice1.pass();
             final Task<Void> task1 = s.start(new RunnableCallable() {
@@ -769,9 +676,9 @@ public class ArrayGuardingTest extends GuardingTest {
             });
             region(2);
             
-            a.guardRead();
+            guardReadOnly(a);
             for(int i = 0; i < a.data.length; i++) {
-                a.data[i].guardRead();
+                guardReadOnly(a.data[i]);
                 assertEquals(i + 1, a.data[i].value);
             }
             task1.get();
@@ -781,20 +688,20 @@ public class ArrayGuardingTest extends GuardingTest {
     
     @Test
     public void testPassSubsliceNested() {
-        /* IMPROVE: Allow {0, 2} by releasing slices independent of subslices
-         * that are still owned by other threads. */
+        /* IMPROVE: Allow {0, 2} by releasing slices independent of subslices that are still owned
+         * by other threads. */
         if(verify(mode, new int[][]{{1, 2}, {0, 2}})) {
-            final Array<Int> a = new Array<>(new Int[3]);
+            final GuardedArray<Int[]> a = new GuardedArray<>(new Int[3]);
             for(int i = 0; i < a.data.length; i++)
                 a.data[i] = new Int(i);
-            
-            final Slice<Int> slice1 = a.slice(0, 2, 1);
+                
+            final GuardedSlice<Int[]> slice1 = a.slice(0, 2, 1);
             slice1.pass();
             final Task<Void> task = s.start(new RunnableCallable() {
                 public void run() {
                     slice1.registerNewOwner();
                     
-                    final Slice<Int> slice2 = slice1.slice(0, 1, 1);
+                    final GuardedSlice<Int[]> slice2 = slice1.slice(0, 1, 1);
                     slice2.pass();
                     final Task<Void> task2 = s.start(new RunnableCallable() {
                         public void run() {
@@ -817,9 +724,9 @@ public class ArrayGuardingTest extends GuardingTest {
             a.data[2].value++;
             region(3);
             
-            a.guardRead();
+            guardReadOnly(a);
             for(int i = 0; i < a.data.length; i++) {
-                a.data[i].guardRead();
+                guardReadOnly(a.data[i]);
                 assertEquals(i + 1, a.data[i].value);
             }
             task.get();
@@ -828,18 +735,18 @@ public class ArrayGuardingTest extends GuardingTest {
     
     @Test
     public void testPassPrimitiveSubsliceNested() {
-        /* IMPROVE: Allow {0, 2} by releasing slices independent of subslices
-         * that are still owned by other threads. */
+        /* IMPROVE: Allow {0, 2} by releasing slices independent of subslices that are still owned
+         * by other threads. */
         if(verify(mode, new int[][]{{1, 2}, {0, 2}})) {
-            final IntArray a = new IntArray(0, 1, 2);
+            final GuardedArray<int[]> a = new GuardedArray<>(new int[]{0, 1, 2});
             
-            final IntSlice slice1 = a.slice(0, 2, 1);
+            final GuardedSlice<int[]> slice1 = a.slice(0, 2, 1);
             slice1.pass();
             final Task<Void> task = s.start(new RunnableCallable() {
                 public void run() {
                     slice1.registerNewOwner();
                     
-                    final IntSlice slice2 = slice1.slice(0, 1, 1);
+                    final GuardedSlice<int[]> slice2 = slice1.slice(0, 1, 1);
                     slice2.pass();
                     final Task<Void> task2 = s.start(new RunnableCallable() {
                         public void run() {
@@ -862,7 +769,7 @@ public class ArrayGuardingTest extends GuardingTest {
             a.data[2]++;
             region(3);
             
-            a.guardRead();
+            guardReadOnly(a);
             for(int i = 0; i < a.data.length; i++)
                 assertEquals(i + 1, a.data[i]);
             task.get();

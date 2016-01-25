@@ -1,10 +1,10 @@
-package ch.trick17.rolez.lang;
+package rolez.lang;
 
-import static ch.trick17.rolez.lang.Partitioners.CONTIGUOUS;
-import static ch.trick17.rolez.lang.Partitioners.STRIPED;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static rolez.lang.Partitioners.CONTIGUOUS;
+import static rolez.lang.Partitioners.STRIPED;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,23 +17,19 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-import ch.trick17.rolez.lang.Partitioner;
-import ch.trick17.rolez.lang.SliceRange;
-
 @RunWith(Parameterized.class)
 public class PartitionersTest {
     
     static final int[] INTERESTING_SIZES = {2, 4, 5, 7, 8, 20, 49, 97};
     static final int[] INTERESTING_NS = {1, 2, 3, 4, 5, 7, 8};
-    static final List<List<Partitioner>> INTERESTING_MODES =
-            new ArrayList<List<Partitioner>>(4) {
-                {
-                    add(asList(CONTIGUOUS, CONTIGUOUS));
-                    add(asList(STRIPED, STRIPED));
-                    add(asList(CONTIGUOUS, STRIPED));
-                    add(asList(STRIPED, CONTIGUOUS));
-                }
-            };
+    static final List<List<Partitioner>> INTERESTING_MODES = new ArrayList<List<Partitioner>>(4) {
+        {
+            add(asList(CONTIGUOUS, CONTIGUOUS));
+            add(asList(STRIPED, STRIPED));
+            add(asList(CONTIGUOUS, STRIPED));
+            add(asList(STRIPED, CONTIGUOUS));
+        }
+    };
     
     static final int[] SPECIAL_SIZES = {0, 1};
     static final int[] SOME_NS = {2, 4, 7};
@@ -48,13 +44,13 @@ public class PartitionersTest {
                 for(final int n2 : INTERESTING_NS)
                     for(final List<Partitioner> modes : INTERESTING_MODES)
                         params.add(new Object[]{size, n1, n2, modes});
-        
+                        
         /* Combinations of special sizes, some ns and some modes */
         for(final int size : SPECIAL_SIZES)
             for(final int n2 : SOME_NS)
                 for(final List<Partitioner> modes : INTERESTING_MODES)
                     params.add(new Object[]{size, 1, n2, modes});
-        
+                    
         return params;
     }
     
@@ -75,14 +71,14 @@ public class PartitionersTest {
     public void testPartition() {
         final SliceRange orig = new SliceRange(0, size, 1);
         
-        final Collection<SliceRange> slices1 = modes.get(0).partition(orig, n1);
+        final Collection<SliceRange> slices1 = asList(modes.get(0).partition(orig, n1).data);
         assertEquals(n1, slices1.size());
         assertCover(orig, slices1);
         assertBalanced(slices1);
         
         final List<SliceRange> slices2 = new ArrayList<>(n1 * n2);
         for(final SliceRange s1 : slices1)
-            slices2.addAll(modes.get(1).partition(s1, n2));
+            slices2.addAll(asList(modes.get(1).partition(s1, n2).data));
         assertEquals(n1 * n2, slices2.size());
         assertCover(orig, slices2);
         assertBalanced(slices2);
@@ -95,7 +91,7 @@ public class PartitionersTest {
         for(final SliceRange slice : slices)
             for(int i = slice.begin; i < slice.end; i += slice.step)
                 assertTrue(indices.add(i));
-        
+                
         for(int i = original.begin; i < original.end; i++)
             assertTrue(indices.contains(i));
     }
