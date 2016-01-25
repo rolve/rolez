@@ -1428,7 +1428,9 @@ class RolezGeneratorTest {
         val errors = new StringBuilder
         val listener = new DiagnosticListener<JavaFileObject> {
             override report(Diagnostic<? extends JavaFileObject> it) {
-                errors.append(it).append("\n\n")
+                // IMPROVE: Emit code without issues, not even "notes"
+                if(kind === Diagnostic.Kind.ERROR)
+                    errors.append(it).append("\n\n")
             }
         }
         
