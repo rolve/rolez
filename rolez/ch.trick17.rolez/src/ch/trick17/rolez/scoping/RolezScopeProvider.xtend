@@ -21,6 +21,8 @@ import javax.inject.Inject
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.EReference
 import org.eclipse.emf.ecore.InternalEObject
+import org.eclipse.xtext.common.types.JvmDeclaredType
+import org.eclipse.xtext.common.types.JvmOperation
 import org.eclipse.xtext.common.types.JvmVisibility
 import org.eclipse.xtext.linking.lazy.LazyLinkingResource
 import org.eclipse.xtext.naming.QualifiedName
@@ -134,7 +136,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
         if(enclosingClass.jvmClass == null)
             return IScope.NULLSCOPE
         
-        val candidates = enclosingClass.jvmClass.declaredOperations.filter[m |
+        val filter = [JvmOperation m |
             val javaParams = m.parameters.iterator
             m.simpleName == name
                 && m.visibility == JvmVisibility.PUBLIC
@@ -142,9 +144,15 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
                 && params.size == m.parameters.size
                 && params.forall[type.mapsTo(javaParams.next.parameterType)]
         ]
+        val candidates = enclosingClass.jvmClass.allMethods(filter)
         
         // IMPROVE: Better error message if no method is found
         scopeFor(candidates, [QualifiedName.create("mapped")], IScope.NULLSCOPE)
+    }
+    
+    private def Iterable<JvmOperation> allMethods(JvmDeclaredType it, (JvmOperation) => boolean filter) {
+        declaredOperations.filter(filter)
+            + ((extendedClass?.type as JvmDeclaredType)?.allMethods(filter) ?: #[])
     }
     
     def scope_Constr_jvmConstr(Constr it, EReference ref) {

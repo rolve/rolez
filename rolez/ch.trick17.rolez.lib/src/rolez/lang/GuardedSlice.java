@@ -21,7 +21,7 @@ public class GuardedSlice<A> extends Guarded {
             
     // TODO: Find a way to "free" unused subslices again
     
-    public GuardedSlice(A array, SliceRange range) {
+    GuardedSlice(A array, SliceRange range) {
         this.data = array;
         this.range = range;
     }

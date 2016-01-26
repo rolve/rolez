@@ -1414,6 +1414,20 @@ class RolezValidatorTest {
     @Test def testMappedClass() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
+                mapped new(length: int)
+            }
+        ''').assertNoErrors
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Slice[T] mapped to rolez.lang.Slice
+            class rolez.lang.Array[T] mapped to rolez.lang.Array extends Slice[T] {
+                mapped new(length: int)
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
             class HashMap mapped to java.util.HashMap
         ''').assertError(CLASS, INCORRECT_MAPPED_CLASS, "multiple type parameters")
         parse('''
@@ -1433,9 +1447,17 @@ class RolezValidatorTest {
         ''').assertError(TYPE_PARAM, INCORRECT_TYPE_PARAM)
         
         parse('''
-            class rolez.lang.Object
+            class rolez.lang.Object mapped to java.lang.Object
             class NonMapped
             class System mapped to java.lang.System extends NonMapped
+        ''').assertError(CLASS, INCORRECT_MAPPED_CLASS)
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.String mapped to java.lang.String
+            class rolez.lang.Array[T] mapped to rolez.lang.Array extends String {
+                mapped new(length: int)
+            }
         ''').assertError(CLASS, INCORRECT_MAPPED_CLASS)
     }
     
@@ -1620,7 +1642,7 @@ class RolezValidatorTest {
         parse('''
             class A
             class rolez.lang.Object mapped to java.lang.Object extends A
-        ''').assertError(CLASS, INCORRECT_MAPPED_SUPERCLASS)
+        ''').assertError(CLASS, INCORRECT_MAPPED_CLASS)
     }
 
     @Test def testStringClass() {
@@ -1645,7 +1667,7 @@ class RolezValidatorTest {
             class rolez.lang.Object mapped to java.lang.Object
             class A
             class rolez.lang.String mapped to java.lang.String extends A
-        ''').assertError(CLASS, INCORRECT_MAPPED_SUPERCLASS)
+        ''').assertError(CLASS, INCORRECT_MAPPED_CLASS)
     }
     
     @Test def testArrayClass() {
@@ -1667,7 +1689,7 @@ class RolezValidatorTest {
         
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            object rolez.lang.Array[T] mapped to something
+            object rolez.lang.Array[T] mapped to rolez.lang.Array
         ''').assertError(CLASS, INCORRECT_MAPPED_CLASS_KIND)
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -1677,7 +1699,7 @@ class RolezValidatorTest {
             class rolez.lang.Object mapped to java.lang.Object
             class A
             class rolez.lang.Array[T] mapped to rolez.lang.Array extends A
-        ''').assertError(CLASS, INCORRECT_MAPPED_SUPERCLASS)
+        ''').assertError(CLASS, INCORRECT_MAPPED_CLASS)
         
         parse('''
             class rolez.lang.Object mapped to java.lang.Object

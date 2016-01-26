@@ -85,6 +85,7 @@ class RolezExtensions {
     def isSingleton(Class it) { it instanceof SingletonClass }
     
     def isObjectClass(Class it) { qualifiedName == objectClassName }
+    def isSliceClass (Class it) { qualifiedName ==  sliceClassName }
     def isArrayClass (Class it) { qualifiedName ==  arrayClassName }
     def isStringClass(Class it) { qualifiedName == stringClassName }
     def isTaskClass  (Class it) { qualifiedName ==   taskClassName }

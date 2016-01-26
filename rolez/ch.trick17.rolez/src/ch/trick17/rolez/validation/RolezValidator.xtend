@@ -45,7 +45,8 @@ import java.util.Set
 import javax.inject.Inject
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.EStructuralFeature
-import org.eclipse.xtext.naming.QualifiedName
+import org.eclipse.xtext.common.types.JvmDeclaredType
+import org.eclipse.xtext.common.types.JvmType
 import org.eclipse.xtext.util.Exceptions
 import org.eclipse.xtext.validation.AbstractDeclarativeValidator
 import org.eclipse.xtext.validation.Check
@@ -100,7 +101,6 @@ class RolezValidator extends RolezSystemValidator {
     public static val MISSING_BODY = "missing body"
     public static val CLASS_ACTUALLY_MAPPED = "class actually mapped"
     public static val INCORRECT_MAPPED_CLASS = "incorrect mapped class"
-    public static val INCORRECT_MAPPED_SUPERCLASS = "incorrect mapped superclass"
     public static val INCORRECT_MAPPED_CLASS_KIND = "incorrect mapped class kind"
     public static val INCORRECT_MAPPED_FIELD = "incorrect mapped field"
     public static val NON_GUARDED_MAPPED_VAR_FIELD = "non-guarded mapped var field"
@@ -489,10 +489,20 @@ class RolezValidator extends RolezSystemValidator {
                 error(qualifiedName + " must not declare a type parameter",
                     typeParam, NAMED__NAME, INCORRECT_TYPE_PARAM)
             
-            if(superclass != null && !superclass.isMapped)
-                error("A mapped class cannot extend a non-mapped class",
-                    CLASS__SUPERCLASS_REF, INCORRECT_MAPPED_CLASS)
+            if(superclass != null) {
+                if(!superclass.isMapped)
+                    error("A mapped class cannot extend a non-mapped class",
+                        CLASS__SUPERCLASS_REF, INCORRECT_MAPPED_CLASS)
+                else if(!jvmClass.isSubclassOf(superclass.jvmClass))
+                    error("Incorrect superclass for mapped class: expected one of "
+                        + jvmClass.superclasses.join(", "), CLASS__SUPERCLASS_REF, INCORRECT_MAPPED_CLASS)
+            }
         }
+    }
+    
+    private def Iterable<JvmType> superclasses(JvmDeclaredType it) {
+        if(extendedClass == null) #[]
+        else (extendedClass.type as JvmDeclaredType).superclasses + #[extendedClass.type]
     }
     
     @Check
@@ -565,7 +575,7 @@ class RolezValidator extends RolezSystemValidator {
         checkMapped
         if(superclass != null)
            error(qualifiedName + " must not have a superclass",
-               CLASS__SUPERCLASS_REF, INCORRECT_MAPPED_SUPERCLASS)
+               CLASS__SUPERCLASS_REF, INCORRECT_MAPPED_CLASS)
     }
     
     @Check
@@ -574,7 +584,14 @@ class RolezValidator extends RolezSystemValidator {
         
         checkClassKind(false)
         checkMapped
-        checkSuperclass(objectClassName)
+    }
+    
+    @Check
+    def checkSliceClass(Class it) {
+        if(!isSliceClass) return;
+        
+        checkClassKind(false)
+        checkMapped
     }
     
     @Check
@@ -583,10 +600,9 @@ class RolezValidator extends RolezSystemValidator {
         
         checkClassKind(false)
         checkMapped
-        checkSuperclass(objectClassName)
         
-        // TODO: Introduce final classes and make array final, so that it cannot be extended
-        // (although, it would be cool if the array class could be extended...)
+        // TODO: Introduce final classes and make array and slice final, so that they cannot be 
+        // extended (although, it would be cool if the array class could be extended...)
     }
     
     private def checkClassKind(Class it, boolean expectSingleton) {
@@ -598,12 +614,6 @@ class RolezValidator extends RolezSystemValidator {
     private def checkMapped(Class it) {
         if(!mapped)
             error("Class must be declared as mapped", NAMED__NAME, CLASS_ACTUALLY_MAPPED)
-    }
-    
-    private def checkSuperclass(Class it, QualifiedName expected) {
-        if(superclass.qualifiedName != expected)
-           error("The superclass of " + qualifiedName + " must be " + expected,
-               CLASS__SUPERCLASS_REF, INCORRECT_MAPPED_SUPERCLASS)
     }
     
     /*
