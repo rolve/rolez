@@ -77,6 +77,10 @@ class JavaMapper {
                 other.type.qualifiedName == jvmGuardedArrayClassName
                     && other.arguments.size == 1 && other.arguments.head instanceof JvmGenericArrayTypeReference
                     && base.typeArg.mapsTo((other.arguments.head as JvmGenericArrayTypeReference).componentType)
+            GenericClassRef case base.clazz.isSliceClass:
+                other.type.qualifiedName == jvmGuardedSliceClassName
+                    && other.arguments.size == 1 && other.arguments.head instanceof JvmGenericArrayTypeReference
+                    && base.typeArg.mapsTo((other.arguments.head as JvmGenericArrayTypeReference).componentType)
             GenericClassRef:
                 base.clazz.jvmClass.qualifiedName == other.type.qualifiedName
                     && other.arguments.size == 1

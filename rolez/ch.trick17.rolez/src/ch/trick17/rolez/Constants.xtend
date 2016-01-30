@@ -10,6 +10,7 @@ class Constants {
     public static val   taskClassName = QualifiedName.create("rolez", "lang", "Task")
     
     public static val      jvmGuardedClassName = "rolez.lang.Guarded"
+    public static val jvmGuardedSliceClassName = "rolez.lang.GuardedSlice"
     public static val jvmGuardedArrayClassName = "rolez.lang.GuardedArray"
     public static val   jvmTaskSystemClassName = "rolez.lang.TaskSystem"
 }
