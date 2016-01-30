@@ -18,7 +18,7 @@ package class ParameterizedGenericClassRef extends ParameterizedEObject<GenericC
         super(eObject, eContainer, typeArgs, roleArgs)
     }
     
-    override getClazz()   { new ParameterizedNormalClass(eObject.clazz, this, typeArgs, roleArgs) }
+    override getClazz()   { eObject.clazz.parameterizedWith(#{eObject.clazz.typeParam -> typeArg}) }
     override getTypeArg() { eObject.typeArg.parameterized }
     
     override eGet(EStructuralFeature feature) {

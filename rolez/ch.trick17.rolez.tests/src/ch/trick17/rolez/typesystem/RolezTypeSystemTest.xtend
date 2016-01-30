@@ -574,6 +574,8 @@ class RolezTypeSystemTest {
         def void set(E e) { this.e = e }
     }
     
+    static class SubContainer<E> extends Container<E> {}
+    
     @Test def testTMemberAccessFieldRoleMismatch() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -702,6 +704,7 @@ class RolezTypeSystemTest {
                 mapped def r get[r includes readonly]: E with r
                 mapped def readwrite set(e: E):
             }
+            class SubContainer[E] mapped to «SubContainer.canonicalName» extends Container[E]
         ''')
         
         parse('''
@@ -711,6 +714,12 @@ class RolezTypeSystemTest {
                 a.get(0);
             }
         ''', lib).main.expr(1).type.assertThat(instanceOf(Int))
+        parse('''
+            task Main: {
+                val a = new SubContainer[int];
+                a.get;
+            }
+        ''', lib).main.lastExpr.type.assertThat(instanceOf(Int))
         parse('''
             class A
             task Main: {
