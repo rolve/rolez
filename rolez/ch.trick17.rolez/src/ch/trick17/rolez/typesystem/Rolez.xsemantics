@@ -271,11 +271,11 @@ from {
                     source a
                     feature MEMBER_ACCESS__MEMBER
         }
-        G |- targetRole <! a.parameterizedMethod.thisRole or fail
+        G |- targetRole <! a.method.thisRole or fail
             error "Role mismatch: Cannot call method " + a.method.string
                 + " on a " + targetRole.string + " target"
             source a
-        t = a.parameterizedMethod.type
+        t = a.method.type
     }
 }
 

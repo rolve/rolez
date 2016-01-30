@@ -200,10 +200,6 @@ class RolezExtensions {
     def field (MemberAccess it) { member as Field  }
     def method(MemberAccess it) { member as Method }
     
-    def parameterizedMethod(MemberAccess it) {
-        method.parameterizedWith(roleArgs.toMap[destRoleParam])
-    }
-    
     def body(Argumented it) { switch(it) {
         MemberAccess: method
         New         : constr

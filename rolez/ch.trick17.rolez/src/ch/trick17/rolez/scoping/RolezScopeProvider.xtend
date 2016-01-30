@@ -123,6 +123,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
         if(enclosingClass.jvmClass == null)
             return IScope.NULLSCOPE
         
+        // TODO: Allow to map to inherited fields, like with methods
         val candidates = enclosingClass.jvmClass.declaredFields.filter[f |
             f.simpleName == name && f.visibility == JvmVisibility.PUBLIC
                 && f.isStatic == enclosingClass.isSingleton
