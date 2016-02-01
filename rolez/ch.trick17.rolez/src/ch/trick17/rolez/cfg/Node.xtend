@@ -1,7 +1,7 @@
 package ch.trick17.rolez.cfg
 
 import ch.trick17.rolez.rolez.Instr
-import ch.trick17.rolez.rolez.WhileLoop
+import ch.trick17.rolez.rolez.Stmt
 import java.util.ArrayList
 import java.util.List
 
@@ -41,8 +41,8 @@ class InstrNode extends Node {
 }
 
 class LoopHeadNode extends Node {
-    public val WhileLoop loop
-    new(WhileLoop loop) { this.loop = loop.requireNonNull }
+    public val Stmt loop // IMPROVE: Use somewhere or remove
+    new(Stmt loop) { this.loop = loop.requireNonNull }
 }
 
 class EntryNode extends Node {}

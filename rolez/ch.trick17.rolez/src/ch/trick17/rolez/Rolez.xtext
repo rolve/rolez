@@ -102,7 +102,7 @@ WhileLoop:
     'while' '(' condition=Expr ')' body=Stmt;
 
 ForLoop:
-    'for' '(' initializer=Stmt condition=Expr ';' step=Expr ')' body=Stmt;
+    'for' '(' initializer=LocalVarDecl condition=Expr ';' step=Expr ')' body=Stmt;
 
 // IMPROVE: for-each and maybe parallel for-each
 

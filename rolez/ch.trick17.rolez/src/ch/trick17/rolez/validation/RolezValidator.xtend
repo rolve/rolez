@@ -68,7 +68,7 @@ class RolezValidator extends RolezSystemValidator {
     public static val DUPLICATE_METHOD = "duplicate method"
     public static val FIELD_WITH_SAME_NAME = "field with same name"
     public static val DUPLICATE_CONSTR = "duplicate constructor"
-    public static val DUPLICATE_VARIABLE = "duplicate variable"
+    public static val DUPLICATE_VAR = "duplicate var"
     public static val MISSING_OVERRIDE = "missing override"
     public static val INCORRECT_OVERRIDE = "incorrect override"
     public static val INCOMPATIBLE_RETURN_TYPE = "incompatible return type"
@@ -233,14 +233,14 @@ class RolezValidator extends RolezSystemValidator {
     def checkNoDuplicateVars(LocalVar it) {
         val vars = utils.varsAbove(enclosingStmt.eContainer, enclosingStmt)
         if(vars.exists[v | v.name == name])
-            error("Duplicate variable " + name, NAMED__NAME, DUPLICATE_VARIABLE)
+            error("Duplicate variable " + name, NAMED__NAME, DUPLICATE_VAR)
     }
     
     @Check
     def checkNoDuplicateParams(ParameterizedBody it) {
         for(p : params)
             if(params.exists[p !== it && p.name == name])
-                error("Duplicate parameter " + p.name, p, NAMED__NAME, DUPLICATE_VARIABLE)
+                error("Duplicate parameter " + p.name, p, NAMED__NAME, DUPLICATE_VAR)
     }
 	
 	/**

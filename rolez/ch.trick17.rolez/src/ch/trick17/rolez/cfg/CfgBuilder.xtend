@@ -5,6 +5,7 @@ import ch.trick17.rolez.rolez.BinaryExpr
 import ch.trick17.rolez.rolez.Block
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.ExprStmt
+import ch.trick17.rolez.rolez.ForLoop
 import ch.trick17.rolez.rolez.IfStmt
 import ch.trick17.rolez.rolez.Instr
 import ch.trick17.rolez.rolez.LocalVarDecl
@@ -98,10 +99,18 @@ class CfgBuilder {
     
     private def dispatch Linker process(WhileLoop l, Linker prev) {
         val headNode = new LoopHeadNode(l)
-        if(!prev.link(headNode))
-            return [false]
+        if(!prev.link(headNode)) return [false]
         
         val conditionLinker = process(l.condition, headNode.linker)
+        process(l.body, conditionLinker).link(headNode)
+        conditionLinker.linkAndReturn(newInstrNode(l))
+    }
+    
+    private def dispatch Linker process(ForLoop l, Linker prev) {
+        val headNode = new LoopHeadNode(l)
+        if(!prev.link(headNode)) return [false]
+        
+        val conditionLinker = process(l.condition, process(l.initializer, headNode.linker))
         process(l.body, conditionLinker).link(headNode)
         conditionLinker.linkAndReturn(newInstrNode(l))
     }

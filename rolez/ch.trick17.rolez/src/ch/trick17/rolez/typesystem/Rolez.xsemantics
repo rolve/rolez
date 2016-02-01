@@ -15,6 +15,7 @@ import ch.trick17.rolez.rolez.DoubleLiteral
 import ch.trick17.rolez.rolez.EqualityExpr
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.ExprStmt
+import ch.trick17.rolez.rolez.ForLoop
 import ch.trick17.rolez.rolez.GenericClassRef
 import ch.trick17.rolez.rolez.IfStmt
 import ch.trick17.rolez.rolez.IntLiteral
@@ -393,6 +394,15 @@ from {
     G |- l.body
 }
 
+rule WForLoop
+    G |- ForLoop l
+from {
+    G |- l.initializer
+    G |- l.^condition <| createBoolean
+    G |- l.step : var Type _
+    G |- l.body
+}
+
 rule WSuperConstrCall
     G |- SuperConstrCall c
 from {
@@ -418,7 +428,7 @@ from {
 rule WExprStmt
     G |- ExprStmt s
 from {
-    G |- s.expr : var Type t
+    G |- s.expr : var Type _
 }
 
 

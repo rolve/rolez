@@ -720,6 +720,7 @@ class RolezValidatorTest {
                     {
                         var k = 0;
                     }
+                    for(var k = 0; true; true) {}
                 }
             }
         ''').assertNoErrors
@@ -729,13 +730,13 @@ class RolezValidatorTest {
             class A {
                 def readwrite foo(a: int, a: boolean): {}
             }
-        ''').assertError(PARAM, DUPLICATE_VARIABLE)
+        ''').assertError(PARAM, DUPLICATE_VAR)
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
                 new(a: int, a: boolean) {}
             }
-        ''').assertError(PARAM, DUPLICATE_VARIABLE)
+        ''').assertError(PARAM, DUPLICATE_VAR)
         
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -745,7 +746,7 @@ class RolezValidatorTest {
                     val a: boolean;
                 }
             }
-        ''').assertError(LOCAL_VAR, DUPLICATE_VARIABLE)
+        ''').assertError(LOCAL_VAR, DUPLICATE_VAR)
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
@@ -754,7 +755,7 @@ class RolezValidatorTest {
                     val a: boolean;
                 }
             }
-        ''').assertError(LOCAL_VAR, DUPLICATE_VARIABLE)
+        ''').assertError(LOCAL_VAR, DUPLICATE_VAR)
         parse('''
             task Main: {
                 val i = 5;
@@ -764,7 +765,21 @@ class RolezValidatorTest {
                 }
                 i;
             }
-        ''').assertError(LOCAL_VAR, DUPLICATE_VARIABLE)
+        ''').assertError(LOCAL_VAR, DUPLICATE_VAR)
+        
+        parse('''
+            task Main: {
+                var k;
+                for(var k = 0; true; true) {}
+            }
+        ''').assertError(LOCAL_VAR, DUPLICATE_VAR)
+        parse('''
+            task Main: {
+                for(var k = 0; true; true) {
+                    var k;
+                }
+            }
+        ''').assertError(LOCAL_VAR, DUPLICATE_VAR)
         
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -773,7 +788,7 @@ class RolezValidatorTest {
                     var a: boolean;
                 }
             }
-        ''').assertError(LOCAL_VAR, DUPLICATE_VARIABLE)
+        ''').assertError(LOCAL_VAR, DUPLICATE_VAR)
         
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -782,7 +797,7 @@ class RolezValidatorTest {
                     var a: boolean;
                 }
             }
-        ''').assertError(LOCAL_VAR, DUPLICATE_VARIABLE)
+        ''').assertError(LOCAL_VAR, DUPLICATE_VAR)
     }
     
     @Test def testTypeArg() {

@@ -171,9 +171,8 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
         scopeFor(candidates, [QualifiedName.create("mapped")], IScope.NULLSCOPE)
     }
     
-    def IScope scope_VarRef_variable(VarRef varRef, EReference eRef) {
-        val stmt = varRef.enclosingStmt
-        scopeFor(utils.varsAbove(stmt.eContainer, stmt))
+    def IScope scope_VarRef_variable(VarRef it, EReference eRef) {
+        scopeFor(utils.varsAbove(eContainer, it))
     }
     
     /**

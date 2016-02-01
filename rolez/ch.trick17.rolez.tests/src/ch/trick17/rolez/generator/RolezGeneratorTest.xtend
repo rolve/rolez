@@ -879,12 +879,17 @@ class RolezGeneratorTest {
             for(var n = 0; n < 10; n += 1)
                 this.bar;
         '''.withFrame, classes).generate.assertEqualsJava('''
-            {
-                int n = 0;
-                while(n < 10) {
-                    this.bar();
-                    n = n + 1;
-                }
+            for(int n = 0; n < 10; n = n + 1)
+                this.bar();
+        '''.withJavaFrame)
+        
+        parse('''
+            for(var n = 0; n < 10; n += 1) {
+                this.bar;
+            }
+        '''.withFrame, classes).generate.assertEqualsJava('''
+            for(int n = 0; n < 10; n = n + 1) {
+                this.bar();
             }
         '''.withJavaFrame)
     }

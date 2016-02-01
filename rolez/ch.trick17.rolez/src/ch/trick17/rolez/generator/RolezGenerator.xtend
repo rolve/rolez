@@ -19,6 +19,7 @@ import ch.trick17.rolez.rolez.EqualityExpr
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.ExprStmt
 import ch.trick17.rolez.rolez.Field
+import ch.trick17.rolez.rolez.ForLoop
 import ch.trick17.rolez.rolez.GenericClassRef
 import ch.trick17.rolez.rolez.IfStmt
 import ch.trick17.rolez.rolez.IntLiteral
@@ -284,7 +285,7 @@ class RolezGenerator extends AbstractGenerator {
             «stmts.head.gen»
             «ENDIF»
             try {
-                «stmts.drop(if(isConstr) 1 else 0).map[gen].join»
+                «stmts.drop(if(isConstr) 1 else 0).map[gen].join("\n")»
             }
             «IF !exceptionTypes.isEmpty»
             catch(«exceptionTypes.map[qualifiedName].join(" | ")» e) {
@@ -293,7 +294,7 @@ class RolezGenerator extends AbstractGenerator {
             «ENDIF»
         '''
         else '''
-            «stmts.map[gen].join»
+            «stmts.map[gen].join("\n")»
         '''
     }
     
@@ -376,43 +377,37 @@ class RolezGenerator extends AbstractGenerator {
     
     private def dispatch generateStmt(Block it)'''
         {
-            «stmts.map[gen].join»
-        }
-    '''
+            «stmts.map[gen].join("\n")»
+        }'''
     
     private def dispatch generateStmt(LocalVarDecl it) {
         val type = system.varType(utils.createEnv(it), variable).value
-        '''
-            «variable.kind.gen»«type.gen» «variable.safeName»«IF initializer != null» = «initializer.gen»«ENDIF»;
-        '''
+        '''«variable.kind.gen»«type.gen» «variable.safeName»«IF initializer != null» = «initializer.gen»«ENDIF»;'''
     }
     
     private def dispatch generateStmt(IfStmt it) '''
         if(«condition.gen»)«thenPart.genIndent»
-        else«elsePart.genIndent»
-    '''
+        else«elsePart.genIndent»'''
     
     private def dispatch generateStmt(WhileLoop it) '''
-        while(«condition.gen»)«body.genIndent»
-    '''
+        while(«condition.gen»)«body.genIndent»'''
+    
+    private def dispatch generateStmt(ForLoop it) '''
+        for(«initializer.gen» «condition.gen»; «step.gen»)«body.genIndent»'''
     
     private def dispatch generateStmt(SuperConstrCall it) '''
-        super(«args.map[gen].join(", ")»);
-    '''
+        super(«args.map[gen].join(", ")»);'''
     
     private def dispatch generateStmt(ReturnNothing _) '''
-        return;
-    '''
+        return;'''
     
     private def dispatch generateStmt(ReturnExpr it) '''
-        return «expr.gen»;
-    '''
+        return «expr.gen»;'''
     
     /* Java only allows certain kinds of "expression statements", so find
      * the corresponding expressions in the rolez expression tree */
     private def dispatch generateStmt(ExprStmt it) '''
-        «findSideFxExpr(expr).map[gen + ";\n"].join»
-    '''
+        «findSideFxExpr(expr).map[gen + ";"].join("\n")»'''
     
     private def Iterable<Expr> findSideFxExpr(Expr it) {
         switch(it) {

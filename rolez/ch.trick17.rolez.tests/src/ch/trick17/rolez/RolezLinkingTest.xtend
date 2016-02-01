@@ -899,19 +899,24 @@ class RolezLinkingTest {
     
     @Test def testVarRef() {
         parse('''
-            task Main: {
-                val i = 5;
-                i;
-            }
-        ''').assertNoErrors
-        parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
                 def pure foo(i: int): {
                     i;
+                    val j = 5;
+                    j;
+                    
+                    for(var k = 0; k < 10; k += 1)
+                        k;
+                    
+                    for(var k = 0; k < 10; k += 1) {
+                        k;
+                    }
+                    
+                    i;
+                    j;
                 }
             }
-            task Main: {}
         ''').assertNoErrors
         
         parse('''
@@ -925,6 +930,18 @@ class RolezLinkingTest {
                 {
                     val i = 0;
                 }
+                i;
+            }
+        ''').assertError(VAR_REF, LINKING_DIAGNOSTIC, "var", "i")
+        
+        parse('''
+            task Main: {
+                for(var i = i; true; true) {}
+            }
+        ''').assertError(VAR_REF, LINKING_DIAGNOSTIC, "var", "i")
+        parse('''
+            task Main: {
+                for(var i = 0; true; true) {}
                 i;
             }
         ''').assertError(VAR_REF, LINKING_DIAGNOSTIC, "var", "i")

@@ -1348,6 +1348,52 @@ class RolezTypeSystemTest {
         ''').assertError(CAST, null, "cannot cast", "boolean", "int")
     }
     
+    @Test def testWForLoop() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            task Main: {
+                for(var i = 0; i < 10; i += 1)
+                    new Object;
+                
+                for(var i = 0; true; true) {
+                    new Object;
+                    new Object;
+                }
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            task Main: {
+                for(var i = 0; 5; true)
+                    new Object;
+            }
+        ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
+    }
+    
+    @Test def testWForLoopErrorInChild() {
+        parse('''
+            task Main: {
+                for(var i = false as int; true; true) true;
+            }
+        ''').assertError(CAST, null, "cannot cast", "boolean", "int")
+        parse('''
+            task Main: {
+                for(var i = 0; false as int; true) true;
+            }
+        ''').assertError(CAST, null, "cannot cast", "boolean", "int")
+        parse('''
+            task Main: {
+                for(var i = 0; true; false as int) true;
+            }
+        ''').assertError(CAST, null, "cannot cast", "boolean", "int")
+        parse('''
+            task Main: {
+                for(var i = 0; true; true) false as int;
+            }
+        ''').assertError(CAST, null, "cannot cast", "boolean", "int")
+    }
+    
     /* More super constr tests in RolezLinkingTest */
     
     @Test def testWSuperConstrCallErrorInArg() {

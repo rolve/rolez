@@ -2,10 +2,8 @@ package ch.trick17.rolez.desugar
 
 import ch.trick17.rolez.RolezExtensions
 import ch.trick17.rolez.rolez.Assignment
-import ch.trick17.rolez.rolez.Block
 import ch.trick17.rolez.rolez.Class
 import ch.trick17.rolez.rolez.Constr
-import ch.trick17.rolez.rolez.ForLoop
 import ch.trick17.rolez.rolez.IfStmt
 import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.OpArithmetic
@@ -63,29 +61,6 @@ class RolezDesugarer extends AbstractDeclarativeDesugarer {
     def addElsePart(IfStmt it) {
         if(elsePart == null)
             elsePart = createBlock
-    }
-    
-    @Rule
-    def desugarForLoop(ForLoop orig) {
-        // Don't attempt to desugar if there are syntax errors
-        if(!orig.eResource.errors.isEmpty) return createBlock
-        
-        createBlock => [
-            stmts += orig.initializer
-            stmts += createWhileLoop => [
-                condition = orig.condition
-                body = createBlock => [
-                    val origBody = orig.body
-                    stmts += switch(origBody) {
-                        Block: origBody.stmts
-                        default: #[origBody]
-                    }
-                    stmts += createExprStmt => [
-                        expr = orig.step
-                    ]
-                ]
-            ]
-        ]
     }
     
     @Rule

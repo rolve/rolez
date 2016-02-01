@@ -6,7 +6,9 @@ import ch.trick17.rolez.rolez.Class
 import ch.trick17.rolez.rolez.ClassRef
 import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.Expr
+import ch.trick17.rolez.rolez.ForLoop
 import ch.trick17.rolez.rolez.GenericClassRef
+import ch.trick17.rolez.rolez.Instr
 import ch.trick17.rolez.rolez.LocalVarDecl
 import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.Method
@@ -147,16 +149,21 @@ class RolezUtils {
     
     def assignedField(Assignment it) { (left as MemberAccess).field }
     
-    def dispatch Iterable<? extends Var> varsAbove(Stmt container, Stmt s) {
-        varsAbove(container.eContainer, container)
-    }
-    
     def dispatch Iterable<? extends Var> varsAbove(Block container, Stmt s) {
         container.stmts.takeWhile[it != s].filter(LocalVarDecl).map[variable]
             + varsAbove(container.eContainer, s)
     }
     
+    def dispatch Iterable<? extends Var> varsAbove(ForLoop container, Instr i) {
+        (if(i === container.initializer) emptyList else #[container.initializer.variable as Var])
+            + varsAbove(container.eContainer, container)
+    }
+    
     def dispatch Iterable<? extends Var> varsAbove(ParameterizedBody container, Stmt s) {
         container.params
+    }
+    
+    def dispatch Iterable<? extends Var> varsAbove(Instr container, Instr i) {
+        varsAbove(container.eContainer, container)
     }
 }
