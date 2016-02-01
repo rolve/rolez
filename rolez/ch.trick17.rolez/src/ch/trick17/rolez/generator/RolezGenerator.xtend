@@ -420,7 +420,7 @@ class RolezGenerator extends AbstractGenerator {
             BinaryExpr: findSideFxExpr(left) + findSideFxExpr(right)
             UnaryExpr: findSideFxExpr(expr)
             // Special cases for array instantiations and get
-            MemberAccess case isMethodInvoke && method.isArrayGet: {
+            MemberAccess case isArrayGet: {
                 if(args.size != 1) throw new AssertionError
                 findSideFxExpr(target) + findSideFxExpr(args.get(0))
             }
@@ -467,15 +467,15 @@ class RolezGenerator extends AbstractGenerator {
     private def dispatch generateExpr(UnaryNot it)
         '''!«expr.genNested»'''
     
-    private def dispatch generateExpr(MemberAccess it) {
-        switch(it) {
-            case isMethodInvoke && method.isArrayGet:  generateArrayGet
-            case isMethodInvoke && method.isArraySet:  generateArraySet
-            case isMethodInvoke:                       generateMethodInvoke
-            case isFieldAccess && field.isArrayLength: generateArrayLength
-            case isFieldAccess:                        generateFieldAccess
-        }
-    }
+    private def dispatch generateExpr(MemberAccess it) { switch(it) {
+        case isArrayGet:     generateArrayGet
+        case isArraySet:     generateArraySet
+        case isArrayLength:  generateArrayLength
+        case isMethodInvoke: generateMethodInvoke
+        case isFieldAccess:  generateFieldAccess
+    }}
+    
+    // IMPROVE: Generate direct access to members of mapped singletons, e.g., System, Math, ...
     
     private def generateArrayGet(MemberAccess it) {
         '''«target.genGuarded(createReadOnly)».data[«args.get(0).gen»]'''
@@ -560,19 +560,6 @@ class RolezGenerator extends AbstractGenerator {
     
     private def dispatch generateExpr(Start it)
         '''«jvmTaskSystemClassName».getDefault().start(new «taskRef.gen»(«args.map[gen].join(", ")»))'''
-    
-    private def int arrayNesting(GenericClassRef it) {
-        if(!clazz.isArrayClass)
-            throw new AssertionError
-        
-        val arg = typeArg
-        switch(arg) {
-            RoleType case arg.base instanceof GenericClassRef:
-                arrayNesting(arg.base as GenericClassRef) + 1
-            default:
-                1
-        }
-    }
     
     private def dispatch generateExpr(Parenthesized it) { expr.gen }
     

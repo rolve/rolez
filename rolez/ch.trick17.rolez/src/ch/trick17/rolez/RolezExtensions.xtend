@@ -43,18 +43,19 @@ import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.TypeParamRef
 import ch.trick17.rolez.rolez.VarKind
 import ch.trick17.rolez.rolez.Void
+import ch.trick17.rolez.typesystem.RolezSystem
 import java.util.HashSet
 import java.util.Set
 import javax.inject.Inject
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.naming.IQualifiedNameProvider
+import org.eclipse.xtext.naming.QualifiedName
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils
 import org.eclipse.xtext.util.OnChangeEvictingCache
 
 import static ch.trick17.rolez.Constants.*
 
 import static extension ch.trick17.rolez.generic.Parameterized.*
-import org.eclipse.xtext.naming.QualifiedName
 
 /**
  * Extension methods for the Rolez language elements
@@ -62,6 +63,7 @@ import org.eclipse.xtext.naming.QualifiedName
 class RolezExtensions {
     
     @Inject IQualifiedNameProvider nameProvider
+    @Inject RolezSystem system
     @Inject RolezUtils utils
     
     def Iterable<Class> classes(Program it) { elements.filter(Class) }
@@ -90,6 +92,9 @@ class RolezExtensions {
     def isStringClass(Class it) { qualifiedName == stringClassName }
     def isTaskClass  (Class it) { qualifiedName ==   taskClassName }
     
+    def dispatch isSliceType(RoleType it) { base.clazz.isSliceClass }
+    def dispatch isSliceType(    Type it) { false }
+    
     def dispatch isArrayType(RoleType it) { base.clazz.isArrayClass }
     def dispatch isArrayType(    Type it) { false }
     
@@ -99,14 +104,14 @@ class RolezExtensions {
             else parameterizedSuperclass.allMembers.filter[m | !overrides(m)]
     }
     
-    val superclassesCache = new OnChangeEvictingCache
-    
     def superclass(Class it) {
         val clazz = superclassRef?.clazz
         if(clazz instanceof NormalClass) clazz else null
     }
     
     def parameterizedSuperclass(Class it) { superclassRef?.parameterizedClass as NormalClass }
+    
+    val superclassesCache = new OnChangeEvictingCache
     
     def strictSuperclasses(Class it) {
         superclassesCache.get(it, eResource, [
@@ -206,16 +211,23 @@ class RolezExtensions {
         Start       : taskRef.task
     }}
     
-    def isArrayGet(Method it) {
-        enclosingClass.qualifiedName == arrayClassName && name == "get" && mapped
+    def isArrayGet(MemberAccess it) {
+        isMethodInvoke && method.name == "get"
+            && system.type(utils.createEnv(it), target).value.isArrayType
     }
     
-    def isArraySet(Method it) {
-        enclosingClass.qualifiedName == arrayClassName && name == "set" && mapped
+    def isSliceGet(MemberAccess it) {
+        isMethodInvoke && method.name == "get"
+            && system.type(utils.createEnv(it), target).value.isSliceType
     }
     
-    def isArrayLength(Field it) {
-        enclosingClass.qualifiedName == arrayClassName && name == "length" && mapped
+    def isArraySet(MemberAccess it) {
+        isMethodInvoke && method.name == "set"
+            && system.type(utils.createEnv(it), target).value.isArrayType
+    }
+    
+    def isArrayLength(MemberAccess it) {
+        isFieldAccess && field.name == "length" && field.enclosingClass.qualifiedName == arrayClassName
     }
     
     def isMapped(Constr it) { jvmConstr != null }

@@ -135,7 +135,7 @@ class RolezUtils {
             Assignment: true
             New: !classRef.clazz.isArrayClass
             Start: true
-            MemberAccess: isMethodInvoke && !method.isArrayGet
+            MemberAccess: isMethodInvoke && !isSliceGet && !isArrayGet
             default: false
         }
     }
