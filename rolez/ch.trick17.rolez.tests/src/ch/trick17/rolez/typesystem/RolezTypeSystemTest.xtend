@@ -463,18 +463,28 @@ class RolezTypeSystemTest {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
-                var x: int
+                var i: int
             }
-            task Main: { new A.x; }
+            task Main: { new A.i; }
         ''').main.lastExpr.type.assertThat(instanceOf(Int))
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
-                var x: int
+                var i: int
             }
             task Main: {
                 val a: readonly A = new A;
-                a.x;
+                a.i;
+            }
+        ''').main.lastExpr.type.assertThat(instanceOf(Int))
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                val i: int = 0
+            }
+            task Main: {
+                val a: pure A = new A;
+                a.i;
             }
         ''').main.lastExpr.type.assertThat(instanceOf(Int))
         
@@ -526,6 +536,16 @@ class RolezTypeSystemTest {
             }
             task Main: {
                 val a: readonly A = new A;
+                a.a;
+            }
+        ''').main.lastExpr.type.assertRoleType(Pure, "A")
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                val a: readwrite A = null
+            }
+            task Main: {
+                val a: pure A = new A;
                 a.a;
             }
         ''').main.lastExpr.type.assertRoleType(Pure, "A")

@@ -241,8 +241,9 @@ from {
     
     val targetRole = targetType.role
     if(a.isFieldAccess) {
-        G |- targetRole <! createReadOnly or fail
-            error "Role mismatch: Cannot access field of a " + targetRole.string + " target"
+        val requiredRole = if(a.field.kind == VarKind.VAL) createPure else createReadOnly
+        G |- targetRole <! requiredRole or fail
+            error "Role mismatch: Cannot access this field with a " + targetRole.string + " target"
             source a.target
         var fieldType = a.field.type
         t = switch(fieldType) {
