@@ -18,6 +18,7 @@ import ch.trick17.rolez.rolez.ParameterizedBody
 import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
+import ch.trick17.rolez.rolez.SimpleClassRef
 import ch.trick17.rolez.rolez.Start
 import ch.trick17.rolez.rolez.Stmt
 import ch.trick17.rolez.rolez.Task
@@ -54,7 +55,7 @@ class RolezUtils {
         result
     }
     
-    def newClassRef(Class c) {
+    def SimpleClassRef newClassRef(Class c) {
         val result = createSimpleClassRef
         result.clazz = c
         result
