@@ -1,0 +1,37 @@
+package rolez.lang
+
+class Partitioner mapped to rolez.lang.Partitioner {
+    mapped def readonly partition(original: pure SliceRange, n: int): readonly Array[readonly SliceRange]
+}
+
+object ContiguousPartitioner extends Partitioner {
+    override pure partition(orig: pure SliceRange, n: int): readonly Array[readonly SliceRange] {
+        val baseSize = orig.size / n;
+        val largeRanges = orig.size % n;
+        
+        val ranges = new Array[readonly SliceRange](n);
+        var begin = orig.begin;
+        for(var i = 0; i < n; i += 1) {
+            var size = orig.step * baseSize;
+            if(i < largeRanges)
+                size += orig.step;
+            val end = the Math.min(begin + size, orig.end);
+            ranges.set(i, new SliceRange(begin, end, orig.step));
+            begin = end;
+        }
+        return ranges;
+    }
+    
+    override pure toString: readonly String { return "ContiguousPartitioner"; }
+}
+
+object StripedPartitioner extends Partitioner {
+    override pure partition(orig: pure SliceRange, n: int): readonly Array[readonly SliceRange] {
+        val ranges = new Array[readonly SliceRange](n);
+        for(var i = 0; i < n; i += 1)
+            ranges.set(i, new SliceRange(the Math.min(orig.begin + i * orig.step, orig.end), orig.end, orig.step * n));
+        return ranges;
+    }
+    
+    override pure toString: readonly String { return "StripedPartitioner"; }
+}

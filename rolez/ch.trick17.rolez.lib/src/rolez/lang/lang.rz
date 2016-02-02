@@ -10,12 +10,24 @@ class Object mapped to java.lang.Object {
 }
 
 class Array[T] mapped to rolez.lang.Array {
-    mapped val length: int
-    
-    mapped new(length: int)
-    
     mapped def readonly  get(index: int): T
     mapped def readwrite set(index: int, component: T):
+    
+    mapped val length: int
+    mapped new(length: int)
+}
+
+class SliceRange mapped to rolez.lang.SliceRange {
+    mapped val begin: int
+    mapped val end: int
+    mapped val step: int
+    
+    mapped new(begin: int, end: int, step: int)
+    
+    mapped def pure size: int
+    mapped def pure isEmpty: boolean
+    mapped def pure covers(other: pure SliceRange): boolean
+    mapped def pure intersectWith(other: pure SliceRange): readonly SliceRange
 }
 
 class String mapped to java.lang.String {
@@ -36,4 +48,9 @@ object System mapped to java.lang.System {
     mapped val err: readonly PrintStream
     
     mapped def readonly exit(code: int):
+}
+
+object Math mapped to java.lang.Math {
+    mapped def pure min(a: int, b: int): int
+    mapped def pure max(a: int, b: int): int
 }

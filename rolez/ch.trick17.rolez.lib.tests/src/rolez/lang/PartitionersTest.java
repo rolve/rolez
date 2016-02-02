@@ -3,8 +3,6 @@ package rolez.lang;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static rolez.lang.Partitioners.CONTIGUOUS;
-import static rolez.lang.Partitioners.STRIPED;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,12 +20,12 @@ public class PartitionersTest {
     
     static final int[] INTERESTING_SIZES = {2, 4, 5, 7, 8, 20, 49, 97};
     static final int[] INTERESTING_NS = {1, 2, 3, 4, 5, 7, 8};
-    static final List<List<Partitioner>> INTERESTING_MODES = new ArrayList<List<Partitioner>>(4) {
+    static final List<List<? extends Partitioner>> INTERESTING_MODES = new ArrayList<List<? extends Partitioner>>(4) {
         {
-            add(asList(CONTIGUOUS, CONTIGUOUS));
-            add(asList(STRIPED, STRIPED));
-            add(asList(CONTIGUOUS, STRIPED));
-            add(asList(STRIPED, CONTIGUOUS));
+            add(asList(ContiguousPartitioner.INSTANCE, ContiguousPartitioner.INSTANCE));
+            add(asList(StripedPartitioner.INSTANCE, StripedPartitioner.INSTANCE));
+            add(asList(ContiguousPartitioner.INSTANCE, StripedPartitioner.INSTANCE));
+            add(asList(StripedPartitioner.INSTANCE, ContiguousPartitioner.INSTANCE));
         }
     };
     
@@ -42,13 +40,13 @@ public class PartitionersTest {
         for(final int size : INTERESTING_SIZES)
             for(final int n1 : INTERESTING_NS)
                 for(final int n2 : INTERESTING_NS)
-                    for(final List<Partitioner> modes : INTERESTING_MODES)
+                    for(final List<? extends Partitioner> modes : INTERESTING_MODES)
                         params.add(new Object[]{size, n1, n2, modes});
                         
         /* Combinations of special sizes, some ns and some modes */
         for(final int size : SPECIAL_SIZES)
             for(final int n2 : SOME_NS)
-                for(final List<Partitioner> modes : INTERESTING_MODES)
+                for(final List<? extends Partitioner> modes : INTERESTING_MODES)
                     params.add(new Object[]{size, 1, n2, modes});
                     
         return params;
