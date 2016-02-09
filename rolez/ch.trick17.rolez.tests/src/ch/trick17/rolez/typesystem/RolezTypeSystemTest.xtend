@@ -14,7 +14,6 @@ import ch.trick17.rolez.rolez.ReadOnly
 import ch.trick17.rolez.rolez.ReadWrite
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
-import ch.trick17.rolez.rolez.SimpleClassRef
 import ch.trick17.rolez.rolez.Void
 import ch.trick17.rolez.tests.RolezInjectorProvider
 import javax.inject.Inject
@@ -318,10 +317,7 @@ class RolezTypeSystemTest {
             role.assertThat(instanceOf(ReadOnly))
             base.assertInstanceOf(GenericClassRef) => [
                 clazz.name.assertThat(is(arrayClassName.toString))
-                typeArg.assertInstanceOf(RoleType) => [
-                    role.assertThat(instanceOf(Pure))
-                    base.assertInstanceOf(SimpleClassRef) => [ clazz.name.assertThat(is("A"))]
-                ]
+                typeArg.assertRoleType(Pure, "A")
             ]
         ]
         
@@ -872,10 +868,7 @@ class RolezTypeSystemTest {
             role.assertThat(instanceOf(ReadWrite))
             base.assertInstanceOf(GenericClassRef) => [
                 clazz.name.assertThat(is(arrayClassName.toString))
-                typeArg.assertInstanceOf(RoleType) => [
-                    role.assertThat(instanceOf(ReadOnly))
-                    base.assertInstanceOf(SimpleClassRef) => [ clazz.name.assertThat(is("A"))]
-                ]
+                typeArg.assertRoleType(ReadOnly, "A")
             ]
         ]
         
@@ -894,10 +887,7 @@ class RolezTypeSystemTest {
                     role.assertThat(instanceOf(Pure))
                     base.assertInstanceOf(GenericClassRef) => [
                         clazz.name.assertThat(is(arrayClassName.toString))
-                        typeArg.assertInstanceOf(RoleType) => [
-                            role.assertInstanceOf(ReadWrite)
-                            base.assertInstanceOf(SimpleClassRef) => [ clazz.name.assertThat(is("A"))]
-                        ]
+                        typeArg.assertRoleType(ReadWrite, "A")
                     ]
                 ]
             ]
@@ -934,12 +924,7 @@ class RolezTypeSystemTest {
             role.assertThat(instanceOf(ReadWrite))
             base.assertInstanceOf(GenericClassRef) => [
                 clazz.name.assertThat(is("Container"))
-                typeArg.assertInstanceOf(RoleType) => [
-                    role.assertThat(instanceOf(ReadOnly))
-                    base.assertInstanceOf(SimpleClassRef) => [
-                        clazz.name.assertThat(is(stringClassName.toString))
-                    ]
-                ]
+                typeArg.assertRoleType(ReadOnly, stringClassName)
             ]
         ]
     }
@@ -979,10 +964,7 @@ class RolezTypeSystemTest {
             role.assertThat(instanceOf(Pure))
             base.assertInstanceOf(GenericClassRef) => [
                 clazz.name.assertThat(is(taskClassName.toString))
-                typeArg.assertInstanceOf(RoleType) => [
-                    role.assertThat(instanceOf(ReadWrite))
-                    base.assertInstanceOf(SimpleClassRef) => [ clazz.name.assertThat(is("A"))]
-                ]
+                typeArg.assertRoleType(ReadWrite, "A")
             ]
         ]
         

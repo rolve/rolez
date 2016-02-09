@@ -87,6 +87,7 @@ class JavaMapper {
                     && base.typeArg.mapsTo(other.arguments.head)
             default: base.clazz.jvmClass.qualifiedName == other.type.qualifiedName
         }
+        // TODO: What if base.clazz is not even mapped?
     }
     
     def dispatch boolean mapsTo(TypeParamRef it, JvmTypeReference other) {
