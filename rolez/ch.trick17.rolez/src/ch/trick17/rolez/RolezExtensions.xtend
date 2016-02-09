@@ -211,14 +211,19 @@ class RolezExtensions {
         Start       : taskRef.task
     }}
     
-    def isArrayGet(MemberAccess it) {
-        isMethodInvoke && method.name == "get"
-            && system.type(utils.createEnv(it), target).value.isArrayType
-    }
-    
     def isSliceGet(MemberAccess it) {
         isMethodInvoke && method.name == "get"
             && system.type(utils.createEnv(it), target).value.isSliceType
+    }
+    
+    def isSliceSet(MemberAccess it) {
+        isMethodInvoke && method.name == "set"
+            && system.type(utils.createEnv(it), target).value.isSliceType
+    }
+    
+    def isArrayGet(MemberAccess it) {
+        isMethodInvoke && method.name == "get"
+            && system.type(utils.createEnv(it), target).value.isArrayType
     }
     
     def isArraySet(MemberAccess it) {

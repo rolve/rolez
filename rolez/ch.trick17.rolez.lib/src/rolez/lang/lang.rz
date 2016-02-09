@@ -9,10 +9,16 @@ class Object mapped to java.lang.Object {
     mapped def readonly toString: readonly String
 }
 
-class Array[T] mapped to rolez.lang.Array {
+class Slice[T] mapped to rolez.lang.Slice {
     mapped def readonly  get(index: int): T
     mapped def readwrite set(index: int, component: T):
     
+    mapped def r slice[r](sliceRange: pure SliceRange): r Slice[T]
+    mapped def r slice[r](begin: int, end: int, step: int): r Slice[T]
+    mapped def r partition[r](p: pure Partitioner, n: int): readonly Array[r Slice[T]]
+}
+
+class Array[T] mapped to rolez.lang.Array extends Slice[T] {
     mapped val length: int
     mapped new(length: int)
 }

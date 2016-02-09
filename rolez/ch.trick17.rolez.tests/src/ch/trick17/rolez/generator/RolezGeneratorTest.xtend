@@ -47,11 +47,14 @@ class RolezGeneratorTest {
                 mapped def readonly hashCode: int
                 mapped def readonly toString: pure String
             }
-            class rolez.lang.Array[T] mapped to rolez.lang.Array {
+            class rolez.lang.Slice[T] mapped to rolez.lang.Slice {
+                mapped def readonly  get(index: int): T
+                mapped def readwrite set(index: int, component: T):
+                mapped def r slice[r](begin: int, end: int, step: int): r Slice[T]
+            }
+            class rolez.lang.Array[T] mapped to rolez.lang.Array extends Slice[T] {
                 mapped val length: int
                 mapped new(i: int)
-                mapped def readonly  get(i: int): T
-                mapped def readwrite set(i: int, o: T):
             }
             class rolez.lang.String mapped to java.lang.String {
                 mapped def pure length: int
@@ -1175,6 +1178,74 @@ class RolezGeneratorTest {
                     c2.get();
                     guardReadWrite(c3).value = 2;
                     return guardReadOnly(c4).value + c5.fortyTwo;
+                }
+            }
+        ''')
+    }
+    
+    @Test def testMemberAccessSlice() {
+        // Access to slice components is guarded, slicing is not
+        parse('''
+            class A {
+                def pure getFirst(a: readwrite Slice[pure Object]): pure Object {
+                    return a.get(0);
+                }
+                def pure getFirstInt(a: readwrite Slice[int]): int {
+                    return a.get(0);
+                }
+                def pure getFirstDouble(a: readwrite Slice[double]): double {
+                    return a.get(0);
+                }
+                def pure getFirstBoolean(a: readwrite Slice[boolean]): boolean {
+                    return a.get(0);
+                }
+                def pure getFirstChar(a: readwrite Slice[char]): char {
+                    return a.get(0);
+                }
+                
+                def pure setFirst(a: readwrite Slice[int]): {
+                    a.set(0, 42);
+                }
+                
+                def pure slice(a: readwrite Slice[int]): readwrite Slice[int] {
+                    return a.slice(0, 1, 1);
+                }
+            }
+        ''', classes).generate.assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
+            
+            public class A extends «jvmGuardedClassName» {
+                
+                public A() {
+                    super();
+                }
+                
+                public java.lang.Object getFirst(final rolez.lang.GuardedSlice<java.lang.Object[]> a) {
+                    return guardReadOnly(a).get(0);
+                }
+                
+                public int getFirstInt(final rolez.lang.GuardedSlice<int[]> a) {
+                    return guardReadOnly(a).getInt(0);
+                }
+                
+                public double getFirstDouble(final rolez.lang.GuardedSlice<double[]> a) {
+                    return guardReadOnly(a).getDouble(0);
+                }
+                
+                public boolean getFirstBoolean(final rolez.lang.GuardedSlice<boolean[]> a) {
+                    return guardReadOnly(a).getBoolean(0);
+                }
+                
+                public char getFirstChar(final rolez.lang.GuardedSlice<char[]> a) {
+                    return guardReadOnly(a).getChar(0);
+                }
+                
+                public void setFirst(final rolez.lang.GuardedSlice<int[]> a) {
+                    guardReadWrite(a).setInt(0, 42);
+                }
+                
+                public rolez.lang.GuardedSlice<int[]> slice(final rolez.lang.GuardedSlice<int[]> a) {
+                    return a.slice(0, 1, 1);
                 }
             }
         ''')

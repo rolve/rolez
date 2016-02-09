@@ -463,6 +463,8 @@ class RolezGenerator extends AbstractGenerator {
         '''!«expr.genNested»'''
     
     private def dispatch generateExpr(MemberAccess it) { switch(it) {
+        case isSliceGet:     generateSliceGet
+        case isSliceSet:     generateSliceSet
         case isArrayGet:     generateArrayGet
         case isArraySet:     generateArraySet
         case isArrayLength:  generateArrayLength
@@ -472,13 +474,27 @@ class RolezGenerator extends AbstractGenerator {
     
     // IMPROVE: Generate direct access to members of mapped singletons, e.g., System, Math, ...
     
-    private def generateArrayGet(MemberAccess it) {
-        '''«target.genGuarded(createReadOnly)».data[«args.get(0).gen»]'''
+    private def generateSliceGet(MemberAccess it)
+        '''«target.genGuarded(createReadOnly)».get«sliceAccessSuffix»(«args.get(0).gen»)'''
+    
+    private def generateSliceSet(MemberAccess it) {
+        '''«target.genGuarded(createReadWrite)».set«sliceAccessSuffix»(«args.get(0).gen», «args.get(1).gen»)'''
     }
     
-    private def generateArraySet(MemberAccess it) {
-        '''«target.genGuarded(createReadWrite)».data[«args.get(0).gen»] = «args.get(1).gen»'''
+    private def sliceAccessSuffix(MemberAccess it) {
+        val targetType = system.type(utils.createEnv(it), target).value
+        val componentType = ((targetType as RoleType).base as GenericClassRef).typeArg
+        switch(componentType) {
+            PrimitiveType: componentType.name.toFirstUpper
+            default: ""
+        }
     }
+    
+    private def generateArrayGet(MemberAccess it)
+        '''«target.genGuarded(createReadOnly)».data[«args.get(0).gen»]'''
+    
+    private def generateArraySet(MemberAccess it)
+        '''«target.genGuarded(createReadWrite)».data[«args.get(0).gen»] = «args.get(1).gen»'''
     
     private def generateArrayLength(MemberAccess it)
         '''«target.genNested».data.length'''
@@ -599,7 +615,9 @@ class RolezGenerator extends AbstractGenerator {
     }
     
     private def dispatch generateClassRef(GenericClassRef it) {
-        if(clazz.isArrayClass)
+        if(clazz.isSliceClass)
+            '''«jvmGuardedSliceClassName»<«typeArg.gen»[]>'''
+        else if(clazz.isArrayClass)
             '''«jvmGuardedArrayClassName»<«typeArg.gen»[]>'''
         else
             '''«clazz.generateName»<«typeArg.genGeneric»>'''
@@ -621,7 +639,8 @@ class RolezGenerator extends AbstractGenerator {
     private def dispatch genErased(    Type it) { generateType }
     
     private def dispatch generateClassRefErased(GenericClassRef it) {
-        if(clazz.isArrayClass) jvmGuardedArrayClassName
+        if(clazz.isSliceClass) jvmGuardedSliceClassName
+        else if(clazz.isArrayClass) jvmGuardedArrayClassName
         else clazz.generateName
     }
     private def dispatch generateClassRefErased(ClassRef it) { generateClassRef }

@@ -32,19 +32,23 @@ public final class SliceRange {
         return size() == 0;
     }
     
+    public boolean contains(int index) {
+        return begin <= index && index < end && (index - begin) % step == 0;
+    }
+    
     /**
-     * Indicates whether this slice covers the given slice. A slice s1 covers a slice s2, iff the
-     * set of indices that s1 represents is a superset of the set of indices s2 represents. In
-     * particular, this mean that every slice covers every empty slice, regardless of the
-     * beginnings, ends or step sizes of the slices.
+     * Indicates whether this range covers the given range. A range r1 covers a range r2, iff the
+     * set of indices that r1 represents is a superset of the set of indices r2 represents. In
+     * particular, this mean that every range covers every empty range, regardless of the
+     * beginnings, ends or step sizes of the ranges.
      * <p>
      * Note that this contrasts with the semantics of {@link #equals(Object) equals()}, which is
-     * defined as the structural equality. This means that two slices that cover each other are not
+     * defined as the structural equality. This means that two ranges that cover each other are not
      * necessarily equal.
      * 
      * @param other
-     *            The other slice
-     * @return <code>true</code> if this slice cover the given one, <code>false</code> otherwise.
+     *            The other range
+     * @return <code>true</code> if this range cover the given one, <code>false</code> otherwise.
      */
     public boolean covers(final SliceRange other) {
         final int otherSize = other.size();

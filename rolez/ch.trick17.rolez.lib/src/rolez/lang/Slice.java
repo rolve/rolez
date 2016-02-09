@@ -12,9 +12,9 @@ public class Slice<T> extends Guarded {
     
     public native void set(int i, T component);
     
-    public native Slice<T> slice(SliceRange sliceRange);
+    public native GuardedSlice<T[]> slice(SliceRange sliceRange);
     
-    public native Slice<T> slice(int begin, int end, int step);
+    public native GuardedSlice<T[]> slice(int begin, int end, int step);
     
-    public native Array<Slice<T>> partition(Partitioner p, int n);
+    public native GuardedArray<GuardedSlice<T[]>[]> partition(Partitioner p, int n);
 }

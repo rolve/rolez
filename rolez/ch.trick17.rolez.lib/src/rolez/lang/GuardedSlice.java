@@ -26,6 +26,62 @@ public class GuardedSlice<A> extends Guarded {
         this.range = range;
     }
     
+    public <T> T get(int index) {
+        checkIndex(index);
+        return (T) ((Object[]) data)[index];
+    }
+    
+    public <T> void set(int index, T component) {
+        checkIndex(index);
+        ((Object[]) data)[index] = component;
+    }
+    
+    public int getInt(int index) {
+        checkIndex(index);
+        return ((int[]) data)[index];
+    }
+    
+    public void setInt(int index, int component) {
+        checkIndex(index);
+        ((int[]) data)[index] = component;
+    }
+    
+    public double getDouble(int index) {
+        checkIndex(index);
+        return ((double[]) data)[index];
+    }
+    
+    public void setDouble(int index, double component) {
+        checkIndex(index);
+        ((double[]) data)[index] = component;
+    }
+    
+    public boolean getBoolean(int index) {
+        checkIndex(index);
+        return ((boolean[]) data)[index];
+    }
+    
+    public void setBoolean(int index, boolean component) {
+        checkIndex(index);
+        ((boolean[]) data)[index] = component;
+    }
+    
+    public char getChar(int index) {
+        checkIndex(index);
+        return ((char[]) data)[index];
+    }
+    
+    public void setChar(int index, char component) {
+        checkIndex(index);
+        ((char[]) data)[index] = component;
+    }
+    
+    private void checkIndex(int index) {
+        // IMPROVE: Suppress check for arrays? (only applies if array is statically a slice)
+        if(!range.contains(index))
+            throw new SliceIndexOutOfBoundsException(index);
+    }
+    
     public GuardedSlice<A> slice(final SliceRange sliceRange) {
         if(!range.covers(sliceRange))
             throw new IllegalArgumentException("Given range: " + sliceRange
