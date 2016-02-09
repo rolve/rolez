@@ -285,7 +285,7 @@ class RolezExtensions {
     }}
     
     def string(RoleParam it) {
-        name + if(upperBound != null) " includes " + upperBound.string else ""
+        name + " includes " + upperBound.string
     }
     
     def stringWithoutRoles(ClassRef it) { switch(it) {

@@ -266,12 +266,11 @@ from {
             else a.method
         val roleArgs = inferRoleArgs(G, a, originalMethod)
         for(entry : roleArgs.entrySet) {
-            if(entry.key.upperBound != null)
-                G |- entry.value <! entry.key.upperBound or fail
-                    error "Bound mismatch: the role " + entry.value.string + " is not a valid substitute "
-                        + "for the bounded role parameter " + entry.key.string
-                    source a
-                    feature MEMBER_ACCESS__MEMBER
+            G |- entry.value <! entry.key.upperBound or fail
+                error "Bound mismatch: the role " + entry.value.string + " is not a valid substitute "
+                    + "for the bounded role parameter " + entry.key.string
+                source a
+                feature MEMBER_ACCESS__MEMBER
         }
         G |- targetRole <! a.method.thisRole or fail
             error "Role mismatch: Cannot call method " + a.method.string

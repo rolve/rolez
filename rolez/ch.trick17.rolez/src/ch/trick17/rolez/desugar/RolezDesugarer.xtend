@@ -8,6 +8,7 @@ import ch.trick17.rolez.rolez.IfStmt
 import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.OpArithmetic
 import ch.trick17.rolez.rolez.OpLogical
+import ch.trick17.rolez.rolez.RoleParam
 import ch.trick17.rolez.rolez.RolezFactory
 import ch.trick17.rolez.rolez.SuperConstrCall
 import javax.inject.Inject
@@ -45,6 +46,13 @@ class RolezDesugarer extends AbstractDeclarativeDesugarer {
             superclassRef = createSimpleClassRef => [
                 createReference(SIMPLE_CLASS_REF__CLAZZ, objectClassName.toString)
             ]
+    }
+    
+    
+    @Rule
+    def addUpperBound(RoleParam it) {
+        if(upperBound == null)
+            upperBound = createPure
     }
     
     @Rule
