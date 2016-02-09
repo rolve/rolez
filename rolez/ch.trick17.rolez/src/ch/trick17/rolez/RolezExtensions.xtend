@@ -276,7 +276,7 @@ class RolezExtensions {
     }}
     
     def string(ClassRef it) { switch(it) {
-        SimpleClassRef : clazz.name
+        SimpleClassRef : clazz.qualifiedName.toString
         GenericClassRef: clazz.qualifiedName + "[" + typeArg.string + "]"
     }}
     

@@ -8,6 +8,8 @@ package rolez.lang;
  */
 public class Slice<T> extends Guarded {
     
+    public final SliceRange range = null;
+    
     public native T get(int i);
     
     public native void set(int i, T component);
