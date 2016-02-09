@@ -475,18 +475,22 @@ class RolezGenerator extends AbstractGenerator {
     // IMPROVE: Generate direct access to members of mapped singletons, e.g., System, Math, ...
     
     private def generateSliceGet(MemberAccess it)
-        '''«target.genGuarded(createReadOnly)».get«sliceAccessSuffix»(«args.get(0).gen»)'''
+        '''«target.genGuarded(createReadOnly)».«genSliceAccess("get")»(«args.get(0).gen»)'''
+    
+    
     
     private def generateSliceSet(MemberAccess it) {
-        '''«target.genGuarded(createReadWrite)».set«sliceAccessSuffix»(«args.get(0).gen», «args.get(1).gen»)'''
+        '''«target.genGuarded(createReadWrite)».«genSliceAccess("set")»(«args.get(0).gen», «args.get(1).gen»)'''
     }
     
-    private def sliceAccessSuffix(MemberAccess it) {
+    private def genSliceAccess(MemberAccess it, String getOrSet) {
         val targetType = system.type(utils.createEnv(it), target).value
         val componentType = ((targetType as RoleType).base as GenericClassRef).typeArg
         switch(componentType) {
-            PrimitiveType: componentType.name.toFirstUpper
-            default: ""
+            PrimitiveType: getOrSet + componentType.name.toFirstUpper
+            case getOrSet == "get": "<" + componentType.gen + ">get"
+            case getOrSet == "set": "set"
+            default: throw new AssertionError
         }
     }
     

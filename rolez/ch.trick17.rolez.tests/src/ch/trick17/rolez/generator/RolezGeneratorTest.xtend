@@ -1221,7 +1221,7 @@ class RolezGeneratorTest {
                 }
                 
                 public java.lang.Object getFirst(final rolez.lang.GuardedSlice<java.lang.Object[]> a) {
-                    return guardReadOnly(a).get(0);
+                    return guardReadOnly(a).<java.lang.Object>get(0);
                 }
                 
                 public int getFirstInt(final rolez.lang.GuardedSlice<int[]> a) {

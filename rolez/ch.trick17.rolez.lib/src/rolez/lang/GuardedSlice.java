@@ -31,7 +31,7 @@ public class GuardedSlice<A> extends Guarded {
         return (T) ((Object[]) data)[index];
     }
     
-    public <T> void set(int index, T component) {
+    public void set(int index, Object component) {
         checkIndex(index);
         ((Object[]) data)[index] = component;
     }
