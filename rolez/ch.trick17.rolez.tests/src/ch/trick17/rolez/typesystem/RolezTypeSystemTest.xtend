@@ -1447,9 +1447,13 @@ class RolezTypeSystemTest {
     @Test def testSubtype() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.Array[T] mapped to rolez.lang.Array {
+            class rolez.lang.Slice[T] mapped to rolez.lang.Slice {
+                mapped def r partition[r](p: pure Partitioner, n: int): readonly Array[r Slice[T]]
+            }
+            class rolez.lang.Array[T] mapped to rolez.lang.Array extends Slice[T] {
                 mapped new(length: int)
             }
+            class rolez.lang.Partitioner mapped to rolez.lang.Partitioner
             class A
             task Main: {
                 val i: int = 5;
@@ -1474,6 +1478,7 @@ class RolezTypeSystemTest {
                 ia = null;
                 var oa: readwrite Array[pure Object] = new Array[pure Object](1);
                 oa = null;
+                val slices: readonly Array[readwrite Slice[pure Object]] = oa.partition(null, 1);
             }
         ''').assertNoErrors
         

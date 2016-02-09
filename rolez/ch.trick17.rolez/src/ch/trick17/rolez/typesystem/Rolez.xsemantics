@@ -537,7 +537,7 @@ rule EqualTypeRoleTypes
     G |- RoleType left ~~ RoleType right
 from {
     G |~ left.role ~~ right.role
-    left.base.clazz == right.base.clazz // Is this correct?
+    left.base.clazz.qualifiedName == right.base.clazz.qualifiedName
     left.base instanceof GenericClassRef == right.base instanceof GenericClassRef
     
     left.base instanceof SimpleClassRef
