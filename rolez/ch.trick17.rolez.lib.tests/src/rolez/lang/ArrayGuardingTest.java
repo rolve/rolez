@@ -344,8 +344,6 @@ public class ArrayGuardingTest extends GuardingTest {
         }
     }
     
-    // FIXME: Fix guarding of overlapping slices:
-    
     @Test
     public void testShareOverlappingSliceModify() {
         assumeVerifyCorrectness();
