@@ -18,6 +18,8 @@ class Guard {
     private final Deque<Set<Guarded>> prevReachables = new ArrayDeque<>();
     
     void initializeViewGuard(final Guard viewGuard) {
+        while(owner == null) {} // Spin; owner field is only temporarily null
+        // IMPROVE: Is spinning really a good idea?
         viewGuard.owner = owner;
         viewGuard.prevOwners.clear();
         viewGuard.prevOwners.addAll(prevOwners);
@@ -31,21 +33,23 @@ class Guard {
     }
     
     void share(final Guarded guarded) {
-        guarded.processAll(SHARE, newIdentitySet(), false);
+        guarded.processAll(GUARD_READ_ONLY, newIdentitySet(), false);
+        guarded.processAll(SHARE, newIdentitySet(), true);
     }
     
     private static final Op SHARE = new Op() {
         @Override
         public void process(final Guarded guarded) {
             jpfWorkaround();
-            guarded.getGuard().guardReadOnly(guarded);
             guarded.getGuard().sharedCount.incrementAndGet();
         }
     };
     
     void pass(final Guarded guarded) {
+        guarded.processAll(GUARD_READ_WRITE, newIdentitySet(), false);
+        
         final Set<Guarded> processed = newIdentitySet();
-        guarded.processAll(PASS, processed, false);
+        guarded.processAll(PASS, processed, true);
         prevReachables.addFirst(processed);
     }
     
@@ -53,7 +57,6 @@ class Guard {
         @Override
         public void process(final Guarded guarded) {
             jpfWorkaround();
-            GUARD_READ_WRITE.process(guarded);
             /* First step of passing */
             final Guard guard = guarded.getGuard();
             guard.owner = null;
@@ -93,16 +96,14 @@ class Guard {
     };
     
     void releasePassed(final Guarded guarded) {
-        /* First, make sure all reachable and previously reachable objects are
-         * mutable */
+        /* First, make sure all reachable and previously reachable objects are readwrite */
         final Set<Guarded> guardProcessed = newIdentitySet();
         guarded.processAll(GUARD_READ_WRITE, guardProcessed, false);
         processReachables(GUARD_READ_WRITE, guardProcessed);
         
-        /* Then, release still reachable objects and make "parent" task the
-         * owner of newly reachable objects */
-        final Thread parent = prevOwners.peekFirst();
-        assert parent != null;
+        /* Then, release still reachable objects and make "parent" task the owner of newly reachable
+         * objects */
+        final Thread parent = prevOwners.getFirst();
         final Op transferOwner = new Op() {
             @Override
             public void process(final Guarded g) {
@@ -129,8 +130,8 @@ class Guard {
             final Guard guard = guarded.getGuard();
             assert !guard.amOriginalOwner();
             guard.owner = guard.prevOwners.removeFirst();
-            /* IMPROVE: Unpark only once, not for every reachable object. May
-             * even save the stack of owners for reachable objects... */
+            /* IMPROVE: Unpark only once, not for every reachable object. May even save the stack of
+             * owners for reachable objects... */
             LockSupport.unpark(guard.owner);
         }
     };
@@ -146,9 +147,8 @@ class Guard {
         @Override
         public void process(final Guarded guarded) {
             jpfWorkaround();
-            /* mayRead() reads the volatile owner field written by
-             * releasePassed() and releaseShared(). Therefore, there is a
-             * happens-before relationship between
+            /* mayRead() reads the volatile owner field written by releasePassed() and
+             * releaseShared(). Therefore, there is a happens-before relationship between
              * releasePassed()/releaseShared() and guardRead(). */
             while(!guarded.getGuard().mayRead())
                 LockSupport.park();
@@ -164,9 +164,8 @@ class Guard {
         @Override
         public void process(final Guarded guarded) {
             jpfWorkaround();
-            /* mayWrite() reads the volatile owner field written by
-             * releasePassed(). Therefore, there is a happens-before
-             * relationship between releasePassed() and guardReadWrite(). */
+            /* mayWrite() reads the volatile owner field written by releasePassed(). Therefore,
+             * there is a happens-before relationship between releasePassed() and guardReadWrite(). */
             while(!guarded.getGuard().mayWrite())
                 LockSupport.park();
         }
@@ -187,23 +186,18 @@ class Guard {
     }
     
     private void processReachables(final Op op, final Set<Guarded> processed) {
-        final Set<Guarded> reachables = prevReachables.peekFirst();
-        assert reachables != null;
-        
-        for(final Guarded guarded : reachables)
+        for(final Guarded guarded : prevReachables.getFirst())
             if(!processed.contains(guarded))
                 op.process(guarded);
     }
     
     private static Set<Guarded> newIdentitySet() {
-        return Collections.newSetFromMap(
-                new IdentityHashMap<Guarded, Boolean>());
+        return Collections.newSetFromMap(new IdentityHashMap<Guarded, Boolean>());
     }
     
     /**
-     * JPF seems to miss some scheduling relevant points in the program, so this
-     * method makes sure that all guarding operations trigger a scheduling
-     * choice.
+     * JPF seems to miss some scheduling relevant points in the program, so this method makes sure
+     * that all guarding operations trigger a scheduling choice.
      */
     private static void jpfWorkaround() {
         // IMPROVE: Push JPF developers to fix this!

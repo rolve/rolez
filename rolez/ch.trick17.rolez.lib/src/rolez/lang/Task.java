@@ -16,8 +16,7 @@ public class Task<V> implements Runnable {
     private volatile Throwable exception;
     
     /**
-     * The list of child tasks. Before a task finishes, it waits for all its
-     * children to finish.
+     * The list of child tasks. Before a task finishes, it waits for all its children to finish.
      */
     private final List<Task<?>> childTasks = new ArrayList<>();
     
@@ -35,14 +34,14 @@ public class Task<V> implements Runnable {
         localStack.push(this);
         try {
             result = callable.call();
-            /* Wait for child tasks to finish so that exceptions get propagated
-             * up the task stack */
+            /* Wait for child tasks to finish so that exceptions get propagated up the task stack */
             for(final Task<?> task : childTasks)
                 task.get();
         } catch(Throwable e) {
-            /* Uncomment below to print the exception as soon as the task is
-             * finished, in case the parent task does not finish (e.g. because
-             * of a deadlock) and the exception is not propagated. */
+            /* Uncomment the following to print the exception as soon as the task is finished, in
+             * case the parent task does not finish (e.g. because of a deadlock) and the exception
+             * is not propagated. */
+            // java.lang.System.err.print("[" + Thread.currentThread().getName() + "] ");
             // e.printStackTrace();
             result = null;
             exception = e;

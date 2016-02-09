@@ -21,6 +21,8 @@ public class GuardingTest extends JpfParallelismTest {
     protected Map<String, Object> additionalJpfProperties() {
         final Map<String, Object> props = new HashMap<>();
         props.put("vm.por", "false");
+        // props.put("report.console.property_violation", "error,snapshot,trace");
+        // props.put("sourcepath", "src" + File.pathSeparator + "../ch.trick17.rolez.lib/src");
         return props;
     }
     
@@ -39,7 +41,6 @@ public class GuardingTest extends JpfParallelismTest {
     
     void assumeVerifyCorrectness() {
         if(mode != VerifyMode.CORRECTNESS)
-            throw new AssumptionViolatedException(
-                    "not verifying correctness properties");
+            throw new AssumptionViolatedException("not verifying correctness properties");
     }
 }

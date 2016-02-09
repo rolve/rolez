@@ -408,7 +408,6 @@ public class ArrayGuardingTest extends GuardingTest {
                     final GuardedSlice<int[]> slice2 = ref.o.slice(1, 2, 1);
                     assertEquals(1, slice2.data[1]);
                     ref.releaseShared();
-                    slice2.toString();
                 }
             });
             
@@ -772,6 +771,120 @@ public class ArrayGuardingTest extends GuardingTest {
             guardReadOnly(a);
             for(int i = 0; i < a.data.length; i++)
                 assertEquals(i + 1, a.data[i]);
+            task.get();
+        }
+    }
+    
+    @Test
+    public void testSlicePureArray() {
+        if(verify(mode, new int[][]{{0, 2}, {1, 2}})) {
+            final GuardedArray<int[]> a = new GuardedArray<>(new int[]{0, 1});
+            
+            a.pass();
+            Task<Void> task = s.start(new RunnableCallable() {
+                public void run() {
+                    a.registerNewOwner();
+                    a.data[0]++;
+                    region(0);
+                    a.releasePassed();
+                }
+            });
+            
+            GuardedSlice<int[]> slice = a.slice(0, 1, 1); // Slicing never blocks
+            region(1);
+            
+            guardReadOnly(slice); // A slice created from a dynamically pure array is also pure, i.e., this may block
+            assertEquals(1, slice.data[0]);
+            region(2);
+            
+            task.get();
+        }
+    }
+    
+    @Test
+    public void testSliceAndPassInParallel() {
+        assumeVerifyCorrectness();
+        if(verifyNoPropertyViolation()) {
+            final GuardedArray<int[]> a = new GuardedArray<>(new int[]{0});
+            
+            a.pass();
+            Task<Void> task = s.start(new RunnableCallable() {
+                public void run() {
+                    a.registerNewOwner();
+                    
+                    a.pass();
+                    s.start(new RunnableCallable() {
+                        public void run() {
+                            a.registerNewOwner();
+                            a.releasePassed();
+                        }
+                    });
+                    
+                    a.releasePassed();
+                }
+            });
+            
+            a.slice(0, 1, 1);
+            task.get();
+        }
+    }
+    
+    @Test
+    public void testSliceAndShareInParallel() {
+        assumeVerifyCorrectness();
+        if(verifyNoPropertyViolation()) {
+            final GuardedArray<int[]> a = new GuardedArray<>(new int[]{0});
+            
+            a.share();
+            Task<Void> task = s.start(new RunnableCallable() {
+                public void run() {
+                    a.share();
+                    s.start(new RunnableCallable() {
+                        public void run() {
+                            assertEquals(0, a.data[0]);
+                            a.releaseShared();
+                        }
+                    });
+                    
+                    a.releaseShared();
+                }
+            });
+            
+            GuardedSlice<int[]> slice = a.slice(0, 1, 1);
+            guardReadWrite(slice);
+            slice.data[0]++;
+            task.get();
+        }
+    }
+    
+    @Test
+    public void testSliceInParallel() {
+        assumeVerifyCorrectness();
+        if(verifyNoPropertyViolation()) {
+            final GuardedArray<int[]> a = new GuardedArray<>(new int[]{0, 1, 2});
+            
+            a.pass();
+            Task<Void> task = s.start(new RunnableCallable() {
+                public void run() {
+                    a.registerNewOwner();
+                    
+                    final GuardedSlice<int[]> slice = a.slice(1, 3, 1); // Slicing in parallel
+                    slice.pass();
+                    s.start(new RunnableCallable() {
+                        public void run() {
+                            slice.registerNewOwner();
+                            slice.data[1]++;
+                            slice.releasePassed();
+                        }
+                    });
+                    
+                    a.releasePassed();
+                }
+            });
+            
+            GuardedSlice<int[]> slice = a.slice(0, 2, 1); // Slicing in parallel
+            guardReadOnly(slice);
+            assertEquals(2, slice.data[1]);
             task.get();
         }
     }

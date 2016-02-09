@@ -33,8 +33,8 @@ public class GuardedSlice<A> extends Guarded {
                     
         final GuardedSlice<A> slice = new GuardedSlice<>(data, sliceRange);
         
-        /* Make sure the new slice is not added while existing slices are being processed. */
-        synchronized(viewLock) {
+        /* Make sure the new slice is not added while existing slices are being processed */
+        synchronized(viewLock()) {
             getGuard().initializeViewGuard(slice.getGuard());
             addSubslice(slice);
         }
@@ -62,7 +62,7 @@ public class GuardedSlice<A> extends Guarded {
         }
         
         /* If an existing subslice covers the new one completely, delegate all the work to this one
-         * and be done. */
+         * and be done */
         for(final GuardedSlice<A> s : subslices) {
             if(s.range.covers(slice.range)) {
                 s.addSubslice(slice);
@@ -71,20 +71,20 @@ public class GuardedSlice<A> extends Guarded {
         }
         
         /* Otherwise, check which existing subslices intersect with (and specifically, are covered
-         * by) the new one. */
+         * by) the new one */
         final Iterator<GuardedSlice<A>> i = subslices.iterator();
         while(i.hasNext()) {
             final GuardedSlice<A> subslice = i.next();
             if(slice.range.covers(subslice.range)) {
-                /* Put the new slice between "this" and the subslice. First, remove old links */
+                /* Put the new slice between "this" and the subslice */
                 i.remove();
-                /* Add new links */
                 slice.subslices.add(subslice);
             }
             else {
                 final SliceRange overlap = subslice.range.intersectWith(slice.range);
                 if(!overlap.isEmpty()) {
                     final GuardedSlice<A> overlapSlice = new GuardedSlice<>(data, overlap);
+                    subslice.getGuard().initializeViewGuard(overlapSlice.getGuard());
                     slice.subslices.add(overlapSlice);
                     subslice.addSubslice(overlapSlice);
                 }
@@ -95,16 +95,22 @@ public class GuardedSlice<A> extends Guarded {
     }
     
     @Override
-    protected final Iterable<? extends Guarded> views() {
-        return subslices;
-    }
-    
-    @Override
     protected final Iterable<?> guardedRefs() {
         if(data instanceof Object[])
             return new SliceList();
         else
             return emptyList();
+    }
+    
+    @Override
+    protected final Iterable<? extends Guarded> views() {
+        return subslices;
+    }
+    
+    @Override
+    protected Object viewLock() {
+        return data; // The data array is the same for all slices, so it can act as the view lock.
+                     // However, care must be taken to not expose the array to code that may lock it.
     }
     
     private final class SliceList extends AbstractList<Object> implements RandomAccess {

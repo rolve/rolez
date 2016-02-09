@@ -21,12 +21,10 @@ public class ObjectGuardingTest extends GuardingTest {
     
     @Parameters(name = "{0}, {1}")
     public static List<?> taskSystems() {
-        return Arrays.asList(new Object[][]{{new NewThreadTaskSystem(),
-                VerifyMode.CORRECTNESS}, {new ThreadPoolTaskSystem(),
-                        VerifyMode.CORRECTNESS}, {new SingleThreadTaskSystem(),
-                                VerifyMode.CORRECTNESS}, {
-                                        new ThreadPoolTaskSystem(3),
-                                        VerifyMode.PARALLELISM}});
+        return Arrays.asList(new Object[][]{{new NewThreadTaskSystem(), VerifyMode.CORRECTNESS}, {
+                new ThreadPoolTaskSystem(), VerifyMode.CORRECTNESS}, {new SingleThreadTaskSystem(),
+                        VerifyMode.CORRECTNESS}, {new ThreadPoolTaskSystem(3),
+                                VerifyMode.PARALLELISM}});
     }
     
     public ObjectGuardingTest(final TaskSystem s, final VerifyMode mode) {
@@ -228,10 +226,9 @@ public class ObjectGuardingTest extends GuardingTest {
     
     @Test
     public void testPassMultiple() {
-        /* IMPROVE: Allow {0, 4} in parallel by passing not-yet-available data
-         * to tasks (so far, pass() is blocking) */
-        if(verify(mode, new int[][]{{0, 1}, {0, 2, 3}, {0, 2, 5}, {4, 5}, {0,
-                4}})) {
+        /* IMPROVE: Allow {0, 4} in parallel by passing not-yet-available data to tasks (so far,
+         * pass() is blocking) */
+        if(verify(mode, new int[][]{{0, 1}, {0, 2, 3}, {0, 2, 5}, {4, 5}, {0, 4}})) {
             final Int i = new Int();
             
             i.pass();
@@ -297,8 +294,7 @@ public class ObjectGuardingTest extends GuardingTest {
     
     @Test
     public void testPassNested() {
-        if(verify(mode, new int[][]{{0, 1}, {2, 3}, {4, 5}, {0, 3}, {2, 5}, {0,
-                5}})) {
+        if(verify(mode, new int[][]{{0, 1}, {2, 3}, {4, 5}, {0, 3}, {2, 5}, {0, 5}})) {
             final Int i = new Int();
             
             i.pass();
@@ -332,6 +328,33 @@ public class ObjectGuardingTest extends GuardingTest {
             assertEquals(3, guardReadOnly(i).value);
             
             region(5);
+            task.get();
+        }
+    }
+    
+    @Test
+    public void testPassNestedWithoutGuarding() {
+        assumeVerifyCorrectness();
+        if(verifyNoPropertyViolation()) {
+            final Int i = new Int();
+            
+            i.pass();
+            final Task<Void> task = s.start(new RunnableCallable() {
+                public void run() {
+                    i.registerNewOwner();
+                    i.pass();
+                    final Task<Void> task2 = s.start(new RunnableCallable() {
+                        public void run() {
+                            i.registerNewOwner();
+                            i.releasePassed();
+                        }
+                    });
+                    
+                    i.releasePassed();
+                    task2.get();
+                }
+            });
+            
             task.get();
         }
     }
@@ -658,8 +681,8 @@ public class ObjectGuardingTest extends GuardingTest {
     
     @Test
     public void testPassSubgroupNested() {
-        /* IMPROVE: Allow {0, 3} by releasing objects independent of reachable
-         * objects that are still owned by other threads. */
+        /* IMPROVE: Allow {0, 3} by releasing objects independent of reachable objects that are
+         * still owned by other threads. */
         if(verify(mode, new int[][]{{0, 1}, {2, 3}, {0, 3}})) {
             final Int i = new Int();
             final Ref<Int> r = new Ref<>(i);
