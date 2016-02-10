@@ -1,0 +1,38 @@
+package rolez.lang
+
+object Int mapped to java.lang.Integer {
+    mapped val MIN_VALUE: int
+    mapped val MAX_VALUE: int
+    
+    mapped def pure parseInt(s: pure String): int
+    mapped def pure parseInt(s: pure String, radix: int): int
+    mapped def pure toString(i: int): readonly String
+}
+
+object Double mapped to java.lang.Double {
+    mapped val POSITIVE_INFINITY: double
+    mapped val NEGATIVE_INFINITY: double
+    mapped val NaN: double
+    mapped val MAX_VALUE: double
+    mapped val MIN_NORMAL: double
+    mapped val MIN_VALUE: double
+    mapped val MAX_EXPONENT: int
+    mapped val MIN_EXPONENT: int
+    
+    mapped def pure parseDouble(s: pure String): double
+    mapped def pure toString(d: double): readonly String
+    mapped def pure isNaN(v: double): boolean
+    mapped def pure isInfinite(v: double): boolean
+}
+
+object Boolean mapped to java.lang.Boolean {
+    mapped def pure parseBoolean(s: pure String): boolean
+    mapped def pure toString(b: boolean): readonly String
+}
+
+object Char mapped to java.lang.Character {
+    mapped val MIN_VALUE: char
+    mapped val MAX_VALUE: char
+    
+    mapped def pure toString(c: char): readonly String
+}

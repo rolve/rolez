@@ -35,3 +35,12 @@ class Scanner mapped to java.util.Scanner {
     
     mapped def readwrite close:
 }
+
+class Random mapped to java.util.Random {
+    mapped new
+    mapped def readwrite nextInt: int
+    mapped def readwrite nextInt(n: int): int
+    mapped def readwrite nextBoolean: boolean
+    mapped def readwrite nextDouble: double
+    mapped def readwrite nextGaussian: double
+}
