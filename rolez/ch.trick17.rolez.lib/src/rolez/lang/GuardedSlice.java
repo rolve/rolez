@@ -17,7 +17,7 @@ public class GuardedSlice<A> extends Guarded {
     /* References to all (direct) subslices. Guarding a slice must also consider subslices, which
      * may currently be "owned" by a different task. */
     final Set<GuardedSlice<A>> subslices = newSetFromMap(
-            new IdentityHashMap<GuardedSlice<A>, Boolean>());
+            new IdentityHashMap<GuardedSlice<A>, java.lang.Boolean>());
             
     // TODO: Find a way to "free" unused subslices again
     

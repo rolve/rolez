@@ -127,6 +127,6 @@ public class GuardedSliceTest {
     }
     
     private static Set<GuardedSlice<?>> newIdentitySet() {
-        return newSetFromMap(new IdentityHashMap<GuardedSlice<?>, Boolean>());
+        return newSetFromMap(new IdentityHashMap<GuardedSlice<?>, java.lang.Boolean>());
     }
 }

@@ -9,21 +9,20 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 
 /**
- * A task system that maintains a pool of worker threads to execute submitted
- * tasks. In contrast to, e.g., {@link ThreadPoolExecutor}, this class does not
- * use a FIFO work queue, as child tasks (which are submitted after their
- * parents) always have higher priority than their parents.
+ * A task system that maintains a pool of worker threads to execute submitted tasks. In contrast to,
+ * e.g., {@link ThreadPoolExecutor}, this class does not use a FIFO work queue, as child tasks
+ * (which are submitted after their parents) always have higher priority than their parents.
  * 
  * @author Michael Faes
  */
 public final class ThreadPoolTaskSystem extends TaskSystem {
     
-    /* IMPROVE: Check if ForkJoinPool would be a good solution instead, but note
-     * this: http://coopsoft.com/ar/CalamityArticle.html */
+    /* IMPROVE: Check if ForkJoinPool would be a good solution instead, but note this:
+     * http://coopsoft.com/ar/CalamityArticle.html */
     
     private final int baseSize;
     private final Set<Worker> idleWorkers = newSetFromMap(
-            new ConcurrentHashMap<Worker, Boolean>());
+            new ConcurrentHashMap<Worker, java.lang.Boolean>());
             
     public ThreadPoolTaskSystem() {
         this(Runtime.getRuntime().availableProcessors());

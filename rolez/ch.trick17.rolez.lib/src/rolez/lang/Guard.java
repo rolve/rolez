@@ -192,7 +192,7 @@ class Guard {
     }
     
     private static Set<Guarded> newIdentitySet() {
-        return Collections.newSetFromMap(new IdentityHashMap<Guarded, Boolean>());
+        return Collections.newSetFromMap(new IdentityHashMap<Guarded, java.lang.Boolean>());
     }
     
     /**
