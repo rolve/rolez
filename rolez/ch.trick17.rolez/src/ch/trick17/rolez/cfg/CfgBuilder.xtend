@@ -92,7 +92,9 @@ class CfgBuilder {
     private def dispatch Linker process(IfStmt s, Linker prev) {
         val conditionLinker = process(s.condition, prev)
         val thenLinker = process(s.thenPart, conditionLinker)
-        val elseLinker = process(s.elsePart, conditionLinker);
+        val elseLinker = 
+            if(s.elsePart == null) conditionLinker
+            else process(s.elsePart, conditionLinker)
         
         (thenLinker + elseLinker).linkAndReturn(newInstrNode(s))
     }

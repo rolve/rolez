@@ -383,7 +383,7 @@ rule WIfStmt
 from {
     G |- ifStmt.^condition <| createBoolean
     G |- ifStmt.thenPart
-    G |- ifStmt.elsePart
+    ifStmt.elsePart == null or G |- ifStmt.elsePart
 }
 
 rule WWhileLoop

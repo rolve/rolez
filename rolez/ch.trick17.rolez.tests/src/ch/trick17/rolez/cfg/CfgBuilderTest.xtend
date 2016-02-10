@@ -152,10 +152,9 @@ class CfgBuilderTest {
             entry -> 1
             1 -> 2, 4
             2 -> 3
-            3 -> 5
+            3 -> 4
             4 -> 5
-            5 -> 6
-            6 -> exit
+            5 -> exit
         ''')
         
         parse('''
@@ -199,8 +198,7 @@ class CfgBuilderTest {
             1 -> 2, 3
             2 -> exit
             3 -> 4
-            4 -> 5
-            5 -> exit
+            4 -> exit
         ''')
         
         parse('''
@@ -216,8 +214,7 @@ class CfgBuilderTest {
             3 -> 4
             4 -> 5
             5 -> 6
-            6 -> 7
-            7 -> exit
+            6 -> exit
         ''')
         
         parse('''

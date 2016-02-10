@@ -4,7 +4,6 @@ import ch.trick17.rolez.RolezExtensions
 import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.Class
 import ch.trick17.rolez.rolez.Constr
-import ch.trick17.rolez.rolez.IfStmt
 import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.OpArithmetic
 import ch.trick17.rolez.rolez.OpLogical
@@ -48,7 +47,6 @@ class RolezDesugarer extends AbstractDeclarativeDesugarer {
             ]
     }
     
-    
     @Rule
     def addUpperBound(RoleParam it) {
         if(upperBound == null)
@@ -63,12 +61,6 @@ class RolezDesugarer extends AbstractDeclarativeDesugarer {
             body.stmts.add(0, supr)
             supr.createReference(SUPER_CONSTR_CALL__CONSTR, "super")
         }
-    }
-    
-    @Rule
-    def addElsePart(IfStmt it) {
-        if(elsePart == null)
-            elsePart = createBlock
     }
     
     @Rule

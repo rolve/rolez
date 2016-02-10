@@ -387,7 +387,9 @@ class RolezGenerator extends AbstractGenerator {
     
     private def dispatch generateStmt(IfStmt it) '''
         if(«condition.gen»)«thenPart.genIndent»
-        else«elsePart.genIndent»'''
+        «IF elsePart != null»
+        else«elsePart.genIndent»
+        «ENDIF»'''
     
     private def dispatch generateStmt(WhileLoop it) '''
         while(«condition.gen»)«body.genIndent»'''

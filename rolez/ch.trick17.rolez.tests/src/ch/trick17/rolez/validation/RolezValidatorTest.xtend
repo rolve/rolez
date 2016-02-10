@@ -466,7 +466,7 @@ class RolezValidatorTest {
             }
         ''')
         program.assertError(RETURN_NOTHING, MISSING_RETURN_EXPR)
-        program.assertError(BLOCK, MISSING_RETURN_EXPR)
+        program.assertError(IF_STMT, MISSING_RETURN_EXPR)
         
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -476,7 +476,7 @@ class RolezValidatorTest {
                         return 0;
                 }
             }
-        ''').assertError(BLOCK, MISSING_RETURN_EXPR)
+        ''').assertError(IF_STMT, MISSING_RETURN_EXPR)
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
@@ -486,7 +486,7 @@ class RolezValidatorTest {
                         return 0;
                 }
             }
-        ''').assertError(BLOCK, MISSING_RETURN_EXPR)
+        ''').assertError(IF_STMT, MISSING_RETURN_EXPR)
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
