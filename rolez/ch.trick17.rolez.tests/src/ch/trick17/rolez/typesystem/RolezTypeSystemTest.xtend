@@ -46,33 +46,64 @@ class RolezTypeSystemTest {
     @Inject extension ParseHelper<Program>
     @Inject extension ValidationTestHelper
     
-    @Test def testTAssignment() {
-        parse('''
+    @Test def void testTAssignment() {
+        var program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class A
+            class rolez.lang.String mapped to java.lang.String
+            class A {
+                var i: int
+                var d: double
+            }
             class B extends A 
             task Main: {
                 var a: readwrite A;
                 a = new B;
+                a.i += 1;
+                a.d -= 42.0;
+                a.d *= 42;
+                var b = true;
+                b &= false;
+                var s = "Hello";
+                s += " World";
             }
-        ''').main.lastExpr.type.assertRoleType(ReadWrite, "A")
+        ''')
+        program.main.expr(0).type.assertRoleType(ReadWrite, "A")
+        program.main.expr(1).type.assertInstanceOf(Int)
+        program.main.expr(2).type.assertInstanceOf(Double)
+        program.main.expr(3).type.assertInstanceOf(Double)
+        program.main.expr(4).type.assertInstanceOf(Boolean)
+        program.main.expr(5).type.assertRoleType(ReadWrite, stringClassName) // Slight inconsistency in the type system, but it is safe
     }
     
     @Test def testTAssignmentErrorInOp() {
-        parse("task Main: { !5 = 5; }").assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
+        parse('''
+            task Main: { !5 = 5; }
+        ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
         
         parse('''
             task Main: {
-                var x: int;
-                x = !5;
+                var i: int;
+                i = !5;
             }
         ''').assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
+        
+        parse('''
+            task Main: {
+                var i = 0;
+                i += -false;
+            }
+        ''').assertError(UNARY_MINUS, null, "operator", "-", "undefined", "boolean")
     }
     
     @Test def testTAssignmentNotAssignable() {
         parse('''
             task Main: {
                 5 = 3;
+            }
+        ''').assertError(INT_LITERAL, AEXPR, "assign", "5")
+        parse('''
+            task Main: {
+                5 += 3;
             }
         ''').assertError(INT_LITERAL, AEXPR, "assign", "5")
         parse('''
@@ -106,10 +137,37 @@ class RolezTypeSystemTest {
     @Test def testTAssignmentTypeMismatch() {
         parse('''
             task Main: {
-                var x: int;
-                x = true;
+                var i: int;
+                i = true;
             }
         ''').assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "int", "boolean")
+        parse('''
+            task Main: {
+                var i: int;
+                i /= true;
+            }
+        ''').assertError(ASSIGNMENT, null, "operator", "undefined", "int", "boolean")
+        parse('''
+            task Main: {
+                var i: int;
+                i /= 0.2;
+            }
+        ''').assertError(ASSIGNMENT, null, "operator", "undefined", "int", "double")
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            task Main: {
+                var o = new Object;
+                o += new Object;
+            }
+        ''').assertError(ASSIGNMENT, null, "operator", "undefined", "Object")
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            task Main: {
+                var o = new Object;
+                o /= new Object;
+            }
+        ''').assertError(ASSIGNMENT, null, "operator", "undefined", "Object")
     }
     
     @Test def testTBooleanExpr() {

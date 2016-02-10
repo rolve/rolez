@@ -443,7 +443,7 @@ class RolezGenerator extends AbstractGenerator {
     private def dispatch CharSequence genNested(      Expr it) { gen }
     
     private def dispatch generateExpr(Assignment it)
-        '''«left.gen» = «right.gen»'''
+        '''«left.gen» «op» «right.gen»'''
     
     private def dispatch generateExpr(BinaryExpr it) {
         val op = switch(it) {

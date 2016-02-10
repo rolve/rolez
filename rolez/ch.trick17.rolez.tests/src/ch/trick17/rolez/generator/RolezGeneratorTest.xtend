@@ -889,7 +889,7 @@ class RolezGeneratorTest {
             for(var n = 0; n < 10; n += 1)
                 this.bar;
         '''.withFrame, classes).generate.assertEqualsJava('''
-            for(int n = 0; n < 10; n = n + 1)
+            for(int n = 0; n < 10; n += 1)
                 this.bar();
         '''.withJavaFrame)
         
@@ -898,7 +898,7 @@ class RolezGeneratorTest {
                 this.bar;
             }
         '''.withFrame, classes).generate.assertEqualsJava('''
-            for(int n = 0; n < 10; n = n + 1) {
+            for(int n = 0; n < 10; n += 1) {
                 this.bar();
             }
         '''.withJavaFrame)
@@ -1019,14 +1019,14 @@ class RolezGeneratorTest {
             j %= 2;
         '''.withFrame, classes).generate.assertEqualsJava('''
             boolean a = false;
-            a = a || true;
-            a = a && false;
+            a |= true;
+            a &= false;
             int j = 42;
-            j = j + 2;
-            j = j - 1;
-            j = j * 2;
-            j = j / 3;
-            j = j % 2;
+            j += 2;
+            j -= 1;
+            j *= 2;
+            j /= 3;
+            j %= 2;
         '''.withJavaFrame)
     }
     

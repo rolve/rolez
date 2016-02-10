@@ -28,6 +28,7 @@ import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.Null
 import ch.trick17.rolez.rolez.NullLiteral
 import ch.trick17.rolez.rolez.OpArithmetic
+import ch.trick17.rolez.rolez.OpAssignment
 import ch.trick17.rolez.rolez.Param
 import ch.trick17.rolez.rolez.ParameterizedBody
 import ch.trick17.rolez.rolez.Parenthesized
@@ -141,7 +142,38 @@ rule TAssignment
 from {
     G |- a.left : var Type leftType
     G |= a.left
-    G |- a.right <| leftType
+    
+    if(a.op == OpAssignment.ASSIGN) {
+        G |- a.right <| leftType
+    }
+    else {
+        G |- a.right : var Type rightType
+        {
+            a.op == OpAssignment.OR_ASSIGN || a.op == OpAssignment.AND_ASSIGN
+            G |- leftType <: createBoolean
+            G |- rightType <: createBoolean
+        } or {
+            a.op == OpAssignment.PLUS_ASSIGN || a.op == OpAssignment.MINUS_ASSIGN
+                || a.op == OpAssignment.TIMES_ASSIGN || a.op == OpAssignment.DIVIDED_BY_ASSIGN
+                || a.op == OpAssignment.MODULO_ASSIGN
+            {
+                G |- leftType  <: createInt
+                G |- rightType <: createInt
+            } or {
+                G |- leftType  <: createDouble
+                G |- rightType <: createInt or G |- rightType <: createDouble
+            }
+        } or {
+            a.op == OpAssignment.PLUS_ASSIGN
+            val stringType = newRoleType(createReadOnly, newClassRef(findClass(stringClassName, a)))
+            
+            G |- leftType <: stringType
+        } or fail
+            error "The operator " + a.op + " is undefined for the argument types "
+                + leftType.string + ", " + rightType.string
+            source a
+    }
+    
     t = leftType
 }
 
@@ -197,13 +229,13 @@ from {
         G |- rightType <: createInt or G |- rightType <: createDouble
         t = createDouble
     } or {
-        e.op == OpArithmetic.PLUS;
+        e.op == OpArithmetic.PLUS
         val stringType = newRoleType(createReadOnly, newClassRef(findClass(stringClassName, e)))
         
         G |- leftType <: stringType or G |- rightType <: stringType
         t = stringType
     } or fail
-        error "The operator + is undefined for the argument types "
+        error "The operator " + e.op + " is undefined for the argument types "
             + leftType.string + ", " + rightType.string
         source e
 }

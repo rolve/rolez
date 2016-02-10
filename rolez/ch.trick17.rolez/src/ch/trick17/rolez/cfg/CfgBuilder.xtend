@@ -1,6 +1,7 @@
 package ch.trick17.rolez.cfg
 
 import ch.trick17.rolez.RolezExtensions
+import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.BinaryExpr
 import ch.trick17.rolez.rolez.Block
 import ch.trick17.rolez.rolez.Expr
@@ -12,6 +13,7 @@ import ch.trick17.rolez.rolez.LocalVarDecl
 import ch.trick17.rolez.rolez.LogicalExpr
 import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.New
+import ch.trick17.rolez.rolez.OpAssignment
 import ch.trick17.rolez.rolez.ParameterizedBody
 import ch.trick17.rolez.rolez.ReturnExpr
 import ch.trick17.rolez.rolez.ReturnNothing
@@ -136,16 +138,11 @@ class CfgBuilder {
         process(s.expr, prev).linkAndReturn(newInstrNode(s))
     }
     
-    private def dispatch Linker process(BinaryExpr e, Linker prev) {
-        val leftLinker = process(e.left, prev)
-        process(e.right, leftLinker).linkAndReturn(newInstrNode(e))
-    }
-    
     private def dispatch Linker process(LogicalExpr e, Linker prev) {
         val leftLinker = process(e.left, prev)
         val node = newInstrNode(e)
         if(e.op == OR) {
-            // Short-circuit to "&&" node if left is "true", so link "&&" node first
+            // Short-circuit to "||" node if left is "true", so link "||" node first
             leftLinker.link(node)
             process(e.right, leftLinker).linkAndReturn(node)
         }
@@ -154,6 +151,28 @@ class CfgBuilder {
             process(e.right, leftLinker).link(node)
             leftLinker.linkAndReturn(node)
         }
+    }
+    
+    private def dispatch Linker process(Assignment a, Linker prev) {
+        val leftLinker = process(a.left, prev)
+        val node = newInstrNode(a)
+        if(a.op == OpAssignment.OR_ASSIGN) {
+            // Short-circuit to "|=" node if left is "true", so link "|=" node first
+            leftLinker.link(node)
+            process(a.right, leftLinker).linkAndReturn(node)
+        }
+        else if(a.op == OpAssignment.AND_ASSIGN) {
+            // Short-circuit to "&=" node if left is "false", so link "&=" node second
+            process(a.right, leftLinker).link(node)
+            leftLinker.linkAndReturn(node)
+        }
+        else
+            process(a.right, leftLinker).linkAndReturn(node)
+    }
+    
+    private def dispatch Linker process(BinaryExpr e, Linker prev) {
+        val leftLinker = process(e.left, prev)
+        process(e.right, leftLinker).linkAndReturn(newInstrNode(e))
     }
     
     private def dispatch Linker process(UnaryExpr e, Linker prev) {

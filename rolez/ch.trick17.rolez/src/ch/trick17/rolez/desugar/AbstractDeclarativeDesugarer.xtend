@@ -7,11 +7,9 @@ import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.EReference
 import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.emf.ecore.util.EObjectEList
-import org.eclipse.xtext.EcoreUtil2
 import org.eclipse.xtext.util.SimpleCache
 import org.eclipse.xtext.util.Triple
 import org.eclipse.xtext.util.Tuples
-import org.eclipse.xtext.nodemodel.INode
 
 abstract class AbstractDeclarativeDesugarer implements IDesugarer {
     
@@ -90,22 +88,5 @@ abstract class AbstractDeclarativeDesugarer implements IDesugarer {
     
     protected def void createReference(EObject object, EReference ref, String text) {
         desugarRefs.add(Tuples.create(object, ref, text))
-    }
-    
-    /**
-     * Copies the object and links the copy to the node model of the original,
-     * to enable reference resolution. References created with
-     * <code>createReference(EObject, EReference, String)</code> for the
-     * original are created for the copy as well.
-     */
-    protected def <T extends EObject> copy(T orig) {
-        val copy = EcoreUtil2.copy(orig)
-//        for(ref : orig.eClass.EReferences) {
-//            val existingRef = desugarRefs.findFirst[first === orig && second === ref]
-//            if(existingRef != null)
-//                createReference(copy, ref, existingRef.third)
-//        }
-        copy.eAdapters += orig.eAdapters.filter[it instanceof INode]
-        copy
     }
 }

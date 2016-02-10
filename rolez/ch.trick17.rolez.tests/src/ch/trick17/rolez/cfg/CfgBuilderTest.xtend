@@ -2,6 +2,7 @@ package ch.trick17.rolez.cfg
 
 import ch.trick17.rolez.RolezUtils
 import ch.trick17.rolez.TestUtils
+import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.Boolean
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.IfStmt
@@ -290,17 +291,129 @@ class CfgBuilderTest {
         ''')
     }
     
-    @Test def testExpr() {
+    @Test def testLogicalExpr() {
+        // Short-circuit!
         parse('''
-            task Main: {
-                0;
+            task Main(a: boolean, b: boolean): {
+                a || b;
+            }
+        ''').main.cfg.assertStructure('''
+            entry -> 1
+            1 -> 3, 2
+            2 -> 3
+            3 -> 4
+            4 -> 5
+            5 -> exit
+        ''')
+        parse('''
+            task Main(a: boolean, b: boolean): {
+                a && b;
+            }
+        ''').main.cfg.assertStructure('''
+            entry -> 1
+            1 -> 2, 3
+            2 -> 3
+            3 -> 4
+            4 -> 5
+            5 -> exit
+        ''')
+        
+        parse('''
+            task Main(a: boolean, b: boolean): {
+                a && (1 > 2 || b);
+            }
+        ''').main.cfg.assertStructure('''
+            entry -> 1
+            1 -> 2, 8
+            2 -> 3
+            3 -> 4
+            4 -> 6, 5
+            5 -> 6
+            6 -> 7
+            7 -> 8
+            8 -> 9
+            9 -> 10
+            10 -> exit
+        ''')
+        parse('''
+            task Main(b: boolean): {
+                0 == 1 && b;
             }
         ''').main.cfg.assertStructure('''
             entry -> 1
             1 -> 2
             2 -> 3
-            3 -> exit
+            3 -> 4, 5
+            4 -> 5
+            5 -> 6
+            6 -> 7
+            7 -> exit
         ''')
+    }
+    
+    @Test def testAssignment() {
+        // Short-circuit!
+        parse('''
+            task Main(a: boolean, b: boolean): {
+                var c = a;
+                c |= b;
+            }
+        ''').main.cfg.assertStructure('''
+            entry -> 1
+            1 -> 2
+            2 -> 3
+            3 -> 5, 4
+            4 -> 5
+            5 -> 6
+            6 -> 7
+            7 -> exit
+        ''')
+        parse('''
+            task Main(a: boolean, b: boolean): {
+                var c = a;
+                c &= b;
+            }
+        ''').main.cfg.assertStructure('''
+            entry -> 1
+            1 -> 2
+            2 -> 3
+            3 -> 4, 5
+            4 -> 5
+            5 -> 6
+            6 -> 7
+            7 -> exit
+        ''')
+    }
+    
+    @Test def testBinaryExpr() {
+        parse('''
+            task Main: {
+                0 + 1;
+            }
+        ''').main.cfg.assertStructure('''
+            entry -> 1
+            1 -> 2
+            2 -> 3
+            3 -> 4
+            4 -> 5
+            5 -> exit
+        ''')
+        
+        parse('''
+            task Main: {
+                0 == 1;
+            }
+        ''').main.cfg.assertStructure('''
+            entry -> 1
+            1 -> 2
+            2 -> 3
+            3 -> 4
+            4 -> 5
+            5 -> exit
+        ''')
+    }
+    
+    @Test def testUnaryExpr() {
         parse('''
             task Main: {
                 (0);
@@ -334,90 +447,22 @@ class CfgBuilderTest {
             3 -> 4
             4 -> exit
         ''')
-        
+    }
+    
+    @Test def testLiteral() {
         parse('''
             task Main: {
-                0 + 1;
+                0;
             }
         ''').main.cfg.assertStructure('''
             entry -> 1
             1 -> 2
             2 -> 3
-            3 -> 4
-            4 -> 5
-            5 -> exit
-        ''')
-        
-        parse('''
-            task Main: {
-                0 == 1;
-            }
-        ''').main.cfg.assertStructure('''
-            entry -> 1
-            1 -> 2
-            2 -> 3
-            3 -> 4
-            4 -> 5
-            5 -> exit
-        ''')
-        
-        // Short-circuit!
-        parse('''
-            task Main(a: boolean, b: boolean): {
-                a && b;
-            }
-        ''').main.cfg.assertStructure('''
-            entry -> 1
-            1 -> 2, 3
-            2 -> 3
-            3 -> 4
-            4 -> 5
-            5 -> exit
-        ''')
-        parse('''
-            task Main(a: boolean, b: boolean): {
-                a || b;
-            }
-        ''').main.cfg.assertStructure('''
-            entry -> 1
-            1 -> 3, 2
-            2 -> 3
-            3 -> 4
-            4 -> 5
-            5 -> exit
-        ''')
-        parse('''
-            task Main(b: boolean): {
-                0 == 1 && b;
-            }
-        ''').main.cfg.assertStructure('''
-            entry -> 1
-            1 -> 2
-            2 -> 3
-            3 -> 4, 5
-            4 -> 5
-            5 -> 6
-            6 -> 7
-            7 -> exit
-        ''')
-        parse('''
-            task Main(a: boolean, b: boolean): {
-                a && (1 > 2 || b);
-            }
-        ''').main.cfg.assertStructure('''
-            entry -> 1
-            1 -> 2, 8
-            2 -> 3
-            3 -> 4
-            4 -> 6, 5
-            5 -> 6
-            6 -> 7
-            7 -> 8
-            8 -> 9
-            9 -> 10
-            10 -> exit
+            3 -> exit
         ''')
     }
+    
+    // IMPROVE: More tests, for MemberAccess and the like
     
     private def cfg(ParameterizedBody it) {
         assertNoErrors
@@ -461,7 +506,7 @@ class CfgBuilderTest {
                 node.predecessors.size.assertThat(is(2))
                 if(node instanceof InstrNode)
                     node.instr.assertThat(either(instanceOf(IfStmt))
-                        .or(instanceOf(LogicalExpr)))
+                        .or(instanceOf(LogicalExpr)).or(instanceOf(Assignment)))
             }
         }
         
