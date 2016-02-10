@@ -172,8 +172,8 @@ from {
     G |- e.right : var Type rightType
     
     {
-        G |- leftType  <: createInt
-        G |- rightType <: createInt
+        G |- leftType  <: createInt or G |- leftType  <: createDouble
+        G |- rightType <: createInt or G |- rightType <: createDouble
     } or {
         G |- leftType  <: createChar
         G |- rightType <: createChar
@@ -192,6 +192,10 @@ from {
         G |- leftType  <: createInt
         G |- rightType <: createInt
         t = createInt
+    } or {
+        G |- leftType  <: createInt or G |- leftType  <: createDouble
+        G |- rightType <: createInt or G |- rightType <: createDouble
+        t = createDouble
     } or {
         e.op == OpArithmetic.PLUS;
         val stringType = newRoleType(createReadOnly, newClassRef(findClass(stringClassName, e)))
@@ -224,9 +228,18 @@ from {
 }
 
 rule TUnaryMinus
-    G |- UnaryMinus m : createInt
+    G |- UnaryMinus m : Type t
 from {
-    G |- m.expr <| createInt
+    G |- m.expr : var Type exprType
+    {
+        G |- exprType <: createInt
+        t = createInt
+    } or {
+        G |- exprType <: createDouble
+        t = createDouble
+    } or fail
+        error "The unary operator - is undefined for the argument type " + exprType.string
+        source m
 }
 
 rule TUnaryNot

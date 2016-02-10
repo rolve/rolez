@@ -167,19 +167,24 @@ class RolezTypeSystemTest {
     @Test def testTRelationalExpr() {
         parse("task Main: {   5 <    6; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
         parse("task Main: {  -1 <= -10; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
-        parse("task Main: { 'a' >  ' '; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
         parse("task Main: { 3+4 >=   0; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
+        
+        parse("task Main: { 'a' >  ' '; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
+        
+        parse("task Main: {  5.0 <  6.0; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
+        parse("task Main: { -1.0 <= -10; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
+        parse("task Main: { -1 <= -10.0; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
     }
     
     @Test def testTRelationalExprErrorInOp() {
         parse("task Main: { -true < 0; }")
-            .assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "int", "boolean")
+            .assertError(UNARY_MINUS, null, "operator", "-", "undefined", "boolean")
         parse("task Main: { 100 <= -false; }")
-            .assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "int", "boolean")
+            .assertError(UNARY_MINUS, null, "operator", "-", "undefined", "boolean")
         parse("task Main: { -'a' > 0; }")
-            .assertError(CHAR_LITERAL, SUBTYPEEXPR, "int", "char")
+            .assertError(UNARY_MINUS, null, "operator", "-", "undefined", "char")
         parse("task Main: { 100 >= -false; }")
-            .assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "int", "boolean")
+            .assertError(UNARY_MINUS, null, "operator", "-", "undefined", "boolean")
     }
     
     @Test def testTRelationalExprIncompatibleTypes() {
@@ -194,8 +199,12 @@ class RolezTypeSystemTest {
             .assertError(RELATIONAL_EXPR, null, "compare", "null")
         parse("task Main: { 5 > '5'; }")
             .assertError(RELATIONAL_EXPR, null, "compare", "int", "char")
+        parse("task Main: { 5.0 > '5'; }")
+            .assertError(RELATIONAL_EXPR, null, "compare", "double", "char")
         parse("task Main: { true > '5'; }")
             .assertError(RELATIONAL_EXPR, null, "compare", "boolean", "char")
+        parse("task Main: { true > 5.0; }")
+            .assertError(RELATIONAL_EXPR, null, "compare", "boolean", "double")
     }
     
     @Test def testTArithmeticExpr() {
@@ -204,6 +213,12 @@ class RolezTypeSystemTest {
         parse("task Main: {   3 *  2; }").main.lastExpr.type.assertThat(instanceOf(Int))
         parse("task Main: { 100 / -1; }").main.lastExpr.type.assertThat(instanceOf(Int))
         parse("task Main: { -99 %  3; }").main.lastExpr.type.assertThat(instanceOf(Int))
+        
+        parse("task Main: { 4.0 +  4.0; }").main.lastExpr.type.assertThat(instanceOf(Double))
+        parse("task Main: { 0.0 -    0; }").main.lastExpr.type.assertThat(instanceOf(Double))
+        parse("task Main: { 3.0 *    2; }").main.lastExpr.type.assertThat(instanceOf(Double))
+        parse("task Main: { 100 / -1.0; }").main.lastExpr.type.assertThat(instanceOf(Double))
+        parse("task Main: { -99.0 %  3; }").main.lastExpr.type.assertThat(instanceOf(Double))
         
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -216,7 +231,13 @@ class RolezTypeSystemTest {
             class rolez.lang.String mapped to java.lang.String
             task Main: { "" + '5'; }
         ''').main.lastExpr.type.assertRoleType(ReadOnly, stringClassName)
-            
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.String mapped to java.lang.String
+            task Main: { "" + 5.0; }
+        ''').main.lastExpr.type.assertRoleType(ReadOnly, stringClassName)
+        
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.String mapped to java.lang.String
@@ -228,11 +249,11 @@ class RolezTypeSystemTest {
         parse("task Main: { !'a' + 0; }")
             .assertError(CHAR_LITERAL, SUBTYPEEXPR, "char", "boolean")
         parse("task Main: { 100 - -false; }")
-            .assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "int", "boolean")
+            .assertError(UNARY_MINUS, null, "operator", "-", "undefined", "boolean")
         parse("task Main: { -'a' * 0; }")
-            .assertError(CHAR_LITERAL, SUBTYPEEXPR, "int", "char")
+            .assertError(UNARY_MINUS, null, "operator", "-", "undefined", "char")
         parse("task Main: { 100 / -true; }")
-            .assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "int", "boolean")
+            .assertError(UNARY_MINUS, null, "operator", "-", "undefined", "boolean")
         parse("task Main: { (3*3) % !42; }")
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
@@ -241,7 +262,7 @@ class RolezTypeSystemTest {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             task Main: { new Object + new Object; }
-        ''').assertError(ARITHMETIC_BINARY_EXPR, null, "operator", "undefined", "object")
+        ''').assertError(ARITHMETIC_BINARY_EXPR, null, "operator", "undefined", "Object")
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A
@@ -276,6 +297,8 @@ class RolezTypeSystemTest {
             .assertError(ARITHMETIC_BINARY_EXPR, null, "operator", "undefined", "null")
         parse("task Main: { 5 % '5'; }")
             .assertError(ARITHMETIC_BINARY_EXPR, null, "operator", "undefined", "int", "char")
+        parse("task Main: { 5.0 % '5'; }")
+            .assertError(ARITHMETIC_BINARY_EXPR, null, "operator", "undefined", "double", "char")
         parse("task Main: { true % '5'; }")
             .assertError(ARITHMETIC_BINARY_EXPR, null, "operator", "undefined", "boolean", "char")
     }
@@ -284,6 +307,7 @@ class RolezTypeSystemTest {
         // Redundant casts
         parse("task Main: { 5 as int; }").main.lastExpr.type.assertThat(instanceOf(Int))
         parse("task Main: { true as boolean; }").main.lastExpr.type.assertThat(instanceOf(Boolean))
+        parse("task Main: { 5.0 as double; }").main.lastExpr.type.assertThat(instanceOf(Double))
         
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -341,6 +365,8 @@ class RolezTypeSystemTest {
             .assertError(CAST, null, "cast", "boolean", "int")
         parse("task Main: { null as int; }")
             .assertError(CAST, null, "cast", "null", "int")
+        parse("task Main: { null as double; }")
+            .assertError(CAST, null, "cast", "null", "double")
         parse("task Main: { 5 as ; }")
             .assertError(CAST, null, "cast", "int", "void")
         
@@ -387,32 +413,36 @@ class RolezTypeSystemTest {
         parse("task Main: { -2; }").main.lastExpr.type.assertThat(instanceOf(Int))
         parse("task Main: { val a: int = 5; -a; }").main.lastExpr.type.assertThat(instanceOf(Int))
         parse("task Main: { -(4-4); }").main.lastExpr.type.assertThat(instanceOf(Int))
+        
+        parse("task Main: { -2.0; }").main.lastExpr.type.assertThat(instanceOf(Double))
+        parse("task Main: { val a: double = 5.0; -a; }").main.lastExpr.type.assertThat(instanceOf(Double))
+        parse("task Main: { -(4-4.0); }").main.lastExpr.type.assertThat(instanceOf(Double))
     }
     
     @Test def testTUnaryMinusErrorInOp() {
         parse("task Main: { -!5; }")
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
         parse("task Main: { -(-'a'); }")
-            .assertError(CHAR_LITERAL, SUBTYPEEXPR, "char", "int")
+            .assertError(UNARY_MINUS, null, "operator", "-", "undefined", "char")
     }
     
     @Test def testTUnaryMinusTypeMismatch() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             task Main: { -new Object; }
-        ''').assertError(NEW, SUBTYPEEXPR, "Object", "int")
+        ''').assertError(UNARY_MINUS, null, "operator", "-", "undefined", "Object")
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.String mapped to java.lang.String
             task Main: { -"Hello"; }
-        ''').assertError(STRING_LITERAL, SUBTYPEEXPR, "String", "int")
+        ''').assertError(UNARY_MINUS, null, "operator", "-", "undefined", "String")
         
         parse("task Main: { -'a'; }")
-            .assertError(CHAR_LITERAL, SUBTYPEEXPR, "char", "int")
+            .assertError(UNARY_MINUS, null, "operator", "-", "undefined", "char")
         parse("task Main: { -true; }")
-            .assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "boolean", "int")
+            .assertError(UNARY_MINUS, null, "operator", "-", "undefined", "boolean")
         parse("task Main: { -null; }")
-            .assertError(NULL_LITERAL, SUBTYPEEXPR, "null", "int")
+            .assertError(UNARY_MINUS, null, "operator", "-", "undefined", "null")
     }
     
     @Test def testTUnaryNot() {
@@ -426,7 +456,7 @@ class RolezTypeSystemTest {
     
     @Test def testTUnaryNotErrorInOp() {
         parse("task Main: { !(-'a'); }")
-            .assertError(CHAR_LITERAL, SUBTYPEEXPR, "char", "int")
+            .assertError(UNARY_MINUS, null, "operator", "-", "undefined", "char")
         parse("task Main: { !(!5); }")
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
@@ -446,6 +476,8 @@ class RolezTypeSystemTest {
             .assertError(CHAR_LITERAL, SUBTYPEEXPR, "char", "boolean")
         parse("task Main: { !5; }")
             .assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
+        parse("task Main: { !5.0; }")
+            .assertError(DOUBLE_LITERAL, SUBTYPEEXPR, "double", "boolean")
         parse("task Main: { !null; }")
             .assertError(NULL_LITERAL, SUBTYPEEXPR, "null", "boolean")
     }
