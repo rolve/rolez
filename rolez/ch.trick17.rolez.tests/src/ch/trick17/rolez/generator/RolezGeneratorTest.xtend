@@ -390,7 +390,7 @@ class RolezGeneratorTest {
                 
                 public java.lang.Void call() {
                     o1.registerNewOwner();
-                    rolez.lang.System.INSTANCE.out.println("Hello World!");
+                    java.lang.System.out.println("Hello World!");
                     o1.releasePassed();
                     o2.releaseShared();
                     return null;
@@ -418,7 +418,7 @@ class RolezGeneratorTest {
                 public java.lang.Void call() {
                     if(o instanceof «jvmGuardedClassName»)
                         ((«jvmGuardedClassName») o).registerNewOwner();
-                    rolez.lang.System.INSTANCE.out.println(o.toString());
+                    java.lang.System.out.println(o.toString());
                     if(o instanceof «jvmGuardedClassName»)
                         ((«jvmGuardedClassName») o).releasePassed();
                     return null;
@@ -1376,8 +1376,12 @@ class RolezGeneratorTest {
     @Test def void testThe() {
         parse('''
             the System.out.println("Hello World!");
+            val system = the System;
+            system.out.println("Hello again!");
         '''.withFrame, classes).generate.assertEqualsJava('''
-            rolez.lang.System.INSTANCE.out.println("Hello World!");
+            java.lang.System.out.println("Hello World!");
+            final rolez.lang.System system = rolez.lang.System.INSTANCE;
+            system.out.println("Hello again!");
         '''.withJavaFrame)
     }
     
@@ -1395,9 +1399,9 @@ class RolezGeneratorTest {
             the System.out.println("Twice the sum!: " + (2 * sum.get));
         '''.withFrame, classes).generate.assertEqualsJava('''
             final rolez.lang.Task<java.lang.Integer> sum = rolez.lang.TaskSystem.getDefault().start(new SumTask(1, 2));
-            rolez.lang.System.INSTANCE.out.println("Parallelism!");
-            rolez.lang.System.INSTANCE.out.println("The sum: " + sum.get());
-            rolez.lang.System.INSTANCE.out.println("Twice the sum!: " + (2 * sum.get()));
+            java.lang.System.out.println("Parallelism!");
+            java.lang.System.out.println("The sum: " + sum.get());
+            java.lang.System.out.println("Twice the sum!: " + (2 * sum.get()));
         '''.withJavaFrame)
     }
     

@@ -474,12 +474,8 @@ class RolezGenerator extends AbstractGenerator {
         case isFieldAccess:  generateFieldAccess
     }}
     
-    // IMPROVE: Generate direct access to members of mapped singletons, e.g., System, Math, ...
-    
     private def generateSliceGet(MemberAccess it)
         '''«target.genGuarded(createReadOnly)».«genSliceAccess("get")»(«args.get(0).gen»)'''
-    
-    
     
     private def generateSliceSet(MemberAccess it) {
         '''«target.genGuarded(createReadWrite)».«genSliceAccess("set")»(«args.get(0).gen», «args.get(1).gen»)'''
@@ -507,7 +503,11 @@ class RolezGenerator extends AbstractGenerator {
     
     private def generateMethodInvoke(MemberAccess it) {
         if(method.isMapped) {
-            val genInvoke = '''«target.genNested».«method.safeName»(«args.map[genCoerced].join(", ")»)'''
+            // Shorter and more efficient code for access to mapped singletons, like System, Math
+            val genTarget = 
+                if(target instanceof The) (target as The).classRef.clazz.jvmClass.qualifiedName
+                else target.genNested
+            val genInvoke = '''«genTarget».«method.safeName»(«args.map[genCoerced].join(", ")»)'''
             if(method.jvmMethod.returnType.type instanceof JvmArrayType) {
                 val componentType = ((method.type as RoleType).base as GenericClassRef).typeArg
                 '''«jvmGuardedArrayClassName».<«componentType.gen»[]>wrap(«genInvoke»)'''
@@ -550,6 +550,9 @@ class RolezGenerator extends AbstractGenerator {
                 ReadOnly : "guardReadOnly("  + gen + ")"
                 Pure     : genNested
             }
+        else if(it instanceof The)
+            // Shorter and more efficient code for access to mapped singletons, like System
+            classRef.clazz.jvmClass.qualifiedName
         else
             genNested
         
