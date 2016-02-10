@@ -108,10 +108,11 @@ class CfgBuilder {
     
     private def dispatch Linker process(ForLoop l, Linker prev) {
         val headNode = new LoopHeadNode(l)
-        if(!prev.link(headNode)) return [false]
+        if(!process(l.initializer, prev).link(headNode)) return [false]
         
-        val conditionLinker = process(l.condition, process(l.initializer, headNode.linker))
-        process(l.body, conditionLinker).link(headNode)
+        val conditionLinker = process(l.condition, headNode.linker)
+        val bodyLinker = process(l.body, conditionLinker)
+        process(l.step, bodyLinker).link(headNode)
         conditionLinker.linkAndReturn(newInstrNode(l))
     }
     
