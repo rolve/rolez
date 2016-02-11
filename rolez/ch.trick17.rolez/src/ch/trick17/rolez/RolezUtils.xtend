@@ -89,12 +89,12 @@ class RolezUtils {
     }
     
     def findClass(QualifiedName name, EObject context) {
-        scopeProvider.getScope(context, SIMPLE_CLASS_REF__CLAZZ)
+        scopeProvider.getScope(context.enclosingProgram, SIMPLE_CLASS_REF__CLAZZ)
             .getSingleElement(name)?.EObjectOrProxy?.resolve(context) as Class
     }
     
     def findNormalClass(QualifiedName name, EObject context) {
-        scopeProvider.getScope(context, GENERIC_CLASS_REF__CLAZZ)
+        scopeProvider.getScope(context.enclosingProgram, GENERIC_CLASS_REF__CLAZZ)
             .getSingleElement(name)?.EObjectOrProxy?.resolve(context) as NormalClass
     }
     
