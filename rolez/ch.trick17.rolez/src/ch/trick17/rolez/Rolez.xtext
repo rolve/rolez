@@ -26,25 +26,17 @@ Class:
     NormalClass | SingletonClass;
 
 NormalClass:
-    'class' name=QualifiedName
-    ('[' typeParam=TypeParam ']')?
-    (mapped?='mapped' 'to' jvmClass=[jvmTypes::JvmGenericType|QualifiedName])?
-    ('extends' superclassRef=ClassRef)?
-    ('{'
+    'class' name=QualifiedName ('[' typeParam=TypeParam ']')? WithMappedClass WithSuperclass ('{'
         (constrs+=Constr | members+=Member)+
     '}')?;
 
 SingletonClass:
-    'object' name=QualifiedName
-    (mapped?='mapped' 'to' jvmClass=[jvmTypes::JvmGenericType|QualifiedName])?
-    ('extends' superclassRef=ClassRef)?
-    ('{'
+    'object' name=QualifiedName WithMappedClass WithSuperclass ('{'
         members+=Member+
     '}')?;
 
 Task:
-    main?='main'? 'task' name=QualifiedName ('(' params+=Param (',' params+=Param)* ')')?
-    ':' type=Type body=Block;
+    main?='main'? 'task' name=QualifiedName WithParams WithType WithBody;
 
 TypeParam: name=ID;
 
@@ -52,29 +44,25 @@ Member:
     Field | Method;
 
 Constr:
-    {Constr} jvmConstr=[jvmTypes::JvmConstructor|MappedKeyword]?
-    'new' ('(' params+=Param (',' params+=Param)* ')')?
-    body=Block?;
+    {Constr} jvmConstr=[jvmTypes::JvmConstructor|Mapped]? 'new' WithParams WithBody?;
 
 Field:
-    jvmField=[jvmTypes::JvmField|MappedKeyword]?
-    kind=VarKind name=ID ':' type=Type
-    ('=' initializer=Expr)?;
+    jvmField=[jvmTypes::JvmField|Mapped]? kind=VarKind name=ID WithType ('=' initializer=Expr)?;
 
 enum VarKind:
     VAL='val' | VAR='var';
 
 Method:
-    jvmMethod=[jvmTypes::JvmOperation|MappedKeyword]?
-    (superMethod=[Method|OverrideKeyword] | 'def') thisRole=Role name=ID
+    jvmMethod=[jvmTypes::JvmOperation|Mapped]?
+    (superMethod=[Method|Override] | 'def') thisRole=Role name=ID
     ('[' roleParams+=RoleParam (',' roleParams+=RoleParam)* ']')?
-    ('('     params+=    Param (','     params+=    Param)* ')')?
-    ':' type=Type
-    body=Block?;
+    WithParams
+    WithType
+    WithBody?;
 
-MappedKeyword: 'mapped';
+Mapped: 'mapped';
 
-OverrideKeyword: 'override';
+Override: 'override';
 
 RoleParam:
     name=ID ('includes' upperBound=BuiltInRole)?; // IMPROVE: Allow role parameter refs as upper bounds
@@ -92,7 +80,7 @@ LocalVarDecl:
     variable=LocalVar ('=' initializer=Expr)? ';';
 
 LocalVar:
-    kind=VarKind name=ID (':' type=Type)?;
+    kind=VarKind name=ID (WithType)?;
 
 IfStmt:
     'if' '(' condition=Expr ')' thenPart=Stmt
@@ -107,9 +95,9 @@ ForLoop:
 // IMPROVE: for-each and maybe parallel for-each
 
 SuperConstrCall:
-    {SuperConstrCall} constr=[Constr|SuperKeyword] ('(' args+=Expr (',' args+=Expr)* ')')? ';';
+    {SuperConstrCall} constr=[Constr|Super] WithArgs ';';
 
-SuperKeyword: 'super';
+Super: 'super';
 
 Return:
     ReturnNothing | ReturnExpr;
@@ -188,12 +176,8 @@ SimpleExpr returns Expr:
 VarRef:
     variable=[Var];
 
-// The mess begins here: this rule is necessary for feature normalization
-// to work for the Argumented interface. And it needs to be here...
-ArgsOnly: args+=Expr;
-
 New:
-    constr=[Constr|NewKeyword] classRef=NewClassRef ('(' args+=Expr (',' args+=Expr)* ')')?;
+    constr=[Constr|NewKeyword] classRef=NewClassRef WithArgs;
 
 NewKeyword: 'new';
 
@@ -201,7 +185,7 @@ The:
     'the' classRef=TheClassRef;
 
 Start:
-    'start' taskRef=TaskRef ('(' args+=Expr (',' args+=Expr)* ')')?;
+    'start' taskRef=TaskRef WithArgs;
 
 Parenthesized: '(' expr=Expr ')';
 
@@ -273,38 +257,17 @@ TheClassRef returns ClassRef:
 TaskRef:
     '(' task=[Task|QualifiedName] ')' | task=[Task];
 
-/* 
- * The following rules are only used to modify the type hierarchy. The
- * various IDs suppress ambiguity warnings. It's a mess...
- */
+/* Fragments */
 
-Expr2 returns Expr:
-    UnaryExpr | BinaryExpr;
+fragment WithMappedClass returns Class:
+    (mapped?='mapped' 'to' jvmClass=[jvmTypes::JvmGenericType|QualifiedName])?;
 
-UnaryExpr:
-    {UnaryMinus} | ID {UnaryNot} | ID ID {Cast} | ID ID ID {Parenthesized};
+fragment WithSuperclass returns Class: ('extends' superclassRef=ClassRef)?;
 
-BinaryExpr:
-    {Assignment} | ID {LogicalExpr} | ID ID {EqualityExpr}
-        | ID ID ID {RelationalExpr} | ID ID ID ID {ArithmeticBinaryExpr};
+fragment WithType returns Typed: ':' type=Type;
 
-Instr:
-    Expr | Stmt;
+fragment WithParams returns ParameterizedBody: ('(' params+=Param (',' params+=Param)* ')')?;
 
-Var:
-    LocalVar | {Param};
+fragment WithBody returns ParameterizedBody: body=Block;
 
-Named:
-    ClassLike | Typed | TypeParam;
-
-Typed:
-    TypedBody | Field | {Var};
-
-ParameterizedBody:
-    Constr | TypedBody;
-
-TypedBody:
-    Method | Task;
-
-Argumented:
-    {MemberAccess} | New | Start | SuperConstrCall | ArgsOnly;
+fragment WithArgs returns Argumented: ('(' args+=Expr (',' args+=Expr)* ')')?;
