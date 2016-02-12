@@ -3,7 +3,7 @@ grammar ch.trick17.rolez.Rolez with org.eclipse.xtext.common.Terminals
 import "http://www.eclipse.org/emf/2002/Ecore"
 import "http://www.eclipse.org/xtext/common/JavaVMTypes" as jvmTypes
 
-generate rolez "http://trick17.ch/rolez/Rolez"
+import "http://trick17.ch/rolez/Rolez"
 
 Program:
     ('package' name=QualifiedName)?

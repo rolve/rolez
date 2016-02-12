@@ -1,5 +1,5 @@
-/src-gen
 /target
+/src-gen
+/emf-gen
 /xtend-gen
 /xsemantics-gen
-/model/generated
