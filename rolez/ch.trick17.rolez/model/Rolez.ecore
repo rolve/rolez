@@ -66,12 +66,14 @@
   <eClassifiers xsi:type="ecore:EClass" name="Stmt" eSuperTypes="#//Instr"/>
   <eClassifiers xsi:type="ecore:EClass" name="LocalVarDecl" eSuperTypes="#//Stmt">
     <eStructuralFeatures xsi:type="ecore:EReference" name="variable" eType="#//LocalVar"
-        containment="true"/>
+        containment="true" eOpposite="#//LocalVar/decl"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="initializer" eType="#//Expr"
         containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="LocalVar" eSuperTypes="#//Var">
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="kind" eType="#//VarKind"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="decl" eType="#//LocalVarDecl"
+        eOpposite="#//LocalVarDecl/variable"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="IfStmt" eSuperTypes="#//Stmt">
     <eStructuralFeatures xsi:type="ecore:EReference" name="condition" eType="#//Expr"

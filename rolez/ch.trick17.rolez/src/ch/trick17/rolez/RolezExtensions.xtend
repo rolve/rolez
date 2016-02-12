@@ -16,7 +16,6 @@ import ch.trick17.rolez.rolez.GenericClassRef
 import ch.trick17.rolez.rolez.Instr
 import ch.trick17.rolez.rolez.Int
 import ch.trick17.rolez.rolez.LocalVar
-import ch.trick17.rolez.rolez.LocalVarDecl
 import ch.trick17.rolez.rolez.Member
 import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.Method
@@ -191,8 +190,6 @@ class RolezExtensions {
             default: container?.enclosingBody
         }
     }
-    
-    def decl(LocalVar it) { enclosingStmt as LocalVarDecl }
     
     def jvmParam(Param it) { enclosingBody.jvmBody.parameters.get(paramIndex) }
     
