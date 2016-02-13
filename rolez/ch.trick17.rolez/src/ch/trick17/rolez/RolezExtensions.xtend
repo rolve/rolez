@@ -3,19 +3,14 @@ package ch.trick17.rolez
 import ch.trick17.rolez.generic.ParameterizedMethod
 import ch.trick17.rolez.generic.ParameterizedNormalClass
 import ch.trick17.rolez.rolez.Argumented
-import ch.trick17.rolez.rolez.Boolean
-import ch.trick17.rolez.rolez.Char
 import ch.trick17.rolez.rolez.Class
 import ch.trick17.rolez.rolez.ClassLike
 import ch.trick17.rolez.rolez.ClassRef
 import ch.trick17.rolez.rolez.Constr
-import ch.trick17.rolez.rolez.Double
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.Field
 import ch.trick17.rolez.rolez.GenericClassRef
 import ch.trick17.rolez.rolez.Instr
-import ch.trick17.rolez.rolez.Int
-import ch.trick17.rolez.rolez.LocalVar
 import ch.trick17.rolez.rolez.Member
 import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.Method
@@ -26,22 +21,15 @@ import ch.trick17.rolez.rolez.Param
 import ch.trick17.rolez.rolez.ParameterizedBody
 import ch.trick17.rolez.rolez.PrimitiveType
 import ch.trick17.rolez.rolez.Program
-import ch.trick17.rolez.rolez.Pure
-import ch.trick17.rolez.rolez.ReadOnly
-import ch.trick17.rolez.rolez.ReadWrite
 import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleParam
-import ch.trick17.rolez.rolez.RoleParamRef
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.SimpleClassRef
-import ch.trick17.rolez.rolez.SingletonClass
 import ch.trick17.rolez.rolez.Start
 import ch.trick17.rolez.rolez.Stmt
 import ch.trick17.rolez.rolez.Task
 import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.TypeParamRef
-import ch.trick17.rolez.rolez.VarKind
-import ch.trick17.rolez.rolez.Void
 import ch.trick17.rolez.typesystem.RolezSystem
 import java.util.HashSet
 import java.util.Set
@@ -83,8 +71,6 @@ class RolezExtensions {
         default            : nameProvider.getFullyQualifiedName(it)
     }}
     
-    def isSingleton(Class it) { it instanceof SingletonClass }
-    
     def isObjectClass(Class it) { qualifiedName == objectClassName }
     def isSliceClass (Class it) { qualifiedName ==  sliceClassName }
     def isArrayClass (Class it) { qualifiedName ==  arrayClassName }
@@ -101,11 +87,6 @@ class RolezExtensions {
         members +
             if(superclass == null) emptyList
             else parameterizedSuperclass.allMembers.filter[m | !overrides(m)]
-    }
-    
-    def superclass(Class it) {
-        val clazz = superclassRef?.clazz
-        if(clazz instanceof NormalClass) clazz else null
     }
     
     def parameterizedSuperclass(Class it) { superclassRef?.parameterizedClass as NormalClass }
@@ -129,9 +110,6 @@ class RolezExtensions {
             superclass?.collectSuperclasses(classes)
     }
     
-    def dispatch clazz( SimpleClassRef it) { clazz }
-    def dispatch clazz(GenericClassRef it) { clazz }
-    
     def dispatch parameterizedClass( SimpleClassRef it) { clazz }
     def dispatch parameterizedClass(GenericClassRef it) {
         clazz.parameterizedWith(#{clazz.typeParam -> typeArg})
@@ -143,9 +121,6 @@ class RolezExtensions {
             Method: methods.exists[utils.equalSignatureWithoutRoles(it, m)]
         }
     }
-    
-    def dispatch kind(LocalVar it) { kind }
-    def dispatch kind(   Param it) { VarKind.VAL }
     
     def Stmt enclosingStmt(EObject it) {
         val container = it?.eContainer
@@ -191,17 +166,6 @@ class RolezExtensions {
         }
     }
     
-    def jvmParam(Param it) { enclosingBody.jvmBody.parameters.get(paramIndex) }
-    
-    def dispatch jvmBody(Method it) { jvmMethod }
-    def dispatch jvmBody(Constr it) { jvmConstr }
-    
-    def isFieldAccess (MemberAccess it) { member instanceof Field  }
-    def isMethodInvoke(MemberAccess it) { member instanceof Method }
-    
-    def field (MemberAccess it) { member as Field  }
-    def method(MemberAccess it) { member as Method }
-    
     def body(Argumented it) { switch(it) {
         MemberAccess: method
         New         : constr
@@ -231,10 +195,6 @@ class RolezExtensions {
     def isArrayLength(MemberAccess it) {
         isFieldAccess && field.name == "length" && field.enclosingClass.qualifiedName == arrayClassName
     }
-    
-    def isMapped(Constr it) { jvmConstr != null }
-    def isMapped( Field it) { jvmField  != null }
-    def isMapped(Method it) { jvmMethod != null }
     
     def isOverriding(Method it) {
         superMethod != null && !superMethod.eIsProxy    // If superMethod could not be resolved,
@@ -279,13 +239,6 @@ class RolezExtensions {
     
     def string(Role it) { name }
     
-    def name(Role it) { switch(it) {
-        ReadWrite   : "readwrite"
-        ReadOnly    : "readonly"
-        Pure        : "pure"
-        RoleParamRef: param.name
-    }}
-    
     def string(RoleParam it) {
         name + " includes " + upperBound.string
     }
@@ -299,12 +252,4 @@ class RolezExtensions {
         // IMPROVE: Not a good idea for synthetic instructions
         NodeModelUtils.findActualNodeFor(it).text.trim.replaceAll("\\s+", " ")
     }
-    
-    def name(PrimitiveType it) { switch(it) {
-        Int:     "int"
-        Double:  "double"
-        Boolean: "boolean"
-        Char:    "char"
-        Void:    "void"
-    }}
 }

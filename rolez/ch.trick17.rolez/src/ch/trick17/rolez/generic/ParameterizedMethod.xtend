@@ -28,6 +28,8 @@ class ParameterizedMethod extends ParameterizedEObject<Method> implements Method
     override getType()        { eObject.type.parameterized }
     override getBody()        { eObject.body }
     
+    override isMapped() { eObject.isMapped }
+    
     override eGet(EStructuralFeature feature) {
         if(feature === METHOD__THIS_ROLE) roleParams
         else if(feature === PARAMETERIZED_BODY__PARAMS) params

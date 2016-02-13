@@ -26,6 +26,8 @@ package class ParameterizedField extends ParameterizedEObject<Field> implements 
     override getType()        { eObject.type.parameterized }
     override getInitializer() { eObject.initializer }
     
+    override isMapped() { eObject.isMapped }
+    
     override eGet(EStructuralFeature feature) {
         if(feature === TYPED__TYPE) type
         else eObject.eGet(feature)

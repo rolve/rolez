@@ -72,7 +72,7 @@ class RolezUtils {
         if(eContainer == null) it else EcoreUtil.copy(it)
     }
     
-    def createEnv(EObject context) {
+    def RuleEnvironment createEnv(EObject context) {
         val body = context.enclosingBody
         switch(body) {
             case null: new RuleEnvironment

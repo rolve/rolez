@@ -527,6 +527,11 @@ class RolezGenerator extends AbstractGenerator {
             gen
     }
     
+    private def jvmParam(Param it) { enclosingBody.jvmBody.parameters.get(paramIndex) }
+    
+    private def dispatch jvmBody(Method it) { jvmMethod }
+    private def dispatch jvmBody(Constr it) { jvmConstr }
+    
     private def gen(JvmArrayType it) { toString.substring(14) } // IMPROVE: A little less magic, a little more robustness, please
     
     private def generateFieldAccess(MemberAccess it) {

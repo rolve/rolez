@@ -20,11 +20,13 @@ package class ParameterizedParam extends ParameterizedEObject<Param> implements 
     override getName() { eObject.name }
     override getType() { eObject.type.parameterized }
     
+    override getKind() { eObject.kind }
+    
     override eGet(EStructuralFeature feature) {
         if(feature === TYPED__TYPE) type
         else eObject.eGet(feature)
     }
     
     override setName(String value) { throw new AssertionError }
-    override setType(Type   value) { throw new AssertionError }    
+    override setType(Type   value) { throw new AssertionError }
 }

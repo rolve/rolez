@@ -23,6 +23,8 @@ class ParameterizedConstr extends ParameterizedEObject<Constr> implements Constr
     override getParams()    { eObject.parameterizedParams }
     override getBody()      { eObject.body }
     
+    override isMapped() { eObject.isMapped }
+    
     override eGet(EStructuralFeature feature) {
         if(feature === PARAMETERIZED_BODY__PARAMS) params
         else eObject.eGet(feature)

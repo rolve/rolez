@@ -13,6 +13,8 @@
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="ClassLike" eSuperTypes="#//Named"/>
   <eClassifiers xsi:type="ecore:EClass" name="Class" eSuperTypes="#//ClassLike">
+    <eOperations name="isSingleton" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    <eOperations name="getSuperclass" eType="#//NormalClass"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="mapped" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="jvmClass" eType="ecore:EClass platform:/resource/org.eclipse.xtext.common.types/model/JavaVMTypes.ecore#//JvmGenericType"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="superclassRef" eType="#//ClassRef"
@@ -33,10 +35,12 @@
   <eClassifiers xsi:type="ecore:EClass" name="TypeParam" eSuperTypes="#//Named"/>
   <eClassifiers xsi:type="ecore:EClass" name="Member"/>
   <eClassifiers xsi:type="ecore:EClass" name="Constr" eSuperTypes="#//ParameterizedBody">
-    <eStructuralFeatures xsi:type="ecore:EReference" name="jvmConstr" eType="ecore:EClass platform:/resource/org.eclipse.xtext.common.types/model/JavaVMTypes.ecore#//JvmConstructor"/>
+    <eOperations name="isMapped" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="jvmConstr" eType="ecore:EClass ../../org.eclipse.xtext.common.types/model/JavaVMTypes.ecore#//JvmConstructor"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="Field" eSuperTypes="#//Member #//Typed">
-    <eStructuralFeatures xsi:type="ecore:EReference" name="jvmField" eType="ecore:EClass platform:/resource/org.eclipse.xtext.common.types/model/JavaVMTypes.ecore#//JvmField"/>
+    <eOperations name="isMapped" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="jvmField" eType="ecore:EClass ../../org.eclipse.xtext.common.types/model/JavaVMTypes.ecore#//JvmField"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="kind" eType="#//VarKind"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="initializer" eType="#//Expr"
         containment="true"/>
@@ -46,7 +50,8 @@
     <eLiterals name="VAR" value="1" literal="var"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="Method" eSuperTypes="#//Member #//TypedBody">
-    <eStructuralFeatures xsi:type="ecore:EReference" name="jvmMethod" eType="ecore:EClass platform:/resource/org.eclipse.xtext.common.types/model/JavaVMTypes.ecore#//JvmOperation"/>
+    <eOperations name="isMapped" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="jvmMethod" eType="ecore:EClass ../../org.eclipse.xtext.common.types/model/JavaVMTypes.ecore#//JvmOperation"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="superMethod" eType="#//Method"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="thisRole" eType="#//Role"
         containment="true"/>
@@ -175,7 +180,9 @@
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="Type"/>
   <eClassifiers xsi:type="ecore:EClass" name="ReferenceType" eSuperTypes="#//Type"/>
-  <eClassifiers xsi:type="ecore:EClass" name="PrimitiveType" eSuperTypes="#//Type"/>
+  <eClassifiers xsi:type="ecore:EClass" name="PrimitiveType" eSuperTypes="#//Type">
+    <eOperations name="getName" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+  </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="TypeParamRef" eSuperTypes="#//Type">
     <eStructuralFeatures xsi:type="ecore:EReference" name="param" eType="#//TypeParam"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="restrictingRole" eType="#//Role"
@@ -186,12 +193,16 @@
     <eStructuralFeatures xsi:type="ecore:EReference" name="base" eType="#//ClassRef"
         containment="true"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="Role"/>
+  <eClassifiers xsi:type="ecore:EClass" name="Role">
+    <eOperations name="getName" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+  </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="RoleParamRef" eSuperTypes="#//Role">
     <eStructuralFeatures xsi:type="ecore:EReference" name="param" eType="#//RoleParam"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="BuiltInRole" eSuperTypes="#//Role"/>
-  <eClassifiers xsi:type="ecore:EClass" name="ClassRef"/>
+  <eClassifiers xsi:type="ecore:EClass" name="ClassRef">
+    <eOperations name="getClazz" eType="#//Class"/>
+  </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="SimpleClassRef" eSuperTypes="#//ClassRef">
     <eStructuralFeatures xsi:type="ecore:EReference" name="clazz" eType="#//Class"/>
   </eClassifiers>
@@ -212,7 +223,9 @@
         containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="Instr"/>
-  <eClassifiers xsi:type="ecore:EClass" name="Var" eSuperTypes="#//Typed"/>
+  <eClassifiers xsi:type="ecore:EClass" name="Var" eSuperTypes="#//Typed">
+    <eOperations name="getKind" eType="#//VarKind"/>
+  </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="Named">
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
   </eClassifiers>
@@ -251,6 +264,10 @@
   <eClassifiers xsi:type="ecore:EClass" name="UnaryMinus" eSuperTypes="#//UnaryExpr"/>
   <eClassifiers xsi:type="ecore:EClass" name="UnaryNot" eSuperTypes="#//UnaryExpr"/>
   <eClassifiers xsi:type="ecore:EClass" name="MemberAccess" eSuperTypes="#//Expr #//Argumented">
+    <eOperations name="isFieldAccess" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    <eOperations name="isMethodInvoke" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    <eOperations name="getMethod" eType="#//Method"/>
+    <eOperations name="getField" eType="#//Field"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="target" eType="#//Expr"
         containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="member" eType="#//Member"/>
