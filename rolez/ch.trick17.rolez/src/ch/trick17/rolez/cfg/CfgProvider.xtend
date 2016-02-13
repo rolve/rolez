@@ -1,21 +1,13 @@
 package ch.trick17.rolez.cfg
 
 import ch.trick17.rolez.rolez.ParameterizedBody
-import com.google.inject.MembersInjector
-import javax.inject.Inject
 import org.eclipse.xtext.util.OnChangeEvictingCache
 
 class CfgProvider {
     
-    @Inject MembersInjector<CfgBuilder> injector
-    
     val cfgs = new OnChangeEvictingCache
     
     def controlFlowGraph(ParameterizedBody it) {
-        cfgs.get(it, eResource, [
-            val builder = new CfgBuilder(it)
-            injector.injectMembers(builder)
-            builder.build
-        ])
+        cfgs.get(it, eResource, [new CfgBuilder(it).build])
     }
 }

@@ -1,6 +1,5 @@
 package ch.trick17.rolez.cfg
 
-import ch.trick17.rolez.RolezExtensions
 import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.BinaryExpr
 import ch.trick17.rolez.rolez.Block
@@ -23,15 +22,12 @@ import ch.trick17.rolez.rolez.UnaryExpr
 import ch.trick17.rolez.rolez.WhileLoop
 import java.util.HashMap
 import java.util.Map
-import javax.inject.Inject
 
 import static ch.trick17.rolez.rolez.OpLogical.*
 
 import static extension java.util.Objects.requireNonNull
 
 class CfgBuilder {
-    
-    @Inject extension RolezExtensions
     
     /* Linkers are used to elegantly connect CFG nodes */
     
