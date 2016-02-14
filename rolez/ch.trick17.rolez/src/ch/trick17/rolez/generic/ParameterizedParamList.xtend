@@ -1,7 +1,7 @@
 package ch.trick17.rolez.generic
 
+import ch.trick17.rolez.rolez.Executable
 import ch.trick17.rolez.rolez.Param
-import ch.trick17.rolez.rolez.ParameterizedBody
 import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleParam
 import ch.trick17.rolez.rolez.Type
@@ -9,9 +9,9 @@ import ch.trick17.rolez.rolez.TypeParam
 import java.util.List
 import java.util.Map
 
-package class ParameterizedParamList extends ParameterizedEList<Param, ParameterizedBody> {
+package class ParameterizedParamList extends ParameterizedEList<Param, Executable> {
     
-    new(List<Param> list, ParameterizedBody eContainer, Map<TypeParam, Type> typeArgs, Map<RoleParam, Role> roleArgs) {
+    new(List<Param> list, Executable eContainer, Map<TypeParam, Type> typeArgs, Map<RoleParam, Role> roleArgs) {
         super(list, eContainer, typeArgs, roleArgs)
     }
     

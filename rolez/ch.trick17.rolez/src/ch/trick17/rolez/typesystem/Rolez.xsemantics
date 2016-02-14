@@ -13,6 +13,7 @@ import ch.trick17.rolez.rolez.ClassRef
 import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.DoubleLiteral
 import ch.trick17.rolez.rolez.EqualityExpr
+import ch.trick17.rolez.rolez.Executable
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.ExprStmt
 import ch.trick17.rolez.rolez.ForLoop
@@ -30,7 +31,6 @@ import ch.trick17.rolez.rolez.NullLiteral
 import ch.trick17.rolez.rolez.OpArithmetic
 import ch.trick17.rolez.rolez.OpAssignment
 import ch.trick17.rolez.rolez.Param
-import ch.trick17.rolez.rolez.ParameterizedBody
 import ch.trick17.rolez.rolez.Parenthesized
 import ch.trick17.rolez.rolez.PrimitiveType
 import ch.trick17.rolez.rolez.Pure
@@ -54,7 +54,7 @@ import ch.trick17.rolez.rolez.The
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.TypeParamRef
-import ch.trick17.rolez.rolez.TypedBody
+import ch.trick17.rolez.rolez.TypedExecutable
 import ch.trick17.rolez.rolez.UnaryMinus
 import ch.trick17.rolez.rolez.UnaryNot
 import ch.trick17.rolez.rolez.Var
@@ -87,7 +87,7 @@ judgments {
     varType   ||- Var v : output Type
     wellTyped |- Stmt s
     
-    validArgs |- Argumented a << ParameterizedBody p
+    validArgs |- Argumented a << Executable e
     
     subtypeExpr |- Expr left <| Type right
         error "Type mismatch: " + type(createEnv(left), left).value?.string + " is not a subtype of " + right.string
@@ -462,11 +462,11 @@ rule WReturnExpr
     G |- ReturnExpr r
 from {
     // Apparently, this needs to be in braces:...
-    {r.enclosingBody instanceof TypedBody} or fail
+    {r.enclosingExecutable instanceof TypedExecutable} or fail
         error "Cannot return an expression in a constructor"
         source r
     
-    G |- r.expr <| (r.enclosingBody as TypedBody).type
+    G |- r.expr <| (r.enclosingExecutable as TypedExecutable).type
 }
 
 rule WExprStmt
@@ -477,15 +477,15 @@ from {
 
 
 rule ValidArgs
-    G |- Argumented a << ParameterizedBody p
+    G |- Argumented a << Executable e
 from {
-    a.args.size >= p.params.size
+    a.args.size >= e.params.size
         or fail error "Too few arguments" source a
-    a.args.size == p.params.size
+    a.args.size == e.params.size
         or fail error "Too many arguments" source a
     
     val i = a.args.iterator
-    for(t : p.params.map[type]) {
+    for(t : e.params.map[type]) {
         G |- i.next <| t
     }
 }
@@ -622,7 +622,7 @@ rule AMemberAccess
 from {
     a.isFieldAccess
     a.field.kind == VarKind.VAR
-        or a.target instanceof This && a.enclosingBody instanceof Constr
+        or a.target instanceof This && a.enclosingExecutable instanceof Constr
         or fail error "Cannot assign to a value field" source a
     
     G |- a.target : var RoleType type

@@ -7,6 +7,7 @@ import ch.trick17.rolez.rolez.Class
 import ch.trick17.rolez.rolez.ClassLike
 import ch.trick17.rolez.rolez.ClassRef
 import ch.trick17.rolez.rolez.Constr
+import ch.trick17.rolez.rolez.Executable
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.Field
 import ch.trick17.rolez.rolez.GenericClassRef
@@ -18,7 +19,6 @@ import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.Null
 import ch.trick17.rolez.rolez.Param
-import ch.trick17.rolez.rolez.ParameterizedBody
 import ch.trick17.rolez.rolez.PrimitiveType
 import ch.trick17.rolez.rolez.Program
 import ch.trick17.rolez.rolez.Role
@@ -154,11 +154,11 @@ class RolezExtensions {
         }
     }
     
-    def ParameterizedBody enclosingBody(EObject it) {
+    def Executable enclosingExecutable(EObject it) {
         val container = it?.eContainer
         switch(container) {
-            ParameterizedBody: container
-            default: container?.enclosingBody
+            Executable: container
+            default: container?.enclosingExecutable
         }
     }
     
@@ -199,7 +199,7 @@ class RolezExtensions {
     def     destParam(Expr it) { (eContainer as Argumented).body.params.get(argIndex) }
     def destRoleParam(Role it) { (eContainer as MemberAccess).method.roleParams.get(roleArgIndex) }
     
-    def     paramIndex(    Param it) { enclosingBody.params.indexOf(it) }
+    def     paramIndex(    Param it) { enclosingExecutable.params.indexOf(it) }
     def roleParamIndex(RoleParam it) { enclosingMethod.roleParams.indexOf(it) }
     def       argIndex(     Expr it) { (eContainer as Argumented).args.indexOf(it) }
     def   roleArgIndex(     Role it) { (eContainer as MemberAccess).roleArgs.indexOf(it) }

@@ -2,12 +2,12 @@ package ch.trick17.rolez
 
 import ch.trick17.rolez.rolez.Block
 import ch.trick17.rolez.rolez.Class
+import ch.trick17.rolez.rolez.Executable
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.ExprStmt
 import ch.trick17.rolez.rolez.GenericClassRef
 import ch.trick17.rolez.rolez.LocalVarDecl
 import ch.trick17.rolez.rolez.NormalClass
-import ch.trick17.rolez.rolez.ParameterizedBody
 import ch.trick17.rolez.rolez.PrimitiveType
 import ch.trick17.rolez.rolez.Program
 import ch.trick17.rolez.rolez.Role
@@ -83,13 +83,13 @@ class TestUtils {
         result
     }
     
-    def expr(ParameterizedBody it, int i) { body.expr(i) }
+    def expr(Executable it, int i) { body.expr(i) }
     
     def expr(Block it, int i) {
         stmts.filter(ExprStmt).get(i).expr
     }
     
-    def lastExpr(ParameterizedBody it) { body.lastExpr }
+    def lastExpr(Executable it) { body.lastExpr }
     
     def lastExpr(Block it) {
         stmts.filter(ExprStmt).last.expr
@@ -101,7 +101,7 @@ class TestUtils {
         result.value
     }
     
-    def variable(ParameterizedBody b, int i) { b.body.variable(i) }
+    def variable(Executable b, int i) { b.body.variable(i) }
     
     def variable(Block b, int i) {
         b.stmts.filter(LocalVarDecl).get(i).variable

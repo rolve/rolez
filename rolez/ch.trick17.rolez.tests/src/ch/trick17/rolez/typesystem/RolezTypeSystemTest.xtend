@@ -1,6 +1,5 @@
 package ch.trick17.rolez.typesystem
 
-import ch.trick17.rolez.RolezExtensions
 import ch.trick17.rolez.TestUtils
 import ch.trick17.rolez.rolez.Boolean
 import ch.trick17.rolez.rolez.Char
@@ -41,7 +40,6 @@ class RolezTypeSystemTest {
     
     @Inject RolezSystem system
     @Inject extension RolezFactory
-    @Inject extension RolezExtensions
     @Inject extension TestUtils
     @Inject extension ParseHelper<Program>
     @Inject extension ValidationTestHelper

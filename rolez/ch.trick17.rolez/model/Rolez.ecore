@@ -25,8 +25,8 @@
         <eTypeArguments eClassifier="#//Method"/>
       </eGenericType>
     </eOperations>
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="mapped" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="jvmClass" eType="ecore:EClass platform:/resource/org.eclipse.xtext.common.types/model/JavaVMTypes.ecore#//JvmGenericType"/>
+    <eOperations name="isMapped" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="jvmClass" eType="ecore:EClass ../../org.eclipse.xtext.common.types/model/JavaVMTypes.ecore#//JvmGenericType"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="superclassRef" eType="#//ClassRef"
         containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="members" upperBound="-1"
@@ -39,12 +39,12 @@
         eType="#//Constr" containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="SingletonClass" eSuperTypes="#//Class"/>
-  <eClassifiers xsi:type="ecore:EClass" name="Task" eSuperTypes="#//ClassLike #//TypedBody">
+  <eClassifiers xsi:type="ecore:EClass" name="Task" eSuperTypes="#//ClassLike #//TypedExecutable">
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="main" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="TypeParam" eSuperTypes="#//Named"/>
   <eClassifiers xsi:type="ecore:EClass" name="Member"/>
-  <eClassifiers xsi:type="ecore:EClass" name="Constr" eSuperTypes="#//ParameterizedBody">
+  <eClassifiers xsi:type="ecore:EClass" name="Constr" eSuperTypes="#//Executable">
     <eOperations name="isMapped" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="jvmConstr" eType="ecore:EClass ../../org.eclipse.xtext.common.types/model/JavaVMTypes.ecore#//JvmConstructor"/>
   </eClassifiers>
@@ -59,7 +59,7 @@
     <eLiterals name="VAL" literal="val"/>
     <eLiterals name="VAR" value="1" literal="var"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="Method" eSuperTypes="#//Member #//TypedBody">
+  <eClassifiers xsi:type="ecore:EClass" name="Method" eSuperTypes="#//Member #//TypedExecutable">
     <eOperations name="isMapped" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="jvmMethod" eType="ecore:EClass ../../org.eclipse.xtext.common.types/model/JavaVMTypes.ecore#//JvmOperation"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="superMethod" eType="#//Method"/>
@@ -242,13 +242,13 @@
   <eClassifiers xsi:type="ecore:EClass" name="Typed" eSuperTypes="#//Named">
     <eStructuralFeatures xsi:type="ecore:EReference" name="type" eType="#//Type" containment="true"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="ParameterizedBody">
+  <eClassifiers xsi:type="ecore:EClass" name="Executable">
     <eStructuralFeatures xsi:type="ecore:EReference" name="params" upperBound="-1"
         eType="#//Param" containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="body" eType="#//Block"
         containment="true"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="TypedBody" eSuperTypes="#//Typed #//ParameterizedBody"/>
+  <eClassifiers xsi:type="ecore:EClass" name="TypedExecutable" eSuperTypes="#//Typed #//Executable"/>
   <eClassifiers xsi:type="ecore:EClass" name="Argumented">
     <eStructuralFeatures xsi:type="ecore:EReference" name="args" upperBound="-1" eType="#//Expr"
         containment="true"/>

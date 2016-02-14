@@ -9,6 +9,11 @@ import ch.trick17.rolez.rolez.NormalClass;
 
 public class ClassImplCustom extends ClassImpl {
     @Override
+    public boolean isMapped() {
+        return getJvmClass() != null;
+    }
+    
+    @Override
     public NormalClass getSuperclass() {
         ClassRef ref = getSuperclassRef();
         if(ref != null && ref.getClazz() instanceof NormalClass)

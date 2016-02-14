@@ -3,9 +3,9 @@ package ch.trick17.rolez.generic
 import ch.trick17.rolez.RolezResource
 import ch.trick17.rolez.rolez.BuiltInRole
 import ch.trick17.rolez.rolez.ClassRef
+import ch.trick17.rolez.rolez.Executable
 import ch.trick17.rolez.rolez.GenericClassRef
 import ch.trick17.rolez.rolez.Null
-import ch.trick17.rolez.rolez.ParameterizedBody
 import ch.trick17.rolez.rolez.PrimitiveType
 import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleParam
@@ -76,8 +76,8 @@ abstract class ParameterizedEObject<E extends EObject>
         GenericClassRef: new ParameterizedGenericClassRef(it, this, typeArgs, roleArgs)
     }}
     
-    def parameterizedParams(ParameterizedBody it) {
-        new ParameterizedParamList(params, this as ParameterizedBody, typeArgs, roleArgs)
+    def parameterizedParams(Executable it) {
+        new ParameterizedParamList(params, this as Executable, typeArgs, roleArgs)
     }
     
     /* (Partially) supported eMethods */

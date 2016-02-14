@@ -11,7 +11,7 @@ import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.EStructuralFeature
 import org.eclipse.xtext.common.types.JvmConstructor
 
-import static ch.trick17.rolez.rolez.RolezPackage.Literals.PARAMETERIZED_BODY__PARAMS
+import static ch.trick17.rolez.rolez.RolezPackage.Literals.EXECUTABLE__PARAMS
 
 class ParameterizedConstr extends ParameterizedEObject<Constr> implements Constr {
     
@@ -26,7 +26,7 @@ class ParameterizedConstr extends ParameterizedEObject<Constr> implements Constr
     override isMapped() { eObject.isMapped }
     
     override eGet(EStructuralFeature feature) {
-        if(feature === PARAMETERIZED_BODY__PARAMS) params
+        if(feature === EXECUTABLE__PARAMS) params
         else eObject.eGet(feature)
     }
     

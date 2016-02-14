@@ -7,7 +7,6 @@ import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.Param
-import ch.trick17.rolez.rolez.ParameterizedBody
 import ch.trick17.rolez.rolez.Parenthesized
 import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleType
@@ -19,6 +18,7 @@ import ch.trick17.rolez.rolez.The
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.VarRef
 import javax.inject.Inject
+import ch.trick17.rolez.rolez.Executable
 
 class RoleAnalysis {
     
@@ -30,14 +30,14 @@ class RoleAnalysis {
     }
     
     def dispatch Role dynamicRole(VarRef it) {
-        if(variable instanceof Param && enclosingBody instanceof Task && !enclosingBody.mayStartTask)
+        if(variable instanceof Param && enclosingExecutable instanceof Task && !enclosingExecutable.mayStartTask)
             (variable.type as RoleType).role
         else
             createPure
     }
     
     def dispatch Role dynamicRole(This it) {
-        if(enclosingBody instanceof Constr && !enclosingBody.mayStartTask)
+        if(enclosingExecutable instanceof Constr && !enclosingExecutable.mayStartTask)
             createReadWrite
         else
             createPure
@@ -67,7 +67,7 @@ class RoleAnalysis {
     
     private def dispatch boolean isGlobal(Expr _) { false }
     
-    private def boolean mayStartTask(ParameterizedBody it) {
+    private def boolean mayStartTask(Executable it) {
         body.eAllContents.exists[
             it instanceof Start
                 || (it instanceof New && !(it as New).constr.isMapped)

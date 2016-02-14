@@ -4,12 +4,12 @@ import ch.trick17.rolez.RolezExtensions
 import ch.trick17.rolez.RolezUtils
 import ch.trick17.rolez.rolez.Argumented
 import ch.trick17.rolez.rolez.Constr
+import ch.trick17.rolez.rolez.Executable
 import ch.trick17.rolez.rolez.Field
 import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.Method
 import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.NormalClass
-import ch.trick17.rolez.rolez.ParameterizedBody
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
 import ch.trick17.rolez.rolez.SuperConstrCall
@@ -181,7 +181,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
      * http://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.12.2
      * </a>.
      */
-    private def maxSpecific(Iterable<? extends ParameterizedBody> candidates, Argumented args) {
+    private def maxSpecific(Iterable<? extends Executable> candidates, Argumented args) {
         val applicable = candidates.filter[
             system.validArgsSucceeded(utils.createEnv(args), args, it)
         ].toList
@@ -191,11 +191,11 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
         ]
     }
     
-    private def strictlyMoreSpecificThan(ParameterizedBody target, ParameterizedBody other) {
+    private def strictlyMoreSpecificThan(Executable target, Executable other) {
         target.moreSpecificThan(other) && !other.moreSpecificThan(target)
     }
     
-    private def moreSpecificThan(ParameterizedBody target, ParameterizedBody other) {
+    private def moreSpecificThan(Executable target, Executable other) {
         // Assume both targets have the same number of parameters
         val i = other.params.iterator
         target.params.forall[system.subtypeSucceeded(utils.createEnv(target), it.type, i.next.type)]

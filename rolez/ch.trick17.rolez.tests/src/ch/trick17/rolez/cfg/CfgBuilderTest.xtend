@@ -4,10 +4,10 @@ import ch.trick17.rolez.RolezUtils
 import ch.trick17.rolez.TestUtils
 import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.Boolean
+import ch.trick17.rolez.rolez.Executable
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.IfStmt
 import ch.trick17.rolez.rolez.LogicalExpr
-import ch.trick17.rolez.rolez.ParameterizedBody
 import ch.trick17.rolez.rolez.Program
 import ch.trick17.rolez.tests.RolezInjectorProvider
 import ch.trick17.rolez.typesystem.RolezSystem
@@ -464,7 +464,7 @@ class CfgBuilderTest {
     
     // IMPROVE: More tests, for MemberAccess and the like
     
-    private def cfg(ParameterizedBody it) {
+    private def cfg(Executable it) {
         assertNoErrors
         controlFlowGraph
     }

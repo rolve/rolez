@@ -260,14 +260,14 @@ TaskRef:
 /* Fragments */
 
 fragment WithMappedClass returns Class:
-    (mapped?='mapped' 'to' jvmClass=[jvmTypes::JvmGenericType|QualifiedName])?;
+    ('mapped' 'to' jvmClass=[jvmTypes::JvmGenericType|QualifiedName])?;
 
 fragment WithSuperclass returns Class: ('extends' superclassRef=ClassRef)?;
 
 fragment WithType returns Typed: ':' type=Type;
 
-fragment WithParams returns ParameterizedBody: ('(' params+=Param (',' params+=Param)* ')')?;
+fragment WithParams returns Executable: ('(' params+=Param (',' params+=Param)* ')')?;
 
-fragment WithBody returns ParameterizedBody: body=Block;
+fragment WithBody returns Executable: body=Block;
 
 fragment WithArgs returns Argumented: ('(' args+=Expr (',' args+=Expr)* ')')?;

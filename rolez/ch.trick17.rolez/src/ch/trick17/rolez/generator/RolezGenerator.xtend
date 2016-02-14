@@ -527,7 +527,7 @@ class RolezGenerator extends AbstractGenerator {
             gen
     }
     
-    private def jvmParam(Param it) { enclosingBody.jvmBody.parameters.get(paramIndex) }
+    private def jvmParam(Param it) { enclosingExecutable.jvmBody.parameters.get(paramIndex) }
     
     private def dispatch jvmBody(Method it) { jvmMethod }
     private def dispatch jvmBody(Constr it) { jvmConstr }

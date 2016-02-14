@@ -9,6 +9,7 @@ import ch.trick17.rolez.rolez.Block
 import ch.trick17.rolez.rolez.Class
 import ch.trick17.rolez.rolez.ClassLike
 import ch.trick17.rolez.rolez.Constr
+import ch.trick17.rolez.rolez.Executable
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.ExprStmt
 import ch.trick17.rolez.rolez.Field
@@ -21,7 +22,6 @@ import ch.trick17.rolez.rolez.Method
 import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.Null
-import ch.trick17.rolez.rolez.ParameterizedBody
 import ch.trick17.rolez.rolez.Program
 import ch.trick17.rolez.rolez.ReadOnly
 import ch.trick17.rolez.rolez.ReturnExpr
@@ -33,7 +33,7 @@ import ch.trick17.rolez.rolez.SuperConstrCall
 import ch.trick17.rolez.rolez.Task
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.Type
-import ch.trick17.rolez.rolez.TypedBody
+import ch.trick17.rolez.rolez.TypedExecutable
 import ch.trick17.rolez.rolez.VarKind
 import ch.trick17.rolez.rolez.VarRef
 import ch.trick17.rolez.rolez.Void
@@ -158,7 +158,7 @@ class RolezValidator extends RolezSystemValidator {
         if(!(type instanceof Void))
             error("A main task must have a void return type", type, null, INCORRECT_MAIN_TASK)
         if(params.size > 1)
-            error("A main task must have zero or one parameter", PARAMETERIZED_BODY__PARAMS, INCORRECT_MAIN_TASK)
+            error("A main task must have zero or one parameter", EXECUTABLE__PARAMS, INCORRECT_MAIN_TASK)
         else if(params.size == 1 && !params.head.type.isStringArray)
             error("The parameter of a main must must be of type readonly Array[String]",
                 params.head.type, null, INCORRECT_MAIN_TASK)
@@ -237,7 +237,7 @@ class RolezValidator extends RolezSystemValidator {
     }
     
     @Check
-    def checkNoDuplicateParams(ParameterizedBody it) {
+    def checkNoDuplicateParams(Executable it) {
         for(p : params)
             if(params.exists[p !== it && p.name == name])
                 error("Duplicate parameter " + p.name, p, NAMED__NAME, DUPLICATE_VAR)
@@ -287,7 +287,7 @@ class RolezValidator extends RolezSystemValidator {
 	}
 	
 	@Check
-	def checkReturnExpr(TypedBody it) {
+	def checkReturnExpr(TypedExecutable it) {
         if(body == null || type instanceof Void) return;
         
 	    val cfg = controlFlowGraph
@@ -407,7 +407,7 @@ class RolezValidator extends RolezSystemValidator {
     }
     
     @Check
-    def checkLocalVarsInitialized(ParameterizedBody it) {
+    def checkLocalVarsInitialized(Executable it) {
         if(body == null) return
         
         val cfg = controlFlowGraph
@@ -421,7 +421,7 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkSuperConstrCall(SuperConstrCall it) {
-        if(!(enclosingBody instanceof Constr))
+        if(!(enclosingExecutable instanceof Constr))
             error("Cannot call a super constructor here", null, INCORRECT_SUPER_CONSTR_CALL)
         
         if(!constr.checkedExceptionTypes.isEmpty)
@@ -465,7 +465,7 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkVoid(Void it) {
-        if(!(eContainer instanceof TypedBody) || it !== (eContainer as TypedBody).type)
+        if(!(eContainer instanceof TypedExecutable) || it !== (eContainer as TypedExecutable).type)
             error("The void type can only be used as a return type", null, VOID_NOT_RETURN_TYPE)
     }
     

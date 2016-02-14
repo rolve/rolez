@@ -5,6 +5,7 @@ import ch.trick17.rolez.rolez.Block
 import ch.trick17.rolez.rolez.Class
 import ch.trick17.rolez.rolez.ClassRef
 import ch.trick17.rolez.rolez.Constr
+import ch.trick17.rolez.rolez.Executable
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.ForLoop
 import ch.trick17.rolez.rolez.GenericClassRef
@@ -14,7 +15,6 @@ import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.Method
 import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.NormalClass
-import ch.trick17.rolez.rolez.ParameterizedBody
 import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
@@ -73,7 +73,7 @@ class RolezUtils {
     }
     
     def RuleEnvironment createEnv(EObject context) {
-        val body = context.enclosingBody
+        val body = context.enclosingExecutable
         switch(body) {
             case null: new RuleEnvironment
             Task: new RuleEnvironment
@@ -106,7 +106,7 @@ class RolezUtils {
         name == other.name && equalParamsWithoutRoles(other)
     }
     
-    def equalParamsWithoutRoles(ParameterizedBody it, ParameterizedBody other) {
+    def equalParamsWithoutRoles(Executable it, Executable other) {
         val i = other.params.map[type].iterator
         params.size == other.params.size
             && params.map[type].forall[equalTypeWithoutRoles(i.next)]
@@ -160,7 +160,7 @@ class RolezUtils {
             + varsAbove(container.eContainer, container)
     }
     
-    def dispatch Iterable<? extends Var> varsAbove(ParameterizedBody container, Stmt s) {
+    def dispatch Iterable<? extends Var> varsAbove(Executable container, Stmt s) {
         container.params
     }
     

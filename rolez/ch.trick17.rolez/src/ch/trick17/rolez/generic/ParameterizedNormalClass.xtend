@@ -21,13 +21,13 @@ class ParameterizedNormalClass extends ParameterizedEObject<NormalClass> impleme
     
     override getName()          { eObject.name }
     override getTypeParam()     { eObject.typeParam }
-    override isMapped()         { eObject.isMapped }
     override getJvmClass()      { eObject.jvmClass }
     override getSuperclassRef() { eObject.superclassRef.parameterized }
     override getConstrs()       { new ParameterizedConstrList(eObject.constrs, this, typeArgs, roleArgs) }
     override getMembers()       { new ParameterizedMemberList(eObject.members, this, typeArgs, roleArgs) }
     
     override isSingleton()   { eObject.isSingleton }
+    override isMapped()      { eObject.isMapped }
     override getSuperclass() { eObject.superclass }
     override getFields()     { eObject.fields }
     override getMethods()    { eObject.methods }
@@ -41,7 +41,6 @@ class ParameterizedNormalClass extends ParameterizedEObject<NormalClass> impleme
     
     override setName(String             value) { throw new AssertionError }
     override setTypeParam(TypeParam     value) { throw new AssertionError }
-    override setMapped(boolean          value) { throw new AssertionError }
     override setJvmClass(JvmGenericType value) { throw new AssertionError }
     override setSuperclassRef(ClassRef  value) { throw new AssertionError }
 }

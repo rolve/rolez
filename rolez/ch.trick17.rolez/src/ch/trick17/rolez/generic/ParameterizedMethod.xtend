@@ -32,7 +32,7 @@ class ParameterizedMethod extends ParameterizedEObject<Method> implements Method
     
     override eGet(EStructuralFeature feature) {
         if(feature === METHOD__THIS_ROLE) roleParams
-        else if(feature === PARAMETERIZED_BODY__PARAMS) params
+        else if(feature === EXECUTABLE__PARAMS) params
         else if(feature === TYPED__TYPE) type
         else eObject.eGet(feature)
     }
