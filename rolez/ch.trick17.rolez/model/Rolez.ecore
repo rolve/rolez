@@ -15,6 +15,16 @@
   <eClassifiers xsi:type="ecore:EClass" name="Class" eSuperTypes="#//ClassLike">
     <eOperations name="isSingleton" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
     <eOperations name="getSuperclass" eType="#//NormalClass"/>
+    <eOperations name="getFields">
+      <eGenericType eClassifier="ecore:EDataType ../../org.eclipse.xtext.common.types/model/JavaVMTypes.ecore#//Iterable">
+        <eTypeArguments eClassifier="#//Field"/>
+      </eGenericType>
+    </eOperations>
+    <eOperations name="getMethods">
+      <eGenericType eClassifier="ecore:EDataType ../../org.eclipse.xtext.common.types/model/JavaVMTypes.ecore#//Iterable">
+        <eTypeArguments eClassifier="#//Method"/>
+      </eGenericType>
+    </eOperations>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="mapped" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="jvmClass" eType="ecore:EClass platform:/resource/org.eclipse.xtext.common.types/model/JavaVMTypes.ecore#//JvmGenericType"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="superclassRef" eType="#//ClassRef"

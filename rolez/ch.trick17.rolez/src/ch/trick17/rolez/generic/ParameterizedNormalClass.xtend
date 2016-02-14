@@ -20,15 +20,17 @@ class ParameterizedNormalClass extends ParameterizedEObject<NormalClass> impleme
     }
     
     override getName()          { eObject.name }
-    override getTypeParam()     { /* TODO: Is this correct? */ eObject.typeParam }
+    override getTypeParam()     { eObject.typeParam }
     override isMapped()         { eObject.isMapped }
     override getJvmClass()      { eObject.jvmClass }
-    override getSuperclassRef() { /* TODO: Is this correct? */  eObject.superclassRef.parameterized }
+    override getSuperclassRef() { eObject.superclassRef.parameterized }
     override getConstrs()       { new ParameterizedConstrList(eObject.constrs, this, typeArgs, roleArgs) }
     override getMembers()       { new ParameterizedMemberList(eObject.members, this, typeArgs, roleArgs) }
     
     override isSingleton()   { eObject.isSingleton }
     override getSuperclass() { eObject.superclass }
+    override getFields()     { eObject.fields }
+    override getMethods()    { eObject.methods }
 
     override eGet(EStructuralFeature feature) {
         if(feature === CLASS__SUPERCLASS_REF) superclassRef

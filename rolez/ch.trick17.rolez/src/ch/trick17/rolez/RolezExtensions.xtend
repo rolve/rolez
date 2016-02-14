@@ -57,10 +57,6 @@ class RolezExtensions {
     
     def Iterable<Task> tasks(Program it) { elements.filter(Task) }
     
-    def Iterable<Method> methods(Class it) { members.filter(Method) }
-    
-    def Iterable<Field> fields(Class it) { members.filter(Field) }
-    
     def QualifiedName qualifiedName(ClassLike it) { switch(it) {
         ParameterizedNormalClass: nameProvider.getFullyQualifiedName(genericEObject)
         default                  :nameProvider.getFullyQualifiedName(it)

@@ -1,6 +1,5 @@
 package ch.trick17.rolez.validation
 
-import ch.trick17.rolez.RolezExtensions
 import ch.trick17.rolez.RolezUtils
 import ch.trick17.rolez.cfg.ControlFlowGraph
 import ch.trick17.rolez.cfg.DataFlowAnalysis
@@ -32,7 +31,6 @@ class ValFieldsInitializedAnalysis extends DataFlowAnalysis<Initialized> {
         }
     }
     
-    @Inject extension RolezExtensions
     @Inject RolezUtils utils
     val Class clazz
     val newFlow = new Initialized(null, null)
