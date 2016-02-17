@@ -20,15 +20,19 @@ class ParameterizedMethod extends ParameterizedEObject<Method> implements Method
     }
     
     override getJvmMethod()   { eObject.jvmMethod }
+    override isDeclaredTask() { eObject.isDeclaredTask }
+    override getSuperMethod() { eObject.superMethod }
     override getRoleParams()  { eObject.roleParams }
     override getThisRole()    { eObject.thisRole.parameterized }
-    override getSuperMethod() { eObject.superMethod }
     override getName()        { eObject.name }
     override getParams()      { eObject.parameterizedParams }
     override getType()        { eObject.type.parameterized }
     override getBody()        { eObject.body }
     
-    override isMapped() { eObject.isMapped }
+    override isMapped()     { eObject.isMapped }
+    override isTask()       { eObject.isTask }
+    override isMain()       { eObject.isMain }
+    override isOverriding() { eObject.isOverriding }
     
     override eGet(EStructuralFeature feature) {
         if(feature === METHOD__THIS_ROLE) roleParams
@@ -38,6 +42,7 @@ class ParameterizedMethod extends ParameterizedEObject<Method> implements Method
     }
     
     override setJvmMethod(JvmOperation value) { throw new AssertionError }
+    override setDeclaredTask(  boolean value) { throw new AssertionError }
     override setSuperMethod(    Method value) { throw new AssertionError }
     override setThisRole(         Role value) { throw new AssertionError }
     override setName(           String value) { throw new AssertionError }

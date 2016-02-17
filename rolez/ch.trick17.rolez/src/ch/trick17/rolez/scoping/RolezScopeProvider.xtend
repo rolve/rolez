@@ -46,16 +46,16 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     
     def scope_MemberAccess_member(MemberAccess it, EReference ref) {
         val targetType = system.type(utils.createEnv(it), target).value
-        val memberName = crossRefText(it, ref)
+        val memberName = crossRefText(ref)
         
         if(targetType instanceof RoleType) {
             val fields = targetType.base.parameterizedClass.allMembers.filter(Field)
                 .filter[f | f.name == memberName]
-            if(args.isEmpty && roleArgs.isEmpty && !fields.isEmpty)
+            if(args.isEmpty && roleArgs.isEmpty && !isTaskStart && !fields.isEmpty)
                 scopeFor(fields)
             else {
                 val candidates = targetType.base.parameterizedClass.allMembers.filter(Method)
-                    .filter[m | m.name == memberName]
+                    .filter[m | m.name == memberName && (!isTaskStart || m.isTask)]
                     .map[m |
                         val roleArgs = system.inferRoleArgs(utils.createEnv(it), it, m)
                         if(roleArgs.size == m.roleParams.size) m.parameterizedWith(roleArgs)
@@ -205,6 +205,6 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
         val proxy = eGet(ref, false) as InternalEObject
         val fragment = proxy.eProxyURI.fragment
         val node = (eResource as LazyLinkingResource).encoder.decode(eResource, fragment).third
-        node.text
+        node.text.trim
     }
 }

@@ -1,7 +1,7 @@
 package ch.trick17.rolez
 
-import ch.trick17.rolez.rolez.Block
 import ch.trick17.rolez.rolez.Class
+import ch.trick17.rolez.rolez.Block
 import ch.trick17.rolez.rolez.Executable
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.ExprStmt
@@ -13,7 +13,6 @@ import ch.trick17.rolez.rolez.Program
 import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.SimpleClassRef
-import ch.trick17.rolez.rolez.Task
 import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.Var
 import ch.trick17.rolez.typesystem.RolezSystem
@@ -28,6 +27,7 @@ import org.eclipse.xtext.resource.XtextResourceSet
 import org.eclipse.xtext.util.StringInputStream
 
 import static org.hamcrest.Matchers.*
+import static org.junit.Assert.assertEquals
 
 import static extension org.hamcrest.MatcherAssert.assertThat
 
@@ -50,9 +50,26 @@ class TestUtils {
         it
     }
     
-    def main(Program it) {
+    def withFrame(CharSequence it) '''
+        class rolez.lang.Object mapped to java.lang.Object
+        class rolez.lang.Array[T] mapped to rolez.lang.Array {
+            mapped new(length: int)
+            mapped def r get[r includes readonly](i: int): T with r
+            mapped def readwrite set(i: int, o: T):
+        }
+        class rolez.lang.String mapped to java.lang.String
+        class A
+        class B
+        class App {
+            task pure frameTask(a: boolean, b: boolean): { «it» }
+        }
+    '''
+    
+    def task(Program it) {
         assertNoErrors
-        elements.filter(Task).filter[name == "Main"].head
+        val tasks = classes.map[methods].flatten.filter[isTask].toList
+        tasks.size.assertThat(is(1))
+        tasks.head
     }
     
     def findClass(Program it, String name) {
@@ -97,7 +114,8 @@ class TestUtils {
     
     def type(Expr e) {
         val result = system.type(createEnv(e), e)
-        result.failed.assertThat(is(false))
+        if(result.failed)
+            assertEquals("", result.ruleFailedException.message)
         result.value
     }
     

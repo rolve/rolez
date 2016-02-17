@@ -4,7 +4,6 @@ import ch.trick17.rolez.generic.ParameterizedMethod
 import ch.trick17.rolez.generic.ParameterizedNormalClass
 import ch.trick17.rolez.rolez.Argumented
 import ch.trick17.rolez.rolez.Class
-import ch.trick17.rolez.rolez.ClassLike
 import ch.trick17.rolez.rolez.ClassRef
 import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.Executable
@@ -15,7 +14,6 @@ import ch.trick17.rolez.rolez.Instr
 import ch.trick17.rolez.rolez.Member
 import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.Method
-import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.Null
 import ch.trick17.rolez.rolez.Param
@@ -25,9 +23,7 @@ import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleParam
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.SimpleClassRef
-import ch.trick17.rolez.rolez.Start
 import ch.trick17.rolez.rolez.Stmt
-import ch.trick17.rolez.rolez.Task
 import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.TypeParamRef
 import ch.trick17.rolez.typesystem.RolezSystem
@@ -43,6 +39,7 @@ import org.eclipse.xtext.util.OnChangeEvictingCache
 import static ch.trick17.rolez.Constants.*
 
 import static extension ch.trick17.rolez.generic.Parameterized.*
+import ch.trick17.rolez.rolez.RolezFactory
 
 /**
  * Extension methods for the Rolez language elements
@@ -53,11 +50,7 @@ class RolezExtensions {
     @Inject RolezSystem system
     @Inject RolezUtils utils
     
-    def Iterable<Class> classes(Program it) { elements.filter(Class) }
-    
-    def Iterable<Task> tasks(Program it) { elements.filter(Task) }
-    
-    def QualifiedName qualifiedName(ClassLike it) { switch(it) {
+    def QualifiedName qualifiedName(Class it) { switch(it) {
         ParameterizedNormalClass: nameProvider.getFullyQualifiedName(genericEObject)
         default                  :nameProvider.getFullyQualifiedName(it)
     }}
@@ -66,6 +59,13 @@ class RolezExtensions {
         ParameterizedMethod: nameProvider.getFullyQualifiedName(genericEObject)
         default            : nameProvider.getFullyQualifiedName(it)
     }}
+    
+    def thisType(Constr it) {
+        utils.newRoleType(RolezFactory.eINSTANCE.createReadWrite, utils.newClassRef(enclosingClass))
+    }
+    def thisType(Method it) {
+        utils.newRoleType(thisRole, utils.newClassRef(enclosingClass))
+    }
     
     def isObjectClass(Class it) { qualifiedName == objectClassName }
     def isSliceClass (Class it) { qualifiedName ==  sliceClassName }
@@ -162,12 +162,6 @@ class RolezExtensions {
         }
     }
     
-    def body(Argumented it) { switch(it) {
-        MemberAccess: method
-        New         : constr
-        Start       : taskRef.task
-    }}
-    
     def isSliceGet(MemberAccess it) {
         isMethodInvoke && method.name == "get"
             && system.type(utils.createEnv(it), target).value.isSliceType
@@ -192,11 +186,7 @@ class RolezExtensions {
         isFieldAccess && field.name == "length" && field.enclosingClass.qualifiedName == arrayClassName
     }
     
-    def isOverriding(Method it) {
-        superMethod != null && !superMethod.eIsProxy    // If superMethod could not be resolved,
-    }                                                   // don't do any overriding checks
-    
-    def     destParam(Expr it) { (eContainer as Argumented).body.params.get(argIndex) }
+    def     destParam(Expr it) { (eContainer as Argumented).executable.params.get(argIndex) }
     def destRoleParam(Role it) { (eContainer as MemberAccess).method.roleParams.get(roleArgIndex) }
     
     def     paramIndex(    Param it) { enclosingExecutable.params.indexOf(it) }

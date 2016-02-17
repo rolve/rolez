@@ -11,7 +11,6 @@ import ch.trick17.rolez.rolez.BooleanLiteral
 import ch.trick17.rolez.rolez.Cast
 import ch.trick17.rolez.rolez.CharLiteral
 import ch.trick17.rolez.rolez.Class
-import ch.trick17.rolez.rolez.ClassLike
 import ch.trick17.rolez.rolez.ClassRef
 import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.DoubleLiteral
@@ -47,12 +46,9 @@ import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
 import ch.trick17.rolez.rolez.SimpleClassRef
 import ch.trick17.rolez.rolez.SingletonClass
-import ch.trick17.rolez.rolez.Start
 import ch.trick17.rolez.rolez.Stmt
 import ch.trick17.rolez.rolez.StringLiteral
 import ch.trick17.rolez.rolez.SuperConstrCall
-import ch.trick17.rolez.rolez.Task
-import ch.trick17.rolez.rolez.TaskRef
 import ch.trick17.rolez.rolez.The
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.Type
@@ -79,6 +75,8 @@ import static ch.trick17.rolez.rolez.VarKind.*
 
 import static extension java.util.Objects.requireNonNull
 import static extension org.eclipse.xtext.util.Strings.convertToJavaString
+import ch.trick17.rolez.rolez.RoleParamRef
+import ch.trick17.rolez.rolez.BuiltInRole
 
 class RolezGenerator extends AbstractGenerator {
     
@@ -93,9 +91,9 @@ class RolezGenerator extends AbstractGenerator {
     
     override void doGenerate(Resource resource, IFileSystemAccess2 fsa, IGeneratorContext context) {
         val program = resource.contents.head as Program
-        for (e : program.classes.filter[!mapped || isSingleton] + program.tasks) {
-            val name = e.qualifiedName.segments.join(File.separator) + ".java"
-            fsa.generateFile(name, e.generateElement)
+        for (c : program.classes.filter[!mapped || isSingleton]) {
+            val name = c.qualifiedName.segments.join(File.separator) + ".java"
+            fsa.generateFile(name, c.generateClass)
         }
     }
     
@@ -103,7 +101,7 @@ class RolezGenerator extends AbstractGenerator {
      * Class and members
      */
     
-    private def dispatch generateElement(NormalClass it) '''
+    private def dispatch generateClass(NormalClass it) '''
         «IF !safePackage.isEmpty»
         package «safePackage»;
         
@@ -143,7 +141,7 @@ class RolezGenerator extends AbstractGenerator {
             || isObjectClass)
     }
     
-    private def dispatch generateElement(SingletonClass it) '''
+    private def dispatch generateClass(SingletonClass it) '''
         «IF !safePackage.isEmpty»
         package «safePackage»;
         
@@ -157,106 +155,6 @@ class RolezGenerator extends AbstractGenerator {
             private «safeSimpleName»() {}
             « fields.map[genObjectField ].join»
             «methods.map[genObjectMethod].join»
-        }
-    '''
-    
-    private def dispatch generateElement(Task it) '''
-        «IF !safePackage.isEmpty»
-        package «safePackage»;
-        
-        «ENDIF»
-        import static «jvmGuardedClassName».*;
-        
-        public final class «safeSimpleName» implements java.util.concurrent.Callable<«type.genGeneric»> {
-            «IF isMain»
-            
-            public static void main(final java.lang.String[] args) {
-                «jvmTaskSystemClassName».getDefault().run(new «safeSimpleName»(«IF !params.isEmpty»«jvmGuardedArrayClassName».<java.lang.String[]>wrap(args)«ENDIF»));
-            }
-            «ENDIF»
-            «IF !params.isEmpty»
-            
-            «FOR p : params»
-            private final «p.type.gen» «p.safeName»;
-            «ENDFOR»
-            
-            public «safeSimpleName»(«params.map[gen].join(", ")») {
-                «FOR p : params.filter[needsTransition]»
-                «p.genTransition»
-                «ENDFOR»
-                «FOR p : params»
-                this.«p.safeName» = «p.safeName»;
-                «ENDFOR»
-            }
-            «ENDIF»
-            
-            public «type.genGeneric» call() {
-                «FOR p : params.filter[needsRegisterNewOwner]»
-                «p.genRegisterNewOwner»
-                «ENDFOR»
-                «body.genStmtsWithTryCatch»
-                «FOR p : params.filter[needsTransition]»
-                «p.genRelease»
-                «ENDFOR»
-                «IF type instanceof Void»
-                return null;
-                «ENDIF»
-            }
-        }
-    '''
-    
-    private def needsTransition(Param it) {
-        type.isGuarded && !((type as RoleType).role instanceof Pure)
-    }
-    
-    private def genTransition(Param it) {
-        val kind = if((type as RoleType).role instanceof ReadWrite) "pass" else "share"
-        if((type as RoleType).base.clazz.isObjectClass)
-            '''
-            if(«safeName» instanceof «jvmGuardedClassName»)
-                ((«jvmGuardedClassName») «safeName»).pass();
-            '''
-        else
-            '''«safeName».«kind»();'''
-    }
-    
-    private def needsRegisterNewOwner(Param it) {
-        type.isGuarded && (type as RoleType).role instanceof ReadWrite
-    }
-    
-    private def genRegisterNewOwner(Param it) {
-        if((type as RoleType).base.clazz.isObjectClass)
-            '''
-            if(«safeName» instanceof «jvmGuardedClassName»)
-                ((«jvmGuardedClassName») «safeName»).registerNewOwner();
-            '''
-        else
-            '''«safeName».registerNewOwner();'''
-    }
-    
-    private def genRelease(Param it) {
-        val kind = if((type as RoleType).role  instanceof ReadWrite) "Passed" else "Shared"
-        if((type as RoleType).base.clazz.isObjectClass)
-            '''
-            if(«safeName» instanceof «jvmGuardedClassName»)
-                ((«jvmGuardedClassName») «safeName»).release«kind»();
-            '''
-        else
-            '''«safeName».release«kind»();'''
-    }
-    
-    private def gen(Field it) '''
-        
-        public «kind.gen»«type.gen» «safeName»«IF initializer != null» = «initializer.gen»«ENDIF»;
-    '''
-    
-    private def gen(Method it) '''
-        
-        «IF isOverriding»
-        @java.lang.Override
-        «ENDIF»
-        public «genReturnType» «safeName»(«params.map[gen].join(", ")») {
-            «body.genStmtsWithTryCatch»
         }
     '''
     
@@ -274,6 +172,117 @@ class RolezGenerator extends AbstractGenerator {
             }
         '''
     }
+    
+    private def gen(Field it) '''
+        
+        public «kind.gen»«type.gen» «safeName»«IF initializer != null» = «initializer.gen»«ENDIF»;
+    '''
+    
+    private def gen(Method it) '''
+        
+        «IF isOverriding»
+        @java.lang.Override
+        «ENDIF»
+        public «genReturnType» «safeName»(«params.map[gen].join(", ")») {
+            «body.genStmtsWithTryCatch»
+        }
+        «IF isTask»
+        
+        public java.util.concurrent.Callable<«type.genGeneric»> $«name»Task(«params.map[gen].join(", ")») {
+            «IF thisRole.needsTransition»
+            «genTransition("", thisType)»
+            «ENDIF»
+            «FOR p : params.filter[needsTransition]»
+            «genTransition(p.safeName, p.type as RoleType)»
+            «ENDFOR»
+            return new java.util.concurrent.Callable<«type.genGeneric»>() {
+                public «type.genGeneric» call() {
+                    «IF thisRole.needsRegisterNewOwner»
+                    «genRegisterNewOwner("", enclosingClass)»
+                    «ENDIF»
+                    «FOR p : params.filter[needsRegisterNewOwner]»
+                    «genRegisterNewOwner(p.safeName, (p.type as RoleType).base.clazz)»
+                    «ENDFOR»
+                    «body.genStmtsWithTryCatch(true)»
+                    finally {
+                        «IF thisRole.needsTransition»
+                        «genRelease("", thisType)»
+                        «ENDIF»
+                        «FOR p : params.filter[needsTransition]»
+                        «genRelease(p.safeName, p.type as RoleType)»
+                        «ENDFOR»
+                    }
+                    «IF type instanceof Void»
+                    return null;
+                    «ENDIF»
+                }
+            };
+        }
+        «ENDIF»
+        «IF isMain»
+        
+        public static void main(final java.lang.String[] args) {
+            «jvmTaskSystemClassName».getDefault().run(new «enclosingClass.safeSimpleName»().$«name»Task(«IF !params.isEmpty»«jvmGuardedArrayClassName».<java.lang.String[]>wrap(args)«ENDIF»));
+        }
+        «ENDIF»
+    '''
+    
+    private def String encodeTaskParamType(Type it) { switch(it) {
+        PrimitiveType: name
+        RoleType: base.clazz.qualifiedName.toString.replace('.', '﹎') + switch(base) {
+            SimpleClassRef: ""
+            GenericClassRef: "‿" + (base as GenericClassRef).typeArg.encodeTaskParamType + "⁔"
+        }
+    }}
+    
+    private def needsTransition(Param it) {
+        type.isGuarded && (type as RoleType).role.needsTransition
+    }
+    
+    private def needsTransition(Role it) { !(erased instanceof Pure)}
+    
+    private def genTransition(String target, RoleType type) {
+        val kind = if(type.role.erased instanceof ReadWrite) "pass" else "share"
+        if(type.base.clazz.isObjectClass)
+            '''
+            if(«target» instanceof «jvmGuardedClassName»)
+                ((«jvmGuardedClassName») «target»).«kind»();
+            '''
+        else
+            '''«IF !target.isEmpty»«target».«ENDIF»«kind»();'''
+    }
+    
+    private def needsRegisterNewOwner(Param it) {
+        type.isGuarded && (type as RoleType).role.needsRegisterNewOwner
+    }
+    
+    private def needsRegisterNewOwner(Role it) { erased instanceof ReadWrite}
+    
+    private def genRegisterNewOwner(String target, Class clazz) {
+        if(clazz.isObjectClass)
+            '''
+            if(«target» instanceof «jvmGuardedClassName»)
+                ((«jvmGuardedClassName») «target»).registerNewOwner();
+            '''
+        else
+            '''«IF !target.isEmpty»«target».«ENDIF»registerNewOwner();'''
+    }
+    
+    private def genRelease(String target, RoleType type) {
+        val kind = if(type.role.erased instanceof ReadWrite) "Passed" else "Shared"
+        if(type.base.clazz.isObjectClass)
+            '''
+            if(«target» instanceof «jvmGuardedClassName»)
+                ((«jvmGuardedClassName») «target»).release«kind»();
+            '''
+        else
+            '''«IF !target.isEmpty»«target».«ENDIF»release«kind»();'''
+    }
+    
+    private def erased(Role it) { switch(it) {
+        BuiltInRole: it
+        RoleParamRef: param.upperBound
+    }}
     
     private def genStmtsWithTryCatch(Block it) { genStmtsWithTryCatch(false) }
     
@@ -470,8 +479,9 @@ class RolezGenerator extends AbstractGenerator {
         case isArrayGet:     generateArrayGet
         case isArraySet:     generateArraySet
         case isArrayLength:  generateArrayLength
-        case isMethodInvoke: generateMethodInvoke
         case isFieldAccess:  generateFieldAccess
+        case isMethodInvoke: generateMethodInvoke
+        case isTaskStart:    generateTaskStart
     }}
     
     private def generateSliceGet(MemberAccess it)
@@ -500,6 +510,14 @@ class RolezGenerator extends AbstractGenerator {
     
     private def generateArrayLength(MemberAccess it)
         '''«target.genNested».data.length'''
+    
+    private def generateFieldAccess(MemberAccess it) {
+        val requiredRole =
+            if(isFieldWrite)           createReadWrite
+            else if(field.kind == VAR) createReadOnly
+            else                       createPure
+        '''«target.genGuarded(requiredRole)».«field.safeName»'''
+    }
     
     private def generateMethodInvoke(MemberAccess it) {
         if(method.isMapped) {
@@ -534,14 +552,6 @@ class RolezGenerator extends AbstractGenerator {
     
     private def gen(JvmArrayType it) { toString.substring(14) } // IMPROVE: A little less magic, a little more robustness, please
     
-    private def generateFieldAccess(MemberAccess it) {
-        val requiredRole =
-            if(isFieldWrite)           createReadWrite
-            else if(field.kind == VAR) createReadOnly
-            else                       createPure
-        '''«target.genGuarded(requiredRole)».«field.safeName»'''
-    }
-    
     private def isFieldWrite(MemberAccess it) {
         eContainer instanceof Assignment && it === (eContainer as Assignment).left
     }
@@ -564,6 +574,9 @@ class RolezGenerator extends AbstractGenerator {
         // IMPROVE: Better syntax (and performance?) when using type system
     }
     
+    private def generateTaskStart(MemberAccess it)
+        '''«jvmTaskSystemClassName».getDefault().start(«target.genNested».$«method.name»Task(«args.map[gen].join(", ")»))'''
+    
     private def dispatch generateExpr(This _) '''this'''
     
     private def dispatch generateExpr(VarRef it) { variable.safeName }
@@ -582,9 +595,6 @@ class RolezGenerator extends AbstractGenerator {
     }
     
     private def dispatch generateExpr(The it) '''«classRef.gen».INSTANCE'''
-    
-    private def dispatch generateExpr(Start it)
-        '''«jvmTaskSystemClassName».getDefault().start(new «taskRef.gen»(«args.map[gen].join(", ")»))'''
     
     private def dispatch generateExpr(Parenthesized it) { expr.gen }
     
@@ -644,8 +654,6 @@ class RolezGenerator extends AbstractGenerator {
             safeQualifiedName
     }
     
-    private def gen(TaskRef it) { task.safeQualifiedName }
-    
     private def dispatch CharSequence genGeneric(PrimitiveType it) { jvmWrapperTypeName }
     private def dispatch CharSequence genGeneric(         Type it) { generateType }
     
@@ -674,22 +682,22 @@ class RolezGenerator extends AbstractGenerator {
     
     private def safeName(Named it) { safe(name) }
     
-    private def safeQualifiedName(ClassLike it) {
+    private def safeQualifiedName(Class it) {
         qualifiedName.segments.map[safe].join(".")
     }
     
-    private def safeSimpleName(ClassLike it) {
+    private def safeSimpleName(Class it) {
         safe(qualifiedName.lastSegment)
     }
     
-    private def safePackage(ClassLike it) {
+    private def safePackage(Class it) {
         val segments = qualifiedName.segments
         segments.takeWhile[it != segments.last].map[safe].join(".")
     }
     
     private def safe(String name) {
         if(javaKeywords.contains(name))
-            "$" + name
+            "£" + name
         else
             name
     }

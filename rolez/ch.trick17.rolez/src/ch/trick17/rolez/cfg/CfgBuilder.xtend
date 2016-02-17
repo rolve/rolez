@@ -16,7 +16,6 @@ import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.OpAssignment
 import ch.trick17.rolez.rolez.ReturnExpr
 import ch.trick17.rolez.rolez.ReturnNothing
-import ch.trick17.rolez.rolez.Start
 import ch.trick17.rolez.rolez.SuperConstrCall
 import ch.trick17.rolez.rolez.UnaryExpr
 import ch.trick17.rolez.rolez.WhileLoop
@@ -188,11 +187,6 @@ class CfgBuilder {
     private def dispatch Linker process(New n, Linker prev) {
         val lastLinker = n.args.fold(prev, [p, e | process(e, p)])
         lastLinker.linkAndReturn(newInstrNode(n))
-    }
-    
-    private def dispatch Linker process(Start s, Linker prev) {
-        val lastLinker = s.args.fold(prev, [p, e | process(e, p)])
-        lastLinker.linkAndReturn(newInstrNode(s))
     }
     
     // Everything else (This, VarRef, Literals)

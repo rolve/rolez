@@ -38,20 +38,16 @@ class CfgBuilderTest {
     @Inject extension ValidationTestHelper
     
     @Test def testBlock() {
-        parse('''
-            task Main: {}
-        ''').main.cfg.assertStructure('''
+        parse("".withFrame).task.cfg.assertStructure('''
             entry -> 1
             1 -> exit
         ''')
         
         parse('''
-            task Main: {
-                0;
-                2;
-                4;
-            }
-        ''').main.cfg.assertStructure('''
+            0;
+            2;
+            4;
+        '''.withFrame).task.cfg.assertStructure('''
             entry -> 1
             1 -> 2
             2 -> 3
@@ -63,15 +59,11 @@ class CfgBuilderTest {
         ''') // Note there's a node for every stmt (incl. blocks) and for every expr
         
         parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.String mapped to java.lang.String
-            task Main: {
-                0;
-                return;
-                "Hi";
-                5+5;
-            }
-        ''').main.cfg.assertStructure('''
+            0;
+            return;
+            "Hi";
+            5+5;
+        '''.withFrame).task.cfg.assertStructure('''
             entry -> 1
             1 -> 2
             2 -> 3
@@ -81,16 +73,14 @@ class CfgBuilderTest {
     
     @Test def testIfStmt() {
         parse('''
-            task Main(b: boolean): {
-                0;
-                if(b) {
-                    3;
-                    5;
-                }
-                else
-                    8;
+            0;
+            if(b) {
+                3;
+                5;
             }
-        ''').main.cfg.assertStructure('''
+            else
+                8;
+        '''.withFrame).task.cfg.assertStructure('''
             entry -> 1
             1 -> 2
             2 -> 3
@@ -107,11 +97,9 @@ class CfgBuilderTest {
         ''')
         
         parse('''
-            task Main(b: boolean): {
-                if(b) {}
-                else {}
-            }
-        ''').main.cfg.assertStructure('''
+            if(b) {}
+            else {}
+        '''.withFrame).task.cfg.assertStructure('''
             entry -> 1
             1 -> 2, 3
             2 -> 4
@@ -121,15 +109,13 @@ class CfgBuilderTest {
         ''')
         
         parse('''
-            task Main(b: boolean): {
-                0;
-                if(b)
-                    3;
-                else
-                    5;
-                8;
-            }
-        ''').main.cfg.assertStructure('''
+            0;
+            if(b)
+                3;
+            else
+                5;
+            8;
+        '''.withFrame).task.cfg.assertStructure('''
             entry -> 1
             1 -> 2
             2 -> 3
@@ -145,11 +131,9 @@ class CfgBuilderTest {
         ''')
         
         parse('''
-            task Main(b: boolean): {
-                if(b)
-                    1;
-            }
-        ''').main.cfg.assertStructure('''
+            if(b)
+                1;
+        '''.withFrame).task.cfg.assertStructure('''
             entry -> 1
             1 -> 2, 4
             2 -> 3
@@ -159,14 +143,12 @@ class CfgBuilderTest {
         ''')
         
         parse('''
-            task Main(b: boolean): {
-                if(b)
-                    return;
-                else {
-                    return;
-                }
+            if(b)
+                return;
+            else {
+                return;
             }
-        ''').main.cfg.assertStructure('''
+        '''.withFrame).task.cfg.assertStructure('''
             entry -> 1
             1 -> 2, 3
             2 -> exit
@@ -174,14 +156,12 @@ class CfgBuilderTest {
         ''')
         
         parse('''
-            task Main(b: boolean): {
-                if(b)
-                    return;
-                else
-                    return;
-                3;
-            }
-        ''').main.cfg.assertStructure('''
+            if(b)
+                return;
+            else
+                return;
+            3;
+        '''.withFrame).task.cfg.assertStructure('''
             entry -> 1
             1 -> 2, 3
             2 -> exit
@@ -189,12 +169,10 @@ class CfgBuilderTest {
         ''')
         
         parse('''
-            task Main(b: boolean): {
-                if(b) {
-                    return;
-                }
+            if(b) {
+                return;
             }
-        ''').main.cfg.assertStructure('''
+        '''.withFrame).task.cfg.assertStructure('''
             entry -> 1
             1 -> 2, 3
             2 -> exit
@@ -203,12 +181,10 @@ class CfgBuilderTest {
         ''')
         
         parse('''
-            task Main(b: boolean): {
-                if(b)
-                    return;
-                3;
-            }
-        ''').main.cfg.assertStructure('''
+            if(b)
+                return;
+            3;
+        '''.withFrame).task.cfg.assertStructure('''
             entry -> 1
             1 -> 2, 3
             2 -> exit
@@ -219,12 +195,10 @@ class CfgBuilderTest {
         ''')
         
         parse('''
-            task Main(b: boolean): {
-                if(b) {}
-                else
-                    return;
-            }
-        ''').main.cfg.assertStructure('''
+            if(b) {}
+            else
+                return;
+        '''.withFrame).task.cfg.assertStructure('''
             entry -> 1
             1 -> 2, 5
             2 -> 3
@@ -236,11 +210,9 @@ class CfgBuilderTest {
     
     @Test def testWhileLoop() {
         parse('''
-            task Main(b: boolean): {
-                while(b)
-                    2;
-            }
-        ''').main.cfg.assertStructure('''
+            while(b)
+                2;
+        '''.withFrame).task.cfg.assertStructure('''
             entry -> 1
             1 -> 2
             2 -> 3, 5
@@ -251,11 +223,9 @@ class CfgBuilderTest {
         ''')
         
         parse('''
-            task Main(b: boolean): {
-                while(b)
-                    return;
-            }
-        ''').main.cfg.assertStructure('''
+            while(b)
+                return;
+        '''.withFrame).task.cfg.assertStructure('''
             entry -> 1
             1 -> 2
             2 -> 3, 4
@@ -267,11 +237,9 @@ class CfgBuilderTest {
     
     @Test def testForLoop() {
         parse('''
-            task Main: {
-                for(var i = 0; i < 10; i = i + 1)
-                    0;
-            }
-        ''').main.cfg.assertStructure('''
+            for(var i = 0; i < 10; i = i + 1)
+                0;
+        '''.withFrame).task.cfg.assertStructure('''
             entry -> 1
             1 -> 2
             2 -> 3
@@ -293,11 +261,7 @@ class CfgBuilderTest {
     
     @Test def testLogicalExpr() {
         // Short-circuit!
-        parse('''
-            task Main(a: boolean, b: boolean): {
-                a || b;
-            }
-        ''').main.cfg.assertStructure('''
+        parse("a || b;".withFrame).task.cfg.assertStructure('''
             entry -> 1
             1 -> 3, 2
             2 -> 3
@@ -305,11 +269,7 @@ class CfgBuilderTest {
             4 -> 5
             5 -> exit
         ''')
-        parse('''
-            task Main(a: boolean, b: boolean): {
-                a && b;
-            }
-        ''').main.cfg.assertStructure('''
+        parse("a && b;".withFrame).task.cfg.assertStructure('''
             entry -> 1
             1 -> 2, 3
             2 -> 3
@@ -318,11 +278,7 @@ class CfgBuilderTest {
             5 -> exit
         ''')
         
-        parse('''
-            task Main(a: boolean, b: boolean): {
-                a && (1 > 2 || b);
-            }
-        ''').main.cfg.assertStructure('''
+        parse("a && (1 > 2 || b);".withFrame).task.cfg.assertStructure('''
             entry -> 1
             1 -> 2, 8
             2 -> 3
@@ -335,11 +291,7 @@ class CfgBuilderTest {
             9 -> 10
             10 -> exit
         ''')
-        parse('''
-            task Main(b: boolean): {
-                0 == 1 && b;
-            }
-        ''').main.cfg.assertStructure('''
+        parse("0 == 1 && b;".withFrame).task.cfg.assertStructure('''
             entry -> 1
             1 -> 2
             2 -> 3
@@ -354,11 +306,9 @@ class CfgBuilderTest {
     @Test def testAssignment() {
         // Short-circuit!
         parse('''
-            task Main(a: boolean, b: boolean): {
-                var c = a;
-                c |= b;
-            }
-        ''').main.cfg.assertStructure('''
+            var c = a;
+            c |= b;
+        '''.withFrame).task.cfg.assertStructure('''
             entry -> 1
             1 -> 2
             2 -> 3
@@ -369,11 +319,9 @@ class CfgBuilderTest {
             7 -> exit
         ''')
         parse('''
-            task Main(a: boolean, b: boolean): {
-                var c = a;
-                c &= b;
-            }
-        ''').main.cfg.assertStructure('''
+            var c = a;
+            c &= b;
+        '''.withFrame).task.cfg.assertStructure('''
             entry -> 1
             1 -> 2
             2 -> 3
@@ -386,11 +334,7 @@ class CfgBuilderTest {
     }
     
     @Test def testBinaryExpr() {
-        parse('''
-            task Main: {
-                0 + 1;
-            }
-        ''').main.cfg.assertStructure('''
+        parse("0 + 1;".withFrame).task.cfg.assertStructure('''
             entry -> 1
             1 -> 2
             2 -> 3
@@ -399,11 +343,7 @@ class CfgBuilderTest {
             5 -> exit
         ''')
         
-        parse('''
-            task Main: {
-                0 == 1;
-            }
-        ''').main.cfg.assertStructure('''
+        parse("0 == 1;".withFrame).task.cfg.assertStructure('''
             entry -> 1
             1 -> 2
             2 -> 3
@@ -414,33 +354,21 @@ class CfgBuilderTest {
     }
     
     @Test def testUnaryExpr() {
-        parse('''
-            task Main: {
-                (0);
-            }
-        ''').main.cfg.assertStructure('''
+        parse("(0);".withFrame).task.cfg.assertStructure('''
             entry -> 1
             1 -> 2
             2 -> 3
             3 -> 4
             4 -> exit
         ''')
-        parse('''
-            task Main: {
-                -0;
-            }
-        ''').main.cfg.assertStructure('''
+        parse("-0;".withFrame).task.cfg.assertStructure('''
             entry -> 1
             1 -> 2
             2 -> 3
             3 -> 4
             4 -> exit
         ''')
-        parse('''
-            task Main: {
-                !true;
-            }
-        ''').main.cfg.assertStructure('''
+        parse("!true;".withFrame).task.cfg.assertStructure('''
             entry -> 1
             1 -> 2
             2 -> 3
@@ -450,11 +378,7 @@ class CfgBuilderTest {
     }
     
     @Test def testLiteral() {
-        parse('''
-            task Main: {
-                0;
-            }
-        ''').main.cfg.assertStructure('''
+        parse("0;".withFrame).task.cfg.assertStructure('''
             entry -> 1
             1 -> 2
             2 -> 3

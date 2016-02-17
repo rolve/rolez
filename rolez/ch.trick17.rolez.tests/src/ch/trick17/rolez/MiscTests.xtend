@@ -19,14 +19,9 @@ class MiscTests {
     
     @Inject extension ParseHelper<Program>
     @Inject extension ValidationTestHelper
+    @Inject extension TestUtils
     
     @Test(timeout = 1000) def testNestedStringLiteral() {
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.String mapped to java.lang.String
-            task Main: {
-                "1" + "2" + "3" + "4" + "5" + "6" + "7" + "8" + "9" + "10";
-            }
-        ''').assertNoErrors
+        parse('''"1" + "2" + "3" + "4" + "5" + "6" + "7" + "8" + "9" + "10";'''.withFrame).assertNoErrors
     }
 }

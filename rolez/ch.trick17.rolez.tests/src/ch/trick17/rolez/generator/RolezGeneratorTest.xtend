@@ -85,9 +85,11 @@ class RolezGeneratorTest {
                 mapped def readonly  get: E
                 mapped def readwrite set(e: E):
             }
-            task VoidTask: {}
-            task ReadWriteTask(o: readwrite Object): {}
-            task SumTask(i: int, j: int): int { return i + j; }
+            object Tasks {
+                task pure foo: {}
+                task pure bar(o: readwrite Object): {}
+                task pure sum(i: int, j: int): int { return i + j; }
+            }
         ''')
     }
     
@@ -265,163 +267,6 @@ class RolezGeneratorTest {
                 
                 public java.lang.String lineSeparator() {
                     return java.lang.System.lineSeparator();
-                }
-            }
-        ''')
-    }
-    
-    @Test def testTask() {
-        parse('''
-            task Main: pure Base {
-                return new Base;
-            }
-        ''', classes).generate.assertEqualsJava('''
-            import static «jvmGuardedClassName».*;
-            
-            public final class Main implements java.util.concurrent.Callable<Base> {
-                
-                public Base call() {
-                    return new Base();
-                }
-            }
-        ''')
-        parse('''
-            task Main: int {
-                return 42;
-            }
-        ''', classes).generate.assertEqualsJava('''
-            import static «jvmGuardedClassName».*;
-            
-            public final class Main implements java.util.concurrent.Callable<java.lang.Integer> {
-                
-                public java.lang.Integer call() {
-                    return 42;
-                }
-            }
-        ''')
-        parse('''
-            task Main(i: int, j: int): {
-                new (foo.bar.Base)(i + j);
-            }
-        ''', classes).generate.assertEqualsJava('''
-            import static «jvmGuardedClassName».*;
-            
-            public final class Main implements java.util.concurrent.Callable<java.lang.Void> {
-                
-                private final int i;
-                private final int j;
-                
-                public Main(final int i, final int j) {
-                    this.i = i;
-                    this.j = j;
-                }
-                
-                public java.lang.Void call() {
-                    new foo.bar.Base(i + j);
-                    return null;
-                }
-            }
-        ''')
-        
-        parse('''
-            main task Main: {}
-        ''', classes).generate.assertEqualsJava('''
-            import static «jvmGuardedClassName».*;
-            
-            public final class Main implements java.util.concurrent.Callable<java.lang.Void> {
-                
-                public static void main(final java.lang.String[] args) {
-                    rolez.lang.TaskSystem.getDefault().run(new Main());
-                }
-                
-                public java.lang.Void call() {
-                    return null;
-                }
-            }
-        ''')
-        parse('''
-            main task Main(args: readonly Array[pure String]): {
-                args.get(0).length;
-            }
-        ''', classes).generate.assertEqualsJava('''
-            import static «jvmGuardedClassName».*;
-            
-            public final class Main implements java.util.concurrent.Callable<java.lang.Void> {
-                
-                public static void main(final java.lang.String[] args) {
-                    rolez.lang.TaskSystem.getDefault().run(new Main(rolez.lang.GuardedArray.<java.lang.String[]>wrap(args)));
-                }
-                
-                private final rolez.lang.GuardedArray<java.lang.String[]> args;
-                
-                public Main(final rolez.lang.GuardedArray<java.lang.String[]> args) {
-                    args.share();
-                    this.args = args;
-                }
-                
-                public java.lang.Void call() {
-                    args.data[0].length();
-                    args.releaseShared();
-                    return null;
-                }
-            }
-        ''')
-        
-        parse('''
-            task Foo(o1: readwrite Base, o2: readonly Base, o3: pure Base): {
-                the System.out.println("Hello World!");
-            }
-        ''', classes).generate.assertEqualsJava('''
-            import static «jvmGuardedClassName».*;
-            
-            public final class Foo implements java.util.concurrent.Callable<java.lang.Void> {
-                
-                private final Base o1;
-                private final Base o2;
-                private final Base o3;
-                
-                public Foo(final Base o1, final Base o2, final Base o3) {
-                    o1.pass();
-                    o2.share();
-                    this.o1 = o1;
-                    this.o2 = o2;
-                    this.o3 = o3;
-                }
-                
-                public java.lang.Void call() {
-                    o1.registerNewOwner();
-                    java.lang.System.out.println("Hello World!");
-                    o1.releasePassed();
-                    o2.releaseShared();
-                    return null;
-                }
-            }
-        ''')
-        
-        parse('''
-            task Foo(o: readwrite Object): {
-                the System.out.println(o.toString);
-            }
-        ''', classes).generate.assertEqualsJava('''
-            import static «jvmGuardedClassName».*;
-            
-            public final class Foo implements java.util.concurrent.Callable<java.lang.Void> {
-                
-                private final java.lang.Object o;
-                
-                public Foo(final java.lang.Object o) {
-                    if(o instanceof «jvmGuardedClassName»)
-                        ((«jvmGuardedClassName») o).pass();
-                    this.o = o;
-                }
-                
-                public java.lang.Void call() {
-                    if(o instanceof «jvmGuardedClassName»)
-                        ((«jvmGuardedClassName») o).registerNewOwner();
-                    java.lang.System.out.println(o.toString());
-                    if(o instanceof «jvmGuardedClassName»)
-                        ((«jvmGuardedClassName») o).releasePassed();
-                    return null;
                 }
             }
         ''')
@@ -639,6 +484,461 @@ class RolezGeneratorTest {
         ''', parse(intContainer, classes).generate)
     }
     
+    @Test def testTask() {
+        parse('''
+            class App {
+                task pure foo: pure Base { return new Base; }
+            }
+        ''', classes).generate.assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
+            
+            public class App extends «jvmGuardedClassName» {
+                
+                public App() {
+                    super();
+                }
+                
+                public Base foo() {
+                    return new Base();
+                }
+                
+                public java.util.concurrent.Callable<Base> $fooTask() {
+                    return new java.util.concurrent.Callable<Base>() {
+                        public Base call() {
+                            try {
+                                return new Base();
+                            }
+                            finally {
+                            }
+                        }
+                    };
+                }
+            }
+        ''')
+        
+        parse('''
+            class App {
+                task pure foo: int { return 42; }
+            }
+        ''', classes).generate.assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
+            
+            public class App extends «jvmGuardedClassName» {
+                
+                public App() {
+                    super();
+                }
+                
+                public int foo() {
+                    return 42;
+                }
+                
+                public java.util.concurrent.Callable<java.lang.Integer> $fooTask() {
+                    return new java.util.concurrent.Callable<java.lang.Integer>() {
+                        public java.lang.Integer call() {
+                            try {
+                                return 42;
+                            }
+                            finally {
+                            }
+                        }
+                    };
+                }
+            }
+        ''')
+        
+        parse('''
+            class App {
+                task pure foo(i: int, j: int): { new (foo.bar.Base)(i + j); }
+            }
+        ''', classes).generate.assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
+            
+            public class App extends «jvmGuardedClassName» {
+                
+                public App() {
+                    super();
+                }
+                
+                public void foo(final int i, final int j) {
+                    new foo.bar.Base(i + j);
+                }
+                
+                public java.util.concurrent.Callable<java.lang.Void> $fooTask(final int i, final int j) {
+                    return new java.util.concurrent.Callable<java.lang.Void>() {
+                        public java.lang.Void call() {
+                            try {
+                                new foo.bar.Base(i + j);
+                            }
+                            finally {
+                            }
+                            return null;
+                        }
+                    };
+                }
+            }
+        ''')
+    }
+    
+    @Test def testTaskWithRoleParam() {
+        parse('''
+            class App {
+                task r foo[r]: {}
+                task r bar[r includes readonly ]: {}
+                task r baz[r includes readwrite]: {}
+            }
+        ''', classes).generate.assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
+            
+            public class App extends «jvmGuardedClassName» {
+                
+                public App() {
+                    super();
+                }
+                
+                public void foo() {
+                }
+                
+                public java.util.concurrent.Callable<java.lang.Void> $fooTask() {
+                    return new java.util.concurrent.Callable<java.lang.Void>() {
+                        public java.lang.Void call() {
+                            try {
+                            }
+                            finally {
+                            }
+                            return null;
+                        }
+                    };
+                }
+                
+                public void bar() {
+                }
+                
+                public java.util.concurrent.Callable<java.lang.Void> $barTask() {
+                    share();
+                    return new java.util.concurrent.Callable<java.lang.Void>() {
+                        public java.lang.Void call() {
+                            try {
+                            }
+                            finally {
+                                releaseShared();
+                            }
+                            return null;
+                        }
+                    };
+                }
+                
+                public void baz() {
+                }
+                
+                public java.util.concurrent.Callable<java.lang.Void> $bazTask() {
+                    pass();
+                    return new java.util.concurrent.Callable<java.lang.Void>() {
+                        public java.lang.Void call() {
+                            registerNewOwner();
+                            try {
+                            }
+                            finally {
+                                releasePassed();
+                            }
+                            return null;
+                        }
+                    };
+                }
+            }
+        ''')
+    }
+    
+    @Test def testTaskMain() {
+        parse('''
+            class App {
+                task pure main: {}
+            }
+        ''', classes).generate.assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
+            
+            public class App extends «jvmGuardedClassName» {
+                
+                public App() {
+                    super();
+                }
+                
+                public void main() {
+                }
+                
+                public java.util.concurrent.Callable<java.lang.Void> $mainTask() {
+                    return new java.util.concurrent.Callable<java.lang.Void>() {
+                        public java.lang.Void call() {
+                            try {
+                            }
+                            finally {
+                            }
+                            return null;
+                        }
+                    };
+                }
+                
+                public static void main(final java.lang.String[] args) {
+                    rolez.lang.TaskSystem.getDefault().run(new App().$mainTask());
+                }
+            }
+        ''')
+        
+        parse('''
+            class App {
+                task pure main(args: readonly Array[pure String]): { args.get(0).length; }
+            }
+        ''', classes).generate.assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
+            
+            public class App extends «jvmGuardedClassName» {
+                
+                public App() {
+                    super();
+                }
+                
+                public void main(final rolez.lang.GuardedArray<java.lang.String[]> args) {
+                    guardReadOnly(args).data[0].length();
+                }
+                
+                public java.util.concurrent.Callable<java.lang.Void> $mainTask(final rolez.lang.GuardedArray<java.lang.String[]> args) {
+                    args.share();
+                    return new java.util.concurrent.Callable<java.lang.Void>() {
+                        public java.lang.Void call() {
+                            try {
+                                args.data[0].length();
+                            }
+                            finally {
+                                args.releaseShared();
+                            }
+                            return null;
+                        }
+                    };
+                }
+                
+                public static void main(final java.lang.String[] args) {
+                    rolez.lang.TaskSystem.getDefault().run(new App().$mainTask(rolez.lang.GuardedArray.<java.lang.String[]>wrap(args)));
+                }
+            }
+        ''')
+    }
+    
+    @Test def testTaskTransitions() {
+        parse('''
+            class App {
+                task readwrite foo(o1: readwrite Base, o2: readonly Base, o3: pure Base): {
+                    the System.out.println("Hello World!");
+                }
+            }
+        ''', classes).generate.assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
+            
+            public class App extends «jvmGuardedClassName» {
+                
+                public App() {
+                    super();
+                }
+                
+                public void foo(final Base o1, final Base o2, final Base o3) {
+                    java.lang.System.out.println("Hello World!");
+                }
+                
+                public java.util.concurrent.Callable<java.lang.Void> $fooTask(final Base o1, final Base o2, final Base o3) {
+                    pass();
+                    o1.pass();
+                    o2.share();
+                    return new java.util.concurrent.Callable<java.lang.Void>() {
+                        public java.lang.Void call() {
+                            registerNewOwner();
+                            o1.registerNewOwner();
+                            try {
+                                java.lang.System.out.println("Hello World!");
+                            }
+                            finally {
+                                releasePassed();
+                                o1.releasePassed();
+                                o2.releaseShared();
+                            }
+                            return null;
+                        }
+                    };
+                }
+            }
+        ''')
+        
+        parse('''
+            class App {
+                task pure foo(o: readwrite Object): {}
+            }
+        ''', classes).generate.assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
+            
+            public class App extends «jvmGuardedClassName» {
+                
+                public App() {
+                    super();
+                }
+                
+                public void foo(final java.lang.Object o) {
+                }
+                
+                public java.util.concurrent.Callable<java.lang.Void> $fooTask(final java.lang.Object o) {
+                    if(o instanceof «jvmGuardedClassName»)
+                        ((«jvmGuardedClassName») o).pass();
+                    return new java.util.concurrent.Callable<java.lang.Void>() {
+                        public java.lang.Void call() {
+                            if(o instanceof «jvmGuardedClassName»)
+                                ((«jvmGuardedClassName») o).registerNewOwner();
+                            try {
+                            }
+                            finally {
+                                if(o instanceof «jvmGuardedClassName»)
+                                    ((«jvmGuardedClassName») o).releasePassed();
+                            }
+                            return null;
+                        }
+                    };
+                }
+            }
+        ''')
+    }
+    
+    @Test def testTaskGuarding() {
+        // The field write is guarded in the method body, but not in the task body
+        parse('''
+            class App {
+                task pure foo(o: readwrite Base): {
+                    o.foo = 42;
+                }
+            }
+        ''', classes).generate.assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
+            
+            public class App extends «jvmGuardedClassName» {
+                
+                public App() {
+                    super();
+                }
+                
+                public void foo(final Base o) {
+                    guardReadWrite(o).foo = 42;
+                }
+                
+                public java.util.concurrent.Callable<java.lang.Void> $fooTask(final Base o) {
+                    o.pass();
+                    return new java.util.concurrent.Callable<java.lang.Void>() {
+                        public java.lang.Void call() {
+                            o.registerNewOwner();
+                            try {
+                                o.foo = 42;
+                            }
+                            finally {
+                                o.releasePassed();
+                            }
+                            return null;
+                        }
+                    };
+                }
+            }
+        ''')
+    }
+    
+    @Test def testTaskOverloading() {
+        parse('''
+            class App {
+                task pure foo: {}
+                task pure foo(i: int): {}
+                task pure foo(d: double): {}
+                task pure foo(a: pure Array[int], b: pure Array[double]): {}
+                task pure foo(a: pure Array[pure Array[int]]): {}
+            }
+        ''', classes).generate.assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
+            
+            public class App extends «jvmGuardedClassName» {
+                
+                public App() {
+                    super();
+                }
+                
+                public void foo() {
+                }
+                
+                public java.util.concurrent.Callable<java.lang.Void> $fooTask() {
+                    return new java.util.concurrent.Callable<java.lang.Void>() {
+                        public java.lang.Void call() {
+                            try {
+                            }
+                            finally {
+                            }
+                            return null;
+                        }
+                    };
+                }
+                
+                public void foo(final int i) {
+                }
+                
+                public java.util.concurrent.Callable<java.lang.Void> $fooTask(final int i) {
+                    return new java.util.concurrent.Callable<java.lang.Void>() {
+                        public java.lang.Void call() {
+                            try {
+                            }
+                            finally {
+                            }
+                            return null;
+                        }
+                    };
+                }
+                
+                public void foo(final double d) {
+                }
+                
+                public java.util.concurrent.Callable<java.lang.Void> $fooTask(final double d) {
+                    return new java.util.concurrent.Callable<java.lang.Void>() {
+                        public java.lang.Void call() {
+                            try {
+                            }
+                            finally {
+                            }
+                            return null;
+                        }
+                    };
+                }
+                
+                public void foo(final rolez.lang.GuardedArray<int[]> a, final rolez.lang.GuardedArray<double[]> b) {
+                }
+                
+                public java.util.concurrent.Callable<java.lang.Void> $fooTask(final rolez.lang.GuardedArray<int[]> a, final rolez.lang.GuardedArray<double[]> b) {
+                    return new java.util.concurrent.Callable<java.lang.Void>() {
+                        public java.lang.Void call() {
+                            try {
+                            }
+                            finally {
+                            }
+                            return null;
+                        }
+                    };
+                }
+                
+                public void foo(final rolez.lang.GuardedArray<rolez.lang.GuardedArray<int[]>[]> a) {
+                }
+                
+                public java.util.concurrent.Callable<java.lang.Void> $fooTask(final rolez.lang.GuardedArray<rolez.lang.GuardedArray<int[]>[]> a) {
+                    return new java.util.concurrent.Callable<java.lang.Void>() {
+                        public java.lang.Void call() {
+                            try {
+                            }
+                            finally {
+                            }
+                            return null;
+                        }
+                    };
+                }
+            }
+        ''')
+    }
+    
     @Test def testConstr() {
         parse('''
             package foo
@@ -701,10 +1001,11 @@ class RolezGeneratorTest {
             }
         ''')
         
+        // Constructor starting a task
         parse('''
             class A {
                 new {
-                    start ReadWriteTask(this);
+                    the Tasks start bar(this);
                 }
             }
         ''', classes).generate.assertEqualsJava('''
@@ -715,7 +1016,7 @@ class RolezGeneratorTest {
                 public A() {
                     super();
                     try {
-                        rolez.lang.TaskSystem.getDefault().start(new ReadWriteTask(this));
+                        rolez.lang.TaskSystem.getDefault().start(Tasks.INSTANCE.$barTask(this));
                     }
                     finally {
                         guardReadWrite(this);
@@ -744,56 +1045,67 @@ class RolezGeneratorTest {
                 }
             }
         ''', classes).generate.assertEqualsJava('''
-            package foo.$static.$native;
+            package foo.£static.£native;
             
             import static «jvmGuardedClassName».*;
             
-            public class $final extends «jvmGuardedClassName» {
+            public class £final extends «jvmGuardedClassName» {
                 
-                public $final() {
+                public £final() {
                     super();
                 }
                 
-                public int $strictfp(final int $volatile) {
-                    final int $synchronized = 2 * $volatile;
+                public int £strictfp(final int £volatile) {
+                    final int £synchronized = 2 * £volatile;
                     final int _synchronized = 42;
-                    return $synchronized + _synchronized;
+                    return £synchronized + _synchronized;
                 }
                 
-                public void $transient() {
-                    final foo.$static.$native.$final $protected = new foo.$static.$native.$final();
-                    $protected.$strictfp(5);
+                public void £transient() {
+                    final foo.£static.£native.£final £protected = new foo.£static.£native.£final();
+                    £protected.£strictfp(5);
                 }
             }
         ''')
         
         parse('''
             package foo.static.native
-            main task final(do: readonly Array[pure String]): {
-                do.get(0).length;
+            class strictfp {
+                task readonly final(do: readwrite Array[int]): {
+                    do.set(0, 42);
+                }
             }
         ''', classes).generate.assertEqualsJava('''
-            package foo.$static.$native;
+            package foo.£static.£native;
             
             import static «jvmGuardedClassName».*;
             
-            public final class $final implements java.util.concurrent.Callable<java.lang.Void> {
+            public class £strictfp extends «jvmGuardedClassName» {
                 
-                public static void main(final java.lang.String[] args) {
-                    rolez.lang.TaskSystem.getDefault().run(new $final(rolez.lang.GuardedArray.<java.lang.String[]>wrap(args)));
+                public £strictfp() {
+                    super();
                 }
                 
-                private final rolez.lang.GuardedArray<java.lang.String[]> $do;
-                
-                public $final(final rolez.lang.GuardedArray<java.lang.String[]> $do) {
-                    $do.share();
-                    this.$do = $do;
+                public void £final(final rolez.lang.GuardedArray<int[]> £do) {
+                    guardReadWrite(£do).data[0] = 42;
                 }
                 
-                public java.lang.Void call() {
-                    $do.data[0].length();
-                    $do.releaseShared();
-                    return null;
+                public java.util.concurrent.Callable<java.lang.Void> $finalTask(final rolez.lang.GuardedArray<int[]> £do) {
+                    share();
+                    £do.pass();
+                    return new java.util.concurrent.Callable<java.lang.Void>() {
+                        public java.lang.Void call() {
+                            £do.registerNewOwner();
+                            try {
+                                £do.data[0] = 42;
+                            }
+                            finally {
+                                releaseShared();
+                                £do.releasePassed();
+                            }
+                            return null;
+                        }
+                    };
                 }
             }
         ''')
@@ -1082,6 +1394,23 @@ class RolezGeneratorTest {
         '''.withJavaFrame)
     }
     
+    @Test def testMemberAccessStartTask() {
+        parse('''
+            the Tasks start foo;
+            
+            val sum = the Tasks start sum(1, 2);
+            the System.out.println("Parallelism!");
+            the System.out.println("The sum: " + sum.get);
+            the System.out.println("Twice the sum!: " + (2 * sum.get));
+        '''.withFrame, classes).generate.assertEqualsJava('''
+            rolez.lang.TaskSystem.getDefault().start(Tasks.INSTANCE.$fooTask());
+            final rolez.lang.Task<java.lang.Integer> sum = rolez.lang.TaskSystem.getDefault().start(Tasks.INSTANCE.$sumTask(1, 2));
+            java.lang.System.out.println("Parallelism!");
+            java.lang.System.out.println("The sum: " + sum.get());
+            java.lang.System.out.println("Twice the sum!: " + (2 * sum.get()));
+        '''.withJavaFrame)
+    }
+    
     @Test def testMemberAccess() {
         parse('''
             "Hello".toString.length;
@@ -1090,6 +1419,7 @@ class RolezGeneratorTest {
             (new Base as readonly Object).hashCode;
             "Hello".substring(1, 3);
             this.bar;
+            val sum = the Tasks.sum(1, 2);
         '''.withFrame, classes).generate.assertEqualsJava('''
             "Hello".toString().length();
             "Hello".equals("Hi");
@@ -1097,6 +1427,7 @@ class RolezGeneratorTest {
             ((java.lang.Object) new Base()).hashCode();
             "Hello".substring(1, 3);
             this.bar();
+            final int sum = Tasks.INSTANCE.sum(1, 2);
         '''.withJavaFrame)
     }
     
@@ -1385,26 +1716,6 @@ class RolezGeneratorTest {
         '''.withJavaFrame)
     }
     
-    @Test def void testStart() {
-        parse('''
-            start VoidTask;
-        '''.withFrame, classes).generate.assertEqualsJava('''
-            rolez.lang.TaskSystem.getDefault().start(new VoidTask());
-        '''.withJavaFrame)
-        
-        parse('''
-            val sum = start SumTask(1, 2);
-            the System.out.println("Parallelism!");
-            the System.out.println("The sum: " + sum.get);
-            the System.out.println("Twice the sum!: " + (2 * sum.get));
-        '''.withFrame, classes).generate.assertEqualsJava('''
-            final rolez.lang.Task<java.lang.Integer> sum = rolez.lang.TaskSystem.getDefault().start(new SumTask(1, 2));
-            java.lang.System.out.println("Parallelism!");
-            java.lang.System.out.println("The sum: " + sum.get());
-            java.lang.System.out.println("Twice the sum!: " + (2 * sum.get()));
-        '''.withJavaFrame)
-    }
-    
     @Test def testParenthesized() {
         parse('''
             var j = (0);
@@ -1498,7 +1809,7 @@ class RolezGeneratorTest {
         javaCode.toString.assertEquals(it.toString)
     }
     
-    static val className = Pattern.compile("public (final )?class ([A-Za-z0-9_$]+) ")
+    static val className = Pattern.compile("public (final )?class ([A-Za-z0-9_£]+) ")
 
     private def assertCompilable(Iterable<CharSequence> sources) {
         val compilationUnits = sources.map[ code |

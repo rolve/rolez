@@ -19,9 +19,7 @@ import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
 import ch.trick17.rolez.rolez.SimpleClassRef
-import ch.trick17.rolez.rolez.Start
 import ch.trick17.rolez.rolez.Stmt
-import ch.trick17.rolez.rolez.Task
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.Var
@@ -76,15 +74,8 @@ class RolezUtils {
         val body = context.enclosingExecutable
         switch(body) {
             case null: new RuleEnvironment
-            Task: new RuleEnvironment
-            Method: {
-                val thisType = newRoleType(body.thisRole, newClassRef(body.enclosingClass))
-                new RuleEnvironment(new RuleEnvironmentEntry("this", thisType))
-            }
-            Constr: {
-                val thisType = newRoleType(createReadWrite, newClassRef(body.enclosingClass))
-                new RuleEnvironment(new RuleEnvironmentEntry("this", thisType))
-            }
+            Method: new RuleEnvironment(new RuleEnvironmentEntry("this", body.thisType))
+            Constr: new RuleEnvironment(new RuleEnvironmentEntry("this", body.thisType))
         }
     }
     
@@ -131,14 +122,14 @@ class RolezUtils {
      * expression that may have side effects, i.e., an assignment, a non-array
      * object instantiation, a task creation or a method invocation that is
      * not an array set.
+     * <p>
      * Note that nested expressions may still have side effects.
      */
     def isSideFxExpr(Expr it) {
         switch(it) {
             Assignment: true
             New: !classRef.clazz.isArrayClass
-            Start: true
-            MemberAccess: isMethodInvoke && !isSliceGet && !isArrayGet
+            MemberAccess: isMethodInvoke && !isSliceGet && !isArrayGet || isTaskStart
             default: false
         }
     }

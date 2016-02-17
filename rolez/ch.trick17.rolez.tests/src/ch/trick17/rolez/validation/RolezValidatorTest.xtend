@@ -23,26 +23,6 @@ class RolezValidatorTest {
     @Inject extension ValidationTestHelper
     @Inject extension TestUtils
     
-    @Test def testDuplicateTopLevelElems() {
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class A
-            class A
-        ''').assertError(CLASS, DUPLICATE_TOP_LEVEL_ELEMENT)
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            task A: {}
-            task A: {}
-        ''').assertError(TASK, DUPLICATE_TOP_LEVEL_ELEMENT)
-        val program = parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class A
-            task A: {}
-        ''')
-        program.assertError(CLASS, DUPLICATE_TOP_LEVEL_ELEMENT)
-        program.assertError(TASK, DUPLICATE_TOP_LEVEL_ELEMENT)
-    }
-    
     @Test def testCircularInheritance() {
         parse('''
             class A extends A
@@ -72,38 +52,6 @@ class RolezValidatorTest {
         ''').assertError(CLASS, SINGLETON_SUPERCLASS)
     }
     
-    @Test def testMainTask() {
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            main task A: {}
-        ''').assertNoErrors
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.Array[T] mapped to rolez.lang.Array {
-                mapped new(i: int)
-            }
-            class rolez.lang.String mapped to java.lang.String
-            main task B(args: readonly Array[readonly String]): {}
-        ''').assertNoErrors
-        
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            main task A: int { return 0; }
-        ''').assertError(INT, INCORRECT_MAIN_TASK)
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            main task A(i: int): {}
-        ''').assertError(INT, INCORRECT_MAIN_TASK)
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            main task A(args: readwrite Array[readonly String]): {}
-        ''').assertError(ROLE_TYPE, INCORRECT_MAIN_TASK)
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            main task A(i: int, j: int): {}
-        ''').assertError(TASK, INCORRECT_MAIN_TASK)
-    }
-    
     @Test def testTypeParam() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -123,7 +71,7 @@ class RolezValidatorTest {
         ''').assertNoErrors
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class A {                def readwrite foo: readwrite A { return new A; } }
+            class A {               task readwrite foo: readwrite A { return new A; } }
             class B extends A { override readwrite foo: readwrite B { return new B; } }
         ''').assertNoErrors
         parse('''
@@ -140,7 +88,7 @@ class RolezValidatorTest {
         
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class A {                def pure foo(o: readwrite Object): {} }
+            class A {               task pure foo(o: readwrite Object): {} }
             class B extends A { override pure foo(o: readwrite Object): {} }
         ''').assertNoErrors
         parse('''
@@ -254,7 +202,7 @@ class RolezValidatorTest {
         ''').assertError(METHOD, INCOMPATIBLE_RETURN_TYPE)
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class A {                def pure foo: pure B {} }
+            class A {               task pure foo: pure B {} }
             class B extends A { override pure foo: pure A {} }
         ''').assertError(METHOD, INCOMPATIBLE_RETURN_TYPE)
         parse('''
@@ -314,18 +262,18 @@ class RolezValidatorTest {
         ''').assertError(METHOD, MISSING_OVERRIDE)
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class A {           def readwrite foo(i: int): {} }
+            class A {          task readwrite foo(i: int): {} }
             class B extends A { def readwrite foo(j: int): {} }
         ''').assertError(METHOD, MISSING_OVERRIDE)
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class A {           def readwrite foo(a: readwrite A): {} }
-            class B extends A { def readwrite foo(a: readwrite A): {} }
+            class A {           task readwrite foo(a: readwrite A): {} }
+            class B extends A { task readwrite foo(a: readwrite A): {} }
         ''').assertError(METHOD, MISSING_OVERRIDE)
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class A {           def readwrite foo(a: readwrite A): {} }
-            class B extends A { def readwrite foo(b: readwrite A): {} }
+            class A {            def readwrite foo(a: readwrite A): {} }
+            class B extends A { task readwrite foo(b: readwrite A): {} }
         ''').assertError(METHOD, MISSING_OVERRIDE)
     }
     
@@ -430,13 +378,10 @@ class RolezValidatorTest {
                         return 0;
                     return 1;
                 }
-            }
-            task T: int {
-                return 3;
-            }
-            task U: {}
-            task V: {
-                return;
+                
+                task pure foo: int { return 3; }
+                task pure bar: {}
+                task pure baz: { return; }
             }
         ''').assertNoErrors
     }
@@ -499,11 +444,15 @@ class RolezValidatorTest {
         ''').assertError(BLOCK, MISSING_RETURN_EXPR)
         
         parse('''
-            task Main: int {}
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                task pure foo: int {}
+            }
         ''').assertError(BLOCK, MISSING_RETURN_EXPR)
         parse('''
-            task Main: int {
-                return;
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                task pure foo: int { return; }
             }
         ''').assertError(RETURN_NOTHING, MISSING_RETURN_EXPR)
     }
@@ -536,12 +485,34 @@ class RolezValidatorTest {
                 mapped new(length: int)
             }
             class A {
-                def readwrite foo: {}
-                def readwrite foo(i: int): {}
-                def readwrite foo(c: char): {}
-                def readwrite foo(o: readonly Object): {}
-                def readwrite foo(a: readonly A): {}
-                def readwrite foo(a: readwrite A, b: readwrite A): {}
+                def pure foo: {}
+                def pure foo(i: int): {}
+                def pure foo(c: char): {}
+                def pure foo(o: readonly Object): {}
+                def pure foo(a: readonly A): {}
+                def pure foo(a: readwrite A, b: readwrite A): {}
+                def pure foo(a: pure Array[int]): {}
+                def pure foo(a: pure Array[double]): {}
+            }
+            class B {
+                task pure foo: {}
+                task pure foo(i: int): {}
+                task pure foo(c: char): {}
+                task pure foo(o: readonly Object): {}
+                task pure foo(a: readonly A): {}
+                task pure foo(a: readwrite A, b: readwrite A): {}
+                task pure foo(a: pure Array[int]): {}
+                task pure foo(a: pure Array[double]): {}
+            }
+            class C {
+                def  pure foo: {}
+                task pure foo(i: int): {}
+                def  pure foo(c: char): {}
+                task pure foo(o: readonly Object): {}
+                def  pure foo(a: readonly A): {}
+                task pure foo(a: readwrite A, b: readwrite A): {}
+                def  pure foo(a: pure Array[int]): {}
+                task pure foo(a: pure Array[double]): {}
             }
         ''').assertNoErrors
         
@@ -574,6 +545,20 @@ class RolezValidatorTest {
             class A {
                 def readwrite foo: {}
                 def readwrite foo: {}
+            }
+        ''').assertError(METHOD, DUPLICATE_METHOD)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                task readwrite foo: {}
+                task readwrite foo: {}
+            }
+        ''').assertError(METHOD, DUPLICATE_METHOD)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def  readwrite foo: {}
+                task readwrite foo: {}
             }
         ''').assertError(METHOD, DUPLICATE_METHOD)
         parse('''
@@ -638,8 +623,8 @@ class RolezValidatorTest {
                 def readwrite foo(i: int): {}
                 def readwrite foo(c: char): {}
                 def readwrite foo(o: readonly Object): {}
-                def readwrite foo(a: readonly A): {}
-                def readwrite foo(a: readwrite A, b: readwrite A): {}
+                task readwrite foo(a: readonly A): {}
+                task readwrite foo(a: readwrite A, b: readwrite A): {}
             }
         ''').assertNoErrors
         
@@ -659,6 +644,82 @@ class RolezValidatorTest {
                 def readwrite foo: {}
             }
         ''').assertError(METHOD, FIELD_WITH_SAME_NAME)
+    }
+    
+    @Test def testMainTask() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class App {
+                task pure main: {}
+            }
+        ''').assertNoErrors
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array {
+                mapped new(i: int)
+            }
+            class rolez.lang.String mapped to java.lang.String
+            class App {
+                task pure main(args: readonly Array[readonly String]): {}
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class App {
+                def pure main: {}
+            }
+        ''').assertError(METHOD, INCORRECT_MAIN)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class App {
+                task pure main: int { return 0; }
+            }
+        ''').assertError(INT, INCORRECT_MAIN)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class App {
+                task pure main(i: int): {}
+            }
+        ''').assertError(INT, INCORRECT_MAIN)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class App {
+                task pure main(args: readwrite Array[readonly String]): {}
+            }
+        ''').assertError(ROLE_TYPE, INCORRECT_MAIN)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class App {
+                task pure main(i: int, j: int): {}
+            }
+        ''').assertError(METHOD, INCORRECT_MAIN)
+    }
+    
+    @Test def testMainClassInstantiable() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class App1 {
+                task pure main: {}
+            }
+            class App2 {
+                new {}
+                task pure main: {}
+            }
+            object App3 {
+                task pure main: {}
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class App {
+                new(i: int) {}
+                task pure main: {}
+            }
+        ''').assertError(CLASS, INCORRECT_MAIN_CLASS)
+        
+        // TODO: Test tasks in mapped classes, both normal and singleton
     }
     
     @Test def testConstrOverloading() {
@@ -757,29 +818,23 @@ class RolezValidatorTest {
             }
         ''').assertError(LOCAL_VAR, DUPLICATE_VAR)
         parse('''
-            task Main: {
-                val i = 5;
-                {
-                    val i = true;
-                    i;
-                }
+            val i = 5;
+            {
+                val i = true;
                 i;
             }
-        ''').assertError(LOCAL_VAR, DUPLICATE_VAR)
+            i;
+        '''.withFrame).assertError(LOCAL_VAR, DUPLICATE_VAR)
         
         parse('''
-            task Main: {
-                var k;
-                for(var k = 0; true; true) {}
-            }
-        ''').assertError(LOCAL_VAR, DUPLICATE_VAR)
+            var k;
+            for(var k = 0; true; true) {}
+        '''.withFrame).assertError(LOCAL_VAR, DUPLICATE_VAR)
         parse('''
-            task Main: {
-                for(var k = 0; true; true) {
-                    var k;
-                }
+            for(var k = 0; true; true) {
+                var k;
             }
-        ''').assertError(LOCAL_VAR, DUPLICATE_VAR)
+        '''.withFrame).assertError(LOCAL_VAR, DUPLICATE_VAR)
         
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -802,46 +857,19 @@ class RolezValidatorTest {
     
     @Test def testTypeArg() {
         parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.Array[T] mapped to rolez.lang.Array {
-                mapped new(length: int)
-            }
-            class A
-            task Main: {
-                val a: pure Array[int] = new Array[int](42);
-                var b: readonly Array[readwrite Array[pure A]];
-                var c: readwrite A;
-            }
-        ''').assertNoErrors
+            val a1: pure Array[int] = new Array[int](42);
+            var a2: readonly Array[readwrite Array[pure A]];
+            var a3: readwrite A;
+        '''.withFrame).assertNoErrors
         
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.Array[T] mapped to rolez.lang.Array
-            task Main: {
-                var a: pure Array;
-            }
-        ''').assertError(SIMPLE_CLASS_REF, MISSING_TYPE_ARG)
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class A
-            task Main: {
-                val a: pure A[int] = null;
-            }
-        ''').assertError(GENERIC_CLASS_REF, INCORRECT_TYPE_ARG, "class A")
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class A
-            task Main: {
-                val a: pure A = new A[int];
-            }
-        ''').assertError(GENERIC_CLASS_REF, INCORRECT_TYPE_ARG, "class A")
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class A
-            task Main: {
-                val a: pure A[readwrite A];
-            }
-        ''').assertError(GENERIC_CLASS_REF, INCORRECT_TYPE_ARG, "class A")
+        parse("var array: pure Array;".withFrame).assertError(SIMPLE_CLASS_REF, MISSING_TYPE_ARG)
+        
+        parse("val array: pure A[int] = null;".withFrame)
+            .assertError(GENERIC_CLASS_REF, INCORRECT_TYPE_ARG, "class A")
+        parse("val a: pure A = new A[int];".withFrame)
+            .assertError(GENERIC_CLASS_REF, INCORRECT_TYPE_ARG, "class A")
+        parse("val a: pure A[readwrite A];".withFrame)
+            .assertError(GENERIC_CLASS_REF, INCORRECT_TYPE_ARG, "class A")
     }
     
     @Test def testValFieldsInitialized() {
@@ -1239,9 +1267,7 @@ class RolezValidatorTest {
                 def pure foo: { super; }
             }
         ''').assertError(SUPER_CONSTR_CALL, INCORRECT_SUPER_CONSTR_CALL)
-        parse('''
-            task Main: { super; }
-        ''').assertError(SUPER_CONSTR_CALL, INCORRECT_SUPER_CONSTR_CALL)
+        parse("super;".withFrame).assertError(SUPER_CONSTR_CALL, INCORRECT_SUPER_CONSTR_CALL)
     }
     
     @Test def testSuperConstrCallUncatchableException() {
@@ -1285,116 +1311,102 @@ class RolezValidatorTest {
                 mapped def readonly  get(i: int): T
                 mapped def readwrite set(i: int, o: T):
             }
-            class rolez.lang.Task 
-            task Main: {
-                var i: int;
-                i = 5 - 2;
-                new String;
-                new String.length;
-                start Main;
-                new Array[int](1).set(0, 42);
+            class rolez.lang.Task[V] mapped to rolez.lang.Task
+            class App {
+                task pure main: {
+                    var i: int;
+                    i = 5 - 2;
+                    new String;
+                    new String.length;
+                    this start main;
+                    new Array[int](1).set(0, 42);
+                }
             }
         ''').assertNoIssues
     }
     
     @Test def testExprStmtNoSideFx() {
         parse('''
-            task Main: { true && 4 > 2; }
-        ''').assertWarning(LOGICAL_EXPR, OUTER_EXPR_NO_SIDE_FX)
+            true && 4 > 2;
+        '''.withFrame).assertWarning( LOGICAL_EXPR, OUTER_EXPR_NO_SIDE_FX)
         parse('''
-            task Main: { 3 == 5; }
-        ''').assertWarning(EQUALITY_EXPR, OUTER_EXPR_NO_SIDE_FX)
+            3 == 5;
+        '''.withFrame).assertWarning(EQUALITY_EXPR, OUTER_EXPR_NO_SIDE_FX)
         parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.String mapped to java.lang.String {
-                mapped def pure length: int
-            }
-            task Main: {
-                val s = new String;
-                2 * s.length();
-            }
-        ''').assertWarning(ARITHMETIC_BINARY_EXPR, OUTER_EXPR_NO_SIDE_FX)
+            val s = new String;
+            2 * s.length();
+        '''.withFrame).assertWarning(ARITHMETIC_BINARY_EXPR, OUTER_EXPR_NO_SIDE_FX)
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A { var i: int }
-            task Main: {
-                new A.i;
+            class App {
+                task pure main: {
+                    new A.i;
+                }
             }
-        ''').assertWarning(MEMBER_ACCESS, OUTER_EXPR_NO_SIDE_FX)
+        '''.withFrame).assertWarning(MEMBER_ACCESS, OUTER_EXPR_NO_SIDE_FX)
         parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.Array[T] mapped to rolez.lang.Array {
-                mapped new(l: int)
-                mapped def get(i: int): T
-            }
-            task Main: {
-                new Array[int](1).get(0);
-            }
-        ''').assertWarning(MEMBER_ACCESS, OUTER_EXPR_NO_SIDE_FX)
+            new Array[int](1).get(0);
+        '''.withFrame).assertWarning(MEMBER_ACCESS, OUTER_EXPR_NO_SIDE_FX)
         parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.String mapped to java.lang.String
-            task Main: {
-                val s = "Hello";
-                s as pure Object;
-            }
-        ''').assertWarning(CAST, OUTER_EXPR_NO_SIDE_FX)
+            val s = "Hello";
+            s as pure Object;
+        '''.withFrame).assertWarning(CAST, OUTER_EXPR_NO_SIDE_FX)
         parse('''
-            task Main: {
-                val i = 5;
-                i;
-            }
-        ''').assertWarning(VAR_REF, OUTER_EXPR_NO_SIDE_FX)
+            val i = 5;
+            i;
+        '''.withFrame).assertWarning(VAR_REF, OUTER_EXPR_NO_SIDE_FX)
         parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.Array[T] mapped to rolez.lang.Array {
-                mapped new(l: int)
-            }
-            task Main: {
-                new Array[int](1);
-            }
-        ''').assertWarning(NEW, OUTER_EXPR_NO_SIDE_FX)
+            new Array[int](1);
+        '''.withFrame).assertWarning(NEW, OUTER_EXPR_NO_SIDE_FX)
         parse('''
-            task Main: {
-                var i: int;
-                (i = 4);
-            }
-        ''').assertWarning(PARENTHESIZED, OUTER_EXPR_NO_SIDE_FX)
+            var i: int;
+            (i = 4);
+        '''.withFrame).assertWarning(PARENTHESIZED, OUTER_EXPR_NO_SIDE_FX)
         parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.String mapped to java.lang.String
-            task Main: { (new String); }
-        ''').assertWarning(PARENTHESIZED, OUTER_EXPR_NO_SIDE_FX)
+            (new String);
+        '''.withFrame).assertWarning(PARENTHESIZED, OUTER_EXPR_NO_SIDE_FX)
         parse('''
-            task Main: { 5; }
-        ''').assertWarning(INT_LITERAL, OUTER_EXPR_NO_SIDE_FX)
+            5;
+        '''.withFrame).assertWarning(INT_LITERAL, OUTER_EXPR_NO_SIDE_FX)
         parse('''
-            task Main: { null; }
-        ''').assertWarning(NULL_LITERAL, OUTER_EXPR_NO_SIDE_FX)
+            null;
+        '''.withFrame).assertWarning(NULL_LITERAL, OUTER_EXPR_NO_SIDE_FX)
     }
     
     @Test def testNull() {
         parse('''
-            task Main: Null { return null; }
+            class rolez.lang.Object mapped to java.lang.Object
+            class App {
+                task pure main: Null { return null; }
+            }
         ''').assertError(NULL, NULL_TYPE_USED)
     }
     
     @Test def testVoid() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            task A: void {}
-            task B: {}
-            class C {
+            class A {
+                task pure foo: void {}
+                task pure bar: {}
+            }
+            class B {
                 def pure foo: void {}
                 def pure bar: {}
             }
         ''').assertNoErrors
         
         parse('''
-            task Main(v: void): {}
+            class rolez.lang.Object mapped to java.lang.Object
+            class App {
+                task pure main(v: void): {}
+            }
         ''').assertError(VOID, VOID_NOT_RETURN_TYPE)
         parse('''
-            task Main(v:): {}
+            class rolez.lang.Object mapped to java.lang.Object
+            class App {
+                task pure main(v:): {}
+            }
         ''').assertError(VOID, VOID_NOT_RETURN_TYPE)
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -1585,6 +1597,14 @@ class RolezValidatorTest {
                 mapped def readonly get(i: int): readonly Object
             }
         ''').assertError(ROLE_TYPE, INCORRECT_MAPPED_METHOD)
+    }
+    
+    @Test def testMappedTask() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object {
+                mapped task pure hashCode: int
+            }
+        ''').assertError(METHOD, INCORRECT_MAPPED_TASK)
     }
     
     @Test def testMappedConstr() {

@@ -5,15 +5,15 @@
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="imports" upperBound="-1"
         eType="#//Import" containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="elements" upperBound="-1"
-        eType="#//ClassLike" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="classes" upperBound="-1"
+        eType="#//Class" containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="Import">
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="importedNamespace" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="ClassLike" eSuperTypes="#//Named"/>
-  <eClassifiers xsi:type="ecore:EClass" name="Class" eSuperTypes="#//ClassLike">
+  <eClassifiers xsi:type="ecore:EClass" name="Class" eSuperTypes="#//Named">
     <eOperations name="isSingleton" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    <eOperations name="isMapped" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
     <eOperations name="getSuperclass" eType="#//NormalClass"/>
     <eOperations name="getFields">
       <eGenericType eClassifier="ecore:EDataType ../../org.eclipse.xtext.common.types/model/JavaVMTypes.ecore#//Iterable">
@@ -25,7 +25,6 @@
         <eTypeArguments eClassifier="#//Method"/>
       </eGenericType>
     </eOperations>
-    <eOperations name="isMapped" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="jvmClass" eType="ecore:EClass ../../org.eclipse.xtext.common.types/model/JavaVMTypes.ecore#//JvmGenericType"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="superclassRef" eType="#//ClassRef"
         containment="true"/>
@@ -39,9 +38,6 @@
         eType="#//Constr" containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="SingletonClass" eSuperTypes="#//Class"/>
-  <eClassifiers xsi:type="ecore:EClass" name="Task" eSuperTypes="#//ClassLike #//TypedExecutable">
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="main" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
-  </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="TypeParam" eSuperTypes="#//Named"/>
   <eClassifiers xsi:type="ecore:EClass" name="Member"/>
   <eClassifiers xsi:type="ecore:EClass" name="Constr" eSuperTypes="#//Executable">
@@ -61,12 +57,16 @@
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="Method" eSuperTypes="#//Member #//TypedExecutable">
     <eOperations name="isMapped" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    <eOperations name="isTask" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    <eOperations name="isOverriding" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    <eOperations name="isMain" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="jvmMethod" eType="ecore:EClass ../../org.eclipse.xtext.common.types/model/JavaVMTypes.ecore#//JvmOperation"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="superMethod" eType="#//Method"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="thisRole" eType="#//Role"
         containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="roleParams" upperBound="-1"
         eType="#//RoleParam" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="declaredTask" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="RoleParam">
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
@@ -123,6 +123,9 @@
     <eStructuralFeatures xsi:type="ecore:EReference" name="expr" eType="#//Expr" containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="Expr" eSuperTypes="#//Instr"/>
+  <eClassifiers xsi:type="ecore:EClass" name="Assignment" eSuperTypes="#//BinaryExpr">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="op" eType="#//OpAssignment"/>
+  </eClassifiers>
   <eClassifiers xsi:type="ecore:EEnum" name="OpAssignment">
     <eLiterals name="ASSIGN" literal="="/>
     <eLiterals name="OR_ASSIGN" value="1" literal="|="/>
@@ -133,19 +136,31 @@
     <eLiterals name="DIVIDED_BY_ASSIGN" value="6" literal="/="/>
     <eLiterals name="MODULO_ASSIGN" value="7" literal="%="/>
   </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="LogicalExpr" eSuperTypes="#//BinaryExpr">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="op" eType="#//OpLogical"/>
+  </eClassifiers>
   <eClassifiers xsi:type="ecore:EEnum" name="OpLogical">
     <eLiterals name="OR" literal="||"/>
     <eLiterals name="AND" value="1" literal="&amp;&amp;"/>
   </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="EqualityExpr" eSuperTypes="#//BinaryExpr">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="op" eType="#//OpEquality"/>
+  </eClassifiers>
   <eClassifiers xsi:type="ecore:EEnum" name="OpEquality">
     <eLiterals name="EQUALS" literal="=="/>
     <eLiterals name="NOT_EQUALS" value="1" literal="!="/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="RelationalExpr" eSuperTypes="#//BinaryExpr">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="op" eType="#//OpRelational"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EEnum" name="OpRelational">
     <eLiterals name="SMALLER" literal="&lt;"/>
     <eLiterals name="GREATER" value="1" literal=">"/>
     <eLiterals name="SMALLER_EQUALS" value="2" literal="&lt;="/>
     <eLiterals name="GREATER_EQUALS" value="3" literal=">="/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="ArithmeticBinaryExpr" eSuperTypes="#//BinaryExpr">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="op" eType="#//OpArithmetic"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EEnum" name="OpArithmetic">
     <eLiterals name="PLUS" literal="+"/>
@@ -154,10 +169,27 @@
     <eLiterals name="DIVIDED_BY" value="3" literal="/"/>
     <eLiterals name="MODULO" value="4" literal="%"/>
   </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Cast" eSuperTypes="#//UnaryExpr">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="type" eType="#//Type" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="UnaryMinus" eSuperTypes="#//UnaryExpr"/>
+  <eClassifiers xsi:type="ecore:EClass" name="UnaryNot" eSuperTypes="#//UnaryExpr"/>
+  <eClassifiers xsi:type="ecore:EClass" name="MemberAccess" eSuperTypes="#//Expr #//Argumented">
+    <eOperations name="isFieldAccess" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    <eOperations name="isMethodInvoke" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    <eOperations name="getField" eType="#//Field"/>
+    <eOperations name="getMethod" eType="#//Method"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="target" eType="#//Expr"
+        containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="taskStart" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="member" eType="#//Member"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="roleArgs" upperBound="-1"
+        eType="#//Role" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="This" eSuperTypes="#//Expr"/>
   <eClassifiers xsi:type="ecore:EClass" name="VarRef" eSuperTypes="#//Expr">
     <eStructuralFeatures xsi:type="ecore:EReference" name="variable" eType="#//Var"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="ArgsOnly" eSuperTypes="#//Argumented"/>
   <eClassifiers xsi:type="ecore:EClass" name="New" eSuperTypes="#//Expr #//Argumented">
     <eStructuralFeatures xsi:type="ecore:EReference" name="constr" eType="#//Constr"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="classRef" eType="#//ClassRef"
@@ -165,10 +197,6 @@
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="The" eSuperTypes="#//Expr">
     <eStructuralFeatures xsi:type="ecore:EReference" name="classRef" eType="#//ClassRef"
-        containment="true"/>
-  </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="Start" eSuperTypes="#//Expr #//Argumented">
-    <eStructuralFeatures xsi:type="ecore:EReference" name="taskRef" eType="#//TaskRef"
         containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="Parenthesized" eSuperTypes="#//UnaryExpr"/>
@@ -221,9 +249,6 @@
     <eStructuralFeatures xsi:type="ecore:EReference" name="typeArg" eType="#//Type"
         containment="true"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="TaskRef">
-    <eStructuralFeatures xsi:type="ecore:EReference" name="task" eType="#//Task"/>
-  </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="UnaryExpr" eSuperTypes="#//Expr">
     <eStructuralFeatures xsi:type="ecore:EReference" name="expr" eType="#//Expr" containment="true"/>
   </eClassifiers>
@@ -250,41 +275,10 @@
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="TypedExecutable" eSuperTypes="#//Typed #//Executable"/>
   <eClassifiers xsi:type="ecore:EClass" name="Argumented">
+    <eOperations name="getExecutable" eType="#//Executable"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="args" upperBound="-1" eType="#//Expr"
         containment="true"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="Assignment" eSuperTypes="#//BinaryExpr">
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="op" eType="#//OpAssignment"/>
-  </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="LogicalExpr" eSuperTypes="#//BinaryExpr">
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="op" eType="#//OpLogical"/>
-  </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="EqualityExpr" eSuperTypes="#//BinaryExpr">
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="op" eType="#//OpEquality"/>
-  </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="RelationalExpr" eSuperTypes="#//BinaryExpr">
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="op" eType="#//OpRelational"/>
-  </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="ArithmeticBinaryExpr" eSuperTypes="#//BinaryExpr">
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="op" eType="#//OpArithmetic"/>
-  </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="Cast" eSuperTypes="#//UnaryExpr">
-    <eStructuralFeatures xsi:type="ecore:EReference" name="type" eType="#//Type" containment="true"/>
-  </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="UnaryMinus" eSuperTypes="#//UnaryExpr"/>
-  <eClassifiers xsi:type="ecore:EClass" name="UnaryNot" eSuperTypes="#//UnaryExpr"/>
-  <eClassifiers xsi:type="ecore:EClass" name="MemberAccess" eSuperTypes="#//Expr #//Argumented">
-    <eOperations name="isFieldAccess" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
-    <eOperations name="isMethodInvoke" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
-    <eOperations name="getMethod" eType="#//Method"/>
-    <eOperations name="getField" eType="#//Field"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="target" eType="#//Expr"
-        containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="member" eType="#//Member"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="roleArgs" upperBound="-1"
-        eType="#//Role" containment="true"/>
-  </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="This" eSuperTypes="#//Expr"/>
   <eClassifiers xsi:type="ecore:EClass" name="NullLiteral" eSuperTypes="#//Literal"/>
   <eClassifiers xsi:type="ecore:EClass" name="Null" eSuperTypes="#//ReferenceType"/>
   <eClassifiers xsi:type="ecore:EClass" name="Int" eSuperTypes="#//PrimitiveType"/>

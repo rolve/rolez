@@ -6,6 +6,7 @@ import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.Program
+import ch.trick17.rolez.rolez.Pure
 import ch.trick17.rolez.rolez.ReadOnly
 import ch.trick17.rolez.rolez.ReadWrite
 import ch.trick17.rolez.rolez.RoleType
@@ -128,8 +129,8 @@ class RolezLinkingTest {
         ''')
         parse('''
             package foo.bar
-            task B: {
-                new A.foo;
+            class B {
+                task pure main: { new A.foo; }
             }
         ''', set).assertNoErrors
         
@@ -378,24 +379,45 @@ class RolezLinkingTest {
     @Test def testMemberAccess() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Task
             class A {
                 var i: int
                 def pure foo: {}
+                task pure bar: {}
             }
-            task Main: {
-                new A.i;
-                new A.foo;
+            class App {
+                task pure main: {
+                    new A.i;
+                    new A.foo;
+                    new A.bar;
+                    new A start bar;
+                }
             }
         ''').assertNoErrors
     }
     
     @Test def testMemberAccessNoMember() {
+        parse("       5.5.a;".withFrame).assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC)
+        parse("new Object.a;".withFrame).assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC)
+        parse("new Object start a;".withFrame).assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC)
+        
         parse('''
-            task Main: { 5.5.a; }
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                var i: int
+            }
+            class App {
+                task pure main: { new A start i; }
+            }
         ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC)
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            task Main: { new Object.a; }
+            class A {
+                def foo: {}
+            }
+            class App {
+                task pure main: { new A start foo; }
+            }
         ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC)
     }
     
@@ -407,13 +429,15 @@ class RolezLinkingTest {
                 var s: readwrite String
                 def r get[r includes readonly]: r String { return this.s; }
             }
-            task Main: {
-                new StringContainer.get[readonly ];
-                new StringContainer.get[readwrite];
+            class App {
+                task pure main: {
+                    new StringContainer.get[readonly ];
+                    new StringContainer.get[readwrite];
+                }
             }
         ''')
-        program.main.expr(0).type.assertRoleType(ReadOnly , stringClassName)
-        program.main.expr(1).type.assertRoleType(ReadWrite, stringClassName)
+        program.task.expr(0).type.assertRoleType(ReadOnly , stringClassName)
+        program.task.expr(1).type.assertRoleType(ReadWrite, stringClassName)
         
         program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -427,13 +451,15 @@ class RolezLinkingTest {
                     return c.get[r];
                 }
             }
-            task Main: {
-                new StringContainerGetter.getFrom[readonly ](new StringContainer);
-                new StringContainerGetter.getFrom[readwrite](new StringContainer);
+            class App {
+                task pure main: {
+                    new StringContainerGetter.getFrom[readonly ](new StringContainer);
+                    new StringContainerGetter.getFrom[readwrite](new StringContainer);
+                }
             }
         ''')
-        program.main.expr(0).type.assertRoleType(ReadOnly , stringClassName)
-        program.main.expr(1).type.assertRoleType(ReadWrite, stringClassName)
+        program.task.expr(0).type.assertRoleType(ReadOnly , stringClassName)
+        program.task.expr(1).type.assertRoleType(ReadWrite, stringClassName)
     }
     
     @Test def testMemberAccessMethodRoleInference() {
@@ -444,13 +470,15 @@ class RolezLinkingTest {
                 var s: readwrite String
                 def r get[r includes readonly]: r String { return this.s; }
             }
-            task Main: {
-                new StringContainer.get;
-                (new StringContainer as readonly StringContainer).get;
+            class App {
+                task pure main: {
+                    new StringContainer.get;
+                    (new StringContainer as readonly StringContainer).get;
+                }
             }
         ''')
-        program.main.expr(0).type.assertRoleType(ReadWrite, stringClassName)
-        program.main.expr(1).type.assertRoleType(ReadOnly , stringClassName)
+        program.task.expr(0).type.assertRoleType(ReadWrite, stringClassName)
+        program.task.expr(1).type.assertRoleType(ReadOnly , stringClassName)
         
         program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -464,30 +492,34 @@ class RolezLinkingTest {
                     return c.get;
                 }
             }
-            task Main: {
-                new StringContainerGetter.getFrom(new StringContainer);
-                new StringContainerGetter.getFrom(new StringContainer as readonly StringContainer);
+            class App {
+                task pure main: {
+                    new StringContainerGetter.getFrom(new StringContainer);
+                    new StringContainerGetter.getFrom(new StringContainer as readonly StringContainer);
+                }
             }
         ''')
-        program.main.expr(0).type.assertRoleType(ReadWrite, stringClassName)
-        program.main.expr(1).type.assertRoleType(ReadOnly , stringClassName)
+        program.task.expr(0).type.assertRoleType(ReadWrite, stringClassName)
+        program.task.expr(1).type.assertRoleType(ReadOnly , stringClassName)
         
         program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
                 def r better[r includes readonly](other: r A): r A { return null; }
             }
-            task Main: {
-                new A.better(new A);
-                new A.better(new A as readonly A);
-                (new A as readonly A).better(new A);
-                (new A as readonly A).better(new A as readonly A);
+            class App {
+                task pure main: {
+                    new A.better(new A);
+                    new A.better(new A as readonly A);
+                    (new A as readonly A).better(new A);
+                    (new A as readonly A).better(new A as readonly A);
+                }
             }
         ''')
-        program.main.expr(0).type.assertRoleType(ReadWrite, "A")
-        program.main.expr(1).type.assertRoleType(ReadOnly , "A")
-        program.main.expr(2).type.assertRoleType(ReadOnly , "A")
-        program.main.expr(3).type.assertRoleType(ReadOnly , "A")
+        program.task.expr(0).type.assertRoleType(ReadWrite, "A")
+        program.task.expr(1).type.assertRoleType(ReadOnly , "A")
+        program.task.expr(2).type.assertRoleType(ReadOnly , "A")
+        program.task.expr(3).type.assertRoleType(ReadOnly , "A")
     }
     
     @Test def testMemberAccessMethodWrongNumberOfRoleArgs() {
@@ -496,8 +528,8 @@ class RolezLinkingTest {
             class A {
                 def pure foo[r]: {}
             }
-            task Main: {
-                new A.foo[pure, pure];
+            class App {
+                task pure main: { new A.foo[pure, pure]; }
             }
         ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC)
         parse('''
@@ -505,8 +537,8 @@ class RolezLinkingTest {
             class A {
                 def pure foo[r1, r2]: {}
             }
-            task Main: {
-                new A.foo[pure];
+            class App {
+                task pure main: { new A.foo[pure]; }
             }
         ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC)
     }
@@ -518,13 +550,15 @@ class RolezLinkingTest {
                 def readwrite foo: int { return 0; }
                 def readwrite foo(a: boolean): boolean { return false; }
             }
-            task Main: {
-                new A.foo;
-                new A.foo(true);
+            class App {
+                task pure main: {
+                    new A.foo;
+                    new A.foo(true);
+                }
             }
         ''')
-        program.main.expr(0).type.assertThat(instanceOf(Int))
-        program.main.expr(1).type.assertThat(instanceOf(Boolean))
+        program.task.expr(0).type.assertThat(instanceOf(Int))
+        program.task.expr(1).type.assertThat(instanceOf(Boolean))
         
         program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -532,13 +566,15 @@ class RolezLinkingTest {
                 def readwrite foo(a: int): int { return 0; }
                 def readwrite foo(a: boolean): boolean { return false; }
             }
-            task Main: {
-                new A.foo(4);
-                new A.foo(true);
+            class App {
+                task pure main: {
+                    new A.foo(4);
+                    new A.foo(true);
+                }
             }
         ''')
-        program.main.expr(0).type.assertThat(instanceOf(Int))
-        program.main.expr(1).type.assertThat(instanceOf(Boolean))
+        program.task.expr(0).type.assertThat(instanceOf(Int))
+        program.task.expr(1).type.assertThat(instanceOf(Boolean))
         
         program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -546,13 +582,15 @@ class RolezLinkingTest {
                 def readwrite foo(a: readwrite A): int { return 0; }
                 def readwrite foo(a: readwrite Object): boolean { return false; }
             }
-            task Main: {
-                new A.foo(new A);
-                new A.foo(new A as readwrite Object);
+            class App {
+                task pure main: {
+                    new A.foo(new A);
+                    new A.foo(new A as readwrite Object);
+                }
             }
         ''')
-        program.main.expr(0).type.assertThat(instanceOf(Int))
-        program.main.expr(1).type.assertThat(instanceOf(Boolean))
+        program.task.expr(0).type.assertThat(instanceOf(Int))
+        program.task.expr(1).type.assertThat(instanceOf(Boolean))
         
         // (Switch order of declaration to rule out accidental selection of the correct one)
         program = parse('''
@@ -561,13 +599,15 @@ class RolezLinkingTest {
                 def readwrite foo(a: readwrite Object): boolean { return false; }
                 def readwrite foo(a: readwrite A): int { return 0; }
             }
-            task Main: {
-                new A.foo(new A);
-                new A.foo(new A as readwrite Object);
+            class App {
+                task pure main: {
+                    new A.foo(new A);
+                    new A.foo(new A as readwrite Object);
+                }
             }
         ''')
-        program.main.expr(0).type.assertThat(instanceOf(Int))
-        program.main.expr(1).type.assertThat(instanceOf(Boolean))
+        program.task.expr(0).type.assertThat(instanceOf(Int))
+        program.task.expr(1).type.assertThat(instanceOf(Boolean))
         
         program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -575,17 +615,19 @@ class RolezLinkingTest {
                 def readwrite foo(a: pure Object, b: pure Object): boolean { return false; }
                 def readwrite foo(a: pure      A, b: pure      A): int { return 0; }
             }
-            task Main: {
-                new A.foo(new A, new A);
-                new A.foo(new A, new A as readwrite Object);
-                new A.foo(new A, new A as readwrite Object);
-                new A.foo(new A as readwrite Object, new A as readwrite Object);
+            class App {
+                task pure main: {
+                    new A.foo(new A, new A);
+                    new A.foo(new A, new A as readwrite Object);
+                    new A.foo(new A, new A as readwrite Object);
+                    new A.foo(new A as readwrite Object, new A as readwrite Object);
+                }
             }
         ''')
-        program.main.expr(0).type.assertThat(instanceOf(Int))
-        program.main.expr(1).type.assertThat(instanceOf(Boolean))
-        program.main.expr(1).type.assertThat(instanceOf(Boolean))
-        program.main.expr(1).type.assertThat(instanceOf(Boolean))
+        program.task.expr(0).type.assertThat(instanceOf(Int))
+        program.task.expr(1).type.assertThat(instanceOf(Boolean))
+        program.task.expr(1).type.assertThat(instanceOf(Boolean))
+        program.task.expr(1).type.assertThat(instanceOf(Boolean))
         
         program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -593,17 +635,36 @@ class RolezLinkingTest {
                 def readwrite foo(a: pure      A, b: pure      A): int { return 0; }
                 def readwrite foo(a: pure Object, b: pure Object): boolean { return false; }
             }
-            task Main: {
-                new A.foo(new A, new A);
-                new A.foo(new A, new A as readwrite Object);
-                new A.foo(new A, new A as readwrite Object);
-                new A.foo(new A as readwrite Object, new A as readwrite Object);
+            class App {
+                task pure main: {
+                    new A.foo(new A, new A);
+                    new A.foo(new A, new A as readwrite Object);
+                    new A.foo(new A, new A as readwrite Object);
+                    new A.foo(new A as readwrite Object, new A as readwrite Object);
+                }
             }
         ''')
-        program.main.expr(0).type.assertThat(instanceOf(Int))
-        program.main.expr(1).type.assertThat(instanceOf(Boolean))
-        program.main.expr(1).type.assertThat(instanceOf(Boolean))
-        program.main.expr(1).type.assertThat(instanceOf(Boolean))
+        program.task.expr(0).type.assertThat(instanceOf(Int))
+        program.task.expr(1).type.assertThat(instanceOf(Boolean))
+        program.task.expr(1).type.assertThat(instanceOf(Boolean))
+        program.task.expr(1).type.assertThat(instanceOf(Boolean))
+        
+        // The following would be ambiguous for a method call, but not for a task start:
+        program = parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Task
+            class A {
+                def  readwrite foo(a: pure      A, b: pure Object): int { return 0; }
+                task readwrite foo(a: pure Object, b: pure      A): boolean { return false; }
+            }
+            class App {
+                task pure main: {
+                    new A start foo(new A, new A);
+                }
+            }
+        ''')
+        program.classes.map[methods].flatten.filter[isMain].head.lastExpr.type
+            .assertRoleType(Pure, taskClassName, Boolean)
         
         // TODO: test generic methods
     }
@@ -615,13 +676,15 @@ class RolezLinkingTest {
                 var foo: int
                 def readwrite foo(a: boolean): boolean { return false; }
             }
-            task Main: {
-                new A.foo;
-                new A.foo(true);
+            class App {
+                task pure main: {
+                    new A.foo;
+                    new A.foo(true);
+                }
             }
         ''')
-        program.main.expr(0).type.assertThat(instanceOf(Int))
-        program.main.expr(1).type.assertThat(instanceOf(Boolean))
+        program.task.expr(0).type.assertThat(instanceOf(Int))
+        program.task.expr(1).type.assertThat(instanceOf(Boolean))
     }
     
     @Test def testMemberAccessMethodFromSuperclass() {
@@ -632,7 +695,9 @@ class RolezLinkingTest {
                 def readwrite foo(a: readonly A, b: readwrite B, c: readwrite C, d: int): {}
             }
             class C extends B
-            task Main: { new C.foo(new A, new C, null, 5); }
+            class App {
+                task pure main: { new C.foo(new A, new C, null, 5); }
+            }
         ''').assertNoErrors
     }
     
@@ -645,46 +710,62 @@ class RolezLinkingTest {
             class B extends A {
                 override readwrite foo: {}
             }
-            task Main: { new B.foo; }
-        ''').main.lastExpr as MemberAccess).method.enclosingClass.name.assertThat(is("B"))
+            class App {
+                task pure main: { new B.foo; }
+            }
+        ''').task.lastExpr as MemberAccess).method.enclosingClass.name.assertThat(is("B"))
      }
     
     @Test def testMemberAccessMethodTypeMismatch() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A { def readwrite foo: {} }
-            task Main: { new A.foo(5); }
+            class App {
+                task pure main: { new A.foo(5); }
+            }
         ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A { def readwrite foo(c: char): {} }
-            task Main: { new A.foo(5, false); }
+            class App {
+                task pure main: { new A.foo(5, false); }
+            }
         ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A { def readwrite foo(i: int): {} }
-            task Main: { new A.foo(); }
+            class App {
+                task pure main: { new A.foo(); }
+            }
         ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A { def readwrite foo(i: int, a: readwrite A): {} }
-            task Main: { new A.foo(false); }
+            class App {
+                task pure main: { new A.foo(false); }
+            }
         ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
         
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A { def readwrite foo(i: int): {} }
-            task Main: { new A.foo(false); }
+            class App {
+                task pure main: { new A.foo(false); }
+            }
         ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A { def readwrite foo(a: readwrite A): {} }
-            task Main: { new A.foo(new Object); }
+            class App {
+                task pure main: { new A.foo(new Object); }
+            }
         ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A { def readwrite foo(a: readwrite A): {} }
-            task Main: { new A.foo(new A as readonly A); }
+            class App {
+                task pure main: { new A.foo(new A as readonly A); }
+            }
         ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "foo")
     }
     
@@ -695,8 +776,8 @@ class RolezLinkingTest {
                 mapped new(i: int)
                 mapped def readwrite set(i: int, o: T):
             }
-            task Main: {
-                new Array[int](1).set(0, true);
+            class App {
+                task pure main: { new Array[int](1).set(0, true); }
             }
         ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "set")
         parse('''
@@ -707,8 +788,8 @@ class RolezLinkingTest {
             }
             class A
             class B
-            task Main: {
-                new Array[pure A](1).set(0, new B);
+            class App {
+                task pure main: { new Array[pure A](1).set(0, new B); }
             }
         ''').assertError(MEMBER_ACCESS, LINKING_DIAGNOSTIC, "set")
     }
@@ -720,8 +801,8 @@ class RolezLinkingTest {
                 def readwrite foo(a: readonly  A, b: readwrite A): {}
                 def readwrite foo(a: readwrite A, b: readonly  A): {}
             }
-            task Main: {
-                new A.foo(new A, new A);
+            class App {
+                task pure main: { new A.foo(new A, new A); }
             }
         ''').assertError(MEMBER_ACCESS, AMBIGUOUS_CALL)
         
@@ -731,8 +812,19 @@ class RolezLinkingTest {
                 def readwrite foo(a: readwrite Object, b: readwrite A): {}
                 def readwrite foo(a: readwrite A, b: readwrite Object): {}
             }
-            task Main: {
-                new A.foo(new A, new A);
+            class App {
+                task pure main: { new A.foo(new A, new A); }
+            }
+        ''').assertError(MEMBER_ACCESS, AMBIGUOUS_CALL)
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def  readwrite foo(a: readwrite Object, b: readwrite A): {}
+                task readwrite foo(a: readwrite A, b: readwrite Object): {}
+            }
+            class App {
+                task pure main: { new A.foo(new A, new A); }
             }
         ''').assertError(MEMBER_ACCESS, AMBIGUOUS_CALL)
         
@@ -746,11 +838,13 @@ class RolezLinkingTest {
             class B { new {} }
             class C { new(i: int) {} }
             class D { new(a: readonly A, b: readwrite B) {} }
-            task Main: {
-                new A;
-                new B;
-                new C(0);
-                new D(new A, new B);
+            class App {
+                task pure main: {
+                    new A;
+                    new B;
+                    new C(0);
+                    new D(new A, new B);
+                }
             }
         ''').assertNoErrors
     }
@@ -761,9 +855,11 @@ class RolezLinkingTest {
             class rolez.lang.Array[T] mapped to rolez.lang.Array {
                 mapped new(length: int)
             }
-            task Main: {
-                new Array[int](10);
-                new Array[readonly Object](0);
+            class App {
+                task pure main: {
+                    new Array[int](10);
+                    new Array[readonly Object](0);
+                }
             }
         ''').assertNoErrors
     }
@@ -775,13 +871,15 @@ class RolezLinkingTest {
                 new(a: int) {}
                 new(a: boolean) {}
             }
-            task Main: {
-                new A(4);
-                new A(true);
+            class App {
+                task pure main: {
+                    new A(4);
+                    new A(true);
+                }
             }
         ''')
-        (program.main.expr(0) as New).constr.params.head.type.assertThat(instanceOf(Int))
-        (program.main.expr(1) as New).constr.params.head.type.assertThat(instanceOf(Boolean))
+        (program.task.expr(0) as New).constr.params.head.type.assertThat(instanceOf(Int))
+        (program.task.expr(1) as New).constr.params.head.type.assertThat(instanceOf(Boolean))
         
         program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -790,13 +888,15 @@ class RolezLinkingTest {
                 new(a: readwrite Object) {}
                 new(a: readwrite A) {}
             }
-            task Main: {
-                new B(new A);
-                new B(new A as readwrite Object);
+            class App {
+                task pure main: {
+                    new B(new A);
+                    new B(new A as readwrite Object);
+                }
             }
         ''')
-        ((program.main.expr(0) as New).constr.params.head.type as RoleType).base.clazz.name.assertThat(is("A"))
-        ((program.main.expr(1) as New).constr.params.head.type as RoleType).base.clazz.name.assertThat(is(objectClassName.toString))
+        ((program.task.expr(0) as New).constr.params.head.type as RoleType).base.clazz.name.assertThat(is("A"))
+        ((program.task.expr(1) as New).constr.params.head.type as RoleType).base.clazz.name.assertThat(is(objectClassName.toString))
         
         // (Switch order of declaration to rule out accidental selection of the correct one)
         program = parse('''
@@ -806,13 +906,15 @@ class RolezLinkingTest {
                 new(a: readwrite A) {}
                 new(a: readwrite Object) {}
             }
-            task Main: {
-                new B(new A);
-                new B(new A as readwrite Object);
+            class App {
+                task pure main: {
+                    new B(new A);
+                    new B(new A as readwrite Object);
+                }
             }
         ''')
-        ((program.main.expr(0) as New).constr.params.head.type as RoleType).base.clazz.name.assertThat(is("A"))
-        ((program.main.expr(1) as New).constr.params.head.type as RoleType).base.clazz.name.assertThat(is(objectClassName.toString))
+        ((program.task.expr(0) as New).constr.params.head.type as RoleType).base.clazz.name.assertThat(is("A"))
+        ((program.task.expr(1) as New).constr.params.head.type as RoleType).base.clazz.name.assertThat(is(objectClassName.toString))
         
         // IMPROVE: test generic constructors
     }
@@ -821,39 +923,53 @@ class RolezLinkingTest {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A
-            task Main: { new A(5); }
+            class App {
+                task pure main: { new A(5); }
+            }
         ''').assertError(NEW, LINKING_DIAGNOSTIC)
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A { new {} }
-            task Main: { new A(5); }
+            class App {
+                task pure main: { new A(5); }
+            }
         ''').assertError(NEW, LINKING_DIAGNOSTIC)
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A { new(c: char) {} }
-            task Main: { new A(5, false); }
+            class App {
+                task pure main: { new A(5, false); }
+            }
         ''').assertError(NEW, LINKING_DIAGNOSTIC)
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A { new(i: int) {} }
-            task Main: { new A; }
+            class App {
+                task pure main: { new A; }
+            }
         ''').assertError(NEW, LINKING_DIAGNOSTIC)
         
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A { new(i: int) {} }
-            task Main: { new A(false); }
+            class App {
+                task pure main: { new A(false); }
+            }
         ''').assertError(NEW, LINKING_DIAGNOSTIC)
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A { new(a: readwrite A) {} }
-            task Main: { new A(new Object); }
+            class App {
+                task pure main: { new A(new Object); }
+            }
         ''').assertError(NEW, LINKING_DIAGNOSTIC)
         
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A { new(o: readwrite Object) {} }
-            task Main: { new A(new Object as readonly Object); }
+            class App {
+                task pure main: { new A(new Object as readonly Object); }
+            }
         ''').assertError(NEW, LINKING_DIAGNOSTIC)
         
         // TODO: test generic constructors
@@ -867,8 +983,8 @@ class RolezLinkingTest {
                 new(a: readonly  A, b: readwrite A) {}
                 new(a: readwrite A, b: readonly  A) {}
             }
-            task Main: {
-                new B(new A, new A);
+            class App {
+                task pure main: { new B(new A, new A); }
             }
         ''').assertError(NEW, AMBIGUOUS_CALL)
         
@@ -879,8 +995,8 @@ class RolezLinkingTest {
                 new(a: readwrite Object, b: readwrite A) {}
                 new(a: readwrite A, b: readwrite Object) {}
             }
-            task Main: {
-                new B(new A, new A);
+            class App {
+                task pure main: { new B(new A, new A); }
             }
         ''').assertError(NEW, AMBIGUOUS_CALL)
         
@@ -891,8 +1007,8 @@ class RolezLinkingTest {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             object A
-            task Main: {
-                new A;
+            class App {
+                task pure main: { new A; }
             }
         ''').assertError(NEW, LINKING_DIAGNOSTIC)
     }
@@ -920,31 +1036,23 @@ class RolezLinkingTest {
         ''').assertNoErrors
         
         parse('''
-            task Main: {
-                i;
+            i;
+            val i = 0;
+        '''.withFrame).assertError(VAR_REF, LINKING_DIAGNOSTIC, "var", "i")
+        parse('''
+            {
                 val i = 0;
             }
-        ''').assertError(VAR_REF, LINKING_DIAGNOSTIC, "var", "i")
-        parse('''
-            task Main: {
-                {
-                    val i = 0;
-                }
-                i;
-            }
-        ''').assertError(VAR_REF, LINKING_DIAGNOSTIC, "var", "i")
+            i;
+        '''.withFrame).assertError(VAR_REF, LINKING_DIAGNOSTIC, "var", "i")
         
         parse('''
-            task Main: {
-                for(var i = i; true; true) {}
-            }
-        ''').assertError(VAR_REF, LINKING_DIAGNOSTIC, "var", "i")
+            for(var i = i; true; true) {}
+        '''.withFrame).assertError(VAR_REF, LINKING_DIAGNOSTIC, "var", "i")
         parse('''
-            task Main: {
-                for(var i = 0; true; true) {}
-                i;
-            }
-        ''').assertError(VAR_REF, LINKING_DIAGNOSTIC, "var", "i")
+            for(var i = 0; true; true) {}
+            i;
+        '''.withFrame).assertError(VAR_REF, LINKING_DIAGNOSTIC, "var", "i")
     }
     
     @Test def testSuperMethod() {
@@ -1191,8 +1299,8 @@ class RolezLinkingTest {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class NoNoArgConstr mapped to «NoNoArgConstr.canonicalName»
-            task Main: {
-                new NoNoArgConstr;
+            class A {
+                task pure main: { new NoNoArgConstr; }
             }
         ''').assertError(NEW, LINKING_DIAGNOSTIC)
     }

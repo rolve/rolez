@@ -7,7 +7,6 @@ import ch.trick17.rolez.cfg.InstrNode
 import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.Block
 import ch.trick17.rolez.rolez.Class
-import ch.trick17.rolez.rolez.ClassLike
 import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.Executable
 import ch.trick17.rolez.rolez.Expr
@@ -30,7 +29,6 @@ import ch.trick17.rolez.rolez.RolezFactory
 import ch.trick17.rolez.rolez.SimpleClassRef
 import ch.trick17.rolez.rolez.SingletonClass
 import ch.trick17.rolez.rolez.SuperConstrCall
-import ch.trick17.rolez.rolez.Task
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.TypedExecutable
@@ -58,10 +56,8 @@ import static ch.trick17.rolez.rolez.VarKind.*
 class RolezValidator extends RolezSystemValidator {
 
     public static val INVALID_NAME = "invalid name"
-    public static val DUPLICATE_TOP_LEVEL_ELEMENT = "duplicate top-level element"
     public static val CIRCULAR_INHERITANCE = "circular inheritance"
     public static val SINGLETON_SUPERCLASS = "singleton superclass"
-    public static val INCORRECT_MAIN_TASK = "incorrect main task"
     public static val INCORRECT_TYPE_PARAM = "incorrect type parameter"
     public static val MISSING_TYPE_PARAM = "missing type parameter"
     public static val DUPLICATE_FIELD = "duplicate field"
@@ -77,6 +73,8 @@ class RolezValidator extends RolezSystemValidator {
     public static val MISSING_RETURN_EXPR = "missing return statement"
     public static val MISSING_TYPE_ARG = "missing type argument"
     public static val INCORRECT_TYPE_ARG = "incorrect type argument"
+    public static val INCORRECT_MAIN = "incorrect main"
+    public static val INCORRECT_MAIN_CLASS = "incorrect main class"
     public static val VAL_FIELD_NOT_INITIALIZED = "val field not initialized"
     public static val VAL_FIELD_OVERINITIALIZED = "val field overinitialized"
     public static val THIS_IN_FIELD_INIT = "'this' in field initializer"
@@ -105,6 +103,7 @@ class RolezValidator extends RolezSystemValidator {
     public static val INCORRECT_MAPPED_FIELD = "incorrect mapped field"
     public static val NON_GUARDED_MAPPED_VAR_FIELD = "non-guarded mapped var field"
     public static val INCORRECT_MAPPED_METHOD = "incorrect mapped method"
+    public static val INCORRECT_MAPPED_TASK = "incorrect mapped task"
     public static val INCORRECT_MAPPED_CONSTR = "incorrect mapped constructor"
     
     @Inject extension RolezExtensions
@@ -121,15 +120,6 @@ class RolezValidator extends RolezSystemValidator {
             warning("Name should start with a capital",
                 NAMED__NAME, INVALID_NAME)
     }
-	
-	@Check
-	def checkNoDuplicateTopLevelElem(ClassLike it) {
-	    val matching = enclosingProgram.elements.filter[e | e.name.equals(name)]
-        if(matching.size < 1)
-            throw new AssertionError
-        if(matching.size > 1)
-            error("Duplicate top-level element " + name, NAMED__NAME, DUPLICATE_TOP_LEVEL_ELEMENT)
-	}
     
     @Check
     def checkCircularInheritance(Class it) {
@@ -152,16 +142,27 @@ class RolezValidator extends RolezSystemValidator {
     }
     
     @Check
-    def checkMainTask(Task it) {
+    def checkMainTask(Method it) {
         if(!isMain) return;
         
+        if(!isTask)
+            error("Illegal method name: only tasks can be named main", NAMED__NAME, INCORRECT_MAIN)
         if(!(type instanceof Void))
-            error("A main task must have a void return type", type, null, INCORRECT_MAIN_TASK)
+            error("A main task must have a void return type", type, null, INCORRECT_MAIN)
         if(params.size > 1)
-            error("A main task must have zero or one parameter", EXECUTABLE__PARAMS, INCORRECT_MAIN_TASK)
+            error("A main task must have zero or one parameter", EXECUTABLE__PARAMS, INCORRECT_MAIN)
         else if(params.size == 1 && !params.head.type.isStringArray)
             error("The parameter of a main must must be of type readonly Array[String]",
-                params.head.type, null, INCORRECT_MAIN_TASK)
+                params.head.type, null, INCORRECT_MAIN)
+    }
+    
+    @Check
+    def checkMainClassInstantiable(Class it) {
+        if(!methods.exists[isMain]) return;
+        
+        if(it instanceof NormalClass) if(!constrs.exists[params.isEmpty])
+            error("Class with a main task must have a no-args constructor", NAMED__NAME,
+                INCORRECT_MAIN_CLASS)
     }
     
     private def isStringArray(Type it) {
@@ -530,6 +531,8 @@ class RolezValidator extends RolezSystemValidator {
     @Check
     def checkMappedMethod(Method it) {
         if(isMapped) {
+            if(isTask)
+                error("Tasks cannot be mapped", METHOD__JVM_METHOD, INCORRECT_MAPPED_TASK)
             if(!enclosingClass.isMapped)
                 error("Mapped methods are allowed in mapped classes only",
                     METHOD__JVM_METHOD, MAPPED_IN_NORMAL_CLASS)

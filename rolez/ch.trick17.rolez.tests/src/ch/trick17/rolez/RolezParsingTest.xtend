@@ -86,59 +86,51 @@ class RolezParsingTest{
     
     @Test def testCharLiteral() {
         val program = parse('''
-            task Main: {
-                'H';
-                '"';
-                '\"';
-                '\'';
-                '\\';
-                '\n';
-                '\t';
-            }
-        ''')
-        (program.main.expr(0) as CharLiteral).value.assertThat(is(Character.valueOf('H')))
-        (program.main.expr(1) as CharLiteral).value.assertThat(is(Character.valueOf('"')))
-        (program.main.expr(2) as CharLiteral).value.assertThat(is(Character.valueOf('"')))
-        (program.main.expr(3) as CharLiteral).value.assertThat(is(Character.valueOf('\'')))
-        (program.main.expr(4) as CharLiteral).value.assertThat(is(Character.valueOf('\\')))
-        (program.main.expr(5) as CharLiteral).value.assertThat(is(Character.valueOf('\n')))
-        (program.main.expr(6) as CharLiteral).value.assertThat(is(Character.valueOf('\t')))
+            'H';
+            '"';
+            '\"';
+            '\'';
+            '\\';
+            '\n';
+            '\t';
+        '''.withFrame)
+        (program.task.expr(0) as CharLiteral).value.assertThat(is(Character.valueOf('H')))
+        (program.task.expr(1) as CharLiteral).value.assertThat(is(Character.valueOf('"')))
+        (program.task.expr(2) as CharLiteral).value.assertThat(is(Character.valueOf('"')))
+        (program.task.expr(3) as CharLiteral).value.assertThat(is(Character.valueOf('\'')))
+        (program.task.expr(4) as CharLiteral).value.assertThat(is(Character.valueOf('\\')))
+        (program.task.expr(5) as CharLiteral).value.assertThat(is(Character.valueOf('\n')))
+        (program.task.expr(6) as CharLiteral).value.assertThat(is(Character.valueOf('\t')))
     }
     
     @Test def testStringLiteral() {
         val program = parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.String mapped to java.lang.String
-            task Main: {
-                "Hello World!";
-                "\"";
-                "'";
-                "\'";
-                "\\";
-                "\n\n";
-                "\t";
-            }
-        ''')
-        (program.main.expr(0) as StringLiteral).value.assertThat(is("Hello World!"))
-        (program.main.expr(1) as StringLiteral).value.assertThat(is("\""))
-        (program.main.expr(2) as StringLiteral).value.assertThat(is("'"))
-        (program.main.expr(3) as StringLiteral).value.assertThat(is("'"))
-        (program.main.expr(4) as StringLiteral).value.assertThat(is("\\"))
-        (program.main.expr(5) as StringLiteral).value.assertThat(is("\n\n"))
-        (program.main.expr(6) as StringLiteral).value.assertThat(is("\t"))
+            "Hello World!";
+            "\"";
+            "'";
+            "\'";
+            "\\";
+            "\n\n";
+            "\t";
+        '''.withFrame)
+        (program.task.expr(0) as StringLiteral).value.assertThat(is("Hello World!"))
+        (program.task.expr(1) as StringLiteral).value.assertThat(is("\""))
+        (program.task.expr(2) as StringLiteral).value.assertThat(is("'"))
+        (program.task.expr(3) as StringLiteral).value.assertThat(is("'"))
+        (program.task.expr(4) as StringLiteral).value.assertThat(is("\\"))
+        (program.task.expr(5) as StringLiteral).value.assertThat(is("\n\n"))
+        (program.task.expr(6) as StringLiteral).value.assertThat(is("\t"))
     }
     
     @Test def testIntLiteral() {
         val program = parse('''
-            task Main: {
-                0;
-                42;
-                «Integer.MAX_VALUE»;
-            }
-        ''')
-        (program.main.expr(0) as IntLiteral).value.assertThat(is(0));
-        (program.main.expr(1) as IntLiteral).value.assertThat(is(42));
-        (program.main.expr(2) as IntLiteral).value.assertThat(is(Integer.MAX_VALUE));
+            0;
+            42;
+            «Integer.MAX_VALUE»;
+        '''.withFrame)
+        (program.task.expr(0) as IntLiteral).value.assertThat(is(0));
+        (program.task.expr(1) as IntLiteral).value.assertThat(is(42));
+        (program.task.expr(2) as IntLiteral).value.assertThat(is(Integer.MAX_VALUE));
         // IMPROVE: Support for Integer.MIN_VALUE
     }
 }
