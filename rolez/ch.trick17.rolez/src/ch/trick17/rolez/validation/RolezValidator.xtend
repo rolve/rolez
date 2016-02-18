@@ -23,7 +23,9 @@ import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.Null
 import ch.trick17.rolez.rolez.Program
 import ch.trick17.rolez.rolez.ReadOnly
+import ch.trick17.rolez.rolez.ReadWrite
 import ch.trick17.rolez.rolez.ReturnExpr
+import ch.trick17.rolez.rolez.RoleParamRef
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
 import ch.trick17.rolez.rolez.SimpleClassRef
@@ -81,6 +83,7 @@ class RolezValidator extends RolezSystemValidator {
     public static val MAPPED_FIELD_WITH_INIT = "mapped with with initializer"
     public static val VAR_FIELD_IN_SINGLETON_CLASS = "var field in singleton class"
     public static val INEFFECTIVE_FIELD_ROLE = "ineffective field role"
+    public static val UNCALLABLE_METHOD = "uncallable method"
     public static val VAL_NOT_INITIALIZED = "val not initialized"
     public static val VAR_NOT_INITIALIZED = "var not initialized"
     public static val INCORRECT_SUPER_CONSTR_CALL = "incorrect super constructor call"
@@ -397,8 +400,20 @@ class RolezValidator extends RolezSystemValidator {
             if(system.subrole(createReadOnly, type.role).failed) {
                 val effectiveRole = system.leastCommonSuperrole(createReadOnly, type.role);
                 warning("Singleton objects are always readonly, therefore this field's effective role is " + effectiveRole,
-                    type, ROLE_TYPE__ROLE, INEFFECTIVE_FIELD_ROLE)
+                    type.role, null, INEFFECTIVE_FIELD_ROLE)
             }
+    }
+    
+    @Check
+    def checkSingletonClassMethod(Method it) {
+        if(!enclosingClass.isSingleton) return;
+        
+        if(thisRole instanceof ReadWrite || thisRole instanceof RoleParamRef
+                && (thisRole as RoleParamRef).param.upperBound instanceof ReadWrite) {
+            warning("Singleton objects are always readonly, therefore this "
+                + if(isTask) "task can never be started" else "method can never be called",
+                thisRole, null, UNCALLABLE_METHOD)
+        }
     }
     
     @Check

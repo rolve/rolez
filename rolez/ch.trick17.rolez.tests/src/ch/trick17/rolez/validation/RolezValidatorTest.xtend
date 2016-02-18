@@ -516,6 +516,8 @@ class RolezValidatorTest {
             }
         ''').assertNoErrors
         
+        // FIXME: generic overloading not supported by code generation!
+        
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
@@ -1084,7 +1086,32 @@ class RolezValidatorTest {
             object A {
                 var foo: readwrite Object
             }
-        ''').assertWarning(TYPE, INEFFECTIVE_FIELD_ROLE)
+        ''').assertWarning(READ_WRITE, INEFFECTIVE_FIELD_ROLE)
+    }
+    
+    @Test def testSingletonClassMethod() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            object A {
+                def pure foo: {}
+                def readonly bar: {}
+                def r baz[r]: {}
+                def r foz[r includes readonly]: {}
+            }
+        ''').assertNoIssues
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            object A {
+                def readwrite foo: {}
+            }
+        ''').assertWarning(READ_WRITE, UNCALLABLE_METHOD, "method", "called")
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            object A {
+                task r foo[r includes readwrite]: {}
+            }
+        ''').assertWarning(ROLE_PARAM_REF, UNCALLABLE_METHOD, "task", "started")
     }
     
     @Test def testLocalValInitialized() {
