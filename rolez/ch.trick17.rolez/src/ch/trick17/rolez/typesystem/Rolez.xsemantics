@@ -84,6 +84,7 @@ auxiliary {
 judgments {
     type      |- Expr e : output Type
     varType   ||- Var v : output Type
+    // IMPROVE: Enable type inference for fields too (introduce VarLike class?)
     wellTyped |- Stmt s
     
     validArgs |- Argumented a << Executable e
