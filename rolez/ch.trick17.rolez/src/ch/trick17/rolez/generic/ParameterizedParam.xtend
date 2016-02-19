@@ -10,6 +10,7 @@ import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.EStructuralFeature
 
 import static ch.trick17.rolez.rolez.RolezPackage.Literals.TYPED__TYPE
+import static ch.trick17.rolez.rolez.impl.InExecutableImplCustom.*
 
 package class ParameterizedParam extends ParameterizedEObject<Param> implements Param {
     
@@ -20,7 +21,9 @@ package class ParameterizedParam extends ParameterizedEObject<Param> implements 
     override getName() { eObject.name }
     override getType() { eObject.type.parameterized }
     
-    override getKind() { eObject.kind }
+    override getKind()             { eObject.kind }
+    override enclosingExecutable() { enclosingExecutable(this) }
+    override enclosingMethod()     { enclosingMethod(this) }
     
     override eGet(EStructuralFeature feature) {
         if(feature === TYPED__TYPE) type

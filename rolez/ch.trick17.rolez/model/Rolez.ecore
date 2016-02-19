@@ -68,7 +68,7 @@
         eType="#//RoleParam" containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="declaredTask" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="RoleParam">
+  <eClassifiers xsi:type="ecore:EClass" name="RoleParam" eSuperTypes="#//InExecutable">
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="upperBound" eType="#//BuiltInRole"
         containment="true"/>
@@ -257,8 +257,8 @@
     <eStructuralFeatures xsi:type="ecore:EReference" name="right" eType="#//Expr"
         containment="true"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="Instr"/>
-  <eClassifiers xsi:type="ecore:EClass" name="Var" eSuperTypes="#//Typed">
+  <eClassifiers xsi:type="ecore:EClass" name="Instr" eSuperTypes="#//InExecutable"/>
+  <eClassifiers xsi:type="ecore:EClass" name="Var" eSuperTypes="#//InExecutable #//Typed">
     <eOperations name="getKind" eType="#//VarKind"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="Named">
@@ -274,7 +274,7 @@
         containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="TypedExecutable" eSuperTypes="#//Typed #//Executable"/>
-  <eClassifiers xsi:type="ecore:EClass" name="Argumented">
+  <eClassifiers xsi:type="ecore:EClass" name="Argumented" eSuperTypes="#//InExecutable">
     <eOperations name="getExecutable" eType="#//Executable"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="args" upperBound="-1" eType="#//Expr"
         containment="true"/>
@@ -289,4 +289,8 @@
   <eClassifiers xsi:type="ecore:EClass" name="Pure" eSuperTypes="#//BuiltInRole"/>
   <eClassifiers xsi:type="ecore:EClass" name="ReadOnly" eSuperTypes="#//BuiltInRole"/>
   <eClassifiers xsi:type="ecore:EClass" name="ReadWrite" eSuperTypes="#//BuiltInRole"/>
+  <eClassifiers xsi:type="ecore:EClass" name="InExecutable">
+    <eOperations name="enclosingExecutable" eType="#//Executable"/>
+    <eOperations name="enclosingMethod" eType="#//Method"/>
+  </eClassifiers>
 </ecore:EPackage>

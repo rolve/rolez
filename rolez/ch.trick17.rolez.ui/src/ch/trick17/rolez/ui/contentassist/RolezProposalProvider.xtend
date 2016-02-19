@@ -38,7 +38,7 @@ class RolezProposalProvider extends AbstractRolezProposalProvider {
         }
         
         if (target != null) {
-            val targetType = system.type(utils.createEnv(model), target).value
+            val targetType = system.type(utils.createEnv(target), target).value
             if (targetType instanceof RoleType) {
                 val factory = getProposalFactory("MemberAccess", context)
                 val scope = Scopes.scopeFor(targetType.base.clazz.allMembers)

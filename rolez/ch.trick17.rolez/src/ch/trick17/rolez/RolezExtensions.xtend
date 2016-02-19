@@ -6,7 +6,6 @@ import ch.trick17.rolez.rolez.Argumented
 import ch.trick17.rolez.rolez.Class
 import ch.trick17.rolez.rolez.ClassRef
 import ch.trick17.rolez.rolez.Constr
-import ch.trick17.rolez.rolez.Executable
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.Field
 import ch.trick17.rolez.rolez.GenericClassRef
@@ -117,14 +116,6 @@ class RolezExtensions {
         }
     }
     
-    def Method enclosingMethod(EObject it) {
-        val container = it?.eContainer
-        switch(container) {
-            Method: container
-            default: container?.enclosingMethod
-        }
-    }
-    
     def Class enclosingClass(EObject it) {
         val container = it?.eContainer
         switch(container) {
@@ -142,14 +133,6 @@ class RolezExtensions {
         switch(container) {
             Program: container
             default: container?.enclosingProgram
-        }
-    }
-    
-    def Executable enclosingExecutable(EObject it) {
-        val container = it?.eContainer
-        switch(container) {
-            Executable: container
-            default: container?.enclosingExecutable
         }
     }
     

@@ -9,6 +9,7 @@ import ch.trick17.rolez.rolez.Executable
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.ForLoop
 import ch.trick17.rolez.rolez.GenericClassRef
+import ch.trick17.rolez.rolez.InExecutable
 import ch.trick17.rolez.rolez.Instr
 import ch.trick17.rolez.rolez.LocalVarDecl
 import ch.trick17.rolez.rolez.MemberAccess
@@ -70,12 +71,15 @@ class RolezUtils {
         if(eContainer == null) it else EcoreUtil.copy(it)
     }
     
-    def RuleEnvironment createEnv(EObject context) {
-        val body = context.enclosingExecutable
-        switch(body) {
+    def RuleEnvironment createEnv(InExecutable context) {
+        createEnv(context.enclosingExecutable)
+    }
+    
+    def RuleEnvironment createEnv(Executable executable) {
+        switch(executable) {
             case null: new RuleEnvironment
-            Method: new RuleEnvironment(new RuleEnvironmentEntry("this", body.thisType))
-            Constr: new RuleEnvironment(new RuleEnvironmentEntry("this", body.thisType))
+            Method: new RuleEnvironment(new RuleEnvironmentEntry("this", executable.thisType))
+            Constr: new RuleEnvironment(new RuleEnvironmentEntry("this", executable.thisType))
         }
     }
     

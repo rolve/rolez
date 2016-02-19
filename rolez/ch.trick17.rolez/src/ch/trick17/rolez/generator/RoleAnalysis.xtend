@@ -1,6 +1,5 @@
 package ch.trick17.rolez.generator
 
-import ch.trick17.rolez.RolezExtensions
 import ch.trick17.rolez.rolez.Cast
 import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.Executable
@@ -17,12 +16,10 @@ import ch.trick17.rolez.rolez.StringLiteral
 import ch.trick17.rolez.rolez.The
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.VarRef
-import javax.inject.Inject
 
 class RoleAnalysis {
     
-    @Inject extension RolezExtensions
-    @Inject extension RolezFactory
+    extension RolezFactory = RolezFactory.eINSTANCE
     
     def dispatch Role dynamicRole(MemberAccess it)  {
         if(isGlobal) createReadOnly else createPure
