@@ -148,7 +148,7 @@ class ClassGenerator {
         «IF isMain»
         
         public static void main(final java.lang.String[] args) {
-            «jvmTaskSystemClassName».getDefault().run(new «enclosingClass.safeSimpleName»().$«name»Task(«IF !params.isEmpty»«jvmGuardedArrayClassName».<java.lang.String[]>wrap(args)«ENDIF»));
+            «jvmTaskSystemClassName».getDefault().run(«genMainInstance».$«name»Task(«IF !params.isEmpty»«jvmGuardedArrayClassName».<java.lang.String[]>wrap(args)«ENDIF»));
         }
         «ENDIF»
     '''
@@ -197,6 +197,13 @@ class ClassGenerator {
         BuiltInRole: it
         RoleParamRef: param.upperBound
     }}
+    
+    private def genMainInstance(Method it) {
+        if(enclosingClass.isSingleton)
+            '''INSTANCE'''
+        else
+            '''new «enclosingClass.safeSimpleName»()'''
+    }
     
     private def genObjectField(Field it) { if(isMapped) '''
         

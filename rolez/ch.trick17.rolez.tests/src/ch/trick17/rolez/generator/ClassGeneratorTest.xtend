@@ -536,6 +536,41 @@ class ClassGeneratorTest extends GeneratorTest {
             }
         ''')
         
+        // Singleton class with main task
+        parse('''
+            object App {
+                task pure main: {}
+            }
+        ''', someClasses).onlyClass.generate.assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
+            
+            public final class App extends java.lang.Object {
+                
+                public static final App INSTANCE = new App();
+                
+                private App() {}
+                
+                public void main() {
+                }
+                
+                public java.util.concurrent.Callable<java.lang.Void> $mainTask() {
+                    return new java.util.concurrent.Callable<java.lang.Void>() {
+                        public java.lang.Void call() {
+                            try {
+                            }
+                            finally {
+                            }
+                            return null;
+                        }
+                    };
+                }
+                
+                public static void main(final java.lang.String[] args) {
+                    rolez.lang.TaskSystem.getDefault().run(INSTANCE.$mainTask());
+                }
+            }
+        ''')
+        
         parse('''
             class App {
                 task pure main(args: readonly Array[pure String]): { args.get(0).length; }
