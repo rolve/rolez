@@ -806,7 +806,7 @@ class RolezValidatorTest {
             class A {
                 def readwrite foo: {
                     var a: int;
-                    val a: boolean;
+                    val a: boolean = false;
                 }
             }
         ''').assertError(LOCAL_VAR, DUPLICATE_VAR)
@@ -815,7 +815,7 @@ class RolezValidatorTest {
             class A {
                 new {
                     var a: int;
-                    val a: boolean;
+                    val a: boolean = true;
                 }
             }
         ''').assertError(LOCAL_VAR, DUPLICATE_VAR)

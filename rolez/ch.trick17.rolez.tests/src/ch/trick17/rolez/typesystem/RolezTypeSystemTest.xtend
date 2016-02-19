@@ -1223,10 +1223,10 @@ class RolezTypeSystemTest {
     }
     
     @Test def testSubtypePrimitiveMismatch() {
-        parse("val i: int     = false;".withFrame).assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "boolean", "int")
-        parse("val i: int     =   'c';".withFrame).assertError(   CHAR_LITERAL, SUBTYPEEXPR, "char", "int")
-        parse("val b: boolean =     1;".withFrame).assertError(    INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
-        parse("val b: boolean =   'c';".withFrame).assertError(   CHAR_LITERAL, SUBTYPEEXPR, "char", "boolean")
+        parse("val i: int = false;".withFrame).assertError(  BOOLEAN_LITERAL, SUBTYPEEXPR, "boolean", "int")
+        parse("val i: int = 'c';".withFrame).assertError(       CHAR_LITERAL, SUBTYPEEXPR, "char", "int")
+        parse("val bool: boolean = 1;".withFrame).assertError(   INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
+        parse("val bool: boolean = 'c';".withFrame).assertError(CHAR_LITERAL, SUBTYPEEXPR, "char", "boolean")
         // I think we get the picture...
     }
     
