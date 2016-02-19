@@ -80,8 +80,4 @@ class RoleAnalysis {
                     && !(it as MemberAccess).method.isMapped
         ]
     }
-    
-    static enum CodeKind {
-        CONSTR, METHOD, TASK, FIELD_INITIALIZER
-    }
 }

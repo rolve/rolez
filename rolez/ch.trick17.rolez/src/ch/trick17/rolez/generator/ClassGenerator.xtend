@@ -1,7 +1,6 @@
 package ch.trick17.rolez.generator
 
 import ch.trick17.rolez.RolezExtensions
-import ch.trick17.rolez.generator.RoleAnalysis.CodeKind
 import ch.trick17.rolez.generic.ParameterizedMethod
 import ch.trick17.rolez.rolez.BuiltInRole
 import ch.trick17.rolez.rolez.Class
@@ -88,7 +87,7 @@ class ClassGenerator {
         '''
             
             public «enclosingClass.safeSimpleName»(«params.map[gen].join(", ")») {
-                «body.generateWithTryCatch(roleAnalysis, guardThis)»
+                «body.generateWithTryCatch(roleAnalysis, CodeKind.CONSTR, guardThis)»
                 «IF guardThis»
                 finally {
                     guardReadWrite(this);
@@ -101,7 +100,7 @@ class ClassGenerator {
     // IMPROVE: Support initializer code that may throw checked exceptions
     private def gen(Field it) '''
         
-        public «kind.generate»«type.generate» «safeName»«IF initializer != null» = «initializer.generate(new RoleAnalysis(initializer, CodeKind.FIELD_INITIALIZER))»«ENDIF»;
+        public «kind.generate»«type.generate» «safeName»«IF initializer != null» = «initializer.generate(new RoleAnalysis(initializer, CodeKind.FIELD_INITIALIZER), CodeKind.FIELD_INITIALIZER)»«ENDIF»;
     '''
     
     private def gen(Method it) '''
@@ -110,7 +109,7 @@ class ClassGenerator {
         @java.lang.Override
         «ENDIF»
         public «genReturnType» «safeName»(«params.map[gen].join(", ")») {
-            «body.generateWithTryCatch(new RoleAnalysis(body, CodeKind.METHOD), false)»
+            «body.generateWithTryCatch(new RoleAnalysis(body, CodeKind.METHOD), CodeKind.METHOD, false)»
         }
         «IF isTask»
         
@@ -129,7 +128,7 @@ class ClassGenerator {
                     «FOR p : params.filter[type.needsRegisterNewOwner]»
                     «genRegisterNewOwner(p.safeName, (p.type as RoleType).base.clazz)»
                     «ENDFOR»
-                    «body.generateWithTryCatch(new RoleAnalysis(body, CodeKind.TASK), true)»
+                    «body.generateWithTryCatch(new RoleAnalysis(body, CodeKind.TASK), CodeKind.TASK, true)»
                     finally {
                         «IF thisType.needsTransition»
                         «genRelease("", thisType)»

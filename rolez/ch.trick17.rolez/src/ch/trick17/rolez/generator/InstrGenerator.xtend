@@ -63,16 +63,16 @@ class InstrGenerator {
     
     @Inject Injector injector
     
-    def generate(Instr it, RoleAnalysis roleAnalysis) {
-        newGenerator(roleAnalysis).generate(it)
+    def generate(Instr it, RoleAnalysis roleAnalysis, CodeKind codeKind) {
+        newGenerator(roleAnalysis, codeKind).generate(it)
     }
     
-    def generateWithTryCatch(Block it, RoleAnalysis roleAnalysis, boolean forceTry) {
-        newGenerator(roleAnalysis).generateWithTryCatch(it, forceTry)
+    def generateWithTryCatch(Block it, RoleAnalysis roleAnalysis, CodeKind codeKind, boolean forceTry) {
+        newGenerator(roleAnalysis, codeKind).generateWithTryCatch(it, forceTry)
     }
     
-    private def newGenerator(RoleAnalysis roleAnalysis) {
-        new Generator(roleAnalysis) => [injector.injectMembers(it)]
+    private def newGenerator(RoleAnalysis roleAnalysis, CodeKind codeKind) {
+        new Generator(roleAnalysis, codeKind) => [injector.injectMembers(it)]
     }
     
     /**
@@ -91,9 +91,11 @@ class InstrGenerator {
         @Inject extension SafeJavaNames
         
         val RoleAnalysis roleAnalysis
+        val CodeKind codeKind
         
-        new(RoleAnalysis roleAnalysis) {
+        new(RoleAnalysis roleAnalysis, CodeKind codeKind) {
             this.roleAnalysis = roleAnalysis
+            this.codeKind = codeKind
         }
         
         /* Stmt */
@@ -301,7 +303,10 @@ class InstrGenerator {
         private def generateTaskStart(MemberAccess it)
             '''«jvmTaskSystemClassName».getDefault().start(«target.genNested».$«method.name»Task(«args.map[generate].join(", ")»))'''
         
-        private def dispatch CharSequence generate(This _) '''this'''
+        private def dispatch CharSequence generate(This it)  {
+            if(codeKind == CodeKind.TASK) '''«enclosingClass.safeSimpleName».this'''
+            else '''this'''
+        }
         
         private def dispatch CharSequence generate(VarRef it) { variable.safeName }
         

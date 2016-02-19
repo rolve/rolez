@@ -370,26 +370,29 @@ class ClassGeneratorTest extends GeneratorTest {
         
         parse('''
             class App {
-                task pure foo: int { return 42; }
+                val magic: int = 42
+                task pure foo: int { return this.magic; }
             }
         ''', someClasses).onlyClass.generate.assertEqualsJava('''
             import static «jvmGuardedClassName».*;
             
             public class App extends «jvmGuardedClassName» {
                 
+                public final int magic = 42;
+                
                 public App() {
                     super();
                 }
                 
                 public int foo() {
-                    return 42;
+                    return this.magic;
                 }
                 
                 public java.util.concurrent.Callable<java.lang.Integer> $fooTask() {
                     return new java.util.concurrent.Callable<java.lang.Integer>() {
                         public java.lang.Integer call() {
                             try {
-                                return 42;
+                                return App.this.magic;
                             }
                             finally {
                             }
