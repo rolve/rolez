@@ -1,7 +1,6 @@
 package ch.trick17.rolez.generator
 
 import ch.trick17.rolez.rolez.Cast
-import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.Instr
 import ch.trick17.rolez.rolez.MemberAccess

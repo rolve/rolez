@@ -294,7 +294,7 @@ class RolezValidator extends RolezSystemValidator {
 	def checkReturnExpr(TypedExecutable it) {
         if(body == null || type instanceof Void) return;
         
-	    val cfg = controlFlowGraph
+	    val cfg = body.controlFlowGraph
         for(p : cfg.exit.predecessors) {
             if(p instanceof InstrNode) {
                 if(!(p.instr instanceof ReturnExpr))
@@ -336,7 +336,7 @@ class RolezValidator extends RolezSystemValidator {
     def checkValFieldsInitialized(Constr it) {
         if(body == null) return
         
-        val cfg = controlFlowGraph
+        val cfg = body.controlFlowGraph
         val extension analysis = valFieldsAnalysis.analyze(cfg, enclosingClass)
         for(f : enclosingClass.fields.filter[kind == VAL])
             if(!f.definitelyInitializedAfter(cfg.exit))
@@ -426,7 +426,7 @@ class RolezValidator extends RolezSystemValidator {
     def checkLocalVarsInitialized(Executable it) {
         if(body == null) return
         
-        val cfg = controlFlowGraph
+        val cfg = body.controlFlowGraph
         val extension analysis = new LocalVarsInitializedAnalysis(cfg)
         for(v : all(VarRef))
             if(v.variable instanceof LocalVar && !v.isAssignmentTarget
@@ -449,7 +449,7 @@ class RolezValidator extends RolezSystemValidator {
     def checkSuperConstrCall(Constr it) {
         if(body == null || enclosingClass.isObjectClass) return
         
-        val cfg = controlFlowGraph
+        val cfg = body.controlFlowGraph
         val extension analysis = new SuperConstrCallAnalysis(cfg)
         for(t : all(This))
             if(cfg.nodeOf(t).isBeforeSuperConstrCall)

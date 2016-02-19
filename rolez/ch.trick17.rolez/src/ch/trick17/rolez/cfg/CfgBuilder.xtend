@@ -3,7 +3,6 @@ package ch.trick17.rolez.cfg
 import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.BinaryExpr
 import ch.trick17.rolez.rolez.Block
-import ch.trick17.rolez.rolez.Executable
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.ExprStmt
 import ch.trick17.rolez.rolez.ForLoop
@@ -52,19 +51,19 @@ class CfgBuilder {
     
     /* Here comes the implementation */
     
-    val Executable executable
+    val Instr instr
     val ExitNode exit
     val Map<Instr, Node> instrMap = new HashMap
     
-    package new(Executable executable) {
-        if(executable.body == null) throw new AssertionError
-        this.executable = executable
+    package new(Instr instr) {
+        if(instr == null) throw new AssertionError
+        this.instr = instr
         this.exit = new ExitNode
     }
     
     def build() {
         val entry = new EntryNode
-        process(executable.body, entry.linker).link(exit)
+        process(instr, entry.linker).link(exit)
         return new ControlFlowGraph(entry, exit, instrMap)
     }
     
