@@ -5,7 +5,6 @@ import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.Instr
 import ch.trick17.rolez.rolez.MemberAccess
-import ch.trick17.rolez.rolez.Method
 import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.Param
 import ch.trick17.rolez.rolez.Parenthesized
@@ -22,11 +21,11 @@ class RoleAnalysis {
     extension RolezFactory = RolezFactory.eINSTANCE
     
     val Instr code
-    val Container container
+    val CodeKind codeKind
     
-    new(Instr code, Container container) {
+    new(Instr code, CodeKind codeKind) {
         this.code = code
-        this.container = container
+        this.codeKind = codeKind
     }
     
     def dispatch Role dynamicRole(MemberAccess it)  {
@@ -34,15 +33,14 @@ class RoleAnalysis {
     }
     
     def dispatch Role dynamicRole(VarRef it) {
-        if(variable instanceof Param && enclosingExecutable instanceof Method
-                && enclosingMethod.isTask && !enclosingExecutable.body.mayStartTask)
+        if(variable instanceof Param && codeKind == CodeKind.TASK && !code.mayStartTask)
             (variable.type as RoleType).role
         else
             createPure
     }
     
-    def dispatch Role dynamicRole(This it) {
-        if(enclosingExecutable instanceof Constr && !enclosingExecutable.body.mayStartTask)
+    def dispatch Role dynamicRole(This _) {
+        if(codeKind == CodeKind.CONSTR && !code.mayStartTask)
             createReadWrite
         else
             createPure
@@ -61,8 +59,8 @@ class RoleAnalysis {
     def dispatch Role dynamicRole(Expr _)           { createPure }
     
     def dynamicThisRoleAtExit() {
-        if(container != Container.CONSTR)
-            throw new IllegalStateException("Only applicable if container is CONSTR")
+        if(codeKind != CodeKind.CONSTR)
+            throw new IllegalStateException("Only applicable if codeKind is CONSTR")
         if(code.mayStartTask) createPure else createReadWrite
     }
     
@@ -84,7 +82,7 @@ class RoleAnalysis {
         ]
     }
     
-    static enum Container {
+    static enum CodeKind {
         CONSTR, METHOD, TASK, FIELD_INITIALIZER
     }
 }
