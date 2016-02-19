@@ -22,8 +22,8 @@ import ch.trick17.rolez.rolez.Program
 import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleParam
 import ch.trick17.rolez.rolez.RoleType
+import ch.trick17.rolez.rolez.RolezFactory
 import ch.trick17.rolez.rolez.SimpleClassRef
-import ch.trick17.rolez.rolez.Stmt
 import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.TypeParamRef
 import ch.trick17.rolez.typesystem.RolezSystem
@@ -39,7 +39,6 @@ import org.eclipse.xtext.util.OnChangeEvictingCache
 import static ch.trick17.rolez.Constants.*
 
 import static extension ch.trick17.rolez.generic.Parameterized.*
-import ch.trick17.rolez.rolez.RolezFactory
 
 /**
  * Extension methods for the Rolez language elements
@@ -115,14 +114,6 @@ class RolezExtensions {
         switch(m) {
             Field: false
             Method: methods.exists[utils.equalSignatureWithoutRoles(it, m)]
-        }
-    }
-    
-    def Stmt enclosingStmt(EObject it) {
-        val container = it?.eContainer
-        switch(container) {
-            Stmt: container
-            default: container?.enclosingStmt
         }
     }
     

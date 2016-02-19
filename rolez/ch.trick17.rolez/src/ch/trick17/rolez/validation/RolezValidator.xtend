@@ -234,10 +234,10 @@ class RolezValidator extends RolezSystemValidator {
     }
     
     @Check
-    def checkNoDuplicateVars(LocalVar it) {
-        val vars = utils.varsAbove(enclosingStmt.eContainer, enclosingStmt)
-        if(vars.exists[v | v.name == name])
-            error("Duplicate variable " + name, NAMED__NAME, DUPLICATE_VAR)
+    def checkNoDuplicateVars(LocalVarDecl it) {
+        val vars = utils.varsAbove(eContainer, it)
+        if(vars.exists[v | v.name == variable.name])
+            error("Duplicate variable " + variable.name, variable, NAMED__NAME, DUPLICATE_VAR)
     }
     
     @Check
