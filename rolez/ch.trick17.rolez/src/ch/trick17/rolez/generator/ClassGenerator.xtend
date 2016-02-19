@@ -1,6 +1,7 @@
 package ch.trick17.rolez.generator
 
 import ch.trick17.rolez.RolezExtensions
+import ch.trick17.rolez.generator.RoleAnalysis.Container
 import ch.trick17.rolez.generic.ParameterizedMethod
 import ch.trick17.rolez.rolez.BuiltInRole
 import ch.trick17.rolez.rolez.Class
@@ -22,10 +23,11 @@ import javax.inject.Inject
 
 import static ch.trick17.rolez.Constants.*
 
+import static extension ch.trick17.rolez.generator.InstrGenerator.generate
+
 class ClassGenerator {
     
     @Inject extension RolezExtensions
-    @Inject extension RoleAnalysis
     
     @Inject extension InstrGenerator
     @Inject extension TypeGenerator
@@ -81,11 +83,12 @@ class ClassGenerator {
     '''
     
     private def gen(Constr it) {
-        val guardThis = !(dynamicThisRoleAtExit instanceof ReadWrite)
+        val roleAnalysis = new RoleAnalysis(body, Container.CONSTR)
+        val guardThis = !(roleAnalysis.dynamicThisRoleAtExit instanceof ReadWrite)
         '''
             
             public «enclosingClass.safeSimpleName»(«params.map[gen].join(", ")») {
-                «body.generateWithTryCatch(guardThis)»
+                «body.generateWithTryCatch(roleAnalysis, guardThis)»
                 «IF guardThis»
                 finally {
                     guardReadWrite(this);
@@ -95,9 +98,10 @@ class ClassGenerator {
         '''
     }
     
+    // IMPROVE: Support initializer code that may throw checked exceptions
     private def gen(Field it) '''
         
-        public «kind.generate»«type.generate» «safeName»«IF initializer != null» = «initializer.generate»«ENDIF»;
+        public «kind.generate»«type.generate» «safeName»«IF initializer != null» = «initializer.generate(new RoleAnalysis(initializer, Container.FIELD_INITIALIZER))»«ENDIF»;
     '''
     
     private def gen(Method it) '''
@@ -106,7 +110,7 @@ class ClassGenerator {
         @java.lang.Override
         «ENDIF»
         public «genReturnType» «safeName»(«params.map[gen].join(", ")») {
-            «body.generateWithTryCatch(false)»
+            «body.generateWithTryCatch(new RoleAnalysis(body, Container.METHOD), false)»
         }
         «IF isTask»
         
@@ -125,7 +129,7 @@ class ClassGenerator {
                     «FOR p : params.filter[type.needsRegisterNewOwner]»
                     «genRegisterNewOwner(p.safeName, (p.type as RoleType).base.clazz)»
                     «ENDFOR»
-                    «body.generateWithTryCatch(true)»
+                    «body.generateWithTryCatch(new RoleAnalysis(body, Container.TASK), true)»
                     finally {
                         «IF thisType.needsTransition»
                         «genRelease("", thisType)»
