@@ -59,6 +59,24 @@ object System mapped to java.lang.System {
 }
 
 object Math mapped to java.lang.Math {
-    mapped def pure min(a: int, b: int): int
+    mapped def pure exp(a: double): double
+    mapped def pure log(a: double): double
+    mapped def pure log10(a: double): double
+    
+    mapped def pure sqrt(a: double): double
+    mapped def pure cbrt(a: double): double
+    mapped def pure pow(a: double, b: double): double
+    
+    mapped def pure ceil(a: double): double
+    mapped def pure floor(a: double): double
+    
+    mapped def pure abs(a: double): double
+    mapped def pure abs(a: int): int
+    
+    mapped def pure max(a: double, b: double): double
+    mapped def pure min(a: double, b: double): double
     mapped def pure max(a: int, b: int): int
+    mapped def pure min(a: int, b: int): int
+    
+    mapped def pure signum(d: double): double
 }
