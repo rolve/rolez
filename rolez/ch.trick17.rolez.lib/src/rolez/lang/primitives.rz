@@ -7,6 +7,9 @@ object Int mapped to java.lang.Integer {
     mapped def pure parseInt(s: pure String): int
     mapped def pure parseInt(s: pure String, radix: int): int
     mapped def pure toString(i: int): readonly String
+    
+    mapped def pure numberOfLeadingZeros(i: int): int
+    mapped def pure numberOfTrailingZeros(i: int): int
 }
 
 object Double mapped to java.lang.Double {
