@@ -1,13 +1,12 @@
 package rolez.lang;
 
 import static java.util.Collections.emptyList;
-import static java.util.Collections.newSetFromMap;
 
 import java.util.AbstractList;
-import java.util.IdentityHashMap;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.RandomAccess;
-import java.util.Set;
 
 public class GuardedSlice<A> extends Guarded {
     
@@ -16,9 +15,8 @@ public class GuardedSlice<A> extends Guarded {
     
     /* References to all (direct) subslices. Guarding a slice must also consider subslices, which
      * may currently be "owned" by a different task. */
-    final Set<GuardedSlice<A>> subslices = newSetFromMap(
-            new IdentityHashMap<GuardedSlice<A>, java.lang.Boolean>());
-            
+    final List<GuardedSlice<A>> subslices = new ArrayList<>();
+    
     // TODO: Find a way to "free" unused subslices again
     
     GuardedSlice(A array, SliceRange range) {
