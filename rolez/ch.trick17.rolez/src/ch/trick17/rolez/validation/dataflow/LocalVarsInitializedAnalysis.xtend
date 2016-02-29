@@ -1,14 +1,13 @@
-package ch.trick17.rolez.validation
+package ch.trick17.rolez.validation.dataflow
 
-import ch.trick17.rolez.cfg.ControlFlowGraph
-import ch.trick17.rolez.cfg.DataFlowAnalysis
-import ch.trick17.rolez.cfg.InstrNode
-import ch.trick17.rolez.cfg.Node
 import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.Instr
 import ch.trick17.rolez.rolez.LocalVarDecl
 import ch.trick17.rolez.rolez.Var
 import ch.trick17.rolez.rolez.VarRef
+import ch.trick17.rolez.validation.cfg.ControlFlowGraph
+import ch.trick17.rolez.validation.cfg.InstrNode
+import ch.trick17.rolez.validation.cfg.Node
 import java.util.Set
 
 import static com.google.common.collect.ImmutableSet.copyOf

@@ -1,4 +1,4 @@
-package ch.trick17.rolez.cfg
+package ch.trick17.rolez.validation.dataflow
 
 import ch.trick17.rolez.rolez.Instr
 import java.util.HashMap
@@ -12,13 +12,13 @@ import static extension java.util.Objects.requireNonNull
  */
 abstract class DataFlowAnalysis<F> {
     
-    protected val ControlFlowGraph cfg
+    protected val ch.trick17.rolez.validation.cfg.ControlFlowGraph cfg
     protected val boolean forward
     
-    val Map<Node, F>  inFlows = new HashMap
-    val Map<Node, F> outFlows = new HashMap
+    val Map<ch.trick17.rolez.validation.cfg.Node, F>  inFlows = new HashMap
+    val Map<ch.trick17.rolez.validation.cfg.Node, F> outFlows = new HashMap
     
-    new (ControlFlowGraph cfg, boolean forward) {
+    new (ch.trick17.rolez.validation.cfg.ControlFlowGraph cfg, boolean forward) {
         this.cfg = cfg;
         this.forward = forward
         
@@ -44,7 +44,7 @@ abstract class DataFlowAnalysis<F> {
             val in = node.prevNodes.map[outFlow].reduce[f1, f2 | merge(f1, f2)]
             inFlows.put(node, in)
             val out =
-                if(node instanceof InstrNode) flowThrough(node.instr, in)
+                if(node instanceof ch.trick17.rolez.validation.cfg.InstrNode) flowThrough(node.instr, in)
                 else in
             
             val oldOut = outFlows.put(node, out)
@@ -54,9 +54,9 @@ abstract class DataFlowAnalysis<F> {
         }
     }
     
-    private def prevNodes(Node it) { if(forward) predecessors else successors }
-    private def nextNodes(Node it) { if(forward) successors else predecessors }
+    private def prevNodes(ch.trick17.rolez.validation.cfg.Node it) { if(forward) predecessors else successors }
+    private def nextNodes(ch.trick17.rolez.validation.cfg.Node it) { if(forward) successors else predecessors }
     
-    protected def  inFlow(Node it) {  inFlows.get(it).requireNonNull }
-    protected def outFlow(Node it) { outFlows.get(it).requireNonNull }
+    protected def  inFlow(ch.trick17.rolez.validation.cfg.Node it) {  inFlows.get(it).requireNonNull }
+    protected def outFlow(ch.trick17.rolez.validation.cfg.Node it) { outFlows.get(it).requireNonNull }
 }

@@ -1,11 +1,10 @@
-package ch.trick17.rolez.validation
+package ch.trick17.rolez.validation.dataflow
 
-import ch.trick17.rolez.cfg.DataFlowAnalysis
 import ch.trick17.rolez.rolez.Instr
-import ch.trick17.rolez.cfg.ControlFlowGraph
 import ch.trick17.rolez.rolez.SuperConstrCall
-import ch.trick17.rolez.cfg.Node
-import ch.trick17.rolez.cfg.InstrNode
+import ch.trick17.rolez.validation.cfg.ControlFlowGraph
+import ch.trick17.rolez.validation.cfg.InstrNode
+import ch.trick17.rolez.validation.cfg.Node
 
 class SuperConstrCallAnalysis extends DataFlowAnalysis<Boolean> {
     

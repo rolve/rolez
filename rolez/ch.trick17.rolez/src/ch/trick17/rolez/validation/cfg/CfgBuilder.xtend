@@ -1,4 +1,4 @@
-package ch.trick17.rolez.cfg
+package ch.trick17.rolez.validation.cfg
 
 import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.BinaryExpr
@@ -96,7 +96,7 @@ class CfgBuilder {
     }
     
     private def dispatch Linker process(WhileLoop l, Linker prev) {
-        val headNode = new LoopHeadNode(l)
+        val headNode = new LoopHeadNode
         if(!prev.link(headNode)) return [false]
         
         val conditionLinker = process(l.condition, headNode.linker)
@@ -105,7 +105,7 @@ class CfgBuilder {
     }
     
     private def dispatch Linker process(ForLoop l, Linker prev) {
-        val headNode = new LoopHeadNode(l)
+        val headNode = new LoopHeadNode
         if(!process(l.initializer, prev).link(headNode)) return [false]
         
         val conditionLinker = process(l.condition, headNode.linker)

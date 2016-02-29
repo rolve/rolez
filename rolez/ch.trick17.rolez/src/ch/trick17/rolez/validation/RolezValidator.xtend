@@ -2,8 +2,6 @@ package ch.trick17.rolez.validation
 
 import ch.trick17.rolez.RolezExtensions
 import ch.trick17.rolez.RolezUtils
-import ch.trick17.rolez.cfg.CfgProvider
-import ch.trick17.rolez.cfg.InstrNode
 import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.Block
 import ch.trick17.rolez.rolez.Class
@@ -40,6 +38,11 @@ import ch.trick17.rolez.rolez.Void
 import ch.trick17.rolez.scoping.RolezScopeProvider
 import ch.trick17.rolez.typesystem.RolezSystem
 import ch.trick17.rolez.typesystem.validation.RolezSystemValidator
+import ch.trick17.rolez.validation.cfg.CfgProvider
+import ch.trick17.rolez.validation.cfg.InstrNode
+import ch.trick17.rolez.validation.dataflow.LocalVarsInitializedAnalysis
+import ch.trick17.rolez.validation.dataflow.SuperConstrCallAnalysis
+import ch.trick17.rolez.validation.dataflow.ValFieldsInitializedAnalysis
 import java.util.HashSet
 import java.util.Set
 import javax.inject.Inject

@@ -1,14 +1,13 @@
-package ch.trick17.rolez.validation
+package ch.trick17.rolez.validation.dataflow
 
 import ch.trick17.rolez.RolezUtils
-import ch.trick17.rolez.cfg.ControlFlowGraph
-import ch.trick17.rolez.cfg.DataFlowAnalysis
-import ch.trick17.rolez.cfg.Node
 import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.Class
 import ch.trick17.rolez.rolez.Field
 import ch.trick17.rolez.rolez.Instr
-import ch.trick17.rolez.validation.ValFieldsInitializedAnalysis.Initialized
+import ch.trick17.rolez.validation.dataflow.ValFieldsInitializedAnalysis.Initialized
+import ch.trick17.rolez.validation.cfg.ControlFlowGraph
+import ch.trick17.rolez.validation.cfg.Node
 import com.google.inject.MembersInjector
 import java.util.Set
 import javax.inject.Inject

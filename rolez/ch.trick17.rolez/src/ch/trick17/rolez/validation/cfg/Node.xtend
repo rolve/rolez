@@ -1,7 +1,6 @@
-package ch.trick17.rolez.cfg
+package ch.trick17.rolez.validation.cfg
 
 import ch.trick17.rolez.rolez.Instr
-import ch.trick17.rolez.rolez.Stmt
 import java.util.ArrayList
 import java.util.List
 
@@ -40,10 +39,6 @@ class InstrNode extends Node {
     new(Instr i) { instr = i.requireNonNull }
 }
 
-class LoopHeadNode extends Node {
-    public val Stmt loop // IMPROVE: Use somewhere or remove
-    new(Stmt loop) { this.loop = loop.requireNonNull }
-}
-
+class LoopHeadNode extends Node {}
 class EntryNode extends Node {}
 class ExitNode extends Node {}

@@ -1,4 +1,4 @@
-package ch.trick17.rolez.cfg
+package ch.trick17.rolez.validation.cfg
 
 import ch.trick17.rolez.rolez.Instr
 import java.util.HashSet
