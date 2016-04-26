@@ -80,3 +80,12 @@ object Math mapped to java.lang.Math {
     
     mapped def pure signum(d: double): double
 }
+
+object MathExtra {
+    // TODO: Move this to Math once non-mapped methods are supported for mapped singletons
+    
+    def pure log2(i: int): int {
+        if(i < 1) return -1;
+        else return 31 - the Int.numberOfLeadingZeros(i);
+    }
+}
