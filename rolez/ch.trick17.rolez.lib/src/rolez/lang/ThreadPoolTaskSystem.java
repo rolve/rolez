@@ -20,6 +20,8 @@ public final class ThreadPoolTaskSystem extends TaskSystem {
     /* IMPROVE: Check if ForkJoinPool would be a good solution instead, but note this:
      * http://coopsoft.com/ar/CalamityArticle.html */
     
+    // FIXME: Deadlocks seem to occur when using this system with many tasks...
+    
     private final int baseSize;
     private final Set<Worker> idleWorkers = newSetFromMap(
             new ConcurrentHashMap<Worker, java.lang.Boolean>());
