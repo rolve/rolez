@@ -8,9 +8,8 @@ import java.util.concurrent.Callable;
 public abstract class TaskSystem implements Serializable {
     
     /**
-     * Keeps track of the tasks that are executed within a thread. Whenever a
-     * new task is started, it is added as a child to current, i.e., the top
-     * task on the stack.
+     * Keeps track of the tasks that are executed within a thread. Whenever a new task is started,
+     * it is added as a child to current, i.e., the top task on the stack.
      */
     final transient ThreadLocal<Deque<Task<?>>> localStack = new ThreadLocal<Deque<Task<?>>>() {
         @Override
@@ -26,11 +25,11 @@ public abstract class TaskSystem implements Serializable {
         return start(new Task<>(callable, this));
     }
     
-    public <V> void run(final Callable<V> callable) {
+    public <V> V run(final Callable<V> callable) {
         Task<V> task = new Task<>(callable, this);
         task.run();
         /* Propagate exceptions */
-        task.get();
+        return task.get();
     }
     
     private <V> Task<V> start(final Task<V> task) {
