@@ -3,6 +3,7 @@ package rolez.lang;
 import static java.util.Collections.emptyList;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -20,8 +21,7 @@ public abstract class Guarded {
         return guard;
     }
     
-    final void processAll(final Guard.Op op, final Set<Guarded> processed,
-            final boolean lockViews) {
+    final void processAll(Guard.Op op, Set<Guarded> processed, boolean lockViews) {
         if(processed.add(this)) {
             /* First, process references, otherwise "parent" task may replace them through a view
              * that has already been released. */
@@ -44,14 +44,14 @@ public abstract class Guarded {
         }
     }
     
-    final void processViews(final Guard.Op op, final Set<Guarded> processed) {
+    final void processViews(Guard.Op op, Set<Guarded> processed) {
         // Same as processViewsRecursive, except "this" is not processed
         for(final Guarded view : currentViews())
             if(view != null)
                 view.processViewsRecursive(op, processed);
     }
     
-    private void processViewsRecursive(final Guard.Op op, final Set<Guarded> processed) {
+    private void processViewsRecursive(Guard.Op op, Set<Guarded> processed) {
         if(processed.add(this)) {
             for(final Guarded view : currentViews())
                 if(view != null)
@@ -71,7 +71,7 @@ public abstract class Guarded {
             return views();
         else
             synchronized(viewLock()) {
-                ArrayList<Guarded> list = new ArrayList<>();
+                List<Guarded> list = new ArrayList<>();
                 for(Guarded view : views())
                     list.add(view);
                 return list;

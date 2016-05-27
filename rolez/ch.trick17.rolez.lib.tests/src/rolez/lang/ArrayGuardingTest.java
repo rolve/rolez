@@ -345,6 +345,29 @@ public class ArrayGuardingTest extends GuardingTest {
     }
     
     @Test
+    public void testSliceSubslice() {
+        assumeVerifyCorrectness();
+        if(verifyNoPropertyViolation()) {
+            final GuardedArray<int[]> a = new GuardedArray<>(new int[]{0});
+            final GuardedSlice<int[]> slice1 = a.slice(0, 1, 1);
+            
+            slice1.pass();
+            Task<Void> task = s.start(new RunnableCallable() {
+                public void run() {
+                    slice1.registerNewOwner();
+                    slice1.data[0]++;
+                    slice1.releasePassed();
+                }
+            });
+            
+            GuardedSlice<int[]> slice2 = a.slice(0, 1, 1);
+            guardReadOnly(slice2);
+            assertEquals(1, slice2.data[0]);
+            task.get();
+        }
+    }
+    
+    @Test
     public void testShareOverlappingSliceModify() {
         assumeVerifyCorrectness();
         if(verifyNoPropertyViolation()) {
@@ -851,6 +874,35 @@ public class ArrayGuardingTest extends GuardingTest {
             GuardedSlice<int[]> slice = a.slice(0, 1, 1);
             guardReadWrite(slice);
             slice.data[0]++;
+            task.get();
+        }
+    }
+    
+    @Test
+    public void testSliceAndShareSubsliceInParallel() {
+        assumeVerifyCorrectness();
+        if(verifyNoPropertyViolation()) {
+            final GuardedArray<int[]> a = new GuardedArray<>(new int[]{0});
+            final GuardedSlice<int[]> slice1 = a.slice(0, 1, 1);
+            
+            slice1.share();
+            Task<Void> task = s.start(new RunnableCallable() {
+                public void run() {
+                    slice1.share();
+                    s.start(new RunnableCallable() {
+                        public void run() {
+                            assertEquals(0, slice1.data[0]);
+                            slice1.releaseShared();
+                        }
+                    });
+                    
+                    slice1.releaseShared();
+                }
+            });
+            
+            GuardedSlice<int[]> slice2 = a.slice(0, 1, 1);
+            guardReadWrite(slice2);
+            slice2.data[0]++;
             task.get();
         }
     }
