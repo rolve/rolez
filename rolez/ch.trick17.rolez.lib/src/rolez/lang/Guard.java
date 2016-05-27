@@ -40,7 +40,6 @@ class Guard {
     private static final Op SHARE = new Op() {
         @Override
         public void process(final Guarded guarded) {
-            jpfWorkaround();
             guarded.getGuard().sharedCount.incrementAndGet();
         }
     };
@@ -56,7 +55,6 @@ class Guard {
     private static final Op PASS = new Op() {
         @Override
         public void process(final Guarded guarded) {
-            jpfWorkaround();
             /* First step of passing */
             final Guard guard = guarded.getGuard();
             guard.owner = null;
@@ -71,7 +69,6 @@ class Guard {
     private static final Op REGISTER_OWNER = new Op() {
         @Override
         public void process(final Guarded guarded) {
-            jpfWorkaround();
             final Guard guard = guarded.getGuard();
             assert guard.owner == null;
             assert !guard.amOriginalOwner();
@@ -87,7 +84,6 @@ class Guard {
     private static final Op RELEASE_SHARED = new Op() {
         @Override
         public void process(final Guarded guarded) {
-            jpfWorkaround();
             final Guard guard = guarded.getGuard();
             final int count = guard.sharedCount.decrementAndGet();
             if(count == 0)
@@ -107,7 +103,6 @@ class Guard {
         final Op transferOwner = new Op() {
             @Override
             public void process(final Guarded g) {
-                jpfWorkaround();
                 final Guard guard = g.getGuard();
                 if(guard.amOriginalOwner())
                     guard.owner = parent;
@@ -126,7 +121,6 @@ class Guard {
     private static final Op RELEASE_PASSED = new Op() {
         @Override
         public void process(final Guarded guarded) {
-            jpfWorkaround();
             final Guard guard = guarded.getGuard();
             assert !guard.amOriginalOwner();
             guard.owner = guard.prevOwners.removeFirst();
@@ -146,7 +140,6 @@ class Guard {
     private static final Op GUARD_READ_ONLY = new Op() {
         @Override
         public void process(final Guarded guarded) {
-            jpfWorkaround();
             /* mayRead() reads the volatile owner field written by releasePassed() and
              * releaseShared(). Therefore, there is a happens-before relationship between
              * releasePassed()/releaseShared() and guardRead(). */
@@ -163,7 +156,6 @@ class Guard {
     private static final Op GUARD_READ_WRITE = new Op() {
         @Override
         public void process(final Guarded guarded) {
-            jpfWorkaround();
             /* mayWrite() reads the volatile owner field written by releasePassed(). Therefore,
              * there is a happens-before relationship between releasePassed() and guardReadWrite(). */
             while(!guarded.getGuard().mayWrite())
@@ -193,14 +185,5 @@ class Guard {
     
     private static Set<Guarded> newIdentitySet() {
         return Collections.newSetFromMap(new IdentityHashMap<Guarded, java.lang.Boolean>());
-    }
-    
-    /**
-     * JPF seems to miss some scheduling relevant points in the program, so this method makes sure
-     * that all guarding operations trigger a scheduling choice.
-     */
-    private static void jpfWorkaround() {
-        // IMPROVE: Push JPF developers to fix this!
-        synchronized(Guard.class) {}
     }
 }
