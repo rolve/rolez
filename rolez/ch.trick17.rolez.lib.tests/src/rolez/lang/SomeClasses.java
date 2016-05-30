@@ -3,6 +3,8 @@ package rolez.lang;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 
+import java.util.Collection;
+
 public abstract class SomeClasses {
     
     public static class Int extends Guarded {
@@ -21,7 +23,7 @@ public abstract class SomeClasses {
         }
         
         @Override
-        protected Iterable<? extends Guarded> views() {
+        protected Collection<? extends Guarded> views() {
             return emptyList();
         }
     }
@@ -42,7 +44,7 @@ public abstract class SomeClasses {
         }
         
         @Override
-        protected Iterable<? extends Guarded> views() {
+        protected Collection<? extends Guarded> views() {
             return emptyList();
         }
     }
@@ -68,7 +70,7 @@ public abstract class SomeClasses {
         }
         
         @Override
-        protected Iterable<? extends Guarded> views() {
+        protected Collection<? extends Guarded> views() {
             return emptyList();
         }
     }

@@ -134,7 +134,8 @@ class Guard {
     
     void guardReadOnly(final Guarded guarded) {
         GUARD_READ_ONLY.process(guarded);
-        guarded.processViews(GUARD_READ_ONLY, newIdentitySet());
+        if(!guarded.views().isEmpty())
+            guarded.processViews(GUARD_READ_ONLY, newIdentitySet());
     }
     
     private static final Op GUARD_READ_ONLY = new Op() {
@@ -150,7 +151,8 @@ class Guard {
     
     void guardReadWrite(final Guarded guarded) {
         GUARD_READ_WRITE.process(guarded);
-        guarded.processViews(GUARD_READ_WRITE, newIdentitySet());
+        if(!guarded.views().isEmpty())
+            guarded.processViews(GUARD_READ_WRITE, newIdentitySet());
     }
     
     private static final Op GUARD_READ_WRITE = new Op() {

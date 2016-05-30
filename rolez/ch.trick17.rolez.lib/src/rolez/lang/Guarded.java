@@ -3,6 +3,7 @@ package rolez.lang;
 import static java.util.Collections.emptyList;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -96,12 +97,12 @@ public abstract class Guarded {
      * Returns all views of this object. Views are (guarded) objects that provide access to a subset
      * of the data of the object they belong to.
      * <p>
-     * This implementation returns an empty iterable.
+     * This implementation returns an empty collection.
      * 
      * @return All views of this object. To simplify the implementation of this method, the
-     *         {@link Iterable} may return <code>null</code> references.
+     *         {@link Collection} may contain <code>null</code> references.
      */
-    protected Iterable<? extends Guarded> views() {
+    protected Collection<? extends Guarded> views() {
         return emptyList();
     }
     

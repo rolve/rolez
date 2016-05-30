@@ -4,6 +4,7 @@ import static java.util.Collections.emptyList;
 
 import java.util.AbstractList;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.RandomAccess;
@@ -157,7 +158,7 @@ public class GuardedSlice<A> extends Guarded {
     }
     
     @Override
-    protected final Iterable<? extends Guarded> views() {
+    protected final Collection<? extends Guarded> views() {
         return subslices;
     }
     
