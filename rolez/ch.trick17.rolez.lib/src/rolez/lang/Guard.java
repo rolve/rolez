@@ -1,17 +1,20 @@
 package rolez.lang;
 
+import static java.lang.Thread.currentThread;
+import static java.util.concurrent.locks.LockSupport.park;
+import static java.util.concurrent.locks.LockSupport.unpark;
+
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.IdentityHashMap;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.LockSupport;
 
 class Guard {
     
-    private volatile Thread owner = Thread.currentThread();
-    private final Deque<Thread> prevOwners = new ArrayDeque<>();
+    private volatile Thread owner = currentThread();
+    private Deque<Thread> prevOwners = null;
     // IMPROVE: Use Unsafe CAS or, once Java 9 is out (:D), standard API to CAS an int field directly
     private final AtomicInteger sharedCount = new AtomicInteger(0);
     
@@ -20,9 +23,9 @@ class Guard {
     void initializeViewGuard(final Guard viewGuard) {
         while(owner == null) {} // Spin; owner field is only temporarily null
         // IMPROVE: Is spinning really a good idea?
+        
         viewGuard.owner = owner;
-        viewGuard.prevOwners.clear();
-        viewGuard.prevOwners.addAll(prevOwners);
+        viewGuard.prevOwners = prevOwners == null ? null : new ArrayDeque<>(prevOwners);
         viewGuard.sharedCount.set(sharedCount.get());
     }
     
@@ -47,6 +50,11 @@ class Guard {
     void pass(final Guarded guarded) {
         guarded.processAll(GUARD_READ_WRITE, newIdentitySet(), false);
         
+        /* Previous owner is only recorded in the root of the object tree */
+        if(prevOwners == null)
+            prevOwners = new ArrayDeque<>();
+        prevOwners.addFirst(currentThread());
+        
         final Set<Guarded> processed = newIdentitySet();
         guarded.processAll(PASS, processed, true);
         prevReachables.addFirst(processed);
@@ -58,7 +66,6 @@ class Guard {
             /* First step of passing */
             final Guard guard = guarded.getGuard();
             guard.owner = null;
-            guard.prevOwners.addFirst(Thread.currentThread());
         }
     };
     
@@ -71,9 +78,8 @@ class Guard {
         public void process(final Guarded guarded) {
             final Guard guard = guarded.getGuard();
             assert guard.owner == null;
-            assert !guard.amOriginalOwner();
             /* Second step of passing */
-            guard.owner = Thread.currentThread();
+            guard.owner = currentThread();
         }
     };
     
@@ -87,48 +93,34 @@ class Guard {
             final Guard guard = guarded.getGuard();
             final int count = guard.sharedCount.decrementAndGet();
             if(count == 0)
-                LockSupport.unpark(guard.owner);
+                unpark(guard.owner);
         }
     };
     
     void releasePassed(final Guarded guarded) {
         /* First, make sure all reachable and previously reachable objects are readwrite */
-        final Set<Guarded> guardProcessed = newIdentitySet();
+        Set<Guarded> guardProcessed = newIdentitySet();
         guarded.processAll(GUARD_READ_WRITE, guardProcessed, false);
         processReachables(GUARD_READ_WRITE, guardProcessed);
         
-        /* Then, release still reachable objects and make "parent" task the owner of newly reachable
-         * objects */
-        final Thread parent = prevOwners.getFirst();
-        final Op transferOwner = new Op() {
+        /* Then, release (or, in the case of newly reachable objects, transfer) reachable objects */
+        final Thread parent = prevOwners.removeFirst();
+        final Op releasePassed = new Op() {
             @Override
             public void process(final Guarded g) {
-                final Guard guard = g.getGuard();
-                if(guard.amOriginalOwner())
-                    guard.owner = parent;
-                else
-                    RELEASE_PASSED.process(g);
+                g.getGuard().owner = parent;
             }
         };
-        final Set<Guarded> processed = newIdentitySet();
-        guarded.processAll(transferOwner, processed, true);
+        Set<Guarded> processed = newIdentitySet();
+        guarded.processAll(releasePassed, processed, true);
         
-        /* Finally, release rest of the originally reachable objects and views */
-        processReachables(RELEASE_PASSED, processed);
+        /* Then, release rest of the originally reachable object */
+        processReachables(releasePassed, processed);
         prevReachables.removeFirst();
+        
+        /* Finally, wake up parent thread in case it is waiting */
+        unpark(parent);
     }
-    
-    private static final Op RELEASE_PASSED = new Op() {
-        @Override
-        public void process(final Guarded guarded) {
-            final Guard guard = guarded.getGuard();
-            assert !guard.amOriginalOwner();
-            guard.owner = guard.prevOwners.removeFirst();
-            /* IMPROVE: Unpark only once, not for every reachable object. May even save the stack of
-             * owners for reachable objects... */
-            LockSupport.unpark(guard.owner);
-        }
-    };
     
     /* Guarding methods */
     
@@ -145,7 +137,7 @@ class Guard {
              * releaseShared(). Therefore, there is a happens-before relationship between
              * releasePassed()/releaseShared() and guardRead(). */
             while(!guarded.getGuard().mayRead())
-                LockSupport.park();
+                park();
         }
     };
     
@@ -161,22 +153,18 @@ class Guard {
             /* mayWrite() reads the volatile owner field written by releasePassed(). Therefore,
              * there is a happens-before relationship between releasePassed() and guardReadWrite(). */
             while(!guarded.getGuard().mayWrite())
-                LockSupport.park();
+                park();
         }
     };
     
     /* Implementation methods */
     
     private boolean mayRead() {
-        return owner == Thread.currentThread() || sharedCount.get() > 0;
+        return owner == currentThread() || sharedCount.get() > 0;
     }
     
     private boolean mayWrite() {
-        return owner == Thread.currentThread() && !(sharedCount.get() > 0);
-    }
-    
-    private boolean amOriginalOwner() {
-        return prevOwners.isEmpty();
+        return owner == currentThread() && !(sharedCount.get() > 0);
     }
     
     private void processReachables(final Op op, final Set<Guarded> processed) {
