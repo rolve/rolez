@@ -26,8 +26,6 @@ public class TaskBasedJpfTest extends JpfParallelismTest {
         return props;
     }
     
-    // TODO: Change all tests to use implicit exception propagation using this
-    // method:
     void verifyTask(int[][] seqGroups, RunnableCallable test) {
         if(verify(mode, seqGroups))
             s.run(test);
