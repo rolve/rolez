@@ -1,5 +1,7 @@
 package rolez.lang;
 
+import static ch.trick17.simplejpf.test.JpfParallelismTest.VerifyMode.CORRECTNESS;
+import static ch.trick17.simplejpf.test.JpfParallelismTest.VerifyMode.PARALLELISM;
 import static org.junit.Assert.assertEquals;
 import static rolez.lang.Guarded.guardReadOnly;
 import static rolez.lang.Guarded.guardReadWrite;
@@ -17,23 +19,25 @@ import rolez.lang.SomeClasses.Node;
 import rolez.lang.SomeClasses.Ref;
 
 @RunWith(Parameterized.class)
-public class ObjectGuardingTest extends GuardingTest {
+public class ObjectGuardingTest extends TaskBasedJpfTest {
     
     @Parameters(name = "{0}, {1}")
     public static List<?> taskSystems() {
-        return Arrays.asList(new Object[][]{{new NewThreadTaskSystem(), VerifyMode.CORRECTNESS}, {
-                new ThreadPoolTaskSystem(), VerifyMode.CORRECTNESS}, {new SingleThreadTaskSystem(),
-                        VerifyMode.CORRECTNESS}, {new ThreadPoolTaskSystem(3),
-                                VerifyMode.PARALLELISM}});
+        return Arrays.asList(new Object[][]{
+                {new NewThreadTaskSystem(), CORRECTNESS},
+                {new ThreadPoolTaskSystem(), CORRECTNESS},
+                {new SingleThreadTaskSystem(), CORRECTNESS},
+                {new ThreadPoolTaskSystem(3), PARALLELISM}
+        });
     }
     
-    public ObjectGuardingTest(final TaskSystem s, final VerifyMode mode) {
+    public ObjectGuardingTest(TaskSystem s, VerifyMode mode) {
         super(s, mode);
     }
     
     @Test
     public void testShare() {
-        verify(new int[][]{{0, 1}, {2, 3}, {0, 3}}, new RunnableCallable() {
+        verifyTask(new int[][]{{0, 1}, {2, 3}, {0, 3}}, new RunnableCallable() {
             public void run() {
                 final Int i = new Int();
                 
@@ -56,799 +60,787 @@ public class ObjectGuardingTest extends GuardingTest {
     
     @Test
     public void testShareMissingGuard() {
-        assumeVerifyCorrectness();
         assumeMultithreaded();
-        if(verifyAssertionError()) {
-            final Int i = new Int();
-            
-            i.share();
-            final Task<Void> task = s.start(new RunnableCallable() {
-                public void run() {
-                    assertEquals(0, i.value);
-                    i.releaseShared();
-                }
-            });
-            
-            // A missing guard causes non-determinism
-            i.value = 1;
-            task.get();
-        }
+        verifyTaskAssertionError(new RunnableCallable() {
+            public void run() {
+                final Int i = new Int();
+                
+                i.share();
+                s.start(new RunnableCallable() {
+                    public void run() {
+                        assertEquals(0, i.value);
+                        i.releaseShared();
+                    }
+                });
+                
+                // A missing guard causes non-determinism
+                i.value = 1;
+            }
+        });
     }
     
     @Test
     public void testShareMissingRelease() {
-        assumeVerifyCorrectness();
-        if(verifyDeadlock()) {
-            final Int i = new Int();
-            
-            i.share();
-            final Task<Void> task = s.start(new RunnableCallable() {
-                public void run() {
-                    assertEquals(0, i.value);
-                    // A missing release causes a deadlock
-                }
-            });
-            
-            guardReadWrite(i).value = 1;
-            task.get();
-        }
+        verifyTaskDeadlock(new RunnableCallable() {
+            public void run() {
+                final Int i = new Int();
+                
+                i.share();
+                s.start(new RunnableCallable() {
+                    public void run() {
+                        assertEquals(0, i.value);
+                        // A missing release causes a deadlock
+                    }
+                });
+                
+                guardReadWrite(i).value = 1;
+            }
+        });
     }
     
     @Test
     public void testShareMultiple() {
-        if(verify(mode, new int[][]{{0, 1}, {2, 3}, {4, 5}, {0, 5}, {2, 5}, {0,
-                3 /* or: 1, 2 */}})) {
-            final Int i = new Int();
-            
-            i.share();
-            final Task<?> task1 = s.start(new RunnableCallable() {
-                public void run() {
-                    region(0);
-                    assertEquals(0, i.value);
-                    i.releaseShared();
-                    region(1);
-                }
-            });
-            
-            i.share();
-            final Task<?> task2 = s.start(new RunnableCallable() {
-                public void run() {
-                    region(2);
-                    assertEquals(0, i.value);
-                    i.releaseShared();
-                    region(3);
-                }
-            });
-            region(4);
-            
-            guardReadWrite(i).value = 1;
-            region(5);
-            
-            task1.get();
-            task2.get();
-        }
+        verifyTask(new int[][]{{0, 1}, {2, 3}, {4, 5}, {0, 5}, {2, 5}, {0, 3 /* or: 1, 2 */}},
+                new RunnableCallable() {
+                    public void run() {
+                        final Int i = new Int();
+                        
+                        i.share();
+                        s.start(new RunnableCallable() {
+                            public void run() {
+                                region(0);
+                                assertEquals(0, i.value);
+                                i.releaseShared();
+                                region(1);
+                            }
+                        });
+                        
+                        i.share();
+                        s.start(new RunnableCallable() {
+                            public void run() {
+                                region(2);
+                                assertEquals(0, i.value);
+                                i.releaseShared();
+                                region(3);
+                            }
+                        });
+                        region(4);
+                        
+                        guardReadWrite(i).value = 1;
+                        region(5);
+                    }
+                });
     }
     
     @Test
     public void testShareMultipleMissingRelease() {
-        assumeVerifyCorrectness();
-        if(verifyDeadlock()) {
-            final Int i = new Int();
-            
-            final Task<?>[] tasks = new Task<?>[3];
-            for(int k = 0; k < 3; k++) {
-                final int theI = k;
+        verifyTaskDeadlock(new RunnableCallable() {
+            public void run() {
+                final Int i = new Int();
                 
-                i.share();
-                tasks[k] = s.start(new RunnableCallable() {
-                    public void run() {
-                        assertEquals(0, i.value);
-                        
-                        // A single missing release causes a deadlock:
-                        if(theI != 0)
-                            i.releaseShared();
-                    }
-                });
+                for(int k = 0; k < 3; k++) {
+                    final int theK = k;
+                    i.share();
+                    s.start(new RunnableCallable() {
+                        public void run() {
+                            assertEquals(0, i.value);
+                            
+                            // A single missing release causes a deadlock:
+                            if(theK != 0)
+                                i.releaseShared();
+                        }
+                    });
+                }
+                
+                guardReadWrite(i).value = 1;
             }
-            
-            guardReadWrite(i).value = 1;
-            for(final Task<?> task : tasks)
-                task.get();
-        }
+        });
     }
     
     @Test
     public void testPass() {
-        if(verify(mode, new int[][]{{0, 1}, {0, 3}, {2, 3}})) {
-            final Int i = new Int();
-            
-            i.pass();
-            final Task<Void> task = s.start(new RunnableCallable() {
-                public void run() {
-                    i.registerNewOwner();
-                    region(0);
-                    i.value++;
-                    i.releasePassed();
-                    region(1);
-                }
-            });
-            region(2);
-            
-            assertEquals(1, guardReadOnly(i).value);
-            region(3);
-            
-            task.get();
-        }
+        verifyTask(new int[][]{{0, 1}, {0, 3}, {2, 3}}, new RunnableCallable() {
+            public void run() {
+                final Int i = new Int();
+                
+                i.pass();
+                s.start(new RunnableCallable() {
+                    public void run() {
+                        i.registerNewOwner();
+                        region(0);
+                        i.value++;
+                        i.releasePassed();
+                        region(1);
+                    }
+                });
+                region(2);
+                
+                assertEquals(1, guardReadOnly(i).value);
+                region(3);
+            }
+        });
     }
     
     @Test
     public void testPassMissingGuard() {
-        assumeVerifyCorrectness();
         assumeMultithreaded();
-        if(verifyAssertionError()) {
-            final Int i = new Int();
-            
-            i.pass();
-            final Task<Void> task = s.start(new RunnableCallable() {
-                public void run() {
-                    i.registerNewOwner();
-                    i.value = 1;
-                    i.releasePassed();
-                }
-            });
-            
-            // A missing guard causes non-determinism
-            assertEquals(1, i.value);
-            task.get();
-        }
+        verifyTaskAssertionError(new RunnableCallable() {
+            public void run() {
+                final Int i = new Int();
+                
+                i.pass();
+                s.start(new RunnableCallable() {
+                    public void run() {
+                        i.registerNewOwner();
+                        i.value = 1;
+                        i.releasePassed();
+                    }
+                });
+                
+                // A missing guard causes non-determinism
+                assertEquals(1, i.value);
+            }
+        });
     }
     
     @Test
     public void testPassMissingRelease() {
-        assumeVerifyCorrectness();
         assumeMultithreaded();
-        if(verifyDeadlock()) {
-            final Int i = new Int();
-            
-            i.pass();
-            final Task<Void> task = s.start(new RunnableCallable() {
-                public void run() {
-                    i.registerNewOwner();
-                    i.value = 1;
-                    // A missing release causes a deadlock
-                }
-            });
-            
-            assertEquals(1, guardReadOnly(i).value);
-            task.get();
-        }
+        verifyTaskDeadlock(new RunnableCallable() {
+            public void run() {
+                final Int i = new Int();
+                
+                i.pass();
+                s.start(new RunnableCallable() {
+                    public void run() {
+                        i.registerNewOwner();
+                        i.value = 1;
+                        // A missing release causes a deadlock
+                    }
+                });
+                
+                assertEquals(1, guardReadOnly(i).value);
+            }
+        });
     }
     
     @Test
     public void testPassMultiple() {
         /* IMPROVE: Allow {0, 4} in parallel by passing not-yet-available data to tasks (so far,
          * pass() is blocking) */
-        if(verify(mode, new int[][]{{0, 1}, {0, 2, 3}, {0, 2, 5}, {4, 5}, {0, 4}})) {
-            final Int i = new Int();
-            
-            i.pass();
-            final Task<?> task1 = s.start(new RunnableCallable() {
-                public void run() {
-                    i.registerNewOwner();
-                    region(0);
-                    i.value++;
-                    i.releasePassed();
-                    region(1);
-                }
-            });
-            
-            i.pass();
-            final Task<?> task2 = s.start(new RunnableCallable() {
-                public void run() {
-                    i.registerNewOwner();
-                    region(2);
-                    i.value++;
-                    i.releasePassed();
-                    region(3);
-                }
-            });
-            region(4);
-            
-            assertEquals(2, guardReadOnly(i).value);
-            
-            region(5);
-            task1.get();
-            task2.get();
-        }
+        verifyTask(new int[][]{{0, 1}, {0, 2, 3}, {0, 2, 5}, {4, 5}, {0, 4}},
+                new RunnableCallable() {
+                    public void run() {
+                        final Int i = new Int();
+                        
+                        i.pass();
+                        s.start(new RunnableCallable() {
+                            public void run() {
+                                i.registerNewOwner();
+                                region(0);
+                                i.value++;
+                                i.releasePassed();
+                                region(1);
+                            }
+                        });
+                        
+                        i.pass();
+                        s.start(new RunnableCallable() {
+                            public void run() {
+                                i.registerNewOwner();
+                                region(2);
+                                i.value++;
+                                i.releasePassed();
+                                region(3);
+                            }
+                        });
+                        region(4);
+                        
+                        assertEquals(2, guardReadOnly(i).value);
+                        
+                        region(5);
+                    }
+                });
     }
     
     @Test
     public void testPassMultipleMissingRelease() {
-        assumeVerifyCorrectness();
         assumeMultithreaded();
-        if(verifyDeadlock()) {
-            final Int i = new Int();
-            
-            final int taskCount = 2;
-            final Task<?>[] tasks = new Task<?>[taskCount];
-            for(int k = 0; k < taskCount; k++) {
-                final int theK = k;
-                i.pass();
-                tasks[k] = s.start(new RunnableCallable() {
-                    public void run() {
-                        i.registerNewOwner();
-                        i.value++;
-                        
-                        // A single missing release causes a deadlock:
-                        if(theK != 0)
-                            i.releasePassed();
-                    }
-                });
+        verifyTaskDeadlock(new RunnableCallable() {
+            public void run() {
+                final Int i = new Int();
+                
+                final int taskCount = 2;
+                for(int k = 0; k < taskCount; k++) {
+                    final int theK = k;
+                    i.pass();
+                    s.start(new RunnableCallable() {
+                        public void run() {
+                            i.registerNewOwner();
+                            i.value++;
+                            
+                            // A single missing release causes a deadlock:
+                            if(theK != 0)
+                                i.releasePassed();
+                        }
+                    });
+                }
+                
+                assertEquals(taskCount, guardReadOnly(i).value);
             }
-            
-            assertEquals(taskCount, guardReadOnly(i).value);
-            for(final Task<?> task : tasks)
-                task.get();
-        }
+        });
     }
     
     @Test
     public void testPassNested() {
-        if(verify(mode, new int[][]{{0, 1}, {2, 3}, {4, 5}, {0, 3}, {2, 5}, {0, 5}})) {
-            final Int i = new Int();
-            
-            i.pass();
-            final Task<Void> task = s.start(new RunnableCallable() {
-                public void run() {
-                    i.registerNewOwner();
-                    i.value++;
-                    
-                    i.pass();
-                    final Task<Void> task2 = s.start(new RunnableCallable() {
-                        public void run() {
-                            i.registerNewOwner();
-                            i.value++;
-                            region(0);
-                            i.releasePassed();
-                            region(1);
-                        }
-                    });
-                    region(2);
-                    
-                    assertEquals(2, guardReadWrite(i).value);
-                    i.value++;
-                    
-                    i.releasePassed();
-                    region(3);
-                    task2.get();
-                }
-            });
-            region(4);
-            
-            assertEquals(3, guardReadOnly(i).value);
-            
-            region(5);
-            task.get();
-        }
+        verifyTask(new int[][]{{0, 1}, {2, 3}, {4, 5}, {0, 3}, {2, 5}, {0, 5}},
+                new RunnableCallable() {
+                    public void run() {
+                        final Int i = new Int();
+                        
+                        i.pass();
+                        s.start(new RunnableCallable() {
+                            public void run() {
+                                i.registerNewOwner();
+                                i.value++;
+                                
+                                i.pass();
+                                s.start(new RunnableCallable() {
+                                    public void run() {
+                                        i.registerNewOwner();
+                                        i.value++;
+                                        region(0);
+                                        i.releasePassed();
+                                        region(1);
+                                    }
+                                });
+                                region(2);
+                                
+                                assertEquals(2, guardReadWrite(i).value);
+                                i.value++;
+                                
+                                i.releasePassed();
+                                region(3);
+                            }
+                        });
+                        region(4);
+                        
+                        assertEquals(3, guardReadOnly(i).value);
+                        
+                        region(5);
+                    }
+                });
     }
     
     @Test
     public void testPassNestedWithoutGuarding() {
         assumeVerifyCorrectness();
-        if(verifyNoPropertyViolation()) {
-            final Int i = new Int();
-            
-            i.pass();
-            final Task<Void> task = s.start(new RunnableCallable() {
-                public void run() {
-                    i.registerNewOwner();
-                    i.pass();
-                    final Task<Void> task2 = s.start(new RunnableCallable() {
-                        public void run() {
-                            i.registerNewOwner();
-                            i.releasePassed();
-                        }
-                    });
-                    
-                    i.releasePassed();
-                    task2.get();
-                }
-            });
-            
-            task.get();
-        }
+        verifyTask(new RunnableCallable() {
+            public void run() {
+                final Int i = new Int();
+                
+                i.pass();
+                s.start(new RunnableCallable() {
+                    public void run() {
+                        i.registerNewOwner();
+                        i.pass();
+                        s.start(new RunnableCallable() {
+                            public void run() {
+                                i.registerNewOwner();
+                                i.releasePassed();
+                            }
+                        });
+                        
+                        i.releasePassed();
+                    }
+                });
+            }
+        });
     }
     
     @Test
     public void testPassNestedMissingRelease() {
-        assumeVerifyCorrectness();
         assumeMultithreaded();
-        if(verifyDeadlock()) {
-            final Int i = new Int();
-            
-            i.pass();
-            final Task<Void> task = s.start(new RunnableCallable() {
-                public void run() {
-                    i.registerNewOwner();
-                    i.value++;
-                    
-                    i.pass();
-                    final Task<Void> task2 = s.start(new RunnableCallable() {
-                        public void run() {
-                            i.registerNewOwner();
-                            i.value++;
-                            // A missed release causes deadlock
-                        }
-                    });
-                    
-                    i.releasePassed();
-                    task2.get();
-                }
-            });
-            
-            assertEquals(3, guardReadOnly(i).value);
-            task.get();
-        }
+        verifyTaskDeadlock(new RunnableCallable() {
+            public void run() {
+                final Int i = new Int();
+                
+                i.pass();
+                s.start(new RunnableCallable() {
+                    public void run() {
+                        i.registerNewOwner();
+                        i.value++;
+                        
+                        i.pass();
+                        s.start(new RunnableCallable() {
+                            public void run() {
+                                i.registerNewOwner();
+                                i.value++;
+                                // A missed release causes deadlock
+                            }
+                        });
+                        
+                        i.releasePassed();
+                    }
+                });
+                
+                assertEquals(3, guardReadOnly(i).value);
+            }
+        });
     }
     
     @Test
     public void testPassShare() {
-        if(verify(mode)) {
-            final Int i = new Int();
-            
-            i.pass();
-            final Task<Void> task = s.start(new RunnableCallable() {
-                public void run() {
-                    i.registerNewOwner();
-                    i.value++;
-                    i.releasePassed();
-                    region(0);
-                }
-            });
-            
-            i.share();
-            final Task<Void> task2 = s.start(new RunnableCallable() {
-                public void run() {
-                    assertEquals(1, i.value);
-                    region(1);
-                    i.releaseShared();
-                }
-            });
-            region(2);
-            
-            guardReadWrite(i).value++;
-            task.get();
-            task2.get();
-        }
+        verifyTask(new RunnableCallable() {
+            public void run() {
+                final Int i = new Int();
+                
+                i.pass();
+                s.start(new RunnableCallable() {
+                    public void run() {
+                        i.registerNewOwner();
+                        i.value++;
+                        i.releasePassed();
+                        region(0);
+                    }
+                });
+                
+                i.share();
+                s.start(new RunnableCallable() {
+                    public void run() {
+                        assertEquals(1, i.value);
+                        region(1);
+                        i.releaseShared();
+                    }
+                });
+                region(2);
+                
+                guardReadWrite(i).value++;
+            }
+        });
     }
     
     @Test
     public void testShareGroup() {
-        if(verify(mode, new int[][]{{0, 1}, {2, 3}, {0, 3}})) {
-            final Int i = new Int();
-            final Ref<Int> r = new Ref<>(i);
-            
-            r.share();
-            final Task<Void> task = s.start(new RunnableCallable() {
-                public void run() {
-                    assertEquals(0, r.o.value);
-                    region(0);
-                    r.releaseShared();
-                    region(1);
-                }
-            });
-            region(2);
-            
-            guardReadWrite(i).value = 1;
-            region(3);
-            
-            task.get();
-        }
+        verifyTask(new int[][]{{0, 1}, {2, 3}, {0, 3}}, new RunnableCallable() {
+            public void run() {
+                final Int i = new Int();
+                final Ref<Int> r = new Ref<>(i);
+                
+                r.share();
+                s.start(new RunnableCallable() {
+                    public void run() {
+                        assertEquals(0, r.o.value);
+                        region(0);
+                        r.releaseShared();
+                        region(1);
+                    }
+                });
+                region(2);
+                
+                guardReadWrite(i).value = 1;
+                region(3);
+            }
+        });
     }
     
     @Test
     public void testShareGroupMultiple() {
-        if(verify(mode)) {
-            final Int i = new Int();
-            final Ref<Int> r = new Ref<>(i);
-            
-            final Task<?>[] tasks = new Task<?>[2];
-            for(int k = 0; k < 2; k++) {
-                final int theK = k;
-                r.share();
-                tasks[k] = s.start(new RunnableCallable() {
-                    public void run() {
-                        assertEquals(0, r.o.value);
-                        r.releaseShared();
-                        region(theK);
-                    }
-                });
+        verifyTask(new RunnableCallable() {
+            public void run() {
+                final Int i = new Int();
+                final Ref<Int> r = new Ref<>(i);
+                
+                for(int k = 0; k < 2; k++) {
+                    final int theK = k;
+                    r.share();
+                    s.start(new RunnableCallable() {
+                        public void run() {
+                            assertEquals(0, r.o.value);
+                            r.releaseShared();
+                            region(theK);
+                        }
+                    });
+                }
+                
+                guardReadWrite(i).value = 1;
+                region(2);
             }
-            
-            guardReadWrite(i).value = 1;
-            region(2);
-            
-            for(final Task<?> task : tasks)
-                task.get();
-        }
+        });
     }
     
     @Test
     public void testPassGroup() {
-        if(verify(mode, new int[][]{{0, 1}, {2, 3}, {0, 3}})) {
-            final Int i = new Int();
-            final Ref<Int> r = new Ref<>(i);
-            
-            r.pass();
-            final Task<Void> task = s.start(new RunnableCallable() {
-                public void run() {
-                    r.registerNewOwner();
-                    r.o.value++;
-                    region(0);
-                    r.releasePassed();
-                    region(1);
-                }
-            });
-            region(2);
-            
-            assertEquals(1, guardReadOnly(i).value);
-            region(3);
-            
-            task.get();
-        }
+        verifyTask(new int[][]{{0, 1}, {2, 3}, {0, 3}}, new RunnableCallable() {
+            public void run() {
+                final Int i = new Int();
+                final Ref<Int> r = new Ref<>(i);
+                
+                r.pass();
+                s.start(new RunnableCallable() {
+                    public void run() {
+                        r.registerNewOwner();
+                        r.o.value++;
+                        region(0);
+                        r.releasePassed();
+                        region(1);
+                    }
+                });
+                region(2);
+                
+                assertEquals(1, guardReadOnly(i).value);
+                region(3);
+            }
+        });
     }
     
     @Test
     public void testPassGroupMultiple() {
         assumeVerifyCorrectness();
-        if(verifyNoPropertyViolation()) {
-            final Int i = new Int();
-            final Ref<Int> r = new Ref<>(i);
-            
-            final Task<?>[] tasks = new Task<?>[2];
-            for(int k = 0; k < 2; k++) {
-                r.pass();
-                tasks[k] = s.start(new RunnableCallable() {
-                    public void run() {
-                        r.registerNewOwner();
-                        r.o.value++;
-                        r.releasePassed();
-                    }
-                });
-            }
-            
-            assertEquals(2, guardReadOnly(i).value);
-            for(final Task<?> task : tasks)
-                task.get();
-        }
-    }
-    
-    @Test
-    public void testPassGroupNested() {
-        assumeVerifyCorrectness();
-        if(verifyNoPropertyViolation()) {
-            final Int i = new Int();
-            final Ref<Int> r = new Ref<>(i);
-            
-            r.pass();
-            final Task<Void> task = s.start(new RunnableCallable() {
-                public void run() {
-                    r.registerNewOwner();
-                    final Int i2 = r.o;
-                    i2.value++;
-                    
+        verifyTask(new RunnableCallable() {
+            public void run() {
+                final Int i = new Int();
+                final Ref<Int> r = new Ref<>(i);
+                
+                for(int k = 0; k < 2; k++) {
                     r.pass();
-                    final Task<Void> task2 = s.start(new RunnableCallable() {
+                    s.start(new RunnableCallable() {
                         public void run() {
                             r.registerNewOwner();
                             r.o.value++;
                             r.releasePassed();
                         }
                     });
-                    
-                    assertEquals(2, guardReadWrite(i2).value);
-                    i2.value++;
-                    
-                    r.releasePassed();
-                    task2.get();
                 }
-            });
-            
-            assertEquals(3, guardReadOnly(i).value);
-            task.get();
-        }
+                
+                assertEquals(2, guardReadOnly(i).value);
+            }
+        });
+    }
+    
+    @Test
+    public void testPassGroupNested() {
+        assumeVerifyCorrectness();
+        verifyTask(new RunnableCallable() {
+            public void run() {
+                final Int i = new Int();
+                final Ref<Int> r = new Ref<>(i);
+                
+                r.pass();
+                s.start(new RunnableCallable() {
+                    public void run() {
+                        r.registerNewOwner();
+                        final Int i2 = r.o;
+                        i2.value++;
+                        
+                        r.pass();
+                        s.start(new RunnableCallable() {
+                            public void run() {
+                                r.registerNewOwner();
+                                r.o.value++;
+                                r.releasePassed();
+                            }
+                        });
+                        
+                        assertEquals(2, guardReadWrite(i2).value);
+                        i2.value++;
+                        
+                        r.releasePassed();
+                    }
+                });
+                
+                assertEquals(3, guardReadOnly(i).value);
+            }
+        });
     }
     
     @Test
     public void testPassShareGroup() {
-        if(verify(mode)) {
-            final Int i = new Int();
-            final Ref<Int> r = new Ref<>(i);
-            
-            r.pass();
-            final Task<Void> task = s.start(new RunnableCallable() {
-                public void run() {
-                    r.registerNewOwner();
-                    r.o.value++;
-                    r.releasePassed();
-                    region(0);
-                }
-            });
-            
-            r.share();
-            final Task<Void> task2 = s.start(new RunnableCallable() {
-                public void run() {
-                    assertEquals(1, r.o.value);
-                    region(1);
-                    r.releaseShared();
-                }
-            });
-            region(2);
-            
-            guardReadWrite(i).value++;
-            task.get();
-            task2.get();
-        }
+        verifyTask(new RunnableCallable() {
+            public void run() {
+                final Int i = new Int();
+                final Ref<Int> r = new Ref<>(i);
+                
+                r.pass();
+                s.start(new RunnableCallable() {
+                    public void run() {
+                        r.registerNewOwner();
+                        r.o.value++;
+                        r.releasePassed();
+                        region(0);
+                    }
+                });
+                
+                r.share();
+                s.start(new RunnableCallable() {
+                    public void run() {
+                        assertEquals(1, r.o.value);
+                        region(1);
+                        r.releaseShared();
+                    }
+                });
+                region(2);
+                
+                guardReadWrite(i).value++;
+            }
+        });
     }
     
     @Test
     public void testShareSubgroupMultiple() {
-        if(verify(mode, new int[][]{{0, 4}, {1, 4}, {2, 4}, {3, 4}})) {
-            final Int i = new Int();
-            final Ref<Int> r = new Ref<>(i);
-            
-            i.share();
-            final Task<Void> task1 = s.start(new RunnableCallable() {
-                public void run() {
-                    assertEquals(0, i.value);
-                    region(0);
-                    i.releaseShared();
-                }
-            });
-            
-            r.share();
-            final Task<Void> task2 = s.start(new RunnableCallable() {
-                public void run() {
-                    assertEquals(0, r.o.value);
-                    region(1);
-                    r.releaseShared();
-                }
-            });
-            
-            i.share();
-            final Task<Void> task3 = s.start(new RunnableCallable() {
-                public void run() {
-                    assertEquals(0, i.value);
-                    region(2);
-                    i.releaseShared();
-                }
-            });
-            region(3);
-            
-            guardReadWrite(i).value = 1;
-            region(4);
-            
-            task1.get();
-            task2.get();
-            task3.get();
-        }
+        verifyTask(new int[][]{{0, 4}, {1, 4}, {2, 4}, {3, 4}}, new RunnableCallable() {
+            public void run() {
+                final Int i = new Int();
+                final Ref<Int> r = new Ref<>(i);
+                
+                i.share();
+                s.start(new RunnableCallable() {
+                    public void run() {
+                        assertEquals(0, i.value);
+                        region(0);
+                        i.releaseShared();
+                    }
+                });
+                
+                r.share();
+                s.start(new RunnableCallable() {
+                    public void run() {
+                        assertEquals(0, r.o.value);
+                        region(1);
+                        r.releaseShared();
+                    }
+                });
+                
+                i.share();
+                s.start(new RunnableCallable() {
+                    public void run() {
+                        assertEquals(0, i.value);
+                        region(2);
+                        i.releaseShared();
+                    }
+                });
+                region(3);
+                
+                guardReadWrite(i).value = 1;
+                region(4);
+            }
+        });
     }
     
     @Test
     public void testPassSubgroup() {
         /* IMPROVE: Allow all regions by passing not-yet-available data */
-        if(verify(mode, new int[][]{{0, 1, 2}, {0, 3}, {1, 3}})) {
-            final Int i = new Int();
-            final Ref<Int> r = new Ref<>(i);
-            
-            i.pass();
-            final Task<Void> task1 = s.start(new RunnableCallable() {
-                public void run() {
-                    i.registerNewOwner();
-                    region(0);
-                    i.value++;
-                    i.releasePassed();
-                }
-            });
-            
-            r.pass();
-            final Task<Void> task2 = s.start(new RunnableCallable() {
-                public void run() {
-                    r.registerNewOwner();
-                    region(1);
-                    r.o.value++;
-                    r.releasePassed();
-                }
-            });
-            
-            i.pass();
-            final Task<Void> task3 = s.start(new RunnableCallable() {
-                public void run() {
-                    i.registerNewOwner();
-                    region(2);
-                    i.value++;
-                    i.releasePassed();
-                }
-            });
-            region(3);
-            
-            assertEquals(3, guardReadOnly(i).value);
-            task1.get();
-            task2.get();
-            task3.get();
-        }
+        verifyTask(new int[][]{{0, 1, 2}, {0, 3}, {1, 3}}, new RunnableCallable() {
+            public void run() {
+                final Int i = new Int();
+                final Ref<Int> r = new Ref<>(i);
+                
+                i.pass();
+                s.start(new RunnableCallable() {
+                    public void run() {
+                        i.registerNewOwner();
+                        region(0);
+                        i.value++;
+                        i.releasePassed();
+                    }
+                });
+                
+                r.pass();
+                s.start(new RunnableCallable() {
+                    public void run() {
+                        r.registerNewOwner();
+                        region(1);
+                        r.o.value++;
+                        r.releasePassed();
+                    }
+                });
+                
+                i.pass();
+                s.start(new RunnableCallable() {
+                    public void run() {
+                        i.registerNewOwner();
+                        region(2);
+                        i.value++;
+                        i.releasePassed();
+                    }
+                });
+                region(3);
+                
+                assertEquals(3, guardReadOnly(i).value);
+            }
+        });
     }
     
     @Test
     public void testPassSubgroupNested() {
         /* IMPROVE: Allow {0, 3} by releasing objects independent of reachable objects that are
          * still owned by other threads. */
-        if(verify(mode, new int[][]{{0, 1}, {2, 3}, {0, 3}})) {
-            final Int i = new Int();
-            final Ref<Int> r = new Ref<>(i);
-            
-            r.pass();
-            final Task<Void> task = s.start(new RunnableCallable() {
-                public void run() {
-                    r.registerNewOwner();
-                    final Int i2 = r.o;
-                    i2.value++;
-                    
-                    i2.pass();
-                    final Task<Void> task2 = s.start(new RunnableCallable() {
-                        public void run() {
-                            i2.registerNewOwner();
-                            region(0);
-                            i2.value++;
-                            i2.releasePassed();
-                            region(1);
-                        }
-                    });
-                    region(2);
-                    
-                    r.releasePassed();
-                    region(3);
-                    task2.get();
-                }
-            });
-            region(4);
-            
-            assertEquals(2, guardReadOnly(i).value);
-            task.get();
-        }
+        verifyTask(new int[][]{{0, 1}, {2, 3}, {0, 3}}, new RunnableCallable() {
+            public void run() {
+                final Int i = new Int();
+                final Ref<Int> r = new Ref<>(i);
+                
+                r.pass();
+                s.start(new RunnableCallable() {
+                    public void run() {
+                        r.registerNewOwner();
+                        final Int i2 = r.o;
+                        i2.value++;
+                        
+                        i2.pass();
+                        s.start(new RunnableCallable() {
+                            public void run() {
+                                i2.registerNewOwner();
+                                region(0);
+                                i2.value++;
+                                i2.releasePassed();
+                                region(1);
+                            }
+                        });
+                        region(2);
+                        
+                        r.releasePassed();
+                        region(3);
+                    }
+                });
+                region(4);
+                
+                assertEquals(2, guardReadOnly(i).value);
+            }
+        });
     }
     
     @Test
     public void testPassShareSubgroup() {
         /* IMPROVE: Allow {0, 2, 3} by sharing not-yet-available data? */
-        if(verify(mode, new int[][]{{0, 1}, {0, 2}, {0, 3}})) {
-            final Int i = new Int();
-            final Ref<Int> r = new Ref<>(i);
-            
-            r.pass();
-            final Task<Void> task = s.start(new RunnableCallable() {
-                public void run() {
-                    r.registerNewOwner();
-                    r.o.value++;
-                    region(0);
-                    r.releasePassed();
-                    region(1);
-                }
-            });
-            
-            i.share();
-            final Task<Void> task2 = s.start(new RunnableCallable() {
-                public void run() {
-                    region(2);
-                    assertEquals(1, i.value);
-                    i.releaseShared();
-                }
-            });
-            region(3);
-            
-            guardReadWrite(i).value++;
-            task.get();
-            task2.get();
-        }
+        verifyTask(new int[][]{{0, 1}, {0, 2}, {0, 3}}, new RunnableCallable() {
+            public void run() {
+                final Int i = new Int();
+                final Ref<Int> r = new Ref<>(i);
+                
+                r.pass();
+                s.start(new RunnableCallable() {
+                    public void run() {
+                        r.registerNewOwner();
+                        r.o.value++;
+                        region(0);
+                        r.releasePassed();
+                        region(1);
+                    }
+                });
+                
+                i.share();
+                s.start(new RunnableCallable() {
+                    public void run() {
+                        region(2);
+                        assertEquals(1, i.value);
+                        i.releaseShared();
+                    }
+                });
+                region(3);
+                
+                guardReadWrite(i).value++;
+            }
+        });
     }
     
     @Test
     public void testShareGroupModify() {
         assumeVerifyCorrectness();
-        if(verifyNoPropertyViolation()) {
-            final Int i = new Int();
-            final Ref<Int> r = new Ref<>(i);
-            
-            r.share();
-            final Task<Void> task = s.start(new RunnableCallable() {
-                public void run() {
-                    assertEquals(0, i.value);
-                    r.releaseShared();
-                }
-            });
-            
-            guardReadWrite(r).o = new Int(10);
-            
-            task.get();
-        }
+        verifyTask(new RunnableCallable() {
+            public void run() {
+                final Int i = new Int();
+                final Ref<Int> r = new Ref<>(i);
+                
+                r.share();
+                s.start(new RunnableCallable() {
+                    public void run() {
+                        assertEquals(0, i.value);
+                        r.releaseShared();
+                    }
+                });
+                
+                guardReadWrite(r).o = new Int(10);
+            }
+        });
     }
     
     @Test
     public void testPassGroupModify() {
         assumeVerifyCorrectness();
-        if(verifyNoPropertyViolation()) {
-            final Int i = new Int();
-            final Ref<Int> r = new Ref<>(i);
-            
-            r.pass();
-            final Task<Void> task = s.start(new RunnableCallable() {
-                public void run() {
-                    r.registerNewOwner();
-                    r.o = new Int();
-                    r.o.value = 10;
-                    r.releasePassed();
-                }
-            });
-            
-            assertEquals(0, guardReadOnly(i).value);
-            assertEquals(10, guardReadOnly(guardReadOnly(r).o).value);
-            task.get();
-        }
+        verifyTask(new RunnableCallable() {
+            public void run() {
+                final Int i = new Int();
+                final Ref<Int> r = new Ref<>(i);
+                
+                r.pass();
+                s.start(new RunnableCallable() {
+                    public void run() {
+                        r.registerNewOwner();
+                        r.o = new Int();
+                        r.o.value = 10;
+                        r.releasePassed();
+                    }
+                });
+                
+                assertEquals(0, guardReadOnly(i).value);
+                assertEquals(10, guardReadOnly(guardReadOnly(r).o).value);
+            }
+        });
     }
     
     @Test
     public void testPassSubgroupNestedModify() {
         assumeVerifyCorrectness();
-        if(verifyNoPropertyViolation()) {
-            final Int i = new Int();
-            final Ref<Int> r = new Ref<>(i);
-            
-            r.pass();
-            final Task<Void> task = s.start(new RunnableCallable() {
-                public void run() {
-                    r.registerNewOwner();
-                    r.o = new Int();
-                    
-                    final Int i2 = r.o;
-                    i2.value++;
-                    i2.pass();
-                    final Task<Void> task2 = s.start(new RunnableCallable() {
-                        public void run() {
-                            i2.registerNewOwner();
-                            i2.value++;
-                            i2.releasePassed();
-                        }
-                    });
-                    
-                    r.releasePassed();
-                    task2.get();
-                }
-            });
-            
-            assertEquals(2, guardReadOnly(guardReadOnly(r).o).value);
-            task.get();
-        }
+        verifyTask(new RunnableCallable() {
+            public void run() {
+                final Int i = new Int();
+                final Ref<Int> r = new Ref<>(i);
+                
+                r.pass();
+                s.start(new RunnableCallable() {
+                    public void run() {
+                        r.registerNewOwner();
+                        r.o = new Int();
+                        
+                        final Int i2 = r.o;
+                        i2.value++;
+                        i2.pass();
+                        s.start(new RunnableCallable() {
+                            public void run() {
+                                i2.registerNewOwner();
+                                i2.value++;
+                                i2.releasePassed();
+                            }
+                        });
+                        r.releasePassed();
+                    }
+                });
+                
+                assertEquals(2, guardReadOnly(guardReadOnly(r).o).value);
+            }
+        });
     }
     
     @Test
     public void testShareCycleModify() {
         assumeVerifyCorrectness();
-        if(verifyNoPropertyViolation()) {
-            final Node n1 = new Node();
-            final Node n2 = new Node(n1);
-            n1.next = n2;
-            
-            n1.share();
-            final Task<Void> task = s.start(new RunnableCallable() {
-                public void run() {
-                    assertEquals(0, n1.next.data);
-                    n1.releaseShared();
-                }
-            });
-            
-            guardReadWrite(n1).next = new Node(10);
-            
-            task.get();
-        }
+        verifyTask(new RunnableCallable() {
+            public void run() {
+                final Node n1 = new Node();
+                final Node n2 = new Node(n1);
+                n1.next = n2;
+                
+                n1.share();
+                s.start(new RunnableCallable() {
+                    public void run() {
+                        assertEquals(0, n1.next.data);
+                        n1.releaseShared();
+                    }
+                });
+                
+                guardReadWrite(n1).next = new Node(10);
+            }
+        });
     }
 }

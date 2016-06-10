@@ -1,10 +1,12 @@
 package rolez.lang;
 
+import static ch.trick17.simplejpf.test.JpfParallelismTest.VerifyMode.CORRECTNESS;
+import static ch.trick17.simplejpf.test.JpfParallelismTest.VerifyMode.PARALLELISM;
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static rolez.lang.Guarded.guardReadOnly;
 import static rolez.lang.Guarded.guardReadWrite;
 
-import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Ignore;
@@ -17,15 +19,17 @@ import rolez.lang.SomeClasses.Int;
 import rolez.lang.SomeClasses.Ref;
 
 @RunWith(Parameterized.class)
-public class ArrayGuardingTest extends GuardingTest {
+public class ArrayGuardingTest extends TaskBasedJpfTest {
     
     @Parameters(name = "{0}, {1}")
     public static List<?> taskSystems() {
-        return Arrays.asList(new Object[][]{{new NewThreadTaskSystem(), VerifyMode.CORRECTNESS}, {
-                new ThreadPoolTaskSystem(), VerifyMode.CORRECTNESS}, {new SingleThreadTaskSystem(),
-                        VerifyMode.CORRECTNESS}, {new NewThreadTaskSystem(),
-                                VerifyMode.PARALLELISM}, {new ThreadPoolTaskSystem(3),
-                                        VerifyMode.PARALLELISM}});
+        return asList(new Object[][]{
+                {new NewThreadTaskSystem(), CORRECTNESS},
+                {new ThreadPoolTaskSystem(), CORRECTNESS},
+                {new SingleThreadTaskSystem(), CORRECTNESS},
+                {new NewThreadTaskSystem(), PARALLELISM},
+                {new ThreadPoolTaskSystem(3), PARALLELISM}
+        });
     }
     
     public ArrayGuardingTest(final TaskSystem s, final VerifyMode mode) {
