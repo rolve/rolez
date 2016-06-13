@@ -39,7 +39,7 @@ public class Task<V> implements Runnable {
      */
     private final List<Task<?>> children = new ArrayList<>();
     
-    Task(Callable<V> callable) {
+    public Task(Callable<V> callable) {
         this.callable = callable;
         Task<?> parent = currentTask();
         if(parent != null)
