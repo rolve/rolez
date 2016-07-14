@@ -41,8 +41,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
             public void run() {
                 final Int i = new Int();
                 
-                i.share();
-                s.start(new RunnableCallable() {
+                Task<?> task = new Task<>(new RunnableCallable() {
                     public void run() {
                         region(0);
                         assertEquals(0, i.value);
@@ -50,6 +49,8 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                         region(1);
                     }
                 });
+                i.share(task);
+                s.start(task);
                 region(2);
                 
                 guardReadWrite(i).value = 1;
@@ -65,13 +66,14 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
             public void run() {
                 final Int i = new Int();
                 
-                i.share();
-                s.start(new RunnableCallable() {
+                Task<?> task = new Task<>(new RunnableCallable() {
                     public void run() {
                         assertEquals(0, i.value);
                         i.releaseShared();
                     }
                 });
+                i.share(task);
+                s.start(task);
                 
                 // A missing guard causes non-determinism
                 i.value = 1;
@@ -85,13 +87,14 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
             public void run() {
                 final Int i = new Int();
                 
-                i.share();
-                s.start(new RunnableCallable() {
+                Task<?> task = new Task<>(new RunnableCallable() {
                     public void run() {
                         assertEquals(0, i.value);
                         // A missing release causes a deadlock
                     }
                 });
+                i.share(task);
+                s.start(task);
                 
                 guardReadWrite(i).value = 1;
             }
@@ -105,8 +108,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     public void run() {
                         final Int i = new Int();
                         
-                        i.share();
-                        s.start(new RunnableCallable() {
+                        Task<?> task1 = new Task<>(new RunnableCallable() {
                             public void run() {
                                 region(0);
                                 assertEquals(0, i.value);
@@ -114,9 +116,10 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                                 region(1);
                             }
                         });
+                        i.share(task1);
+                        s.start(task1);
                         
-                        i.share();
-                        s.start(new RunnableCallable() {
+                        Task<?> task2 = new Task<>(new RunnableCallable() {
                             public void run() {
                                 region(2);
                                 assertEquals(0, i.value);
@@ -124,6 +127,8 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                                 region(3);
                             }
                         });
+                        i.share(task2);
+                        s.start(task2);
                         region(4);
                         
                         guardReadWrite(i).value = 1;
@@ -140,8 +145,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 
                 for(int k = 0; k < 3; k++) {
                     final int theK = k;
-                    i.share();
-                    s.start(new RunnableCallable() {
+                    Task<?> task = new Task<>(new RunnableCallable() {
                         public void run() {
                             assertEquals(0, i.value);
                             
@@ -150,6 +154,8 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                                 i.releaseShared();
                         }
                     });
+                    i.share(task);
+                    s.start(task);
                 }
                 
                 guardReadWrite(i).value = 1;
@@ -164,7 +170,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Int i = new Int();
                 
                 i.pass();
-                s.start(new RunnableCallable() {
+                s.start(new Task<>(new RunnableCallable() {
                     public void run() {
                         i.registerNewOwner();
                         region(0);
@@ -172,7 +178,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                         i.releasePassed();
                         region(1);
                     }
-                });
+                }));
                 region(2);
                 
                 assertEquals(1, guardReadOnly(i).value);
@@ -189,13 +195,13 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Int i = new Int();
                 
                 i.pass();
-                s.start(new RunnableCallable() {
+                s.start(new Task<>(new RunnableCallable() {
                     public void run() {
                         i.registerNewOwner();
                         i.value = 1;
                         i.releasePassed();
                     }
-                });
+                }));
                 
                 // A missing guard causes non-determinism
                 assertEquals(1, i.value);
@@ -211,13 +217,13 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Int i = new Int();
                 
                 i.pass();
-                s.start(new RunnableCallable() {
+                s.start(new Task<>(new RunnableCallable() {
                     public void run() {
                         i.registerNewOwner();
                         i.value = 1;
                         // A missing release causes a deadlock
                     }
-                });
+                }));
                 
                 assertEquals(1, guardReadOnly(i).value);
             }
@@ -234,7 +240,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                         final Int i = new Int();
                         
                         i.pass();
-                        s.start(new RunnableCallable() {
+                        s.start(new Task<>(new RunnableCallable() {
                             public void run() {
                                 i.registerNewOwner();
                                 region(0);
@@ -242,10 +248,10 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                                 i.releasePassed();
                                 region(1);
                             }
-                        });
+                        }));
                         
                         i.pass();
-                        s.start(new RunnableCallable() {
+                        s.start(new Task<>(new RunnableCallable() {
                             public void run() {
                                 i.registerNewOwner();
                                 region(2);
@@ -253,7 +259,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                                 i.releasePassed();
                                 region(3);
                             }
-                        });
+                        }));
                         region(4);
                         
                         assertEquals(2, guardReadOnly(i).value);
@@ -274,7 +280,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 for(int k = 0; k < taskCount; k++) {
                     final int theK = k;
                     i.pass();
-                    s.start(new RunnableCallable() {
+                    s.start(new Task<>(new RunnableCallable() {
                         public void run() {
                             i.registerNewOwner();
                             i.value++;
@@ -283,7 +289,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                             if(theK != 0)
                                 i.releasePassed();
                         }
-                    });
+                    }));
                 }
                 
                 assertEquals(taskCount, guardReadOnly(i).value);
@@ -299,13 +305,13 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                         final Int i = new Int();
                         
                         i.pass();
-                        s.start(new RunnableCallable() {
+                        s.start(new Task<>(new RunnableCallable() {
                             public void run() {
                                 i.registerNewOwner();
                                 i.value++;
                                 
                                 i.pass();
-                                s.start(new RunnableCallable() {
+                                s.start(new Task<>(new RunnableCallable() {
                                     public void run() {
                                         i.registerNewOwner();
                                         i.value++;
@@ -313,7 +319,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                                         i.releasePassed();
                                         region(1);
                                     }
-                                });
+                                }));
                                 region(2);
                                 
                                 assertEquals(2, guardReadWrite(i).value);
@@ -322,7 +328,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                                 i.releasePassed();
                                 region(3);
                             }
-                        });
+                        }));
                         region(4);
                         
                         assertEquals(3, guardReadOnly(i).value);
@@ -340,20 +346,20 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Int i = new Int();
                 
                 i.pass();
-                s.start(new RunnableCallable() {
+                s.start(new Task<>(new RunnableCallable() {
                     public void run() {
                         i.registerNewOwner();
                         i.pass();
-                        s.start(new RunnableCallable() {
+                        s.start(new Task<>(new RunnableCallable() {
                             public void run() {
                                 i.registerNewOwner();
                                 i.releasePassed();
                             }
-                        });
+                        }));
                         
                         i.releasePassed();
                     }
-                });
+                }));
             }
         });
     }
@@ -366,23 +372,23 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Int i = new Int();
                 
                 i.pass();
-                s.start(new RunnableCallable() {
+                s.start(new Task<>(new RunnableCallable() {
                     public void run() {
                         i.registerNewOwner();
                         i.value++;
                         
                         i.pass();
-                        s.start(new RunnableCallable() {
+                        s.start(new Task<>(new RunnableCallable() {
                             public void run() {
                                 i.registerNewOwner();
                                 i.value++;
                                 // A missed release causes deadlock
                             }
-                        });
+                        }));
                         
                         i.releasePassed();
                     }
-                });
+                }));
                 
                 assertEquals(3, guardReadOnly(i).value);
             }
@@ -396,23 +402,24 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Int i = new Int();
                 
                 i.pass();
-                s.start(new RunnableCallable() {
+                s.start(new Task<>(new RunnableCallable() {
                     public void run() {
                         i.registerNewOwner();
                         i.value++;
                         i.releasePassed();
                         region(0);
                     }
-                });
+                }));
                 
-                i.share();
-                s.start(new RunnableCallable() {
+                Task<?> task = new Task<>(new RunnableCallable() {
                     public void run() {
                         assertEquals(1, i.value);
                         region(1);
                         i.releaseShared();
                     }
                 });
+                i.share(task);
+                s.start(task);
                 region(2);
                 
                 guardReadWrite(i).value++;
@@ -427,8 +434,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                r.share();
-                s.start(new RunnableCallable() {
+                Task<?> task = new Task<>(new RunnableCallable() {
                     public void run() {
                         assertEquals(0, r.o.value);
                         region(0);
@@ -436,6 +442,8 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                         region(1);
                     }
                 });
+                r.share(task);
+                s.start(task);
                 region(2);
                 
                 guardReadWrite(i).value = 1;
@@ -453,14 +461,15 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 
                 for(int k = 0; k < 2; k++) {
                     final int theK = k;
-                    r.share();
-                    s.start(new RunnableCallable() {
+                    Task<?> task = new Task<>(new RunnableCallable() {
                         public void run() {
                             assertEquals(0, r.o.value);
                             r.releaseShared();
                             region(theK);
                         }
                     });
+                    r.share(task);
+                    s.start(task);
                 }
                 
                 guardReadWrite(i).value = 1;
@@ -477,7 +486,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Ref<Int> r = new Ref<>(i);
                 
                 r.pass();
-                s.start(new RunnableCallable() {
+                s.start(new Task<>(new RunnableCallable() {
                     public void run() {
                         r.registerNewOwner();
                         r.o.value++;
@@ -485,7 +494,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                         r.releasePassed();
                         region(1);
                     }
-                });
+                }));
                 region(2);
                 
                 assertEquals(1, guardReadOnly(i).value);
@@ -504,13 +513,13 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 
                 for(int k = 0; k < 2; k++) {
                     r.pass();
-                    s.start(new RunnableCallable() {
+                    s.start(new Task<>(new RunnableCallable() {
                         public void run() {
                             r.registerNewOwner();
                             r.o.value++;
                             r.releasePassed();
                         }
-                    });
+                    }));
                 }
                 
                 assertEquals(2, guardReadOnly(i).value);
@@ -527,27 +536,27 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Ref<Int> r = new Ref<>(i);
                 
                 r.pass();
-                s.start(new RunnableCallable() {
+                s.start(new Task<>(new RunnableCallable() {
                     public void run() {
                         r.registerNewOwner();
                         final Int i2 = r.o;
                         i2.value++;
                         
                         r.pass();
-                        s.start(new RunnableCallable() {
+                        s.start(new Task<>(new RunnableCallable() {
                             public void run() {
                                 r.registerNewOwner();
                                 r.o.value++;
                                 r.releasePassed();
                             }
-                        });
+                        }));
                         
                         assertEquals(2, guardReadWrite(i2).value);
                         i2.value++;
                         
                         r.releasePassed();
                     }
-                });
+                }));
                 
                 assertEquals(3, guardReadOnly(i).value);
             }
@@ -562,23 +571,24 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Ref<Int> r = new Ref<>(i);
                 
                 r.pass();
-                s.start(new RunnableCallable() {
+                s.start(new Task<>(new RunnableCallable() {
                     public void run() {
                         r.registerNewOwner();
                         r.o.value++;
                         r.releasePassed();
                         region(0);
                     }
-                });
+                }));
                 
-                r.share();
-                s.start(new RunnableCallable() {
+                Task<?> task = new Task<>(new RunnableCallable() {
                     public void run() {
                         assertEquals(1, r.o.value);
                         region(1);
                         r.releaseShared();
                     }
                 });
+                r.share(task);
+                s.start(task);
                 region(2);
                 
                 guardReadWrite(i).value++;
@@ -593,32 +603,35 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                i.share();
-                s.start(new RunnableCallable() {
+                Task<?> task1 = new Task<>(new RunnableCallable() {
                     public void run() {
                         assertEquals(0, i.value);
                         region(0);
                         i.releaseShared();
                     }
                 });
+                i.share(task1);
+                s.start(task1);
                 
-                r.share();
-                s.start(new RunnableCallable() {
+                Task<?> task2 = new Task<>(new RunnableCallable() {
                     public void run() {
                         assertEquals(0, r.o.value);
                         region(1);
                         r.releaseShared();
                     }
                 });
+                r.share(task2);
+                s.start(task2);
                 
-                i.share();
-                s.start(new RunnableCallable() {
+                Task<?> task3 = new Task<>(new RunnableCallable() {
                     public void run() {
                         assertEquals(0, i.value);
                         region(2);
                         i.releaseShared();
                     }
                 });
+                i.share(task3);
+                s.start(task3);
                 region(3);
                 
                 guardReadWrite(i).value = 1;
@@ -636,34 +649,34 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Ref<Int> r = new Ref<>(i);
                 
                 i.pass();
-                s.start(new RunnableCallable() {
+                s.start(new Task<>(new RunnableCallable() {
                     public void run() {
                         i.registerNewOwner();
                         region(0);
                         i.value++;
                         i.releasePassed();
                     }
-                });
+                }));
                 
                 r.pass();
-                s.start(new RunnableCallable() {
+                s.start(new Task<>(new RunnableCallable() {
                     public void run() {
                         r.registerNewOwner();
                         region(1);
                         r.o.value++;
                         r.releasePassed();
                     }
-                });
+                }));
                 
                 i.pass();
-                s.start(new RunnableCallable() {
+                s.start(new Task<>(new RunnableCallable() {
                     public void run() {
                         i.registerNewOwner();
                         region(2);
                         i.value++;
                         i.releasePassed();
                     }
-                });
+                }));
                 region(3);
                 
                 assertEquals(3, guardReadOnly(i).value);
@@ -681,14 +694,14 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Ref<Int> r = new Ref<>(i);
                 
                 r.pass();
-                s.start(new RunnableCallable() {
+                s.start(new Task<>(new RunnableCallable() {
                     public void run() {
                         r.registerNewOwner();
                         final Int i2 = r.o;
                         i2.value++;
                         
                         i2.pass();
-                        s.start(new RunnableCallable() {
+                        s.start(new Task<>(new RunnableCallable() {
                             public void run() {
                                 i2.registerNewOwner();
                                 region(0);
@@ -696,13 +709,13 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                                 i2.releasePassed();
                                 region(1);
                             }
-                        });
+                        }));
                         region(2);
                         
                         r.releasePassed();
                         region(3);
                     }
-                });
+                }));
                 region(4);
                 
                 assertEquals(2, guardReadOnly(i).value);
@@ -719,7 +732,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Ref<Int> r = new Ref<>(i);
                 
                 r.pass();
-                s.start(new RunnableCallable() {
+                s.start(new Task<>(new RunnableCallable() {
                     public void run() {
                         r.registerNewOwner();
                         r.o.value++;
@@ -727,16 +740,17 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                         r.releasePassed();
                         region(1);
                     }
-                });
+                }));
                 
-                i.share();
-                s.start(new RunnableCallable() {
+                Task<?> task = new Task<>(new RunnableCallable() {
                     public void run() {
                         region(2);
                         assertEquals(1, i.value);
                         i.releaseShared();
                     }
                 });
+                i.share(task);
+                s.start(task);
                 region(3);
                 
                 guardReadWrite(i).value++;
@@ -752,13 +766,14 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                r.share();
-                s.start(new RunnableCallable() {
+                Task<?> task = new Task<>(new RunnableCallable() {
                     public void run() {
                         assertEquals(0, i.value);
                         r.releaseShared();
                     }
                 });
+                r.share(task);
+                s.start(task);
                 
                 guardReadWrite(r).o = new Int(10);
             }
@@ -774,14 +789,14 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Ref<Int> r = new Ref<>(i);
                 
                 r.pass();
-                s.start(new RunnableCallable() {
+                s.start(new Task<>(new RunnableCallable() {
                     public void run() {
                         r.registerNewOwner();
                         r.o = new Int();
                         r.o.value = 10;
                         r.releasePassed();
                     }
-                });
+                }));
                 
                 assertEquals(0, guardReadOnly(i).value);
                 assertEquals(10, guardReadOnly(guardReadOnly(r).o).value);
@@ -798,7 +813,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Ref<Int> r = new Ref<>(i);
                 
                 r.pass();
-                s.start(new RunnableCallable() {
+                s.start(new Task<>(new RunnableCallable() {
                     public void run() {
                         r.registerNewOwner();
                         r.o = new Int();
@@ -806,16 +821,16 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                         final Int i2 = r.o;
                         i2.value++;
                         i2.pass();
-                        s.start(new RunnableCallable() {
+                        s.start(new Task<>(new RunnableCallable() {
                             public void run() {
                                 i2.registerNewOwner();
                                 i2.value++;
                                 i2.releasePassed();
                             }
-                        });
+                        }));
                         r.releasePassed();
                     }
-                });
+                }));
                 
                 assertEquals(2, guardReadOnly(guardReadOnly(r).o).value);
             }
@@ -831,13 +846,14 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Node n2 = new Node(n1);
                 n1.next = n2;
                 
-                n1.share();
-                s.start(new RunnableCallable() {
+                Task<?> task = new Task<>(new RunnableCallable() {
                     public void run() {
                         assertEquals(0, n1.next.data);
                         n1.releaseShared();
                     }
                 });
+                n1.share(task);
+                s.start(task);
                 
                 guardReadWrite(n1).next = new Node(10);
             }

@@ -113,14 +113,8 @@ class ClassGenerator {
         }
         «IF isTask»
         
-        public java.util.concurrent.Callable<«type.generateGeneric»> $«name»Task(«params.map[gen].join(", ")») {
-            «IF thisType.needsTransition»
-            «genTransition("", thisType)»
-            «ENDIF»
-            «FOR p : params.filter[type.needsTransition]»
-            «genTransition(p.safeName, p.type as RoleType)»
-            «ENDFOR»
-            return new java.util.concurrent.Callable<«type.generateGeneric»>() {
+        public «taskClassName»<«type.generateGeneric»> $«name»Task(«params.map[gen].join(", ")») {
+            «taskClassName»<«type.generateGeneric»> $task = new «taskClassName»<>(new java.util.concurrent.Callable<«type.generateGeneric»>() {
                 public «type.generateGeneric» call() {
                     «IF thisType.needsRegisterNewOwner»
                     «genRegisterNewOwner("", enclosingClass)»
@@ -141,7 +135,14 @@ class ClassGenerator {
                     return null;
                     «ENDIF»
                 }
-            };
+            });
+            «IF thisType.needsTransition»
+            «genTransition("", "$task", thisType)»
+            «ENDIF»
+            «FOR p : params.filter[type.needsTransition]»
+            «genTransition(p.safeName, "$task", p.type as RoleType)»
+            «ENDFOR»
+            return $task;
         }
         «ENDIF»
         «IF isMain»
@@ -156,15 +157,15 @@ class ClassGenerator {
         isGuarded && !((it as RoleType).role.erased instanceof Pure)
     }
     
-    private def genTransition(String target, RoleType type) {
-        val kind = if(type.role.erased instanceof ReadWrite) "pass" else "share"
+    private def genTransition(String target, String task, RoleType type) {
+        val call = if(type.role.erased instanceof ReadWrite) "pass()" else "share(" + task + ")"
         if(type.base.clazz.isObjectClass)
             '''
             if(«target» instanceof «jvmGuardedClassName»)
-                ((«jvmGuardedClassName») «target»).«kind»();
+                ((«jvmGuardedClassName») «target»).«call»;
             '''
         else
-            '''«IF !target.isEmpty»«target».«ENDIF»«kind»();'''
+            '''«IF !target.isEmpty»«target».«ENDIF»«call»;'''
     }
     
     private def needsRegisterNewOwner(Type it) {

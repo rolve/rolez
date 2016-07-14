@@ -2,14 +2,11 @@ package rolez.lang;
 
 import static java.lang.Math.min;
 import static java.util.Arrays.asList;
-import static java.util.Collections.newSetFromMap;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
-import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Set;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -73,33 +70,30 @@ public class GuardedSliceTest {
         final GuardedArray<?> array = new GuardedArray<>(new Guarded[length]);
         
         final List<GuardedSlice<?>> slices = new ArrayList<>();
+        slices.add(array);
         for(final SliceRange range : ranges) {
             final GuardedSlice<?> slice = array.slice(range);
             assertEquals(range, slice.range);
             slices.add(slice);
         }
         
-        assertSoundSlicesCondition(array);
+        assertSoundSlicesCondition(array, slices);
     }
     
-    private static void assertSoundSlicesCondition(final GuardedSlice<?> slice) {
-        final Set<GuardedSlice<?>> allSlices = reachableSlices(slice);
-        
-        for(int index = slice.range.begin; index < slice.range.end; index += slice.range.step) {
+    private static void assertSoundSlicesCondition(GuardedArray<?> array,
+            List<GuardedSlice<?>> slices) {
+        for(int index = array.range.begin; index < array.range.end; index += array.range.step) {
             /* Find all slices that contain the given index */
             final List<GuardedSlice<?>> containing = new ArrayList<>();
-            for(final GuardedSlice<?> s : allSlices)
+            for(final GuardedSlice<?> s : slices)
                 if(contains(s.range, index))
                     containing.add(s);
                     
-            /* For each pair of such slices, assert that they have a common subslice that also
-             * contains the index */
+            /* For each pair of such slices, assert that they reference each other */
             for(int i = 0; i < containing.size(); i++)
                 for(int j = i + 1; j < containing.size(); j++) {
-                    final Set<GuardedSlice<?>> reachable1 = reachableSlices(containing.get(i));
-                    final Set<GuardedSlice<?>> reachable2 = reachableSlices(containing.get(j));
-                    reachable1.retainAll(reachable2);
-                    assertFalse(reachable1.isEmpty());
+                    assertTrue(containing.get(i).overlappingSlices.contains(containing.get(j)));
+                    assertTrue(containing.get(j).overlappingSlices.contains(containing.get(i)));
                 }
         }
     }
@@ -112,21 +106,5 @@ public class GuardedSliceTest {
         if((index - range.begin) % range.step != 0)
             return false;
         return true;
-    }
-    
-    private static Set<GuardedSlice<?>> reachableSlices(final GuardedSlice<?> s1) {
-        final Set<GuardedSlice<?>> allSlices = newIdentitySet();
-        collectSlices(s1, allSlices);
-        return allSlices;
-    }
-    
-    private static void collectSlices(final GuardedSlice<?> s1, final Set<GuardedSlice<?>> slices) {
-        for(final GuardedSlice<?> subslice : s1.subslices)
-            collectSlices(subslice, slices);
-        slices.add(s1);
-    }
-    
-    private static Set<GuardedSlice<?>> newIdentitySet() {
-        return newSetFromMap(new IdentityHashMap<GuardedSlice<?>, java.lang.Boolean>());
     }
 }

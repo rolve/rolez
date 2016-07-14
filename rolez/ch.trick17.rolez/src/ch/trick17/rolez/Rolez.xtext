@@ -240,6 +240,7 @@ RoleParamRef:
 
 BuiltInRole:
     {Pure} 'pure' | {ReadOnly} 'readonly' | {ReadWrite} 'readwrite';
+    // TODO: Use shorter names like pure, read, and write?
 
 ClassRef:
     SimpleClassRef | GenericClassRef;

@@ -13,11 +13,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import ch.trick17.simplejpf.test.JpfParallelismTest;
-import rolez.lang.NewThreadTaskSystem;
-import rolez.lang.SingleThreadTaskSystem;
-import rolez.lang.Task;
-import rolez.lang.TaskSystem;
-import rolez.lang.ThreadPoolTaskSystem;
 
 @RunWith(Parameterized.class)
 public class TaskSystemTest extends JpfParallelismTest {
@@ -43,12 +38,12 @@ public class TaskSystemTest extends JpfParallelismTest {
         if(verifyNoPropertyViolation()) {
             flag = false;
             final Thread original = Thread.currentThread();
-            system.start(new RunnableCallable() {
+            system.start(new Task<>(new RunnableCallable() {
                 public void run() {
                     flag = true;
                     LockSupport.unpark(original);
                 }
-            });
+            }));
             while(!flag)
                 LockSupport.park();
         }
@@ -59,13 +54,13 @@ public class TaskSystemTest extends JpfParallelismTest {
         if(verifyDeadlock()) {
             flag = false;
             final Thread original = Thread.currentThread();
-            system.start(new RunnableCallable() {
+            system.start(new Task<>(new RunnableCallable() {
                 public void run() {
                     // Not setting the flag will result in a deadlock:
                     // flag = true;
                     LockSupport.unpark(original);
                 }
-            });
+            }));
             while(!flag)
                 LockSupport.park();
         }
@@ -76,20 +71,20 @@ public class TaskSystemTest extends JpfParallelismTest {
         if(verifyNoPropertyViolation()) {
             flag = false;
             final Thread original = Thread.currentThread();
-            system.start(new RunnableCallable() {
+            system.start(new Task<>(new RunnableCallable() {
                 public void run() {
-                    system.start(new RunnableCallable() {
+                    system.start(new Task<>(new RunnableCallable() {
                         public void run() {
-                            system.start(new RunnableCallable() {
+                            system.start(new Task<>(new RunnableCallable() {
                                 public void run() {
                                     flag = true;
                                     LockSupport.unpark(original);
                                 }
-                            });
+                            }));
                         }
-                    });
+                    }));
                 }
-            });
+            }));
             
             while(!flag)
                 LockSupport.park();
@@ -99,35 +94,35 @@ public class TaskSystemTest extends JpfParallelismTest {
     @Test
     public void testRunTaskWaiting() {
         if(verifyNoPropertyViolation()) {
-            system.start(new RunnableCallable() {
+            system.start(new Task<>(new RunnableCallable() {
                 public void run() {
                     flag = false;
                     final Thread original = Thread.currentThread();
-                    system.start(new RunnableCallable() {
+                    system.start(new Task<>(new RunnableCallable() {
                         public void run() {
                             flag = true;
                             LockSupport.unpark(original);
                         }
-                    });
+                    }));
                     while(!flag)
                         LockSupport.park();
                 }
-            });
+            }));
         }
     }
     
     @Test
     public void testExceptionInTask() {
         if(verifyUnhandledException("java.lang.RuntimeException", "Hello")) {
-            system.run(new RunnableCallable() {
+            system.run(new Task<>(new RunnableCallable() {
                 public void run() {
-                    system.start(new RunnableCallable() {
+                    system.start(new Task<>(new RunnableCallable() {
                         public void run() {
                             throw new RuntimeException("Hello");
                         }
-                    });
+                    }));
                 }
-            });
+            }));
             /* Exception should be propagated automatically */
         }
     }
@@ -135,11 +130,11 @@ public class TaskSystemTest extends JpfParallelismTest {
     @Test
     public void testReturnValue() throws Throwable {
         if(verifyNoPropertyViolation()) {
-            final Task<Integer> task = system.start(new Callable<Integer>() {
+            final Task<Integer> task = system.start(new Task<>(new Callable<Integer>() {
                 public Integer call() {
                     return 42;
                 }
-            });
+            }));
             
             assertEquals(42, (int) task.get());
         }
@@ -149,27 +144,25 @@ public class TaskSystemTest extends JpfParallelismTest {
     public void testNestedParallelism() {
         assumeMultithreaded();
         if(verifyParallelExcept()) {
-            system.start(new RunnableCallable() {
+            system.start(new Task<>(new RunnableCallable() {
                 public void run() {
                     /* Task 1 */
-                    final Task<Void> task = system.start(
-                            new RunnableCallable() {
+                    final Task<Void> task = system.start(new Task<>(new RunnableCallable() {
                         public void run() {
                             /* Task 2 */
-                            system.start(new RunnableCallable() {
+                            system.start(new Task<>(new RunnableCallable() {
                                 public void run() {
                                     /* Task 3 */
                                     region(0);
                                 }
-                            });
+                            }));
                             region(1);
                         }
-                    });
-                    /* Waiting for other tasks should not block worker threads
-                     * of thread pools: */
+                    }));
+                    /* Waiting for other tasks should not block worker threads of thread pools: */
                     task.get();
                 }
-            }).get();
+            })).get();
         }
     }
     

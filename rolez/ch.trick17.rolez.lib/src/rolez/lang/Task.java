@@ -1,6 +1,7 @@
 package rolez.lang;
 
 import static java.lang.Thread.currentThread;
+import static java.util.concurrent.locks.LockSupport.unpark;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -20,10 +21,10 @@ public class Task<V> implements Runnable {
             return new ArrayDeque<>();
         }
     };
-    // IMPROVE: Could replace thread-local variable with "current" task variable
-    // that is passed to all generated methods. Wouldn't support call-backs
-    // from mapped methods though...
+    // IMPROVE: Could replace thread-local variable with "current" task variable that is passed to
+    // all generated methods. Wouldn't support call-backs from mapped methods though...
     
+    // IMPROVE: To speed this up, could cache current task in a field of a custom thread class or so
     public static Task<?> currentTask() {
         return localStack.get().peek();
     }
@@ -31,8 +32,17 @@ public class Task<V> implements Runnable {
     private Callable<V> callable;
     private final Sync sync = new Sync();
     
+    private Thread executingThread;
     private volatile V result;
     private volatile Throwable exception;
+    
+    /**
+     * The parent task. Parent links are followed to efficiently detect a parent-child relation
+     * between two tasks.
+     * <p>
+     * The "main" task has no parent, i.e., its parent field is <code>null</code> .
+     */
+    public final Task<?> parent;
     
     /**
      * The list of child tasks. Before a task finishes, it waits for all its children to finish.
@@ -41,12 +51,13 @@ public class Task<V> implements Runnable {
     
     public Task(Callable<V> callable) {
         this.callable = callable;
-        Task<?> parent = currentTask();
+        this.parent = currentTask();
         if(parent != null)
             parent.children.add(this);
     }
     
     public final void run() {
+        executingThread = currentThread();
         Deque<Task<?>> stack = localStack.get();
         stack.push(this);
         try {
@@ -68,6 +79,8 @@ public class Task<V> implements Runnable {
         
         /* Unblock threads waiting to get the result */
         sync.done();
+        if(parent != null)
+            unpark(parent.executingThread);
     }
     
     public final V get() {
@@ -83,6 +96,17 @@ public class Task<V> implements Runnable {
             throw(Error) e;
         else
             throw new AssertionError("Checked exception in task", e);
+    }
+    
+    boolean isActive() {
+        return !sync.isDone();
+    }
+    
+    boolean isDescendantOf(Task<?> other) {
+        for(Task<?> ancestor = parent; ancestor != null; ancestor = ancestor.parent)
+            if(ancestor == other)
+                return true;
+        return false;
     }
     
     /**
@@ -105,6 +129,10 @@ public class Task<V> implements Runnable {
         
         void done() {
             releaseShared(IGNORED);
+        }
+        
+        boolean isDone() {
+            return getState() == DONE;
         }
         
         @Override

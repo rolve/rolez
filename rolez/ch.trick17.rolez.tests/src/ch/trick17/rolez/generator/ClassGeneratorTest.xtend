@@ -354,8 +354,8 @@ class ClassGeneratorTest extends GeneratorTest {
                     return new Base();
                 }
                 
-                public java.util.concurrent.Callable<Base> $fooTask() {
-                    return new java.util.concurrent.Callable<Base>() {
+                public rolez.lang.Task<Base> $fooTask() {
+                    rolez.lang.Task<Base> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<Base>() {
                         public Base call() {
                             try {
                                 return new Base();
@@ -363,7 +363,8 @@ class ClassGeneratorTest extends GeneratorTest {
                             finally {
                             }
                         }
-                    };
+                    });
+                    return $task;
                 }
             }
         ''')
@@ -388,8 +389,8 @@ class ClassGeneratorTest extends GeneratorTest {
                     return this.magic;
                 }
                 
-                public java.util.concurrent.Callable<java.lang.Integer> $fooTask() {
-                    return new java.util.concurrent.Callable<java.lang.Integer>() {
+                public rolez.lang.Task<java.lang.Integer> $fooTask() {
+                    rolez.lang.Task<java.lang.Integer> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Integer>() {
                         public java.lang.Integer call() {
                             try {
                                 return App.this.magic;
@@ -397,7 +398,8 @@ class ClassGeneratorTest extends GeneratorTest {
                             finally {
                             }
                         }
-                    };
+                    });
+                    return $task;
                 }
             }
         ''')
@@ -419,8 +421,8 @@ class ClassGeneratorTest extends GeneratorTest {
                     new foo.bar.Base(i + j);
                 }
                 
-                public java.util.concurrent.Callable<java.lang.Void> $fooTask(final int i, final int j) {
-                    return new java.util.concurrent.Callable<java.lang.Void>() {
+                public rolez.lang.Task<java.lang.Void> $fooTask(final int i, final int j) {
+                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
                         public java.lang.Void call() {
                             try {
                                 new foo.bar.Base(i + j);
@@ -429,7 +431,8 @@ class ClassGeneratorTest extends GeneratorTest {
                             }
                             return null;
                         }
-                    };
+                    });
+                    return $task;
                 }
             }
         ''')
@@ -454,8 +457,8 @@ class ClassGeneratorTest extends GeneratorTest {
                 public void foo() {
                 }
                 
-                public java.util.concurrent.Callable<java.lang.Void> $fooTask() {
-                    return new java.util.concurrent.Callable<java.lang.Void>() {
+                public rolez.lang.Task<java.lang.Void> $fooTask() {
+                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
                         public java.lang.Void call() {
                             try {
                             }
@@ -463,15 +466,15 @@ class ClassGeneratorTest extends GeneratorTest {
                             }
                             return null;
                         }
-                    };
+                    });
+                    return $task;
                 }
                 
                 public void bar() {
                 }
                 
-                public java.util.concurrent.Callable<java.lang.Void> $barTask() {
-                    share();
-                    return new java.util.concurrent.Callable<java.lang.Void>() {
+                public rolez.lang.Task<java.lang.Void> $barTask() {
+                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
                         public java.lang.Void call() {
                             try {
                             }
@@ -480,15 +483,16 @@ class ClassGeneratorTest extends GeneratorTest {
                             }
                             return null;
                         }
-                    };
+                    });
+                    share($task);
+                    return $task;
                 }
                 
                 public void baz() {
                 }
                 
-                public java.util.concurrent.Callable<java.lang.Void> $bazTask() {
-                    pass();
-                    return new java.util.concurrent.Callable<java.lang.Void>() {
+                public rolez.lang.Task<java.lang.Void> $bazTask() {
+                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
                         public java.lang.Void call() {
                             registerNewOwner();
                             try {
@@ -498,7 +502,9 @@ class ClassGeneratorTest extends GeneratorTest {
                             }
                             return null;
                         }
-                    };
+                    });
+                    pass();
+                    return $task;
                 }
             }
         ''')
@@ -521,8 +527,8 @@ class ClassGeneratorTest extends GeneratorTest {
                 public void main() {
                 }
                 
-                public java.util.concurrent.Callable<java.lang.Void> $mainTask() {
-                    return new java.util.concurrent.Callable<java.lang.Void>() {
+                public rolez.lang.Task<java.lang.Void> $mainTask() {
+                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
                         public java.lang.Void call() {
                             try {
                             }
@@ -530,7 +536,8 @@ class ClassGeneratorTest extends GeneratorTest {
                             }
                             return null;
                         }
-                    };
+                    });
+                    return $task;
                 }
                 
                 public static void main(final java.lang.String[] args) {
@@ -556,8 +563,8 @@ class ClassGeneratorTest extends GeneratorTest {
                 public void main() {
                 }
                 
-                public java.util.concurrent.Callable<java.lang.Void> $mainTask() {
-                    return new java.util.concurrent.Callable<java.lang.Void>() {
+                public rolez.lang.Task<java.lang.Void> $mainTask() {
+                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
                         public java.lang.Void call() {
                             try {
                             }
@@ -565,7 +572,8 @@ class ClassGeneratorTest extends GeneratorTest {
                             }
                             return null;
                         }
-                    };
+                    });
+                    return $task;
                 }
                 
                 public static void main(final java.lang.String[] args) {
@@ -591,9 +599,8 @@ class ClassGeneratorTest extends GeneratorTest {
                     guardReadOnly(args).data[0].length();
                 }
                 
-                public java.util.concurrent.Callable<java.lang.Void> $mainTask(final rolez.lang.GuardedArray<java.lang.String[]> args) {
-                    args.share();
-                    return new java.util.concurrent.Callable<java.lang.Void>() {
+                public rolez.lang.Task<java.lang.Void> $mainTask(final rolez.lang.GuardedArray<java.lang.String[]> args) {
+                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
                         public java.lang.Void call() {
                             try {
                                 args.data[0].length();
@@ -603,7 +610,9 @@ class ClassGeneratorTest extends GeneratorTest {
                             }
                             return null;
                         }
-                    };
+                    });
+                    args.share($task);
+                    return $task;
                 }
                 
                 public static void main(final java.lang.String[] args) {
@@ -633,11 +642,8 @@ class ClassGeneratorTest extends GeneratorTest {
                     java.lang.System.out.println("Hello World!");
                 }
                 
-                public java.util.concurrent.Callable<java.lang.Void> $fooTask(final Base o1, final Base o2, final Base o3) {
-                    pass();
-                    o1.pass();
-                    o2.share();
-                    return new java.util.concurrent.Callable<java.lang.Void>() {
+                public rolez.lang.Task<java.lang.Void> $fooTask(final Base o1, final Base o2, final Base o3) {
+                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
                         public java.lang.Void call() {
                             registerNewOwner();
                             o1.registerNewOwner();
@@ -651,7 +657,11 @@ class ClassGeneratorTest extends GeneratorTest {
                             }
                             return null;
                         }
-                    };
+                    });
+                    pass();
+                    o1.pass();
+                    o2.share($task);
+                    return $task;
                 }
             }
         ''')
@@ -672,10 +682,8 @@ class ClassGeneratorTest extends GeneratorTest {
                 public void foo(final java.lang.Object o) {
                 }
                 
-                public java.util.concurrent.Callable<java.lang.Void> $fooTask(final java.lang.Object o) {
-                    if(o instanceof «jvmGuardedClassName»)
-                        ((«jvmGuardedClassName») o).pass();
-                    return new java.util.concurrent.Callable<java.lang.Void>() {
+                public rolez.lang.Task<java.lang.Void> $fooTask(final java.lang.Object o) {
+                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
                         public java.lang.Void call() {
                             if(o instanceof «jvmGuardedClassName»)
                                 ((«jvmGuardedClassName») o).registerNewOwner();
@@ -687,7 +695,10 @@ class ClassGeneratorTest extends GeneratorTest {
                             }
                             return null;
                         }
-                    };
+                    });
+                    if(o instanceof «jvmGuardedClassName»)
+                        ((«jvmGuardedClassName») o).pass();
+                    return $task;
                 }
             }
         ''')
@@ -714,9 +725,8 @@ class ClassGeneratorTest extends GeneratorTest {
                     guardReadWrite(o).foo = 42;
                 }
                 
-                public java.util.concurrent.Callable<java.lang.Void> $fooTask(final Base o) {
-                    o.pass();
-                    return new java.util.concurrent.Callable<java.lang.Void>() {
+                public rolez.lang.Task<java.lang.Void> $fooTask(final Base o) {
+                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
                         public java.lang.Void call() {
                             o.registerNewOwner();
                             try {
@@ -727,7 +737,9 @@ class ClassGeneratorTest extends GeneratorTest {
                             }
                             return null;
                         }
-                    };
+                    });
+                    o.pass();
+                    return $task;
                 }
             }
         ''')
@@ -754,8 +766,8 @@ class ClassGeneratorTest extends GeneratorTest {
                 public void foo() {
                 }
                 
-                public java.util.concurrent.Callable<java.lang.Void> $fooTask() {
-                    return new java.util.concurrent.Callable<java.lang.Void>() {
+                public rolez.lang.Task<java.lang.Void> $fooTask() {
+                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
                         public java.lang.Void call() {
                             try {
                             }
@@ -763,14 +775,15 @@ class ClassGeneratorTest extends GeneratorTest {
                             }
                             return null;
                         }
-                    };
+                    });
+                    return $task;
                 }
                 
                 public void foo(final int i) {
                 }
                 
-                public java.util.concurrent.Callable<java.lang.Void> $fooTask(final int i) {
-                    return new java.util.concurrent.Callable<java.lang.Void>() {
+                public rolez.lang.Task<java.lang.Void> $fooTask(final int i) {
+                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
                         public java.lang.Void call() {
                             try {
                             }
@@ -778,14 +791,15 @@ class ClassGeneratorTest extends GeneratorTest {
                             }
                             return null;
                         }
-                    };
+                    });
+                    return $task;
                 }
                 
                 public void foo(final double d) {
                 }
                 
-                public java.util.concurrent.Callable<java.lang.Void> $fooTask(final double d) {
-                    return new java.util.concurrent.Callable<java.lang.Void>() {
+                public rolez.lang.Task<java.lang.Void> $fooTask(final double d) {
+                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
                         public java.lang.Void call() {
                             try {
                             }
@@ -793,14 +807,15 @@ class ClassGeneratorTest extends GeneratorTest {
                             }
                             return null;
                         }
-                    };
+                    });
+                    return $task;
                 }
                 
                 public void foo(final rolez.lang.GuardedArray<int[]> a, final rolez.lang.GuardedArray<double[]> b) {
                 }
                 
-                public java.util.concurrent.Callable<java.lang.Void> $fooTask(final rolez.lang.GuardedArray<int[]> a, final rolez.lang.GuardedArray<double[]> b) {
-                    return new java.util.concurrent.Callable<java.lang.Void>() {
+                public rolez.lang.Task<java.lang.Void> $fooTask(final rolez.lang.GuardedArray<int[]> a, final rolez.lang.GuardedArray<double[]> b) {
+                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
                         public java.lang.Void call() {
                             try {
                             }
@@ -808,14 +823,15 @@ class ClassGeneratorTest extends GeneratorTest {
                             }
                             return null;
                         }
-                    };
+                    });
+                    return $task;
                 }
                 
                 public void foo(final rolez.lang.GuardedArray<rolez.lang.GuardedArray<int[]>[]> a) {
                 }
                 
-                public java.util.concurrent.Callable<java.lang.Void> $fooTask(final rolez.lang.GuardedArray<rolez.lang.GuardedArray<int[]>[]> a) {
-                    return new java.util.concurrent.Callable<java.lang.Void>() {
+                public rolez.lang.Task<java.lang.Void> $fooTask(final rolez.lang.GuardedArray<rolez.lang.GuardedArray<int[]>[]> a) {
+                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
                         public java.lang.Void call() {
                             try {
                             }
@@ -823,7 +839,8 @@ class ClassGeneratorTest extends GeneratorTest {
                             }
                             return null;
                         }
-                    };
+                    });
+                    return $task;
                 }
             }
         ''')
@@ -980,10 +997,8 @@ class ClassGeneratorTest extends GeneratorTest {
                     guardReadWrite(£do).data[0] = 42;
                 }
                 
-                public java.util.concurrent.Callable<java.lang.Void> $finalTask(final rolez.lang.GuardedArray<int[]> £do) {
-                    share();
-                    £do.pass();
-                    return new java.util.concurrent.Callable<java.lang.Void>() {
+                public rolez.lang.Task<java.lang.Void> $finalTask(final rolez.lang.GuardedArray<int[]> £do) {
+                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
                         public java.lang.Void call() {
                             £do.registerNewOwner();
                             try {
@@ -995,7 +1010,10 @@ class ClassGeneratorTest extends GeneratorTest {
                             }
                             return null;
                         }
-                    };
+                    });
+                    share($task);
+                    £do.pass();
+                    return $task;
                 }
             }
         ''')

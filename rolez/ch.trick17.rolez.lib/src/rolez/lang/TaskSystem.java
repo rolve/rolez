@@ -1,24 +1,21 @@
 package rolez.lang;
 
 import java.io.Serializable;
-import java.util.concurrent.Callable;
 
 public abstract class TaskSystem implements Serializable {
     
-    public <V> Task<V> start(final Callable<V> callable) {
-        final Task<V> task = new Task<>(callable);
+    public <V> Task<V> start(Task<V> task) {
         doStart(task);
         return task;
     }
     
-    public <V> V run(final Callable<V> callable) {
-        Task<V> task = new Task<>(callable);
+    public <V> V run(Task<V> task) {
         task.run();
         /* Propagate exceptions */
         return task.get();
     }
     
-    abstract void doStart(final Task<?> task);
+    abstract void doStart(Task<?> task);
     
     @Override
     public String toString() {

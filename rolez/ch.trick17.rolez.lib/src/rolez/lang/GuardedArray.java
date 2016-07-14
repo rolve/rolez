@@ -8,6 +8,7 @@ public final class GuardedArray<A> extends GuardedSlice<A> {
         super(array, new SliceRange(0, Array.getLength(array), 1));
     }
     
+    @SuppressWarnings("unchecked")
     public static <A> GuardedArray<A> wrap(Object array) {
         if(array == null)
             return null;

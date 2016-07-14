@@ -1,179 +1,229 @@
 package rolez.lang;
 
 import static java.lang.Thread.currentThread;
+import static java.util.Collections.newSetFromMap;
 import static java.util.concurrent.locks.LockSupport.park;
 import static java.util.concurrent.locks.LockSupport.unpark;
+import static rolez.lang.Task.currentTask;
 
 import java.util.ArrayDeque;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class Guard {
     
-    private volatile Thread owner = currentThread();
-    private Deque<Thread> prevOwners = null;
-    // IMPROVE: Use Unsafe CAS or, once Java 9 is out (:D), standard API to CAS an int field directly
-    private final AtomicInteger sharedCount = new AtomicInteger(0);
+    volatile Task<?> owner = currentTask(); // volatile, so tasks stuck in a guarding op don't read stale info
+    volatile Thread ownerThread = currentThread(); // same
+    Deque<Thread> prevOwnerThreads = null;
     
-    private final Deque<Set<Guarded>> prevReachables = new ArrayDeque<>();
+    final AtomicInteger sharedCount = new AtomicInteger(0); // atomic because tasks can share concurrently
+    Set<Task<?>> readers = newSetFromMap(new ConcurrentHashMap<Task<?>, java.lang.Boolean>()); // IMPROVE: Initialize lazily?
     
-    void initializeViewGuard(final Guard viewGuard) {
-        while(owner == null) {} // Spin; owner field is only temporarily null
-        // IMPROVE: Is spinning really a good idea?
-        
-        viewGuard.owner = owner;
-        viewGuard.prevOwners = prevOwners == null ? null : new ArrayDeque<>(prevOwners);
-        viewGuard.sharedCount.set(sharedCount.get());
-    }
+    final Deque<Set<Guarded>> prevReachables = new ArrayDeque<>(); // IMPROVE: Could we use weak refs here?
     
-    /* Object state operations */
+    /* Role transition operations */
     
     static abstract class Op {
         abstract void process(Guarded guarded);
     }
     
-    void share(final Guarded guarded) {
-        guarded.processAll(GUARD_READ_ONLY, newIdentitySet(), false);
-        guarded.processAll(SHARE, newIdentitySet(), true);
+    void share(Guarded guarded, final Task<?> task) {
+        guarded.processAll(GUARD_READ_ONLY, newIdentitySet());
+        
+        Op share = new Op() {
+            @Override
+            public void process(Guarded g) {
+                // IMPROVE: Use Unsafe CAS or, once Java 9 is out (:D), standard API to
+                // CAS an int field directly
+                g.getGuard().sharedCount.incrementAndGet();
+                if(g.viewLock() != null) {
+                    TaskSystem.getDefault();
+                    g.getGuard().readers.add(task);
+                }
+            }
+        };
+        guarded.processAll(share, newIdentitySet());
     }
     
-    private static final Op SHARE = new Op() {
-        @Override
-        public void process(final Guarded guarded) {
-            guarded.getGuard().sharedCount.incrementAndGet();
-        }
-    };
-    
-    void pass(final Guarded guarded) {
-        guarded.processAll(GUARD_READ_WRITE, newIdentitySet(), false);
+    void pass(Guarded guarded) {
+        guarded.processAll(GUARD_READ_WRITE, newIdentitySet());
         
-        /* Previous owner is only recorded in the root of the object tree */
-        if(prevOwners == null)
-            prevOwners = new ArrayDeque<>();
-        prevOwners.addFirst(currentThread());
+        /* Previous owner is only recorded in the root of the object tree... */
+        final Thread prevOwner = currentThread();
+        if(prevOwnerThreads == null)
+            prevOwnerThreads = new ArrayDeque<>();
+        prevOwnerThreads.push(prevOwner);
         
-        final Set<Guarded> processed = newIdentitySet();
-        guarded.processAll(PASS, processed, true);
+        Set<Guarded> processed = newIdentitySet();
+        guarded.processAll(PASS, processed);
         prevReachables.addFirst(processed);
     }
     
     private static final Op PASS = new Op() {
         @Override
-        public void process(final Guarded guarded) {
+        public void process(Guarded g) {
             /* First step of passing */
-            final Guard guard = guarded.getGuard();
-            guard.owner = null;
+            g.getGuard().owner = null;
+            g.getGuard().ownerThread = null;
         }
     };
     
-    void registerNewOwner(final Guarded guarded) {
-        guarded.processAll(REGISTER_OWNER, newIdentitySet(), false);
+    void registerNewOwner(Guarded guarded) {
+        guarded.processAll(REGISTER_OWNER, newIdentitySet());
     }
     
     private static final Op REGISTER_OWNER = new Op() {
         @Override
-        public void process(final Guarded guarded) {
-            final Guard guard = guarded.getGuard();
-            assert guard.owner == null;
+        public void process(Guarded guarded) {
+            assert guarded.getGuard().owner == null;
+            assert guarded.getGuard().ownerThread == null;
             /* Second step of passing */
-            guard.owner = currentThread();
+            guarded.getGuard().owner = currentTask();
+            guarded.getGuard().ownerThread = currentThread();
         }
     };
     
-    void releaseShared(final Guarded guarded) {
-        guarded.processAll(RELEASE_SHARED, newIdentitySet(), true);
+    void releaseShared(Guarded guarded) {
+        guarded.processAll(RELEASE_SHARED, newIdentitySet());
     }
     
     private static final Op RELEASE_SHARED = new Op() {
         @Override
-        public void process(final Guarded guarded) {
-            final Guard guard = guarded.getGuard();
-            final int count = guard.sharedCount.decrementAndGet();
+        public void process(Guarded guarded) {
+            int count = guarded.getGuard().sharedCount.decrementAndGet();
+            if(guarded.viewLock() != null) {
+                TaskSystem.getDefault();
+                boolean removed = guarded.getGuard().readers.remove(currentTask());
+                assert removed;
+            }
             if(count == 0)
-                unpark(guard.owner);
+                unpark(guarded.getGuard().ownerThread);
         }
     };
     
-    void releasePassed(final Guarded guarded) {
+    void releasePassed(Guarded guarded) {
         /* First, make sure all reachable and previously reachable objects are readwrite */
         Set<Guarded> guardProcessed = newIdentitySet();
-        guarded.processAll(GUARD_READ_WRITE, guardProcessed, false);
+        guarded.processAll(GUARD_READ_WRITE, guardProcessed);
         processReachables(GUARD_READ_WRITE, guardProcessed);
         
         /* Then, release (or, in the case of newly reachable objects, transfer) reachable objects */
-        final Thread parent = prevOwners.removeFirst();
-        final Op releasePassed = new Op() {
+        final Thread parentThread = prevOwnerThreads.pop();
+        Op releasePassed = new Op() {
             @Override
             public void process(final Guarded g) {
-                g.getGuard().owner = parent;
+                g.getGuard().owner = g.getGuard().owner.parent;
+                g.getGuard().ownerThread = parentThread;
             }
         };
         Set<Guarded> processed = newIdentitySet();
-        guarded.processAll(releasePassed, processed, true);
+        guarded.processAll(releasePassed, processed);
         
         /* Then, release rest of the originally reachable object */
         processReachables(releasePassed, processed);
         prevReachables.removeFirst();
         
-        /* Finally, wake up parent thread in case it is waiting */
-        unpark(parent);
+        /* Finally, notify parent thread in case it is waiting */
+        unpark(parentThread);
     }
     
     /* Guarding methods */
     
-    void guardReadOnly(final Guarded guarded) {
+    void guardReadOnly(Guarded guarded) {
         GUARD_READ_ONLY.process(guarded);
-        if(!guarded.views().isEmpty())
-            guarded.processViews(GUARD_READ_ONLY, newIdentitySet());
     }
     
     private static final Op GUARD_READ_ONLY = new Op() {
         @Override
-        public void process(final Guarded guarded) {
+        public void process(Guarded guarded) {
             /* mayRead() reads the volatile owner field written by releasePassed() and
              * releaseShared(). Therefore, there is a happens-before relationship between
              * releasePassed()/releaseShared() and guardRead(). */
-            while(!guarded.getGuard().mayRead())
+            while(!mayRead(guarded))
                 park();
         }
     };
     
-    void guardReadWrite(final Guarded guarded) {
+    void guardReadWrite(Guarded guarded) {
         GUARD_READ_WRITE.process(guarded);
-        if(!guarded.views().isEmpty())
-            guarded.processViews(GUARD_READ_WRITE, newIdentitySet());
     }
     
     private static final Op GUARD_READ_WRITE = new Op() {
         @Override
-        public void process(final Guarded guarded) {
+        public void process(Guarded guarded) {
             /* mayWrite() reads the volatile owner field written by releasePassed(). Therefore,
              * there is a happens-before relationship between releasePassed() and guardReadWrite(). */
-            while(!guarded.getGuard().mayWrite())
+            while(!mayWrite(guarded))
                 park();
         }
     };
     
     /* Implementation methods */
     
-    private boolean mayRead() {
-        return owner == currentThread() || sharedCount.get() > 0;
+    // TODO: Redesign Guard and Guarded so that Guarded instances are less passed around explicitly
+    private static boolean mayRead(Guarded g) {
+        return g.getGuard().sharedCount.get() > 0
+                || (g.guard.ownerThread == currentThread() && !descWithReadWriteViewExists(g));
     }
     
-    private boolean mayWrite() {
-        return owner == currentThread() && !(sharedCount.get() > 0);
+    /**
+     * Determines if there is a descendant task of the current task that has a (overlapping)
+     * readwrite view of the given object.
+     */
+    private static boolean descWithReadWriteViewExists(Guarded g) {
+        if(g.viewLock() == null)
+            return false;
+        // IMPROVE: Slow path in separate method?
+        Task<?> currentTask = currentTask();
+        List<? extends Guarded> currentViews;
+        synchronized(g.viewLock()) {
+            currentViews = new ArrayList<>(g.views()); // Could contain views that are not "in use" anymore
+        }
+        for(Guarded v : currentViews)
+            if(v.getGuard().sharedCount.get() == 0) {
+                Task<?> currentOwner = null;
+                while((currentOwner = v.guard.owner) == null) {} // Wait until owner is set
+                if(currentOwner.isActive() && currentOwner.isDescendantOf(currentTask))
+                    return true;
+            }
+        return false;
     }
     
-    private void processReachables(final Op op, final Set<Guarded> processed) {
-        for(final Guarded guarded : prevReachables.getFirst())
+    private static boolean mayWrite(Guarded g) {
+        return g.getGuard().ownerThread == currentThread() && g.getGuard().sharedCount.get() == 0
+                && !descWithReadViewExists(g) && !descWithReadWriteViewExists(g);
+        // IMPROVE: Combine above two methods for efficiency
+    }
+    
+    /**
+     * Determines if there is a descendant task of the current task that has a (overlapping) read
+     * view of the given object.
+     */
+    private static boolean descWithReadViewExists(Guarded g) {
+        if(g.viewLock() == null)
+            return false;
+        Task<?> currentTask = currentTask();
+        synchronized(g.viewLock()) {
+            for(Guarded view : g.views())
+                for(Task<?> reader : view.getGuard().readers)
+                    if(reader.isDescendantOf(currentTask))
+                        return true;
+        }
+        return false;
+    }
+    
+    private void processReachables(Op op, Set<Guarded> processed) {
+        for(Guarded guarded : prevReachables.getFirst())
             if(!processed.contains(guarded))
                 op.process(guarded);
     }
     
     private static Set<Guarded> newIdentitySet() {
-        return Collections.newSetFromMap(new IdentityHashMap<Guarded, java.lang.Boolean>());
+        return newSetFromMap(new IdentityHashMap<Guarded, java.lang.Boolean>());
     }
 }
