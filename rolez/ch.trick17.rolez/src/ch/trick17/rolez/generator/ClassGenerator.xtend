@@ -116,11 +116,11 @@ class ClassGenerator {
         public «taskClassName»<«type.generateGeneric»> $«name»Task(«params.map[gen].join(", ")») {
             «taskClassName»<«type.generateGeneric»> $task = new «taskClassName»<>(new java.util.concurrent.Callable<«type.generateGeneric»>() {
                 public «type.generateGeneric» call() {
-                    «IF thisType.needsRegisterNewOwner»
-                    «genRegisterNewOwner("", enclosingClass)»
+                    «IF thisType.needsCompletePass»
+                    «genCompletePass("", enclosingClass)»
                     «ENDIF»
-                    «FOR p : params.filter[type.needsRegisterNewOwner]»
-                    «genRegisterNewOwner(p.safeName, (p.type as RoleType).base.clazz)»
+                    «FOR p : params.filter[type.needsCompletePass]»
+                    «genCompletePass(p.safeName, (p.type as RoleType).base.clazz)»
                     «ENDFOR»
                     «body.generateWithTryCatch(new RoleAnalysis(body, CodeKind.TASK), CodeKind.TASK, true)»
                     finally {
@@ -158,28 +158,28 @@ class ClassGenerator {
     }
     
     private def genTransition(String target, String task, RoleType type) {
-        val call = if(type.role.erased instanceof ReadWrite) "pass()" else "share(" + task + ")"
+        val kind = if(type.role.erased instanceof ReadWrite) "pass" else "share"
         if(type.base.clazz.isObjectClass)
             '''
             if(«target» instanceof «jvmGuardedClassName»)
-                ((«jvmGuardedClassName») «target»).«call»;
+                ((«jvmGuardedClassName») «target»).«kind»(«task»);
             '''
         else
-            '''«IF !target.isEmpty»«target».«ENDIF»«call»;'''
+            '''«IF !target.isEmpty»«target».«ENDIF»«kind»(«task»);'''
     }
     
-    private def needsRegisterNewOwner(Type it) {
+    private def needsCompletePass(Type it) {
         isGuarded && (it as RoleType).role.erased instanceof ReadWrite
     }
     
-    private def genRegisterNewOwner(String target, Class clazz) {
+    private def genCompletePass(String target, Class clazz) {
         if(clazz.isObjectClass)
             '''
             if(«target» instanceof «jvmGuardedClassName»)
-                ((«jvmGuardedClassName») «target»).registerNewOwner();
+                ((«jvmGuardedClassName») «target»).completePass();
             '''
         else
-            '''«IF !target.isEmpty»«target».«ENDIF»registerNewOwner();'''
+            '''«IF !target.isEmpty»«target».«ENDIF»completePass();'''
     }
     
     private def genRelease(String target, RoleType type) {

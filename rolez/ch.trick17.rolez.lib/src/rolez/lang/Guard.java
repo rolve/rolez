@@ -7,24 +7,23 @@ import static java.util.concurrent.locks.LockSupport.unpark;
 import static rolez.lang.Task.currentTask;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
 import java.util.IdentityHashMap;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class Guard {
     
-    volatile Task<?> owner = currentTask(); // volatile, so tasks stuck in a guarding op don't read stale info
-    volatile Thread ownerThread = currentThread(); // same
-    Deque<Thread> prevOwnerThreads = null;
+    private volatile Task<?> owner = currentTask(); // volatile, so tasks stuck in a guarding op don't read stale info
+    private volatile Thread ownerThread = currentThread(); // same
+    private Deque<Thread> prevOwnerThreads = null;
     
-    final AtomicInteger sharedCount = new AtomicInteger(0); // atomic because tasks can share concurrently
-    Set<Task<?>> readers = newSetFromMap(new ConcurrentHashMap<Task<?>, java.lang.Boolean>()); // IMPROVE: Initialize lazily?
+    private final AtomicInteger sharedCount = new AtomicInteger(0); // atomic because tasks can share concurrently
+    private final Set<Task<?>> readers = newSetFromMap(
+            new ConcurrentHashMap<Task<?>, java.lang.Boolean>()); // IMPROVE: Initialize lazily?
     
-    final Deque<Set<Guarded>> prevReachables = new ArrayDeque<>(); // IMPROVE: Could we use weak refs here?
+    private final Deque<Set<Guarded>> prevReachables = new ArrayDeque<>(); // IMPROVE: Could we use weak refs here?
     
     /* Role transition operations */
     
@@ -50,7 +49,7 @@ class Guard {
         guarded.processAll(share, newIdentitySet());
     }
     
-    void pass(Guarded guarded) {
+    void pass(Guarded guarded, final Task<?> task) {
         guarded.processAll(GUARD_READ_WRITE, newIdentitySet());
         
         /* Previous owner is only recorded in the root of the object tree... */
@@ -59,31 +58,29 @@ class Guard {
             prevOwnerThreads = new ArrayDeque<>();
         prevOwnerThreads.push(prevOwner);
         
+        Op pass = new Op() {
+            @Override
+            public void process(Guarded g) {
+                /* First step of passing */
+                g.getGuard().owner = task;
+                g.getGuard().ownerThread = null;
+            }
+        };
+        
         Set<Guarded> processed = newIdentitySet();
-        guarded.processAll(PASS, processed);
+        guarded.processAll(pass, processed);
         prevReachables.addFirst(processed);
     }
     
-    private static final Op PASS = new Op() {
-        @Override
-        public void process(Guarded g) {
-            /* First step of passing */
-            g.getGuard().owner = null;
-            g.getGuard().ownerThread = null;
-        }
-    };
-    
-    void registerNewOwner(Guarded guarded) {
-        guarded.processAll(REGISTER_OWNER, newIdentitySet());
+    void completePass(Guarded guarded) {
+        guarded.processAll(REGISTER_OWNER_THREAD, newIdentitySet());
     }
     
-    private static final Op REGISTER_OWNER = new Op() {
+    private static final Op REGISTER_OWNER_THREAD = new Op() {
         @Override
         public void process(Guarded guarded) {
-            assert guarded.getGuard().owner == null;
             assert guarded.getGuard().ownerThread == null;
             /* Second step of passing */
-            guarded.getGuard().owner = currentTask();
             guarded.getGuard().ownerThread = currentThread();
         }
     };
@@ -180,17 +177,14 @@ class Guard {
             return false;
         // IMPROVE: Slow path in separate method?
         Task<?> currentTask = currentTask();
-        List<? extends Guarded> currentViews;
         synchronized(g.viewLock()) {
-            currentViews = new ArrayList<>(g.views()); // Could contain views that are not "in use" anymore
+            for(Guarded v : g.views())
+                if(v.getGuard().sharedCount.get() == 0) {
+                    Task<?> currentOwner = v.guard.owner;
+                    if(currentOwner.isActive() && currentOwner.isDescendantOf(currentTask))
+                        return true;
+                }
         }
-        for(Guarded v : currentViews)
-            if(v.getGuard().sharedCount.get() == 0) {
-                Task<?> currentOwner = null;
-                while((currentOwner = v.guard.owner) == null) {} // Wait until owner is set
-                if(currentOwner.isActive() && currentOwner.isDescendantOf(currentTask))
-                    return true;
-            }
         return false;
     }
     

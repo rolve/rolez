@@ -80,13 +80,13 @@ public abstract class Guarded {
         getGuard().share(this, task);
     }
     
-    public final void pass() {
-        getGuard().pass(this);
+    public final void pass(Task<?> task) {
+        getGuard().pass(this, task);
     }
     
-    public final void registerNewOwner() {
+    public final void completePass() {
         assert guard != null;
-        guard.registerNewOwner(this);
+        guard.completePass(this);
     }
     
     public final void releaseShared() {

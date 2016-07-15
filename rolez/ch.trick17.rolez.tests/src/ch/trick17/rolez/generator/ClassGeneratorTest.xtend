@@ -494,7 +494,7 @@ class ClassGeneratorTest extends GeneratorTest {
                 public rolez.lang.Task<java.lang.Void> $bazTask() {
                     rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
                         public java.lang.Void call() {
-                            registerNewOwner();
+                            completePass();
                             try {
                             }
                             finally {
@@ -503,7 +503,7 @@ class ClassGeneratorTest extends GeneratorTest {
                             return null;
                         }
                     });
-                    pass();
+                    pass($task);
                     return $task;
                 }
             }
@@ -645,8 +645,8 @@ class ClassGeneratorTest extends GeneratorTest {
                 public rolez.lang.Task<java.lang.Void> $fooTask(final Base o1, final Base o2, final Base o3) {
                     rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
                         public java.lang.Void call() {
-                            registerNewOwner();
-                            o1.registerNewOwner();
+                            completePass();
+                            o1.completePass();
                             try {
                                 java.lang.System.out.println("Hello World!");
                             }
@@ -658,8 +658,8 @@ class ClassGeneratorTest extends GeneratorTest {
                             return null;
                         }
                     });
-                    pass();
-                    o1.pass();
+                    pass($task);
+                    o1.pass($task);
                     o2.share($task);
                     return $task;
                 }
@@ -686,7 +686,7 @@ class ClassGeneratorTest extends GeneratorTest {
                     rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
                         public java.lang.Void call() {
                             if(o instanceof «jvmGuardedClassName»)
-                                ((«jvmGuardedClassName») o).registerNewOwner();
+                                ((«jvmGuardedClassName») o).completePass();
                             try {
                             }
                             finally {
@@ -697,7 +697,7 @@ class ClassGeneratorTest extends GeneratorTest {
                         }
                     });
                     if(o instanceof «jvmGuardedClassName»)
-                        ((«jvmGuardedClassName») o).pass();
+                        ((«jvmGuardedClassName») o).pass($task);
                     return $task;
                 }
             }
@@ -728,7 +728,7 @@ class ClassGeneratorTest extends GeneratorTest {
                 public rolez.lang.Task<java.lang.Void> $fooTask(final Base o) {
                     rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
                         public java.lang.Void call() {
-                            o.registerNewOwner();
+                            o.completePass();
                             try {
                                 o.foo = 42;
                             }
@@ -738,7 +738,7 @@ class ClassGeneratorTest extends GeneratorTest {
                             return null;
                         }
                     });
-                    o.pass();
+                    o.pass($task);
                     return $task;
                 }
             }
@@ -1000,7 +1000,7 @@ class ClassGeneratorTest extends GeneratorTest {
                 public rolez.lang.Task<java.lang.Void> $finalTask(final rolez.lang.GuardedArray<int[]> £do) {
                     rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
                         public java.lang.Void call() {
-                            £do.registerNewOwner();
+                            £do.completePass();
                             try {
                                 £do.data[0] = 42;
                             }
@@ -1012,7 +1012,7 @@ class ClassGeneratorTest extends GeneratorTest {
                         }
                     });
                     share($task);
-                    £do.pass();
+                    £do.pass($task);
                     return $task;
                 }
             }
