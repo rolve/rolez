@@ -9,6 +9,13 @@ class InputStream mapped to java.io.InputStream {
 class PrintStream mapped to java.io.PrintStream {
     mapped new(file: readonly String)
     
+    mapped def readonly print(i: int):
+    mapped def readonly print(b: boolean):
+    mapped def readonly print(c: char):
+    mapped def readonly print(d: double):
+    mapped def readonly print(o: readonly Object):
+    mapped def readonly print(s: readonly String):
+    
     mapped def readonly println(i: int):
     mapped def readonly println(b: boolean):
     mapped def readonly println(c: char):
