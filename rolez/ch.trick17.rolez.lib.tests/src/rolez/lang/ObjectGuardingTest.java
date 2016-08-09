@@ -169,7 +169,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
             public void run() {
                 final Int i = new Int();
                 
-                Task<Void> task = new Task<>(new RunnableCallable() {
+                Task<?> task = new Task<>(new RunnableCallable() {
                     public void run() {
                         i.completePass();
                         region(0);
@@ -195,7 +195,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
             public void run() {
                 final Int i = new Int();
                 
-                Task<Void> task = new Task<>(new RunnableCallable() {
+                Task<?> task = new Task<>(new RunnableCallable() {
                     public void run() {
                         i.completePass();
                         i.value = 1;
@@ -218,7 +218,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
             public void run() {
                 final Int i = new Int();
                 
-                Task<Void> task = new Task<>(new RunnableCallable() {
+                Task<?> task = new Task<>(new RunnableCallable() {
                     public void run() {
                         i.completePass();
                         i.value = 1;
@@ -242,7 +242,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     public void run() {
                         final Int i = new Int();
                         
-                        Task<Void> task1 = new Task<>(new RunnableCallable() {
+                        Task<?> task1 = new Task<>(new RunnableCallable() {
                             public void run() {
                                 i.completePass();
                                 region(0);
@@ -254,7 +254,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                         i.pass(task1);
                         s.start(task1);
                         
-                        Task<Void> task2 = new Task<>(new RunnableCallable() {
+                        Task<?> task2 = new Task<>(new RunnableCallable() {
                             public void run() {
                                 i.completePass();
                                 region(2);
@@ -284,7 +284,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final int taskCount = 2;
                 for(int k = 0; k < taskCount; k++) {
                     final int theK = k;
-                    Task<Void> task = new Task<>(new RunnableCallable() {
+                    Task<?> task = new Task<>(new RunnableCallable() {
                         public void run() {
                             i.completePass();
                             i.value++;
@@ -310,12 +310,12 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     public void run() {
                         final Int i = new Int();
                         
-                        Task<Void> task1 = new Task<>(new RunnableCallable() {
+                        Task<?> task1 = new Task<>(new RunnableCallable() {
                             public void run() {
                                 i.completePass();
                                 i.value++;
                                 
-                                Task<Void> task2 = new Task<>(new RunnableCallable() {
+                                Task<?> task2 = new Task<>(new RunnableCallable() {
                                     public void run() {
                                         i.completePass();
                                         i.value++;
@@ -353,10 +353,10 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
             public void run() {
                 final Int i = new Int();
                 
-                Task<Void> task1 = new Task<>(new RunnableCallable() {
+                Task<?> task1 = new Task<>(new RunnableCallable() {
                     public void run() {
                         i.completePass();
-                        Task<Void> task2 = new Task<>(new RunnableCallable() {
+                        Task<?> task2 = new Task<>(new RunnableCallable() {
                             public void run() {
                                 i.completePass();
                                 i.releasePassed();
@@ -381,12 +381,12 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
             public void run() {
                 final Int i = new Int();
                 
-                Task<Void> task1 = new Task<>(new RunnableCallable() {
+                Task<?> task1 = new Task<>(new RunnableCallable() {
                     public void run() {
                         i.completePass();
                         i.value++;
                         
-                        Task<Void> task2 = new Task<>(new RunnableCallable() {
+                        Task<?> task2 = new Task<>(new RunnableCallable() {
                             public void run() {
                                 i.completePass();
                                 i.value++;
@@ -413,7 +413,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
             public void run() {
                 final Int i = new Int();
                 
-                Task<Void> task1 = new Task<>(new RunnableCallable() {
+                Task<?> task1 = new Task<>(new RunnableCallable() {
                     public void run() {
                         i.completePass();
                         i.value++;
@@ -498,7 +498,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                Task<Void> task = new Task<>(new RunnableCallable() {
+                Task<?> task = new Task<>(new RunnableCallable() {
                     public void run() {
                         r.completePass();
                         r.o.value++;
@@ -526,7 +526,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Ref<Int> r = new Ref<>(i);
                 
                 for(int k = 0; k < 2; k++) {
-                    Task<Void> task = new Task<>(new RunnableCallable() {
+                    Task<?> task = new Task<>(new RunnableCallable() {
                         public void run() {
                             r.completePass();
                             r.o.value++;
@@ -550,13 +550,13 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                Task<Void> task1 = new Task<>(new RunnableCallable() {
+                Task<?> task1 = new Task<>(new RunnableCallable() {
                     public void run() {
                         r.completePass();
                         final Int i2 = r.o;
                         i2.value++;
                         
-                        Task<Void> task2 = new Task<>(new RunnableCallable() {
+                        Task<?> task2 = new Task<>(new RunnableCallable() {
                             public void run() {
                                 r.completePass();
                                 r.o.value++;
@@ -587,7 +587,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                Task<Void> task1 = new Task<>(new RunnableCallable() {
+                Task<?> task1 = new Task<>(new RunnableCallable() {
                     public void run() {
                         r.completePass();
                         r.o.value++;
@@ -666,7 +666,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                Task<Void> task1 = new Task<>(new RunnableCallable() {
+                Task<?> task1 = new Task<>(new RunnableCallable() {
                     public void run() {
                         i.completePass();
                         region(0);
@@ -677,7 +677,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 i.pass(task1);
                 s.start(task1);
                 
-                Task<Void> task2 = new Task<>(new RunnableCallable() {
+                Task<?> task2 = new Task<>(new RunnableCallable() {
                     public void run() {
                         r.completePass();
                         region(1);
@@ -688,7 +688,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 r.pass(task2);
                 s.start(task2);
                 
-                Task<Void> task3 = new Task<>(new RunnableCallable() {
+                Task<?> task3 = new Task<>(new RunnableCallable() {
                     public void run() {
                         i.completePass();
                         region(2);
@@ -714,13 +714,13 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                Task<Void> task1 = new Task<>(new RunnableCallable() {
+                Task<?> task1 = new Task<>(new RunnableCallable() {
                     public void run() {
                         r.completePass();
                         final Int i2 = r.o;
                         i2.value++;
                         
-                        Task<Void> task2 = new Task<>(new RunnableCallable() {
+                        Task<?> task2 = new Task<>(new RunnableCallable() {
                             public void run() {
                                 i2.completePass();
                                 region(0);
@@ -754,7 +754,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                Task<Void> task1 = new Task<>(new RunnableCallable() {
+                Task<?> task1 = new Task<>(new RunnableCallable() {
                     public void run() {
                         r.completePass();
                         r.o.value++;
@@ -812,7 +812,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                Task<Void> task1 = new Task<>(new RunnableCallable() {
+                Task<?> task1 = new Task<>(new RunnableCallable() {
                     public void run() {
                         r.completePass();
                         r.o = new Int();
@@ -837,14 +837,14 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                Task<Void> task1 = new Task<>(new RunnableCallable() {
+                Task<?> task1 = new Task<>(new RunnableCallable() {
                     public void run() {
                         r.completePass();
                         r.o = new Int();
                         
                         final Int i2 = r.o;
                         i2.value++;
-                        Task<Void> task2 = new Task<>(new RunnableCallable() {
+                        Task<?> task2 = new Task<>(new RunnableCallable() {
                             public void run() {
                                 i2.completePass();
                                 i2.value++;
