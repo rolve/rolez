@@ -8,6 +8,7 @@ import static rolez.lang.Guarded.guardReadWrite;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -403,6 +404,32 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 s.start(task1);
                 
                 assertEquals(3, guardReadOnly(i).value);
+            }
+        });
+    }
+    
+    @Test
+    public void testDoublePass() {
+        assumeVerifyCorrectness();
+        verifyTask(new RunnableCallable() {
+            public void run() {
+                final Int i = new Int();
+                final Int j = i;
+                
+                Task<?> task = new Task<>(new RunnableCallable() {
+                    public void run() {
+                        i.completePass();
+                        j.completePass();
+                        guardReadWrite(i).value = 42;
+                        i.releasePassed();
+                        j.releasePassed();
+                    }
+                });
+                i.pass(task);
+                j.pass(task);
+                s.start(task);
+                
+                assertEquals(42, guardReadOnly(i).value);
             }
         });
     }
@@ -883,6 +910,36 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 s.start(task);
                 
                 guardReadWrite(n1).next = new Node(10);
+            }
+        });
+    }
+    
+    @Test
+    public void testReturn() {
+        assumeVerifyCorrectness();
+        verifyTask(new RunnableCallable() {
+            public void run() {
+                Task<Int> task1 = new Task<>(new Callable<Int>() {
+                    public Int call() throws Exception {
+                        final Int result = new Int();
+                        
+                        Task<?> task2 = new Task<>(new RunnableCallable() {
+                            public void run() {
+                                result.completePass();
+                                guardReadWrite(result).value = 3;
+                                result.releasePassed();
+                            }
+                        });
+                        result.pass(task2);
+                        s.start(task2);
+                        
+                        return result;
+                    }
+                });
+                s.start(task1);
+                Int i = task1.get();
+                
+                assertEquals(3, guardReadOnly(i).value);
             }
         });
     }
