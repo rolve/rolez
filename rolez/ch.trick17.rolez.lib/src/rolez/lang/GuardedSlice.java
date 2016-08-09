@@ -18,8 +18,10 @@ public class GuardedSlice<A> extends Guarded {
      * all overlapping slices change their role too. */
     final Set<GuardedSlice<A>> overlappingSlices = newSetFromMap(
             new WeakHashMap<GuardedSlice<A>, java.lang.Boolean>());
-            
+    
     GuardedSlice(A array, SliceRange range) {
+        /* Slices can have views and therefore are initialized eagerly */
+        super(true);
         this.data = array;
         this.range = range;
     }
@@ -85,13 +87,8 @@ public class GuardedSlice<A> extends Guarded {
         if(!range.covers(sliceRange))
             throw new IllegalArgumentException("Given range: " + sliceRange
                     + " is not covered by this slice's range: " + range);
-                    
-        GuardedSlice<A> slice = new GuardedSlice<>(data, sliceRange);
-        /* Make sure the slice has a guard (guards are normally created when the role of an object
-         * changes, but objects with views can change their effective role without being passed or
-         * shared themselves, so they need a guard from the start) */
-        slice.getGuard();
         
+        GuardedSlice<A> slice = new GuardedSlice<>(data, sliceRange);
         if(!slice.range.isEmpty()) {
             /* Make sure the new slice is not added while existing slices are being processed */
             synchronized(viewLock()) {
