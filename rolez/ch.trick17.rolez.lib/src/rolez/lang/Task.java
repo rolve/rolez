@@ -110,6 +110,29 @@ public class Task<V> implements Runnable {
     }
     
     /**
+     * Creates a new task and registers it as the {@linkplain #currentTask() currently executing
+     * task}. Subsequent Rolez code will behave as if it was executed in that task (but in the
+     * current thread!). This method is only intended for specific situations, where Rolez code is
+     * invoked from Java and creating a task object from a {@link Callable} is not possible.
+     */
+    public static void registerNewTask() {
+        localStack.get().push(new Task<>(new Callable<Void>() {
+            public Void call() {
+                return null;
+            }
+        }));
+    }
+    
+    /**
+     * Unregisters a previously {@linkplain #registerNewTask() registered task}. If that task was
+     * the root task, subsequent Rolez code may not work correctly as there will be no
+     * {@linkplain #currentTask() currently executing task}.
+     */
+    public static void unregisterCurrentTask() {
+        localStack.get().pop();
+    }
+    
+    /**
      * Implements the blocking of threads waiting to get the result of a task.
      * 
      * @author Michael Faes
