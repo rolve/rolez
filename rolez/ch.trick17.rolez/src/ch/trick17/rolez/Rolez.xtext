@@ -27,6 +27,9 @@ NormalClass:
         (constrs+=Constr | members+=Member)+
     '}')?;
 
+// TODO: Understand mapped classes better. E.g., transitions do not work for guarded objects
+// to which only mapped objects have a reference.
+
 SingletonClass:
     'object' name=QualifiedName WithMappedClass WithSuperclass ('{'
         members+=Member+

@@ -401,7 +401,7 @@ class RolezValidator extends RolezSystemValidator {
         val type = type
         if(type instanceof RoleType)
             if(system.subrole(createReadOnly, type.role).failed) {
-                val effectiveRole = system.leastCommonSuperrole(createReadOnly, type.role);
+                val effectiveRole = system.leastCommonSuperrole(createReadOnly, type.role).string;
                 warning("Singleton objects are always readonly, therefore this field's effective role is " + effectiveRole,
                     type.role, null, INEFFECTIVE_FIELD_ROLE)
             }
