@@ -355,15 +355,16 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public rolez.lang.Task<Base> $fooTask() {
-                    rolez.lang.Task<Base> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<Base>() {
-                        public Base call() {
+                    rolez.lang.Task<Base> $task = new rolez.lang.Task<Base>() {
+                        @java.lang.Override
+                        protected Base runRolez() {
                             try {
                                 return new Base();
                             }
                             finally {
                             }
                         }
-                    });
+                    };
                     return $task;
                 }
             }
@@ -390,15 +391,16 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public rolez.lang.Task<java.lang.Integer> $fooTask() {
-                    rolez.lang.Task<java.lang.Integer> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Integer>() {
-                        public java.lang.Integer call() {
+                    rolez.lang.Task<java.lang.Integer> $task = new rolez.lang.Task<java.lang.Integer>() {
+                        @java.lang.Override
+                        protected java.lang.Integer runRolez() {
                             try {
                                 return App.this.magic;
                             }
                             finally {
                             }
                         }
-                    });
+                    };
                     return $task;
                 }
             }
@@ -422,8 +424,9 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $fooTask(final int i, final int j) {
-                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
-                        public java.lang.Void call() {
+                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<java.lang.Void>() {
+                        @java.lang.Override
+                        protected java.lang.Void runRolez() {
                             try {
                                 new foo.bar.Base(i + j);
                             }
@@ -431,7 +434,7 @@ class ClassGeneratorTest extends GeneratorTest {
                             }
                             return null;
                         }
-                    });
+                    };
                     return $task;
                 }
             }
@@ -458,15 +461,16 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $fooTask() {
-                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
-                        public java.lang.Void call() {
+                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<java.lang.Void>() {
+                        @java.lang.Override
+                        protected java.lang.Void runRolez() {
                             try {
                             }
                             finally {
                             }
                             return null;
                         }
-                    });
+                    };
                     return $task;
                 }
                 
@@ -474,8 +478,9 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $barTask() {
-                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
-                        public java.lang.Void call() {
+                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<java.lang.Void>() {
+                        @java.lang.Override
+                        protected java.lang.Void runRolez() {
                             try {
                             }
                             finally {
@@ -483,7 +488,7 @@ class ClassGeneratorTest extends GeneratorTest {
                             }
                             return null;
                         }
-                    });
+                    };
                     share($task);
                     return $task;
                 }
@@ -492,8 +497,9 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $bazTask() {
-                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
-                        public java.lang.Void call() {
+                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<java.lang.Void>() {
+                        @java.lang.Override
+                        protected java.lang.Void runRolez() {
                             completePass();
                             try {
                             }
@@ -502,7 +508,7 @@ class ClassGeneratorTest extends GeneratorTest {
                             }
                             return null;
                         }
-                    });
+                    };
                     pass($task);
                     return $task;
                 }
@@ -528,15 +534,16 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $mainTask() {
-                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
-                        public java.lang.Void call() {
+                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<java.lang.Void>() {
+                        @java.lang.Override
+                        protected java.lang.Void runRolez() {
                             try {
                             }
                             finally {
                             }
                             return null;
                         }
-                    });
+                    };
                     return $task;
                 }
                 
@@ -564,15 +571,16 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $mainTask() {
-                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
-                        public java.lang.Void call() {
+                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<java.lang.Void>() {
+                        @java.lang.Override
+                        protected java.lang.Void runRolez() {
                             try {
                             }
                             finally {
                             }
                             return null;
                         }
-                    });
+                    };
                     return $task;
                 }
                 
@@ -600,8 +608,9 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $mainTask(final rolez.lang.GuardedArray<java.lang.String[]> args) {
-                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
-                        public java.lang.Void call() {
+                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<java.lang.Void>() {
+                        @java.lang.Override
+                        protected java.lang.Void runRolez() {
                             try {
                                 args.data[0].length();
                             }
@@ -610,7 +619,7 @@ class ClassGeneratorTest extends GeneratorTest {
                             }
                             return null;
                         }
-                    });
+                    };
                     args.share($task);
                     return $task;
                 }
@@ -643,8 +652,9 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $fooTask(final Base o1, final Base o2, final Base o3) {
-                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
-                        public java.lang.Void call() {
+                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<java.lang.Void>() {
+                        @java.lang.Override
+                        protected java.lang.Void runRolez() {
                             completePass();
                             o1.completePass();
                             try {
@@ -657,7 +667,7 @@ class ClassGeneratorTest extends GeneratorTest {
                             }
                             return null;
                         }
-                    });
+                    };
                     pass($task);
                     o1.pass($task);
                     o2.share($task);
@@ -683,8 +693,9 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $fooTask(final java.lang.Object o) {
-                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
-                        public java.lang.Void call() {
+                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<java.lang.Void>() {
+                        @java.lang.Override
+                        protected java.lang.Void runRolez() {
                             if(o instanceof «jvmGuardedClassName»)
                                 ((«jvmGuardedClassName») o).completePass();
                             try {
@@ -695,7 +706,7 @@ class ClassGeneratorTest extends GeneratorTest {
                             }
                             return null;
                         }
-                    });
+                    };
                     if(o instanceof «jvmGuardedClassName»)
                         ((«jvmGuardedClassName») o).pass($task);
                     return $task;
@@ -726,8 +737,9 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $fooTask(final Base o) {
-                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
-                        public java.lang.Void call() {
+                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<java.lang.Void>() {
+                        @java.lang.Override
+                        protected java.lang.Void runRolez() {
                             o.completePass();
                             try {
                                 o.foo = 42;
@@ -737,7 +749,7 @@ class ClassGeneratorTest extends GeneratorTest {
                             }
                             return null;
                         }
-                    });
+                    };
                     o.pass($task);
                     return $task;
                 }
@@ -767,15 +779,16 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $fooTask() {
-                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
-                        public java.lang.Void call() {
+                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<java.lang.Void>() {
+                        @java.lang.Override
+                        protected java.lang.Void runRolez() {
                             try {
                             }
                             finally {
                             }
                             return null;
                         }
-                    });
+                    };
                     return $task;
                 }
                 
@@ -783,15 +796,16 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $fooTask(final int i) {
-                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
-                        public java.lang.Void call() {
+                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<java.lang.Void>() {
+                        @java.lang.Override
+                        protected java.lang.Void runRolez() {
                             try {
                             }
                             finally {
                             }
                             return null;
                         }
-                    });
+                    };
                     return $task;
                 }
                 
@@ -799,15 +813,16 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $fooTask(final double d) {
-                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
-                        public java.lang.Void call() {
+                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<java.lang.Void>() {
+                        @java.lang.Override
+                        protected java.lang.Void runRolez() {
                             try {
                             }
                             finally {
                             }
                             return null;
                         }
-                    });
+                    };
                     return $task;
                 }
                 
@@ -815,15 +830,16 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $fooTask(final rolez.lang.GuardedArray<int[]> a, final rolez.lang.GuardedArray<double[]> b) {
-                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
-                        public java.lang.Void call() {
+                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<java.lang.Void>() {
+                        @java.lang.Override
+                        protected java.lang.Void runRolez() {
                             try {
                             }
                             finally {
                             }
                             return null;
                         }
-                    });
+                    };
                     return $task;
                 }
                 
@@ -831,15 +847,16 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $fooTask(final rolez.lang.GuardedArray<rolez.lang.GuardedArray<int[]>[]> a) {
-                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
-                        public java.lang.Void call() {
+                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<java.lang.Void>() {
+                        @java.lang.Override
+                        protected java.lang.Void runRolez() {
                             try {
                             }
                             finally {
                             }
                             return null;
                         }
-                    });
+                    };
                     return $task;
                 }
             }
@@ -998,8 +1015,9 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $finalTask(final rolez.lang.GuardedArray<int[]> £do) {
-                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<>(new java.util.concurrent.Callable<java.lang.Void>() {
-                        public java.lang.Void call() {
+                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<java.lang.Void>() {
+                        @java.lang.Override
+                        protected java.lang.Void runRolez() {
                             £do.completePass();
                             try {
                                 £do.data[0] = 42;
@@ -1010,7 +1028,7 @@ class ClassGeneratorTest extends GeneratorTest {
                             }
                             return null;
                         }
-                    });
+                    };
                     share($task);
                     £do.pass($task);
                     return $task;
