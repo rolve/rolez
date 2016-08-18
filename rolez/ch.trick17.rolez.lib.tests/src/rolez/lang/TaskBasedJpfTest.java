@@ -65,4 +65,18 @@ public class TaskBasedJpfTest extends JpfParallelismTest {
         if(mode != VerifyMode.CORRECTNESS)
             throw new AssumptionViolatedException("not verifying correctness properties");
     }
+    
+    private static class VoidTask extends Task<Void> {
+        private final Runnable runnable;
+        
+        public VoidTask(Runnable runnable) {
+            this.runnable = runnable;
+        }
+        
+        @Override
+        protected Void runRolez() {
+            runnable.run();
+            return null;
+        }
+    }
 }
