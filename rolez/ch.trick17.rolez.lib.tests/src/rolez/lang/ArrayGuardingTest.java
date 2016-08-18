@@ -47,11 +47,11 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     @Override
                     public Void runRolez() {
                         assertEquals(2, a.data[2].value);
-                        a.releaseShared();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                a.share(task);
+                task.taskStartTransitions(new Object[]{}, new Object[]{a});
                 s.start(task);
                 
                 guardReadWrite(guardReadOnly(a).data[2]).value = 1;
@@ -70,14 +70,13 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 Task<?> task = new Task<Void>() {
                     @Override
                     protected Void runRolez() {
-                        a.completePass();
                         for(int i = 0; i < a.data.length; i++)
                             a.data[i].value++;
-                        a.releasePassed();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                a.pass(task);
+                task.taskStartTransitions(new Object[]{a}, new Object[]{});
                 s.start(task);
                 
                 guardReadOnly(a);
@@ -97,11 +96,11 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         assertEquals(0, a.data[0]);
-                        a.releaseShared();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                a.share(task);
+                task.taskStartTransitions(new Object[]{}, new Object[]{a});
                 s.start(task);
                 
                 guardReadWrite(a).data[0] = 1;
@@ -118,14 +117,13 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 Task<?> task = new Task<Void>() {
                     @Override
                     protected Void runRolez() {
-                        a.completePass();
                         for(int i = 0; i < a.data.length; i++)
                             a.data[i]++;
-                        a.releasePassed();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                a.pass(task);
+                task.taskStartTransitions(new Object[]{a}, new Object[]{});
                 s.start(task);
                 
                 guardReadOnly(a);
@@ -146,33 +144,33 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         assertEquals(0, i.value);
-                        i.releaseShared();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                i.share(task1);
+                task1.taskStartTransitions(new Object[]{}, new Object[]{i});
                 s.start(task1);
                 
                 Task<?> task2 = new Task<Void>() {
                     @Override
                     protected Void runRolez() {
                         assertEquals(0, a.data[0].value);
-                        a.releaseShared();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                a.share(task2);
+                task2.taskStartTransitions(new Object[]{}, new Object[]{a});
                 s.start(task2);
                 
                 Task<?> task3 = new Task<Void>() {
                     @Override
                     protected Void runRolez() {
                         assertEquals(0, i.value);
-                        i.releaseShared();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                i.share(task3);
+                task3.taskStartTransitions(new Object[]{}, new Object[]{i});
                 s.start(task3);
                 
                 guardReadWrite(i).value = 1;
@@ -190,37 +188,34 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 Task<?> task1 = new Task<Void>() {
                     @Override
                     protected Void runRolez() {
-                        i.completePass();
                         i.value++;
-                        i.releasePassed();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                i.pass(task1);
+                task1.taskStartTransitions(new Object[]{i}, new Object[]{});
                 s.start(task1);
                 
                 Task<?> task2 = new Task<Void>() {
                     @Override
                     protected Void runRolez() {
-                        a.completePass();
                         a.data[0].value++;
-                        a.releasePassed();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                a.pass(task2);
+                task2.taskStartTransitions(new Object[]{a}, new Object[]{});
                 s.start(task2);
                 
                 Task<?> task3 = new Task<Void>() {
                     @Override
                     protected Void runRolez() {
-                        i.completePass();
                         i.value++;
-                        i.releasePassed();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                i.pass(task3);
+                task3.taskStartTransitions(new Object[]{i}, new Object[]{});
                 s.start(task3);
                 
                 assertEquals(3, guardReadOnly(i).value);
@@ -238,7 +233,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 Task<?> task1 = new Task<Void>() {
                     @Override
                     protected Void runRolez() {
-                        a.completePass();
                         a.data[0] = new Int();
                         
                         final Int i2 = a.data[0];
@@ -246,23 +240,22 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                         Task<?> task2 = new Task<Void>() {
                             @Override
                             protected Void runRolez() {
-                                i2.completePass();
                                 i2.value++;
-                                i2.releasePassed();
+                                taskFinishTransitions();
                                 return null;
                             }
                         };
-                        i2.pass(task2);
+                        task2.taskStartTransitions(new Object[]{i2}, new Object[]{});
                         s.start(task2);
                         
                         assertEquals(2, guardReadWrite(i2).value);
                         i2.value++;
                         
-                        a.releasePassed();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                a.pass(task1);
+                task1.taskStartTransitions(new Object[]{a}, new Object[]{});
                 s.start(task1);
                 
                 assertEquals(3, guardReadOnly(guardReadOnly(a).data[0]).value);
@@ -284,11 +277,11 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     protected Void runRolez() {
                         guardReadOnly(slice); // Not necessary, but could happen
                         assertEquals(1, slice.data[1].value);
-                        slice.releaseShared();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                slice.share(task);
+                task.taskStartTransitions(new Object[]{}, new Object[]{slice});
                 s.start(task);
                 
                 guardReadWrite(guardReadOnly(a).data[1]).value = 0;
@@ -308,15 +301,14 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 Task<?> task = new Task<Void>() {
                     @Override
                     protected Void runRolez() {
-                        slice.completePass();
                         guardReadWrite(slice); // Not necessary, but could happen
                         for(int i = slice.range.begin; i < slice.range.end; i++)
                             slice.data[i].value++;
-                        slice.releasePassed();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                slice.pass(task);
+                task.taskStartTransitions(new Object[]{slice}, new Object[]{});
                 s.start(task);
                 
                 guardReadOnly(a);
@@ -340,13 +332,12 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 Task<?> task = new Task<Void>() {
                     @Override
                     protected Void runRolez() {
-                        slice.completePass();
                         assertEquals(0, slice.data[0]);
-                        slice.releasePassed();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                slice.pass(task);
+                task.taskStartTransitions(new Object[]{slice}, new Object[]{});
                 s.start(task);
                 
                 guardReadWrite(a).data[0] = 1;
@@ -365,11 +356,11 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         assertEquals(0, slice.data[0]);
-                        slice.releaseShared();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                slice.share(task);
+                task.taskStartTransitions(new Object[]{}, new Object[]{slice});
                 s.start(task);
                 
                 guardReadWrite(a).data[0] = 1;
@@ -387,14 +378,13 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 Task<?> task = new Task<Void>() {
                     @Override
                     protected Void runRolez() {
-                        slice.completePass();
                         for(int i = slice.range.begin; i < slice.range.end; i++)
                             slice.data[i]++;
-                        slice.releasePassed();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                slice.pass(task);
+                task.taskStartTransitions(new Object[]{slice}, new Object[]{});
                 s.start(task);
                 
                 guardReadOnly(a);
@@ -419,11 +409,11 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         assertEquals(1, slice.data[1].value);
-                        slice.releaseShared();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                slice.share(task);
+                task.taskStartTransitions(new Object[]{}, new Object[]{slice});
                 s.start(task);
                 
                 guardReadWrite(a).data[1] = new Int(100);
@@ -444,13 +434,13 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     protected Void runRolez() {
                         final GuardedSlice<Int[]> slice = a.slice(0, 2, 1);
                         assertEquals(0, slice.data[0].value);
-                        a.releaseShared();
+                        taskFinishTransitions();
                         /* Use slice again to prevent incidental garbage collection */
                         slice.toString();
                         return null;
                     }
                 };
-                a.share(task);
+                task.taskStartTransitions(new Object[]{}, new Object[]{a});
                 s.start(task);
                 
                 guardReadWrite(a).data[0] = new Int(1);
@@ -476,18 +466,18 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                             @Override
                             protected Void runRolez() {
                                 assertEquals(0, slice2.data[0].value);
-                                slice2.releaseShared();
+                                taskFinishTransitions();
                                 return null;
                             }
                         };
-                        slice2.share(task2);
+                        task2.taskStartTransitions(new Object[]{}, new Object[]{slice2});
                         s.start(task2);
                         
-                        slice1.releaseShared();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                slice1.share(task1);
+                task1.taskStartTransitions(new Object[]{}, new Object[]{slice1});
                 s.start(task1);
                 
                 guardReadWrite(a).data[0] = new Int(1);
@@ -507,11 +497,11 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         assertEquals(1, a.data[1].value);
-                        a.releaseShared();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                a.share(task);
+                task.taskStartTransitions(new Object[]{}, new Object[]{a});
                 s.start(task);
                 
                 GuardedSlice<Int[]> slice = a.slice(0, 2, 1);
@@ -530,13 +520,12 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 Task<?> task = new Task<Void>() {
                     @Override
                     protected Void runRolez() {
-                        slice1.completePass();
                         slice1.data[0]++;
-                        slice1.releasePassed();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                slice1.pass(task);
+                task.taskStartTransitions(new Object[]{slice1}, new Object[]{});
                 s.start(task);
                 
                 GuardedSlice<int[]> slice2 = a.slice(0, 1, 1);
@@ -559,11 +548,11 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         assertEquals(1, slice1.data[1].value);
-                        slice1.releaseShared();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                slice1.share(task);
+                task.taskStartTransitions(new Object[]{}, new Object[]{slice1});
                 s.start(task);
                 
                 guardReadWrite(slice2).data[1] = new Int(100);
@@ -587,11 +576,11 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     protected Void runRolez() {
                         final GuardedSlice<int[]> slice2 = ref.o.slice(1, 2, 1);
                         assertEquals(1, slice2.data[1]);
-                        ref.releaseShared();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                ref.share(task);
+                task.taskStartTransitions(new Object[]{}, new Object[]{ref});
                 s.start(task);
                 
                 guardReadWrite(a).data[1] = 0;
@@ -611,11 +600,11 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         assertEquals(1, slice1.data[1]);
-                        slice1.releaseShared();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                slice1.share(task);
+                task.taskStartTransitions(new Object[]{}, new Object[]{slice1});
                 s.start(task);
                 
                 guardReadWrite(slice2).data[1] = 2;
@@ -641,11 +630,11 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         assertEquals(0, subslice.data[0].value);
-                        subslice.releaseShared();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                subslice.share(task);
+                task.taskStartTransitions(new Object[]{}, new Object[]{subslice});
                 s.start(task);
                 
                 guardReadWrite(a).data[0] = new Int(1);
@@ -664,16 +653,15 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 Task<?> task = new Task<Void>() {
                     @Override
                     protected Void runRolez() {
-                        ref.completePass();
                         final GuardedSlice<int[]> slice2 = ref.o.slice(0, 5, 1);
                         for(int i = slice2.range.begin; i < slice2.range.end; i++)
                             slice2.data[i]++;
-                        ref.releasePassed();
+                        taskFinishTransitions();
                         slice2.toString();
                         return null;
                     }
                 };
-                ref.pass(task);
+                task.taskStartTransitions(new Object[]{ref}, new Object[]{});
                 s.start(task);
                 
                 guardReadOnly(a);
@@ -697,33 +685,33 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         assertEquals(0, slice.data[0].value);
-                        slice.releaseShared();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                slice.share(task1);
+                task1.taskStartTransitions(new Object[]{}, new Object[]{slice});
                 s.start(task1);
                 
                 Task<?> task2 = new Task<Void>() {
                     @Override
                     protected Void runRolez() {
                         assertEquals(0, a.data[0].value);
-                        a.releaseShared();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                a.share(task2);
+                task2.taskStartTransitions(new Object[]{}, new Object[]{a});
                 s.start(task2);
                 
                 Task<?> task3 = new Task<Void>() {
                     @Override
                     protected Void runRolez() {
                         assertEquals(0, slice.data[0].value);
-                        slice.releaseShared();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                slice.share(task3);
+                task3.taskStartTransitions(new Object[]{}, new Object[]{slice});
                 s.start(task3);
                 
                 guardReadWrite(i).value = 1;
@@ -742,37 +730,34 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 Task<?> task1 = new Task<Void>() {
                     @Override
                     protected Void runRolez() {
-                        slice.completePass();
                         slice.data[0].value++;
-                        slice.releasePassed();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                slice.pass(task1);
+                task1.taskStartTransitions(new Object[]{slice}, new Object[]{});
                 s.start(task1);
                 
                 Task<?> task2 = new Task<Void>() {
                     @Override
                     protected Void runRolez() {
-                        a.completePass();
                         a.data[0].value++;
-                        a.releasePassed();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                a.pass(task2);
+                task2.taskStartTransitions(new Object[]{a}, new Object[]{});
                 s.start(task2);
                 
                 Task<?> task3 = new Task<Void>() {
                     @Override
                     protected Void runRolez() {
-                        slice.completePass();
                         slice.data[0].value++;
-                        slice.releasePassed();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                slice.pass(task3);
+                task3.taskStartTransitions(new Object[]{slice}, new Object[]{});
                 s.start(task3);
                 
                 assertEquals(3, guardReadOnly(i).value);
@@ -794,29 +779,27 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 Task<?> task1 = new Task<Void>() {
                     @Override
                     protected Void runRolez() {
-                        slice1.completePass();
                         for(int i = slice1.range.begin; i < slice1.range.end; i++)
                             slice1.data[i].value++;
                         region(0);
-                        slice1.releasePassed();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                slice1.pass(task1);
+                task1.taskStartTransitions(new Object[]{slice1}, new Object[]{});
                 s.start(task1);
                 
                 Task<?> task2 = new Task<Void>() {
                     @Override
                     protected Void runRolez() {
-                        slice2.completePass();
                         for(int i = slice2.range.begin; i < slice2.range.end; i++)
                             slice2.data[i].value++;
                         region(1);
-                        slice2.releasePassed();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                slice2.pass(task2);
+                task2.taskStartTransitions(new Object[]{slice2}, new Object[]{});
                 s.start(task2);
                 region(2);
                 
@@ -841,31 +824,29 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 Task<?> task1 = new Task<Void>() {
                     @Override
                     protected Void runRolez() {
-                        slice1.completePass();
                         
                         final GuardedSlice<Int[]> slice2 = slice1.slice(0, 1, 1);
                         Task<?> task2 = new Task<Void>() {
                             @Override
                             protected Void runRolez() {
-                                slice2.completePass();
                                 slice2.data[0].value++;
                                 region(0);
-                                slice2.releasePassed();
+                                taskFinishTransitions();
                                 return null;
                             }
                         };
-                        slice2.pass(task2);
+                        task2.taskStartTransitions(new Object[]{slice2}, new Object[]{});
                         s.start(task2);
                         
                         slice1.data[1].value++;
                         region(1);
                         
-                        slice1.releasePassed();
+                        taskFinishTransitions();
                         region(2);
                         return null;
                     }
                 };
-                slice1.pass(task1);
+                task1.taskStartTransitions(new Object[]{slice1}, new Object[]{});
                 s.start(task1);
                 
                 a.data[2].value++;
@@ -891,31 +872,29 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 Task<?> task1 = new Task<Void>() {
                     @Override
                     protected Void runRolez() {
-                        slice1.completePass();
                         
                         final GuardedSlice<int[]> slice2 = slice1.slice(0, 1, 1);
                         Task<?> task2 = new Task<Void>() {
                             @Override
                             protected Void runRolez() {
-                                slice2.completePass();
                                 slice2.data[0]++;
                                 region(0);
-                                slice2.releasePassed();
+                                taskFinishTransitions();
                                 return null;
                             }
                         };
-                        slice2.pass(task2);
+                        task2.taskStartTransitions(new Object[]{slice2}, new Object[]{});
                         s.start(task2);
                         
                         slice1.data[1]++;
                         region(1);
                         
-                        slice1.releasePassed();
+                        taskFinishTransitions();
                         region(2);
                         return null;
                     }
                 };
-                slice1.pass(task1);
+                task1.taskStartTransitions(new Object[]{slice1}, new Object[]{});
                 s.start(task1);
                 
                 a.data[2]++;
@@ -938,14 +917,13 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 Task<?> task = new Task<Void>() {
                     @Override
                     protected Void runRolez() {
-                        a.completePass();
                         a.data[0]++;
                         region(0);
-                        a.releasePassed();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                a.pass(task);
+                task.taskStartTransitions(new Object[]{a}, new Object[]{});
                 s.start(task);
                 
                 GuardedSlice<int[]> slice = a.slice(0, 1, 1); // Slicing never blocks
@@ -966,24 +944,22 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 Task<?> task1 = new Task<Void>() {
                     @Override
                     protected Void runRolez() {
-                        a.completePass();
                         
                         Task<?> task2 = new Task<Void>() {
                             @Override
                             protected Void runRolez() {
-                                a.completePass();
-                                a.releasePassed();
+                                taskFinishTransitions();
                                 return null;
                             }
                         };
-                        a.pass(task2);
+                        task2.taskStartTransitions(new Object[]{a}, new Object[]{});
                         s.start(task2);
                         
-                        a.releasePassed();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                a.pass(task1);
+                task1.taskStartTransitions(new Object[]{a}, new Object[]{});
                 s.start(task1);
                 
                 a.slice(0, 1, 1);
@@ -1004,18 +980,18 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                             @Override
                             protected Void runRolez() {
                                 assertEquals(0, a.data[0]);
-                                a.releaseShared();
+                                taskFinishTransitions();
                                 return null;
                             }
                         };
-                        a.share(task2);
+                        task2.taskStartTransitions(new Object[]{}, new Object[]{a});
                         s.start(task2);
                         
-                        a.releaseShared();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                a.share(task1);
+                task1.taskStartTransitions(new Object[]{}, new Object[]{a});
                 s.start(task1);
                 
                 GuardedSlice<int[]> slice = a.slice(0, 1, 1);
@@ -1038,18 +1014,18 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                             @Override
                             protected Void runRolez() {
                                 assertEquals(0, slice1.data[0]);
-                                slice1.releaseShared();
+                                taskFinishTransitions();
                                 return null;
                             }
                         };
-                        slice1.share(task2);
+                        task2.taskStartTransitions(new Object[]{}, new Object[]{slice1});
                         s.start(task2);
                         
-                        slice1.releaseShared();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                slice1.share(task1);
+                task1.taskStartTransitions(new Object[]{}, new Object[]{slice1});
                 s.start(task1);
                 
                 GuardedSlice<int[]> slice2 = a.slice(0, 1, 1);
@@ -1067,26 +1043,24 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 Task<?> task1 = new Task<Void>() {
                     @Override
                     protected Void runRolez() {
-                        a.completePass();
                         
                         final GuardedSlice<int[]> slice = a.slice(1, 3, 1); // Slicing in parallel
                         Task<?> task2 = new Task<Void>() {
                             @Override
                             protected Void runRolez() {
-                                slice.completePass();
                                 slice.data[1]++;
-                                slice.releasePassed();
+                                taskFinishTransitions();
                                 return null;
                             }
                         };
-                        slice.pass(task2);
+                        task2.taskStartTransitions(new Object[]{slice}, new Object[]{});
                         s.start(task2);
                         
-                        a.releasePassed();
+                        taskFinishTransitions();
                         return null;
                     }
                 };
-                a.pass(task1);
+                task1.taskStartTransitions(new Object[]{a}, new Object[]{});
                 s.start(task1);
                 
                 GuardedSlice<int[]> slice = a.slice(0, 2, 1); // Slicing in parallel

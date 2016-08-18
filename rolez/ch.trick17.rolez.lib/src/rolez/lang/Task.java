@@ -1,12 +1,16 @@
 package rolez.lang;
 
 import static java.lang.Thread.currentThread;
+import static java.util.Collections.newSetFromMap;
 import static java.util.concurrent.locks.LockSupport.unpark;
+import static rolez.lang.Guarded.guardReadWrite;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
@@ -22,7 +26,9 @@ public abstract class Task<V> implements Runnable {
         }
     };
     // IMPROVE: Could replace thread-local variable with "current" task variable that is passed to
-    // all generated methods. Wouldn't support call-backs from mapped methods though...
+    // all generated methods. Callbacks from mapped methods could go to a "bridge" method that gets
+    // the current task from the thread local. Bridge methods only necessary for methods that
+    // override a mapped method (including equals(), hashCode(), toString()).
     
     // IMPROVE: To speed this up, could cache current task in a field of a custom thread class or so
     public static Task<?> currentTask() {
@@ -34,6 +40,15 @@ public abstract class Task<V> implements Runnable {
     private Thread executingThread;
     private volatile V result;
     private volatile Throwable exception;
+    
+    private final List<Guarded> passed = new ArrayList<>();
+    /**
+     * Contains all objects that are reachable from any passed one when the task starts. At the end
+     * of the task, the object graphs may have changed, so some objects may not be reachable
+     * anymore. To be able to release those, they are stored here.
+     */
+    private final Set<Guarded> passedReachable = newIdentitySet();
+    private final Set<Guarded> sharedReachable = newIdentitySet();
     
     /**
      * The parent task. Parent links are followed to efficiently detect a parent-child relation
@@ -63,6 +78,7 @@ public abstract class Task<V> implements Runnable {
         executingThread = currentThread();
         Deque<Task<?>> stack = localStack.get();
         stack.push(this);
+        completeTaskStartTransitions();
         try {
             result = runRolez();
             /* Wait for child tasks to finish so that exceptions get propagated up the task stack */
@@ -116,6 +132,10 @@ public abstract class Task<V> implements Runnable {
             if(ancestor == other)
                 return true;
         return false;
+    }
+    
+    Thread getExecutingThread() {
+        return executingThread;
     }
     
     /**
@@ -180,5 +200,61 @@ public abstract class Task<V> implements Runnable {
         }
         
         private static final int IGNORED = 0;
+    }
+    
+    /* Transitions */
+    
+    public void taskStartTransitions(Object[] passedObjects, Object[] sharedObjects) {
+        assert passedReachable.isEmpty();
+        for(Object g : passedObjects)
+            if(g instanceof Guarded) {
+                passed.add((Guarded) g);
+                ((Guarded) g).guardReadWriteReachable(passedReachable);
+            }
+        
+        // Objects that are reachable both from a passed and a shared object are effectively *passed*
+        assert sharedReachable.isEmpty();
+        sharedReachable.addAll(passedReachable);
+        for(Object g : sharedObjects)
+            if(g instanceof Guarded)
+                ((Guarded) g).guardReadOnlyReachable(sharedReachable);
+        sharedReachable.removeAll(passedReachable);
+        
+        for(Guarded g : passedReachable)
+            g.pass(this);
+        for(Guarded g : sharedReachable)
+            g.share(this);
+    }
+    
+    private void completeTaskStartTransitions() {
+        for(Guarded g : passedReachable)
+            g.completePass();
+    }
+    
+    public void taskFinishTransitions() {
+        /* Release all shared objects. No need for guarding, as it's not possible that they have
+         * been modified. */
+        for(Guarded g : sharedReachable)
+            g.releaseShared();
+        
+        /* Then, find objects that are now reachable from passed objects and release those */
+        Set<Guarded> newPassedReachable = newIdentitySet();
+        for(Guarded g : passed)
+            g.guardReadWriteReachable(newPassedReachable);
+        for(Guarded g : newPassedReachable)
+            g.releasePassed();
+        
+        /* Finally, release objects that were previously reachable (but not anymore) and notify
+         * parent thread. */
+        passedReachable.removeAll(newPassedReachable);
+        for(Guarded g : passedReachable) {
+            guardReadWrite(g);
+            g.releasePassed();
+        }
+        unpark(parent.executingThread);
+    }
+    
+    private static Set<Guarded> newIdentitySet() {
+        return newSetFromMap(new IdentityHashMap<Guarded, java.lang.Boolean>());
     }
 }

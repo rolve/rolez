@@ -206,6 +206,8 @@ class ClassGenerator {
             '''new «enclosingClass.safeSimpleName»()'''
     }
     
+    // TODO: Disable guarding
+    
     private def genObjectField(Field it) { if(isMapped) '''
         
         public «kind.generate»«type.generate» «name» = «enclosingClass.jvmClass.qualifiedName».«name»;
