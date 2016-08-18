@@ -26,26 +26,26 @@ public class TaskBasedJpfTest extends JpfParallelismTest {
         return props;
     }
     
-    void verifyTask(int[][] seqGroups, RunnableCallable task) {
+    void verifyTask(int[][] seqGroups, Runnable runnable) {
         if(verify(mode, seqGroups))
-            s.run(new Task<>(task));
+            s.run(new VoidTask(runnable));
     }
     
-    void verifyTask(RunnableCallable task) {
+    void verifyTask(Runnable runnable) {
         if(verify(mode))
-            s.run(new Task<>(task));
+            s.run(new VoidTask(runnable));
     }
     
-    void verifyTaskDeadlock(RunnableCallable task) {
+    void verifyTaskDeadlock(Runnable runnable) {
         assumeVerifyCorrectness();
         if(verifyDeadlock())
-            s.run(new Task<>(task));
+            s.run(new VoidTask(runnable));
     }
     
-    void verifyTaskAssertionError(RunnableCallable task) {
+    void verifyTaskAssertionError(Runnable runnable) {
         assumeVerifyCorrectness();
         if(verifyAssertionError())
-            s.run(new Task<>(task));
+            s.run(new VoidTask(runnable));
     }
     
     /**

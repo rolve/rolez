@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.locks.LockSupport;
 
 import org.junit.Test;
@@ -38,7 +37,7 @@ public class TaskSystemTest extends JpfParallelismTest {
         if(verifyNoPropertyViolation()) {
             flag = false;
             final Thread original = Thread.currentThread();
-            system.start(new Task<>(new RunnableCallable() {
+            system.start(new VoidTask(new Runnable() {
                 public void run() {
                     flag = true;
                     LockSupport.unpark(original);
@@ -54,7 +53,7 @@ public class TaskSystemTest extends JpfParallelismTest {
         if(verifyDeadlock()) {
             flag = false;
             final Thread original = Thread.currentThread();
-            system.start(new Task<>(new RunnableCallable() {
+            system.start(new VoidTask(new Runnable() {
                 public void run() {
                     // Not setting the flag will result in a deadlock:
                     // flag = true;
@@ -71,11 +70,11 @@ public class TaskSystemTest extends JpfParallelismTest {
         if(verifyNoPropertyViolation()) {
             flag = false;
             final Thread original = Thread.currentThread();
-            system.start(new Task<>(new RunnableCallable() {
+            system.start(new VoidTask(new Runnable() {
                 public void run() {
-                    system.start(new Task<>(new RunnableCallable() {
+                    system.start(new VoidTask(new Runnable() {
                         public void run() {
-                            system.start(new Task<>(new RunnableCallable() {
+                            system.start(new VoidTask(new Runnable() {
                                 public void run() {
                                     flag = true;
                                     LockSupport.unpark(original);
@@ -94,11 +93,11 @@ public class TaskSystemTest extends JpfParallelismTest {
     @Test
     public void testRunTaskWaiting() {
         if(verifyNoPropertyViolation()) {
-            system.start(new Task<>(new RunnableCallable() {
+            system.start(new VoidTask(new Runnable() {
                 public void run() {
                     flag = false;
                     final Thread original = Thread.currentThread();
-                    system.start(new Task<>(new RunnableCallable() {
+                    system.start(new VoidTask(new Runnable() {
                         public void run() {
                             flag = true;
                             LockSupport.unpark(original);
@@ -114,9 +113,9 @@ public class TaskSystemTest extends JpfParallelismTest {
     @Test
     public void testExceptionInTask() {
         if(verifyUnhandledException("java.lang.RuntimeException", "Hello")) {
-            system.run(new Task<>(new RunnableCallable() {
+            system.run(new VoidTask(new Runnable() {
                 public void run() {
-                    system.start(new Task<>(new RunnableCallable() {
+                    system.start(new VoidTask(new Runnable() {
                         public void run() {
                             throw new RuntimeException("Hello");
                         }
@@ -130,11 +129,12 @@ public class TaskSystemTest extends JpfParallelismTest {
     @Test
     public void testReturnValue() throws Throwable {
         if(verifyNoPropertyViolation()) {
-            final Task<Integer> task = system.start(new Task<>(new Callable<Integer>() {
-                public Integer call() {
+            final Task<Integer> task = system.start(new Task<Integer>() {
+                @Override
+                protected Integer runRolez() {
                     return 42;
                 }
-            }));
+            });
             
             assertEquals(42, (int) task.get());
         }
@@ -144,13 +144,13 @@ public class TaskSystemTest extends JpfParallelismTest {
     public void testNestedParallelism() {
         assumeMultithreaded();
         if(verifyParallelExcept()) {
-            system.start(new Task<>(new RunnableCallable() {
+            system.start(new VoidTask(new Runnable() {
                 public void run() {
                     /* Task 1 */
-                    final Task<Void> task = system.start(new Task<>(new RunnableCallable() {
+                    final Task<Void> task = system.start(new VoidTask(new Runnable() {
                         public void run() {
                             /* Task 2 */
-                            system.start(new Task<>(new RunnableCallable() {
+                            system.start(new VoidTask(new Runnable() {
                                 public void run() {
                                     /* Task 3 */
                                     region(0);

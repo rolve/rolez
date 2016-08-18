@@ -37,11 +37,11 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     
     @Test
     public void testShare() {
-        verifyTask(new int[][]{{0, 1}, {2, 3}, {0, 3}}, new RunnableCallable() {
+        verifyTask(new int[][]{{0, 1}, {2, 3}, {0, 3}}, new Runnable() {
             public void run() {
                 final Int i = new Int();
                 
-                Task<?> task = new Task<>(new RunnableCallable() {
+                Task<?> task = new VoidTask(new Runnable() {
                     public void run() {
                         region(0);
                         assertEquals(0, i.value);
@@ -62,11 +62,11 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     @Test
     public void testShareMissingGuard() {
         assumeMultithreaded();
-        verifyTaskAssertionError(new RunnableCallable() {
+        verifyTaskAssertionError(new Runnable() {
             public void run() {
                 final Int i = new Int();
                 
-                Task<?> task = new Task<>(new RunnableCallable() {
+                Task<?> task = new VoidTask(new Runnable() {
                     public void run() {
                         assertEquals(0, i.value);
                         i.releaseShared();
@@ -83,11 +83,11 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     
     @Test
     public void testShareMissingRelease() {
-        verifyTaskDeadlock(new RunnableCallable() {
+        verifyTaskDeadlock(new Runnable() {
             public void run() {
                 final Int i = new Int();
                 
-                Task<?> task = new Task<>(new RunnableCallable() {
+                Task<?> task = new VoidTask(new Runnable() {
                     public void run() {
                         assertEquals(0, i.value);
                         // A missing release causes a deadlock
@@ -104,11 +104,11 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     @Test
     public void testShareMultiple() {
         verifyTask(new int[][]{{0, 1}, {2, 3}, {4, 5}, {0, 5}, {2, 5}, {0, 3 /* or: 1, 2 */}},
-                new RunnableCallable() {
+                new Runnable() {
                     public void run() {
                         final Int i = new Int();
                         
-                        Task<?> task1 = new Task<>(new RunnableCallable() {
+                        Task<?> task1 = new VoidTask(new Runnable() {
                             public void run() {
                                 region(0);
                                 assertEquals(0, i.value);
@@ -119,7 +119,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                         i.share(task1);
                         s.start(task1);
                         
-                        Task<?> task2 = new Task<>(new RunnableCallable() {
+                        Task<?> task2 = new VoidTask(new Runnable() {
                             public void run() {
                                 region(2);
                                 assertEquals(0, i.value);
@@ -139,13 +139,13 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     
     @Test
     public void testShareMultipleMissingRelease() {
-        verifyTaskDeadlock(new RunnableCallable() {
+        verifyTaskDeadlock(new Runnable() {
             public void run() {
                 final Int i = new Int();
                 
                 for(int k = 0; k < 3; k++) {
                     final int theK = k;
-                    Task<?> task = new Task<>(new RunnableCallable() {
+                    Task<?> task = new VoidTask(new Runnable() {
                         public void run() {
                             assertEquals(0, i.value);
                             
@@ -165,11 +165,11 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     
     @Test
     public void testPass() {
-        verifyTask(new int[][]{{0, 1}, {0, 3}, {2, 3}}, new RunnableCallable() {
+        verifyTask(new int[][]{{0, 1}, {0, 3}, {2, 3}}, new Runnable() {
             public void run() {
                 final Int i = new Int();
                 
-                Task<?> task = new Task<>(new RunnableCallable() {
+                Task<?> task = new VoidTask(new Runnable() {
                     public void run() {
                         i.completePass();
                         region(0);
@@ -191,11 +191,11 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     @Test
     public void testPassMissingGuard() {
         assumeMultithreaded();
-        verifyTaskAssertionError(new RunnableCallable() {
+        verifyTaskAssertionError(new Runnable() {
             public void run() {
                 final Int i = new Int();
                 
-                Task<?> task = new Task<>(new RunnableCallable() {
+                Task<?> task = new VoidTask(new Runnable() {
                     public void run() {
                         i.completePass();
                         i.value = 1;
@@ -214,11 +214,11 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     @Test
     public void testPassMissingRelease() {
         assumeMultithreaded();
-        verifyTaskDeadlock(new RunnableCallable() {
+        verifyTaskDeadlock(new Runnable() {
             public void run() {
                 final Int i = new Int();
                 
-                Task<?> task = new Task<>(new RunnableCallable() {
+                Task<?> task = new VoidTask(new Runnable() {
                     public void run() {
                         i.completePass();
                         i.value = 1;
@@ -238,11 +238,11 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
         /* IMPROVE: Allow {0, 4} in parallel by passing not-yet-available data to tasks (so far,
          * pass() is blocking) */
         verifyTask(new int[][]{{0, 1}, {0, 2, 3}, {0, 2, 5}, {4, 5}, {0, 4}},
-                new RunnableCallable() {
+                new Runnable() {
                     public void run() {
                         final Int i = new Int();
                         
-                        Task<?> task1 = new Task<>(new RunnableCallable() {
+                        Task<?> task1 = new VoidTask(new Runnable() {
                             public void run() {
                                 i.completePass();
                                 region(0);
@@ -254,7 +254,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                         i.pass(task1);
                         s.start(task1);
                         
-                        Task<?> task2 = new Task<>(new RunnableCallable() {
+                        Task<?> task2 = new VoidTask(new Runnable() {
                             public void run() {
                                 i.completePass();
                                 region(2);
@@ -277,14 +277,14 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     @Test
     public void testPassMultipleMissingRelease() {
         assumeMultithreaded();
-        verifyTaskDeadlock(new RunnableCallable() {
+        verifyTaskDeadlock(new Runnable() {
             public void run() {
                 final Int i = new Int();
                 
                 final int taskCount = 2;
                 for(int k = 0; k < taskCount; k++) {
                     final int theK = k;
-                    Task<?> task = new Task<>(new RunnableCallable() {
+                    Task<?> task = new VoidTask(new Runnable() {
                         public void run() {
                             i.completePass();
                             i.value++;
@@ -306,16 +306,16 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     @Test
     public void testPassNested() {
         verifyTask(new int[][]{{0, 1}, {2, 3}, {4, 5}, {0, 3}, {2, 5}, {0, 5}},
-                new RunnableCallable() {
+                new Runnable() {
                     public void run() {
                         final Int i = new Int();
                         
-                        Task<?> task1 = new Task<>(new RunnableCallable() {
+                        Task<?> task1 = new VoidTask(new Runnable() {
                             public void run() {
                                 i.completePass();
                                 i.value++;
                                 
-                                Task<?> task2 = new Task<>(new RunnableCallable() {
+                                Task<?> task2 = new VoidTask(new Runnable() {
                                     public void run() {
                                         i.completePass();
                                         i.value++;
@@ -349,14 +349,14 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     @Test
     public void testPassNestedWithoutGuarding() {
         assumeVerifyCorrectness();
-        verifyTask(new RunnableCallable() {
+        verifyTask(new Runnable() {
             public void run() {
                 final Int i = new Int();
                 
-                Task<?> task1 = new Task<>(new RunnableCallable() {
+                Task<?> task1 = new VoidTask(new Runnable() {
                     public void run() {
                         i.completePass();
-                        Task<?> task2 = new Task<>(new RunnableCallable() {
+                        Task<?> task2 = new VoidTask(new Runnable() {
                             public void run() {
                                 i.completePass();
                                 i.releasePassed();
@@ -377,16 +377,16 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     @Test
     public void testPassNestedMissingRelease() {
         assumeMultithreaded();
-        verifyTaskDeadlock(new RunnableCallable() {
+        verifyTaskDeadlock(new Runnable() {
             public void run() {
                 final Int i = new Int();
                 
-                Task<?> task1 = new Task<>(new RunnableCallable() {
+                Task<?> task1 = new VoidTask(new Runnable() {
                     public void run() {
                         i.completePass();
                         i.value++;
                         
-                        Task<?> task2 = new Task<>(new RunnableCallable() {
+                        Task<?> task2 = new VoidTask(new Runnable() {
                             public void run() {
                                 i.completePass();
                                 i.value++;
@@ -409,11 +409,11 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     
     @Test
     public void testPassShare() {
-        verifyTask(new RunnableCallable() {
+        verifyTask(new Runnable() {
             public void run() {
                 final Int i = new Int();
                 
-                Task<?> task1 = new Task<>(new RunnableCallable() {
+                Task<?> task1 = new VoidTask(new Runnable() {
                     public void run() {
                         i.completePass();
                         i.value++;
@@ -424,7 +424,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 i.pass(task1);
                 s.start(task1);
                 
-                Task<?> task2 = new Task<>(new RunnableCallable() {
+                Task<?> task2 = new VoidTask(new Runnable() {
                     public void run() {
                         assertEquals(1, i.value);
                         region(1);
@@ -442,12 +442,12 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     
     @Test
     public void testShareGroup() {
-        verifyTask(new int[][]{{0, 1}, {2, 3}, {0, 3}}, new RunnableCallable() {
+        verifyTask(new int[][]{{0, 1}, {2, 3}, {0, 3}}, new Runnable() {
             public void run() {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                Task<?> task = new Task<>(new RunnableCallable() {
+                Task<?> task = new VoidTask(new Runnable() {
                     public void run() {
                         assertEquals(0, r.o.value);
                         region(0);
@@ -467,14 +467,14 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     
     @Test
     public void testShareGroupMultiple() {
-        verifyTask(new RunnableCallable() {
+        verifyTask(new Runnable() {
             public void run() {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
                 for(int k = 0; k < 2; k++) {
                     final int theK = k;
-                    Task<?> task = new Task<>(new RunnableCallable() {
+                    Task<?> task = new VoidTask(new Runnable() {
                         public void run() {
                             assertEquals(0, r.o.value);
                             r.releaseShared();
@@ -493,12 +493,12 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     
     @Test
     public void testPassGroup() {
-        verifyTask(new int[][]{{0, 1}, {2, 3}, {0, 3}}, new RunnableCallable() {
+        verifyTask(new int[][]{{0, 1}, {2, 3}, {0, 3}}, new Runnable() {
             public void run() {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                Task<?> task = new Task<>(new RunnableCallable() {
+                Task<?> task = new VoidTask(new Runnable() {
                     public void run() {
                         r.completePass();
                         r.o.value++;
@@ -520,13 +520,13 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     @Test
     public void testPassGroupMultiple() {
         assumeVerifyCorrectness();
-        verifyTask(new RunnableCallable() {
+        verifyTask(new Runnable() {
             public void run() {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
                 for(int k = 0; k < 2; k++) {
-                    Task<?> task = new Task<>(new RunnableCallable() {
+                    Task<?> task = new VoidTask(new Runnable() {
                         public void run() {
                             r.completePass();
                             r.o.value++;
@@ -545,18 +545,18 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     @Test
     public void testPassGroupNested() {
         assumeVerifyCorrectness();
-        verifyTask(new RunnableCallable() {
+        verifyTask(new Runnable() {
             public void run() {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                Task<?> task1 = new Task<>(new RunnableCallable() {
+                Task<?> task1 = new VoidTask(new Runnable() {
                     public void run() {
                         r.completePass();
                         final Int i2 = r.o;
                         i2.value++;
                         
-                        Task<?> task2 = new Task<>(new RunnableCallable() {
+                        Task<?> task2 = new VoidTask(new Runnable() {
                             public void run() {
                                 r.completePass();
                                 r.o.value++;
@@ -582,12 +582,12 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     
     @Test
     public void testPassShareGroup() {
-        verifyTask(new RunnableCallable() {
+        verifyTask(new Runnable() {
             public void run() {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                Task<?> task1 = new Task<>(new RunnableCallable() {
+                Task<?> task1 = new VoidTask(new Runnable() {
                     public void run() {
                         r.completePass();
                         r.o.value++;
@@ -598,7 +598,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 r.pass(task1);
                 s.start(task1);
                 
-                Task<?> task2 = new Task<>(new RunnableCallable() {
+                Task<?> task2 = new VoidTask(new Runnable() {
                     public void run() {
                         assertEquals(1, r.o.value);
                         region(1);
@@ -616,12 +616,12 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     
     @Test
     public void testShareSubgroupMultiple() {
-        verifyTask(new int[][]{{0, 4}, {1, 4}, {2, 4}, {3, 4}}, new RunnableCallable() {
+        verifyTask(new int[][]{{0, 4}, {1, 4}, {2, 4}, {3, 4}}, new Runnable() {
             public void run() {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                Task<?> task1 = new Task<>(new RunnableCallable() {
+                Task<?> task1 = new VoidTask(new Runnable() {
                     public void run() {
                         assertEquals(0, i.value);
                         region(0);
@@ -631,7 +631,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 i.share(task1);
                 s.start(task1);
                 
-                Task<?> task2 = new Task<>(new RunnableCallable() {
+                Task<?> task2 = new VoidTask(new Runnable() {
                     public void run() {
                         assertEquals(0, r.o.value);
                         region(1);
@@ -641,7 +641,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 r.share(task2);
                 s.start(task2);
                 
-                Task<?> task3 = new Task<>(new RunnableCallable() {
+                Task<?> task3 = new VoidTask(new Runnable() {
                     public void run() {
                         assertEquals(0, i.value);
                         region(2);
@@ -661,12 +661,12 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     @Test
     public void testPassSubgroup() {
         /* IMPROVE: Allow all regions by passing not-yet-available data */
-        verifyTask(new int[][]{{0, 1, 2}, {0, 3}, {1, 3}}, new RunnableCallable() {
+        verifyTask(new int[][]{{0, 1, 2}, {0, 3}, {1, 3}}, new Runnable() {
             public void run() {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                Task<?> task1 = new Task<>(new RunnableCallable() {
+                Task<?> task1 = new VoidTask(new Runnable() {
                     public void run() {
                         i.completePass();
                         region(0);
@@ -677,7 +677,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 i.pass(task1);
                 s.start(task1);
                 
-                Task<?> task2 = new Task<>(new RunnableCallable() {
+                Task<?> task2 = new VoidTask(new Runnable() {
                     public void run() {
                         r.completePass();
                         region(1);
@@ -688,7 +688,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 r.pass(task2);
                 s.start(task2);
                 
-                Task<?> task3 = new Task<>(new RunnableCallable() {
+                Task<?> task3 = new VoidTask(new Runnable() {
                     public void run() {
                         i.completePass();
                         region(2);
@@ -709,18 +709,18 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     public void testPassSubgroupNested() {
         /* IMPROVE: Allow {0, 3} by releasing objects independent of reachable objects that are
          * still owned by other threads. */
-        verifyTask(new int[][]{{0, 1}, {2, 3}, {0, 3}}, new RunnableCallable() {
+        verifyTask(new int[][]{{0, 1}, {2, 3}, {0, 3}}, new Runnable() {
             public void run() {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                Task<?> task1 = new Task<>(new RunnableCallable() {
+                Task<?> task1 = new VoidTask(new Runnable() {
                     public void run() {
                         r.completePass();
                         final Int i2 = r.o;
                         i2.value++;
                         
-                        Task<?> task2 = new Task<>(new RunnableCallable() {
+                        Task<?> task2 = new VoidTask(new Runnable() {
                             public void run() {
                                 i2.completePass();
                                 region(0);
@@ -749,12 +749,12 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     @Test
     public void testPassShareSubgroup() {
         /* IMPROVE: Allow {0, 2, 3} by sharing not-yet-available data? */
-        verifyTask(new int[][]{{0, 1}, {0, 2}, {0, 3}}, new RunnableCallable() {
+        verifyTask(new int[][]{{0, 1}, {0, 2}, {0, 3}}, new Runnable() {
             public void run() {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                Task<?> task1 = new Task<>(new RunnableCallable() {
+                Task<?> task1 = new VoidTask(new Runnable() {
                     public void run() {
                         r.completePass();
                         r.o.value++;
@@ -766,7 +766,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 r.pass(task1);
                 s.start(task1);
                 
-                Task<?> task2 = new Task<>(new RunnableCallable() {
+                Task<?> task2 = new VoidTask(new Runnable() {
                     public void run() {
                         region(2);
                         assertEquals(1, i.value);
@@ -785,12 +785,12 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     @Test
     public void testShareGroupModify() {
         assumeVerifyCorrectness();
-        verifyTask(new RunnableCallable() {
+        verifyTask(new Runnable() {
             public void run() {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                Task<?> task = new Task<>(new RunnableCallable() {
+                Task<?> task = new VoidTask(new Runnable() {
                     public void run() {
                         assertEquals(0, i.value);
                         r.releaseShared();
@@ -807,12 +807,12 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     @Test
     public void testPassGroupModify() {
         assumeVerifyCorrectness();
-        verifyTask(new RunnableCallable() {
+        verifyTask(new Runnable() {
             public void run() {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                Task<?> task1 = new Task<>(new RunnableCallable() {
+                Task<?> task1 = new VoidTask(new Runnable() {
                     public void run() {
                         r.completePass();
                         r.o = new Int();
@@ -832,19 +832,19 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     @Test
     public void testPassSubgroupNestedModify() {
         assumeVerifyCorrectness();
-        verifyTask(new RunnableCallable() {
+        verifyTask(new Runnable() {
             public void run() {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                Task<?> task1 = new Task<>(new RunnableCallable() {
+                Task<?> task1 = new VoidTask(new Runnable() {
                     public void run() {
                         r.completePass();
                         r.o = new Int();
                         
                         final Int i2 = r.o;
                         i2.value++;
-                        Task<?> task2 = new Task<>(new RunnableCallable() {
+                        Task<?> task2 = new VoidTask(new Runnable() {
                             public void run() {
                                 i2.completePass();
                                 i2.value++;
@@ -867,13 +867,13 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     @Test
     public void testShareCycleModify() {
         assumeVerifyCorrectness();
-        verifyTask(new RunnableCallable() {
+        verifyTask(new Runnable() {
             public void run() {
                 final Node n1 = new Node();
                 final Node n2 = new Node(n1);
                 n1.next = n2;
                 
-                Task<?> task = new Task<>(new RunnableCallable() {
+                Task<?> task = new VoidTask(new Runnable() {
                     public void run() {
                         assertEquals(0, n1.next.data);
                         n1.releaseShared();

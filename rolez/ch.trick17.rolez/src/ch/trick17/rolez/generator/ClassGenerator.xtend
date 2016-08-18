@@ -114,8 +114,9 @@ class ClassGenerator {
         «IF isTask»
         
         public «taskClassName»<«type.generateGeneric»> $«name»Task(«params.map[gen].join(", ")») {
-            «taskClassName»<«type.generateGeneric»> $task = new «taskClassName»<>(new java.util.concurrent.Callable<«type.generateGeneric»>() {
-                public «type.generateGeneric» call() {
+            «taskClassName»<«type.generateGeneric»> $task = new «taskClassName»<«type.generateGeneric»>() {
+                @java.lang.Override
+                protected «type.generateGeneric» runRolez() {
                     «IF thisType.needsCompletePass»
                     «genCompletePass("", enclosingClass)»
                     «ENDIF»
@@ -135,7 +136,7 @@ class ClassGenerator {
                     return null;
                     «ENDIF»
                 }
-            });
+            };
             «IF thisType.needsTransition»
             «genTransition("", "$task", thisType)»
             «ENDIF»
