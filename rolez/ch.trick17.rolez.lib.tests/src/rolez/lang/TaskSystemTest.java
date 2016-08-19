@@ -37,14 +37,12 @@ public class TaskSystemTest extends JpfParallelismTest {
         if(verifyNoPropertyViolation()) {
             flag = false;
             final Thread original = Thread.currentThread();
-            system.start(new Task<Void>() {
-                @Override
-                protected Void runRolez() {
+            system.start(new VoidTask(new Runnable() {
+                public void run() {
                     flag = true;
                     LockSupport.unpark(original);
-                    return null;
                 }
-            });
+            }));
             while(!flag)
                 LockSupport.park();
         }
@@ -55,15 +53,14 @@ public class TaskSystemTest extends JpfParallelismTest {
         if(verifyDeadlock()) {
             flag = false;
             final Thread original = Thread.currentThread();
-            system.start(new Task<Void>() {
+            system.start(new VoidTask(new Runnable() {
                 @Override
-                protected Void runRolez() {
+                public void run() {
                     // Not setting the flag will result in a deadlock:
                     // flag = true;
                     LockSupport.unpark(original);
-                    return null;
                 }
-            });
+            }));
             while(!flag)
                 LockSupport.park();
         }
@@ -74,26 +71,23 @@ public class TaskSystemTest extends JpfParallelismTest {
         if(verifyNoPropertyViolation()) {
             flag = false;
             final Thread original = Thread.currentThread();
-            system.start(new Task<Void>() {
+            system.start(new VoidTask(new Runnable() {
                 @Override
-                protected Void runRolez() {
-                    system.start(new Task<Void>() {
+                public void run() {
+                    system.start(new VoidTask(new Runnable() {
                         @Override
-                        protected Void runRolez() {
-                            system.start(new Task<Void>() {
+                        public void run() {
+                            system.start(new VoidTask(new Runnable() {
                                 @Override
-                                protected Void runRolez() {
+                                public void run() {
                                     flag = true;
                                     LockSupport.unpark(original);
-                                    return null;
                                 }
-                            });
-                            return null;
+                            }));
                         }
-                    });
-                    return null;
+                    }));
                 }
-            });
+            }));
             
             while(!flag)
                 LockSupport.park();
@@ -103,42 +97,39 @@ public class TaskSystemTest extends JpfParallelismTest {
     @Test
     public void testRunTaskWaiting() {
         if(verifyNoPropertyViolation()) {
-            system.start(new Task<Void>() {
+            system.start(new VoidTask(new Runnable() {
                 @Override
-                protected Void runRolez() {
+                public void run() {
                     flag = false;
                     final Thread original = Thread.currentThread();
-                    system.start(new Task<Void>() {
+                    system.start(new VoidTask(new Runnable() {
                         @Override
-                        protected Void runRolez() {
+                        public void run() {
                             flag = true;
                             LockSupport.unpark(original);
-                            return null;
                         }
-                    });
+                    }));
                     while(!flag)
                         LockSupport.park();
-                    return null;
                 }
-            });
+            }));
         }
     }
     
     @Test
     public void testExceptionInTask() {
         if(verifyUnhandledException("java.lang.RuntimeException", "Hello")) {
-            system.run(new Task<Void>() {
+            system.run(new VoidTask(new Runnable() {
                 @Override
-                protected Void runRolez() {
-                    system.start(new Task<Void>() {
+                public void run() {
+                    system.start(new VoidTask(new Runnable() {
                         @Override
-                        protected Void runRolez() {
+                        public void run() {
                             throw new RuntimeException("Hello");
                         }
-                    });
-                    return null;
+                    }));
                 }
-            });
+            }));
             /* Exception should be propagated automatically */
         }
     }
@@ -146,7 +137,8 @@ public class TaskSystemTest extends JpfParallelismTest {
     @Test
     public void testReturnValue() throws Throwable {
         if(verifyNoPropertyViolation()) {
-            final Task<Integer> task = system.start(new Task<Integer>() {
+            final Task<Integer> task = system.start(new Task<Integer>(new Object[]{},
+                    new Object[]{}) {
                 @Override
                 protected Integer runRolez() {
                     return 42;
@@ -161,31 +153,28 @@ public class TaskSystemTest extends JpfParallelismTest {
     public void testNestedParallelism() {
         assumeMultithreaded();
         if(verifyParallelExcept()) {
-            system.start(new Task<Void>() {
+            system.start(new VoidTask(new Runnable() {
                 @Override
-                protected Void runRolez() {
+                public void run() {
                     /* Task 1 */
-                    final Task<Void> task = system.start(new Task<Void>() {
+                    final Task<Void> task = system.start(new VoidTask(new Runnable() {
                         @Override
-                        protected Void runRolez() {
+                        public void run() {
                             /* Task 2 */
-                            system.start(new Task<Void>() {
+                            system.start(new VoidTask(new Runnable() {
                                 @Override
-                                protected Void runRolez() {
+                                public void run() {
                                     /* Task 3 */
                                     region(0);
-                                    return null;
                                 }
-                            });
+                            }));
                             region(1);
-                            return null;
                         }
-                    });
+                    }));
                     /* Waiting for other tasks should not block worker threads of thread pools: */
                     task.get();
-                    return null;
                 }
-            }).get();
+            })).get();
         }
     }
     

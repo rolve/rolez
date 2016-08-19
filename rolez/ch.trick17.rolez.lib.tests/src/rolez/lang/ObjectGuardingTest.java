@@ -41,7 +41,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
             public void run() {
                 final Int i = new Int();
                 
-                Task<?> task = new Task<Void>() {
+                Task<?> task = new Task<Void>(new Object[]{}, new Object[]{i}) {
                     @Override
                     protected Void runRolez() {
                         region(0);
@@ -49,7 +49,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                         return null;
                     }
                 };
-                task.taskStartTransitions(new Object[]{}, new Object[]{i});
                 s.start(task);
                 region(2);
                 
@@ -66,14 +65,13 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
             public void run() {
                 final Int i = new Int();
                 
-                Task<?> task = new Task<Void>() {
+                Task<?> task = new Task<Void>(new Object[]{}, new Object[]{i}) {
                     @Override
                     protected Void runRolez() {
                         assertEquals(0, i.value);
                         return null;
                     }
                 };
-                task.taskStartTransitions(new Object[]{}, new Object[]{i});
                 s.start(task);
                 
                 // A missing guard causes non-determinism
@@ -89,7 +87,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     public void run() {
                         final Int i = new Int();
                         
-                        Task<?> task1 = new Task<Void>() {
+                        Task<?> task1 = new Task<Void>(new Object[]{}, new Object[]{i}) {
                             @Override
                             protected Void runRolez() {
                                 region(0);
@@ -97,10 +95,9 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                                 return null;
                             }
                         };
-                        task1.taskStartTransitions(new Object[]{}, new Object[]{i});
                         s.start(task1);
                         
-                        Task<?> task2 = new Task<Void>() {
+                        Task<?> task2 = new Task<Void>(new Object[]{}, new Object[]{i}) {
                             @Override
                             protected Void runRolez() {
                                 region(2);
@@ -108,7 +105,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                                 return null;
                             }
                         };
-                        task2.taskStartTransitions(new Object[]{}, new Object[]{i});
                         s.start(task2);
                         region(4);
                         
@@ -124,7 +120,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
             public void run() {
                 final Int i = new Int();
                 
-                Task<?> task = new Task<Void>() {
+                Task<?> task = new Task<Void>(new Object[]{i}, new Object[]{}) {
                     @Override
                     protected Void runRolez() {
                         region(0);
@@ -132,7 +128,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                         return null;
                     }
                 };
-                task.taskStartTransitions(new Object[]{i}, new Object[]{});
                 s.start(task);
                 region(2);
                 
@@ -149,14 +144,13 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
             public void run() {
                 final Int i = new Int();
                 
-                Task<?> task = new Task<Void>() {
+                Task<?> task = new Task<Void>(new Object[]{i}, new Object[]{}) {
                     @Override
                     protected Void runRolez() {
                         i.value = 1;
                         return null;
                     }
                 };
-                task.taskStartTransitions(new Object[]{i}, new Object[]{});
                 s.start(task);
                 
                 // A missing guard causes non-determinism
@@ -174,7 +168,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     public void run() {
                         final Int i = new Int();
                         
-                        Task<?> task1 = new Task<Void>() {
+                        Task<?> task1 = new Task<Void>(new Object[]{i}, new Object[]{}) {
                             @Override
                             protected Void runRolez() {
                                 region(0);
@@ -182,10 +176,9 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                                 return null;
                             }
                         };
-                        task1.taskStartTransitions(new Object[]{i}, new Object[]{});
                         s.start(task1);
                         
-                        Task<?> task2 = new Task<Void>() {
+                        Task<?> task2 = new Task<Void>(new Object[]{i}, new Object[]{}) {
                             @Override
                             protected Void runRolez() {
                                 region(2);
@@ -193,7 +186,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                                 return null;
                             }
                         };
-                        task2.taskStartTransitions(new Object[]{i}, new Object[]{});
                         s.start(task2);
                         region(4);
                         
@@ -211,12 +203,12 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     public void run() {
                         final Int i = new Int();
                         
-                        Task<?> task1 = new Task<Void>() {
+                        Task<?> task1 = new Task<Void>(new Object[]{i}, new Object[]{}) {
                             @Override
                             protected Void runRolez() {
                                 i.value++;
                                 
-                                Task<?> task2 = new Task<Void>() {
+                                Task<?> task2 = new Task<Void>(new Object[]{i}, new Object[]{}) {
                                     @Override
                                     protected Void runRolez() {
                                         i.value++;
@@ -224,7 +216,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                                         return null;
                                     }
                                 };
-                                task2.taskStartTransitions(new Object[]{i}, new Object[]{});
                                 s.start(task2);
                                 region(2);
                                 
@@ -233,7 +224,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                                 return null;
                             }
                         };
-                        task1.taskStartTransitions(new Object[]{i}, new Object[]{});
                         s.start(task1);
                         region(4);
                         
@@ -251,22 +241,20 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
             public void run() {
                 final Int i = new Int();
                 
-                Task<?> task1 = new Task<Void>() {
+                Task<?> task1 = new Task<Void>(new Object[]{i}, new Object[]{}) {
                     @Override
                     protected Void runRolez() {
-                        Task<?> task2 = new Task<Void>() {
+                        Task<?> task2 = new Task<Void>(new Object[]{i}, new Object[]{}) {
                             @Override
                             protected Void runRolez() {
                                 return null;
                             }
                         };
-                        task2.taskStartTransitions(new Object[]{i}, new Object[]{});
                         s.start(task2);
                         
                         return null;
                     }
                 };
-                task1.taskStartTransitions(new Object[]{i}, new Object[]{});
                 s.start(task1);
             }
         });
@@ -280,14 +268,13 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Int i = new Int();
                 final Int j = i;
                 
-                Task<?> task = new Task<Void>() {
+                Task<?> task = new Task<Void>(new Object[]{i, j}, new Object[]{}) {
                     @Override
                     protected Void runRolez() {
                         guardReadWrite(i).value = 42;
                         return null;
                     }
                 };
-                task.taskStartTransitions(new Object[]{i, j}, new Object[]{});
                 s.start(task);
                 
                 assertEquals(42, guardReadOnly(i).value);
@@ -301,17 +288,16 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
             public void run() {
                 final Int i = new Int();
                 
-                Task<?> task1 = new Task<Void>() {
+                Task<?> task1 = new Task<Void>(new Object[]{i}, new Object[]{}) {
                     @Override
                     protected Void runRolez() {
                         i.value++;
                         return null;
                     }
                 };
-                task1.taskStartTransitions(new Object[]{i}, new Object[]{});
                 s.start(task1);
                 
-                Task<?> task2 = new Task<Void>() {
+                Task<?> task2 = new Task<Void>(new Object[]{}, new Object[]{i}) {
                     @Override
                     protected Void runRolez() {
                         assertEquals(1, i.value);
@@ -319,7 +305,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                         return null;
                     }
                 };
-                task2.taskStartTransitions(new Object[]{}, new Object[]{i});
                 s.start(task2);
                 region(2);
                 
@@ -335,7 +320,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                Task<?> task = new Task<Void>() {
+                Task<?> task = new Task<Void>(new Object[]{}, new Object[]{r}) {
                     @Override
                     protected Void runRolez() {
                         assertEquals(0, r.o.value);
@@ -343,7 +328,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                         return null;
                     }
                 };
-                task.taskStartTransitions(new Object[]{}, new Object[]{r});
                 s.start(task);
                 region(2);
                 
@@ -362,14 +346,13 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Ref<Int> r = new Ref<>(i);
                 
                 for(int k = 0; k < 2; k++) {
-                    Task<?> task = new Task<Void>() {
+                    Task<?> task = new Task<Void>(new Object[]{}, new Object[]{r}) {
                         @Override
                         protected Void runRolez() {
                             assertEquals(0, r.o.value);
                             return null;
                         }
                     };
-                    task.taskStartTransitions(new Object[]{}, new Object[]{r});
                     s.start(task);
                 }
                 
@@ -385,7 +368,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                Task<?> task = new Task<Void>() {
+                Task<?> task = new Task<Void>(new Object[]{r}, new Object[]{}) {
                     @Override
                     protected Void runRolez() {
                         r.o.value++;
@@ -393,7 +376,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                         return null;
                     }
                 };
-                task.taskStartTransitions(new Object[]{r}, new Object[]{});
                 s.start(task);
                 region(2);
                 
@@ -412,14 +394,13 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Ref<Int> r = new Ref<>(i);
                 
                 for(int k = 0; k < 2; k++) {
-                    Task<?> task = new Task<Void>() {
+                    Task<?> task = new Task<Void>(new Object[]{r}, new Object[]{}) {
                         @Override
                         protected Void runRolez() {
                             r.o.value++;
                             return null;
                         }
                     };
-                    task.taskStartTransitions(new Object[]{r}, new Object[]{});
                     s.start(task);
                 }
                 
@@ -436,20 +417,19 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                Task<?> task1 = new Task<Void>() {
+                Task<?> task1 = new Task<Void>(new Object[]{r}, new Object[]{}) {
                     @Override
                     protected Void runRolez() {
                         final Int i2 = r.o;
                         i2.value++;
                         
-                        Task<?> task2 = new Task<Void>() {
+                        Task<?> task2 = new Task<Void>(new Object[]{r}, new Object[]{}) {
                             @Override
                             protected Void runRolez() {
                                 r.o.value++;
                                 return null;
                             }
                         };
-                        task2.taskStartTransitions(new Object[]{r}, new Object[]{});
                         s.start(task2);
                         
                         assertEquals(2, guardReadWrite(i2).value);
@@ -457,7 +437,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                         return null;
                     }
                 };
-                task1.taskStartTransitions(new Object[]{r}, new Object[]{});
                 s.start(task1);
                 
                 assertEquals(3, guardReadOnly(i).value);
@@ -472,17 +451,16 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                Task<?> task1 = new Task<Void>() {
+                Task<?> task1 = new Task<Void>(new Object[]{r}, new Object[]{}) {
                     @Override
                     protected Void runRolez() {
                         r.o.value++;
                         return null;
                     }
                 };
-                task1.taskStartTransitions(new Object[]{r}, new Object[]{});
                 s.start(task1);
                 
-                Task<?> task2 = new Task<Void>() {
+                Task<?> task2 = new Task<Void>(new Object[]{}, new Object[]{r}) {
                     @Override
                     protected Void runRolez() {
                         assertEquals(1, r.o.value);
@@ -490,7 +468,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                         return null;
                     }
                 };
-                task2.taskStartTransitions(new Object[]{}, new Object[]{r});
                 s.start(task2);
                 region(2);
                 
@@ -506,7 +483,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                Task<?> task1 = new Task<Void>() {
+                Task<?> task1 = new Task<Void>(new Object[]{}, new Object[]{i}) {
                     @Override
                     protected Void runRolez() {
                         assertEquals(0, i.value);
@@ -514,10 +491,9 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                         return null;
                     }
                 };
-                task1.taskStartTransitions(new Object[]{}, new Object[]{i});
                 s.start(task1);
                 
-                Task<?> task2 = new Task<Void>() {
+                Task<?> task2 = new Task<Void>(new Object[]{}, new Object[]{r}) {
                     @Override
                     protected Void runRolez() {
                         assertEquals(0, r.o.value);
@@ -525,10 +501,9 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                         return null;
                     }
                 };
-                task2.taskStartTransitions(new Object[]{}, new Object[]{r});
                 s.start(task2);
                 
-                Task<?> task3 = new Task<Void>() {
+                Task<?> task3 = new Task<Void>(new Object[]{}, new Object[]{i}) {
                     @Override
                     protected Void runRolez() {
                         assertEquals(0, i.value);
@@ -536,7 +511,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                         return null;
                     }
                 };
-                task3.taskStartTransitions(new Object[]{}, new Object[]{i});
                 s.start(task3);
                 region(3);
                 
@@ -554,7 +528,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                Task<?> task1 = new Task<Void>() {
+                Task<?> task1 = new Task<Void>(new Object[]{i}, new Object[]{}) {
                     @Override
                     protected Void runRolez() {
                         region(0);
@@ -562,10 +536,9 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                         return null;
                     }
                 };
-                task1.taskStartTransitions(new Object[]{i}, new Object[]{});
                 s.start(task1);
                 
-                Task<?> task2 = new Task<Void>() {
+                Task<?> task2 = new Task<Void>(new Object[]{r}, new Object[]{}) {
                     @Override
                     protected Void runRolez() {
                         region(1);
@@ -573,10 +546,9 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                         return null;
                     }
                 };
-                task2.taskStartTransitions(new Object[]{r}, new Object[]{});
                 s.start(task2);
                 
-                Task<?> task3 = new Task<Void>() {
+                Task<?> task3 = new Task<Void>(new Object[]{i}, new Object[]{}) {
                     @Override
                     protected Void runRolez() {
                         region(2);
@@ -584,7 +556,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                         return null;
                     }
                 };
-                task3.taskStartTransitions(new Object[]{i}, new Object[]{});
                 s.start(task3);
                 region(3);
                 
@@ -600,13 +571,13 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                Task<?> task1 = new Task<Void>() {
+                Task<?> task1 = new Task<Void>(new Object[]{r}, new Object[]{}) {
                     @Override
                     protected Void runRolez() {
                         final Int i2 = r.o;
                         i2.value++;
                         
-                        Task<?> task2 = new Task<Void>() {
+                        Task<?> task2 = new Task<Void>(new Object[]{i2}, new Object[]{}) {
                             @Override
                             protected Void runRolez() {
                                 region(0);
@@ -614,14 +585,12 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                                 return null;
                             }
                         };
-                        task2.taskStartTransitions(new Object[]{i2}, new Object[]{});
                         s.start(task2);
                         region(2);
                         
                         return null;
                     }
                 };
-                task1.taskStartTransitions(new Object[]{r}, new Object[]{});
                 s.start(task1);
                 region(4);
                 
@@ -638,7 +607,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                Task<?> task1 = new Task<Void>() {
+                Task<?> task1 = new Task<Void>(new Object[]{r}, new Object[]{}) {
                     @Override
                     protected Void runRolez() {
                         r.o.value++;
@@ -646,10 +615,9 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                         return null;
                     }
                 };
-                task1.taskStartTransitions(new Object[]{r}, new Object[]{});
                 s.start(task1);
                 
-                Task<?> task2 = new Task<Void>() {
+                Task<?> task2 = new Task<Void>(new Object[]{}, new Object[]{i}) {
                     @Override
                     protected Void runRolez() {
                         region(2);
@@ -657,7 +625,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                         return null;
                     }
                 };
-                task2.taskStartTransitions(new Object[]{}, new Object[]{i});
                 s.start(task2);
                 region(3);
                 
@@ -674,14 +641,13 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                Task<?> task = new Task<Void>() {
+                Task<?> task = new Task<Void>(new Object[]{}, new Object[]{r}) {
                     @Override
                     protected Void runRolez() {
                         assertEquals(0, i.value);
                         return null;
                     }
                 };
-                task.taskStartTransitions(new Object[]{}, new Object[]{r});
                 s.start(task);
                 
                 guardReadWrite(r).o = new Int(10);
@@ -697,7 +663,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                Task<?> task1 = new Task<Void>() {
+                Task<?> task1 = new Task<Void>(new Object[]{r}, new Object[]{}) {
                     @Override
                     protected Void runRolez() {
                         r.o = new Int();
@@ -705,7 +671,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                         return null;
                     }
                 };
-                task1.taskStartTransitions(new Object[]{r}, new Object[]{});
                 s.start(task1);
                 
                 assertEquals(0, guardReadOnly(i).value);
@@ -722,26 +687,24 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
-                Task<?> task1 = new Task<Void>() {
+                Task<?> task1 = new Task<Void>(new Object[]{r}, new Object[]{}) {
                     @Override
                     protected Void runRolez() {
                         r.o = new Int();
                         
                         final Int i2 = r.o;
                         i2.value++;
-                        Task<?> task2 = new Task<Void>() {
+                        Task<?> task2 = new Task<Void>(new Object[]{i2}, new Object[]{}) {
                             @Override
                             protected Void runRolez() {
                                 i2.value++;
                                 return null;
                             }
                         };
-                        task2.taskStartTransitions(new Object[]{i2}, new Object[]{});
                         s.start(task2);
                         return null;
                     }
                 };
-                task1.taskStartTransitions(new Object[]{r}, new Object[]{});
                 s.start(task1);
                 
                 assertEquals(2, guardReadOnly(guardReadOnly(r).o).value);
@@ -758,14 +721,13 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 final Node n2 = new Node(n1);
                 n1.next = n2;
                 
-                Task<?> task = new Task<Void>() {
+                Task<?> task = new Task<Void>(new Object[]{}, new Object[]{n1}) {
                     @Override
                     protected Void runRolez() {
                         assertEquals(0, n1.next.data);
                         return null;
                     }
                 };
-                task.taskStartTransitions(new Object[]{}, new Object[]{n1});
                 s.start(task);
                 
                 guardReadWrite(n1).next = new Node(10);
@@ -778,19 +740,18 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
         assumeVerifyCorrectness();
         verifyTask(new Runnable() {
             public void run() {
-                Task<Int> task1 = new Task<Int>() {
+                Task<Int> task1 = new Task<Int>(new Object[]{}, new Object[]{}) {
                     @Override
                     protected Int runRolez() {
                         final Int result = new Int();
                         
-                        Task<?> task2 = new Task<Void>() {
+                        Task<?> task2 = new Task<Void>(new Object[]{result}, new Object[]{}) {
                             @Override
                             protected Void runRolez() {
                                 guardReadWrite(result).value = 3;
                                 return null;
                             }
                         };
-                        task2.taskStartTransitions(new Object[]{result}, new Object[]{});
                         s.start(task2);
                         
                         return result;

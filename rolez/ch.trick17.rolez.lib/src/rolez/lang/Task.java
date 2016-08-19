@@ -41,14 +41,14 @@ public abstract class Task<V> implements Runnable {
     private volatile V result;
     private volatile Throwable exception;
     
-    private final List<Guarded> passed = new ArrayList<>();
+    private List<Guarded> passed;
     /**
      * Contains all objects that are reachable from any passed one when the task starts. At the end
      * of the task, the object graphs may have changed, so some objects may not be reachable
      * anymore. To be able to release those, they are stored here.
      */
-    private final Set<Guarded> passedReachable = newIdentitySet();
-    private final Set<Guarded> sharedReachable = newIdentitySet();
+    private Set<Guarded> passedReachable;
+    private Set<Guarded> sharedReachable;
     
     /**
      * The parent task. Parent links are followed to efficiently detect a parent-child relation
@@ -63,10 +63,12 @@ public abstract class Task<V> implements Runnable {
      */
     private final List<Task<?>> children = new ArrayList<>();
     
-    public Task() {
+    public Task(Object[] passedObjects, Object[] sharedObjects) {
         this.parent = currentTask();
         if(parent != null)
             parent.children.add(this);
+        
+        taskStartTransitions(passedObjects, sharedObjects);
     }
     
     /**
@@ -146,7 +148,7 @@ public abstract class Task<V> implements Runnable {
      * invoked from Java and creating a task object from a {@link Callable} is not possible.
      */
     public static void registerNewTask() {
-        localStack.get().push(new Task<Void>() {
+        localStack.get().push(new Task<Void>(new Object[]{}, new Object[]{}) {
             @Override
             protected Void runRolez() {
                 return null;
@@ -205,16 +207,18 @@ public abstract class Task<V> implements Runnable {
     
     /* Transitions */
     
-    public void taskStartTransitions(Object[] passedObjects, Object[] sharedObjects) {
-        assert passedReachable.isEmpty();
+    private void taskStartTransitions(Object[] passedObjects, Object[] sharedObjects) {
+        passed = new ArrayList<>(passedObjects.length);
         for(Object g : passedObjects)
-            if(g instanceof Guarded) {
+            if(g instanceof Guarded)
                 passed.add((Guarded) g);
-                ((Guarded) g).guardReadWriteReachable(passedReachable);
-            }
+            
+        passedReachable = newIdentitySet();
+        for(Guarded g : passed)
+            g.guardReadWriteReachable(passedReachable);
         
         // Objects that are reachable both from a passed and a shared object are effectively *passed*
-        assert sharedReachable.isEmpty();
+        sharedReachable = newIdentitySet();
         sharedReachable.addAll(passedReachable);
         for(Object g : sharedObjects)
             if(g instanceof Guarded)
@@ -258,6 +262,11 @@ public abstract class Task<V> implements Runnable {
         }
         if(parent != null)
             unpark(parent.executingThread);
+        
+        /* Clear fields to allow task args to be GC'd */
+        passed = null;
+        passedReachable = null;
+        sharedReachable = null;
     }
     
     private static Set<Guarded> newIdentitySet() {
