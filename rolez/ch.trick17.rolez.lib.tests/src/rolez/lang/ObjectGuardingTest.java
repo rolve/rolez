@@ -273,6 +273,29 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     }
     
     @Test
+    public void testDoublePass() {
+        assumeVerifyCorrectness();
+        verifyTask(new Runnable() {
+            public void run() {
+                final Int i = new Int();
+                final Int j = i;
+                
+                Task<?> task = new Task<Void>() {
+                    @Override
+                    protected Void runRolez() {
+                        guardReadWrite(i).value = 42;
+                        return null;
+                    }
+                };
+                task.taskStartTransitions(new Object[]{i, j}, new Object[]{});
+                s.start(task);
+                
+                assertEquals(42, guardReadOnly(i).value);
+            }
+        });
+    }
+    
+    @Test
     public void testPassShare() {
         verifyTask(new Runnable() {
             public void run() {
@@ -746,6 +769,37 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 s.start(task);
                 
                 guardReadWrite(n1).next = new Node(10);
+            }
+        });
+    }
+    
+    @Test
+    public void testReturn() {
+        assumeVerifyCorrectness();
+        verifyTask(new Runnable() {
+            public void run() {
+                Task<Int> task1 = new Task<Int>() {
+                    @Override
+                    protected Int runRolez() {
+                        final Int result = new Int();
+                        
+                        Task<?> task2 = new Task<Void>() {
+                            @Override
+                            protected Void runRolez() {
+                                guardReadWrite(result).value = 3;
+                                return null;
+                            }
+                        };
+                        task2.taskStartTransitions(new Object[]{result}, new Object[]{});
+                        s.start(task2);
+                        
+                        return result;
+                    }
+                };
+                s.start(task1);
+                Int i = task1.get();
+                
+                assertEquals(3, guardReadOnly(i).value);
             }
         });
     }
