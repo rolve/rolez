@@ -37,7 +37,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     
     @Test
     public void testShare() {
-        verifyTask(new int[][]{{0, 1}, {2, 3}, {0, 3}}, new Runnable() {
+        verifyTask(new int[][]{{2, 3}, {0, 3}}, new Runnable() {
             public void run() {
                 final Int i = new Int();
                 
@@ -46,8 +46,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     protected Void runRolez() {
                         region(0);
                         assertEquals(0, i.value);
-                        taskFinishTransitions();
-                        region(1);
                         return null;
                     }
                 };
@@ -72,7 +70,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         assertEquals(0, i.value);
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -86,30 +83,8 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     }
     
     @Test
-    public void testShareMissingRelease() {
-        verifyTaskDeadlock(new Runnable() {
-            public void run() {
-                final Int i = new Int();
-                
-                Task<?> task = new Task<Void>() {
-                    @Override
-                    protected Void runRolez() {
-                        assertEquals(0, i.value);
-                        // Missing finish transitions cause a deadlock
-                        return null;
-                    }
-                };
-                task.taskStartTransitions(new Object[]{}, new Object[]{i});
-                s.start(task);
-                
-                guardReadWrite(i).value = 1;
-            }
-        });
-    }
-    
-    @Test
     public void testShareMultiple() {
-        verifyTask(new int[][]{{0, 1}, {2, 3}, {4, 5}, {0, 5}, {2, 5}, {0, 3 /* or: 1, 2 */}},
+        verifyTask(new int[][]{{4, 5}, {0, 5}, {2, 5}},
                 new Runnable() {
                     public void run() {
                         final Int i = new Int();
@@ -119,8 +94,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                             protected Void runRolez() {
                                 region(0);
                                 assertEquals(0, i.value);
-                                taskFinishTransitions();
-                                region(1);
                                 return null;
                             }
                         };
@@ -132,8 +105,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                             protected Void runRolez() {
                                 region(2);
                                 assertEquals(0, i.value);
-                                taskFinishTransitions();
-                                region(3);
                                 return null;
                             }
                         };
@@ -149,7 +120,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     
     @Test
     public void testPass() {
-        verifyTask(new int[][]{{0, 1}, {0, 3}, {2, 3}}, new Runnable() {
+        verifyTask(new int[][]{{0, 3}, {2, 3}}, new Runnable() {
             public void run() {
                 final Int i = new Int();
                 
@@ -158,8 +129,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     protected Void runRolez() {
                         region(0);
                         i.value++;
-                        taskFinishTransitions();
-                        region(1);
                         return null;
                     }
                 };
@@ -184,7 +153,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         i.value = 1;
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -198,33 +166,10 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     }
     
     @Test
-    public void testPassMissingRelease() {
-        assumeMultithreaded();
-        verifyTaskDeadlock(new Runnable() {
-            public void run() {
-                final Int i = new Int();
-                
-                Task<?> task = new Task<Void>() {
-                    @Override
-                    protected Void runRolez() {
-                        i.value = 1;
-                        // Missing finish transitions cause a deadlock
-                        return null;
-                    }
-                };
-                task.taskStartTransitions(new Object[]{i}, new Object[]{});
-                s.start(task);
-                
-                assertEquals(1, guardReadOnly(i).value);
-            }
-        });
-    }
-    
-    @Test
     public void testPassMultiple() {
         /* IMPROVE: Allow {0, 4} in parallel by passing not-yet-available data to tasks (so far,
          * pass() is blocking) */
-        verifyTask(new int[][]{{0, 1}, {0, 2, 3}, {0, 2, 5}, {4, 5}, {0, 4}},
+        verifyTask(new int[][]{{0, 2, 5}, {4, 5}, {0, 4}},
                 new Runnable() {
                     public void run() {
                         final Int i = new Int();
@@ -234,8 +179,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                             protected Void runRolez() {
                                 region(0);
                                 i.value++;
-                                taskFinishTransitions();
-                                region(1);
                                 return null;
                             }
                         };
@@ -247,8 +190,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                             protected Void runRolez() {
                                 region(2);
                                 i.value++;
-                                taskFinishTransitions();
-                                region(3);
                                 return null;
                             }
                         };
@@ -265,7 +206,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     
     @Test
     public void testPassNested() {
-        verifyTask(new int[][]{{0, 1}, {2, 3}, {4, 5}, {0, 3}, {2, 5}, {0, 5}},
+        verifyTask(new int[][]{{4, 5}, {2, 5}, {0, 5}},
                 new Runnable() {
                     public void run() {
                         final Int i = new Int();
@@ -280,8 +221,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                                     protected Void runRolez() {
                                         i.value++;
                                         region(0);
-                                        taskFinishTransitions();
-                                        region(1);
                                         return null;
                                     }
                                 };
@@ -291,9 +230,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                                 
                                 assertEquals(2, guardReadWrite(i).value);
                                 i.value++;
-                                
-                                taskFinishTransitions();
-                                region(3);
                                 return null;
                             }
                         };
@@ -321,54 +257,17 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                         Task<?> task2 = new Task<Void>() {
                             @Override
                             protected Void runRolez() {
-                                taskFinishTransitions();
                                 return null;
                             }
                         };
                         task2.taskStartTransitions(new Object[]{i}, new Object[]{});
                         s.start(task2);
                         
-                        taskFinishTransitions();
                         return null;
                     }
                 };
                 task1.taskStartTransitions(new Object[]{i}, new Object[]{});
                 s.start(task1);
-            }
-        });
-    }
-    
-    @Test
-    public void testPassNestedMissingRelease() {
-        assumeMultithreaded();
-        verifyTaskDeadlock(new Runnable() {
-            public void run() {
-                final Int i = new Int();
-                
-                Task<?> task1 = new Task<Void>() {
-                    @Override
-                    protected Void runRolez() {
-                        i.value++;
-                        
-                        Task<?> task2 = new Task<Void>() {
-                            @Override
-                            protected Void runRolez() {
-                                i.value++;
-                                // Missing finish transitions cause a deadlock
-                                return null;
-                            }
-                        };
-                        task2.taskStartTransitions(new Object[]{i}, new Object[]{});
-                        s.start(task2);
-                        
-                        taskFinishTransitions();
-                        return null;
-                    }
-                };
-                task1.taskStartTransitions(new Object[]{i}, new Object[]{});
-                s.start(task1);
-                
-                assertEquals(3, guardReadOnly(i).value);
             }
         });
     }
@@ -383,8 +282,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         i.value++;
-                        taskFinishTransitions();
-                        region(0);
                         return null;
                     }
                 };
@@ -396,7 +293,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     protected Void runRolez() {
                         assertEquals(1, i.value);
                         region(1);
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -411,7 +307,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     
     @Test
     public void testShareGroup() {
-        verifyTask(new int[][]{{0, 1}, {2, 3}, {0, 3}}, new Runnable() {
+        verifyTask(new int[][]{{2, 3}, {0, 3}}, new Runnable() {
             public void run() {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
@@ -421,8 +317,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     protected Void runRolez() {
                         assertEquals(0, r.o.value);
                         region(0);
-                        taskFinishTransitions();
-                        region(1);
                         return null;
                     }
                 };
@@ -438,19 +332,17 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     
     @Test
     public void testShareGroupMultiple() {
+        assumeVerifyCorrectness();
         verifyTask(new Runnable() {
             public void run() {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
                 
                 for(int k = 0; k < 2; k++) {
-                    final int theK = k;
                     Task<?> task = new Task<Void>() {
                         @Override
                         protected Void runRolez() {
                             assertEquals(0, r.o.value);
-                            taskFinishTransitions();
-                            region(theK);
                             return null;
                         }
                     };
@@ -459,14 +351,13 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 }
                 
                 guardReadWrite(i).value = 1;
-                region(2);
             }
         });
     }
     
     @Test
     public void testPassGroup() {
-        verifyTask(new int[][]{{0, 1}, {2, 3}, {0, 3}}, new Runnable() {
+        verifyTask(new int[][]{{2, 3}, {0, 3}}, new Runnable() {
             public void run() {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
@@ -476,8 +367,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     protected Void runRolez() {
                         r.o.value++;
                         region(0);
-                        taskFinishTransitions();
-                        region(1);
                         return null;
                     }
                 };
@@ -504,7 +393,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                         @Override
                         protected Void runRolez() {
                             r.o.value++;
-                            taskFinishTransitions();
                             return null;
                         }
                     };
@@ -535,7 +423,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                             @Override
                             protected Void runRolez() {
                                 r.o.value++;
-                                taskFinishTransitions();
                                 return null;
                             }
                         };
@@ -544,8 +431,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                         
                         assertEquals(2, guardReadWrite(i2).value);
                         i2.value++;
-                        
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -568,8 +453,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         r.o.value++;
-                        taskFinishTransitions();
-                        region(0);
                         return null;
                     }
                 };
@@ -581,7 +464,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     protected Void runRolez() {
                         assertEquals(1, r.o.value);
                         region(1);
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -606,7 +488,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     protected Void runRolez() {
                         assertEquals(0, i.value);
                         region(0);
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -618,7 +499,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     protected Void runRolez() {
                         assertEquals(0, r.o.value);
                         region(1);
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -630,7 +510,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     protected Void runRolez() {
                         assertEquals(0, i.value);
                         region(2);
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -657,7 +536,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     protected Void runRolez() {
                         region(0);
                         i.value++;
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -669,7 +547,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     protected Void runRolez() {
                         region(1);
                         r.o.value++;
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -681,7 +558,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     protected Void runRolez() {
                         region(2);
                         i.value++;
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -696,9 +572,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     
     @Test
     public void testPassSubgroupNested() {
-        /* IMPROVE: Allow {0, 3} by releasing objects independent of reachable objects that are
-         * still owned by other threads. */
-        verifyTask(new int[][]{{0, 1}, {2, 3}, {0, 3}}, new Runnable() {
+        verifyTask(new Runnable() {
             public void run() {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
@@ -714,8 +588,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                             protected Void runRolez() {
                                 region(0);
                                 i2.value++;
-                                taskFinishTransitions();
-                                region(1);
                                 return null;
                             }
                         };
@@ -723,8 +595,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                         s.start(task2);
                         region(2);
                         
-                        taskFinishTransitions();
-                        region(3);
                         return null;
                     }
                 };
@@ -740,7 +610,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     @Test
     public void testPassShareSubgroup() {
         /* IMPROVE: Allow {0, 2, 3} by sharing not-yet-available data? */
-        verifyTask(new int[][]{{0, 1}, {0, 2}, {0, 3}}, new Runnable() {
+        verifyTask(new int[][]{{0, 2}, {0, 3}}, new Runnable() {
             public void run() {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
@@ -750,8 +620,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     protected Void runRolez() {
                         r.o.value++;
                         region(0);
-                        taskFinishTransitions();
-                        region(1);
                         return null;
                     }
                 };
@@ -763,7 +631,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     protected Void runRolez() {
                         region(2);
                         assertEquals(1, i.value);
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -788,7 +655,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         assertEquals(0, i.value);
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -813,7 +679,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     protected Void runRolez() {
                         r.o = new Int();
                         r.o.value = 10;
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -845,13 +710,11 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                             @Override
                             protected Void runRolez() {
                                 i2.value++;
-                                taskFinishTransitions();
                                 return null;
                             }
                         };
                         task2.taskStartTransitions(new Object[]{i2}, new Object[]{});
                         s.start(task2);
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -876,7 +739,6 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         assertEquals(0, n1.next.data);
-                        taskFinishTransitions();
                         return null;
                     }
                 };

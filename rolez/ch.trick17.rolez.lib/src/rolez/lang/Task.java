@@ -93,6 +93,7 @@ public abstract class Task<V> implements Runnable {
             result = null;
             exception = e;
         }
+        taskFinishTransitions();
         stack.pop();
         
         /* Unblock threads waiting to get the result */
@@ -231,16 +232,20 @@ public abstract class Task<V> implements Runnable {
             g.completePass();
     }
     
-    public void taskFinishTransitions() {
+    private void taskFinishTransitions() {
         /* Release all shared objects. No need for guarding, as it's not possible that they have
          * been modified. */
         for(Guarded g : sharedReachable)
             g.releaseShared();
         
-        /* Then, find objects that are now reachable from passed objects and release those */
+        /* Then, find objects that are now reachable from passed objects (and the result object) and
+         * release those */
         Set<Guarded> newPassedReachable = newIdentitySet();
         for(Guarded g : passed)
             g.guardReadWriteReachable(newPassedReachable);
+        if(result instanceof Guarded)
+            ((Guarded) result).guardReadWriteReachable(newPassedReachable);
+        
         for(Guarded g : newPassedReachable)
             g.releasePassed();
         
@@ -251,7 +256,8 @@ public abstract class Task<V> implements Runnable {
             guardReadWrite(g);
             g.releasePassed();
         }
-        unpark(parent.executingThread);
+        if(parent != null)
+            unpark(parent.executingThread);
     }
     
     private static Set<Guarded> newIdentitySet() {

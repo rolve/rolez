@@ -47,7 +47,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     @Override
                     public Void runRolez() {
                         assertEquals(2, a.data[2].value);
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -72,7 +71,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     protected Void runRolez() {
                         for(int i = 0; i < a.data.length; i++)
                             a.data[i].value++;
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -96,7 +94,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         assertEquals(0, a.data[0]);
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -119,7 +116,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     protected Void runRolez() {
                         for(int i = 0; i < a.data.length; i++)
                             a.data[i]++;
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -144,7 +140,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         assertEquals(0, i.value);
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -155,7 +150,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         assertEquals(0, a.data[0].value);
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -166,7 +160,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         assertEquals(0, i.value);
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -189,7 +182,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         i.value++;
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -200,7 +192,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         a.data[0].value++;
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -211,7 +202,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         i.value++;
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -241,7 +231,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                             @Override
                             protected Void runRolez() {
                                 i2.value++;
-                                taskFinishTransitions();
                                 return null;
                             }
                         };
@@ -251,7 +240,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                         assertEquals(2, guardReadWrite(i2).value);
                         i2.value++;
                         
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -277,7 +265,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     protected Void runRolez() {
                         guardReadOnly(slice); // Not necessary, but could happen
                         assertEquals(1, slice.data[1].value);
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -304,7 +291,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                         guardReadWrite(slice); // Not necessary, but could happen
                         for(int i = slice.range.begin; i < slice.range.end; i++)
                             slice.data[i].value++;
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -333,7 +319,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         assertEquals(0, slice.data[0]);
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -356,7 +341,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         assertEquals(0, slice.data[0]);
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -380,7 +364,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     protected Void runRolez() {
                         for(int i = slice.range.begin; i < slice.range.end; i++)
                             slice.data[i]++;
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -409,7 +392,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         assertEquals(1, slice.data[1].value);
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -434,7 +416,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     protected Void runRolez() {
                         final GuardedSlice<Int[]> slice = a.slice(0, 2, 1);
                         assertEquals(0, slice.data[0].value);
-                        taskFinishTransitions();
                         /* Use slice again to prevent incidental garbage collection */
                         slice.toString();
                         return null;
@@ -466,14 +447,12 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                             @Override
                             protected Void runRolez() {
                                 assertEquals(0, slice2.data[0].value);
-                                taskFinishTransitions();
                                 return null;
                             }
                         };
                         task2.taskStartTransitions(new Object[]{}, new Object[]{slice2});
                         s.start(task2);
                         
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -497,7 +476,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         assertEquals(1, a.data[1].value);
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -521,7 +499,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         slice1.data[0]++;
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -548,7 +525,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         assertEquals(1, slice1.data[1].value);
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -576,7 +552,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     protected Void runRolez() {
                         final GuardedSlice<int[]> slice2 = ref.o.slice(1, 2, 1);
                         assertEquals(1, slice2.data[1]);
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -600,7 +575,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         assertEquals(1, slice1.data[1]);
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -630,7 +604,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         assertEquals(0, subslice.data[0].value);
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -656,7 +629,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                         final GuardedSlice<int[]> slice2 = ref.o.slice(0, 5, 1);
                         for(int i = slice2.range.begin; i < slice2.range.end; i++)
                             slice2.data[i]++;
-                        taskFinishTransitions();
                         slice2.toString();
                         return null;
                     }
@@ -685,7 +657,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         assertEquals(0, slice.data[0].value);
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -696,7 +667,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         assertEquals(0, a.data[0].value);
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -707,7 +677,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         assertEquals(0, slice.data[0].value);
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -731,7 +700,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         slice.data[0].value++;
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -742,7 +710,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         a.data[0].value++;
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -753,7 +720,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         slice.data[0].value++;
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -782,7 +748,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                         for(int i = slice1.range.begin; i < slice1.range.end; i++)
                             slice1.data[i].value++;
                         region(0);
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -795,7 +760,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                         for(int i = slice2.range.begin; i < slice2.range.end; i++)
                             slice2.data[i].value++;
                         region(1);
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -831,7 +795,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                             protected Void runRolez() {
                                 slice2.data[0].value++;
                                 region(0);
-                                taskFinishTransitions();
                                 return null;
                             }
                         };
@@ -841,7 +804,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                         slice1.data[1].value++;
                         region(1);
                         
-                        taskFinishTransitions();
                         region(2);
                         return null;
                     }
@@ -879,7 +841,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                             protected Void runRolez() {
                                 slice2.data[0]++;
                                 region(0);
-                                taskFinishTransitions();
                                 return null;
                             }
                         };
@@ -889,7 +850,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                         slice1.data[1]++;
                         region(1);
                         
-                        taskFinishTransitions();
                         region(2);
                         return null;
                     }
@@ -919,7 +879,6 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     protected Void runRolez() {
                         a.data[0]++;
                         region(0);
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -948,14 +907,12 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                         Task<?> task2 = new Task<Void>() {
                             @Override
                             protected Void runRolez() {
-                                taskFinishTransitions();
                                 return null;
                             }
                         };
                         task2.taskStartTransitions(new Object[]{a}, new Object[]{});
                         s.start(task2);
                         
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -980,14 +937,12 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                             @Override
                             protected Void runRolez() {
                                 assertEquals(0, a.data[0]);
-                                taskFinishTransitions();
                                 return null;
                             }
                         };
                         task2.taskStartTransitions(new Object[]{}, new Object[]{a});
                         s.start(task2);
                         
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -1014,14 +969,12 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                             @Override
                             protected Void runRolez() {
                                 assertEquals(0, slice1.data[0]);
-                                taskFinishTransitions();
                                 return null;
                             }
                         };
                         task2.taskStartTransitions(new Object[]{}, new Object[]{slice1});
                         s.start(task2);
                         
-                        taskFinishTransitions();
                         return null;
                     }
                 };
@@ -1049,14 +1002,12 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                             @Override
                             protected Void runRolez() {
                                 slice.data[1]++;
-                                taskFinishTransitions();
                                 return null;
                             }
                         };
                         task2.taskStartTransitions(new Object[]{slice}, new Object[]{});
                         s.start(task2);
                         
-                        taskFinishTransitions();
                         return null;
                     }
                 };
