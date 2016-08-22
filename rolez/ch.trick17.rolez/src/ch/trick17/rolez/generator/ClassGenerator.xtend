@@ -3,19 +3,18 @@ package ch.trick17.rolez.generator
 import ch.trick17.rolez.RolezExtensions
 import ch.trick17.rolez.generic.ParameterizedMethod
 import ch.trick17.rolez.rolez.BuiltInRole
-import ch.trick17.rolez.rolez.Class
 import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.Field
 import ch.trick17.rolez.rolez.Method
 import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.Param
 import ch.trick17.rolez.rolez.Pure
+import ch.trick17.rolez.rolez.ReadOnly
 import ch.trick17.rolez.rolez.ReadWrite
 import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleParamRef
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.SingletonClass
-import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.TypeParamRef
 import ch.trick17.rolez.rolez.Void
 import javax.inject.Inject
@@ -114,36 +113,15 @@ class ClassGenerator {
         «IF isTask»
         
         public «taskClassName»<«type.generateGeneric»> $«name»Task(«params.map[gen].join(", ")») {
-            «taskClassName»<«type.generateGeneric»> $task = new «taskClassName»<«type.generateGeneric»>() {
+            return new «taskClassName»<«type.generateGeneric»>(new Object[]{«genTransitionArgs(ReadWrite)»}, new Object[]{«genTransitionArgs(ReadOnly)»}) {
                 @java.lang.Override
                 protected «type.generateGeneric» runRolez() {
-                    «IF thisType.needsCompletePass»
-                    «genCompletePass("", enclosingClass)»
-                    «ENDIF»
-                    «FOR p : params.filter[type.needsCompletePass]»
-                    «genCompletePass(p.safeName, (p.type as RoleType).base.clazz)»
-                    «ENDFOR»
-                    «body.generateWithTryCatch(new RoleAnalysis(body, CodeKind.TASK), CodeKind.TASK, true)»
-                    finally {
-                        «IF thisType.needsTransition»
-                        «genRelease("", thisType)»
-                        «ENDIF»
-                        «FOR p : params.filter[type.needsTransition]»
-                        «genRelease(p.safeName, p.type as RoleType)»
-                        «ENDFOR»
-                    }
+                    «body.generateWithTryCatch(new RoleAnalysis(body, CodeKind.TASK), CodeKind.TASK, false)»
                     «IF type instanceof Void»
                     return null;
                     «ENDIF»
                 }
             };
-            «IF thisType.needsTransition»
-            «genTransition("", "$task", thisType)»
-            «ENDIF»
-            «FOR p : params.filter[type.needsTransition]»
-            «genTransition(p.safeName, "$task", p.type as RoleType)»
-            «ENDFOR»
-            return $task;
         }
         «ENDIF»
         «IF isMain»
@@ -154,44 +132,15 @@ class ClassGenerator {
         «ENDIF»
     '''
     
-    private def needsTransition(Type it) {
-        isGuarded && !((it as RoleType).role.erased instanceof Pure)
+    private def genTransitionArgs(Method it, Class<? extends Role> role) {
+        (#[thisType -> "this"] + params.filter[type instanceof RoleType].map[type as RoleType -> safeName])
+            .filter[key.needsTransition]
+            .filter[role.isInstance(key.role.erased)]
+            .map[value].join(", ")
     }
     
-    private def genTransition(String target, String task, RoleType type) {
-        val kind = if(type.role.erased instanceof ReadWrite) "pass" else "share"
-        if(type.base.clazz.isObjectClass)
-            '''
-            if(«target» instanceof «jvmGuardedClassName»)
-                ((«jvmGuardedClassName») «target»).«kind»(«task»);
-            '''
-        else
-            '''«IF !target.isEmpty»«target».«ENDIF»«kind»(«task»);'''
-    }
-    
-    private def needsCompletePass(Type it) {
-        isGuarded && (it as RoleType).role.erased instanceof ReadWrite
-    }
-    
-    private def genCompletePass(String target, Class clazz) {
-        if(clazz.isObjectClass)
-            '''
-            if(«target» instanceof «jvmGuardedClassName»)
-                ((«jvmGuardedClassName») «target»).completePass();
-            '''
-        else
-            '''«IF !target.isEmpty»«target».«ENDIF»completePass();'''
-    }
-    
-    private def genRelease(String target, RoleType type) {
-        val kind = if(type.role.erased instanceof ReadWrite) "Passed" else "Shared"
-        if(type.base.clazz.isObjectClass)
-            '''
-            if(«target» instanceof «jvmGuardedClassName»)
-                ((«jvmGuardedClassName») «target»).release«kind»();
-            '''
-        else
-            '''«IF !target.isEmpty»«target».«ENDIF»release«kind»();'''
+    private def needsTransition(RoleType it) {
+        isGuarded && !(role.erased instanceof Pure)
     }
     
     private def erased(Role it) { switch(it) {

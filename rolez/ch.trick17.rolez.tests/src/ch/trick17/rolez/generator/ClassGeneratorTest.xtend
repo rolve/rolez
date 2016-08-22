@@ -355,17 +355,12 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public rolez.lang.Task<Base> $fooTask() {
-                    rolez.lang.Task<Base> $task = new rolez.lang.Task<Base>() {
+                    return new rolez.lang.Task<Base>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected Base runRolez() {
-                            try {
-                                return new Base();
-                            }
-                            finally {
-                            }
+                            return new Base();
                         }
                     };
-                    return $task;
                 }
             }
         ''')
@@ -391,17 +386,12 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public rolez.lang.Task<java.lang.Integer> $fooTask() {
-                    rolez.lang.Task<java.lang.Integer> $task = new rolez.lang.Task<java.lang.Integer>() {
+                    return new rolez.lang.Task<java.lang.Integer>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Integer runRolez() {
-                            try {
-                                return App.this.magic;
-                            }
-                            finally {
-                            }
+                            return App.this.magic;
                         }
                     };
-                    return $task;
                 }
             }
         ''')
@@ -424,18 +414,13 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $fooTask(final int i, final int j) {
-                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<java.lang.Void>() {
+                    return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            try {
-                                new foo.bar.Base(i + j);
-                            }
-                            finally {
-                            }
+                            new foo.bar.Base(i + j);
                             return null;
                         }
                     };
-                    return $task;
                 }
             }
         ''')
@@ -461,56 +446,36 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $fooTask() {
-                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<java.lang.Void>() {
+                    return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            try {
-                            }
-                            finally {
-                            }
                             return null;
                         }
                     };
-                    return $task;
                 }
                 
                 public void bar() {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $barTask() {
-                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<java.lang.Void>() {
+                    return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{this}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            try {
-                            }
-                            finally {
-                                releaseShared();
-                            }
                             return null;
                         }
                     };
-                    share($task);
-                    return $task;
                 }
                 
                 public void baz() {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $bazTask() {
-                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<java.lang.Void>() {
+                    return new rolez.lang.Task<java.lang.Void>(new Object[]{this}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            completePass();
-                            try {
-                            }
-                            finally {
-                                releasePassed();
-                            }
                             return null;
                         }
                     };
-                    pass($task);
-                    return $task;
                 }
             }
         ''')
@@ -534,17 +499,12 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $mainTask() {
-                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<java.lang.Void>() {
+                    return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            try {
-                            }
-                            finally {
-                            }
                             return null;
                         }
                     };
-                    return $task;
                 }
                 
                 public static void main(final java.lang.String[] args) {
@@ -571,17 +531,12 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $mainTask() {
-                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<java.lang.Void>() {
+                    return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            try {
-                            }
-                            finally {
-                            }
                             return null;
                         }
                     };
-                    return $task;
                 }
                 
                 public static void main(final java.lang.String[] args) {
@@ -608,20 +563,13 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $mainTask(final rolez.lang.GuardedArray<java.lang.String[]> args) {
-                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<java.lang.Void>() {
+                    return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{args}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            try {
-                                args.data[0].length();
-                            }
-                            finally {
-                                args.releaseShared();
-                            }
+                            args.data[0].length();
                             return null;
                         }
                     };
-                    args.share($task);
-                    return $task;
                 }
                 
                 public static void main(final java.lang.String[] args) {
@@ -652,26 +600,13 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $fooTask(final Base o1, final Base o2, final Base o3) {
-                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<java.lang.Void>() {
+                    return new rolez.lang.Task<java.lang.Void>(new Object[]{this, o1}, new Object[]{o2}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            completePass();
-                            o1.completePass();
-                            try {
-                                java.lang.System.out.println("Hello World!");
-                            }
-                            finally {
-                                releasePassed();
-                                o1.releasePassed();
-                                o2.releaseShared();
-                            }
+                            java.lang.System.out.println("Hello World!");
                             return null;
                         }
                     };
-                    pass($task);
-                    o1.pass($task);
-                    o2.share($task);
-                    return $task;
                 }
             }
         ''')
@@ -693,23 +628,12 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $fooTask(final java.lang.Object o) {
-                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<java.lang.Void>() {
+                    return new rolez.lang.Task<java.lang.Void>(new Object[]{o}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            if(o instanceof «jvmGuardedClassName»)
-                                ((«jvmGuardedClassName») o).completePass();
-                            try {
-                            }
-                            finally {
-                                if(o instanceof «jvmGuardedClassName»)
-                                    ((«jvmGuardedClassName») o).releasePassed();
-                            }
                             return null;
                         }
                     };
-                    if(o instanceof «jvmGuardedClassName»)
-                        ((«jvmGuardedClassName») o).pass($task);
-                    return $task;
                 }
             }
         ''')
@@ -737,21 +661,13 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $fooTask(final Base o) {
-                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<java.lang.Void>() {
+                    return new rolez.lang.Task<java.lang.Void>(new Object[]{o}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            o.completePass();
-                            try {
-                                o.foo = 42;
-                            }
-                            finally {
-                                o.releasePassed();
-                            }
+                            o.foo = 42;
                             return null;
                         }
                     };
-                    o.pass($task);
-                    return $task;
                 }
             }
         ''')
@@ -779,85 +695,60 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $fooTask() {
-                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<java.lang.Void>() {
+                    return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            try {
-                            }
-                            finally {
-                            }
                             return null;
                         }
                     };
-                    return $task;
                 }
                 
                 public void foo(final int i) {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $fooTask(final int i) {
-                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<java.lang.Void>() {
+                    return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            try {
-                            }
-                            finally {
-                            }
                             return null;
                         }
                     };
-                    return $task;
                 }
                 
                 public void foo(final double d) {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $fooTask(final double d) {
-                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<java.lang.Void>() {
+                    return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            try {
-                            }
-                            finally {
-                            }
                             return null;
                         }
                     };
-                    return $task;
                 }
                 
                 public void foo(final rolez.lang.GuardedArray<int[]> a, final rolez.lang.GuardedArray<double[]> b) {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $fooTask(final rolez.lang.GuardedArray<int[]> a, final rolez.lang.GuardedArray<double[]> b) {
-                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<java.lang.Void>() {
+                    return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            try {
-                            }
-                            finally {
-                            }
                             return null;
                         }
                     };
-                    return $task;
                 }
                 
                 public void foo(final rolez.lang.GuardedArray<rolez.lang.GuardedArray<int[]>[]> a) {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $fooTask(final rolez.lang.GuardedArray<rolez.lang.GuardedArray<int[]>[]> a) {
-                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<java.lang.Void>() {
+                    return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            try {
-                            }
-                            finally {
-                            }
                             return null;
                         }
                     };
-                    return $task;
                 }
             }
         ''')
@@ -1015,23 +906,13 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $finalTask(final rolez.lang.GuardedArray<int[]> £do) {
-                    rolez.lang.Task<java.lang.Void> $task = new rolez.lang.Task<java.lang.Void>() {
+                    return new rolez.lang.Task<java.lang.Void>(new Object[]{£do}, new Object[]{this}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            £do.completePass();
-                            try {
-                                £do.data[0] = 42;
-                            }
-                            finally {
-                                releaseShared();
-                                £do.releasePassed();
-                            }
+                            £do.data[0] = 42;
                             return null;
                         }
                     };
-                    share($task);
-                    £do.pass($task);
-                    return $task;
                 }
             }
         ''')
