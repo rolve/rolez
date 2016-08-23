@@ -125,8 +125,13 @@ class InstrGenerator {
         private def dispatch CharSequence generate(SuperConstrCall it) '''
             super(«args.map[generate].join(", ")»);'''
         
-        private def dispatch CharSequence generate(ReturnNothing _) '''
-            return;'''
+        private def dispatch CharSequence generate(ReturnNothing _) {
+            if(codeKind == CodeKind.TASK) '''
+                return null;'''
+            else '''
+                return;
+            '''
+        }
         
         private def dispatch CharSequence generate(ReturnExpr it) '''
             return «expr.generate»;'''

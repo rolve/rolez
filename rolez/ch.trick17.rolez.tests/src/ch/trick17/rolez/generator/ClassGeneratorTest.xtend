@@ -754,6 +754,83 @@ class ClassGeneratorTest extends GeneratorTest {
         ''')
     }
     
+    @Test def testTaskReturn() {
+        parse('''
+            class A {
+                task pure foo(i: int): {
+                    return;
+                }
+            }
+        ''', someClasses).onlyClass.generate.assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
+            
+            public class A extends «jvmGuardedClassName» {
+                
+                public A() {
+                    super();
+                }
+                
+                public void foo(final int i) {
+                    return;
+                }
+                
+                public rolez.lang.Task<java.lang.Void> $fooTask(final int i) {
+                    return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
+                        @java.lang.Override
+                        protected java.lang.Void runRolez() {
+                            return null;
+                        }
+                    };
+                }
+            }
+        ''')
+        
+        parse('''
+            class A {
+                task pure foo(i: int): {
+                    if(i == 0)
+                        return;
+                    else {
+                        this.foo(i - 1);
+                        return;
+                    }
+                }
+            }
+        ''', someClasses).onlyClass.generate.assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
+            
+            public class A extends «jvmGuardedClassName» {
+                
+                public A() {
+                    super();
+                }
+                
+                public void foo(final int i) {
+                    if(i == 0)
+                        return;
+                    else {
+                        this.foo(i - 1);
+                        return;
+                    }
+                }
+                
+                public rolez.lang.Task<java.lang.Void> $fooTask(final int i) {
+                    return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
+                        @java.lang.Override
+                        protected java.lang.Void runRolez() {
+                            if(i == 0)
+                                return null;
+                            else {
+                                A.this.foo(i - 1);
+                                return null;
+                            }
+                        }
+                    };
+                }
+            }
+        ''')
+    }
+    
     @Test def testConstr() {
         parse('''
             package foo

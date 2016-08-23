@@ -11,12 +11,15 @@ import ch.trick17.rolez.rolez.Param
 import ch.trick17.rolez.rolez.Pure
 import ch.trick17.rolez.rolez.ReadOnly
 import ch.trick17.rolez.rolez.ReadWrite
+import ch.trick17.rolez.rolez.ReturnNothing
 import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleParamRef
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.SingletonClass
 import ch.trick17.rolez.rolez.TypeParamRef
 import ch.trick17.rolez.rolez.Void
+import ch.trick17.rolez.validation.cfg.CfgProvider
+import ch.trick17.rolez.validation.cfg.InstrNode
 import javax.inject.Inject
 
 import static ch.trick17.rolez.Constants.*
@@ -30,6 +33,7 @@ class ClassGenerator {
     @Inject extension InstrGenerator
     @Inject extension TypeGenerator
     @Inject extension SafeJavaNames
+    @Inject extension CfgProvider
     
     // IMPROVE: Use some kind of import manager (note: the Xtext one is incorrect when using the default pkg)
     
@@ -117,7 +121,7 @@ class ClassGenerator {
                 @java.lang.Override
                 protected «type.generateGeneric» runRolez() {
                     «body.generateWithTryCatch(new RoleAnalysis(body, CodeKind.TASK), CodeKind.TASK, false)»
-                    «IF type instanceof Void»
+                    «IF needsReturnNull»
                     return null;
                     «ENDIF»
                 }
@@ -147,6 +151,11 @@ class ClassGenerator {
         BuiltInRole: it
         RoleParamRef: param.upperBound
     }}
+    
+    private def needsReturnNull(Method it) {
+        type instanceof Void && body.controlFlowGraph.exit.predecessors
+            .filter(InstrNode).exists[!(instr instanceof ReturnNothing)]
+    }
     
     private def genMainInstance(Method it) {
         if(enclosingClass.isSingleton)
