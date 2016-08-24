@@ -127,7 +127,8 @@ class InstrGenerator {
         
         private def dispatch CharSequence generate(ReturnNothing _) {
             if(codeKind == CodeKind.TASK) '''
-                return null;'''
+                return null;
+            '''
             else '''
                 return;
             '''

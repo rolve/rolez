@@ -5,9 +5,7 @@ import static java.util.Collections.newSetFromMap;
 import static java.util.concurrent.locks.LockSupport.unpark;
 import static rolez.lang.Guarded.guardReadWrite;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
@@ -15,16 +13,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
 public abstract class Task<V> implements Runnable {
-    /**
-     * Keeps track of the tasks that are executed within a thread. Whenever a new task is started,
-     * it is added as a child to current, i.e., the top task on the stack.
-     */
-    private static final transient ThreadLocal<Deque<Task<?>>> localStack = new ThreadLocal<Deque<Task<?>>>() {
-        @Override
-        protected Deque<Task<?>> initialValue() {
-            return new ArrayDeque<>();
-        }
-    };
+    
+    private static final transient ThreadLocal<Task<?>> currentTask = new ThreadLocal<Task<?>>();
+    
     // IMPROVE: Could replace thread-local variable with "current" task variable that is passed to
     // all generated methods. Callbacks from mapped methods could go to a "bridge" method that gets
     // the current task from the thread local. Bridge methods only necessary for methods that
@@ -32,7 +23,7 @@ public abstract class Task<V> implements Runnable {
     
     // IMPROVE: To speed this up, could cache current task in a field of a custom thread class or so
     public static Task<?> currentTask() {
-        return localStack.get().peek();
+        return currentTask.get();
     }
     
     private final Sync sync = new Sync();
@@ -78,8 +69,8 @@ public abstract class Task<V> implements Runnable {
      */
     public final void run() {
         executingThread = currentThread();
-        Deque<Task<?>> stack = localStack.get();
-        stack.push(this);
+        Task<?> prevTask = currentTask.get();
+        currentTask.set(this);
         completeTaskStartTransitions();
         try {
             result = runRolez();
@@ -96,7 +87,7 @@ public abstract class Task<V> implements Runnable {
             exception = e;
         }
         taskFinishTransitions();
-        stack.pop();
+        currentTask.set(prevTask);
         
         /* Unblock threads waiting to get the result */
         sync.done();
@@ -147,8 +138,9 @@ public abstract class Task<V> implements Runnable {
      * current thread!). This method is only intended for specific situations, where Rolez code is
      * invoked from Java and creating a task object from a {@link Callable} is not possible.
      */
-    public static void registerNewTask() {
-        localStack.get().push(new Task<Void>(new Object[]{}, new Object[]{}) {
+    public static void registerNewRootTask() {
+        assert currentTask.get() == null;
+        currentTask.set(new Task<Void>(new Object[]{}, new Object[]{}) {
             @Override
             protected Void runRolez() {
                 return null;
@@ -157,12 +149,13 @@ public abstract class Task<V> implements Runnable {
     }
     
     /**
-     * Unregisters a previously {@linkplain #registerNewTask() registered task}. If that task was
-     * the root task, subsequent Rolez code may not work correctly as there will be no
-     * {@linkplain #currentTask() currently executing task}.
+     * Unregisters a previously {@linkplain #registerNewRootTask() registered root task}. Subsequent
+     * Rolez code may not work correctly as there will be no {@linkplain #currentTask() currently
+     * executing task}.
      */
-    public static void unregisterCurrentTask() {
-        localStack.get().pop();
+    public static void unregisterRootTask() {
+        assert currentTask.get().parent == null;
+        currentTask.set(null);
     }
     
     /**
