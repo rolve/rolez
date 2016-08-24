@@ -125,6 +125,7 @@ public abstract class Guarded {
                 assert removed;
             }
         }
+        // TODO: notify tasks that wait for other views?
     }
     
     final void releasePassed() {
@@ -133,6 +134,7 @@ public abstract class Guarded {
             owner = owner.parent;
             ownerThread = owner.getExecutingThread();
         }
+        // TODO: notify tasks that wait for other views?
     }
     
     /* Guarding methods. The static versions can return the guarded object with the precise type

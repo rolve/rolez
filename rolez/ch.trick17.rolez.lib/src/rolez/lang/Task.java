@@ -89,11 +89,11 @@ public abstract class Task<V> implements Runnable {
         taskFinishTransitions();
         currentTask.set(prevTask);
         
-        /* Unblock threads waiting to get the result */
+        /* Unblock threads waiting to get the result. Note that not only the parent task, but also
+         * tasks started by the parent tasks may have a reference to this task. */
         sync.done();
         if(parent != null)
             unpark(parent.executingThread);
-        // TODO: Isn't it enough to just unpark the parent thread? Could any other thread have a reference to this task?
     }
     
     /**
