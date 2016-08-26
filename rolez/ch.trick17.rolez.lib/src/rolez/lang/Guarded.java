@@ -4,12 +4,16 @@ import static java.lang.Thread.currentThread;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.newSetFromMap;
 import static java.util.concurrent.locks.LockSupport.park;
+import static rolez.internal.ImmutableBitSet.EMPTY;
 import static rolez.lang.Task.currentTask;
 
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+
+import rolez.internal.ImmutableBitSet;
 
 /**
  * Superclass of all guarded objects
@@ -25,6 +29,8 @@ public abstract class Guarded {
     
     private AtomicInteger sharedCount; // atomic because tasks can share concurrently
     private Set<Task<?>> readers;
+    
+    private AtomicReference<ImmutableBitSet> guardedInTasks;
     
     /**
      * Default constructor that does not initialize guarding. Initialization happens lazily, when
@@ -49,7 +55,7 @@ public abstract class Guarded {
     
     /**
      * Initializes the guarding "infrastructure", if guarding is not
-     * {@linkplain #disableGuarding(Guarded) disabled}. If a
+     * {@linkplain #disableGuarding(Guarded) disabled}.
      */
     final void ensureGuardingInitialized() {
         assert !guardingDisabled;
@@ -59,6 +65,7 @@ public abstract class Guarded {
             sharedCount = new AtomicInteger(0);
             // IMPROVE: Initialize only when first used?
             readers = newSetFromMap(new ConcurrentHashMap<Task<?>, java.lang.Boolean>());
+            guardedInTasks = new AtomicReference<>(EMPTY); // IMPROVE: Add current task and fix tests that don't allow this...
         }
     }
     
@@ -66,6 +73,7 @@ public abstract class Guarded {
     
     /**
      * Disables guarded object and all objects it (transitively) references. This is used for
+     * objects that are reachable from global object (singleton classes).
      */
     public static <G extends Guarded> G disableGuarding(G g) {
         ((Guarded) g).disableGuarding();
@@ -96,6 +104,7 @@ public abstract class Guarded {
             /* First step of passing */
             owner = task;
             ownerThread = null;
+            guardedInTasks.set(EMPTY);
         }
     }
     
@@ -106,6 +115,7 @@ public abstract class Guarded {
             sharedCount.incrementAndGet();
             if(viewLock() != null)
                 readers.add(task);
+            guardedInTasks.set(EMPTY);
         }
     }
     
@@ -156,7 +166,7 @@ public abstract class Guarded {
     }
     
     private final void guardReadOnly() {
-        if(!guardingInitialized())
+        if(!guardingInitialized() || alreadyGuardedIn(currentTask()))
             return;
         
         while(!mayRead())
@@ -178,11 +188,24 @@ public abstract class Guarded {
     }
     
     private void guardReadWrite() {
-        if(!guardingInitialized())
+        if(!guardingInitialized() || alreadyGuardedIn(currentTask()))
             return;
         
         while(!mayWrite())
             park();
+    }
+    
+    private boolean alreadyGuardedIn(Task<?> task) {
+        ImmutableBitSet bitSet = guardedInTasks.get();
+        boolean alreadyGuarded = bitSet.get(task.id);
+        if(!alreadyGuarded) {
+            boolean success;
+            do {
+                success = guardedInTasks.compareAndSet(bitSet, bitSet.set(task.id));
+                bitSet = guardedInTasks.get();
+            } while(!success);
+        }
+        return alreadyGuarded;
     }
     
     /* The following two are required for expressions of type java.lang.Object, for which it is only

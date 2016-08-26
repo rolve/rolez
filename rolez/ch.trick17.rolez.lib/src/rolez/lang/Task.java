@@ -10,6 +10,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
 public abstract class Task<V> implements Runnable {
@@ -26,6 +27,9 @@ public abstract class Task<V> implements Runnable {
         return currentTask.get();
     }
     
+    private static final AtomicInteger idCounter = new AtomicInteger();
+    
+    public final int id = idCounter.getAndIncrement();
     private final Sync sync = new Sync();
     
     private Thread executingThread;
