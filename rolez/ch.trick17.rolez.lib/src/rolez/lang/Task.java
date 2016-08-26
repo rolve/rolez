@@ -218,6 +218,9 @@ public abstract class Task<V> implements Runnable {
                 ((Guarded) g).guardReadOnlyReachable(sharedReachable);
         sharedReachable.removeAll(passedReachable);
         
+        /* IMPROVE: Only pass (share) objects that are reachable through chain of readwrite
+         * (readonly) references? Would enable programmers to express more parallelism (especially
+         * with parameterized classes) and could be more efficient (or less...). */
         for(Guarded g : passedReachable)
             g.pass(this);
         for(Guarded g : sharedReachable)
