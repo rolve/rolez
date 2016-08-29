@@ -23,7 +23,7 @@ class TypeGenerator {
     
     def CharSequence generate(Type it) { switch(it) {
         PrimitiveType: string
-        RoleType: base.generate + ""
+        RoleType: base.generate
         default: throw new AssertionError // Null or TypeParamRef
     }}
     
@@ -38,15 +38,19 @@ class TypeGenerator {
     }}
     
     def generate(ClassRef it) { switch(it) {
-        GenericClassRef case clazz.isSliceClass: '''«jvmGuardedSliceClassName»<«typeArg.generate»[]>'''
-        GenericClassRef case clazz.isArrayClass: '''«jvmGuardedArrayClassName»<«typeArg.generate»[]>'''
+        GenericClassRef case clazz.        isSliceClass: '''«jvmGuardedSliceClassName»<«typeArg.generate»[]>'''
+        GenericClassRef case clazz.        isArrayClass: '''«jvmGuardedArrayClassName»<«typeArg.generate»[]>'''
+        GenericClassRef case clazz.       isVectorClass: '''«typeArg.generate»[]'''
+        GenericClassRef case clazz.isVectorBuilderClass: '''«jvmGuardedVectorBuilderClassName»<«typeArg.generate»[]>'''
         GenericClassRef: '''«clazz.generateName»<«typeArg.generateGeneric»>'''
         default: clazz.generateName
     }}
     
     private def generateErased(ClassRef it) { switch(it) {
-        GenericClassRef case clazz.isSliceClass: jvmGuardedSliceClassName
-        GenericClassRef case clazz.isArrayClass: jvmGuardedArrayClassName
+        GenericClassRef case clazz.        isSliceClass: jvmGuardedSliceClassName
+        GenericClassRef case clazz.        isArrayClass: jvmGuardedArrayClassName
+        GenericClassRef case clazz.       isVectorClass: '''«typeArg.generate»[]'''
+        GenericClassRef case clazz.isVectorBuilderClass: jvmGuardedVectorBuilderClassName
         default: clazz.generateName
     }}
     

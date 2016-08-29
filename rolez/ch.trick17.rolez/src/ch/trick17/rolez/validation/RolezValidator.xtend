@@ -600,14 +600,6 @@ class RolezValidator extends RolezSystemValidator {
     }
     
     @Check
-    def checkStringClass(Class it) {
-        if(!isStringClass) return;
-        
-        checkClassKind(false)
-        checkMapped
-    }
-    
-    @Check
     def checkSliceClass(Class it) {
         if(!isSliceClass) return;
         
@@ -621,9 +613,33 @@ class RolezValidator extends RolezSystemValidator {
         
         checkClassKind(false)
         checkMapped
+    }
+    
+    @Check
+    def checkVectorClass(Class it) {
+        if(!isVectorClass) return;
         
-        // TODO: Introduce final classes and make array and slice final, so that they cannot be 
-        // extended (although, it would be cool if the array class could be extended...)
+        checkClassKind(false)
+        checkMapped
+    }
+    
+    @Check
+    def checkVectorBuilderClass(Class it) {
+        if(!isVectorBuilderClass) return;
+        
+        checkClassKind(false)
+        checkMapped
+    }
+        
+    // TODO: Introduce final classes and make array, slice, etc. final, so that they cannot be 
+    // extended (although, it would be cool if the array class could be extended...)
+    
+    @Check
+    def checkStringClass(Class it) {
+        if(!isStringClass) return;
+        
+        checkClassKind(false)
+        checkMapped
     }
     
     private def checkClassKind(Class it, boolean expectSingleton) {

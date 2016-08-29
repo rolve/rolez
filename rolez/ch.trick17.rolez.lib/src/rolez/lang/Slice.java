@@ -1,8 +1,8 @@
 package rolez.lang;
 
 /**
- * This class represents the interface of the slice class in the Rolez compiler, but is not actually
- * used in Rolez programs. Instead the {@link GuardedSlice} class is used.
+ * This class represents the interface of the <code>Slice</code> class in the Rolez compiler, but is
+ * not actually used in Rolez programs. Instead the {@link GuardedSlice} class is used.
  * 
  * @author Michael Faes
  */

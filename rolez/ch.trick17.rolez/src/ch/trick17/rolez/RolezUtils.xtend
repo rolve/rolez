@@ -133,7 +133,7 @@ class RolezUtils {
         switch(it) {
             Assignment: true
             New: !classRef.clazz.isArrayClass
-            MemberAccess: isMethodInvoke && !isSliceGet && !isArrayGet || isTaskStart
+            MemberAccess: isMethodInvoke && !isSliceGet && !isArrayGet && !isVectorGet && !isVectorBuilderGet || isTaskStart
             default: false
         }
     }

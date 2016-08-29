@@ -65,17 +65,25 @@ class RolezExtensions {
         utils.newRoleType(thisRole, utils.newClassRef(enclosingClass))
     }
     
-    def isObjectClass(Class it) { qualifiedName == objectClassName }
-    def isSliceClass (Class it) { qualifiedName ==  sliceClassName }
-    def isArrayClass (Class it) { qualifiedName ==  arrayClassName }
-    def isStringClass(Class it) { qualifiedName == stringClassName }
-    def isTaskClass  (Class it) { qualifiedName ==   taskClassName }
+    def isObjectClass        (Class it) { qualifiedName ==        objectClassName }
+    def isSliceClass         (Class it) { qualifiedName ==         sliceClassName }
+    def isArrayClass         (Class it) { qualifiedName ==         arrayClassName }
+    def isVectorClass        (Class it) { qualifiedName ==        vectorClassName }
+    def isVectorBuilderClass (Class it) { qualifiedName == vectorBuilderClassName }
+    def isStringClass        (Class it) { qualifiedName ==        stringClassName }
+    def isTaskClass          (Class it) { qualifiedName ==          taskClassName }
     
     def dispatch isSliceType(RoleType it) { base.clazz.isSliceClass }
     def dispatch isSliceType(    Type it) { false }
     
     def dispatch isArrayType(RoleType it) { base.clazz.isArrayClass }
     def dispatch isArrayType(    Type it) { false }
+    
+    def dispatch isVectorType(RoleType it) { base.clazz.isVectorClass }
+    def dispatch isVectorType(    Type it) { false }
+    
+    def dispatch isVectorBuilderType(RoleType it) { base.clazz.isVectorBuilderClass }
+    def dispatch isVectorBuilderType(    Type it) { false }
     
     def Iterable<Member> allMembers(Class it) {
         members +
@@ -164,6 +172,25 @@ class RolezExtensions {
     
     def isArrayLength(MemberAccess it) {
         isFieldAccess && field.name == "length" && field.enclosingClass.qualifiedName == arrayClassName
+    }
+    
+    def isVectorGet(MemberAccess it) {
+        isMethodInvoke && method.name == "get"
+            && system.type(utils.createEnv(it), target).value.isVectorType
+    }
+    
+    def isVectorLength(MemberAccess it) {
+        isFieldAccess && field.name == "length" && field.enclosingClass.qualifiedName == vectorClassName
+    }
+    
+    def isVectorBuilderGet(MemberAccess it) {
+        isMethodInvoke && method.name == "get"
+            && system.type(utils.createEnv(it), target).value.isVectorBuilderType
+    }
+    
+    def isVectorBuilderSet(MemberAccess it) {
+        isMethodInvoke && method.name == "set"
+            && system.type(utils.createEnv(it), target).value.isVectorBuilderType
     }
     
     def     destParam(Expr it) { (eContainer as Argumented).executable.params.get(argIndex) }

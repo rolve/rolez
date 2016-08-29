@@ -579,6 +579,75 @@ class InstrGeneratorTest extends GeneratorTest {
         ''')
     }
     
+    @Test def testMemberAccessVector() {
+        // Access to array components is guarded, access to length field is not
+        parse('''
+            class A {
+                def pure getFirst(v: readonly Vector[int]): int {
+                    return v.get(0);
+                }
+                def pure length(v: readonly Vector[int]): int {
+                    return v.length;
+                }
+            }
+        ''', someClasses).onlyClass.generate.assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
+            
+            public class A extends «jvmGuardedClassName» {
+                
+                public A() {
+                    super();
+                }
+                
+                public int getFirst(final int[] v) {
+                    return v[0];
+                }
+                
+                public int length(final int[] v) {
+                    return v.length;
+                }
+            }
+        ''')
+    }
+    
+    @Test def testMemberAccessVectorBuilder() {
+        // Access to array components is guarded, access to length field is not
+        parse('''
+            class A {
+                def pure getFirst(b: readonly VectorBuilder[int]): int {
+                    return b.get(0);
+                }
+                def pure setFirst(b: readwrite VectorBuilder[int]): {
+                    b.set(0, 42);
+                }
+                def pure build(b: readwrite VectorBuilder[int]): readonly Vector[int] {
+                    return b.build;
+                }
+            }
+        ''', someClasses).onlyClass.generate.assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
+            
+            public class A extends «jvmGuardedClassName» {
+                
+                public A() {
+                    super();
+                }
+                
+                public int getFirst(final rolez.lang.GuardedVectorBuilder<int[]> b) {
+                    return guardReadOnly(b).data[0];
+                }
+                
+                public void setFirst(final rolez.lang.GuardedVectorBuilder<int[]> b) {
+                    guardReadWrite(b).setInt(0, 42);
+                }
+                
+                public int[] build(final rolez.lang.GuardedVectorBuilder<int[]> b) {
+                    return b.build();
+                }
+            }
+        ''')
+    }
+    
     @Test def testMemberAccessArrayCoercion() {
         parse('''
             var ia: pure Array[int] = new Array[int](0);
@@ -643,6 +712,8 @@ class InstrGeneratorTest extends GeneratorTest {
             var ai : pure Object = new Array[int](10 * 10);
             var ab : pure Object = new Array[pure Base](42);
             var aai: pure Object = new Array[pure Array[int]](0);
+            var avi: pure Object = new Array[pure Vector[int]](0);
+            var avvi: pure Object = new Array[pure Vector[pure Vector[int]]](0);
             new Container[int];
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
             new Base();
@@ -652,6 +723,8 @@ class InstrGeneratorTest extends GeneratorTest {
             java.lang.Object ai = new rolez.lang.GuardedArray<int[]>(new int[10 * 10]);
             java.lang.Object ab = new rolez.lang.GuardedArray<Base[]>(new Base[42]);
             java.lang.Object aai = new rolez.lang.GuardedArray<rolez.lang.GuardedArray<int[]>[]>(new rolez.lang.GuardedArray[0]);
+            java.lang.Object avi = new rolez.lang.GuardedArray<int[][]>(new int[0][]);
+            java.lang.Object avvi = new rolez.lang.GuardedArray<int[][][]>(new int[0][][]);
             new «Container.canonicalName»<java.lang.Integer>();
         '''.withJavaFrame)
     }

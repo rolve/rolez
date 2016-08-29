@@ -45,6 +45,16 @@ abstract class GeneratorTest {
                 mapped val length: int
                 mapped new(i: int)
             }
+            class rolez.lang.Vector[T] mapped to rolez.lang.Vector {
+                mapped val length: int
+                mapped def readonly get(index: int): T
+            }
+            class rolez.lang.VectorBuilder[T] mapped to rolez.lang.VectorBuilder {
+                mapped new(length: int)
+                mapped def readonly get(index: int): T
+                mapped def readwrite set(index: int, component: T): readwrite VectorBuilder[T]
+                mapped def readonly build: readonly Vector[T]
+            }
             class rolez.lang.String mapped to java.lang.String {
                 mapped def pure length: int
                 mapped def pure substring(b: int, e: int): pure String

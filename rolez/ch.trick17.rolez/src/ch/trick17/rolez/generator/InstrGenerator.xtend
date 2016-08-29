@@ -51,6 +51,7 @@ import ch.trick17.rolez.rolez.WhileLoop
 import ch.trick17.rolez.typesystem.RolezSystem
 import ch.trick17.rolez.validation.JavaMapper
 import com.google.inject.Injector
+import java.util.regex.Pattern
 import javax.inject.Inject
 import org.eclipse.xtext.common.types.JvmArrayType
 
@@ -224,22 +225,25 @@ class InstrGenerator {
             '''!«expr.genNested»'''
         
         private def dispatch CharSequence generate(MemberAccess it) { switch(it) {
-            case isSliceGet:     generateSliceGet
-            case isSliceSet:     generateSliceSet
-            case isArrayGet:     generateArrayGet
-            case isArraySet:     generateArraySet
-            case isArrayLength:  generateArrayLength
-            case isFieldAccess:  generateFieldAccess
-            case isMethodInvoke: generateMethodInvoke
-            case isTaskStart:    generateTaskStart
+            case isSliceGet:         generateSliceGet
+            case isSliceSet:         generateSliceSet
+            case isArrayGet:         generateArrayGet
+            case isArraySet:         generateArraySet
+            case isArrayLength:      generateArrayLength
+            case isVectorGet:        generateVectorGet
+            case isVectorLength:     generateVectorLength
+            case isVectorBuilderGet: generateArrayGet         // same code as for arrays
+            case isVectorBuilderSet: generateVectorBuilderSet
+            case isFieldAccess:      generateFieldAccess
+            case isMethodInvoke:     generateMethodInvoke
+            case isTaskStart:        generateTaskStart
         }}
         
         private def generateSliceGet(MemberAccess it)
             '''«target.genGuarded(createReadOnly)».«genSliceAccess("get")»(«args.get(0).generate»)'''
         
-        private def generateSliceSet(MemberAccess it) {
+        private def generateSliceSet(MemberAccess it)
             '''«target.genGuarded(createReadWrite)».«genSliceAccess("set")»(«args.get(0).generate», «args.get(1).generate»)'''
-        }
         
         private def genSliceAccess(MemberAccess it, String getOrSet) {
             val targetType = system.type(utils.createEnv(it), target).value
@@ -260,6 +264,22 @@ class InstrGenerator {
         
         private def generateArrayLength(MemberAccess it)
             '''«target.genNested».data.length'''
+        
+        private def generateVectorGet(MemberAccess it)
+            '''«target.genNested»[«args.get(0).generate»]'''
+        
+        private def generateVectorLength(MemberAccess it)
+            '''«target.genNested».length'''
+        
+        private def generateVectorBuilderSet(MemberAccess it) {
+            val targetType = system.type(utils.createEnv(it), target).value
+            val componentType = ((targetType as RoleType).base as GenericClassRef).typeArg
+            val suffix =
+                if(componentType instanceof PrimitiveType) componentType.name.toFirstUpper
+                else ""
+            
+            '''«target.genGuarded(createReadWrite)».set«suffix»(«args.get(0).generate», «args.get(1).generate»)'''
+        }
         
         private def generateFieldAccess(MemberAccess it) {
             val requiredRole =
@@ -318,9 +338,12 @@ class InstrGenerator {
         
         private def dispatch CharSequence generate(New it) {
             val genArgs = 
-                if(classRef.clazz.isArrayClass) {
+                if(classRef.clazz.isArrayClass || classRef.clazz.isVectorBuilderClass) {
                     val componentType = (classRef as GenericClassRef).typeArg
-                    '''new «componentType.generateErased»[«args.head.generate»]'''
+                    val withoutSize = '''new «componentType.generateErased»[]'''
+                    val matcher = bracketPattern.matcher(withoutSize)
+                    matcher.find
+                    withoutSize.substring(0, matcher.start) + args.head.generate + withoutSize.substring(matcher.start)
                 }
                 else if(constr.isMapped)
                     args.map[genCoerced].join(", ")
@@ -328,6 +351,8 @@ class InstrGenerator {
                     args.map[generate].join(", ")
             '''new «classRef.generate»(«genArgs»)'''
         }
+        
+        private static val bracketPattern = Pattern.compile("\\](\\[\\])*$")
         
         private def dispatch CharSequence generate(The it) '''«classRef.generate».INSTANCE'''
         
