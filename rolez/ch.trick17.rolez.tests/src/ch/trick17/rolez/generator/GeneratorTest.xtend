@@ -31,7 +31,7 @@ abstract class GeneratorTest {
     
     protected def someClasses() {
         newResourceSet.with('''
-            class rolez.lang.Object mapped to java.lang.Object {
+            pure class rolez.lang.Object mapped to java.lang.Object {
                 mapped def readonly equals(o: readonly Object): boolean
                 mapped def readonly hashCode: int
                 mapped def readonly toString: pure String
@@ -45,7 +45,7 @@ abstract class GeneratorTest {
                 mapped val length: int
                 mapped new(i: int)
             }
-            class rolez.lang.String mapped to java.lang.String {
+            pure class rolez.lang.String mapped to java.lang.String {
                 mapped def pure length: int
                 mapped def pure substring(b: int, e: int): pure String
             }
@@ -62,6 +62,9 @@ abstract class GeneratorTest {
             }
             class Base {
                 var foo: int
+            }
+            pure class PureBase {
+                val foo: int = 42
             }
             class foo.bar.Base {
                 new {}

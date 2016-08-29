@@ -96,6 +96,33 @@ class ClassGeneratorTest extends GeneratorTest {
         ''')
     }
     
+    @Test def testPureClass() {
+        parse('''
+            pure class A
+        ''', someClasses).onlyClass.generate.assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
+            
+            public class A extends java.lang.Object {
+                
+                public A() {
+                    super();
+                }
+            }
+        ''')
+        parse('''
+            pure class A extends PureBase
+        ''', someClasses).onlyClass.generate.assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
+            
+            public class A extends PureBase {
+                
+                public A() {
+                    super();
+                }
+            }
+        ''')
+    }
+    
     @Test def testSingletonClass() {
         parse('''
             object A

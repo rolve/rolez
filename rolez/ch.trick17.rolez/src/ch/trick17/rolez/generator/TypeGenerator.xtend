@@ -62,8 +62,12 @@ class TypeGenerator {
     }
     
     private def isGuarded(Class it) {
-        it instanceof NormalClass && (!isMapped
-            || jvmClass.isSubclassOf(jvmGuardedClassName, it)
-            || isObjectClass)
+        if(isObjectClass)
+            true // Special case: some subclasses are guarded, some are not
+        else if(it instanceof NormalClass)
+            // Normal classes are guarded, except if pure or mapped to a non-guarded JVM class
+            !pure && (!isMapped || jvmClass.isSubclassOf(jvmGuardedClassName, it))
+        else
+            false // Singleton classes are not guarded
     }
 }

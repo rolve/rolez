@@ -59,7 +59,7 @@ class ClassGenerator {
     '''
     
     private def generateSuperclassName(NormalClass it) {
-        if(superclass.isObjectClass) jvmGuardedClassName
+        if(superclass.isObjectClass && !pure) jvmGuardedClassName
         else superclassRef.generate
     }
     
