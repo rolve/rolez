@@ -23,7 +23,7 @@ Class:
     NormalClass | SingletonClass;
 
 NormalClass:
-    'class' name=QualifiedName ('[' typeParam=TypeParam ']')? WithMappedClass WithSuperclass ('{'
+    (pure?='pure')? 'class' name=QualifiedName ('[' typeParam=TypeParam ']')? WithMappedClass WithSuperclass ('{'
         (constrs+=Constr | members+=Member)+
     '}')?;
 

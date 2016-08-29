@@ -20,6 +20,7 @@ import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.Null
 import ch.trick17.rolez.rolez.Program
+import ch.trick17.rolez.rolez.Pure
 import ch.trick17.rolez.rolez.ReadOnly
 import ch.trick17.rolez.rolez.ReadWrite
 import ch.trick17.rolez.rolez.ReturnExpr
@@ -63,11 +64,14 @@ class RolezValidator extends RolezSystemValidator {
     public static val INVALID_NAME = "invalid name"
     public static val CIRCULAR_INHERITANCE = "circular inheritance"
     public static val SINGLETON_SUPERCLASS = "singleton superclass"
+    public static val NON_PURE_SUPERCLASS = "non-pure superclass"
     public static val INCORRECT_TYPE_PARAM = "incorrect type parameter"
     public static val MISSING_TYPE_PARAM = "missing type parameter"
     public static val DUPLICATE_FIELD = "duplicate field"
     public static val DUPLICATE_METHOD = "duplicate method"
     public static val FIELD_WITH_SAME_NAME = "field with same name"
+    public static val VAR_FIELD_IN_PURE_CLASS = "var field in pure class"
+    public static val NON_PURE_FIELD_IN_PURE_CLASS = "non-pure field in pure class"
     public static val DUPLICATE_CONSTR = "duplicate constructor"
     public static val DUPLICATE_VAR = "duplicate var"
     public static val MISSING_OVERRIDE = "missing override"
@@ -148,6 +152,12 @@ class RolezValidator extends RolezSystemValidator {
     }
     
     @Check
+    def checkPureSuperclass(NormalClass it) {
+        if(pure && !superclass.pure)
+            error("Pure classes cannot extend non-pure classes", CLASS__SUPERCLASS_REF, NON_PURE_SUPERCLASS)
+    }
+    
+    @Check
     def checkMainTask(Method it) {
         if(!isMain) return;
         
@@ -225,6 +235,17 @@ class RolezValidator extends RolezSystemValidator {
                 .filter[f | f.name == name].isEmpty)
             error("Field with same name: method cannot be called",
                 NAMED__NAME, FIELD_WITH_SAME_NAME)
+    }
+    
+    @Check
+    def checkPureClassFields(Field it) {
+        if(!(enclosingClass instanceof NormalClass) || !(enclosingClass as NormalClass).pure)
+            return;
+        
+        if(kind == VarKind.VAR)
+            error("Var-field in pure class", FIELD__KIND, VAR_FIELD_IN_PURE_CLASS)
+        if(type instanceof RoleType && !((type as RoleType).role instanceof Pure))
+            error("Non-pure field in pure class", TYPED__TYPE, NON_PURE_FIELD_IN_PURE_CLASS)
     }
     
     @Check

@@ -52,6 +52,19 @@ class RolezValidatorTest {
         ''').assertError(CLASS, SINGLETON_SUPERCLASS)
     }
     
+    @Test def testPureSuperclass() {
+        parse('''
+            pure class rolez.lang.Object mapped to java.lang.Object
+            pure class A extends Object
+        ''').assertNoErrors
+        
+        parse('''
+            pure class rolez.lang.Object mapped to java.lang.Object
+            class A extends Object
+            pure class B extends A
+        ''').assertError(CLASS, NON_PURE_SUPERCLASS)
+    }
+    
     @Test def testTypeParam() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -646,6 +659,38 @@ class RolezValidatorTest {
                 def readwrite foo: {}
             }
         ''').assertError(METHOD, FIELD_WITH_SAME_NAME)
+    }
+    
+    @Test def testPureClassFields() {
+        parse('''
+            pure class rolez.lang.Object mapped to java.lang.Object
+            pure class A {
+                val i: int = 42
+                val b: pure B = new B
+            }
+            class B
+        ''').assertNoErrors
+        
+        parse('''
+            pure class rolez.lang.Object mapped to java.lang.Object
+            pure class A {
+                var i: int
+            }
+        ''').assertError(FIELD, VAR_FIELD_IN_PURE_CLASS)
+        parse('''
+            pure class rolez.lang.Object mapped to java.lang.Object
+            pure class A {
+                val b: readonly B = new B
+            }
+            class B
+        ''').assertError(FIELD, NON_PURE_FIELD_IN_PURE_CLASS)
+        parse('''
+            pure class rolez.lang.Object mapped to java.lang.Object
+            pure class A {
+                val b: readwrite B = new B
+            }
+            class B
+        ''').assertError(FIELD, NON_PURE_FIELD_IN_PURE_CLASS)
     }
     
     @Test def testMainTask() {

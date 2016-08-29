@@ -36,6 +36,7 @@
         containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="constrs" upperBound="-1"
         eType="#//Constr" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="pure" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="SingletonClass" eSuperTypes="#//Class"/>
   <eClassifiers xsi:type="ecore:EClass" name="TypeParam" eSuperTypes="#//Named"/>
