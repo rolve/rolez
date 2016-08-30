@@ -44,7 +44,7 @@ class ClassGenerator {
         «ENDIF»
         import static «jvmGuardedClassName».*;
         
-        public class «safeSimpleName» extends «generateSuperclassName» {
+        public class «safeSimpleName» extends «generateGuardedSuperclassName» {
             « fields.map[gen].join»
             «constrs.map[gen].join»
             «methods.map[gen].join»
@@ -58,8 +58,8 @@ class ClassGenerator {
         }
     '''
     
-    private def generateSuperclassName(NormalClass it) {
-        if(superclass.isObjectClass) jvmGuardedClassName
+    private def generateGuardedSuperclassName(NormalClass it) {
+        if(superclass.isObjectClass && !pure) jvmGuardedClassName
         else superclassRef.generate
     }
     

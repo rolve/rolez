@@ -25,7 +25,7 @@ class Array[T] mapped to rolez.lang.Array extends Slice[T] {
     mapped new(length: int)
 }
 
-class SliceRange mapped to rolez.lang.SliceRange {
+pure class SliceRange mapped to rolez.lang.SliceRange {
     mapped val begin: int
     mapped val end: int
     mapped val step: int
@@ -38,7 +38,7 @@ class SliceRange mapped to rolez.lang.SliceRange {
     mapped def pure intersectWith(other: pure SliceRange): readonly SliceRange
 }
 
-class Vector[T] mapped to rolez.lang.Vector {
+pure class Vector[T] mapped to rolez.lang.Vector {
     mapped val length: int
     mapped def readonly get(i: int): T
 }
@@ -50,7 +50,7 @@ class VectorBuilder[T] mapped to rolez.lang.VectorBuilder {
     mapped def readonly build: readonly Vector[T]
 }
 
-class String mapped to java.lang.String {
+pure class String mapped to java.lang.String {
     mapped new(chars: readonly Array[char])
     
     mapped def pure length: int

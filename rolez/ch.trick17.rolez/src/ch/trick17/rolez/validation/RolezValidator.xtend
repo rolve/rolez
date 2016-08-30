@@ -20,6 +20,7 @@ import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.Null
 import ch.trick17.rolez.rolez.Program
+import ch.trick17.rolez.rolez.Pure
 import ch.trick17.rolez.rolez.ReadOnly
 import ch.trick17.rolez.rolez.ReadWrite
 import ch.trick17.rolez.rolez.ReturnExpr
@@ -63,6 +64,7 @@ class RolezValidator extends RolezSystemValidator {
     public static val INVALID_NAME = "invalid name"
     public static val CIRCULAR_INHERITANCE = "circular inheritance"
     public static val SINGLETON_SUPERCLASS = "singleton superclass"
+    public static val INCORRECT_SUPERCLASS_PURITY = "incorrect superclass purity"
     public static val INCORRECT_TYPE_PARAM = "incorrect type parameter"
     public static val MISSING_TYPE_PARAM = "missing type parameter"
     public static val DUPLICATE_FIELD = "duplicate field"
@@ -86,6 +88,8 @@ class RolezValidator extends RolezSystemValidator {
     public static val MAPPED_FIELD_WITH_INIT = "mapped with with initializer"
     public static val VAR_FIELD_IN_SINGLETON_CLASS = "var field in singleton class"
     public static val INEFFECTIVE_FIELD_ROLE = "ineffective field role"
+    public static val VAR_FIELD_IN_PURE_CLASS = "var field in pure class"
+    public static val NON_PURE_FIELD_IN_PURE_CLASS = "non-pure field in pure class"
     public static val UNCALLABLE_METHOD = "uncallable method"
     public static val VAL_NOT_INITIALIZED = "val not initialized"
     public static val VAR_NOT_INITIALIZED = "var not initialized"
@@ -106,6 +110,7 @@ class RolezValidator extends RolezSystemValidator {
     public static val CLASS_ACTUALLY_MAPPED = "class actually mapped"
     public static val INCORRECT_MAPPED_CLASS = "incorrect mapped class"
     public static val INCORRECT_MAPPED_CLASS_KIND = "incorrect mapped class kind"
+    public static val INCORRECT_MAPPED_CLASS_PURITY = "incorrect mapped class purity"
     public static val INCORRECT_MAPPED_FIELD = "incorrect mapped field"
     public static val NON_GUARDED_MAPPED_VAR_FIELD = "non-guarded mapped var field"
     public static val INCORRECT_MAPPED_METHOD = "incorrect mapped method"
@@ -145,6 +150,17 @@ class RolezValidator extends RolezSystemValidator {
     def checkSingletonSuperclass(Class it) {
         if(superclassRef != null && superclassRef.clazz instanceof SingletonClass)
             error("Singleton classes cannot be extended", CLASS__SUPERCLASS_REF, SINGLETON_SUPERCLASS)
+    }
+    
+    @Check
+    def checkPureSuperclass(Class it) {
+        /* Pure classes must extend pure classes or Object; otherwise, they could inherit mutable
+         * parts. Singletons are an exception: since there can never be a readwrite reference to
+         * them, even mutable parts they inherit from superclasses are effectively immutable. */
+        if(isPure && !singleton && !superclass.isPure && !superclass.isObjectClass)
+            error("Pure classes cannot extend non-pure classes", CLASS__SUPERCLASS_REF, INCORRECT_SUPERCLASS_PURITY)
+        else if(!isPure && superclass.isPure && !isObjectClass)
+            error("Non-pure classes cannot extend pure classes", CLASS__SUPERCLASS_REF, INCORRECT_SUPERCLASS_PURITY)
     }
     
     @Check
@@ -408,6 +424,16 @@ class RolezValidator extends RolezSystemValidator {
     }
     
     @Check
+    def checkPureClassFields(Field it) {
+        if(!enclosingClass.isPure || enclosingClass.isSingleton) return; // Singletons are checked separately
+        
+        if(kind == VarKind.VAR)
+            error("Var-field in pure class", FIELD__KIND, VAR_FIELD_IN_PURE_CLASS)
+        if(type instanceof RoleType && !((type as RoleType).base.clazz.isPure))
+            error("Non-pure field in pure class", TYPED__TYPE, NON_PURE_FIELD_IN_PURE_CLASS)
+    }
+    
+    @Check
     def checkSingletonClassMethod(Method it) {
         if(!enclosingClass.isSingleton) return;
         
@@ -593,6 +619,7 @@ class RolezValidator extends RolezSystemValidator {
         if(!isObjectClass) return;
         
         checkClassKind(false)
+        checkPurity(false)
         checkMapped
         if(superclass != null)
            error(qualifiedName + " must not have a superclass",
@@ -604,6 +631,7 @@ class RolezValidator extends RolezSystemValidator {
         if(!isSliceClass) return;
         
         checkClassKind(false)
+        checkPurity(false)
         checkMapped
     }
     
@@ -612,6 +640,7 @@ class RolezValidator extends RolezSystemValidator {
         if(!isArrayClass) return;
         
         checkClassKind(false)
+        checkPurity(false)
         checkMapped
     }
     
@@ -620,6 +649,7 @@ class RolezValidator extends RolezSystemValidator {
         if(!isVectorClass) return;
         
         checkClassKind(false)
+        checkPurity(true)
         checkMapped
     }
     
@@ -628,6 +658,7 @@ class RolezValidator extends RolezSystemValidator {
         if(!isVectorBuilderClass) return;
         
         checkClassKind(false)
+        checkPurity(false)
         checkMapped
     }
         
@@ -639,6 +670,7 @@ class RolezValidator extends RolezSystemValidator {
         if(!isStringClass) return;
         
         checkClassKind(false)
+        checkPurity(true)
         checkMapped
     }
     
@@ -646,6 +678,12 @@ class RolezValidator extends RolezSystemValidator {
         if(isSingleton != expectSingleton)
             error(qualifiedName + " must " + (if(expectSingleton) "" else "not ")
                 + "be a singleton class", NAMED__NAME, INCORRECT_MAPPED_CLASS_KIND)
+    }
+    
+    private def checkPurity(Class it, boolean expectPure) {
+        if(isPure != expectPure)
+            error(qualifiedName + " must " + (if(expectPure) "" else "not ")
+                + "be a pure class", NAMED__NAME, INCORRECT_MAPPED_CLASS_PURITY)
     }
     
     private def checkMapped(Class it) {

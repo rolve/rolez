@@ -52,6 +52,31 @@ class RolezValidatorTest {
         ''').assertError(CLASS, SINGLETON_SUPERCLASS)
     }
     
+    @Test def testPureSuperclass() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            
+            pure class A
+            pure class B extends A
+            object C extends B
+            
+            class D
+            class E extends D
+            object F extends E
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A extends Object
+            pure class B extends A
+        ''').assertError(CLASS, INCORRECT_SUPERCLASS_PURITY)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            pure class A
+            class B extends A
+        ''').assertError(CLASS, INCORRECT_SUPERCLASS_PURITY)
+    }
+    
     @Test def testTypeParam() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -160,7 +185,7 @@ class RolezValidatorTest {
     @Test def testValidOverrideRoleParams() {
         val lib = newResourceSet.with('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.String mapped to java.lang.String
+            pure class rolez.lang.String mapped to java.lang.String
             class Container[E] mapped to «Container.canonicalName» {
                 mapped var e: E
                 mapped def r get[r includes readonly]: E with r
@@ -660,7 +685,7 @@ class RolezValidatorTest {
             class rolez.lang.Array[T] mapped to rolez.lang.Array {
                 mapped new(i: int)
             }
-            class rolez.lang.String mapped to java.lang.String
+            pure class rolez.lang.String mapped to java.lang.String
             class App {
                 task pure main(args: readonly Array[readonly String]): {}
             }
@@ -884,7 +909,7 @@ class RolezValidatorTest {
         ''').assertNoErrors
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.String mapped to java.lang.String
+            pure class rolez.lang.String mapped to java.lang.String
             class rolez.io.PrintStream mapped to java.io.PrintStream {
                 mapped new(s: pure String)
             }
@@ -1029,7 +1054,7 @@ class RolezValidatorTest {
             class rolez.lang.Object mapped to java.lang.Object {
                 mapped def readonly toString: pure String
             }
-            class rolez.lang.String mapped to java.lang.String {
+            pure class rolez.lang.String mapped to java.lang.String {
                 mapped def pure length: int
             }
             object rolez.lang.System mapped to java.lang.System
@@ -1087,6 +1112,33 @@ class RolezValidatorTest {
                 var foo: readwrite Object
             }
         ''').assertWarning(READ_WRITE, INEFFECTIVE_FIELD_ROLE)
+    }
+    
+    @Test def testPureClassFields() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            pure class A {
+                val i: int = 42
+                val b: pure B = new B
+                val c: pure C = the C
+            }
+            pure class B
+            object C
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            pure class A {
+                var i: int
+            }
+        ''').assertError(FIELD, VAR_FIELD_IN_PURE_CLASS)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            pure class A {
+                val b: pure B = new B
+            }
+            class B
+        ''').assertError(FIELD, NON_PURE_FIELD_IN_PURE_CLASS)
     }
     
     @Test def testSingletonClassMethod() {
@@ -1195,7 +1247,7 @@ class RolezValidatorTest {
     @Test def testSuperConstrCall() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.String mapped to java.lang.String {
+            pure class rolez.lang.String mapped to java.lang.String {
                 mapped def pure length: int
             }
             class A {
@@ -1300,7 +1352,7 @@ class RolezValidatorTest {
     @Test def testSuperConstrCallUncatchableException() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.String mapped to java.lang.String
+            pure class rolez.lang.String mapped to java.lang.String
             class rolez.io.PrintStream mapped to java.io.PrintStream {
                 mapped new(f: pure String)
             }
@@ -1312,7 +1364,7 @@ class RolezValidatorTest {
         ''').assertError(SUPER_CONSTR_CALL, UNCATCHABLE_CHECKED_EXCEPTION)
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.String mapped to java.lang.String
+            pure class rolez.lang.String mapped to java.lang.String
             class rolez.io.PrintStream mapped to java.io.PrintStream {
                 mapped new(f: pure String)
             }
@@ -1330,7 +1382,7 @@ class RolezValidatorTest {
     @Test def testExprStmt() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.String mapped to java.lang.String {
+            pure class rolez.lang.String mapped to java.lang.String {
                 mapped def pure length: int
             }
             class rolez.lang.Array[T] mapped to rolez.lang.Array {
@@ -1508,7 +1560,7 @@ class RolezValidatorTest {
         
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.String mapped to java.lang.String
+            pure class rolez.lang.String mapped to java.lang.String
             class rolez.lang.Array[T] mapped to rolez.lang.Array extends String {
                 mapped new(length: int)
             }
@@ -1576,7 +1628,7 @@ class RolezValidatorTest {
                 mapped def pure hashCode: int
                 mapped def pure toString: pure String
             }
-            class rolez.lang.String mapped to java.lang.String {
+            pure class rolez.lang.String mapped to java.lang.String {
                 mapped override pure equals(o: pure Object): boolean
                 mapped def pure length: int
                 mapped def pure charAt(i: int): char
@@ -1602,7 +1654,7 @@ class RolezValidatorTest {
         ''').assertError(METHOD, NON_MAPPED_METHOD)
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.String mapped to java.lang.String {
+            pure class rolez.lang.String mapped to java.lang.String {
                 mapped def pure length: int { return 0; }
             }
         ''').assertError(BLOCK, MAPPED_WITH_BODY)
@@ -1614,7 +1666,7 @@ class RolezValidatorTest {
         ''').assertError(METHOD, MISSING_BODY)
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.String mapped to java.lang.String {
+            pure class rolez.lang.String mapped to java.lang.String {
                 mapped def pure length: boolean
             }
         ''').assertError(BOOLEAN, INCORRECT_MAPPED_METHOD)
@@ -1640,7 +1692,7 @@ class RolezValidatorTest {
             class rolez.lang.Array[T] mapped to rolez.lang.Array {
                 mapped new(l: int)
             }
-            class rolez.lang.String mapped to java.lang.String {
+            pure class rolez.lang.String mapped to java.lang.String {
                 mapped new
                 mapped new(original: pure String)
                 mapped new(value: pure Array[char])
@@ -1653,7 +1705,7 @@ class RolezValidatorTest {
         ''').assertNoErrors
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.String mapped to java.lang.String
+            pure class rolez.lang.String mapped to java.lang.String
         ''').assertNoErrors
         
         parse('''
@@ -1710,11 +1762,11 @@ class RolezValidatorTest {
     @Test def testStringClass() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.String mapped to java.lang.String
+            pure class rolez.lang.String mapped to java.lang.String
         ''').assertNoErrors
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.String mapped to java.lang.String extends Object
+            pure class rolez.lang.String mapped to java.lang.String extends Object
         ''').assertNoErrors
         
         parse('''
@@ -1728,7 +1780,7 @@ class RolezValidatorTest {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A
-            class rolez.lang.String mapped to java.lang.String extends A
+            pure class rolez.lang.String mapped to java.lang.String extends A
         ''').assertError(CLASS, INCORRECT_MAPPED_CLASS)
     }
     

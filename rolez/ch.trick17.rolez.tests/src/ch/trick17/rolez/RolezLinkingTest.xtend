@@ -424,7 +424,7 @@ class RolezLinkingTest {
     @Test def testMemberAccessMethodRoleGeneric() {
         var program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.String mapped to java.lang.String
+            pure class rolez.lang.String mapped to java.lang.String
             class StringContainer {
                 var s: readwrite String
                 def r get[r includes readonly]: r String { return this.s; }
@@ -441,7 +441,7 @@ class RolezLinkingTest {
         
         program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.String mapped to java.lang.String
+            pure class rolez.lang.String mapped to java.lang.String
             class StringContainer {
                 var s: readwrite String
                 def r get[r includes readonly]: r String { return this.s; }
@@ -465,7 +465,7 @@ class RolezLinkingTest {
     @Test def testMemberAccessMethodRoleInference() {
         var program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.String mapped to java.lang.String
+            pure class rolez.lang.String mapped to java.lang.String
             class StringContainer {
                 var s: readwrite String
                 def r get[r includes readonly]: r String { return this.s; }
@@ -482,7 +482,7 @@ class RolezLinkingTest {
         
         program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.String mapped to java.lang.String
+            pure class rolez.lang.String mapped to java.lang.String
             class StringContainer {
                 var s: readwrite String
                 def r get[r includes readonly]: r String { return this.s; }
@@ -1235,7 +1235,7 @@ class RolezLinkingTest {
     @Test def testJvmField() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.String mapped to java.lang.String
+            pure class rolez.lang.String mapped to java.lang.String
             class rolez.io.PrintStream mapped to java.io.PrintStream {
                 mapped new(s: readonly String)
             }
@@ -1280,7 +1280,7 @@ class RolezLinkingTest {
             class rolez.lang.Object mapped to java.lang.Object {
                 mapped new
             }
-            class rolez.lang.String mapped to java.lang.String {
+            pure class rolez.lang.String mapped to java.lang.String {
                 mapped new(s: readonly String)
             }
         ''').assertNoErrors

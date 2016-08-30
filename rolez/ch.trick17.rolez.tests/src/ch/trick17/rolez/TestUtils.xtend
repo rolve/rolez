@@ -57,7 +57,7 @@ class TestUtils {
             mapped def r get[r includes readonly](i: int): T with r
             mapped def readwrite set(i: int, o: T):
         }
-        class rolez.lang.String mapped to java.lang.String
+        pure class rolez.lang.String mapped to java.lang.String
         class A
         class B
         class App {

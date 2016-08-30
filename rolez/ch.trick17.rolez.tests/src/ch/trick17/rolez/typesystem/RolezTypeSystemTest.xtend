@@ -46,7 +46,7 @@ class RolezTypeSystemTest {
     @Test def void testTAssignment() {
         var program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.String mapped to java.lang.String
+            pure class rolez.lang.String mapped to java.lang.String
             class A {
                 var i: int
                 var d: double
@@ -695,7 +695,7 @@ class RolezTypeSystemTest {
             class rolez.lang.Array[T] mapped to rolez.lang.Array {
                 mapped new(length: int)
             }
-            class rolez.lang.String mapped to java.lang.String
+            pure class rolez.lang.String mapped to java.lang.String
             class Container[E] mapped to «Container.canonicalName» {
                 mapped var e: E
                 mapped def r get[r includes readonly]: E with r
@@ -857,7 +857,7 @@ class RolezTypeSystemTest {
     @Test def void testTNewGeneric() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.String mapped to java.lang.String
+            pure class rolez.lang.String mapped to java.lang.String
             class Container[E] mapped to «Container.canonicalName» {
                 mapped new(e: E)
             }
@@ -869,7 +869,7 @@ class RolezTypeSystemTest {
         
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.String mapped to java.lang.String
+            pure class rolez.lang.String mapped to java.lang.String
             class Container[E] mapped to «Container.canonicalName» {
                 mapped new(e: E)
             }

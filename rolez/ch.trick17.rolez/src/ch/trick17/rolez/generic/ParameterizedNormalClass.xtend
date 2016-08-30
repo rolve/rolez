@@ -19,6 +19,7 @@ class ParameterizedNormalClass extends ParameterizedEObject<NormalClass> impleme
         super(eObject, eContainer, typeArgs, roleArgs)
     }
     
+    override isPure()           { eObject.pure }
     override getName()          { eObject.name }
     override getTypeParam()     { eObject.typeParam }
     override getJvmClass()      { eObject.jvmClass }
@@ -39,6 +40,7 @@ class ParameterizedNormalClass extends ParameterizedEObject<NormalClass> impleme
         else eObject.eGet(feature)
     }
     
+    override setPure(boolean            value) { throw new AssertionError }
     override setName(String             value) { throw new AssertionError }
     override setTypeParam(TypeParam     value) { throw new AssertionError }
     override setJvmClass(JvmGenericType value) { throw new AssertionError }

@@ -48,7 +48,7 @@ class RolezGeneratorTest {
     @Test def testMappedClasses() {
         var program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.String mapped to java.lang.String
+            pure class rolez.lang.String mapped to java.lang.String
             class rolez.io.PrintStream mapped to java.io.PrintStream {
                 mapped new(s: pure String)
             }
