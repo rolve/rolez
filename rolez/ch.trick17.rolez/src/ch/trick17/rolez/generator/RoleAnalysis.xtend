@@ -91,7 +91,7 @@ class RoleAnalysis {
     private def thisMayEscapeTask() {
         code.eAllContents.exists[switch(it) {
             Assignment: right.isThis
-            MemberAccess case isMethodInvoke: target.isThis || args.exists[isThis]
+            MemberAccess case isMethodInvoke || isTaskStart: target.isThis || args.exists[isThis]
             New: args.exists[isThis]
             default: false
         }]
