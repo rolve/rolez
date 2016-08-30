@@ -1,10 +1,12 @@
 package ch.trick17.rolez.generator
 
+import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.Cast
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.Instr
 import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.New
+import ch.trick17.rolez.rolez.OpAssignment
 import ch.trick17.rolez.rolez.Param
 import ch.trick17.rolez.rolez.Parenthesized
 import ch.trick17.rolez.rolez.Role
@@ -39,7 +41,7 @@ class RoleAnalysis {
     }
     
     def dispatch Role dynamicRole(This _) {
-        if(codeKind == CodeKind.CONSTR && !code.mayStartTask)
+        if(codeKind == CodeKind.CONSTR && !thisMayEscapeTask)
             createReadWrite
         else
             createPure
@@ -60,7 +62,7 @@ class RoleAnalysis {
     def dynamicThisRoleAtExit() {
         if(codeKind != CodeKind.CONSTR)
             throw new IllegalStateException("Only applicable if codeKind is CONSTR")
-        if(code.mayStartTask) createPure else createReadWrite
+        if(thisMayEscapeTask) createPure else createReadWrite
     }
     
     private def dispatch boolean isGlobal(MemberAccess it) {
@@ -71,13 +73,35 @@ class RoleAnalysis {
     
     private def dispatch boolean isGlobal(Expr _) { false }
     
-    private def boolean mayStartTask(Instr it) {
-        eAllContents.exists[
-            it instanceof New && !(it as New).constr.isMapped
-                || it instanceof MemberAccess && (it as MemberAccess).isTaskStart
-                || it instanceof MemberAccess
-                    && (it as MemberAccess).isMethodInvoke
-                    && !(it as MemberAccess).method.isMapped
-        ]
+    private def mayStartTask(Instr it) {
+        eAllContents.exists[switch(it) {
+            New: !constr.isMapped
+            MemberAccess: isTaskStart || isMethodInvoke && !method.isMapped
+            default: false
+        }]
     }
+    
+    /**
+     * Very simple escape analysis to avoid guarding "this" in constructors when some methods are
+     * called before val fields have been initialized.
+     * 
+     * TODO: In addition to this, change code generation s.t. it does not generate the problematic
+     * "guard...(this).field = ..." pattern.
+     */
+    private def thisMayEscapeTask() {
+        code.eAllContents.exists[switch(it) {
+            Assignment: right.isThis
+            MemberAccess case isMethodInvoke: target.isThis || args.exists[isThis]
+            New: args.exists[isThis]
+            default: false
+        }]
+    }
+    
+    private def boolean isThis(Expr it) { switch(it) {
+        This: true
+        Parenthesized: expr.isThis
+        Cast: expr.isThis
+        Assignment: op == OpAssignment.ASSIGN && right.isThis
+        default: false
+    }}
 }
