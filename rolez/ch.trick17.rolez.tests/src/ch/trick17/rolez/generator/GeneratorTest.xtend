@@ -31,7 +31,7 @@ abstract class GeneratorTest {
     
     protected def someClasses() {
         newResourceSet.with('''
-            pure class rolez.lang.Object mapped to java.lang.Object {
+            class rolez.lang.Object mapped to java.lang.Object {
                 mapped def readonly equals(o: readonly Object): boolean
                 mapped def readonly hashCode: int
                 mapped def readonly toString: pure String

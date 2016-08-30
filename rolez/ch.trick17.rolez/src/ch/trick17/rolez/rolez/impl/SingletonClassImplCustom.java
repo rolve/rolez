@@ -5,4 +5,9 @@ public class SingletonClassImplCustom extends SingletonClassImpl {
     public boolean isSingleton() {
         return true;
     }
+    
+    @Override
+    public boolean isPure() {
+        return true;
+    }
 }

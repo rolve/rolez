@@ -25,6 +25,7 @@
         <eTypeArguments eClassifier="#//Method"/>
       </eGenericType>
     </eOperations>
+    <eOperations name="isPure" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="jvmClass" eType="ecore:EClass ../../org.eclipse.xtext.common.types/model/JavaVMTypes.ecore#//JvmGenericType"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="superclassRef" eType="#//ClassRef"
         containment="true"/>

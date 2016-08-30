@@ -3,7 +3,7 @@ package rolez.lang
 import rolez.io.InputStream
 import rolez.io.PrintStream
 
-pure class Object mapped to java.lang.Object {
+class Object mapped to java.lang.Object {
     mapped def readonly equals(other: readonly Object): boolean
     mapped def readonly hashCode: int
     mapped def readonly toString: readonly String
