@@ -11,9 +11,10 @@ public class GuardedVectorBuilder<A> extends Guarded {
     
     public void set(int index, Object component) {
         checkNotBuilt();
+        // IMPROVE: Could check vector type arg at compile time, but would lose some flexibility
         if(component instanceof Guarded)
             throw new IllegalArgumentException(
-                    "vector components must be immutable (i.e. not guarded)");
+                    "vector components must be pure (primitive or instances of pure classes, including singleton classes)");
         ((Object[]) data)[index] = component;
     }
     

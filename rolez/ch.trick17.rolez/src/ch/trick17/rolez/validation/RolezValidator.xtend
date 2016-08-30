@@ -20,7 +20,6 @@ import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.Null
 import ch.trick17.rolez.rolez.Program
-import ch.trick17.rolez.rolez.Pure
 import ch.trick17.rolez.rolez.ReadOnly
 import ch.trick17.rolez.rolez.ReadWrite
 import ch.trick17.rolez.rolez.ReturnExpr

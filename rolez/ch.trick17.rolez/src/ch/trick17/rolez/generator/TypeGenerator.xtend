@@ -13,7 +13,6 @@ import javax.inject.Inject
 import static ch.trick17.rolez.Constants.*
 
 import static extension java.util.Objects.requireNonNull
-import ch.trick17.rolez.rolez.NormalClass
 
 class TypeGenerator {
     
