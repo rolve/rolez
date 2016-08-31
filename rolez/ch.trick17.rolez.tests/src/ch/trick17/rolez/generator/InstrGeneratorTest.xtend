@@ -740,10 +740,12 @@ class InstrGeneratorTest extends GeneratorTest {
             the System.out.println("Hello World!");
             val system = the System;
             system.out.println("Hello again!");
+            the System.exit(0);
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
             java.lang.System.out.println("Hello World!");
             final rolez.lang.System system = rolez.lang.System.INSTANCE;
             system.out.println("Hello again!");
+            java.lang.System.exit(0);
         '''.withJavaFrame)
     }
     

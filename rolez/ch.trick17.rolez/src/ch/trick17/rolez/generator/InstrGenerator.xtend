@@ -355,7 +355,8 @@ class InstrGenerator {
         private static val bracketPattern = Pattern.compile("\\](\\[\\])*$")
         
         private def dispatch CharSequence generate(The it) {
-            if(classRef.clazz.isMapped)
+            if(eContainer instanceof MemberAccess && it == (eContainer as MemberAccess).target
+                    && classRef.clazz.isMapped)
                 classRef.clazz.jvmClass.qualifiedName // more efficient access to static members
             else
                 '''«classRef.generate».INSTANCE'''
