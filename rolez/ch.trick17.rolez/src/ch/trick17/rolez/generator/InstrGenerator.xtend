@@ -354,7 +354,12 @@ class InstrGenerator {
         
         private static val bracketPattern = Pattern.compile("\\](\\[\\])*$")
         
-        private def dispatch CharSequence generate(The it) '''«classRef.generate».INSTANCE'''
+        private def dispatch CharSequence generate(The it) {
+            if(classRef.clazz.isMapped)
+                classRef.clazz.jvmClass.qualifiedName // more efficient access to static members
+            else
+                '''«classRef.generate».INSTANCE'''
+        }
         
         private def dispatch CharSequence generate(Parenthesized it) { expr.generate }
         
@@ -388,9 +393,6 @@ class InstrGenerator {
                     ReadOnly : "guardReadOnly("  + generate + ")"
                     Pure     : genNested
                 }
-            else if(it instanceof The)
-                // Shorter and more efficient code for access to mapped singletons, like System
-                classRef.clazz.jvmClass.qualifiedName
             else
                 genNested
             

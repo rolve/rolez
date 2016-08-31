@@ -64,6 +64,7 @@ abstract class GeneratorTest {
             }
             object rolez.lang.System mapped to java.lang.System {
                 mapped val out: readonly rolez.io.PrintStream
+                mapped def readonly exit(code: int):
             }
             class rolez.io.PrintStream mapped to java.io.PrintStream {
                 mapped new(file: readonly String)
@@ -91,6 +92,9 @@ abstract class GeneratorTest {
                 task pure foo: {}
                 task pure bar(o: readwrite Object): {}
                 task pure sum(i: int, j: int): int { return i + j; }
+            }
+            object Constants {
+                val answer: int = 42
             }
         ''')
     }

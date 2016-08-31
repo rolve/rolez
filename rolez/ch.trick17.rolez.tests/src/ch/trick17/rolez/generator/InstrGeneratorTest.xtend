@@ -372,6 +372,9 @@ class InstrGeneratorTest extends GeneratorTest {
             "Hello".substring(1, 3);
             this.bar;
             val sum = the Tasks.sum(1, 2);
+            val answer = the Constants.answer;
+            val out = the System.out;
+            the System.exit(answer);
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
             "Hello".toString().length();
             "Hello".equals("Hi");
@@ -380,6 +383,9 @@ class InstrGeneratorTest extends GeneratorTest {
             "Hello".substring(1, 3);
             this.bar();
             final int sum = Tasks.INSTANCE.sum(1, 2);
+            final int answer = Constants.INSTANCE.answer;
+            final java.io.PrintStream out = java.lang.System.out;
+            java.lang.System.exit(answer);
         '''.withJavaFrame)
     }
     

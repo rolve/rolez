@@ -35,6 +35,9 @@ SingletonClass:
         members+=Member+
     '}')?;
 
+// FIXME: Singleton classes must not extend classes with no no-args constructor!
+// TODO : Or even better, allow singleton classes to specify args to super constr: object Black extends Color(0, 0, 0)
+
 TypeParam: name=ID;
 
 Member:
