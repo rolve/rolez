@@ -71,6 +71,16 @@ object System mapped to java.lang.System {
 }
 
 object Math mapped to java.lang.Math {
+    mapped val E: double
+    mapped val PI: double
+    
+    mapped def pure sin(a: double): double
+    mapped def pure cos(a: double): double
+    mapped def pure tan(a: double): double
+    mapped def pure asin(a: double): double
+    mapped def pure acos(a: double): double
+    mapped def pure atan(a: double): double
+    
     mapped def pure exp(a: double): double
     mapped def pure log(a: double): double
     mapped def pure log10(a: double): double
