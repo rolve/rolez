@@ -3,6 +3,7 @@ package rolez.lang;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.newSetFromMap;
 
+import java.lang.reflect.Array;
 import java.util.AbstractList;
 import java.util.Collection;
 import java.util.RandomAccess;
@@ -25,6 +26,12 @@ public class GuardedSlice<A> extends Guarded {
         this.data = array;
         this.range = range;
     }
+    
+    public int arrayLength() {
+        return Array.getLength(data);
+    }
+    
+    // IMPROVE: Check if using java.lang.reflect.Array for getters and setters improves performance
     
     @SuppressWarnings("unchecked")
     public <T> T get(int index) {

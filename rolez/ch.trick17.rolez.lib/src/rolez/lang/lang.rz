@@ -12,6 +12,7 @@ class Object mapped to java.lang.Object {
 class Slice[T] mapped to rolez.lang.Slice {
     mapped val range: readonly SliceRange
     
+    mapped def pure arrayLength: int
     mapped def readonly  get(index: int): T
     mapped def readwrite set(index: int, component: T):
     
