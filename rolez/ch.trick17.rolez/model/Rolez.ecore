@@ -223,6 +223,7 @@
   <eClassifiers xsi:type="ecore:EClass" name="PrimitiveType" eSuperTypes="#//Type">
     <eOperations name="getName" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
   </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="NumericType" eSuperTypes="#//PrimitiveType"/>
   <eClassifiers xsi:type="ecore:EClass" name="TypeParamRef" eSuperTypes="#//Type">
     <eStructuralFeatures xsi:type="ecore:EReference" name="param" eType="#//TypeParam"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="restrictingRole" eType="#//Role"
@@ -283,10 +284,10 @@
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="NullLiteral" eSuperTypes="#//Literal"/>
   <eClassifiers xsi:type="ecore:EClass" name="Null" eSuperTypes="#//ReferenceType"/>
-  <eClassifiers xsi:type="ecore:EClass" name="Int" eSuperTypes="#//PrimitiveType"/>
-  <eClassifiers xsi:type="ecore:EClass" name="Double" eSuperTypes="#//PrimitiveType"/>
+  <eClassifiers xsi:type="ecore:EClass" name="Int" eSuperTypes="#//NumericType"/>
+  <eClassifiers xsi:type="ecore:EClass" name="Double" eSuperTypes="#//NumericType"/>
+  <eClassifiers xsi:type="ecore:EClass" name="Char" eSuperTypes="#//NumericType"/>
   <eClassifiers xsi:type="ecore:EClass" name="Boolean" eSuperTypes="#//PrimitiveType"/>
-  <eClassifiers xsi:type="ecore:EClass" name="Char" eSuperTypes="#//PrimitiveType"/>
   <eClassifiers xsi:type="ecore:EClass" name="Void" eSuperTypes="#//PrimitiveType"/>
   <eClassifiers xsi:type="ecore:EClass" name="Pure" eSuperTypes="#//BuiltInRole"/>
   <eClassifiers xsi:type="ecore:EClass" name="ReadOnly" eSuperTypes="#//BuiltInRole"/>

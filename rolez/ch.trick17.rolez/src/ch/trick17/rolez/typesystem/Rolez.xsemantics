@@ -28,6 +28,7 @@ import ch.trick17.rolez.rolez.Method
 import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.Null
 import ch.trick17.rolez.rolez.NullLiteral
+import ch.trick17.rolez.rolez.NumericType
 import ch.trick17.rolez.rolez.OpArithmetic
 import ch.trick17.rolez.rolez.OpAssignment
 import ch.trick17.rolez.rolez.Param
@@ -247,16 +248,18 @@ from {
     
     G |- exprType <: c.type // Upcasts are always fine
     or {
-        // Downcasts only allowed if role stays the same and of there is a subclass relation
+        // Downcasts only allowed if role stays the same and if there is a subclass relation
         c.type instanceof RoleType && exprType instanceof RoleType
         G |~ (exprType as RoleType).role ~~ (c.type as RoleType).role
         G |- (c.type as RoleType).base <~ (exprType as RoleType).base
+    }
+    or {
+        c.type instanceof NumericType && exprType instanceof NumericType
     } or fail
         error "Cannot cast " + exprType.string + " to " + c.type.string
         source c
     
     t = c.type
-    // TODO: Allow coercion of primitive types?
 }
 
 rule TUnaryMinus

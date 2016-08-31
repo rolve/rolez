@@ -225,7 +225,10 @@ ReferenceType:
     RoleType | {Null} NULL_TYPE;
 
 PrimitiveType:
-    {Int} 'int' | {Double} 'double' | {Boolean} 'boolean' | {Char} 'char' | {Void} 'void'?;
+    NumericType | {Boolean} 'boolean' | {Void} 'void'?;
+
+NumericType:
+    {Int} 'int' | {Double} 'double' | {Char} 'char';
 
 TypeParamRef:
     param=[TypeParam] ('with' restrictingRole=Role)?;
