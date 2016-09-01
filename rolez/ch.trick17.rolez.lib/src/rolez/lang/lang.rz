@@ -13,12 +13,12 @@ class Slice[T] mapped to rolez.lang.Slice {
     mapped val range: readonly SliceRange
     
     mapped def pure arrayLength: int
-    mapped def readonly  get(index: int): T
+    mapped def r get[r includes readonly](index: int): T with r
     mapped def readwrite set(index: int, component: T):
     
     mapped def r slice[r](sliceRange: pure SliceRange): r Slice[T]
     mapped def r slice[r](begin: int, end: int, step: int): r Slice[T]
-    mapped def r partition[r](p: pure Partitioner, n: int): readonly Array[r Slice[T]]
+    mapped def r partition[r](p: pure Partitioner, n: int): readwrite Array[r Slice[T]]
 }
 
 class Array[T] mapped to rolez.lang.Array extends Slice[T] {
