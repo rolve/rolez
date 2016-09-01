@@ -708,7 +708,7 @@ class RolezTypeSystemTest {
             val array = new Array[int](1);
             array.set(0, 42);
             array.get(0);
-        '''.withFrame).task.expr(1).type.assertThat(instanceOf(Int))
+        '''.withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
         parse('''
             class App {
                 task pure main: {
