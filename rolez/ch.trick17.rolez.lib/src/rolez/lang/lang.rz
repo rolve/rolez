@@ -41,7 +41,7 @@ pure class SliceRange mapped to rolez.lang.SliceRange {
 
 pure class Vector[T] mapped to rolez.lang.Vector {
     mapped val length: int
-    mapped def readonly get(i: int): T
+    mapped def pure get(i: int): T
 }
 
 class VectorBuilder[T] mapped to rolez.lang.VectorBuilder {
