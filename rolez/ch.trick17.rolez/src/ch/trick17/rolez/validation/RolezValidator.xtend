@@ -158,7 +158,7 @@ class RolezValidator extends RolezSystemValidator {
          * them, even mutable parts they inherit from superclasses are effectively immutable. */
         if(isPure && !singleton && !superclass.isPure && !superclass.isObjectClass)
             error("Pure classes cannot extend non-pure classes", CLASS__SUPERCLASS_REF, INCORRECT_SUPERCLASS_PURITY)
-        else if(!isPure && superclass.isPure && !isObjectClass)
+        else if(!isPure && !isObjectClass && superclass.isPure)
             error("Non-pure classes cannot extend pure classes", CLASS__SUPERCLASS_REF, INCORRECT_SUPERCLASS_PURITY)
     }
     
