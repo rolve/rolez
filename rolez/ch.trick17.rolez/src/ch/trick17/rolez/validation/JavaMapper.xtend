@@ -82,12 +82,12 @@ class JavaMapper {
                     && other.arguments.size == 1 && other.arguments.head instanceof JvmGenericArrayTypeReference
                     && base.typeArg.mapsTo((other.arguments.head as JvmGenericArrayTypeReference).componentType)
             GenericClassRef:
-                base.clazz.jvmClass.qualifiedName == other.type.qualifiedName
+                base.clazz.jvmClass.qualifiedName == other.type.qualifiedName // generic classes are always mapped, but could there still be an NPE here?
                     && other.arguments.size == 1
                     && base.typeArg.mapsTo(other.arguments.head)
-            default: base.clazz.jvmClass.qualifiedName == other.type.qualifiedName
+            default: base.clazz.isMapped
+                    && base.clazz.jvmClass.qualifiedName == other.type.qualifiedName
         }
-        // TODO: What if base.clazz is not even mapped?
     }
     
     def dispatch boolean mapsTo(TypeParamRef it, JvmTypeReference other) {
