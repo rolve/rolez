@@ -72,7 +72,7 @@ abstract class ParameterizedEObject<E extends EObject>
     }}
     
     def ClassRef parameterized(ClassRef it) { switch(it) {
-        SimpleClassRef : new ParameterizedSimpleClassRef (it, this, typeArgs, roleArgs)
+        SimpleClassRef : it
         GenericClassRef: new ParameterizedGenericClassRef(it, this, typeArgs, roleArgs)
     }}
     
