@@ -91,13 +91,7 @@ class RolezExtensions {
             else parameterizedSuperclass.allMembers.filter[m | !overrides(m)]
     }
     
-    def parameterizedSuperclass(Class it) {
-        val paramerizedClass = superclassRef?.parameterizedClass
-        if(paramerizedClass instanceof NormalClass)
-            paramerizedClass
-        else
-            null // If the superclass could not be resolved
-    }
+    def parameterizedSuperclass(Class it) { superclassRef?.parameterizedClass as NormalClass }
     
     val superclassesCache = new OnChangeEvictingCache
     

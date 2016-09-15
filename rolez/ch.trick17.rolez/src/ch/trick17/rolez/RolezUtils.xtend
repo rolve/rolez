@@ -76,6 +76,7 @@ class RolezUtils {
     }
     
     def RuleEnvironment createEnv(Executable executable) {
+        // IMPROVE: cache environments for better performance?
         switch(executable) {
             case null: new RuleEnvironment
             Method: new RuleEnvironment(new RuleEnvironmentEntry("this", executable.thisType))
