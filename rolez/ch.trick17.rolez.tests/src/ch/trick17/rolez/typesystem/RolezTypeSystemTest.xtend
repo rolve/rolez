@@ -515,7 +515,7 @@ class RolezTypeSystemTest {
         program.task.expr(0).type.assertThat(instanceOf(Int))
         program.task.expr(1).type.assertRoleType(ReadWrite, "A")
         program.task.expr(2).type.assertRoleType(ReadOnly, "A")
-        program.task.expr(2).type.assertRoleType(ReadOnly, "A")
+        program.task.expr(3).type.assertRoleType(ReadOnly, "A")
         
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
