@@ -711,6 +711,8 @@ class RolezValidatorTest {
         ''').assertError(INT, INCORRECT_MAIN)
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Array[T] mapped to rolez.lang.Array
+            class rolez.lang.String mapped to java.lang.String
             class App {
                 task pure main(args: readwrite Array[readonly String]): {}
             }
