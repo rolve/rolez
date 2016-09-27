@@ -10,4 +10,9 @@ public class SingletonClassImplCustom extends SingletonClassImpl {
     public boolean isPure() {
         return true;
     }
+    
+    @Override
+    public String toString() {
+        return getQualifiedName().toString();
+    }
 }

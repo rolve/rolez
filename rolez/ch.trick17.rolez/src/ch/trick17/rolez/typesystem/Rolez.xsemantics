@@ -91,7 +91,7 @@ judgments {
     validArgs |- Argumented a << Executable e
     
     subtypeExpr |- Expr left <| Type right
-        error "Type mismatch: " + type(createEnv(left), left).value?.string + " is not a subtype of " + right.string
+        error "Type mismatch: " + type(createEnv(left), left).value + " is not a subtype of " + right
         source left
     
     subtype  |-     Type left <:     Type right error "subtype" // Apparently, an error message is necessary for sensible error message selection
@@ -102,7 +102,7 @@ judgments {
     equalRole |~ Role left ~~ Role right error "equal role"
     
     assignable |= Expr e
-        error "Cannot assign to " + e.string source e
+        error "Cannot assign to this expression" source e
 }
 
 auxiliary leastCommonSuperrole(Role r1, Role r2) {
@@ -171,7 +171,7 @@ from {
             G |- leftType <: stringType
         } or fail
             error "The operator " + a.op + " is undefined for the argument types "
-                + leftType.string + ", " + rightType.string
+                + leftType + ", " + rightType
             source a
     }
     
@@ -194,7 +194,7 @@ from {
     G |- leftType <: rightType
         or G |- rightType <: leftType
         or fail
-            error "Cannot compare " + leftType.string + " to " + rightType.string
+            error "Cannot compare " + leftType + " to " + rightType
             source e
 }
 
@@ -211,7 +211,7 @@ from {
         G |- leftType  <: createChar
         G |- rightType <: createChar
     } or fail
-        error "Cannot compare " + leftType.string + " to " + rightType.string
+        error "Cannot compare " + leftType + " to " + rightType
         source e
 }
 
@@ -237,7 +237,7 @@ from {
         t = stringType
     } or fail
         error "The operator " + e.op + " is undefined for the argument types "
-            + leftType.string + ", " + rightType.string
+            + leftType + ", " + rightType
         source e
 }
 
@@ -256,7 +256,7 @@ from {
     or {
         c.type instanceof NumericType && exprType instanceof NumericType
     } or fail
-        error "Cannot cast " + exprType.string + " to " + c.type.string
+        error "Cannot cast " + exprType + " to " + c.type
         source c
     
     t = c.type
@@ -273,7 +273,7 @@ from {
         G |- exprType <: createDouble
         t = createDouble
     } or fail
-        error "The unary operator - is undefined for the argument type " + exprType.string
+        error "The unary operator - is undefined for the argument type " + exprType
         source m
 }
 
@@ -293,7 +293,7 @@ from {
     if(a.isFieldAccess) {
         val requiredRole = if(a.field.kind == VarKind.VAL) createPure else createReadOnly
         G |- targetRole <! requiredRole or fail
-            error "Role mismatch: Cannot access this field with a " + targetRole.string + " target"
+            error "Role mismatch: Cannot access this field with a " + targetRole + " target"
             source a.target
         var fieldType = a.field.type
         t = switch(fieldType) {
@@ -316,14 +316,14 @@ from {
         val roleArgs = inferRoleArgs(G, a, originalMethod)
         for(entry : roleArgs.entrySet) {
             G |- entry.value <! entry.key.upperBound or fail
-                error "Bound mismatch: the role " + entry.value.string + " is not a valid substitute "
-                    + "for the bounded role parameter " + entry.key.string
+                error "Bound mismatch: the role " + entry.value + " is not a valid substitute "
+                    + "for the bounded role parameter " + entry.key
                 source a
                 feature MEMBER_ACCESS__MEMBER
         }
         G |- targetRole <! a.method.thisRole or fail
             error "Role mismatch: Cannot " + (if(a.isTaskStart) "start task " else "call method ")
-                + a.method.string + " with a " + targetRole.string + " target"
+                + a.method + " with a " + targetRole + " target"
             source a
         
         if(a.isTaskStart) {

@@ -27,11 +27,12 @@ class ParameterizedNormalClass extends ParameterizedEObject<NormalClass> impleme
     override getConstrs()       { new ParameterizedConstrList(eObject.constrs, this, typeArgs, roleArgs) }
     override getMembers()       { new ParameterizedMemberList(eObject.members, this, typeArgs, roleArgs) }
     
-    override isSingleton()   { eObject.isSingleton }
-    override isMapped()      { eObject.isMapped }
-    override getSuperclass() { eObject.superclass }
-    override getFields()     { eObject.fields }
-    override getMethods()    { eObject.methods }
+    override isSingleton()      { eObject.isSingleton }
+    override isMapped()         { eObject.isMapped }
+    override getSuperclass()    { eObject.superclass }
+    override getFields()        { eObject.fields }
+    override getMethods()       { eObject.methods }
+    override getQualifiedName() { eObject.qualifiedName }
 
     override eGet(EStructuralFeature feature) {
         if(feature === CLASS__SUPERCLASS_REF) superclassRef

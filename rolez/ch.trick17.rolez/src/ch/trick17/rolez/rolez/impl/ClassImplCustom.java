@@ -2,6 +2,9 @@ package ch.trick17.rolez.rolez.impl;
 
 import static org.eclipse.xtext.xbase.lib.IterableExtensions.filter;
 
+import org.eclipse.xtext.naming.QualifiedName;
+
+import ch.trick17.rolez.RolezResource;
 import ch.trick17.rolez.rolez.ClassRef;
 import ch.trick17.rolez.rolez.Field;
 import ch.trick17.rolez.rolez.Method;
@@ -30,5 +33,10 @@ public class ClassImplCustom extends ClassImpl {
     @Override
     public Iterable<Method> getMethods() {
         return filter(getMembers(), Method.class);
+    }
+    
+    @Override
+    public QualifiedName getQualifiedName() {
+        return ((RolezResource) eResource()).qualifiedNameProvider().getFullyQualifiedName(this);
     }
 }

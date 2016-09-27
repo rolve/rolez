@@ -89,8 +89,8 @@ class RolezTypeSystemTest {
     }
     
     @Test def testTAssignmentNotAssignable() {
-        parse("5 =  3;".withFrame).assertError(INT_LITERAL, AEXPR, "assign", "5")
-        parse("5 += 3;".withFrame).assertError(INT_LITERAL, AEXPR, "assign", "5")
+        parse("5 =  3;".withFrame).assertError(INT_LITERAL, AEXPR, "assign")
+        parse("5 += 3;".withFrame).assertError(INT_LITERAL, AEXPR, "assign")
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
@@ -101,7 +101,7 @@ class RolezTypeSystemTest {
                     new A.foo = 3;
                 }
             }
-        ''').assertError(MEMBER_ACCESS, AMEMBERACCESS, "assign", "foo")
+        ''').assertError(MEMBER_ACCESS, AMEMBERACCESS, "assign")
         
         parse('''
             val x: int = 5;

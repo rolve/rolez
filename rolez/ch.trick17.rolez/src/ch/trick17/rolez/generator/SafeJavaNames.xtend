@@ -1,13 +1,9 @@
 package ch.trick17.rolez.generator
 
-import ch.trick17.rolez.RolezExtensions
 import ch.trick17.rolez.rolez.Class
 import ch.trick17.rolez.rolez.Named
-import javax.inject.Inject
 
 class SafeJavaNames {
-    
-    @Inject extension RolezExtensions
     
     static val javaKeywords = #{
         "abstract", "assert", "boolean", "break", "byte", "case", "catch", 

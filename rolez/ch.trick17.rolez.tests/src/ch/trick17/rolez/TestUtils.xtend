@@ -34,7 +34,6 @@ import static extension org.hamcrest.MatcherAssert.assertThat
 class TestUtils {
     
     @Inject RolezSystem system
-    @Inject extension RolezExtensions extensions
     @Inject extension RolezUtils
     @Inject extension ValidationTestHelper
     @Inject Provider<XtextResourceSet> resourceSetProvider

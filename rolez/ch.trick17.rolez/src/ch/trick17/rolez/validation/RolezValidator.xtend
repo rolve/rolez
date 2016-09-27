@@ -5,6 +5,7 @@ import ch.trick17.rolez.RolezUtils
 import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.Block
 import ch.trick17.rolez.rolez.Class
+import ch.trick17.rolez.rolez.ClassRef
 import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.Executable
 import ch.trick17.rolez.rolez.Expr
@@ -226,13 +227,24 @@ class RolezValidator extends RolezSystemValidator {
 	 */
     @Check
     def checkNoDuplicateMethods(Method it) {
-        val matching = enclosingClass.methods.filter[m | utils.equalSignatureWithoutRoles(m, it)]
-        if(matching.size < 1)
-           throw new AssertionError
-        if(matching.size > 1)
-           error("Duplicate method " + name + "("+ params.map[type.stringWithoutRoles].join(", ") + ")",
+        // TODO: Shouldn't we also ignore type args while comparing?
+        val matching = enclosingClass.methods.filter[m |
+            it !== m && utils.equalSignatureWithoutRoles(m, it)
+        ]
+        if(matching.size > 0)
+           error("Duplicate method " + name + "("+ params.map[type.toStringWithoutRoles].join(", ") + ")",
                NAMED__NAME, DUPLICATE_METHOD)
     }
+    
+    private def String toStringWithoutRoles(Type it) { switch(it) {
+        RoleType: base.toStringWithoutRoles
+        default : toString
+    }}
+    
+    private def toStringWithoutRoles(ClassRef it) { switch(it) {
+        GenericClassRef: clazz.qualifiedName + "[" + typeArg.toStringWithoutRoles + "]"
+        default        : toString
+    }}
     
     @Check
     def checkFieldWithSameName(Method it) {
@@ -276,17 +288,17 @@ class RolezValidator extends RolezSystemValidator {
         if(!overriding) return;
         
         if(system.subtype(utils.createEnv(it), type, superMethod.type).failed)
-            error("The return type " + type.string + " is incompatible with overridden method "
-                + superMethod.string, TYPED__TYPE, INCOMPATIBLE_RETURN_TYPE)
+            error("The return type " + type + " is incompatible with overridden method "
+                + superMethod, TYPED__TYPE, INCOMPATIBLE_RETURN_TYPE)
         if(system.subrole(superMethod.thisRole, thisRole).failed)
-            error("The role of \"this\" is incompatible with overridden method " + superMethod.string,
+            error("The role of \"this\" is incompatible with overridden method " + superMethod,
                 METHOD__THIS_ROLE, RolezValidator.INCOMPATIBLE_THIS_ROLE)
         
         for(p : params) {
             val superParamType = superMethod.params.get(p.paramIndex).type
             if(system.subtype(utils.createEnv(it), superParamType, p.type).failed)
                 error("This parameter type is incompatible with overridden method "
-                    + superMethod.string, p, TYPED__TYPE, RolezValidator.INCOMPATIBLE_PARAM_TYPE)
+                    + superMethod, p, TYPED__TYPE, RolezValidator.INCOMPATIBLE_PARAM_TYPE)
         }
 	}
     
@@ -316,7 +328,7 @@ class RolezValidator extends RolezSystemValidator {
         for(p : cfg.exit.predecessors) {
             if(p instanceof InstrNode) {
                 if(!(p.instr instanceof ReturnExpr))
-                    error("Method must return a value of type " + type.string,
+                    error("Method must return a value of type " + type,
                         nonReturningNode(p).instr, null, MISSING_RETURN_EXPR)
             }
             else throw new AssertionError
@@ -416,7 +428,7 @@ class RolezValidator extends RolezSystemValidator {
         val type = type
         if(type instanceof RoleType)
             if(system.subrole(createReadOnly, type.role).failed) {
-                val effectiveRole = system.leastCommonSuperrole(createReadOnly, type.role).string;
+                val effectiveRole = system.leastCommonSuperrole(createReadOnly, type.role);
                 warning("Singleton objects are always readonly, therefore this field's effective role is " + effectiveRole,
                     type.role, null, INEFFECTIVE_FIELD_ROLE)
             }

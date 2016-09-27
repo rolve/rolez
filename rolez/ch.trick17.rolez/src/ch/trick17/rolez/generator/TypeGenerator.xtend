@@ -21,7 +21,7 @@ class TypeGenerator {
     @Inject extension SafeJavaNames
     
     def CharSequence generate(Type it) { switch(it) {
-        PrimitiveType: string
+        PrimitiveType: name
         RoleType: base.generate
         default: throw new AssertionError // Null or TypeParamRef
     }}

@@ -26,6 +26,7 @@
       </eGenericType>
     </eOperations>
     <eOperations name="isPure" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    <eOperations name="getQualifiedName" eType="#//QualifiedName"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="jvmClass" eType="ecore:EClass ../../org.eclipse.xtext.common.types/model/JavaVMTypes.ecore#//JvmGenericType"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="superclassRef" eType="#//ClassRef"
         containment="true"/>
@@ -41,7 +42,9 @@
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="SingletonClass" eSuperTypes="#//Class"/>
   <eClassifiers xsi:type="ecore:EClass" name="TypeParam" eSuperTypes="#//Named"/>
-  <eClassifiers xsi:type="ecore:EClass" name="Member"/>
+  <eClassifiers xsi:type="ecore:EClass" name="Member">
+    <eOperations name="getQualifiedName" eType="#//QualifiedName"/>
+  </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="Constr" eSuperTypes="#//Executable">
     <eOperations name="isMapped" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="jvmConstr" eType="ecore:EClass ../../org.eclipse.xtext.common.types/model/JavaVMTypes.ecore#//JvmConstructor"/>
@@ -267,6 +270,7 @@
   <eClassifiers xsi:type="ecore:EClass" name="Named">
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
   </eClassifiers>
+  <eClassifiers xsi:type="ecore:EDataType" name="QualifiedName" instanceClassName="org.eclipse.xtext.naming.QualifiedName"/>
   <eClassifiers xsi:type="ecore:EClass" name="Typed" eSuperTypes="#//Named">
     <eStructuralFeatures xsi:type="ecore:EReference" name="type" eType="#//Type" containment="true"/>
   </eClassifiers>
