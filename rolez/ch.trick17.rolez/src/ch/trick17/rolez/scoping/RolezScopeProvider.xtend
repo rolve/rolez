@@ -101,7 +101,11 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     }
     
     def scope_Method_superMethod(Method it, EReference ref) {
-        val allMethods = enclosingClass.parameterizedSuperclass.allMembers.filter(Method)
+        val superclass = enclosingClass.parameterizedSuperclass
+        if(superclass == null)
+            return IScope.NULLSCOPE
+        
+        val allMethods = superclass.allMembers.filter(Method)
         val matching = allMethods.filter[m | utils.equalSignatureWithoutRoles(m, it)]
             .filter[m | m.roleParams.size >= roleParams.size]
             .map[m |
