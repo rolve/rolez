@@ -1,6 +1,5 @@
 package ch.trick17.rolez.desugar
 
-import ch.trick17.rolez.RolezExtensions
 import ch.trick17.rolez.rolez.Class
 import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.NormalClass
@@ -14,10 +13,11 @@ import org.eclipse.xtext.common.types.JvmVisibility
 import static ch.trick17.rolez.Constants.*
 import static ch.trick17.rolez.rolez.RolezPackage.Literals.*
 
+import static extension ch.trick17.rolez.RolezExtensions.*
+
 class RolezDesugarer extends AbstractDeclarativeDesugarer {
 
     @Inject extension RolezFactory
-    @Inject extension RolezExtensions
 
     @Rule
     def void addDefaultConstr(NormalClass it) {

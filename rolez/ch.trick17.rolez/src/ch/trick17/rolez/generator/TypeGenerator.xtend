@@ -1,6 +1,5 @@
 package ch.trick17.rolez.generator
 
-import ch.trick17.rolez.RolezExtensions
 import ch.trick17.rolez.rolez.Class
 import ch.trick17.rolez.rolez.ClassRef
 import ch.trick17.rolez.rolez.GenericClassRef
@@ -12,11 +11,11 @@ import javax.inject.Inject
 
 import static ch.trick17.rolez.Constants.*
 
+import static extension ch.trick17.rolez.RolezExtensions.*
 import static extension java.util.Objects.requireNonNull
 
 class TypeGenerator {
     
-    @Inject extension RolezExtensions
     @Inject extension JavaMapper
     @Inject extension SafeJavaNames
     

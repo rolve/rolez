@@ -1,6 +1,5 @@
 package ch.trick17.rolez.generator
 
-import ch.trick17.rolez.RolezExtensions
 import ch.trick17.rolez.RolezUtils
 import ch.trick17.rolez.rolez.ArithmeticBinaryExpr
 import ch.trick17.rolez.rolez.Assignment
@@ -56,8 +55,10 @@ import javax.inject.Inject
 import org.eclipse.xtext.common.types.JvmArrayType
 
 import static ch.trick17.rolez.Constants.*
+import static ch.trick17.rolez.RolezUtils.*
 import static ch.trick17.rolez.rolez.VarKind.*
 
+import static extension ch.trick17.rolez.RolezExtensions.*
 import static extension org.eclipse.xtext.util.Strings.convertToJavaString
 
 class InstrGenerator {
@@ -82,7 +83,6 @@ class InstrGenerator {
      */
     private static class Generator {
         
-        @Inject extension RolezExtensions
         @Inject extension RolezFactory
         @Inject extension JavaMapper
         @Inject RolezUtils utils
@@ -107,7 +107,7 @@ class InstrGenerator {
             }'''
         
         private def dispatch CharSequence generate(LocalVarDecl it) {
-            val type = system.varType(utils.createEnv(it), variable).value
+            val type = system.varType(createEnv(it), variable).value
             '''«variable.kind.generate»«type.generate» «variable.safeName»«IF initializer != null» = «initializer.generate»«ENDIF»;'''
         }
         
@@ -149,7 +149,7 @@ class InstrGenerator {
                 BinaryExpr: findSideFxExpr(left) + findSideFxExpr(right)
                 UnaryExpr: findSideFxExpr(expr)
                 // Special cases for array instantiations and get
-                MemberAccess case isArrayGet: {
+                MemberAccess case utils.isArrayGet(it): {
                     if(args.size != 1) throw new AssertionError
                     findSideFxExpr(target) + findSideFxExpr(args.get(0))
                 }
@@ -225,18 +225,18 @@ class InstrGenerator {
             '''!«expr.genNested»'''
         
         private def dispatch CharSequence generate(MemberAccess it) { switch(it) {
-            case isSliceGet:         generateSliceGet
-            case isSliceSet:         generateSliceSet
-            case isArrayGet:         generateArrayGet
-            case isArraySet:         generateArraySet
-            case isArrayLength:      generateArrayLength
-            case isVectorGet:        generateVectorGet
-            case isVectorLength:     generateVectorLength
-            case isVectorBuilderGet: generateArrayGet         // same code as for arrays
-            case isVectorBuilderSet: generateVectorBuilderSet
-            case isFieldAccess:      generateFieldAccess
-            case isMethodInvoke:     generateMethodInvoke
-            case isTaskStart:        generateTaskStart
+            case utils.isSliceGet(it):         generateSliceGet
+            case utils.isSliceSet(it):         generateSliceSet
+            case utils.isArrayGet(it):         generateArrayGet
+            case utils.isArraySet(it):         generateArraySet
+            case utils.isArrayLength(it):      generateArrayLength
+            case utils.isVectorGet(it):        generateVectorGet
+            case utils.isVectorLength(it):     generateVectorLength
+            case utils.isVectorBuilderGet(it): generateArrayGet         // same code as for arrays
+            case utils.isVectorBuilderSet(it): generateVectorBuilderSet
+            case isFieldAccess:                generateFieldAccess
+            case isMethodInvoke:               generateMethodInvoke
+            case isTaskStart:                  generateTaskStart
         }}
         
         private def generateSliceGet(MemberAccess it)
@@ -246,7 +246,7 @@ class InstrGenerator {
             '''«target.genGuarded(createReadWrite)».«genSliceAccess("set")»(«args.get(0).generate», «args.get(1).generate»)'''
         
         private def genSliceAccess(MemberAccess it, String getOrSet) {
-            val targetType = system.type(utils.createEnv(it), target).value
+            val targetType = system.type(createEnv(it), target).value
             val componentType = ((targetType as RoleType).base as GenericClassRef).typeArg
             switch(componentType) {
                 PrimitiveType: getOrSet + componentType.name.toFirstUpper
@@ -272,7 +272,7 @@ class InstrGenerator {
             '''«target.genNested».length'''
         
         private def generateVectorBuilderSet(MemberAccess it) {
-            val targetType = system.type(utils.createEnv(it), target).value
+            val targetType = system.type(createEnv(it), target).value
             val componentType = ((targetType as RoleType).base as GenericClassRef).typeArg
             val suffix =
                 if(componentType instanceof PrimitiveType) componentType.name.toFirstUpper
@@ -386,7 +386,7 @@ class InstrGenerator {
         }}
         
         private def genGuarded(Expr it, Role requiredRole) {
-            val type = system.type(utils.createEnv(it), it).value
+            val type = system.type(createEnv(it), it).value
             val needsGuard = !system.subroleSucceeded(roleAnalysis.dynamicRole(it), requiredRole)
             if(type.isGuarded && needsGuard)
                 switch(requiredRole) {

@@ -67,15 +67,18 @@ import java.util.HashMap
 import java.util.Map
 
 import static ch.trick17.rolez.Constants.*
+import static ch.trick17.rolez.RolezUtils.*
 import static ch.trick17.rolez.rolez.RolezPackage.Literals.*
+
+import static extension ch.trick17.rolez.RolezExtensions.*
 
 system ch.trick17.rolez.typesystem.RolezSystem
 
 validatorExtends AbstractRolezValidator
 
+inject RolezUtils utils
 inject extension RolezFactory _
 inject extension RolezExtensions __
-inject extension RolezUtils ___
 
 auxiliary {
     leastCommonSuperrole(Role r1, Role r2): Role
@@ -166,7 +169,7 @@ from {
             }
         } or {
             a.op == OpAssignment.PLUS_ASSIGN
-            val stringType = newRoleType(createReadOnly, newClassRef(findClass(stringClassName, a)))
+            val stringType = newRoleType(createReadOnly, newClassRef(utils.findClass(stringClassName, a)))
             
             G |- leftType <: stringType
         } or fail
@@ -231,7 +234,7 @@ from {
         t = createDouble
     } or {
         e.op == OpArithmetic.PLUS
-        val stringType = newRoleType(createReadOnly, newClassRef(findClass(stringClassName, e)))
+        val stringType = newRoleType(createReadOnly, newClassRef(utils.findClass(stringClassName, e)))
         
         G |- leftType <: stringType or G |- rightType <: stringType
         t = stringType
@@ -327,7 +330,7 @@ from {
             source a
         
         if(a.isTaskStart) {
-            val taskClass = findNormalClass(taskClassName, a)
+            val taskClass = utils.findNormalClass(taskClassName, a)
             taskClass != null
             t = newRoleType(createPure, newClassRef(taskClass, a.method.type))
         }
@@ -370,7 +373,7 @@ rule TStringLiteral
     G |- StringLiteral s : Type t
     error stringClassName + " class is not defined" source s
 from {
-    val stringClass = findClass(stringClassName, s)
+    val stringClass = utils.findClass(stringClassName, s)
     stringClass != null
     t = newRoleType(createReadWrite, newClassRef(stringClass))
 }
@@ -559,13 +562,13 @@ from { fail }
 rule SubclassSimple
     G |- ClassRef left <~ SimpleClassRef right
 from {
-    left.clazz === right.clazz || strictSuperclasses(left.clazz).contains(right.clazz)
+    left.clazz === right.clazz || utils.strictSuperclasses(left.clazz).contains(right.clazz)
 }
 
 rule SubclassGeneric
     G |- GenericClassRef left <~ GenericClassRef right
 from {
-    left.clazz.qualifiedName == right.clazz.qualifiedName || strictSuperclasses(left.clazz).contains(right.clazz)
+    left.clazz.qualifiedName == right.clazz.qualifiedName || utils.strictSuperclasses(left.clazz).contains(right.clazz)
     G |- left.typeArg ~~ right.typeArg
 }
 

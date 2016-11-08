@@ -11,7 +11,6 @@ import org.eclipse.xtext.naming.IQualifiedNameProvider
 class RolezResource extends DesugaringLazyLinkingResource {
     
     @Inject RolezSystem system
-    @Inject RolezUtils  utils
     @Inject IQualifiedNameProvider nameProvider
     
     /**
@@ -19,12 +18,6 @@ class RolezResource extends DesugaringLazyLinkingResource {
      * need to carry around references to it themselves.
      */
     def rolezSystem() { system }
-    
-    /**
-     * Allows {@link ParameterizedEObject}s to get access to the {@link RolezUtils}, without the
-     * need to carry around references to it themselves.
-     */
-    def rolezUtils() { utils }
     
     /**
      * Allows {@link Class}es to get access to the {@link IQualifiedNameProvider} for their

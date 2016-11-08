@@ -1,17 +1,19 @@
 package ch.trick17.rolez.ui.contentassist
 
-import ch.trick17.rolez.RolezExtensions
-import ch.trick17.rolez.RolezUtils
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.typesystem.RolezSystem
 import javax.inject.Inject
 import org.eclipse.emf.ecore.EObject
+import org.eclipse.xtext.Assignment
 import org.eclipse.xtext.scoping.Scopes
 import org.eclipse.xtext.ui.editor.contentassist.ContentAssistContext
 import org.eclipse.xtext.ui.editor.contentassist.ICompletionProposalAcceptor
-import org.eclipse.xtext.Assignment
+
+import static ch.trick17.rolez.RolezUtils.*
+
+import static extension ch.trick17.rolez.RolezExtensions.*
 
 /**
  * See https://www.eclipse.org/Xtext/documentation/304_ide_concepts.html#content-assist
@@ -20,8 +22,6 @@ import org.eclipse.xtext.Assignment
 class RolezProposalProvider extends AbstractRolezProposalProvider {
     
     @Inject RolezSystem system
-    @Inject RolezUtils utils
-    @Inject extension RolezExtensions
     
     override completeMemberAccess_Member(EObject model, Assignment a, ContentAssistContext context,
         ICompletionProposalAcceptor acceptor) {
@@ -38,7 +38,7 @@ class RolezProposalProvider extends AbstractRolezProposalProvider {
         }
         
         if (target != null) {
-            val targetType = system.type(utils.createEnv(target), target).value
+            val targetType = system.type(createEnv(target), target).value
             if (targetType instanceof RoleType) {
                 val factory = getProposalFactory("MemberAccess", context)
                 val scope = Scopes.scopeFor(targetType.base.clazz.allMembers)

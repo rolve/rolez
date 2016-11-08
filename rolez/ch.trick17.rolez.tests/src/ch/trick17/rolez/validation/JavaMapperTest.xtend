@@ -1,6 +1,5 @@
 package ch.trick17.rolez.validation
 
-import ch.trick17.rolez.RolezUtils
 import ch.trick17.rolez.TestUtils
 import ch.trick17.rolez.rolez.Program
 import ch.trick17.rolez.rolez.Role
@@ -17,10 +16,12 @@ import org.eclipse.xtext.junit4.util.ParseHelper
 import org.junit.Test
 import org.junit.runner.RunWith
 import rolez.lang.GuardedArray
+import rolez.lang.GuardedSlice
 import rolez.lang.Task
 
+import static ch.trick17.rolez.RolezUtils.*
+
 import static extension org.junit.Assert.*
-import rolez.lang.GuardedSlice
 
 @RunWith(XtextRunner)
 @InjectWith(RolezInjectorProvider)
@@ -28,7 +29,6 @@ class JavaMapperTest {
     
     @Inject extension JavaMapper
     @Inject extension RolezFactory
-    @Inject extension RolezUtils
     @Inject extension ParseHelper<Program>
     @Inject extension TestUtils
     @Inject IJvmTypeProvider.Factory jvmTypesFactory

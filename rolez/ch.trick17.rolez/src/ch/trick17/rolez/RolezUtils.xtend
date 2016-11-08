@@ -24,17 +24,23 @@ import ch.trick17.rolez.rolez.Stmt
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.Var
+import ch.trick17.rolez.typesystem.RolezSystem
 import it.xsemantics.runtime.RuleEnvironment
 import it.xsemantics.runtime.RuleEnvironmentEntry
+import java.util.HashSet
+import java.util.Set
 import javax.inject.Inject
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.util.EcoreUtil
 import org.eclipse.xtext.naming.QualifiedName
 import org.eclipse.xtext.scoping.IScopeProvider
+import org.eclipse.xtext.util.OnChangeEvictingCache
 
+import static ch.trick17.rolez.Constants.*
 import static ch.trick17.rolez.rolez.RolezPackage.Literals.*
 import static ch.trick17.rolez.rolez.VarKind.VAL
 
+import static extension ch.trick17.rolez.RolezExtensions.*
 import static extension org.eclipse.emf.ecore.util.EcoreUtil.resolve
 
 /** 
@@ -43,45 +49,126 @@ import static extension org.eclipse.emf.ecore.util.EcoreUtil.resolve
  */
 class RolezUtils {
     
-    @Inject extension RolezFactory
-    @Inject extension RolezExtensions
-    @Inject IScopeProvider scopeProvider
+    static extension val RolezFactory = RolezFactory.eINSTANCE
     
-    def newRoleType(Role r, ClassRef base) {
+    /*
+     * Static helper methods
+     */
+    
+    static def newRoleType(Role r, ClassRef base) {
         val result = createRoleType
         result.role = r.copyIfNecessary
         result.base = base.copyIfNecessary
         result
     }
     
-    def SimpleClassRef newClassRef(Class c) {
+    static def SimpleClassRef newClassRef(Class c) {
         val result = createSimpleClassRef
         result.clazz = c
         result
     }
     
-    def newClassRef(NormalClass c, Type arg) {
+    static def newClassRef(NormalClass c, Type arg) {
         val result = createGenericClassRef
         result.clazz = c
         result.typeArg = arg.copyIfNecessary
         result
     }
     
-    private def <T extends EObject> copyIfNecessary(T it) {
+    private static def <T extends EObject> copyIfNecessary(T it) {
         if(eContainer == null) it else EcoreUtil.copy(it)
     }
     
-    def RuleEnvironment createEnv(InExecutable context) {
+    static def RuleEnvironment createEnv(InExecutable context) {
         createEnv(context.enclosingExecutable)
     }
     
-    def RuleEnvironment createEnv(Executable executable) {
+    static def RuleEnvironment createEnv(Executable executable) {
         // IMPROVE: cache environments for better performance?
         switch(executable) {
             case null: new RuleEnvironment
             Method: new RuleEnvironment(new RuleEnvironmentEntry("this", executable.thisType))
             Constr: new RuleEnvironment(new RuleEnvironmentEntry("this", executable.thisType))
         }
+    }    
+    
+    /**
+     * Returns <code>true</code> if the name and the types of the parameters of
+     * the two given methods are the same, ignoring roles.
+     */
+    static def equalSignatureWithoutRoles(Method it, Method other) {
+        name == other.name && equalParamsWithoutRoles(other)
+    }
+    
+    static def equalParamsWithoutRoles(Executable it, Executable other) {
+        val i = other.params.map[type].iterator
+        params.size == other.params.size
+            && params.map[type].forall[equalTypeWithoutRoles(i.next)]
+    }
+    
+    private static def dispatch boolean equalTypeWithoutRoles(RoleType it, RoleType other) {
+        base.equalRefWithoutRoles(other.base)
+    }
+    private static def dispatch boolean equalTypeWithoutRoles(Type it, Type other) {
+        EcoreUtil.equals(it, other)
+    }
+    
+    private static def dispatch boolean equalRefWithoutRoles(GenericClassRef it, GenericClassRef other) {
+        clazz == other.clazz && typeArg.equalTypeWithoutRoles(other.typeArg)
+    }
+    private static def dispatch boolean equalRefWithoutRoles(ClassRef it, ClassRef other) {
+        EcoreUtil.equals(it, other)
+    }
+    
+    static def isValFieldInit(Assignment it) {
+        !(#[left].filter(MemberAccess).filter[isFieldAccess && target instanceof This]
+            .map[field].filter[kind == VAL].isEmpty)
+    }
+    
+    static def assignedField(Assignment it) { (left as MemberAccess).field }
+    
+    static def dispatch Iterable<? extends Var> varsAbove(Block container, Stmt s) {
+        container.stmts.takeWhile[it != s].filter(LocalVarDecl).map[variable]
+            + varsAbove(container.eContainer, s)
+    }
+    
+    static def dispatch Iterable<? extends Var> varsAbove(ForLoop container, Instr i) {
+        (if(i === container.initializer) emptyList else #[container.initializer.variable as Var])
+            + varsAbove(container.eContainer, container)
+    }
+    
+    static def dispatch Iterable<? extends Var> varsAbove(Executable container, Stmt s) {
+        container.params
+    }
+    
+    static def dispatch Iterable<? extends Var> varsAbove(Instr container, Instr i) {
+        varsAbove(container.eContainer, container)
+    }
+    
+    /*
+     * Non-static methods that depend on RolezSystem and IScopeProvider
+     */
+    
+    @Inject RolezSystem system
+    @Inject IScopeProvider scopeProvider
+    
+    val superclassesCache = new OnChangeEvictingCache
+    
+    def strictSuperclasses(Class it) {
+        superclassesCache.get(it, eResource, [
+            val result = new HashSet
+            collectSuperclasses(result)
+            
+            val object = findClass(objectClassName, it)
+            if(it != object && object != null)
+                result += object
+            result
+        ])
+    }
+    
+    private def void collectSuperclasses(Class it, Set<Class> classes) {
+        if(classes += it)
+            superclass?.collectSuperclasses(classes)
     }
     
     def findClass(QualifiedName name, EObject context) {
@@ -94,32 +181,47 @@ class RolezUtils {
             .getSingleElement(name)?.EObjectOrProxy?.resolve(context) as NormalClass
     }
     
-    /**
-     * Returns <code>true</code> if the name and the types of the parameters of
-     * the two given methods are the same, ignoring roles.
-     */
-    def equalSignatureWithoutRoles(Method it, Method other) {
-        name == other.name && equalParamsWithoutRoles(other)
+    def isSliceGet(MemberAccess it) {
+        isMethodInvoke && method.name == "get"
+            && system.type(createEnv(it), target).value.isSliceType
     }
     
-    def equalParamsWithoutRoles(Executable it, Executable other) {
-        val i = other.params.map[type].iterator
-        params.size == other.params.size
-            && params.map[type].forall[equalTypeWithoutRoles(i.next)]
+    def isSliceSet(MemberAccess it) {
+        isMethodInvoke && method.name == "set"
+            && system.type(createEnv(it), target).value.isSliceType
     }
     
-    private def dispatch boolean equalTypeWithoutRoles(RoleType it, RoleType other) {
-        base.equalRefWithoutRoles(other.base)
-    }
-    private def dispatch boolean equalTypeWithoutRoles(Type it, Type other) {
-        EcoreUtil.equals(it, other)
+    def isArrayGet(MemberAccess it) {
+        isMethodInvoke && method.name == "get"
+            && system.type(createEnv(it), target).value.isArrayType
     }
     
-    private def dispatch boolean equalRefWithoutRoles(GenericClassRef it, GenericClassRef other) {
-        clazz == other.clazz && typeArg.equalTypeWithoutRoles(other.typeArg)
+    def isArraySet(MemberAccess it) {
+        isMethodInvoke && method.name == "set"
+            && system.type(createEnv(it), target).value.isArrayType
     }
-    private def dispatch boolean equalRefWithoutRoles(ClassRef it, ClassRef other) {
-        EcoreUtil.equals(it, other)
+    
+    def isArrayLength(MemberAccess it) {
+        isFieldAccess && field.name == "length" && field.enclosingClass.qualifiedName == arrayClassName
+    }
+    
+    def isVectorGet(MemberAccess it) {
+        isMethodInvoke && method.name == "get"
+            && system.type(createEnv(it), target).value.isVectorType
+    }
+    
+    def isVectorLength(MemberAccess it) {
+        isFieldAccess && field.name == "length" && field.enclosingClass.qualifiedName == vectorClassName
+    }
+    
+    def isVectorBuilderGet(MemberAccess it) {
+        isMethodInvoke && method.name == "get"
+            && system.type(createEnv(it), target).value.isVectorBuilderType
+    }
+    
+    def isVectorBuilderSet(MemberAccess it) {
+        isMethodInvoke && method.name == "set"
+            && system.type(createEnv(it), target).value.isVectorBuilderType
     }
     
     /**
@@ -137,30 +239,5 @@ class RolezUtils {
             MemberAccess: isMethodInvoke && !isSliceGet && !isArrayGet && !isVectorGet && !isVectorBuilderGet || isTaskStart
             default: false
         }
-    }
-    
-    def isValFieldInit(Assignment it) {
-        !(#[left].filter(MemberAccess).filter[isFieldAccess && target instanceof This]
-            .map[field].filter[kind == VAL].isEmpty)
-    }
-    
-    def assignedField(Assignment it) { (left as MemberAccess).field }
-    
-    def dispatch Iterable<? extends Var> varsAbove(Block container, Stmt s) {
-        container.stmts.takeWhile[it != s].filter(LocalVarDecl).map[variable]
-            + varsAbove(container.eContainer, s)
-    }
-    
-    def dispatch Iterable<? extends Var> varsAbove(ForLoop container, Instr i) {
-        (if(i === container.initializer) emptyList else #[container.initializer.variable as Var])
-            + varsAbove(container.eContainer, container)
-    }
-    
-    def dispatch Iterable<? extends Var> varsAbove(Executable container, Stmt s) {
-        container.params
-    }
-    
-    def dispatch Iterable<? extends Var> varsAbove(Instr container, Instr i) {
-        varsAbove(container.eContainer, container)
     }
 }

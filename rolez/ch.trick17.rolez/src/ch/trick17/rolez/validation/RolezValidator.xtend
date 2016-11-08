@@ -1,6 +1,5 @@
 package ch.trick17.rolez.validation
 
-import ch.trick17.rolez.RolezExtensions
 import ch.trick17.rolez.RolezUtils
 import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.Block
@@ -58,6 +57,9 @@ import org.eclipse.xtext.validation.Check
 import static ch.trick17.rolez.Constants.*
 import static ch.trick17.rolez.rolez.RolezPackage.Literals.*
 import static ch.trick17.rolez.rolez.VarKind.*
+
+import static extension ch.trick17.rolez.RolezExtensions.*
+import static extension ch.trick17.rolez.RolezUtils.*
 
 class RolezValidator extends RolezSystemValidator {
 
@@ -117,7 +119,6 @@ class RolezValidator extends RolezSystemValidator {
     public static val INCORRECT_MAPPED_TASK = "incorrect mapped task"
     public static val INCORRECT_MAPPED_CONSTR = "incorrect mapped constructor"
     
-    @Inject extension RolezExtensions
     @Inject extension RolezFactory
     @Inject extension CfgProvider
     @Inject extension JavaMapper javaMapper
@@ -229,7 +230,7 @@ class RolezValidator extends RolezSystemValidator {
     def checkNoDuplicateMethods(Method it) {
         // TODO: Shouldn't we also ignore type args while comparing?
         val matching = enclosingClass.methods.filter[m |
-            it !== m && utils.equalSignatureWithoutRoles(m, it)
+            it !== m && equalSignatureWithoutRoles(m, it)
         ]
         if(matching.size > 0)
            error("Duplicate method " + name + "("+ params.map[type.toStringWithoutRoles].join(", ") + ")",
@@ -256,7 +257,7 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkNoDuplicateConstrs(Constr it) {
-        val matching = enclosingClass.constrs.filter[c | utils.equalParamsWithoutRoles(c, it)]
+        val matching = enclosingClass.constrs.filter[c | equalParamsWithoutRoles(c, it)]
         if(matching.size < 1)
            throw new AssertionError
         if(matching.size > 1)
@@ -265,7 +266,7 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkNoDuplicateVars(LocalVarDecl it) {
-        val vars = utils.varsAbove(eContainer, it)
+        val vars = varsAbove(eContainer, it)
         if(vars.exists[v | v.name == variable.name])
             error("Duplicate variable " + variable.name, variable, NAMED__NAME, DUPLICATE_VAR)
     }
@@ -287,7 +288,7 @@ class RolezValidator extends RolezSystemValidator {
 	def checkValidOverride(Method it) {
         if(!overriding) return;
         
-        if(system.subtype(utils.createEnv(it), type, superMethod.type).failed)
+        if(system.subtype(createEnv(it), type, superMethod.type).failed)
             error("The return type " + type + " is incompatible with overridden method "
                 + superMethod, TYPED__TYPE, INCOMPATIBLE_RETURN_TYPE)
         if(system.subrole(superMethod.thisRole, thisRole).failed)
@@ -296,7 +297,7 @@ class RolezValidator extends RolezSystemValidator {
         
         for(p : params) {
             val superParamType = superMethod.params.get(p.paramIndex).type
-            if(system.subtype(utils.createEnv(it), superParamType, p.type).failed)
+            if(system.subtype(createEnv(it), superParamType, p.type).failed)
                 error("This parameter type is incompatible with overridden method "
                     + superMethod, p, TYPED__TYPE, RolezValidator.INCOMPATIBLE_PARAM_TYPE)
         }
@@ -373,8 +374,8 @@ class RolezValidator extends RolezSystemValidator {
                 error("Value field " + f.name + " may not have been initialized",
                     null, VAL_FIELD_NOT_INITIALIZED)
         
-        for(a : all(Assignment).filter[utils.isValFieldInit(it)]) {
-            val f = utils.assignedField(a)
+        for(a : all(Assignment).filter[isValFieldInit(it)]) {
+            val f = assignedField(a)
             if(f.possiblyInitializedBefore(cfg.nodeOf(a)))
                 error("Value field " + f.name + " may already have been initialized",
                     a, null, VAL_FIELD_OVERINITIALIZED)

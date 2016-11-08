@@ -1,6 +1,5 @@
 package ch.trick17.rolez.validation.cfg
 
-import ch.trick17.rolez.RolezUtils
 import ch.trick17.rolez.TestUtils
 import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.Boolean
@@ -21,6 +20,7 @@ import org.eclipse.xtext.junit4.validation.ValidationTestHelper
 import org.junit.Test
 import org.junit.runner.RunWith
 
+import static ch.trick17.rolez.RolezUtils.*
 import static org.hamcrest.Matchers.*
 
 import static extension org.hamcrest.MatcherAssert.assertThat
@@ -31,7 +31,6 @@ import static extension org.junit.Assert.assertEquals
 class CfgBuilderTest {
     
     @Inject RolezSystem system
-    @Inject RolezUtils utils
     @Inject extension CfgProvider
     @Inject extension TestUtils
     @Inject extension ParseHelper<Program>
@@ -420,7 +419,7 @@ class CfgBuilderTest {
                 node.assertThat(instanceOf(InstrNode))
                 val instr = (node as InstrNode).instr
                 instr.assertThat(instanceOf(Expr))
-                system.type(utils.createEnv(instr), instr as Expr).value
+                system.type(createEnv(instr), instr as Expr).value
                     .assertThat(instanceOf(Boolean))
             }
             else

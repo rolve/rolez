@@ -18,14 +18,10 @@ import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
 import ch.trick17.rolez.rolez.SimpleClassRef
 import ch.trick17.rolez.rolez.Type
-import ch.trick17.rolez.typesystem.RolezSystem
-import java.util.HashSet
-import java.util.Set
-import javax.inject.Inject
 import org.eclipse.emf.ecore.EObject
-import org.eclipse.xtext.util.OnChangeEvictingCache
 
 import static ch.trick17.rolez.Constants.*
+import static ch.trick17.rolez.RolezUtils.*
 
 import static extension ch.trick17.rolez.generic.Parameterized.*
 
@@ -34,76 +30,55 @@ import static extension ch.trick17.rolez.generic.Parameterized.*
  */
 class RolezExtensions {
     
-    @Inject RolezSystem system
-    @Inject RolezUtils utils
-    
-    def thisType(Constr it) {
-        utils.newRoleType(RolezFactory.eINSTANCE.createReadWrite, utils.newClassRef(enclosingClass))
-    }
-    def thisType(Method it) {
-        utils.newRoleType(thisRole, utils.newClassRef(enclosingClass))
+    static def thisType(Constr it) {
+        newRoleType(RolezFactory.eINSTANCE.createReadWrite, newClassRef(enclosingClass))
     }
     
-    def isObjectClass        (Class it) { qualifiedName ==        objectClassName }
-    def isSliceClass         (Class it) { qualifiedName ==         sliceClassName }
-    def isArrayClass         (Class it) { qualifiedName ==         arrayClassName }
-    def isVectorClass        (Class it) { qualifiedName ==        vectorClassName }
-    def isVectorBuilderClass (Class it) { qualifiedName == vectorBuilderClassName }
-    def isStringClass        (Class it) { qualifiedName ==        stringClassName }
-    def isTaskClass          (Class it) { qualifiedName ==          taskClassName }
+    static def thisType(Method it) {
+        newRoleType(thisRole, newClassRef(enclosingClass))
+    }
     
-    def dispatch isSliceType(RoleType it) { base.clazz.isSliceClass }
-    def dispatch isSliceType(    Type it) { false }
+    static def isObjectClass        (Class it) { qualifiedName ==        objectClassName }
+    static def isSliceClass         (Class it) { qualifiedName ==         sliceClassName }
+    static def isArrayClass         (Class it) { qualifiedName ==         arrayClassName }
+    static def isVectorClass        (Class it) { qualifiedName ==        vectorClassName }
+    static def isVectorBuilderClass (Class it) { qualifiedName == vectorBuilderClassName }
+    static def isStringClass        (Class it) { qualifiedName ==        stringClassName }
+    static def isTaskClass          (Class it) { qualifiedName ==          taskClassName }
     
-    def dispatch isArrayType(RoleType it) { base.clazz.isArrayClass }
-    def dispatch isArrayType(    Type it) { false }
+    static def dispatch isSliceType(RoleType it) { base.clazz.isSliceClass }
+    static def dispatch isSliceType(    Type it) { false }
     
-    def dispatch isVectorType(RoleType it) { base.clazz.isVectorClass }
-    def dispatch isVectorType(    Type it) { false }
+    static def dispatch isArrayType(RoleType it) { base.clazz.isArrayClass }
+    static def dispatch isArrayType(    Type it) { false }
     
-    def dispatch isVectorBuilderType(RoleType it) { base.clazz.isVectorBuilderClass }
-    def dispatch isVectorBuilderType(    Type it) { false }
+    static def dispatch isVectorType(RoleType it) { base.clazz.isVectorClass }
+    static def dispatch isVectorType(    Type it) { false }
     
-    def Iterable<Member> allMembers(Class it) {
+    static def dispatch isVectorBuilderType(RoleType it) { base.clazz.isVectorBuilderClass }
+    static def dispatch isVectorBuilderType(    Type it) { false }
+    
+    static def Iterable<Member> allMembers(Class it) {
         members +
             if(superclass == null) emptyList
             else parameterizedSuperclass.allMembers.filter[m | !overrides(m)]
     }
     
-    def parameterizedSuperclass(Class it) { superclassRef?.parameterizedClass as NormalClass }
+    static def parameterizedSuperclass(Class it) { superclassRef?.parameterizedClass as NormalClass }
     
-    val superclassesCache = new OnChangeEvictingCache
-    
-    def strictSuperclasses(Class it) {
-        superclassesCache.get(it, eResource, [
-            val result = new HashSet
-            collectSuperclasses(result)
-            
-            val object = utils.findClass(objectClassName, it)
-            if(it != object && object != null)
-                result += object
-            result
-        ])
-    }
-    
-    private def void collectSuperclasses(Class it, Set<Class> classes) {
-        if(classes += it)
-            superclass?.collectSuperclasses(classes)
-    }
-    
-    def dispatch parameterizedClass( SimpleClassRef it) { clazz }
-    def dispatch parameterizedClass(GenericClassRef it) {
+    static def dispatch parameterizedClass( SimpleClassRef it) { clazz }
+    static def dispatch parameterizedClass(GenericClassRef it) {
         clazz.parameterizedWith(#{clazz.typeParam -> typeArg})
     }
     
-    private def overrides(Class it, Member m) {
+    private static def overrides(Class it, Member m) {
         switch(m) {
             Field: false
-            Method: methods.exists[utils.equalSignatureWithoutRoles(it, m)]
+            Method: methods.exists[equalSignatureWithoutRoles(it, m)]
         }
     }
     
-    def Class enclosingClass(EObject it) {
+    static def Class enclosingClass(EObject it) {
         val container = it?.eContainer
         switch(container) {
             Class: container
@@ -111,11 +86,11 @@ class RolezExtensions {
         }
     }
     
-    def enclosingClass(Constr it) {
+    static def enclosingClass(Constr it) {
         (it as EObject).enclosingClass as NormalClass
     }
     
-    def Program enclosingProgram(EObject it) {
+    static def Program enclosingProgram(EObject it) {
         val container = it?.eContainer
         switch(container) {
             Program: container
@@ -123,54 +98,11 @@ class RolezExtensions {
         }
     }
     
-    def isSliceGet(MemberAccess it) {
-        isMethodInvoke && method.name == "get"
-            && system.type(utils.createEnv(it), target).value.isSliceType
-    }
+    static def     destParam(Expr it) { (eContainer as Argumented).executable.params.get(argIndex) }
+    static def destRoleParam(Role it) { (eContainer as MemberAccess).method.roleParams.get(roleArgIndex) }
     
-    def isSliceSet(MemberAccess it) {
-        isMethodInvoke && method.name == "set"
-            && system.type(utils.createEnv(it), target).value.isSliceType
-    }
-    
-    def isArrayGet(MemberAccess it) {
-        isMethodInvoke && method.name == "get"
-            && system.type(utils.createEnv(it), target).value.isArrayType
-    }
-    
-    def isArraySet(MemberAccess it) {
-        isMethodInvoke && method.name == "set"
-            && system.type(utils.createEnv(it), target).value.isArrayType
-    }
-    
-    def isArrayLength(MemberAccess it) {
-        isFieldAccess && field.name == "length" && field.enclosingClass.qualifiedName == arrayClassName
-    }
-    
-    def isVectorGet(MemberAccess it) {
-        isMethodInvoke && method.name == "get"
-            && system.type(utils.createEnv(it), target).value.isVectorType
-    }
-    
-    def isVectorLength(MemberAccess it) {
-        isFieldAccess && field.name == "length" && field.enclosingClass.qualifiedName == vectorClassName
-    }
-    
-    def isVectorBuilderGet(MemberAccess it) {
-        isMethodInvoke && method.name == "get"
-            && system.type(utils.createEnv(it), target).value.isVectorBuilderType
-    }
-    
-    def isVectorBuilderSet(MemberAccess it) {
-        isMethodInvoke && method.name == "set"
-            && system.type(utils.createEnv(it), target).value.isVectorBuilderType
-    }
-    
-    def     destParam(Expr it) { (eContainer as Argumented).executable.params.get(argIndex) }
-    def destRoleParam(Role it) { (eContainer as MemberAccess).method.roleParams.get(roleArgIndex) }
-    
-    def     paramIndex(    Param it) { enclosingExecutable.params.indexOf(it) }
-    def roleParamIndex(RoleParam it) { enclosingMethod.roleParams.indexOf(it) }
-    def       argIndex(     Expr it) { (eContainer as Argumented).args.indexOf(it) }
-    def   roleArgIndex(     Role it) { (eContainer as MemberAccess).roleArgs.indexOf(it) }
+    static def     paramIndex(    Param it) { enclosingExecutable.params.indexOf(it) }
+    static def roleParamIndex(RoleParam it) { enclosingMethod.roleParams.indexOf(it) }
+    static def       argIndex(     Expr it) { (eContainer as Argumented).args.indexOf(it) }
+    static def   roleArgIndex(     Role it) { (eContainer as MemberAccess).roleArgs.indexOf(it) }
 }

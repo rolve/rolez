@@ -28,6 +28,8 @@ import org.eclipse.emf.ecore.EStructuralFeature
 import org.eclipse.emf.ecore.InternalEObject
 import org.eclipse.emf.ecore.resource.Resource.Internal
 
+import static ch.trick17.rolez.RolezUtils.*
+
 abstract class ParameterizedEObject<E extends EObject>
         extends Parameterized implements EObject, InternalEObject {
     
@@ -56,7 +58,7 @@ abstract class ParameterizedEObject<E extends EObject>
             // role type with the least common superrole
             switch(type) {
                 RoleType case restrictingRole != null:
-                    utils.newRoleType(system.leastCommonSuperrole(type.role, restrictingRole.parameterized), type.base) 
+                    newRoleType(system.leastCommonSuperrole(type.role, restrictingRole.parameterized), type.base) 
                 default:
                     type
             }
@@ -64,7 +66,6 @@ abstract class ParameterizedEObject<E extends EObject>
     }}
     
     private def system() { (eResource as RolezResource).rolezSystem  }
-    private def utils () { (eResource as RolezResource).rolezUtils }
     
     def parameterized(Role it) { switch(it) {
         BuiltInRole : it

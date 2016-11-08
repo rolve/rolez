@@ -28,6 +28,7 @@ import static ch.trick17.rolez.scoping.RolezScopeProvider.AMBIGUOUS_CALL
 import static org.eclipse.xtext.diagnostics.Diagnostic.*
 import static org.hamcrest.Matchers.*
 
+import static extension ch.trick17.rolez.RolezExtensions.*
 import static extension org.hamcrest.MatcherAssert.assertThat
 
 @RunWith(XtextRunner)
@@ -35,7 +36,6 @@ import static extension org.hamcrest.MatcherAssert.assertThat
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class RolezLinkingTest {
     
-    @Inject extension RolezExtensions
     @Inject extension ParseHelper<Program>
     @Inject extension ValidationTestHelper
     @Inject extension TestUtils

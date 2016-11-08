@@ -26,6 +26,7 @@ import org.eclipse.xtext.naming.QualifiedName
 import org.eclipse.xtext.resource.XtextResourceSet
 import org.eclipse.xtext.util.StringInputStream
 
+import static ch.trick17.rolez.RolezUtils.*
 import static org.hamcrest.Matchers.*
 import static org.junit.Assert.assertEquals
 
@@ -34,7 +35,6 @@ import static extension org.hamcrest.MatcherAssert.assertThat
 class TestUtils {
     
     @Inject RolezSystem system
-    @Inject extension RolezUtils
     @Inject extension ValidationTestHelper
     @Inject Provider<XtextResourceSet> resourceSetProvider
     

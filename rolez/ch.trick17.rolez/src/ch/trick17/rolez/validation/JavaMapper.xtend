@@ -1,6 +1,5 @@
 package ch.trick17.rolez.validation
 
-import ch.trick17.rolez.RolezExtensions
 import ch.trick17.rolez.rolez.Boolean
 import ch.trick17.rolez.rolez.Char
 import ch.trick17.rolez.rolez.Constr
@@ -27,9 +26,10 @@ import org.eclipse.xtext.common.types.access.IJvmTypeProvider
 
 import static ch.trick17.rolez.Constants.*
 
+import static extension ch.trick17.rolez.RolezExtensions.*
+
 class JavaMapper {
     
-    @Inject extension RolezExtensions
     @Inject IJvmTypeProvider.Factory jvmTypesFactory
     
     def checkedExceptionTypes(Method it) {

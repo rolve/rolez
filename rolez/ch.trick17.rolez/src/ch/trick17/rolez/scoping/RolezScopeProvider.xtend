@@ -1,7 +1,5 @@
 package ch.trick17.rolez.scoping
 
-import ch.trick17.rolez.RolezExtensions
-import ch.trick17.rolez.RolezUtils
 import ch.trick17.rolez.rolez.Argumented
 import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.Executable
@@ -29,23 +27,23 @@ import org.eclipse.xtext.naming.QualifiedName
 import org.eclipse.xtext.scoping.IScope
 import org.eclipse.xtext.scoping.impl.AbstractDeclarativeScopeProvider
 
+import static ch.trick17.rolez.RolezUtils.*
 import static org.eclipse.xtext.scoping.Scopes.scopeFor
 
+import static extension ch.trick17.rolez.RolezExtensions.*
 import static extension ch.trick17.rolez.generic.Parameterized.parameterizedWith
 
 class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     
     public static val AMBIGUOUS_CALL = "ambiguous call"
     
-    @Inject extension RolezExtensions
     @Inject extension JavaMapper
     @Inject extension RolezFactory
     @Inject RolezSystem system
     @Inject RolezValidator validator
-    @Inject RolezUtils utils
     
     def scope_MemberAccess_member(MemberAccess it, EReference ref) {
-        val targetType = system.type(utils.createEnv(it), target).value
+        val targetType = system.type(createEnv(it), target).value
         val memberName = crossRefText(ref)
         
         if(targetType instanceof RoleType) {
@@ -57,7 +55,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
                 val candidates = targetType.base.parameterizedClass.allMembers.filter(Method)
                     .filter[m | m.name == memberName && (!isTaskStart || m.isTask)]
                     .map[m |
-                        val roleArgs = system.inferRoleArgs(utils.createEnv(it), it, m)
+                        val roleArgs = system.inferRoleArgs(createEnv(it), it, m)
                         if(roleArgs.size == m.roleParams.size) m.parameterizedWith(roleArgs)
                     ].filterNull
                 val maxSpecific = maxSpecific(candidates, it).toList
@@ -106,7 +104,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
             return IScope.NULLSCOPE
         
         val allMethods = superclass.allMembers.filter(Method)
-        val matching = allMethods.filter[m | utils.equalSignatureWithoutRoles(m, it)]
+        val matching = allMethods.filter[m | equalSignatureWithoutRoles(m, it)]
             .filter[m | m.roleParams.size >= roleParams.size]
             .map[m |
                 // Parameterize the super method with references to this method's role parameters
@@ -175,7 +173,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     }
     
     def IScope scope_VarRef_variable(VarRef it, EReference eRef) {
-        scopeFor(utils.varsAbove(eContainer, it))
+        scopeFor(varsAbove(eContainer, it))
     }
     
     /**
@@ -186,7 +184,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
      */
     private def maxSpecific(Iterable<? extends Executable> candidates, Argumented args) {
         val applicable = candidates.filter[
-            system.validArgsSucceeded(utils.createEnv(args), args, it)
+            system.validArgsSucceeded(createEnv(args), args, it)
         ].toList
         
         applicable.filter[p |
@@ -201,7 +199,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     private def moreSpecificThan(Executable target, Executable other) {
         // Assume both targets have the same number of parameters
         val i = other.params.iterator
-        target.params.forall[system.subtypeSucceeded(utils.createEnv(target), it.type, i.next.type)]
+        target.params.forall[system.subtypeSucceeded(createEnv(target), it.type, i.next.type)]
     }
     
     private def crossRefText(EObject it, EReference ref) {

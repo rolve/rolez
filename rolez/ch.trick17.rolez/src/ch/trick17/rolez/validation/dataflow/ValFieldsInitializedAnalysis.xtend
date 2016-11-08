@@ -1,6 +1,5 @@
 package ch.trick17.rolez.validation.dataflow
 
-import ch.trick17.rolez.RolezUtils
 import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.Class
 import ch.trick17.rolez.rolez.Field
@@ -13,6 +12,7 @@ import java.util.Set
 import javax.inject.Inject
 
 import static ch.trick17.rolez.rolez.VarKind.VAL
+import static ch.trick17.rolez.RolezUtils.*
 import static com.google.common.collect.ImmutableSet.*
 
 import static extension com.google.common.collect.Sets.*
@@ -30,7 +30,6 @@ class ValFieldsInitializedAnalysis extends DataFlowAnalysis<Initialized> {
         }
     }
     
-    @Inject RolezUtils utils
     val Class clazz
     val newFlow = new Initialized(null, null)
     
@@ -49,7 +48,7 @@ class ValFieldsInitializedAnalysis extends DataFlowAnalysis<Initialized> {
     }
     
     protected def dispatch flowThrough(Assignment a, Initialized in) {
-        if(utils.isValFieldInit(a)) in.with(utils.assignedField(a))
+        if(isValFieldInit(a)) in.with(assignedField(a))
         else in
     }
     
