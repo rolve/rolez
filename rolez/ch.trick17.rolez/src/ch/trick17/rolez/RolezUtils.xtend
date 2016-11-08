@@ -55,23 +55,23 @@ class RolezUtils {
      * Static helper methods
      */
     
-    static def newRoleType(Role r, ClassRef base) {
+    static def newRoleType(Role role, ClassRef base) {
         val result = createRoleType
-        result.role = r.copyIfNecessary
+        result.role = role.copyIfNecessary
         result.base = base.copyIfNecessary
         result
     }
     
-    static def SimpleClassRef newClassRef(Class c) {
+    static def SimpleClassRef newClassRef(Class clazz) {
         val result = createSimpleClassRef
-        result.clazz = c
+        result.clazz = clazz
         result
     }
     
-    static def newClassRef(NormalClass c, Type arg) {
+    static def newClassRef(NormalClass clazz, Type typeArg) {
         val result = createGenericClassRef
-        result.clazz = c
-        result.typeArg = arg.copyIfNecessary
+        result.clazz = clazz
+        result.typeArg = typeArg.copyIfNecessary
         result
     }
     
