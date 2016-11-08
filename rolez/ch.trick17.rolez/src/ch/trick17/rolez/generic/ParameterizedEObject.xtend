@@ -5,6 +5,7 @@ import ch.trick17.rolez.rolez.BuiltInRole
 import ch.trick17.rolez.rolez.ClassRef
 import ch.trick17.rolez.rolez.Executable
 import ch.trick17.rolez.rolez.GenericClassRef
+import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.Null
 import ch.trick17.rolez.rolez.PrimitiveType
 import ch.trick17.rolez.rolez.Role
@@ -47,20 +48,35 @@ abstract class ParameterizedEObject<E extends EObject>
     
     /* Helper methods for subclasses */
     
+    def parameterized(NormalClass it) { new ParameterizedNormalClass(it, this, typeArgs, roleArgs)}
+    
     def Type parameterized(Type it) { switch(it) {
         RoleType             : new ParameterizedRoleType(it, this, typeArgs, roleArgs)
         Null                 : it
         PrimitiveType        : it
         TypeParamRef         : {
-            if(!typeArgs.containsKey(param)) throw new AssertionError
-            val type = typeArgs.get(param)
-            // If the type parameter reference has a restricting role ("with"), return a new
-            // role type with the least common superrole
-            switch(type) {
-                RoleType case restrictingRole != null:
-                    newRoleType(system.leastCommonSuperrole(type.role, restrictingRole.parameterized), type.base) 
-                default:
-                    type
+            if(typeArgs.containsKey(param)) {
+                val type = typeArgs.get(param)
+                switch(type) {
+                    RoleType case restrictingRole != null: {
+                        if(type.role instanceof RoleParamRef && restrictingRole instanceof RoleParamRef)
+                            throw new AssertionError
+                        newRoleType(system.leastCommonSuperrole(type.role, restrictingRole.parameterized), type.base) 
+                    }
+                    TypeParamRef case restrictingRole != null:
+                        newTypeParamRef(type.param, restrictingRole /* .parameterized??? */)
+                    default: type
+                }
+            }
+            else {
+                val restrRole = restrictingRole
+                val newRestrRole =
+                    switch(restrRole) {
+                        case null: null
+                        RoleParamRef case roleArgs.containsKey(restrRole.param): roleArgs.get(restrRole.param)
+                        default: throw new AssertionError
+                    }
+                return newTypeParamRef(param, newRestrRole)
             }
         }
     }}
@@ -154,7 +170,7 @@ abstract class ParameterizedEObject<E extends EObject>
     override hashCode() {
         super.hashCode + eObject.hashCode
     }
-        
+    
     override toString() '''
         Parameterized(«typeArgs», «roleArgs») {
             «eObject»

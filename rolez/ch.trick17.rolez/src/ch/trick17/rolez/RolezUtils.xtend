@@ -23,6 +23,7 @@ import ch.trick17.rolez.rolez.SimpleClassRef
 import ch.trick17.rolez.rolez.Stmt
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.Type
+import ch.trick17.rolez.rolez.TypeParam
 import ch.trick17.rolez.rolez.Var
 import ch.trick17.rolez.typesystem.RolezSystem
 import it.xsemantics.runtime.RuleEnvironment
@@ -41,6 +42,7 @@ import static ch.trick17.rolez.rolez.RolezPackage.Literals.*
 import static ch.trick17.rolez.rolez.VarKind.VAL
 
 import static extension ch.trick17.rolez.RolezExtensions.*
+import static extension ch.trick17.rolez.generic.Parameterized.parameterizedWith
 import static extension org.eclipse.emf.ecore.util.EcoreUtil.resolve
 
 /** 
@@ -70,9 +72,16 @@ class RolezUtils {
     
     static def newClassRef(NormalClass clazz, Type typeArg) {
         val result = createGenericClassRef
-        result.clazz = clazz
+        result.clazz = clazz.parameterizedWith(#{clazz.typeParam -> typeArg})
         result.typeArg = typeArg.copyIfNecessary
         result
+    }
+    
+    static def newTypeParamRef(TypeParam param, Role restrictingRole) {
+        val result = createTypeParamRef
+        result.param = param
+        result.restrictingRole = restrictingRole?.copyIfNecessary
+        return result
     }
     
     private static def <T extends EObject> copyIfNecessary(T it) {
@@ -90,7 +99,7 @@ class RolezUtils {
             Method: new RuleEnvironment(new RuleEnvironmentEntry("this", executable.thisType))
             Constr: new RuleEnvironment(new RuleEnvironmentEntry("this", executable.thisType))
         }
-    }    
+    }
     
     /**
      * Returns <code>true</code> if the name and the types of the parameters of
@@ -114,7 +123,7 @@ class RolezUtils {
     }
     
     private static def dispatch boolean equalRefWithoutRoles(GenericClassRef it, GenericClassRef other) {
-        clazz == other.clazz && typeArg.equalTypeWithoutRoles(other.typeArg)
+        clazz.qualifiedName == other.clazz.qualifiedName && typeArg.equalTypeWithoutRoles(other.typeArg)
     }
     private static def dispatch boolean equalRefWithoutRoles(ClassRef it, ClassRef other) {
         EcoreUtil.equals(it, other)
@@ -155,19 +164,15 @@ class RolezUtils {
     val superclassesCache = new OnChangeEvictingCache
     
     def strictSuperclasses(Class it) {
-        superclassesCache.get(it, eResource, [
+        superclassesCache.get(qualifiedName, eResource, [
             val result = new HashSet
             collectSuperclasses(result)
-            
-            val object = findClass(objectClassName, it)
-            if(it != object && object != null)
-                result += object
             result
         ])
     }
     
-    private def void collectSuperclasses(Class it, Set<Class> classes) {
-        if(classes += it)
+    private def void collectSuperclasses(Class it, Set<QualifiedName> classes) {
+        if(classes += qualifiedName)
             superclass?.collectSuperclasses(classes)
     }
     

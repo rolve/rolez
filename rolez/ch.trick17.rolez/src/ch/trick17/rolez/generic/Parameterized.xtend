@@ -20,19 +20,25 @@ import java.util.Map
 abstract class Parameterized {
     
     static def NormalClass parameterizedWith(NormalClass it, Map<TypeParam, ? extends Type> typeArgs) {
-        if(typeArgs.isEmpty)
-            it
-        else
-            new ParameterizedNormalClass(it, eContainer, new HashMap(typeArgs), emptyMap)
+        new ParameterizedNormalClass(it, eContainer, new HashMap(typeArgs), emptyMap)
+        // TODO: flatten if possible. where else?
     }
     
     static def Method parameterizedWith(Method it, Map<RoleParam, ? extends Role> roleArgs) {
         if(roleArgs.isEmpty)
             it
-        else if(it instanceof ParameterizedMethod)
-            new ParameterizedMethod(genericEObject, eContainer, typeArgs, new HashMap(roleArgs))
         else
-            new ParameterizedMethod(it, eContainer, emptyMap, new HashMap(roleArgs))
+            // If method is already parameterized (e.g. because of a parameterized target type),
+            // we need to make sure this parameterization is applied before the existing ones, i.e.,
+            // we cannot simply put a another wrapper around.
+            insertParameterization(it, new HashMap(roleArgs))
+    }
+    
+    private static def Method insertParameterization(Method it, Map<RoleParam, Role> newArgs) {
+        if(it instanceof ParameterizedMethod)
+            new ParameterizedMethod(insertParameterization(genericEObject, newArgs), eContainer, typeArgs, roleArgs)
+        else
+            new ParameterizedMethod(it, eContainer, emptyMap, newArgs)
     }
     
     package val Map<TypeParam, Type> typeArgs

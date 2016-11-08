@@ -1,4 +1,3 @@
-import ch.trick17.rolez.RolezExtensions
 import ch.trick17.rolez.RolezUtils
 import ch.trick17.rolez.generic.ParameterizedMethod
 import ch.trick17.rolez.rolez.Argumented
@@ -78,7 +77,6 @@ validatorExtends AbstractRolezValidator
 
 inject RolezUtils utils
 inject extension RolezFactory _
-inject extension RolezExtensions __
 
 auxiliary {
     leastCommonSuperrole(Role r1, Role r2): Role
@@ -562,13 +560,15 @@ from { fail }
 rule SubclassSimple
     G |- ClassRef left <~ SimpleClassRef right
 from {
-    left.clazz === right.clazz || utils.strictSuperclasses(left.clazz).contains(right.clazz)
+    left.clazz.qualifiedName == right.clazz.qualifiedName
+            || utils.strictSuperclasses(left.clazz).contains(right.clazz.qualifiedName)
 }
 
 rule SubclassGeneric
     G |- GenericClassRef left <~ GenericClassRef right
 from {
-    left.clazz.qualifiedName == right.clazz.qualifiedName || utils.strictSuperclasses(left.clazz).contains(right.clazz)
+    left.clazz.qualifiedName == right.clazz.qualifiedName
+            || utils.strictSuperclasses(left.clazz).contains(right.clazz.qualifiedName)
     G |- left.typeArg ~~ right.typeArg
 }
 

@@ -5,7 +5,6 @@ import ch.trick17.rolez.rolez.Class
 import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.Field
-import ch.trick17.rolez.rolez.GenericClassRef
 import ch.trick17.rolez.rolez.Member
 import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.Method
@@ -16,14 +15,11 @@ import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleParam
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
-import ch.trick17.rolez.rolez.SimpleClassRef
 import ch.trick17.rolez.rolez.Type
 import org.eclipse.emf.ecore.EObject
 
 import static ch.trick17.rolez.Constants.*
 import static ch.trick17.rolez.RolezUtils.*
-
-import static extension ch.trick17.rolez.generic.Parameterized.*
 
 /**
  * Extension methods for the Rolez language elements
@@ -61,14 +57,7 @@ class RolezExtensions {
     static def Iterable<Member> allMembers(Class it) {
         members +
             if(superclass == null) emptyList
-            else parameterizedSuperclass.allMembers.filter[m | !overrides(m)]
-    }
-    
-    static def parameterizedSuperclass(Class it) { superclassRef?.parameterizedClass as NormalClass }
-    
-    static def dispatch parameterizedClass( SimpleClassRef it) { clazz }
-    static def dispatch parameterizedClass(GenericClassRef it) {
-        clazz.parameterizedWith(#{clazz.typeParam -> typeArg})
+            else superclass.allMembers.filter[m | !overrides(m)]
     }
     
     private static def overrides(Class it, Member m) {

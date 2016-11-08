@@ -1,6 +1,8 @@
 package ch.trick17.rolez.generic
 
 import ch.trick17.rolez.rolez.ClassRef
+import ch.trick17.rolez.rolez.Field
+import ch.trick17.rolez.rolez.Method
 import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleParam
@@ -29,9 +31,9 @@ class ParameterizedNormalClass extends ParameterizedEObject<NormalClass> impleme
     
     override isSingleton()      { eObject.isSingleton }
     override isMapped()         { eObject.isMapped }
-    override getSuperclass()    { eObject.superclass }
-    override getFields()        { eObject.fields }
-    override getMethods()       { eObject.methods }
+    override getSuperclass()    { eObject.superclass?.parameterized }
+    override getFields()        { eObject.fields.map[parameterized] }
+    override getMethods()       { eObject.methods.map[parameterized] }
     override getQualifiedName() { eObject.qualifiedName }
 
     override eGet(EStructuralFeature feature) {
@@ -46,4 +48,7 @@ class ParameterizedNormalClass extends ParameterizedEObject<NormalClass> impleme
     override setTypeParam(TypeParam     value) { throw new AssertionError }
     override setJvmClass(JvmGenericType value) { throw new AssertionError }
     override setSuperclassRef(ClassRef  value) { throw new AssertionError }
+    
+    def parameterized(Field  it) { new ParameterizedField (it, this, typeArgs, roleArgs) }
+    def parameterized(Method it) { new ParameterizedMethod(it, this, typeArgs, roleArgs) }
 }

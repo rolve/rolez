@@ -753,6 +753,28 @@ class RolezTypeSystemTest {
         program.task.expr(1).type.assertRoleType(ReadWrite, objectClassName)
         program.task.expr(2).type.assertRoleType(ReadOnly , objectClassName)
         
+        val task = parse('''
+            val array = new Array[int](10);
+            array.partition(null, 5).get(0);
+            (array as readonly Array[int]).partition(null, 5).get(0);
+        '''.withFrame).task
+        task.expr(0).type
+            .assertInstanceOf(RoleType) => [
+                role.assertThat(instanceOf(ReadWrite)) // slice is readwrite
+                base.assertInstanceOf(GenericClassRef) => [
+                    clazz.name.assertThat(is(sliceClassName.toString))
+                    typeArg.assertInstanceOf(Int)
+                ]
+            ]
+        task.expr(1).type
+            .assertInstanceOf(RoleType) => [
+                role.assertThat(instanceOf(ReadOnly)) // slice is readonly
+                base.assertInstanceOf(GenericClassRef) => [
+                    clazz.name.assertThat(is(sliceClassName.toString))
+                    typeArg.assertInstanceOf(Int)
+                ]
+            ]
+        
         parse('''
             class IntContainer extends Container[int] {
                 def readonly myGet: int { return this.get; }

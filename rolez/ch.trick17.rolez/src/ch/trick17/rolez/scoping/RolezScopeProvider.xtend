@@ -4,6 +4,7 @@ import ch.trick17.rolez.rolez.Argumented
 import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.Executable
 import ch.trick17.rolez.rolez.Field
+import ch.trick17.rolez.rolez.GenericClassRef
 import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.Method
 import ch.trick17.rolez.rolez.New
@@ -24,14 +25,18 @@ import org.eclipse.xtext.common.types.JvmOperation
 import org.eclipse.xtext.common.types.JvmVisibility
 import org.eclipse.xtext.linking.lazy.LazyLinkingResource
 import org.eclipse.xtext.naming.QualifiedName
+import org.eclipse.xtext.resource.EObjectDescription
+import org.eclipse.xtext.resource.IEObjectDescription
 import org.eclipse.xtext.scoping.IScope
 import org.eclipse.xtext.scoping.impl.AbstractDeclarativeScopeProvider
+import org.eclipse.xtext.xbase.lib.Functions.Function1
 
 import static ch.trick17.rolez.RolezUtils.*
 import static org.eclipse.xtext.scoping.Scopes.scopeFor
 
 import static extension ch.trick17.rolez.RolezExtensions.*
 import static extension ch.trick17.rolez.generic.Parameterized.parameterizedWith
+import static extension com.google.common.collect.Maps.toMap
 
 class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     
@@ -42,17 +47,21 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     @Inject RolezSystem system
     @Inject RolezValidator validator
     
+    def scope_GenericClassRef_clazz(GenericClassRef it, EReference ref) {
+        delegateGetScope(it, ref).map(NormalClass, [c | c.parameterizedWith(#{c.typeParam -> typeArg})])
+    }
+    
     def scope_MemberAccess_member(MemberAccess it, EReference ref) {
         val targetType = system.type(createEnv(it), target).value
         val memberName = crossRefText(ref)
         
         if(targetType instanceof RoleType) {
-            val fields = targetType.base.parameterizedClass.allMembers.filter(Field)
+            val fields = targetType.base.clazz.allMembers.filter(Field)
                 .filter[f | f.name == memberName]
             if(args.isEmpty && roleArgs.isEmpty && !isTaskStart && !fields.isEmpty)
                 scopeFor(fields)
             else {
-                val candidates = targetType.base.parameterizedClass.allMembers.filter(Method)
+                val candidates = targetType.base.clazz.allMembers.filter(Method)
                     .filter[m | m.name == memberName && (!isTaskStart || m.isTask)]
                     .map[m |
                         val roleArgs = system.inferRoleArgs(createEnv(it), it, m)
@@ -73,7 +82,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     }
     
     def scope_New_constr(New it, EReference ref) {
-        val clazz = classRef.parameterizedClass
+        val clazz = classRef.clazz
         if(clazz instanceof NormalClass) {
             val maxSpecific = maxSpecific(clazz.constrs, it).toList
             
@@ -89,7 +98,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     }
     
     def scope_SuperConstrCall_constr(SuperConstrCall it, EReference ref) {
-        val maxSpecific = maxSpecific(enclosingClass.parameterizedSuperclass.constrs, it).toList
+        val maxSpecific = maxSpecific(enclosingClass.superclass.constrs, it).toList
         
         if(maxSpecific.size > 1)
             validator.delayedError("Constructor call is ambiguous", it, ref, AMBIGUOUS_CALL)
@@ -99,20 +108,25 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     }
     
     def scope_Method_superMethod(Method it, EReference ref) {
-        val superclass = enclosingClass.parameterizedSuperclass
-        if(superclass == null)
+        if(enclosingClass.superclass == null)
             return IScope.NULLSCOPE
         
-        val allMethods = superclass.allMembers.filter(Method)
+        val allMethods = enclosingClass.superclass.allMembers.filter(Method)
         val matching = allMethods.filter[m | equalSignatureWithoutRoles(m, it)]
             .filter[m | m.roleParams.size >= roleParams.size]
             .map[m |
                 // Parameterize the super method with references to this method's role parameters
                 // IMPROVE: This could be problematic if the super method has more role params than
                 // this method, since the parameterization is position-based
-                val roleArgs = roleParams
-                    .toMap[m.roleParams.get(roleParamIndex)]
-                    .mapValues[p | createRoleParamRef => [param = p]]
+                val roleArgs = m.roleParams.toMap[p |
+                    // If the super method has more role params than this, the args corresponding to
+                    // the "excess" role params are just their upper bounds.
+                    // TODO: Does this make any sense?
+                    if(p.roleParamIndex >= roleParams.size)
+                        p.upperBound
+                    else
+                        createRoleParamRef => [r | r.param = roleParams.get(p.roleParamIndex)]
+                ]
                 m.parameterizedWith(roleArgs)
             ].toList
         
@@ -202,10 +216,29 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
         target.params.forall[system.subtypeSucceeded(createEnv(target), it.type, i.next.type)]
     }
     
+    // IMPROVE: can replace the following with LinkingHelper.getCrossRefNodeAsString()?
     private def crossRefText(EObject it, EReference ref) {
         val proxy = eGet(ref, false) as InternalEObject
         val fragment = proxy.eProxyURI.fragment
         val node = (eResource as LazyLinkingResource).encoder.decode(eResource, fragment).third
         node.text.trim
+    }
+    
+    private def <T extends EObject> map(IScope original, Class<T> expectedClass, Function1<T, T> transformation) {
+        new IScope {
+            override getAllElements()                     { original.allElements.map[transform] }
+            override getElements(QualifiedName name)      { original.getElements(name).map[transform] }
+            override getElements(EObject object)          { original.getElements(object).map[transform] }
+            override getSingleElement(QualifiedName name) { original.getSingleElement(name).transform }
+            override getSingleElement(EObject object)     { original.getSingleElement(object).transform }
+            
+            private def transform(IEObjectDescription desc) {
+                new EObjectDescription(
+                    desc.qualifiedName,
+                    transformation.apply(expectedClass.cast(desc.EObjectOrProxy)),
+                    desc.userDataKeys.toMap[desc.getUserData(it)]
+                )
+            }
+        }
     }
 }

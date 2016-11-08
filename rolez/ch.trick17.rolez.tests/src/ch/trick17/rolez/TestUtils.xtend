@@ -51,11 +51,15 @@ class TestUtils {
     
     def withFrame(CharSequence it) '''
         class rolez.lang.Object mapped to java.lang.Object
-        class rolez.lang.Array[T] mapped to rolez.lang.Array {
-            mapped new(length: int)
+        class rolez.lang.Slice[T] mapped to rolez.lang.Slice {
             mapped def r get[r includes readonly](i: int): T with r
             mapped def readwrite set(i: int, o: T):
+            mapped def r partition[r](p: pure Partitioner, n: int): readwrite Array[r Slice[T]]
         }
+        class rolez.lang.Array[T] mapped to rolez.lang.Array extends Slice[T] {
+            mapped new(length: int)
+        }
+        class rolez.lang.Partitioner mapped to rolez.lang.Partitioner
         pure class rolez.lang.String mapped to java.lang.String
         class A
         class B
