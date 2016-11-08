@@ -154,4 +154,10 @@ abstract class ParameterizedEObject<E extends EObject>
     override hashCode() {
         super.hashCode + eObject.hashCode
     }
+        
+    override toString() '''
+        Parameterized(«typeArgs», «roleArgs») {
+            «eObject»
+        }
+    '''
 }
