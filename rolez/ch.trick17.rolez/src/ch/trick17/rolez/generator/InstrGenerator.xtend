@@ -8,7 +8,6 @@ import ch.trick17.rolez.rolez.Block
 import ch.trick17.rolez.rolez.BooleanLiteral
 import ch.trick17.rolez.rolez.Cast
 import ch.trick17.rolez.rolez.CharLiteral
-import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.DoubleLiteral
 import ch.trick17.rolez.rolez.EqualityExpr
 import ch.trick17.rolez.rolez.Expr
@@ -21,10 +20,8 @@ import ch.trick17.rolez.rolez.IntLiteral
 import ch.trick17.rolez.rolez.LocalVarDecl
 import ch.trick17.rolez.rolez.LogicalExpr
 import ch.trick17.rolez.rolez.MemberAccess
-import ch.trick17.rolez.rolez.Method
 import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.NullLiteral
-import ch.trick17.rolez.rolez.Param
 import ch.trick17.rolez.rolez.Parenthesized
 import ch.trick17.rolez.rolez.PrimitiveType
 import ch.trick17.rolez.rolez.Pure
@@ -316,11 +313,6 @@ class InstrGenerator {
             else
                 generate
         }
-        
-        private def jvmParam(Param it) { enclosingExecutable.jvmExecutable.parameters.get(paramIndex) }
-        
-        private def dispatch jvmExecutable(Method it) { jvmMethod }
-        private def dispatch jvmExecutable(Constr it) { jvmConstr }
         
         private def isFieldWrite(MemberAccess it) {
             eContainer instanceof Assignment && it === (eContainer as Assignment).left

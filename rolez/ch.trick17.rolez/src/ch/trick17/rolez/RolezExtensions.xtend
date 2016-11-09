@@ -94,4 +94,9 @@ class RolezExtensions {
     static def roleParamIndex(RoleParam it) { enclosingMethod.roleParams.indexOf(it) }
     static def       argIndex(     Expr it) { (eContainer as Argumented).args.indexOf(it) }
     static def   roleArgIndex(     Role it) { (eContainer as MemberAccess).roleArgs.indexOf(it) }
+    
+    static def jvmParam(Param it) { enclosingExecutable.jvmExecutable.parameters.get(paramIndex) }
+                
+    private static def dispatch jvmExecutable(Method it) { jvmMethod }
+    private static def dispatch jvmExecutable(Constr it) { jvmConstr }
 }

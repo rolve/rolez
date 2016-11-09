@@ -20,6 +20,7 @@ import ch.trick17.rolez.rolez.Void
 import ch.trick17.rolez.validation.cfg.CfgProvider
 import ch.trick17.rolez.validation.cfg.InstrNode
 import javax.inject.Inject
+import org.eclipse.xtext.common.types.JvmArrayType
 
 import static ch.trick17.rolez.Constants.*
 
@@ -171,10 +172,20 @@ class ClassGenerator {
     
     private def genObjectMethod(Method it) { if(isMapped) '''
         
-        public «genReturnType» «name»(«params.map[gen].join(", ")») {
+        public «genReturnType» «name»(«params.map[genPlain].join(", ")») {
             «if(!(type instanceof Void)) "return "»«generateStaticCall»;
         }
     ''' else gen }
+    
+    private def genPlain(Param it) {
+        val paramType = jvmParam.parameterType.type
+        if(paramType instanceof JvmArrayType) {
+            val arrayType = paramType.toString.substring(14) // IMPROVE: Yes, magic.
+            '''«kind.generate»«arrayType» «name»'''
+        }
+        else
+            gen
+    }
     
     private def generateStaticCall(Method it)
         '''«enclosingClass.jvmClass.qualifiedName».«name»(«params.map[safeName].join(", ")»)'''

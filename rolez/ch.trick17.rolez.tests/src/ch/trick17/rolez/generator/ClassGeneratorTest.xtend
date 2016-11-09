@@ -182,6 +182,27 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
             }
         ''')
+        
+        parse('''
+            object test.Arrays mapped to java.util.Arrays {
+                mapped def pure sort(a: readwrite Array[int]):
+            }
+        ''', someClasses).onlyClass.generate.assertEqualsJava('''
+            package test;
+            
+            import static «jvmGuardedClassName».*;
+            
+            public final class Arrays extends java.lang.Object {
+                
+                public static final Arrays INSTANCE = new Arrays();
+                
+                private Arrays() {}
+                
+                public void sort(final int[] a) {
+                    java.util.Arrays.sort(a);
+                }
+            }
+        ''')
     }
     
     @Test def testField() {
