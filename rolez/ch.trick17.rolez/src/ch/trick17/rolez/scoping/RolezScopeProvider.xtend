@@ -20,6 +20,7 @@ import javax.inject.Inject
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.EReference
 import org.eclipse.emf.ecore.InternalEObject
+import org.eclipse.emf.ecore.util.EcoreUtil
 import org.eclipse.xtext.common.types.JvmDeclaredType
 import org.eclipse.xtext.common.types.JvmOperation
 import org.eclipse.xtext.common.types.JvmVisibility
@@ -48,7 +49,10 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     @Inject RolezValidator validator
     
     def scope_GenericClassRef_clazz(GenericClassRef it, EReference ref) {
-        delegateGetScope(it, ref).map(NormalClass, [c | c.parameterizedWith(#{c.typeParam -> typeArg})])
+        delegateGetScope(it, ref).map(NormalClass, [c |
+            val resolvedClass = EcoreUtil.resolve(c, it) as NormalClass
+            resolvedClass.parameterizedWith(#{resolvedClass.typeParam -> typeArg})
+        ])
     }
     
     def scope_MemberAccess_member(MemberAccess it, EReference ref) {
@@ -229,8 +233,8 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
             override getAllElements()                     { original.allElements.map[transform] }
             override getElements(QualifiedName name)      { original.getElements(name).map[transform] }
             override getElements(EObject object)          { original.getElements(object).map[transform] }
-            override getSingleElement(QualifiedName name) { original.getSingleElement(name).transform }
-            override getSingleElement(EObject object)     { original.getSingleElement(object).transform }
+            override getSingleElement(QualifiedName name) { original.getSingleElement(name)?.transform }
+            override getSingleElement(EObject object)     { original.getSingleElement(object)?.transform }
             
             private def transform(IEObjectDescription desc) {
                 new EObjectDescription(
