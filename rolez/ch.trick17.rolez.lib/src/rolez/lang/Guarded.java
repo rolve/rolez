@@ -142,7 +142,7 @@ public abstract class Guarded {
         if(!guardingDisabled) {
             ensureGuardingInitialized();
             owner = owner.parent;
-            ownerThread = owner.getExecutingThread();
+            ownerThread = owner == null ? null : owner.getExecutingThread();
         }
         // TODO: notify tasks that wait for other views?
     }
