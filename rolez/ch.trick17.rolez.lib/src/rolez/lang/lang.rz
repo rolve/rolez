@@ -82,6 +82,9 @@ object Math mapped to java.lang.Math {
     mapped def pure acos(a: double): double
     mapped def pure atan(a: double): double
     
+    mapped def pure toDegrees(angrad: double): double
+    mapped def pure toRadians(angdeg: double): double
+    
     mapped def pure exp(a: double): double
     mapped def pure log(a: double): double
     mapped def pure log10(a: double): double
