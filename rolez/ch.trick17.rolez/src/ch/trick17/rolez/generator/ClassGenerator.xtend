@@ -17,6 +17,7 @@ import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.SingletonClass
 import ch.trick17.rolez.rolez.TypeParamRef
 import ch.trick17.rolez.rolez.Void
+import ch.trick17.rolez.validation.JavaMapper
 import ch.trick17.rolez.validation.cfg.CfgProvider
 import ch.trick17.rolez.validation.cfg.InstrNode
 import javax.inject.Inject
@@ -31,6 +32,7 @@ class ClassGenerator {
         
     @Inject extension InstrGenerator
     @Inject extension TypeGenerator
+    @Inject extension JavaMapper
     @Inject extension SafeJavaNames
     @Inject extension CfgProvider
     
@@ -172,7 +174,7 @@ class ClassGenerator {
     
     private def genObjectMethod(Method it) { if(isMapped) '''
         
-        public «genReturnType» «name»(«params.map[genPlain].join(", ")») {
+        public «genReturnType» «name»(«params.map[genPlain].join(", ")»)«checkedExceptionTypes.join(" throws ", ", ", "", [qualifiedName])» {
             «if(!(type instanceof Void)) "return "»«generateStaticCall»;
         }
     ''' else gen }

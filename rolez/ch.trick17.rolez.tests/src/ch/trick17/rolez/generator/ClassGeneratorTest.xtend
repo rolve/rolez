@@ -155,21 +155,21 @@ class ClassGeneratorTest extends GeneratorTest {
     
     @Test def testSingletonClassMapped() {
         parse('''
-            object rolez.lang.System2 mapped to java.lang.System {
+            object test.System mapped to java.lang.System {
                 mapped val out: readonly rolez.io.PrintStream
                 mapped def readonly exit(status: int):
                 mapped def readonly lineSeparator: pure String
             }
         ''', someClasses).onlyClass.generate.assertEqualsJava('''
-            package rolez.lang;
+            package test;
             
             import static «jvmGuardedClassName».*;
             
-            public final class System2 extends java.lang.Object {
+            public final class System extends java.lang.Object {
                 
-                public static final System2 INSTANCE = new System2();
+                public static final System INSTANCE = new System();
                 
-                private System2() {}
+                private System() {}
                 
                 public final java.io.PrintStream out = java.lang.System.out;
                 
@@ -200,6 +200,28 @@ class ClassGeneratorTest extends GeneratorTest {
                 
                 public void sort(final int[] a) {
                     java.util.Arrays.sort(a);
+                }
+            }
+        ''')
+        
+        parse('''
+            class test.Channel mapped to java.nio.channels.Channel
+            object test.System mapped to java.lang.System {
+                mapped def pure inheritedChannel: pure test.Channel
+            }
+        ''', someClasses).classes.last.generate.assertEqualsJava('''
+            package test;
+            
+            import static «jvmGuardedClassName».*;
+            
+            public final class System extends java.lang.Object {
+                
+                public static final System INSTANCE = new System();
+                
+                private System() {}
+                
+                public java.nio.channels.Channel inheritedChannel() throws java.io.IOException {
+                    return java.lang.System.inheritedChannel();
                 }
             }
         ''')
