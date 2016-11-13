@@ -86,8 +86,9 @@ class RolezValidator extends RolezSystemValidator {
     public static val INCORRECT_MAIN_CLASS = "incorrect main class"
     public static val VAL_FIELD_NOT_INITIALIZED = "val field not initialized"
     public static val VAL_FIELD_OVERINITIALIZED = "val field overinitialized"
-    public static val THIS_IN_FIELD_INIT = "'this' in field initializer"
+    public static val FIELD_INIT_TYPE_MISMATCH = "field initializer type mismatch"
     public static val MAPPED_FIELD_WITH_INIT = "mapped with with initializer"
+    public static val THIS_IN_FIELD_INIT = "'this' in field initializer"
     public static val VAR_FIELD_IN_SINGLETON_CLASS = "var field in singleton class"
     public static val INEFFECTIVE_FIELD_ROLE = "ineffective field role"
     public static val VAR_FIELD_IN_PURE_CLASS = "var field in pure class"
@@ -410,6 +411,9 @@ class RolezValidator extends RolezSystemValidator {
     def checkFieldInitializer(Field it) {
         if(initializer == null) return;
         
+        val subtypeResult = system.subtypeExpr(initializer, type)
+        if(subtypeResult.failed)
+            error(subtypeResult.ruleFailedException.message, initializer, null, FIELD_INIT_TYPE_MISMATCH)
         if(isMapped)
             error("Mapped fields cannot have an initializer", initializer,
                 null, MAPPED_FIELD_WITH_INIT)

@@ -1069,17 +1069,24 @@ class RolezValidatorTest {
         
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.String mapped to java.lang.String
             class A {
-                val i: int = 0
-                val j: int = this.i
+                var foo: int = "Hi"
             }
-        ''').assertError(THIS, THIS_IN_FIELD_INIT)
+        ''').assertError(STRING_LITERAL, FIELD_INIT_TYPE_MISMATCH, "String", "int")
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.Array[T] mapped to rolez.lang.Array {
                 mapped val length: int = 0
             }
         ''').assertError(INT_LITERAL, MAPPED_FIELD_WITH_INIT)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                val i: int = 0
+                val j: int = this.i
+            }
+        ''').assertError(THIS, THIS_IN_FIELD_INIT)
     }
     
     @Test def testSingletonClassField() {
