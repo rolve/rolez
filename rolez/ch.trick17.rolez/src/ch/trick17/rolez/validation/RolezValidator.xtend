@@ -250,10 +250,14 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkFieldWithSameName(Method it) {
-        if(params.isEmpty && !enclosingClass.allMembers.filter(Field)
-                .filter[f | f.name == name].isEmpty)
-            error("Field with same name: method cannot be called",
-                NAMED__NAME, FIELD_WITH_SAME_NAME)
+        if(params.isEmpty && !enclosingClass.allMembers.filter(Field).filter[f | f.name == name].isEmpty) {
+            if(isOverriding)
+                warning("Field with same name: method cannot be called",
+                    NAMED__NAME, FIELD_WITH_SAME_NAME)
+            else
+                error("Field with same name: method cannot be called",
+                    NAMED__NAME, FIELD_WITH_SAME_NAME)
+        }
     }
     
     @Check
