@@ -290,7 +290,7 @@ class InstrGenerator {
             if(method.isMapped) {
                 // Shorter and more efficient code for access to mapped singletons, like System, Math
                 val genTarget = 
-                    if(target instanceof The) (target as The).classRef.clazz.jvmClass.qualifiedName
+                    if(target instanceof The) (target as The).classRef.clazz.jvmClass.getQualifiedName('.')
                     else target.genNested
                 val genInvoke = '''«genTarget».«method.safeName»(«args.map[genCoerced].join(", ")»)'''
                 if(method.jvmMethod.returnType.type instanceof JvmArrayType) {
