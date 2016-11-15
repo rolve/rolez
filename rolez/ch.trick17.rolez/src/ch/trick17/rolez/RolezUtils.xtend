@@ -96,8 +96,12 @@ class RolezUtils {
         // IMPROVE: cache environments for better performance?
         switch(executable) {
             case null: new RuleEnvironment
-            Method: new RuleEnvironment(new RuleEnvironmentEntry("this", executable.thisType))
-            Constr: new RuleEnvironment(new RuleEnvironmentEntry("this", executable.thisType))
+            Method: new RuleEnvironment(
+                new RuleEnvironment(new RuleEnvironmentEntry("this", executable.thisType)),
+                new RuleEnvironment(new RuleEnvironmentEntry("super", executable.superType)))
+            Constr: new RuleEnvironment(
+                new RuleEnvironment(new RuleEnvironmentEntry("this", executable.thisType)),
+                new RuleEnvironment(new RuleEnvironmentEntry("super", executable.superType)))
         }
     }
     

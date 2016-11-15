@@ -785,6 +785,21 @@ class InstrGeneratorTest extends GeneratorTest {
         def String[]   returnsStringArray() { null }
     }
     
+    @Test def testSuper() {
+        parse('''
+            super.bar;
+        '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
+            super.bar();
+        '''.withJavaFrame)
+        
+        parse('''
+            super;
+        '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
+        '''.withJavaFrame)
+        
+        // TODO: Generate correct code for super calls to mapped methods
+    }
+    
     @Test def testNew() {
         parse('''
             new Base;
@@ -909,18 +924,18 @@ class InstrGeneratorTest extends GeneratorTest {
     /* Test infrastructure */
     
     private def withFrame(CharSequence it) {'''
-        class A {
+        class A extends Base {
             def readwrite foo(i: int, b: boolean): {
                 «it»
             }
-            def pure bar: {}
+            override pure bar: {}
         }
     '''}
     
     private def withJavaFrame(CharSequence it) {'''
         import static «jvmGuardedClassName».*;
         
-        public class A extends «jvmGuardedClassName» {
+        public class A extends Base {
             
             public A() {
                 super();
@@ -930,6 +945,7 @@ class InstrGeneratorTest extends GeneratorTest {
                 «it»
             }
             
+            @java.lang.Override
             public void bar() {
             }
         }

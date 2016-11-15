@@ -813,6 +813,35 @@ class RolezTypeSystemTest {
         ''').findNormalClass("A").constrs.head.lastExpr.type.assertRoleType(ReadWrite, "A")
     }
     
+    @Test def testTSuper() {
+        val roles = #[createReadWrite, createReadOnly, createPure]
+        for(expected : roles)
+            parse('''
+                class rolez.lang.Object mapped to java.lang.Object
+                class A
+                class B extends A {
+                    def «expected.name» foo: { super; }
+                }
+            ''').findClass("B").findMethod("foo").lastExpr.type.assertRoleType(expected.class, "A")
+        
+        for(expected : roles)
+            parse('''
+                class rolez.lang.Object mapped to java.lang.Object
+                class A
+                class B extends A {
+                    task «expected.name» foo: { super; }
+                }
+            ''').findClass("B").findMethod("foo").lastExpr.type.assertRoleType(expected.class, "A")
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A
+            class B extends A {
+                new { super; }
+            }
+        ''').findNormalClass("B").constrs.head.lastExpr.type.assertRoleType(ReadWrite, "A")
+    }
+    
     @Test def testTVarRef() {
         parse('''
             val i = 5;

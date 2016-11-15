@@ -1316,7 +1316,7 @@ class RolezValidatorTest {
             class A {
                 new {
                     3;
-                    super;
+                    super(1);
                 }
             }
         ''').assertError(SUPER_CONSTR_CALL, SUPER_CONSTR_CALL_FIRST)
@@ -1352,10 +1352,12 @@ class RolezValidatorTest {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
-                def pure foo: { super; }
+                def pure foo: { super(1); }
             }
         ''').assertError(SUPER_CONSTR_CALL, INCORRECT_SUPER_CONSTR_CALL)
-        parse("super;".withFrame).assertError(SUPER_CONSTR_CALL, INCORRECT_SUPER_CONSTR_CALL)
+        parse('''
+            super(1);
+        '''.withFrame).assertError(SUPER_CONSTR_CALL, INCORRECT_SUPER_CONSTR_CALL)
     }
     
     @Test def testSuperConstrCallUncatchableException() {

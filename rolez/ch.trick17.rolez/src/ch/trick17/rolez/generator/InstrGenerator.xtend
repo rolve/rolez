@@ -34,6 +34,7 @@ import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
 import ch.trick17.rolez.rolez.Stmt
 import ch.trick17.rolez.rolez.StringLiteral
+import ch.trick17.rolez.rolez.Super
 import ch.trick17.rolez.rolez.SuperConstrCall
 import ch.trick17.rolez.rolez.The
 import ch.trick17.rolez.rolez.This
@@ -340,6 +341,11 @@ class InstrGenerator {
         private def dispatch CharSequence generate(This it)  {
             if(codeKind == CodeKind.TASK) '''«enclosingClass.safeSimpleName».this'''
             else '''this'''
+        }
+        
+        private def dispatch CharSequence generate(Super it)  {
+            if(codeKind == CodeKind.TASK) '''«enclosingClass.safeSimpleName».super'''
+            else '''super'''
         }
         
         private def dispatch CharSequence generate(VarRef it) { variable.safeName }

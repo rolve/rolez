@@ -48,6 +48,7 @@ import ch.trick17.rolez.rolez.RolezFactory
 import ch.trick17.rolez.rolez.SimpleClassRef
 import ch.trick17.rolez.rolez.Stmt
 import ch.trick17.rolez.rolez.StringLiteral
+import ch.trick17.rolez.rolez.Super
 import ch.trick17.rolez.rolez.SuperConstrCall
 import ch.trick17.rolez.rolez.The
 import ch.trick17.rolez.rolez.This
@@ -342,6 +343,13 @@ rule TThis
     error "Cannot refer to \"this\" in this context" source t
 from {
     type = env(G, "this", RoleType)
+}
+
+rule TSuper
+    G |- Super s : Type type
+    error "Cannot refer to \"super\" in this context" source s
+from {
+    type = env(G, "super", RoleType)
 }
 
 rule TVarRef

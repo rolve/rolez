@@ -97,7 +97,8 @@ ForLoop:
 // IMPROVE: for-each and maybe parallel for-each
 
 SuperConstrCall:
-    {SuperConstrCall} constr=[Constr|Super] WithArgs ';';
+    {SuperConstrCall} constr=[Constr|Super] '(' args+=Expr (',' args+=Expr)* ')' ';';
+    // Note that parentheses are required here. A "super" without parentheses is an expression.
 
 Super: 'super';
 
@@ -184,7 +185,7 @@ MemberAccess returns Expr:
     // IMPROVE: Allow member accesses without "this"
 
 SimpleExpr returns Expr:
-    {This} 'this' | VarRef | New | The | Parenthesized | Literal;
+    {This} 'this' | {Super} 'super' | VarRef | New | The | Parenthesized | Literal;
 
 VarRef:
     variable=[Var];

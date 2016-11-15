@@ -192,6 +192,7 @@
         eType="#//Role" containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="This" eSuperTypes="#//Expr"/>
+  <eClassifiers xsi:type="ecore:EClass" name="Super" eSuperTypes="#//Expr"/>
   <eClassifiers xsi:type="ecore:EClass" name="VarRef" eSuperTypes="#//Expr">
     <eStructuralFeatures xsi:type="ecore:EReference" name="variable" eType="#//Var"/>
   </eClassifiers>

@@ -75,6 +75,7 @@ abstract class GeneratorTest {
             }
             class Base {
                 var foo: int
+                def pure bar: {}
             }
             pure class PureBase {
                 val foo: int = 42
