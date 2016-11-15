@@ -126,12 +126,12 @@ enum OpAssignment:
     | TIMES_ASSIGN='*=' | DIVIDED_BY_ASSIGN='/=' | MODULO_ASSIGN='%=';
 
 OrExpr returns Expr:
-    AndExpr ({LogicalExpr.left=current} op=OpOr right=AndExpr)?;
+    AndExpr ({LogicalExpr.left=current} op=OpOr right=AndExpr)*;
 
 enum OpOr returns OpLogical: OR='||';
 
 AndExpr returns Expr:
-    EqualityExpr ({LogicalExpr.left=current} op=OpAnd right=EqualityExpr)?;
+    EqualityExpr ({LogicalExpr.left=current} op=OpAnd right=EqualityExpr)*;
 
 enum OpAnd returns OpLogical: AND='&&';
 
