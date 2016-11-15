@@ -24,7 +24,6 @@ import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.NullLiteral
 import ch.trick17.rolez.rolez.Parenthesized
 import ch.trick17.rolez.rolez.PrimitiveType
-import ch.trick17.rolez.rolez.Pure
 import ch.trick17.rolez.rolez.ReadOnly
 import ch.trick17.rolez.rolez.ReadWrite
 import ch.trick17.rolez.rolez.RelationalExpr
@@ -49,6 +48,7 @@ import ch.trick17.rolez.validation.JavaMapper
 import com.google.inject.Injector
 import java.util.regex.Pattern
 import javax.inject.Inject
+import org.eclipse.xtext.common.types.JvmAnnotationTarget
 import org.eclipse.xtext.common.types.JvmArrayType
 
 import static ch.trick17.rolez.Constants.*
@@ -237,10 +237,10 @@ class InstrGenerator {
         }}
         
         private def generateSliceGet(MemberAccess it)
-            '''«target.genGuarded(createReadOnly)».«genSliceAccess("get")»(«args.get(0).generate»)'''
+            '''«target.genGuarded(createReadOnly, true)».«genSliceAccess("get")»(«args.get(0).generate»)'''
         
         private def generateSliceSet(MemberAccess it)
-            '''«target.genGuarded(createReadWrite)».«genSliceAccess("set")»(«args.get(0).generate», «args.get(1).generate»)'''
+            '''«target.genGuarded(createReadWrite, true)».«genSliceAccess("set")»(«args.get(0).generate», «args.get(1).generate»)'''
         
         private def genSliceAccess(MemberAccess it, String getOrSet) {
             val targetType = system.type(createEnv(it), target).value
@@ -254,10 +254,10 @@ class InstrGenerator {
         }
         
         private def generateArrayGet(MemberAccess it)
-            '''«target.genGuarded(createReadOnly)».data[«args.get(0).generate»]'''
+            '''«target.genGuarded(createReadOnly, true)».data[«args.get(0).generate»]'''
         
         private def generateArraySet(MemberAccess it)
-            '''«target.genGuarded(createReadWrite)».data[«args.get(0).generate»] = «args.get(1).generate»'''
+            '''«target.genGuarded(createReadWrite, true)».data[«args.get(0).generate»] = «args.get(1).generate»'''
         
         private def generateArrayLength(MemberAccess it)
             '''«target.genNested».data.length'''
@@ -275,7 +275,7 @@ class InstrGenerator {
                 if(componentType instanceof PrimitiveType) componentType.name.toFirstUpper
                 else ""
             
-            '''«target.genGuarded(createReadWrite)».set«suffix»(«args.get(0).generate», «args.get(1).generate»)'''
+            '''«target.genGuarded(createReadWrite, true)».set«suffix»(«args.get(0).generate», «args.get(1).generate»)'''
         }
         
         private def generateFieldAccess(MemberAccess it) {
@@ -283,7 +283,7 @@ class InstrGenerator {
                 if(isFieldWrite)           createReadWrite
                 else if(field.kind == VAR) createReadOnly
                 else                       createPure
-            '''«target.genGuarded(requiredRole)».«field.safeName»'''
+            '''«target.genGuarded(requiredRole, true)».«field.safeName»'''
         }
         
         private def generateMethodInvoke(MemberAccess it) {
@@ -291,7 +291,7 @@ class InstrGenerator {
                 // Shorter and more efficient code for access to mapped singletons, like System, Math
                 val genTarget = 
                     if(target instanceof The) (target as The).classRef.clazz.jvmClass.getQualifiedName('.')
-                    else target.genNested
+                    else target.genGuardedMapped(method.thisRole, true)
                 val genInvoke = '''«genTarget».«method.safeName»(«args.map[genCoerced].join(", ")»)'''
                 if(method.jvmMethod.returnType.type instanceof JvmArrayType) {
                     val componentType = ((method.type as RoleType).base as GenericClassRef).typeArg
@@ -306,12 +306,28 @@ class InstrGenerator {
         
         private def CharSequence genCoerced(Expr it) {
             val paramType = destParam.jvmParam.parameterType.type
+            val reqRole = 
+                if(destParam.type instanceof RoleType) (destParam.type as RoleType).role
             if(paramType instanceof JvmArrayType) {
                 val arrayType = paramType.toString.substring(14) // IMPROVE: A little less magic, a little more robustness, please
-                '''«jvmGuardedArrayClassName».unwrap(«genNested», «arrayType».class)'''
+                '''«jvmGuardedArrayClassName».unwrap(«genGuardedMapped(reqRole, false)», «arrayType».class)'''
             }
             else
-                generate
+                genGuardedMapped(reqRole, false)
+        }
+        
+        private def genGuardedMapped(Expr it, Role requiredRole, boolean nested) {
+            val container = eContainer
+            val annotated = switch(container) {
+                MemberAccess case it === container.target: container.method.jvmMethod
+                default: destParam.jvmParam
+            }
+            
+            if(annotated.isSafe) generate else genGuarded(requiredRole, nested)
+        }
+        
+        private def isSafe(JvmAnnotationTarget it) {
+            annotations.exists[annotation.qualifiedName == safeAnnotationName]
         }
         
         private def isFieldWrite(MemberAccess it) {
@@ -377,17 +393,17 @@ class InstrGenerator {
             default   : generate
         }}
         
-        private def genGuarded(Expr it, Role requiredRole) {
+        private def genGuarded(Expr it, Role requiredRole, boolean nested) {
             val type = system.type(createEnv(it), it).value
             val needsGuard = !system.subroleSucceeded(roleAnalysis.dynamicRole(it), requiredRole)
             if(type.isGuarded && needsGuard)
                 switch(requiredRole) {
                     ReadWrite: "guardReadWrite(" + generate + ")"
                     ReadOnly : "guardReadOnly("  + generate + ")"
-                    Pure     : genNested
+                    Pure     : if(nested) genNested else generate
                 }
             else
-                genNested
+                if(nested) genNested else generate
             
             // IMPROVE: Better syntax (and performance?) when using type system
         }

@@ -12,6 +12,7 @@ import org.junit.runner.RunWith
 import rolez.lang.Guarded
 
 import static ch.trick17.rolez.Constants.*
+import rolez.lang.Safe
 
 @RunWith(XtextRunner)
 @InjectWith(RolezInjectorProvider)
@@ -443,7 +444,8 @@ class InstrGeneratorTest extends GeneratorTest {
     }
     
     @Test def testMemberAccessGuardedMapped() {
-        // Only Guarded mapped classes can have var fields
+        // Member access to mapped classes is generally guarded (also methods)
+        // (Only Guarded mapped classes can have var fields)
         parse('''
             class A {
                 def pure test(c1: readwrite IntContainer, c2: readwrite IntContainer, c3: readwrite IntContainer, c4: readwrite IntContainer, c5: readwrite IntContainer): int {
@@ -470,32 +472,102 @@ class InstrGeneratorTest extends GeneratorTest {
                 }
                 
                 public int test(final «IntContainer.canonicalName» c1, final «IntContainer.canonicalName» c2, final «IntContainer.canonicalName» c3, final «IntContainer.canonicalName» c4, final «IntContainer.canonicalName» c5) {
-                    c1.set(42);
-                    c2.get();
+                    guardReadWrite(c1).set(42);
+                    guardReadOnly(c2).get();
                     guardReadWrite(c3).value = 2;
                     return guardReadOnly(c4).value + c5.fortyTwo;
                 }
             }
         ''')
+        
+        // Also arguments to mapped methods are guarded!
+        parse('''
+            class A {
+                def pure doSomething(s: readwrite SomethingWithChars, chars: readonly Array[char]): {
+                    s.doSomething(chars);
+                }
+            }
+        ''', someClasses.with('''
+            class SomethingWithChars mapped to «SomethingWithChars.canonicalName» {
+                mapped def readwrite doSomething(chars: readonly Array[char]):
+            }
+        ''')).onlyClass.generate.assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
+            
+            public class A extends «jvmGuardedClassName» {
+                
+                public A() {
+                    super();
+                }
+                
+                public void doSomething(final «SomethingWithChars.canonicalName» s, final rolez.lang.GuardedArray<char[]> chars) {
+                    guardReadWrite(s).doSomething(rolez.lang.GuardedArray.unwrap(guardReadOnly(chars), char[].class));
+                }
+            }
+        ''')
+        
+        // Except if param or method is annoated as "Safe"!
+        parse('''
+            class A {
+                def pure doSomething(s: readwrite SomethingSafeWithChars, chars: readonly Array[char]): {
+                    s.doSomething(chars);
+                    s.doSomethingElse(chars);
+                }
+            }
+        ''', someClasses.with('''
+            class SomethingSafeWithChars mapped to «SomethingSafeWithChars.canonicalName» {
+                mapped def readwrite doSomething    (chars: readonly Array[char]):
+                mapped def readwrite doSomethingElse(chars: readonly Array[char]):
+            }
+        ''')).onlyClass.generate.assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
+            
+            public class A extends «jvmGuardedClassName» {
+                
+                public A() {
+                    super();
+                }
+                
+                public void doSomething(final «SomethingSafeWithChars.canonicalName» s, final rolez.lang.GuardedArray<char[]> chars) {
+                    s.doSomething(rolez.lang.GuardedArray.unwrap(guardReadOnly(chars), char[].class));
+                    guardReadWrite(s).doSomethingElse(rolez.lang.GuardedArray.unwrap(chars, char[].class));
+                }
+            }
+        ''')
+        
+    }
+    
+    static class SomethingWithChars extends Guarded {
+        public def void doSomething(char[] chars) {}
+    }
+    
+    static class SomethingSafeWithChars extends Guarded {
+        @Safe
+        public def void doSomething(char[] chars) {}
+        public def void doSomethingElse(@Safe char[] chars) {}
     }
     
     @Test def testMemberAccessSlice() {
-        // Access to slice components is guarded, slicing is not
+        // Access to slice components is guarded, to arrayLength() and slicing methods not
         parse('''
             class A {
-                def pure getFirst(a: readwrite Slice[pure Object]): pure Object {
+                def pure arrayLength(a: pure Slice[int]): int {
+                    return a.arrayLength;
+                }
+                
+                def pure getFirst(a: readonly Slice[pure Object]): pure Object {
                     return a.get(0);
                 }
-                def pure getFirstInt(a: readwrite Slice[int]): int {
+                def pure getFirstInt(a: readonly Slice[int]): int {
                     return a.get(0);
                 }
-                def pure getFirstDouble(a: readwrite Slice[double]): double {
+                def pure getFirstDouble(a: readonly Slice[double]): double {
                     return a.get(0);
                 }
-                def pure getFirstBoolean(a: readwrite Slice[boolean]): boolean {
+                def pure getFirstBoolean(a: readonly Slice[boolean]): boolean {
                     return a.get(0);
                 }
-                def pure getFirstChar(a: readwrite Slice[char]): char {
+                def pure getFirstChar(a: readonly Slice[char]): char {
                     return a.get(0);
                 }
                 
@@ -514,6 +586,10 @@ class InstrGeneratorTest extends GeneratorTest {
                 
                 public A() {
                     super();
+                }
+                
+                public int arrayLength(final rolez.lang.GuardedSlice<int[]> a) {
+                    return a.arrayLength();
                 }
                 
                 public java.lang.Object getFirst(final rolez.lang.GuardedSlice<java.lang.Object[]> a) {
@@ -617,7 +693,7 @@ class InstrGeneratorTest extends GeneratorTest {
     }
     
     @Test def testMemberAccessVectorBuilder() {
-        // Access to array components is guarded, access to length field is not
+        // All access is guarded
         parse('''
             class A {
                 def pure getFirst(b: readonly VectorBuilder[int]): int {
@@ -648,7 +724,7 @@ class InstrGeneratorTest extends GeneratorTest {
                 }
                 
                 public int[] build(final rolez.lang.GuardedVectorBuilder<int[]> b) {
-                    return b.build();
+                    return guardReadOnly(b).build();
                 }
             }
         ''')

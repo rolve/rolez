@@ -37,6 +37,7 @@ abstract class GeneratorTest {
                 mapped def readonly toString: pure String
             }
             class rolez.lang.Slice[T] mapped to rolez.lang.Slice {
+                mapped def pure arrayLength: int
                 mapped def readonly  get(index: int): T
                 mapped def readwrite set(index: int, component: T):
                 mapped def r slice[r](begin: int, end: int, step: int): r Slice[T]
@@ -56,6 +57,7 @@ abstract class GeneratorTest {
                 mapped def readonly build: readonly Vector[T]
             }
             pure class rolez.lang.String mapped to java.lang.String {
+                mapped new(chars: readonly Array[char])
                 mapped def pure length: int
                 mapped def pure substring(b: int, e: int): pure String
             }

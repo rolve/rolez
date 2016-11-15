@@ -16,4 +16,6 @@ class Constants {
     public static val         jvmGuardedArrayClassName = "rolez.lang.GuardedArray"
     public static val jvmGuardedVectorBuilderClassName = "rolez.lang.GuardedVectorBuilder"
     public static val           jvmTaskSystemClassName = "rolez.lang.TaskSystem"
+    
+    public static val safeAnnotationName = "rolez.lang.Safe"
 }
