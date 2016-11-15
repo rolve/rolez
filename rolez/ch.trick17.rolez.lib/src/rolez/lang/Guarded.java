@@ -105,6 +105,8 @@ public abstract class Guarded {
             owner = task;
             ownerThread = null;
             guardedInTasks.set(EMPTY);
+            for(Guarded v : views())
+                v.guardedInTasks.set(EMPTY);
         }
     }
     
@@ -116,6 +118,8 @@ public abstract class Guarded {
             if(viewLock() != null)
                 readers.add(task);
             guardedInTasks.set(EMPTY);
+            for(Guarded v : views())
+                v.guardedInTasks.set(EMPTY);
         }
     }
     

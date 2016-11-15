@@ -300,6 +300,9 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 for(int i = 0; i < a.data.length; i++)
                     a.data[i] = i;
                 
+                // say a is guarded here for some reason (so that it's "alreadyGuardedIn" this task)
+                guardReadWrite(a);
+                
                 final GuardedSlice<int[]> slice = a.slice(0, 3, 1);
                 Task<?> task = new Task<Void>(new Object[]{slice}, new Object[]{}) {
                     @Override
