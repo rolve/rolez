@@ -44,3 +44,20 @@ class Random mapped to java.util.Random {
     mapped def readwrite nextDouble: double
     mapped def readwrite nextGaussian: double
 }
+
+class ArrayList[E] mapped to java.util.ArrayList {
+    mapped new
+    
+    mapped def readonly size: int
+    mapped def readonly isEmpty: boolean
+    
+    mapped def r get[r includes readonly](index: int): E with r
+    mapped def readwrite set(index: int, element: E): E
+    
+    mapped def readwrite add(element: E): boolean
+    mapped def readwrite add(index: int, element: E):
+    mapped def readwrite remove(element: readonly Object): boolean
+    mapped def readwrite remove(index: int): E
+    
+    mapped def readwrite clear:
+}
