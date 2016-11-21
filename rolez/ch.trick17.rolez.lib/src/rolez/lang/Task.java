@@ -144,12 +144,14 @@ public abstract class Task<V> implements Runnable {
      */
     public static void registerNewRootTask() {
         assert currentTask.get() == null;
-        currentTask.set(new Task<Void>(new Object[]{}, new Object[]{}) {
+        Task<Void> task = new Task<Void>(new Object[]{}, new Object[]{}) {
             @Override
             protected Void runRolez() {
                 return null;
             }
-        });
+        };
+        task.executingThread = currentThread();
+        currentTask.set(task);
     }
     
     /**
