@@ -1,4 +1,4 @@
-package ch.trick17.rolez.ui
+package ch.trick17.rolez.ui.syntaxcoloring
 
 import org.eclipse.swt.graphics.RGB
 import org.eclipse.xtext.ui.editor.syntaxcoloring.DefaultHighlightingConfiguration

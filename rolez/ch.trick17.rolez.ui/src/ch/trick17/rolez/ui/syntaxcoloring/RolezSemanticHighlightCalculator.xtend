@@ -1,6 +1,5 @@
-package ch.trick17.rolez.ui
+package ch.trick17.rolez.ui.syntaxcoloring
 
-import ch.trick17.rolez.rolez.DoubleLiteral
 import ch.trick17.rolez.rolez.Field
 import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.RolezPackage
@@ -12,9 +11,8 @@ import org.eclipse.xtext.ide.editor.syntaxcoloring.ISemanticHighlightingCalculat
 import org.eclipse.xtext.resource.XtextResource
 import org.eclipse.xtext.util.CancelIndicator
 
-import static ch.trick17.rolez.ui.RolezHighlightingConfiguration.*
+import static ch.trick17.rolez.ui.syntaxcoloring.RolezHighlightingConfiguration.*
 import static org.eclipse.xtext.nodemodel.util.NodeModelUtils.*
-import static org.eclipse.xtext.ui.editor.syntaxcoloring.DefaultHighlightingConfiguration.*
 
 class RolezSemanticHighlightCalculator implements ISemanticHighlightingCalculator {
     
@@ -42,10 +40,6 @@ class RolezSemanticHighlightCalculator implements ISemanticHighlightingCalculato
                 MemberAccess case object.isFieldAccess: {
                     val node = findNodesForFeature(object, rolez.memberAccess_Member).head
                     acceptor.addPosition(node.offset, node.length, FIELD_ID)
-                }
-                DoubleLiteral: {
-                    val node = findActualNodeFor(object)
-                    acceptor.addPosition(node.offset, node.length, NUMBER_ID)
                 }
             }
         }
