@@ -8,6 +8,7 @@ import org.eclipse.xtext.ide.editor.syntaxcoloring.AbstractAntlrTokenToAttribute
 import org.eclipse.xtext.ide.editor.syntaxcoloring.ISemanticHighlightingCalculator
 import org.eclipse.xtext.ui.editor.hover.IEObjectHoverProvider
 import org.eclipse.xtext.ui.editor.syntaxcoloring.IHighlightingConfiguration
+import org.eclipse.xtext.documentation.IEObjectDocumentationProvider
 
 /**
  * Use this class to register components to be used within the Eclipse IDE.
@@ -29,5 +30,9 @@ class RolezUiModule extends AbstractRolezUiModule {
     
     def Class<? extends IEObjectHoverProvider> bindIEObjectHoverProvider() {
         RolezHoverProvider
+    }
+    
+    def Class<? extends IEObjectDocumentationProvider> bindIEObjectDocumentationProvider() {
+        RolezDocumentationProvider
     }
 }

@@ -1,4 +1,4 @@
-grammar ch.trick17.rolez.Rolez with org.eclipse.xtext.common.Terminals
+grammar ch.trick17.rolez.Rolez with org.eclipse.xtext.common.Terminals hidden(WS, ML_COMMENT, SL_COMMENT, DOCUMENTATION)
 
 import "http://www.eclipse.org/emf/2002/Ecore"
 import "http://www.eclipse.org/xtext/common/JavaVMTypes" as jvmTypes
@@ -283,3 +283,8 @@ fragment WithParams returns Executable: ('(' params+=Param (',' params+=Param)* 
 fragment WithBody returns Executable: body=Block;
 
 fragment WithArgs returns Argumented: ('(' args+=Expr (',' args+=Expr)* ')')?;
+
+/* Doc */
+
+terminal ML_COMMENT: '/*'!'*' -> '*/'; // Apparently, need to exclude the /** pattern explicitly
+terminal DOCUMENTATION: '/**' -> '*/';
