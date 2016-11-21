@@ -22,7 +22,7 @@
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="false" type="InstallableUnit">
 <unit id="it.xsemantics.runtime.feature.feature.group" version="0.0.0"/>
-<repository location="http://sourceforge.net/projects/xsemantics/files/updates/releases/1.9"/>
+<repository location="https://dl.bintray.com/lorenzobettini/xsemantics/updates/1.9/"/>
 </location>
 </locations>
 <targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
