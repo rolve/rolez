@@ -9,6 +9,7 @@ import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.OpAssignment
 import ch.trick17.rolez.rolez.Param
 import ch.trick17.rolez.rolez.Parenthesized
+import ch.trick17.rolez.rolez.Pure
 import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
@@ -16,6 +17,8 @@ import ch.trick17.rolez.rolez.StringLiteral
 import ch.trick17.rolez.rolez.The
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.VarRef
+
+import static extension ch.trick17.rolez.RolezExtensions.*
 
 class RoleAnalysis {
     
@@ -90,10 +93,15 @@ class RoleAnalysis {
      */
     private def thisMayEscapeTask() {
         code.eAllContents.exists[switch(it) {
-            Assignment: right.isThis
-            MemberAccess case isMethodInvoke || isTaskStart: target.isThis || args.exists[isThis]
-            New: args.exists[isThis]
-            default: false
+            Assignment:
+                right.isThis
+            MemberAccess case isMethodInvoke || isTaskStart:
+                target.isThis && !method.thisRole.isPure
+                    || args.exists[isThis && !(destParam.type as RoleType).role.isPure]
+            New:
+                args.exists[isThis]
+            default:
+                false
         }]
     }
     
@@ -104,4 +112,6 @@ class RoleAnalysis {
         Assignment: op == OpAssignment.ASSIGN && right.isThis
         default: false
     }}
+    
+    private def boolean isPure(Role it) { it instanceof Pure }
 }
