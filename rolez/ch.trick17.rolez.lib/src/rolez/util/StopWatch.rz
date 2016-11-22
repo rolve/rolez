@@ -1,0 +1,8 @@
+package rolez.util
+
+import rolez.io.PrintStream
+
+class StopWatch mapped to StopWatch {
+    mapped def readwrite go: readwrite StopWatch
+    mapped def readonly get: double
+}
