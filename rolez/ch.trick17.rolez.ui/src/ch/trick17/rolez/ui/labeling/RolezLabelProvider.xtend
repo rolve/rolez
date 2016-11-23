@@ -14,7 +14,7 @@ import org.eclipse.xtext.ui.label.DefaultEObjectLabelProvider
 
 import static ch.trick17.rolez.RolezUtils.createEnv
 import static ch.trick17.rolez.rolez.VarKind.VAL
-import static org.eclipse.jdt.ui.JavaElementImageDescriptor.FINAL
+import static org.eclipse.jdt.ui.JavaElementImageDescriptor.*
 import static org.eclipse.xtext.common.types.JvmVisibility.PUBLIC
 
 class RolezLabelProvider extends DefaultEObjectLabelProvider {
@@ -61,8 +61,7 @@ class RolezLabelProvider extends DefaultEObjectLabelProvider {
     }
     
     def image(Method it) {
-        images.forOperation(PUBLIC, 0)
-        // IMPROVE: different image for tasks
+        images.forOperation(PUBLIC, if(isTask) TRANSIENT else 0) // abuse the "transient T" for tasks
     }
     
     def image(Var it) {
