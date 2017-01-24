@@ -7,7 +7,7 @@ import rolez.io.InputStream
 class Scanner mapped to java.util.Scanner {
     mapped new(source: readonly InputStream)
     mapped new(source: readonly InputStream, charset: readonly String)
-    mapped new(source: readonly String)
+    mapped new(source: pure String)
     
     mapped def readonly radix: int
     mapped def readwrite useRadix(radix: int): readonly Scanner

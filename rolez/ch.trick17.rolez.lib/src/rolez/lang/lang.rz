@@ -57,6 +57,8 @@ pure class String mapped to java.lang.String {
     mapped def pure length: int
     mapped def pure charAt(position: int): char
     mapped def pure trim: readonly String
+    
+    mapped def pure split(regex: pure String): readwrite Array[pure String]
 }
 
 class Task[V] mapped to rolez.lang.Task {

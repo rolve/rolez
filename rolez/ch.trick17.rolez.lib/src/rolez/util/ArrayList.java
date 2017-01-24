@@ -101,6 +101,19 @@ public class ArrayList<E> extends Guarded implements Iterable<E> {
         size = 0;
     }
     
+    public boolean addAll(ArrayList<E> list) {
+        Object[] a = list.toArray();
+        int numNew = a.length;
+        ensureCapacityInternal(size + numNew); // Increments modCount
+        System.arraycopy(a, 0, elementData, size, numNew);
+        size += numNew;
+        return numNew != 0;
+    }
+    
+    private Object[] toArray() {
+        return Arrays.copyOf(elementData, size);
+    }
+    
     public Iterator<E> iterator() {
         return new Itr();
     }

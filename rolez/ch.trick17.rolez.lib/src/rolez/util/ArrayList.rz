@@ -17,4 +17,6 @@ class ArrayList[E] mapped to ArrayList {
     mapped def readwrite remove(index: int): E
     
     mapped def readwrite clear:
+    
+    mapped def readwrite addAll(list: readonly ArrayList[E]): boolean
 }
