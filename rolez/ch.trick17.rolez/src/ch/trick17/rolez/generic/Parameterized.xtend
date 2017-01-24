@@ -41,8 +41,8 @@ abstract class Parameterized {
             new ParameterizedMethod(it, eContainer, emptyMap, newArgs)
     }
     
-    package val Map<TypeParam, Type> typeArgs
-    package val Map<RoleParam, Role> roleArgs
+    public val Map<TypeParam, Type> typeArgs
+    public val Map<RoleParam, Role> roleArgs // need to be public so that type system can check validity
     
     package new(Map<TypeParam, Type> typeArgs, Map<RoleParam, Role> roleArgs) {
         if(typeArgs == null || roleArgs == null)

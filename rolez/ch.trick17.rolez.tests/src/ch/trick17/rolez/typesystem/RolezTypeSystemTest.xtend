@@ -678,6 +678,17 @@ class RolezTypeSystemTest {
         
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
+            class rolez.lang.Slice[T] mapped to rolez.lang.Slice {
+                mapped def r get[r includes readonly](index: int): T with r
+            }
+            class App {
+                def pure foo(s: pure Slice[int]): int { return s.get(0); }
+            }
+        ''').assertError(MEMBER_ACCESS, null, "bound mismatch", "pure", "r includes readonly")
+        
+        // with start
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
             class A
             class AContainer {
                 var a: readwrite A

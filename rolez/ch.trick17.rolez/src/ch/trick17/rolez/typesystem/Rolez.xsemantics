@@ -312,16 +312,16 @@ from {
             G |- arg : var Type _
         }
         // Check if role args respect bounds of role params
-        val originalMethod =
-            if(a.method instanceof ParameterizedMethod) (a.method as ParameterizedMethod).genericEObject
-            else a.method
-        val roleArgs = inferRoleArgs(G, a, originalMethod)
-        for(entry : roleArgs.entrySet) {
-            G |- entry.value <! entry.key.upperBound or fail
-                error "Bound mismatch: the role " + entry.value + " is not a valid substitute "
-                    + "for the bounded role parameter " + entry.key
-                source a
-                feature MEMBER_ACCESS__MEMBER
+        var m = a.method
+        while(m instanceof ParameterizedMethod) {
+            for(entry : m.roleArgs.entrySet) {
+                G |- entry.value <! entry.key.upperBound or fail
+                    error "Bound mismatch: the role " + entry.value + " is not a valid substitute "
+                        + "for the bounded role parameter " + entry.key
+                    source a
+                    feature MEMBER_ACCESS__MEMBER
+            }
+            m = m.genericEObject
         }
         G |- targetRole <! a.method.thisRole or fail
             error "Role mismatch: Cannot " + (if(a.isTaskStart) "start task " else "call method ")
