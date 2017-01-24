@@ -6,8 +6,12 @@ class InputStream mapped to java.io.InputStream {
     mapped def readonly close:
 }
 
+class FileInputStream mapped to java.io.FileInputStream extends InputStream {
+    mapped new(file: pure String)
+}
+
 class PrintStream mapped to java.io.PrintStream {
-    mapped new(file: readonly String)
+    mapped new(file: pure String)
     
     mapped def readonly print(i: int):
     mapped def readonly print(b: boolean):
