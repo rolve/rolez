@@ -47,6 +47,7 @@ import ch.trick17.rolez.rolez.WhileLoop
 import ch.trick17.rolez.typesystem.RolezSystem
 import ch.trick17.rolez.validation.JavaMapper
 import com.google.inject.Injector
+import java.util.ArrayList
 import java.util.regex.Pattern
 import javax.inject.Inject
 import org.eclipse.xtext.common.types.JvmAnnotationTarget
@@ -55,6 +56,7 @@ import org.eclipse.xtext.common.types.JvmArrayType
 import static ch.trick17.rolez.Constants.*
 import static ch.trick17.rolez.RolezUtils.*
 import static ch.trick17.rolez.rolez.VarKind.*
+import static ch.trick17.rolez.generator.CodeKind.*
 
 import static extension ch.trick17.rolez.RolezExtensions.*
 import static extension org.eclipse.xtext.util.Strings.convertToJavaString
@@ -63,16 +65,16 @@ class InstrGenerator {
     
     @Inject Injector injector
     
-    def generate(Instr it, RoleAnalysis roleAnalysis, CodeKind codeKind) {
-        newGenerator(roleAnalysis, codeKind).generate(it)
+    def generate(Instr it, RoleAnalysis roleAnalysis) {
+        newGenerator(roleAnalysis).generate(it)
     }
     
-    def generateWithTryCatch(Block it, RoleAnalysis roleAnalysis, CodeKind codeKind, boolean forceTry) {
-        newGenerator(roleAnalysis, codeKind).generateWithTryCatch(it, forceTry)
+    def generateWithTryCatch(Block it, RoleAnalysis roleAnalysis, boolean forceTry) {
+        newGenerator(roleAnalysis).generateWithTryCatch(it, forceTry)
     }
     
-    private def newGenerator(RoleAnalysis roleAnalysis, CodeKind codeKind) {
-        new Generator(roleAnalysis, codeKind) => [injector.injectMembers(it)]
+    private def newGenerator(RoleAnalysis roleAnalysis) {
+        new Generator(roleAnalysis) => [injector.injectMembers(it)]
     }
     
     /**
@@ -90,11 +92,9 @@ class InstrGenerator {
         @Inject extension SafeJavaNames
         
         val RoleAnalysis roleAnalysis
-        val CodeKind codeKind
         
-        new(RoleAnalysis roleAnalysis, CodeKind codeKind) {
+        new(RoleAnalysis roleAnalysis) {
             this.roleAnalysis = roleAnalysis
-            this.codeKind = codeKind
         }
         
         /* Stmt */
@@ -125,7 +125,7 @@ class InstrGenerator {
             super(«args.map[generate].join(", ")»);'''
         
         private def dispatch CharSequence generate(ReturnNothing _) {
-            if(codeKind == CodeKind.TASK) '''
+            if(roleAnalysis.codeKind == TASK) '''
                 return null;
             '''
             else '''
@@ -166,14 +166,12 @@ class InstrGenerator {
         }}
         
         private def generateWithTryCatch(Block it, boolean forceTry) {
+            // skip super constr call if there is one, it is generated separately, outside of try
+            val withoutSuperConstr = stmts.filter[!(it instanceof SuperConstrCall)]
             val exceptionTypes = thrownExceptionTypes
-            val isConstr = !stmts.isEmpty && stmts.head instanceof SuperConstrCall
             if(!exceptionTypes.isEmpty || forceTry) '''
-                «IF isConstr»
-                «stmts.head.generate»
-                «ENDIF»
                 try {
-                    «stmts.drop(if(isConstr) 1 else 0).map[generate].join("\n")»
+                    «withoutSuperConstr.map[generate].join("\n")»
                 }
                 «IF !exceptionTypes.isEmpty»
                 catch(«exceptionTypes.map[qualifiedName].join(" | ")» e) {
@@ -182,7 +180,7 @@ class InstrGenerator {
                 «ENDIF»
             '''
             else '''
-                «stmts.map[generate].join("\n")»
+                «withoutSuperConstr.map[generate].join("\n")»
             '''
         }
         
@@ -302,7 +300,7 @@ class InstrGenerator {
                     genInvoke
             }
             else
-                '''«target.genNested».«method.safeName»(«args.map[generate].join(", ")»)'''
+                '''«target.genNested».«method.safeName»(«genArgs»)'''
         }
         
         private def CharSequence genCoerced(Expr it) {
@@ -331,20 +329,32 @@ class InstrGenerator {
             annotations.exists[annotation.qualifiedName == safeAnnotationName]
         }
         
+        private def genArgs(MemberAccess it) {
+            val allArgs = new ArrayList(args.map[generate])
+            if(method.isAsync)
+                allArgs += "$tasks"
+            allArgs.join(", ")
+        }
+        
         private def isFieldWrite(MemberAccess it) {
             eContainer instanceof Assignment && it === (eContainer as Assignment).left
         }
         
-        private def generateTaskStart(MemberAccess it)
-            '''«jvmTaskSystemClassName».getDefault().start(«target.genNested».$«method.name»Task(«args.map[generate].join(", ")»))'''
+        private def generateTaskStart(MemberAccess it) {
+            val start = '''«jvmTaskSystemClassName».getDefault().start(«target.genNested».$«method.name»Task(«args.map[generate].join(", ")»))'''
+            if(roleAnalysis.codeKind == TASK)
+                start
+            else
+                '''$tasks.addInline(«start»)'''
+        }
         
         private def dispatch CharSequence generate(This it)  {
-            if(codeKind == CodeKind.TASK) '''«enclosingClass.safeSimpleName».this'''
+            if(roleAnalysis.codeKind == TASK) '''«enclosingClass.safeSimpleName».this'''
             else '''this'''
         }
         
         private def dispatch CharSequence generate(Super it)  {
-            if(codeKind == CodeKind.TASK) '''«enclosingClass.safeSimpleName».super'''
+            if(roleAnalysis.codeKind == TASK) '''«enclosingClass.safeSimpleName».super'''
             else '''super'''
         }
         

@@ -17,6 +17,11 @@ public class MethodImplCustom extends MethodImpl {
     }
     
     @Override
+    public boolean isAsync() {
+        return isDeclaredAsync() || isOverriding() && getSuperMethod().isAsync();
+    }
+    
+    @Override
     public boolean isTask() {
         return isDeclaredTask() || isOverriding() && getSuperMethod().isTask();
     }

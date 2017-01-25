@@ -99,6 +99,9 @@ abstract class GeneratorTest {
             object Constants {
                 val answer: int = 42
             }
+            object Asyncer {
+                async def pure foo: {}
+            }
         ''')
     }
     

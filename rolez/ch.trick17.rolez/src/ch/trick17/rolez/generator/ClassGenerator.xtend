@@ -4,6 +4,8 @@ import ch.trick17.rolez.generic.ParameterizedMethod
 import ch.trick17.rolez.rolez.BuiltInRole
 import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.Field
+import ch.trick17.rolez.rolez.Instr
+import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.Method
 import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.Param
@@ -20,6 +22,7 @@ import ch.trick17.rolez.rolez.Void
 import ch.trick17.rolez.validation.JavaMapper
 import ch.trick17.rolez.validation.cfg.CfgProvider
 import ch.trick17.rolez.validation.cfg.InstrNode
+import java.util.ArrayList
 import javax.inject.Inject
 import org.eclipse.xtext.common.types.JvmArrayType
 
@@ -87,14 +90,17 @@ class ClassGenerator {
     
     private def gen(Constr it) {
         val roleAnalysis = new RoleAnalysis(body, CodeKind.CONSTR)
-        val guardThis = !(roleAnalysis.dynamicThisRoleAtExit instanceof ReadWrite)
-        '''
+         '''
             
             public «enclosingClass.safeSimpleName»(«params.map[gen].join(", ")») {
-                «body.generateWithTryCatch(roleAnalysis, CodeKind.CONSTR, guardThis)»
-                «IF guardThis»
+                «body.stmts.head.generate(roleAnalysis) /* super constr call */»
+                «IF body.startsTasks»
+                final «jvmTasksClassName» $tasks = new «jvmTasksClassName»();
+                «ENDIF»
+                «body.generateWithTryCatch(roleAnalysis, body.startsTasks)»
+                «IF body.startsTasks»
                 finally {
-                    guardReadWrite(this);
+                    $tasks.joinAll();
                 }
                 «ENDIF»
             }
@@ -104,7 +110,7 @@ class ClassGenerator {
     // IMPROVE: Support initializer code that may throw checked exceptions
     private def gen(Field it) '''
         
-        public «kind.generate»«type.generate» «safeName»«IF initializer != null» = «initializer.generate(new RoleAnalysis(initializer, CodeKind.FIELD_INITIALIZER), CodeKind.FIELD_INITIALIZER)»«ENDIF»;
+        public «kind.generate»«type.generate» «safeName»«IF initializer != null» = «initializer.generate(new RoleAnalysis(initializer, CodeKind.FIELD_INITIALIZER))»«ENDIF»;
     '''
     
     private def gen(Method it) '''
@@ -112,16 +118,24 @@ class ClassGenerator {
         «IF isOverriding»
         @java.lang.Override
         «ENDIF»
-        public «genReturnType» «safeName»(«params.map[gen].join(", ")») {
-            «body.generateWithTryCatch(new RoleAnalysis(body, CodeKind.METHOD), CodeKind.METHOD, false)»
+        public «genReturnType» «safeName»(«genParams») {
+            «IF needsTasksJoin»
+            final «jvmTasksClassName» $tasks = new «jvmTasksClassName»();
+            «ENDIF»
+            «body.generateWithTryCatch(new RoleAnalysis(body, CodeKind.METHOD), needsTasksJoin)»
+            «IF needsTasksJoin»
+            finally {
+                $tasks.joinAll();
+            }
+            «ENDIF»
         }
         «IF isTask»
         
-        public «taskClassName»<«type.generateGeneric»> $«name»Task(«params.map[gen].join(", ")») {
+        public «taskClassName»<«type.generateGeneric»> $«name»Task(«genParams») {
             return new «taskClassName»<«type.generateGeneric»>(new Object[]{«genTransitionArgs(ReadWrite)»}, new Object[]{«genTransitionArgs(ReadOnly)»}) {
                 @java.lang.Override
                 protected «type.generateGeneric» runRolez() {
-                    «body.generateWithTryCatch(new RoleAnalysis(body, CodeKind.TASK), CodeKind.TASK, false)»
+                    «body.generateWithTryCatch(new RoleAnalysis(body, CodeKind.TASK), false)»
                     «IF needsReturnNull»
                     return null;
                     «ENDIF»
@@ -136,6 +150,21 @@ class ClassGenerator {
         }
         «ENDIF»
     '''
+    
+    private def genParams(Method it) {
+        var allParams = new ArrayList(params.map[gen])
+        if(isAsync)
+            allParams += "final " + jvmTasksClassName + " $tasks"
+        allParams.join(", ")
+    }
+    
+    private def needsTasksJoin(Method it) {
+        !isAsync && body.startsTasks
+    }
+    
+    private def startsTasks(Instr it) {
+        eAllContents.filter(MemberAccess).exists[isTaskStart || isMethodInvoke && method.isAsync]
+    }
     
     private def genTransitionArgs(Method it, Class<? extends Role> role) {
         (#[thisType -> "this"] + params.filter[type instanceof RoleType].map[type as RoleType -> safeName])

@@ -406,6 +406,101 @@ class ClassGeneratorTest extends GeneratorTest {
         ''', parse(intContainer, someClasses).onlyClass.generate)
     }
     
+    @Test def testMethodStartingTasks() {
+        parse('''
+            class A {
+                def pure foo: {
+                    this start bar;
+                    this.bar;
+                }
+                task pure bar: {}
+            }
+        ''', someClasses).onlyClass.generate.assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
+            
+            public class A extends «jvmGuardedClassName» {
+                
+                public A() {
+                    super();
+                }
+                
+                public void foo() {
+                    final rolez.internal.Tasks $tasks = new rolez.internal.Tasks();
+                    try {
+                        $tasks.addInline(rolez.lang.TaskSystem.getDefault().start(this.$barTask()));
+                        this.bar();
+                    }
+                    finally {
+                        $tasks.joinAll();
+                    }
+                }
+                
+                public void bar() {
+                }
+                
+                public rolez.lang.Task<java.lang.Void> $barTask() {
+                    return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
+                        @java.lang.Override
+                        protected java.lang.Void runRolez() {
+                            return null;
+                        }
+                    };
+                }
+            }
+        ''')
+    }
+    
+    @Test def testAsyncMethod() {
+        parse('''
+            class A {
+                def pure foo: {
+                    this.fooAsync;
+                }
+                async def pure fooAsync: {
+                    this start bar;
+                    this.bar;
+                }
+                task pure bar: {}
+            }
+        ''', someClasses).onlyClass.generate.assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
+            
+            public class A extends «jvmGuardedClassName» {
+                
+                public A() {
+                    super();
+                }
+                
+                public void foo() {
+                    final rolez.internal.Tasks $tasks = new rolez.internal.Tasks();
+                    try {
+                        this.fooAsync($tasks);
+                    }
+                    finally {
+                        $tasks.joinAll();
+                    }
+                }
+                
+                public void fooAsync(final rolez.internal.Tasks $tasks) {
+                    $tasks.addInline(rolez.lang.TaskSystem.getDefault().start(this.$barTask()));
+                    this.bar();
+                }
+                
+                public void bar() {
+                }
+                
+                public rolez.lang.Task<java.lang.Void> $barTask() {
+                    return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
+                        @java.lang.Override
+                        protected java.lang.Void runRolez() {
+                            return null;
+                        }
+                    };
+                }
+            }
+        ''')
+    }
+    
     @Test def testTask() {
         parse('''
             class App {
@@ -977,11 +1072,12 @@ class ClassGeneratorTest extends GeneratorTest {
                 
                 public A() {
                     super();
+                    final rolez.internal.Tasks $tasks = new rolez.internal.Tasks();
                     try {
-                        rolez.lang.TaskSystem.getDefault().start(Tasks.INSTANCE.$barTask(this));
+                        $tasks.addInline(rolez.lang.TaskSystem.getDefault().start(Tasks.INSTANCE.$barTask(this)));
                     }
                     finally {
-                        guardReadWrite(this);
+                        $tasks.joinAll();
                     }
                 }
             }

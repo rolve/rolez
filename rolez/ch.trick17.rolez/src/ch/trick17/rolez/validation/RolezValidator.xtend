@@ -79,6 +79,7 @@ class RolezValidator extends RolezSystemValidator {
     public static val INCOMPATIBLE_RETURN_TYPE = "incompatible return type"
     public static val INCOMPATIBLE_THIS_ROLE = "incompatible \"this\" role"
     public static val INCOMPATIBLE_PARAM_TYPE = "incompatible param type"
+    public static val MAPPED_ASYNC = "mapped 'async'"
     public static val MISSING_RETURN_EXPR = "missing return statement"
     public static val MISSING_TYPE_ARG = "missing type argument"
     public static val INCORRECT_TYPE_ARG = "incorrect type argument"
@@ -89,6 +90,7 @@ class RolezValidator extends RolezSystemValidator {
     public static val FIELD_INIT_TYPE_MISMATCH = "field initializer type mismatch"
     public static val MAPPED_FIELD_WITH_INIT = "mapped with with initializer"
     public static val THIS_IN_FIELD_INIT = "'this' in field initializer"
+    public static val ASYNC_IN_FIELD_INIT = "'async' in field initializer"
     public static val VAR_FIELD_IN_SINGLETON_CLASS = "var field in singleton class"
     public static val INEFFECTIVE_FIELD_ROLE = "ineffective field role"
     public static val VAR_FIELD_IN_PURE_CLASS = "var field in pure class"
@@ -101,6 +103,8 @@ class RolezValidator extends RolezSystemValidator {
     public static val SUPER_CONSTR_CALL_FIRST = "super constructor call first"
     public static val THIS_BEFORE_SUPER_CONSTR_CALL = "'this' before super constructor call"
     public static val UNCATCHABLE_CHECKED_EXCEPTION = "uncatchable checked exception"
+    public static val TASK_START_BEFORE_SUPER_CONSTR_CALL = "task start before super constructor call"
+    public static val ASYNC_INVOKE_BEFORE_SUPER_CONSTR_CALL = "'async' invoke before super constructor call"
     public static val OUTER_EXPR_NO_SIDE_FX = "outer expr no side effects"
     public static val NULL_TYPE_USED = "null type used"
     public static val VOID_NOT_RETURN_TYPE = "void not return type"
@@ -327,6 +331,12 @@ class RolezValidator extends RolezSystemValidator {
 	}
 	
 	@Check
+	def checkMappedAsync(Method it) {
+	    if(mapped && declaredAsync)
+	       error("Mapped method cannot be 'async'", METHOD__DECLARED_ASYNC, MAPPED_ASYNC)
+	}
+	
+	@Check
 	def checkReturnExpr(TypedExecutable it) {
         if(body == null || type instanceof Void) return;
         
@@ -408,7 +418,7 @@ class RolezValidator extends RolezSystemValidator {
     }
     
     private def <T> all(EObject it, java.lang.Class<T> c) {
-        eAllContents.filter(c).toIterable
+        (#[it] + eAllContents.toIterable).filter(c)
     }
     
     @Check
@@ -422,8 +432,10 @@ class RolezValidator extends RolezSystemValidator {
             error("Mapped fields cannot have an initializer", initializer,
                 null, MAPPED_FIELD_WITH_INIT)
         for(t : initializer.all(This))
-            error("Cannot refer to 'this' in a field initializer", t, null,
-                THIS_IN_FIELD_INIT)
+            error("Cannot refer to 'this' in a field initializer", t, null, THIS_IN_FIELD_INIT)
+        for(access : initializer.all(MemberAccess))
+            if(access.isMethodInvoke && access.method.isAsync)
+                error("Cannot invoke 'async' method in a field initializer", access, null, ASYNC_IN_FIELD_INIT)
     }
     
     @Check
@@ -509,6 +521,14 @@ class RolezValidator extends RolezSystemValidator {
                     && !(n.constr.checkedExceptionTypes.isEmpty))
                 error("Cannot call a mapped constructor that throws checked exceptions before callig the super constructor",
                     n, null, UNCATCHABLE_CHECKED_EXCEPTION)
+        for(m: all(MemberAccess).filter[isTaskStart])
+            if(cfg.nodeOf(m).isBeforeSuperConstrCall)
+                error("Cannot start a task before callig the super constructor",
+                    m, null, TASK_START_BEFORE_SUPER_CONSTR_CALL)
+        for(m: all(MemberAccess).filter[isMethodInvoke && method.isAsync])
+            if(cfg.nodeOf(m).isBeforeSuperConstrCall)
+                error("Cannot call an 'async' method before callig the super constructor",
+                    m, null, ASYNC_INVOKE_BEFORE_SUPER_CONSTR_CALL)
         
         for(c : all(SuperConstrCall))
             if(body.stmts.head !== c)

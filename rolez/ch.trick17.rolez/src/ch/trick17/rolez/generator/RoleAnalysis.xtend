@@ -1,15 +1,13 @@
 package ch.trick17.rolez.generator
 
-import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.Cast
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.Instr
+import ch.trick17.rolez.rolez.LocalVar
 import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.New
-import ch.trick17.rolez.rolez.OpAssignment
 import ch.trick17.rolez.rolez.Param
 import ch.trick17.rolez.rolez.Parenthesized
-import ch.trick17.rolez.rolez.Pure
 import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
@@ -18,14 +16,15 @@ import ch.trick17.rolez.rolez.The
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.VarRef
 
-import static extension ch.trick17.rolez.RolezExtensions.*
+import static ch.trick17.rolez.generator.CodeKind.*
+import static ch.trick17.rolez.rolez.VarKind.*
 
 class RoleAnalysis {
     
     extension RolezFactory = RolezFactory.eINSTANCE
     
     val Instr code
-    val CodeKind codeKind
+    public val CodeKind codeKind
     
     new(Instr code, CodeKind codeKind) {
         this.code = code
@@ -37,17 +36,28 @@ class RoleAnalysis {
     }
     
     def dispatch Role dynamicRole(VarRef it) {
-        if(variable instanceof Param && codeKind == CodeKind.TASK && !code.mayStartTask)
-            (variable.type as RoleType).role
+        // TODO: dataflow analysis
+        if(!code.mayStartTask) {
+            val variable = variable
+            switch(variable) {
+                Param case codeKind == TASK: (variable.type as RoleType).role
+                LocalVar case variable.kind == VAL: variable.decl.initializer.dynamicRole
+                default: createPure
+            }
+        }
         else
             createPure
     }
     
     def dispatch Role dynamicRole(This _) {
-        if(codeKind == CodeKind.CONSTR && !thisMayEscapeTask)
+        if(codeKind == CONSTR && !code.mayStartTask)
             createReadWrite
         else
             createPure
+    }
+    
+    private def mayStartTask(Instr it) {
+        eAllContents.filter(MemberAccess).exists[isTaskStart || isMethodInvoke && method.isAsync]
     }
     
     def dispatch Role dynamicRole(Cast it)          { expr.dynamicRole }
@@ -62,12 +72,6 @@ class RoleAnalysis {
     
     def dispatch Role dynamicRole(Expr _)           { createPure }
     
-    def dynamicThisRoleAtExit() {
-        if(codeKind != CodeKind.CONSTR)
-            throw new IllegalStateException("Only applicable if codeKind is CONSTR")
-        if(thisMayEscapeTask) createPure else createReadWrite
-    }
-    
     private def dispatch boolean isGlobal(MemberAccess it) {
         isFieldAccess && target.isGlobal
     }
@@ -75,43 +79,4 @@ class RoleAnalysis {
     private def dispatch boolean isGlobal(The _)  { true }
     
     private def dispatch boolean isGlobal(Expr _) { false }
-    
-    private def mayStartTask(Instr it) {
-        eAllContents.exists[switch(it) {
-            New: !constr.isMapped
-            MemberAccess: isTaskStart || isMethodInvoke && !method.isMapped
-            default: false
-        }]
-    }
-    
-    /**
-     * Very simple escape analysis to avoid guarding "this" in constructors when some methods are
-     * called before val fields have been initialized.
-     * 
-     * TODO: In addition to this, change code generation s.t. it does not generate the problematic
-     * "guard...(this).field = ..." pattern.
-     */
-    private def thisMayEscapeTask() {
-        code.eAllContents.exists[switch(it) {
-            Assignment:
-                right.isThis
-            MemberAccess case isMethodInvoke || isTaskStart:
-                target.isThis && !method.thisRole.isPure
-                    || args.exists[isThis && !(destParam.type as RoleType).role.isPure]
-            New:
-                args.exists[isThis]
-            default:
-                false
-        }]
-    }
-    
-    private def boolean isThis(Expr it) { switch(it) {
-        This: true
-        Parenthesized: expr.isThis
-        Cast: expr.isThis
-        Assignment: op == OpAssignment.ASSIGN && right.isThis
-        default: false
-    }}
-    
-    private def boolean isPure(Role it) { it instanceof Pure }
 }

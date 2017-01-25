@@ -356,11 +356,17 @@ class InstrGeneratorTest extends GeneratorTest {
             the System.out.println("The sum: " + sum.get);
             the System.out.println("Twice the sum!: " + (2 * sum.get));
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
-            rolez.lang.TaskSystem.getDefault().start(Tasks.INSTANCE.$fooTask());
-            final rolez.lang.Task<java.lang.Integer> sum = rolez.lang.TaskSystem.getDefault().start(Tasks.INSTANCE.$sumTask(1, 2));
-            java.lang.System.out.println("Parallelism!");
-            java.lang.System.out.println("The sum: " + sum.get());
-            java.lang.System.out.println("Twice the sum!: " + (2 * sum.get()));
+            final rolez.internal.Tasks $tasks = new rolez.internal.Tasks();
+            try {
+                $tasks.addInline(rolez.lang.TaskSystem.getDefault().start(Tasks.INSTANCE.$fooTask()));
+                final rolez.lang.Task<java.lang.Integer> sum = $tasks.addInline(rolez.lang.TaskSystem.getDefault().start(Tasks.INSTANCE.$sumTask(1, 2)));
+                java.lang.System.out.println("Parallelism!");
+                java.lang.System.out.println("The sum: " + sum.get());
+                java.lang.System.out.println("Twice the sum!: " + (2 * sum.get()));
+            }
+            finally {
+                $tasks.joinAll();
+            }
         '''.withJavaFrame)
     }
     
@@ -545,6 +551,20 @@ class InstrGeneratorTest extends GeneratorTest {
         @Safe
         public def void doSomething(char[] chars) {}
         public def void doSomethingElse(@Safe char[] chars) {}
+    }
+    
+    @Test def testMemberAccessAsyncMethod() {
+        parse('''
+            the Asyncer.foo;
+        '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
+            final rolez.internal.Tasks $tasks = new rolez.internal.Tasks();
+            try {
+                Asyncer.INSTANCE.foo($tasks);
+            }
+            finally {
+                $tasks.joinAll();
+            }
+        '''.withJavaFrame)
     }
     
     @Test def testMemberAccessSlice() {

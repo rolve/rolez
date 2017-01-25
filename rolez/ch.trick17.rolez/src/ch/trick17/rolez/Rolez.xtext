@@ -54,7 +54,7 @@ enum VarKind:
 
 Method:
     jvmMethod=[jvmTypes::JvmOperation|Mapped]?
-    ('def' | declaredTask?='task' | superMethod=[Method|Override]) thisRole=Role name=MethodName
+    ((declaredAsync?='async'? 'def') | declaredTask?='task' | superMethod=[Method|Override]) thisRole=Role name=MethodName
     ('[' roleParams+=RoleParam (',' roleParams+=RoleParam)* ']')?
     WithParams
     WithType

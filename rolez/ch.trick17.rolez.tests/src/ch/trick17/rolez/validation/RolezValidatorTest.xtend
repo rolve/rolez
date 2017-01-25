@@ -349,6 +349,22 @@ class RolezValidatorTest {
         ''').assertError(METHOD, MISSING_OVERRIDE)
     }
     
+    @Test def testMappedAsync() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                async def pure foo: {}
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class MyString mapped to java.lang.String {
+                mapped async def pure length: int
+            }
+        ''').assertError(METHOD, MAPPED_ASYNC)
+    }
+    
     static class GenericClass<T> {
         new(T t) {}
         new(T t, int i) {}
@@ -1087,6 +1103,29 @@ class RolezValidatorTest {
                 val j: int = this.i
             }
         ''').assertError(THIS, THIS_IN_FIELD_INIT)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            object Asyncer {
+                async def pure foo: int { return 0; }
+            }
+            class A {
+                val i: int = 0
+                val j: int = the Asyncer.foo
+            }
+        ''').assertError(MEMBER_ACCESS, ASYNC_IN_FIELD_INIT)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class AsyncerParent {
+                async def pure foo: int { return 0; }
+            }
+            object Asyncer extends AsyncerParent {
+                override pure foo: int { return 1; }
+            }
+            class A {
+                val i: int = 0
+                val j: int = the Asyncer.foo
+            }
+        ''').assertError(MEMBER_ACCESS, ASYNC_IN_FIELD_INIT)
     }
     
     @Test def testSingletonClassField() {
@@ -1388,6 +1427,40 @@ class RolezValidatorTest {
                 }
             }
         ''').assertError(NEW, UNCATCHABLE_CHECKED_EXCEPTION)
+    }
+    
+    @Test def testSuperConstrCallTaskStartBefore() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                new(i: int) {}
+            }
+            class B extends A {
+                new {
+                    super(the C start foo);
+                }
+            }
+            object C {
+                task pure foo: int { return 0; }
+            }
+        ''').assertError(MEMBER_ACCESS, TASK_START_BEFORE_SUPER_CONSTR_CALL)
+    }
+    
+    @Test def testSuperConstrCallAsyncInvokeBefore() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                new(i: int) {}
+            }
+            class B extends A {
+                new {
+                    super(the C.foo);
+                }
+            }
+            object C {
+                async def pure foo: int { return 0; }
+            }
+        ''').assertError(MEMBER_ACCESS, ASYNC_INVOKE_BEFORE_SUPER_CONSTR_CALL)
     }
     
     @Test def testExprStmt() {
