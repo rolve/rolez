@@ -332,7 +332,10 @@ class InstrGenerator {
         private def genArgs(MemberAccess it) {
             val allArgs = new ArrayList(args.map[generate])
             if(method.isAsync)
-                allArgs += "$tasks"
+                if(roleAnalysis.codeKind == TASK)
+                    allArgs += jvmTasksClassName + ".NO_OP_INSTANCE"
+                else
+                    allArgs += "$tasks"
             allArgs.join(", ")
         }
         

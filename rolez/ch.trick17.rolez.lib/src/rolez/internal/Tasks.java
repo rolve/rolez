@@ -19,4 +19,9 @@ public class Tasks extends ArrayList<Task<?>> {
         for(Task<?> task : this)
             task.get();
     }
+
+    public static final Tasks NO_OP_INSTANCE = new Tasks() {
+        @Override public <V> Task<V> addInline(Task<V> task) { return task; }
+        @Override public void joinAll() {}
+    };
 }

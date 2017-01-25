@@ -565,6 +565,49 @@ class InstrGeneratorTest extends GeneratorTest {
                 $tasks.joinAll();
             }
         '''.withJavaFrame)
+        
+        // special case inside tasks
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                task pure foo: {
+                    this.bar;
+                }
+                async def pure bar: {}
+            }
+        ''').classes.last.generate.assertEqualsJava('''
+            import static rolez.lang.Guarded.*;
+            
+            public class A extends rolez.lang.Guarded {
+                
+                public A() {
+                    super();
+                }
+                
+                public void foo() {
+                    final rolez.internal.Tasks $tasks = new rolez.internal.Tasks();
+                    try {
+                        this.bar($tasks);
+                    }
+                    finally {
+                        $tasks.joinAll();
+                    }
+                }
+                
+                public rolez.lang.Task<java.lang.Void> $fooTask() {
+                    return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
+                        @java.lang.Override
+                        protected java.lang.Void runRolez() {
+                            A.this.bar(rolez.internal.Tasks.NO_OP_INSTANCE);
+                            return null;
+                        }
+                    };
+                }
+                
+                public void bar(final rolez.internal.Tasks $tasks) {
+                }
+            }
+        ''')
     }
     
     @Test def testMemberAccessSlice() {
