@@ -1,6 +1,6 @@
 package ch.trick17.rolez.generic
 
-import ch.trick17.rolez.rolez.Block
+import ch.trick17.rolez.rolez.Instr
 import ch.trick17.rolez.rolez.Method
 import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleParam
@@ -28,7 +28,7 @@ class ParameterizedMethod extends ParameterizedEObject<Method> implements Method
     override getName()         { eObject.name }
     override getParams()       { eObject.parameterizedParams }
     override getType()         { eObject.type.parameterized }
-    override getBody()         { eObject.body }
+    override getCode()         { eObject.code }
     
     override isMapped()         { eObject.isMapped }
     override isAsync()          { eObject.isAsync }
@@ -36,6 +36,7 @@ class ParameterizedMethod extends ParameterizedEObject<Method> implements Method
     override isMain()           { eObject.isMain }
     override isOverriding()     { eObject.isOverriding }
     override getQualifiedName() { eObject.qualifiedName }
+    override getBody()          { eObject.body }
     
     override eGet(EStructuralFeature feature) {
         if(feature === METHOD__THIS_ROLE) roleParams
@@ -51,5 +52,5 @@ class ParameterizedMethod extends ParameterizedEObject<Method> implements Method
     override setThisRole(         Role value) { throw new AssertionError }
     override setName(           String value) { throw new AssertionError }
     override setType(             Type value) { throw new AssertionError }
-    override setBody(            Block value) { throw new AssertionError }
+    override setCode(            Instr value) { throw new AssertionError }
 }

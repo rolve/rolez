@@ -55,8 +55,8 @@ import org.eclipse.xtext.common.types.JvmArrayType
 
 import static ch.trick17.rolez.Constants.*
 import static ch.trick17.rolez.RolezUtils.*
-import static ch.trick17.rolez.rolez.VarKind.*
 import static ch.trick17.rolez.generator.CodeKind.*
+import static ch.trick17.rolez.rolez.VarKind.*
 
 import static extension ch.trick17.rolez.RolezExtensions.*
 import static extension org.eclipse.xtext.util.Strings.convertToJavaString
@@ -66,15 +66,15 @@ class InstrGenerator {
     @Inject Injector injector
     
     def generate(Instr it, RoleAnalysis roleAnalysis) {
-        newGenerator(roleAnalysis).generate(it)
+        newGenerator(roleAnalysis, roleAnalysis.codeKind).generate(it)
     }
     
     def generateWithTryCatch(Block it, RoleAnalysis roleAnalysis, boolean forceTry) {
-        newGenerator(roleAnalysis).generateWithTryCatch(it, forceTry)
+        newGenerator(roleAnalysis, roleAnalysis.codeKind).generateWithTryCatch(it, forceTry)
     }
     
-    private def newGenerator(RoleAnalysis roleAnalysis) {
-        new Generator(roleAnalysis) => [injector.injectMembers(it)]
+    private def newGenerator(RoleAnalysis roleAnalysis, CodeKind codeKind) {
+        new Generator(roleAnalysis, codeKind) => [injector.injectMembers(it)]
     }
     
     /**
@@ -92,9 +92,11 @@ class InstrGenerator {
         @Inject extension SafeJavaNames
         
         val RoleAnalysis roleAnalysis
+        val CodeKind codeKind
         
-        new(RoleAnalysis roleAnalysis) {
+        new(RoleAnalysis roleAnalysis, CodeKind codeKind) {
             this.roleAnalysis = roleAnalysis
+            this.codeKind = codeKind
         }
         
         /* Stmt */
@@ -125,7 +127,7 @@ class InstrGenerator {
             super(«args.map[generate].join(", ")»);'''
         
         private def dispatch CharSequence generate(ReturnNothing _) {
-            if(roleAnalysis.codeKind == TASK) '''
+            if(codeKind == TASK) '''
                 return null;
             '''
             else '''
@@ -332,7 +334,7 @@ class InstrGenerator {
         private def genArgs(MemberAccess it) {
             val allArgs = new ArrayList(args.map[generate])
             if(method.isAsync)
-                if(roleAnalysis.codeKind == TASK)
+                if(codeKind == TASK)
                     allArgs += jvmTasksClassName + ".NO_OP_INSTANCE"
                 else
                     allArgs += "$tasks"
@@ -345,19 +347,19 @@ class InstrGenerator {
         
         private def generateTaskStart(MemberAccess it) {
             val start = '''«jvmTaskSystemClassName».getDefault().start(«target.genNested».$«method.name»Task(«args.map[generate].join(", ")»))'''
-            if(roleAnalysis.codeKind == TASK)
+            if(codeKind == TASK)
                 start
             else
                 '''$tasks.addInline(«start»)'''
         }
         
         private def dispatch CharSequence generate(This it)  {
-            if(roleAnalysis.codeKind == TASK) '''«enclosingClass.safeSimpleName».this'''
+            if(codeKind == TASK) '''«enclosingClass.safeSimpleName».this'''
             else '''this'''
         }
         
         private def dispatch CharSequence generate(Super it)  {
-            if(roleAnalysis.codeKind == TASK) '''«enclosingClass.safeSimpleName».super'''
+            if(codeKind == TASK) '''«enclosingClass.safeSimpleName».super'''
             else '''super'''
         }
         

@@ -1,12 +1,12 @@
 package ch.trick17.rolez
 
-import ch.trick17.rolez.rolez.Class
 import ch.trick17.rolez.rolez.Block
-import ch.trick17.rolez.rolez.Executable
+import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.ExprStmt
 import ch.trick17.rolez.rolez.GenericClassRef
 import ch.trick17.rolez.rolez.LocalVarDecl
+import ch.trick17.rolez.rolez.Method
 import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.PrimitiveType
 import ch.trick17.rolez.rolez.Program
@@ -97,19 +97,20 @@ class TestUtils {
         result
     }
     
-    def findMethod(Class it, String name) {
+    def findMethod(ch.trick17.rolez.rolez.Class it, String name) {
         val result = methods.findFirst[it.name == name]
         result.assertThat(notNullValue)
         result
     }
     
-    def expr(Executable it, int i) { body.expr(i) }
+    def expr(Method it, int i) { body.expr(i) }
     
     def expr(Block it, int i) {
         stmts.filter(ExprStmt).get(i).expr
     }
     
-    def lastExpr(Executable it) { body.lastExpr }
+    def lastExpr(Method it) { body.lastExpr }
+    def lastExpr(Constr it) { body.lastExpr }
     
     def lastExpr(Block it) {
         stmts.filter(ExprStmt).last.expr
@@ -122,7 +123,7 @@ class TestUtils {
         result.value
     }
     
-    def variable(Executable b, int i) { b.body.variable(i) }
+    def variable(Method it, int i) { body.variable(i) }
     
     def variable(Block b, int i) {
         b.stmts.filter(LocalVarDecl).get(i).variable
@@ -134,23 +135,23 @@ class TestUtils {
         result.value
     }
     
-    def <T> assertInstanceOf(Object it, java.lang.Class<T> clazz) {
+    def <T> assertInstanceOf(Object it, Class<T> clazz) {
         assertThat(instanceOf(clazz))
         clazz.cast(it)
     }
     
-    def void assertRoleType(Type it, java.lang.Class<? extends Role> r, String n) {
+    def void assertRoleType(Type it, Class<? extends Role> r, String n) {
         assertInstanceOf(RoleType) => [
             role.assertThat(instanceOf(r))
             base.assertInstanceOf(SimpleClassRef) => [ clazz.name.assertThat(is(n)) ]
         ]
     }
     
-    def void assertRoleType(Type it, java.lang.Class<? extends Role> r, QualifiedName n) {
+    def void assertRoleType(Type it, Class<? extends Role> r, QualifiedName n) {
         assertRoleType(r, n.toString)
     }
     
-    def void assertRoleType(Type it, java.lang.Class<? extends Role> r, String n, java.lang.Class<? extends PrimitiveType> t) {
+    def void assertRoleType(Type it, Class<? extends Role> r, String n, Class<? extends PrimitiveType> t) {
         assertInstanceOf(RoleType) => [
             role.assertThat(instanceOf(r))
             base.assertInstanceOf(GenericClassRef) => [
@@ -160,7 +161,7 @@ class TestUtils {
         ]
     }
     
-    def void assertRoleType(Type it, java.lang.Class<? extends Role> r, QualifiedName n, java.lang.Class<? extends PrimitiveType> t) {
+    def void assertRoleType(Type it, Class<? extends Role> r, QualifiedName n, Class<? extends PrimitiveType> t) {
         assertRoleType(r, n.toString, t)
     }
 }

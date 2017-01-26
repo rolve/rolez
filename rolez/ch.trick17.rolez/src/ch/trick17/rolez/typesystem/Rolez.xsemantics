@@ -54,7 +54,6 @@ import ch.trick17.rolez.rolez.The
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.TypeParamRef
-import ch.trick17.rolez.rolez.TypedExecutable
 import ch.trick17.rolez.rolez.UnaryMinus
 import ch.trick17.rolez.rolez.UnaryNot
 import ch.trick17.rolez.rolez.Var
@@ -472,11 +471,11 @@ rule WReturnExpr
     G |- ReturnExpr r
 from {
     // Apparently, this needs to be in braces:...
-    {r.enclosingExecutable instanceof TypedExecutable} or fail
+    {r.enclosingExecutable instanceof Method} or fail
         error "Cannot return an expression in a constructor"
         source r
     
-    G |- r.expr <| (r.enclosingExecutable as TypedExecutable).type
+    G |- r.expr <| (r.enclosingExecutable as Method).type
 }
 
 rule WExprStmt

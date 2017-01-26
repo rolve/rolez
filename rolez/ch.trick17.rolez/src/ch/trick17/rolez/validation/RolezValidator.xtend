@@ -31,7 +31,6 @@ import ch.trick17.rolez.rolez.SingletonClass
 import ch.trick17.rolez.rolez.SuperConstrCall
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.Type
-import ch.trick17.rolez.rolez.TypedExecutable
 import ch.trick17.rolez.rolez.VarKind
 import ch.trick17.rolez.rolez.VarRef
 import ch.trick17.rolez.rolez.Void
@@ -90,6 +89,7 @@ class RolezValidator extends RolezSystemValidator {
     public static val FIELD_INIT_TYPE_MISMATCH = "field initializer type mismatch"
     public static val MAPPED_FIELD_WITH_INIT = "mapped with with initializer"
     public static val THIS_IN_FIELD_INIT = "'this' in field initializer"
+    public static val TASK_START_IN_FIELD_INIT = "task start in field initializer"
     public static val ASYNC_IN_FIELD_INIT = "'async' in field initializer"
     public static val VAR_FIELD_IN_SINGLETON_CLASS = "var field in singleton class"
     public static val INEFFECTIVE_FIELD_ROLE = "ineffective field role"
@@ -337,7 +337,7 @@ class RolezValidator extends RolezSystemValidator {
 	}
 	
 	@Check
-	def checkReturnExpr(TypedExecutable it) {
+	def checkReturnExpr(Method it) {
         if(body == null || type instanceof Void) return;
         
 	    val cfg = body.controlFlowGraph
@@ -425,7 +425,7 @@ class RolezValidator extends RolezSystemValidator {
     def checkFieldInitializer(Field it) {
         if(initializer == null) return;
         
-        val subtypeResult = system.subtypeExpr(initializer, type)
+        val subtypeResult = system.subtypeExpr(initializer.expr, type)
         if(subtypeResult.failed)
             error(subtypeResult.ruleFailedException.message, initializer, null, FIELD_INIT_TYPE_MISMATCH)
         if(isMapped)
@@ -434,7 +434,9 @@ class RolezValidator extends RolezSystemValidator {
         for(t : initializer.all(This))
             error("Cannot refer to 'this' in a field initializer", t, null, THIS_IN_FIELD_INIT)
         for(access : initializer.all(MemberAccess))
-            if(access.isMethodInvoke && access.method.isAsync)
+            if(access.isTaskStart)
+                error("Cannot start task in a field initializer", access, null, TASK_START_IN_FIELD_INIT)
+            else if(access.isMethodInvoke && access.method.isAsync)
                 error("Cannot invoke 'async' method in a field initializer", access, null, ASYNC_IN_FIELD_INIT)
     }
     
@@ -485,9 +487,9 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkLocalVarsInitialized(Executable it) {
-        if(body == null) return
+        if(code == null) return
         
-        val cfg = body.controlFlowGraph
+        val cfg = code.controlFlowGraph
         val extension analysis = new LocalVarsInitializedAnalysis(cfg)
         for(v : all(VarRef))
             if(v.variable instanceof LocalVar && !v.isAssignmentTarget
@@ -550,7 +552,7 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkVoid(Void it) {
-        if(!(eContainer instanceof TypedExecutable) || it !== (eContainer as TypedExecutable).type)
+        if(!(eContainer instanceof Method) || it !== (eContainer as Method).type)
             error("The void type can only be used as a return type", null, VOID_NOT_RETURN_TYPE)
     }
     

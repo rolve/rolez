@@ -7,6 +7,7 @@ import ch.trick17.rolez.rolez.ClassRef
 import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.Executable
 import ch.trick17.rolez.rolez.Expr
+import ch.trick17.rolez.rolez.FieldInitializer
 import ch.trick17.rolez.rolez.ForLoop
 import ch.trick17.rolez.rolez.GenericClassRef
 import ch.trick17.rolez.rolez.InExecutable
@@ -102,6 +103,8 @@ class RolezUtils {
             Constr: new RuleEnvironment(
                 new RuleEnvironment(new RuleEnvironmentEntry("this", executable.thisType)),
                 new RuleEnvironment(new RuleEnvironmentEntry("super", executable.superType)))
+            FieldInitializer: new RuleEnvironment
+            default: throw new AssertionError
         }
     }
     

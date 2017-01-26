@@ -47,25 +47,30 @@
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="Constr" eSuperTypes="#//Executable">
     <eOperations name="isMapped" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    <eOperations name="getBody" eType="#//Block"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="jvmConstr" eType="ecore:EClass ../../org.eclipse.xtext.common.types/model/JavaVMTypes.ecore#//JvmConstructor"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="Field" eSuperTypes="#//Member #//Typed">
     <eOperations name="isMapped" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="jvmField" eType="ecore:EClass ../../org.eclipse.xtext.common.types/model/JavaVMTypes.ecore#//JvmField"/>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="kind" eType="#//VarKind"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="initializer" eType="#//Expr"
+    <eStructuralFeatures xsi:type="ecore:EReference" name="initializer" eType="#//FieldInitializer"
         containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="FieldInitializer" eSuperTypes="#//Executable">
+    <eOperations name="getExpr" eType="#//Expr"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EEnum" name="VarKind">
     <eLiterals name="VAL" literal="val"/>
     <eLiterals name="VAR" value="1" literal="var"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="Method" eSuperTypes="#//Member #//TypedExecutable">
+  <eClassifiers xsi:type="ecore:EClass" name="Method" eSuperTypes="#//Member #//Executable #//Typed">
     <eOperations name="isMapped" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
     <eOperations name="isAsync" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
     <eOperations name="isTask" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
     <eOperations name="isOverriding" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
     <eOperations name="isMain" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
+    <eOperations name="getBody" eType="#//Block"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="jvmMethod" eType="ecore:EClass ../../org.eclipse.xtext.common.types/model/JavaVMTypes.ecore#//JvmOperation"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="superMethod" eType="#//Method"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="thisRole" eType="#//Role"
@@ -280,10 +285,9 @@
   <eClassifiers xsi:type="ecore:EClass" name="Executable">
     <eStructuralFeatures xsi:type="ecore:EReference" name="params" upperBound="-1"
         eType="#//Param" containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="body" eType="#//Block"
+    <eStructuralFeatures xsi:type="ecore:EReference" name="code" eType="#//Instr"
         containment="true"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="TypedExecutable" eSuperTypes="#//Typed #//Executable"/>
   <eClassifiers xsi:type="ecore:EClass" name="Argumented" eSuperTypes="#//InExecutable">
     <eOperations name="getExecutable" eType="#//Executable"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="args" upperBound="-1" eType="#//Expr"

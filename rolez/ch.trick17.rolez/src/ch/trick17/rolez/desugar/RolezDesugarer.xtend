@@ -25,7 +25,7 @@ class RolezDesugarer extends AbstractDeclarativeDesugarer {
             val c = createConstr
             constrs += c
             if(mapped) c.createReference(CONSTR__JVM_CONSTR, "mapped")
-            else c.body = createBlock
+            else c.code = createBlock
         }
     }
     

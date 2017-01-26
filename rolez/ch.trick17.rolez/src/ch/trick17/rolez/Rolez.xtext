@@ -47,10 +47,13 @@ Constr:
     {Constr} jvmConstr=[jvmTypes::JvmConstructor|Mapped]? 'new' WithParams WithBody?;
 
 Field:
-    jvmField=[jvmTypes::JvmField|Mapped]? kind=VarKind name=ID WithType ('=' initializer=Expr)?;
+    jvmField=[jvmTypes::JvmField|Mapped]? kind=VarKind name=ID WithType ('=' initializer=FieldInitializer)?;
 
 enum VarKind:
     VAL='val' | VAR='var';
+
+FieldInitializer: code=Expr;
+
 
 Method:
     jvmMethod=[jvmTypes::JvmOperation|Mapped]?
@@ -280,7 +283,7 @@ fragment WithType returns Typed: ':' type=Type;
 
 fragment WithParams returns Executable: ('(' params+=Param (',' params+=Param)* ')')?;
 
-fragment WithBody returns Executable: body=Block;
+fragment WithBody returns Executable: code=Block;
 
 fragment WithArgs returns Argumented: ('(' args+=Expr (',' args+=Expr)* ')')?;
 

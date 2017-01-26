@@ -1085,32 +1085,40 @@ class RolezValidatorTest {
         
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            class rolez.lang.String mapped to java.lang.String
+            pure class rolez.lang.String mapped to java.lang.String
             class A {
                 var foo: int = "Hi"
             }
-        ''').assertError(STRING_LITERAL, FIELD_INIT_TYPE_MISMATCH, "String", "int")
+        ''').assertError(FIELD_INITIALIZER, FIELD_INIT_TYPE_MISMATCH, "String", "int")
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class rolez.lang.Array[T] mapped to rolez.lang.Array {
                 mapped val length: int = 0
             }
-        ''').assertError(INT_LITERAL, MAPPED_FIELD_WITH_INIT)
+        ''').assertError(FIELD_INITIALIZER, MAPPED_FIELD_WITH_INIT)
+        
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
-                val i: int = 0
-                val j: int = this.i
+                val i: int = this.i
             }
         ''').assertError(THIS, THIS_IN_FIELD_INIT)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            object Tasks {
+                task pure foo: int { return 0; }
+            }
+            class A {
+                val i: int = (the Tasks start foo).get
+            }
+        ''').assertError(MEMBER_ACCESS, TASK_START_IN_FIELD_INIT)
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             object Asyncer {
                 async def pure foo: int { return 0; }
             }
             class A {
-                val i: int = 0
-                val j: int = the Asyncer.foo
+                val i: int = the Asyncer.foo
             }
         ''').assertError(MEMBER_ACCESS, ASYNC_IN_FIELD_INIT)
         parse('''
@@ -1122,8 +1130,7 @@ class RolezValidatorTest {
                 override pure foo: int { return 1; }
             }
             class A {
-                val i: int = 0
-                val j: int = the Asyncer.foo
+                val i: int = the Asyncer.foo
             }
         ''').assertError(MEMBER_ACCESS, ASYNC_IN_FIELD_INIT)
     }

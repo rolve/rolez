@@ -1,7 +1,7 @@
 package ch.trick17.rolez.generic
 
-import ch.trick17.rolez.rolez.Block
 import ch.trick17.rolez.rolez.Constr
+import ch.trick17.rolez.rolez.Instr
 import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleParam
 import ch.trick17.rolez.rolez.Type
@@ -21,9 +21,10 @@ class ParameterizedConstr extends ParameterizedEObject<Constr> implements Constr
     
     override getJvmConstr() { eObject.jvmConstr }
     override getParams()    { eObject.parameterizedParams }
-    override getBody()      { eObject.body }
+    override getCode()      { eObject.code }
     
     override isMapped() { eObject.isMapped }
+    override getBody()  { eObject.body }
     
     override eGet(EStructuralFeature feature) {
         if(feature === EXECUTABLE__PARAMS) params
@@ -31,5 +32,5 @@ class ParameterizedConstr extends ParameterizedEObject<Constr> implements Constr
     }
     
     override setJvmConstr(JvmConstructor value) { throw new AssertionError }
-    override setBody(Block value)               { throw new AssertionError }
+    override setCode(Instr value)               { throw new AssertionError }
 }

@@ -1,7 +1,7 @@
 package ch.trick17.rolez.generic
 
-import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.Field
+import ch.trick17.rolez.rolez.FieldInitializer
 import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleParam
 import ch.trick17.rolez.rolez.Type
@@ -34,9 +34,9 @@ package class ParameterizedField extends ParameterizedEObject<Field> implements 
         else eObject.eGet(feature)
     }
     
-    override setJvmField(JvmField value) { throw new AssertionError }
-    override setKind(VarKind      value) { throw new AssertionError }
-    override setName(String       value) { throw new AssertionError }
-    override setType(Type         value) { throw new AssertionError }
-    override setInitializer(Expr  value) { throw new AssertionError }
+    override setJvmField(JvmField            value) { throw new AssertionError }
+    override setKind(VarKind                 value) { throw new AssertionError }
+    override setName(String                  value) { throw new AssertionError }
+    override setType(Type                    value) { throw new AssertionError }
+    override setInitializer(FieldInitializer value) { throw new AssertionError }
 }

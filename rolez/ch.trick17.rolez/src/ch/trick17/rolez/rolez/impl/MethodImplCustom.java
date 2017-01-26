@@ -7,10 +7,13 @@ import org.eclipse.xtext.naming.QualifiedName;
 import org.eclipse.xtext.xbase.lib.Functions.Function1;
 
 import ch.trick17.rolez.RolezResource;
+import ch.trick17.rolez.rolez.Block;
+import ch.trick17.rolez.rolez.Instr;
 import ch.trick17.rolez.rolez.Type;
 import ch.trick17.rolez.rolez.Typed;
 
 public class MethodImplCustom extends MethodImpl {
+    
     @Override
     public boolean isMapped() {
         return getJvmMethod() != null;
@@ -40,6 +43,18 @@ public class MethodImplCustom extends MethodImpl {
     @Override
     public QualifiedName getQualifiedName() {
         return ((RolezResource) eResource()).qualifiedNameProvider().getFullyQualifiedName(this);
+    }
+    
+    @Override
+    public void setCode(Instr code) {
+        if(!(code instanceof Block))
+            throw new IllegalArgumentException("method code needs to be a block");
+        super.setCode(code);
+    }
+    
+    @Override
+    public Block getBody() {
+        return (Block) getCode();
     }
     
     @Override
