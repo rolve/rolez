@@ -239,8 +239,8 @@ class RolezUtils {
     /**
      * Returns <code>true</code> iff the given expression is a kind of
      * expression that may have side effects, i.e., an assignment, a non-array
-     * object instantiation, a task creation or a method invocation that is
-     * not an array set.
+     * object instantiation, a task creation or a method invocation that is not
+     * an array-, slice-, vector-, or vector builder get.
      * <p>
      * Note that nested expressions may still have side effects.
      */

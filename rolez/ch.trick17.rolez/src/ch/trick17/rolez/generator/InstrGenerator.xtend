@@ -63,7 +63,7 @@ import static extension org.eclipse.xtext.util.Strings.convertToJavaString
 
 class InstrGenerator {
     
-    @Inject Injector injector
+    @Inject extension Injector
     
     def generate(Instr it, RoleAnalysis roleAnalysis) {
         newGenerator(roleAnalysis, roleAnalysis.codeKind).generate(it)
@@ -74,7 +74,7 @@ class InstrGenerator {
     }
     
     private def newGenerator(RoleAnalysis roleAnalysis, CodeKind codeKind) {
-        new Generator(roleAnalysis, codeKind) => [injector.injectMembers(it)]
+        new Generator(roleAnalysis, codeKind) => [injectMembers]
     }
     
     /**
@@ -94,7 +94,7 @@ class InstrGenerator {
         val RoleAnalysis roleAnalysis
         val CodeKind codeKind
         
-        new(RoleAnalysis roleAnalysis, CodeKind codeKind) {
+        private new(RoleAnalysis roleAnalysis, CodeKind codeKind) {
             this.roleAnalysis = roleAnalysis
             this.codeKind = codeKind
         }
@@ -339,10 +339,6 @@ class InstrGenerator {
                 else
                     allArgs += "$tasks"
             allArgs.join(", ")
-        }
-        
-        private def isFieldWrite(MemberAccess it) {
-            eContainer instanceof Assignment && it === (eContainer as Assignment).left
         }
         
         private def generateTaskStart(MemberAccess it) {

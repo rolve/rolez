@@ -39,6 +39,7 @@ class ClassGenerator {
     @Inject extension JavaMapper
     @Inject extension SafeJavaNames
     @Inject extension CfgProvider
+    @Inject extension RoleAnalysis.Provider
     
     // IMPROVE: Use some kind of import manager (note: the Xtext one is incorrect when using the default pkg)
     
@@ -90,7 +91,7 @@ class ClassGenerator {
     '''
     
     private def gen(Constr it) {
-        val roleAnalysis = new RoleAnalysis(it, body.controlFlowGraph)
+        val roleAnalysis = newRoleAnalysis(it, body.controlFlowGraph)
          '''
             
             public «enclosingClass.safeSimpleName»(«params.map[gen].join(", ")») {
@@ -111,7 +112,7 @@ class ClassGenerator {
     // IMPROVE: Support initializer code that may throw checked exceptions
     private def gen(Field it) '''
         
-        public «kind.generate»«type.generate» «safeName»«IF initializer != null» = «initializer.expr.generate(new RoleAnalysis(initializer, initializer.expr.controlFlowGraph))»«ENDIF»;
+        public «kind.generate»«type.generate» «safeName»«IF initializer != null» = «initializer.expr.generate(newRoleAnalysis(initializer, initializer.expr.controlFlowGraph))»«ENDIF»;
     '''
     
     private def gen(Method it) '''
@@ -123,7 +124,7 @@ class ClassGenerator {
             «IF needsTasksJoin»
             final «jvmTasksClassName» $tasks = new «jvmTasksClassName»();
             «ENDIF»
-            «body.generateWithTryCatch(new RoleAnalysis(it, body.controlFlowGraph, METHOD), needsTasksJoin)»
+            «body.generateWithTryCatch(newRoleAnalysis(it, body.controlFlowGraph, METHOD), needsTasksJoin)»
             «IF needsTasksJoin»
             finally {
                 $tasks.joinAll();
@@ -136,7 +137,7 @@ class ClassGenerator {
             return new «taskClassName»<«type.generateGeneric»>(new Object[]{«genTransitionArgs(ReadWrite)»}, new Object[]{«genTransitionArgs(ReadOnly)»}) {
                 @java.lang.Override
                 protected «type.generateGeneric» runRolez() {
-                    «body.generateWithTryCatch(new RoleAnalysis(it, body.controlFlowGraph, TASK), false)»
+                    «body.generateWithTryCatch(newRoleAnalysis(it, body.controlFlowGraph, TASK), false)»
                     «IF needsReturnNull»
                     return null;
                     «ENDIF»

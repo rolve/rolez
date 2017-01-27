@@ -80,6 +80,7 @@ inject extension RolezFactory _
 
 auxiliary {
     leastCommonSuperrole(Role r1, Role r2): Role
+    greatestCommonSubrole(Role r1, Role r2): Role
     inferRoleArgs(RuleEnvironment G, MemberAccess a, Method m): Map<RoleParam, Role>
 }
 
@@ -111,6 +112,15 @@ auxiliary leastCommonSuperrole(Role r1, Role r2) {
         r2
     else if(subroleSucceeded(r2, r1))
         r1
+    else
+        createPure
+}
+
+auxiliary greatestCommonSubrole(Role r1, Role r2) {
+    if(subroleSucceeded(r1, r2))
+        r1
+    else if(subroleSucceeded(r2, r1))
+        r2
     else
         createPure
 }

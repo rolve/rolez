@@ -1,6 +1,7 @@
 package ch.trick17.rolez
 
 import ch.trick17.rolez.rolez.Argumented
+import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.Class
 import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.Expr
@@ -93,6 +94,10 @@ class RolezExtensions {
             Program: container
             default: container?.enclosingProgram
         }
+    }
+    
+    static def isFieldWrite(MemberAccess it) {
+        eContainer instanceof Assignment && it === (eContainer as Assignment).left
     }
     
     static def     destParam(Expr it) { (eContainer as Argumented).executable.params.get(argIndex) }

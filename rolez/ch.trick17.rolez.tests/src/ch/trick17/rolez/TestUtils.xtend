@@ -2,6 +2,7 @@ package ch.trick17.rolez
 
 import ch.trick17.rolez.rolez.Block
 import ch.trick17.rolez.rolez.Constr
+import ch.trick17.rolez.rolez.Executable
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.ExprStmt
 import ch.trick17.rolez.rolez.GenericClassRef
@@ -15,6 +16,7 @@ import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.SimpleClassRef
 import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.Var
+import ch.trick17.rolez.rolez.VarRef
 import ch.trick17.rolez.typesystem.RolezSystem
 import java.util.Random
 import javax.inject.Inject
@@ -61,10 +63,13 @@ class TestUtils {
         }
         class rolez.lang.Partitioner mapped to rolez.lang.Partitioner
         pure class rolez.lang.String mapped to java.lang.String
-        class A
+        class A {
+            var i: int
+        }
         class B
         class App {
             task pure frameTask(a: boolean, b: boolean): { «it» }
+            def pure getA: readwrite A { return new A; }
         }
     '''
     
@@ -115,6 +120,8 @@ class TestUtils {
     def lastExpr(Block it) {
         stmts.filter(ExprStmt).last.expr
     }
+    
+    def lastVarRef(Executable it) { eAllContents.filter(VarRef).last }
     
     def type(Expr e) {
         val result = system.type(createEnv(e), e)
