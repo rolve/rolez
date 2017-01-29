@@ -11,8 +11,6 @@ import org.eclipse.xtext.scoping.Scopes
 import org.eclipse.xtext.ui.editor.contentassist.ContentAssistContext
 import org.eclipse.xtext.ui.editor.contentassist.ICompletionProposalAcceptor
 
-import static ch.trick17.rolez.RolezUtils.*
-
 import static extension ch.trick17.rolez.RolezExtensions.*
 
 /**
@@ -38,7 +36,7 @@ class RolezProposalProvider extends AbstractRolezProposalProvider {
         }
         
         if (target != null) {
-            val targetType = system.type(createEnv(target), target).value
+            val targetType = system.type(null, target).value
             if (targetType instanceof RoleType) {
                 val factory = getProposalFactory("MemberAccess", context)
                 val scope = Scopes.scopeFor(targetType.base.clazz.allMembers)

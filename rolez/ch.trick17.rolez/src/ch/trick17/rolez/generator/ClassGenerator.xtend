@@ -169,7 +169,7 @@ class ClassGenerator {
     }
     
     private def genTransitionArgs(Method it, Class<? extends Role> role) {
-        (#[thisType -> "this"] + params.filter[type instanceof RoleType].map[type as RoleType -> safeName])
+        (#[thisParam.type -> "this"] + params.filter[type instanceof RoleType].map[type as RoleType -> safeName])
             .filter[key.needsTransition]
             .filter[role.isInstance(key.role.erased)]
             .map[value].join(", ")

@@ -174,18 +174,11 @@ class CfgBuilder {
     }
     
     private def dispatch Linker process(MemberAccess a, Linker prev) {
-        val targetLinker = process(a.target, prev)
-        val lastLinker =
-            if(a.isFieldAccess)
-                targetLinker.linkAndReturn(newInstrNode(a))
-            else
-                a.args.fold(targetLinker, [p, e | process(e, p)])
-        lastLinker.linkAndReturn(newInstrNode(a))
+        a.allArgs.fold(prev, [p, e | process(e, p)]).linkAndReturn(newInstrNode(a))
     }
     
     private def dispatch Linker process(New n, Linker prev) {
-        val lastLinker = n.args.fold(prev, [p, e | process(e, p)])
-        lastLinker.linkAndReturn(newInstrNode(n))
+        n.args.fold(prev, [p, e | process(e, p)]).linkAndReturn(newInstrNode(n))
     }
     
     // Everything else (This, VarRef, Literals)

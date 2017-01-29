@@ -1,5 +1,7 @@
 package ch.trick17.rolez.rolez.impl;
 
+import static com.google.common.collect.Iterables.concat;
+import static java.util.Arrays.asList;
 import static org.eclipse.xtext.xbase.lib.IterableExtensions.join;
 import static org.eclipse.xtext.xbase.lib.IterableExtensions.map;
 
@@ -9,6 +11,7 @@ import org.eclipse.xtext.xbase.lib.Functions.Function1;
 import ch.trick17.rolez.RolezResource;
 import ch.trick17.rolez.rolez.Block;
 import ch.trick17.rolez.rolez.Instr;
+import ch.trick17.rolez.rolez.Param;
 import ch.trick17.rolez.rolez.Type;
 import ch.trick17.rolez.rolez.Typed;
 
@@ -58,8 +61,13 @@ public class MethodImplCustom extends MethodImpl {
     }
     
     @Override
+    public Iterable<Param> getAllParams() {
+        return concat(asList(getThisParam()), getParams());
+    }
+    
+    @Override
     public String toString() {
-        return thisRole + " " + getQualifiedName()
+        return getThisParam().getType().getRole() + " " + getQualifiedName()
                 + join(getRoleParams(), "[", ",", "]", toStr())
                 + join(map(getParams(), toType()), "(", ",", ")", toStr())
                 + ": " + type;

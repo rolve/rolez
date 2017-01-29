@@ -297,16 +297,16 @@ class RolezValidator extends RolezSystemValidator {
 	def checkValidOverride(Method it) {
         if(!overriding) return;
         
-        if(system.subtype(createEnv(it), type, superMethod.type).failed)
+        if(system.subtype(null, type, superMethod.type).failed)
             error("The return type " + type + " is incompatible with overridden method "
                 + superMethod, TYPED__TYPE, INCOMPATIBLE_RETURN_TYPE)
-        if(system.subrole(superMethod.thisRole, thisRole).failed)
+        if(system.subrole(superMethod.thisParam.type.role, thisParam.type.role).failed)
             error("The role of \"this\" is incompatible with overridden method " + superMethod,
-                METHOD__THIS_ROLE, RolezValidator.INCOMPATIBLE_THIS_ROLE)
+                METHOD__THIS_PARAM, RolezValidator.INCOMPATIBLE_THIS_ROLE)
         
         for(p : params) {
             val superParamType = superMethod.params.get(p.paramIndex).type
-            if(system.subtype(createEnv(it), superParamType, p.type).failed)
+            if(system.subtype(null, superParamType, p.type).failed)
                 error("This parameter type is incompatible with overridden method "
                     + superMethod, p, TYPED__TYPE, RolezValidator.INCOMPATIBLE_PARAM_TYPE)
         }
@@ -471,11 +471,11 @@ class RolezValidator extends RolezSystemValidator {
     def checkSingletonClassMethod(Method it) {
         if(!enclosingClass.isSingleton) return;
         
-        if(thisRole instanceof ReadWrite || thisRole instanceof RoleParamRef
-                && (thisRole as RoleParamRef).param.upperBound instanceof ReadWrite) {
+        if(thisParam.type.role instanceof ReadWrite || thisParam.type.role instanceof RoleParamRef
+                && (thisParam.type.role as RoleParamRef).param.upperBound instanceof ReadWrite) {
             warning("Singleton objects are always readonly, therefore this "
                 + if(isTask) "task can never be started" else "method can never be called",
-                thisRole, null, UNCALLABLE_METHOD)
+                thisParam.type.role, null, UNCALLABLE_METHOD)
         }
     }
     

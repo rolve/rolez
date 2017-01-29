@@ -13,6 +13,8 @@ import org.eclipse.xtext.util.CancelIndicator
 
 import static ch.trick17.rolez.ui.syntaxcoloring.RolezHighlightingConfiguration.*
 import static org.eclipse.xtext.nodemodel.util.NodeModelUtils.*
+import ch.trick17.rolez.rolez.Super
+import ch.trick17.rolez.rolez.This
 
 class RolezSemanticHighlightCalculator implements ISemanticHighlightingCalculator {
     
@@ -27,8 +29,10 @@ class RolezSemanticHighlightCalculator implements ISemanticHighlightingCalculato
             switch(object) {
                 Var: {
                     val node = findNodesForFeature(object, rolez.named_Name).head
-                    acceptor.addPosition(node.offset, node.length, VARIABLE_ID)
+                    if(node != null) // skip synthetic vars like the "this" parameter
+                        acceptor.addPosition(node.offset, node.length, VARIABLE_ID)
                 }
+                This, Super: {} // skip this and super (they're VarRefs too)
                 VarRef: {
                     val node = findActualNodeFor(object)
                     acceptor.addPosition(node.offset, node.length, VARIABLE_ID)

@@ -1,7 +1,11 @@
 package ch.trick17.rolez.rolez.impl;
 
+import static com.google.common.collect.Iterables.concat;
+import static java.util.Arrays.asList;
+
 import ch.trick17.rolez.rolez.Block;
 import ch.trick17.rolez.rolez.Instr;
+import ch.trick17.rolez.rolez.Param;
 
 public class ConstrImplCustom extends ConstrImpl {
     
@@ -20,5 +24,10 @@ public class ConstrImplCustom extends ConstrImpl {
     @Override
     public Block getBody() {
         return (Block) getCode();
+    }
+    
+    @Override
+    public Iterable<Param> getAllParams() {
+        return concat(asList(getThisParam()), getParams());
     }
 }

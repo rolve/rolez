@@ -20,7 +20,6 @@ import org.eclipse.xtext.junit4.validation.ValidationTestHelper
 import org.junit.Test
 import org.junit.runner.RunWith
 
-import static ch.trick17.rolez.RolezUtils.*
 import static org.hamcrest.Matchers.*
 
 import static extension org.hamcrest.MatcherAssert.assertThat
@@ -419,7 +418,7 @@ class CfgBuilderTest {
                 node.assertThat(instanceOf(InstrNode))
                 val instr = (node as InstrNode).instr
                 instr.assertThat(instanceOf(Expr))
-                system.type(createEnv(instr), instr as Expr).value
+                system.type(null, instr as Expr).value
                     .assertThat(instanceOf(Boolean))
             }
             else

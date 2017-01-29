@@ -5,7 +5,9 @@ import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.RoleParam
 import ch.trick17.rolez.rolez.RolezFactory
+import ch.trick17.rolez.rolez.Super
 import ch.trick17.rolez.rolez.SuperConstrCall
+import ch.trick17.rolez.rolez.ThisParam
 import javax.inject.Inject
 import org.eclipse.xtext.common.types.JvmGenericType
 import org.eclipse.xtext.common.types.JvmVisibility
@@ -55,5 +57,40 @@ class RolezDesugarer extends AbstractDeclarativeDesugarer {
             body.stmts.add(0, supr)
             supr.createReference(SUPER_CONSTR_CALL__CONSTR, "super")
         }
+    }
+    
+    @Rule
+    def addThisParam(Constr it) {
+        if(thisParam == null)
+            thisParam = createThisParam => [
+                type = createRoleType => [
+                    role = createReadWrite
+                ]
+            ]
+    }
+    
+    @Rule
+    def completeThisParam(ThisParam it) {
+        if(name == null) {
+            name = "this"
+            val clazz = enclosingClass
+            if(clazz instanceof NormalClass && (clazz as NormalClass).typeParam != null) {
+                type.base = createGenericClassRef => [
+                    typeArg = createTypeParamRef => [
+                        param = (clazz as NormalClass).typeParam
+                    ]
+                ]
+                type.base.createReference(GENERIC_CLASS_REF__CLAZZ, clazz.qualifiedName.toString)
+            }            
+            else {
+                type.base = createSimpleClassRef
+                type.base.createReference(SIMPLE_CLASS_REF__CLAZZ, clazz.qualifiedName.toString)
+            }
+        }
+    }
+    
+    @Rule
+    def modifySuperRef(Super it) {
+        createReference(VAR_REF__VARIABLE, "this")
     }
 }

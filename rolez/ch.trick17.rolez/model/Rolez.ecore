@@ -49,6 +49,8 @@
     <eOperations name="isMapped" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
     <eOperations name="getBody" eType="#//Block"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="jvmConstr" eType="ecore:EClass ../../org.eclipse.xtext.common.types/model/JavaVMTypes.ecore#//JvmConstructor"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="thisParam" eType="#//ThisParam"
+        containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="Field" eSuperTypes="#//Member #//Typed">
     <eOperations name="isMapped" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
@@ -73,7 +75,7 @@
     <eOperations name="getBody" eType="#//Block"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="jvmMethod" eType="ecore:EClass ../../org.eclipse.xtext.common.types/model/JavaVMTypes.ecore#//JvmOperation"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="superMethod" eType="#//Method"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="thisRole" eType="#//Role"
+    <eStructuralFeatures xsi:type="ecore:EReference" name="thisParam" eType="#//ThisParam"
         containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="roleParams" upperBound="-1"
         eType="#//RoleParam" containment="true"/>
@@ -86,6 +88,9 @@
         containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="Param" eSuperTypes="#//Var"/>
+  <eClassifiers xsi:type="ecore:EClass" name="ThisParam" eSuperTypes="#//Param">
+    <eOperations name="getType" eType="#//RoleType"/>
+  </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="Block" eSuperTypes="#//Stmt">
     <eStructuralFeatures xsi:type="ecore:EReference" name="stmts" upperBound="-1"
         eType="#//Stmt" containment="true"/>
@@ -191,15 +196,20 @@
     <eOperations name="isMethodInvoke" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
     <eOperations name="getField" eType="#//Field"/>
     <eOperations name="getMethod" eType="#//Method"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="target" eType="#//Expr"
-        containment="true"/>
+    <eOperations name="getAllArgs">
+      <eGenericType eClassifier="ecore:EDataType ../../org.eclipse.xtext.common.types/model/JavaVMTypes.ecore#//Iterable">
+        <eTypeArguments eClassifier="#//Expr"/>
+      </eGenericType>
+    </eOperations>
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="taskStart" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="member" eType="#//Member"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="target" eType="#//Expr"
+        containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="roleArgs" upperBound="-1"
         eType="#//Role" containment="true"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="This" eSuperTypes="#//Expr"/>
-  <eClassifiers xsi:type="ecore:EClass" name="Super" eSuperTypes="#//Expr"/>
+  <eClassifiers xsi:type="ecore:EClass" name="This" eSuperTypes="#//VarRef"/>
+  <eClassifiers xsi:type="ecore:EClass" name="Super" eSuperTypes="#//VarRef"/>
   <eClassifiers xsi:type="ecore:EClass" name="VarRef" eSuperTypes="#//Expr">
     <eStructuralFeatures xsi:type="ecore:EReference" name="variable" eType="#//Var"/>
   </eClassifiers>
@@ -283,6 +293,11 @@
     <eStructuralFeatures xsi:type="ecore:EReference" name="type" eType="#//Type" containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="Executable">
+    <eOperations name="getAllParams">
+      <eGenericType eClassifier="ecore:EDataType ../../org.eclipse.xtext.common.types/model/JavaVMTypes.ecore#//Iterable">
+        <eTypeArguments eClassifier="#//Param"/>
+      </eGenericType>
+    </eOperations>
     <eStructuralFeatures xsi:type="ecore:EReference" name="params" upperBound="-1"
         eType="#//Param" containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="code" eType="#//Instr"

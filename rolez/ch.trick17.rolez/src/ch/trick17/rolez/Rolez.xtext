@@ -57,11 +57,15 @@ FieldInitializer: code=Expr;
 
 Method:
     jvmMethod=[jvmTypes::JvmOperation|Mapped]?
-    ((declaredAsync?='async'? 'def') | declaredTask?='task' | superMethod=[Method|Override]) thisRole=Role name=MethodName
+    ((declaredAsync?='async'? 'def') | declaredTask?='task' | superMethod=[Method|Override]) thisParam=ThisParam name=MethodName
     ('[' roleParams+=RoleParam (',' roleParams+=RoleParam)* ']')?
     WithParams
     WithType
     WithBody?;
+
+ThisParam: type=ThisType;
+
+ThisType returns RoleType: role=Role;
 
 Mapped: 'mapped';
 
@@ -100,10 +104,10 @@ ForLoop:
 // IMPROVE: for-each and maybe parallel for-each
 
 SuperConstrCall:
-    {SuperConstrCall} constr=[Constr|Super] '(' args+=Expr (',' args+=Expr)* ')' ';';
+    {SuperConstrCall} constr=[Constr|SuperKeyword] '(' args+=Expr (',' args+=Expr)* ')' ';';
     // Note that parentheses are required here. A "super" without parentheses is an expression.
 
-Super: 'super';
+SuperKeyword: 'super';
 
 Return:
     ReturnNothing | ReturnExpr;
@@ -174,7 +178,7 @@ Start returns Expr:
         {MemberAccess.target=current}
         taskStart?='start' member=[Method|MethodName]
         ('[' roleArgs+=Role (',' roleArgs+=Role)* ']')?
-        ('(' args+=Expr (',' args+=Expr)* ')')?
+        ('('     args+=Expr (','     args+=Expr)* ')')?
     )*;
     // IMPROVE: Allow starting tasks without "this"
 
@@ -188,7 +192,13 @@ MemberAccess returns Expr:
     // IMPROVE: Allow member accesses without "this"
 
 SimpleExpr returns Expr:
-    {This} 'this' | {Super} 'super' | VarRef | New | The | Parenthesized | Literal;
+    This | Super | VarRef | New | The | Parenthesized | Literal;
+
+This: variable=[ThisParam|ThisKeyword];
+
+ThisKeyword: 'this';
+
+Super: variable=[ThisParam|SuperKeyword];
 
 VarRef:
     variable=[Var];

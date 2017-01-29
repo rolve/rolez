@@ -31,18 +31,6 @@ class RolezExtensions {
         newRoleType(RolezFactory.eINSTANCE.createReadWrite, newClassRef(enclosingClass))
     }
     
-    static def thisType(Method it) {
-        newRoleType(thisRole, newClassRef(enclosingClass))
-    }
-    
-    static def superType(Constr it) {
-        newRoleType(RolezFactory.eINSTANCE.createReadWrite, newClassRef(enclosingClass.superclass))
-    }
-    
-    static def superType(Method it) {
-        newRoleType(thisRole, newClassRef(enclosingClass.superclass))
-    }
-    
     static def isObjectClass        (Class it) { qualifiedName ==        objectClassName }
     static def isSliceClass         (Class it) { qualifiedName ==         sliceClassName }
     static def isArrayClass         (Class it) { qualifiedName ==         arrayClassName }

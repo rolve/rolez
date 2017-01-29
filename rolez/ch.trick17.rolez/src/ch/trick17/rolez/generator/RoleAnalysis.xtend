@@ -20,7 +20,8 @@ import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
 import ch.trick17.rolez.rolez.StringLiteral
 import ch.trick17.rolez.rolez.The
-import ch.trick17.rolez.rolez.This
+import ch.trick17.rolez.rolez.ThisParam
+import ch.trick17.rolez.rolez.Var
 import ch.trick17.rolez.rolez.VarRef
 import ch.trick17.rolez.typesystem.RolezSystem
 import ch.trick17.rolez.validation.cfg.ControlFlowGraph
@@ -36,8 +37,9 @@ import static ch.trick17.rolez.rolez.VarKind.*
 import static com.google.common.collect.ImmutableMap.copyOf
 
 import static extension ch.trick17.rolez.RolezExtensions.*
+import static extension com.google.common.collect.Maps.toMap
 
-class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<String, BuiltInRole>> {
+class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, BuiltInRole>> {
     
     static class Provider {
         
@@ -85,15 +87,14 @@ class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<String, BuiltInRole>> {
     protected override newFlow()   { ImmutableMap.of }
     
     protected override entryFlow() {
-        val paramRoles = code.params.filter[type instanceof RoleType].toMap[name].mapValues[
-            if(codeKind == TASK) (type as RoleType).role.erased else createPure
-        ]
-        val thisRole = switch(codeKind) {
-            case CONSTR: createReadWrite
-            case TASK  : (code as Method).thisRole.erased
-            default    : createPure
-        }
-        paramRoles.with("$this", thisRole)
+        copyOf(code.allParams.filter[type instanceof RoleType].toMap[
+            if(codeKind == CONSTR && it instanceof ThisParam)
+                createReadWrite
+            else if(codeKind == TASK)
+                (type as RoleType).role.erased
+            else
+                createPure
+        ])
     }
     
     private def erased(Role it) { switch(it) {
@@ -101,22 +102,55 @@ class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<String, BuiltInRole>> {
         RoleParamRef: param.upperBound  
     }}
     
-    protected def dispatch flowThrough(MemberAccess a, ImmutableMap<String, BuiltInRole> in) {
+    protected def dispatch flowThrough(MemberAccess a, ImmutableMap<Var, BuiltInRole> in) {
         if(a.isTaskStart || a.isMethodInvoke && a.method.isAsync)
             // after a task has (potentially) been started, reset all roles to pure
             copyOf(in.mapValues[createPure])
-        else if(a.target instanceof VarRef && a.isWriteAccess) {
+        else if(a.target instanceof VarRef && a.isWriteAccess)
             // after a successful write access, we know the object is readwrite
-            in.with((a.target as VarRef).variable.name, createReadWrite)
-        }
+            in.with((a.target as VarRef).variable, createReadWrite)
         else if(a.target instanceof VarRef && a.isReadAccess) {
             // after a successful read access, we know the object is at least readonly
-            val name = (a.target as VarRef).variable.name
-            in.with(name, system.greatestCommonSubrole(in.get(name), createReadOnly) as BuiltInRole)
+            val variable = (a.target as VarRef).variable
+            in.with(variable, system.greatestCommonSubrole(in.get(variable), createReadOnly) as BuiltInRole)
         }
         else
             in
     }
+    
+    protected def dispatch flowThrough(LocalVarDecl d, ImmutableMap<Var, BuiltInRole> in) {
+        in.with(d.variable, d.initializer?.dynamicRole(in) ?: createPure)
+    }
+    
+    protected def dispatch flowThrough(Assignment a, ImmutableMap<Var, BuiltInRole> in) {
+        if(a.left instanceof VarRef && (a.left as VarRef).variable.type instanceof RoleType)
+            in.with((a.left as VarRef).variable, a.right.dynamicRole(in))
+        else
+            in
+    }
+    
+    protected def dispatch flowThrough(Instr _, ImmutableMap<Var, BuiltInRole> in) { in }
+    
+    protected override merge(ImmutableMap<Var, BuiltInRole> in1,
+            ImmutableMap<Var, BuiltInRole> in2) {
+        val merged = new HashMap(in1)
+        for(Entry<Var, BuiltInRole> entry : in2.entrySet) {
+            val mergedRole = system.leastCommonSuperrole(entry.value,
+                    merged.get(entry.key) ?: createReadWrite) as BuiltInRole
+            merged.put(entry.key, mergedRole)
+        }
+        copyOf(merged)
+    }
+    
+    private def BuiltInRole dynamicRole(Expr it, Map<Var, BuiltInRole> roles) { switch(it) {
+        New                       : createReadWrite
+        The, StringLiteral        : createReadOnly
+        MemberAccess case isGlobal: createReadOnly
+        VarRef                    : roles.get(variable)
+        Cast, Parenthesized       : expr.dynamicRole(roles)
+        Assignment                : right.dynamicRole(roles)
+        default: createPure
+    }}
     
     private def isReadAccess(MemberAccess it) {
         isFieldAccess && field.kind == VAR || isSliceGet || isArrayGet || isVectorBuilderGet
@@ -126,54 +160,20 @@ class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<String, BuiltInRole>> {
         isFieldWrite || isSliceSet || isArraySet || isVectorBuilderSet
     }
     
-    protected def dispatch flowThrough(LocalVarDecl d, ImmutableMap<String, BuiltInRole> in) {
-        in.with(d.variable.name, d.initializer?.dynamicRole(in) ?: createPure)
-    }
-    
-    protected def dispatch flowThrough(Assignment a, ImmutableMap<String, BuiltInRole> in) {
-        if(a.left instanceof VarRef && (a.left as VarRef).variable.type instanceof RoleType)
-            in.with((a.left as VarRef).variable.name, a.right.dynamicRole(in))
-        else
-            in
-    }
-    
-    protected def dispatch flowThrough(Instr _, ImmutableMap<String, BuiltInRole> in) { in }
-    
-    protected override merge(ImmutableMap<String, BuiltInRole> in1,
-            ImmutableMap<String, BuiltInRole> in2) {
-        val merged = new HashMap(in1)
-        for(Entry<String, BuiltInRole> entry : in2.entrySet) {
-            val mergedRole = system.leastCommonSuperrole(entry.value,
-                    merged.get(entry.key) ?: createReadWrite) as BuiltInRole
-            merged.put(entry.key, mergedRole)
-        }
-        copyOf(merged)
-    }
-    
-    private def BuiltInRole dynamicRole(Expr it, Map<String, BuiltInRole> roles) { switch(it) {
-        New                       : createReadWrite
-        The, StringLiteral        : createReadOnly
-        MemberAccess case isGlobal: createReadOnly
-        VarRef                    : roles.get(variable.name)
-        This                      : roles.get("$this")
-        Cast, Parenthesized       : expr.dynamicRole(roles)
-        Assignment                : right.dynamicRole(roles)
-        default: createPure
-    }}
-    
     private def boolean isGlobal(Expr it) { switch(it) {
         The: true
         MemberAccess case isFieldAccess && target.isGlobal: true
         default: false
     }}
     
-    private def with(Map<String, BuiltInRole> map, String varName, BuiltInRole role) {
-        copyOf(new HashMap(map) => [put(varName, role)])
+    private def with(Map<Var, BuiltInRole> map, Var variable, BuiltInRole role) {
+        copyOf(new HashMap(map) => [put(variable, role)])
     }
     
+    /* Interface of the analysis */
+    
     def dynamicRole(Expr it) { switch(it) {
-        This   : cfg.nodeOf(it).inFlow.get("$this")
-        VarRef : cfg.nodeOf(it).inFlow.get(variable.name)
+        VarRef : cfg.nodeOf(it).inFlow.get(variable)
         default: dynamicRole(ImmutableMap.of)
     }}
 }

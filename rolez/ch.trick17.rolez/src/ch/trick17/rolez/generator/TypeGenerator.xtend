@@ -23,6 +23,7 @@ class TypeGenerator {
         PrimitiveType: name
         RoleType: base.generate
         default: throw new AssertionError // Null or TypeParamRef
+        // FIXME: val v = null; triggers the above error!
     }}
     
     def generateGeneric(Type it) { switch(it) {

@@ -56,7 +56,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     }
     
     def scope_MemberAccess_member(MemberAccess it, EReference ref) {
-        val targetType = system.type(createEnv(it), target).value
+        val targetType = system.type(null, target).value
         val memberName = crossRefText(ref)
         
         if(targetType instanceof RoleType) {
@@ -68,7 +68,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
                 val candidates = targetType.base.clazz.allMembers.filter(Method)
                     .filter[m | m.name == memberName && (!isTaskStart || m.isTask)]
                     .map[m |
-                        val roleArgs = system.inferRoleArgs(createEnv(it), it, m)
+                        val roleArgs = system.inferRoleArgs(it, m)
                         if(roleArgs.size == m.roleParams.size) m.parameterizedWith(roleArgs)
                     ].filterNull
                 val maxSpecific = maxSpecific(candidates, it).toList
@@ -202,7 +202,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
      */
     private def maxSpecific(Iterable<? extends Executable> candidates, Argumented args) {
         val applicable = candidates.filter[
-            system.validArgsSucceeded(createEnv(args), args, it)
+            system.validArgsSucceeded(null, args, it)
         ].toList
         
         applicable.filter[p |
@@ -217,7 +217,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     private def moreSpecificThan(Executable target, Executable other) {
         // Assume both targets have the same number of parameters
         val i = other.params.iterator
-        target.params.forall[system.subtypeSucceeded(createEnv(target), it.type, i.next.type)]
+        target.params.forall[system.subtypeSucceeded(null, it.type, i.next.type)]
     }
     
     // IMPROVE: can replace the following with LinkingHelper.getCrossRefNodeAsString()?

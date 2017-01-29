@@ -59,13 +59,13 @@ class RolezParsingTest{
         ''').assertNoErrors
     }
     
-    @Test def testThisRole() {
+    @Test def testThisParam() {
         (parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
                 def pure f: {}
             }
-        ''').findClass("A").members.head as Method).thisRole.assertThat(instanceOf(Pure))
+        ''').findClass("A").members.head as Method).thisParam.type.role.assertThat(instanceOf(Pure))
     }
     
     @Test def testNewAndMemberAccess() {

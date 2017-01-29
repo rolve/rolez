@@ -4,13 +4,10 @@ import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.Block
 import ch.trick17.rolez.rolez.Class
 import ch.trick17.rolez.rolez.ClassRef
-import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.Executable
 import ch.trick17.rolez.rolez.Expr
-import ch.trick17.rolez.rolez.FieldInitializer
 import ch.trick17.rolez.rolez.ForLoop
 import ch.trick17.rolez.rolez.GenericClassRef
-import ch.trick17.rolez.rolez.InExecutable
 import ch.trick17.rolez.rolez.Instr
 import ch.trick17.rolez.rolez.LocalVarDecl
 import ch.trick17.rolez.rolez.MemberAccess
@@ -27,8 +24,6 @@ import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.TypeParam
 import ch.trick17.rolez.rolez.Var
 import ch.trick17.rolez.typesystem.RolezSystem
-import it.xsemantics.runtime.RuleEnvironment
-import it.xsemantics.runtime.RuleEnvironmentEntry
 import java.util.HashSet
 import java.util.Set
 import javax.inject.Inject
@@ -89,25 +84,6 @@ class RolezUtils {
         if(eContainer == null) it else EcoreUtil.copy(it)
     }
     
-    static def RuleEnvironment createEnv(InExecutable context) {
-        createEnv(context.enclosingExecutable)
-    }
-    
-    static def RuleEnvironment createEnv(Executable executable) {
-        // IMPROVE: cache environments for better performance?
-        switch(executable) {
-            case null: new RuleEnvironment
-            Method: new RuleEnvironment(
-                new RuleEnvironment(new RuleEnvironmentEntry("this", executable.thisType)),
-                new RuleEnvironment(new RuleEnvironmentEntry("super", executable.superType)))
-            Constr: new RuleEnvironment(
-                new RuleEnvironment(new RuleEnvironmentEntry("this", executable.thisType)),
-                new RuleEnvironment(new RuleEnvironmentEntry("super", executable.superType)))
-            FieldInitializer: new RuleEnvironment
-            default: throw new AssertionError
-        }
-    }
-    
     /**
      * Returns <code>true</code> if the name and the types of the parameters of
      * the two given methods are the same, ignoring roles.
@@ -154,7 +130,7 @@ class RolezUtils {
     }
     
     static def dispatch Iterable<? extends Var> varsAbove(Executable container, Stmt s) {
-        container.params
+        container.allParams
     }
     
     static def dispatch Iterable<? extends Var> varsAbove(Instr container, Instr i) {
@@ -195,22 +171,22 @@ class RolezUtils {
     
     def isSliceGet(MemberAccess it) {
         isMethodInvoke && method.name == "get"
-            && system.type(createEnv(it), target).value.isSliceType
+            && system.type(null, target).value.isSliceType
     }
     
     def isSliceSet(MemberAccess it) {
         isMethodInvoke && method.name == "set"
-            && system.type(createEnv(it), target).value.isSliceType
+            && system.type(null, target).value.isSliceType
     }
     
     def isArrayGet(MemberAccess it) {
         isMethodInvoke && method.name == "get"
-            && system.type(createEnv(it), target).value.isArrayType
+            && system.type(null, target).value.isArrayType
     }
     
     def isArraySet(MemberAccess it) {
         isMethodInvoke && method.name == "set"
-            && system.type(createEnv(it), target).value.isArrayType
+            && system.type(null, target).value.isArrayType
     }
     
     def isArrayLength(MemberAccess it) {
@@ -219,7 +195,7 @@ class RolezUtils {
     
     def isVectorGet(MemberAccess it) {
         isMethodInvoke && method.name == "get"
-            && system.type(createEnv(it), target).value.isVectorType
+            && system.type(null, target).value.isVectorType
     }
     
     def isVectorLength(MemberAccess it) {
@@ -228,12 +204,12 @@ class RolezUtils {
     
     def isVectorBuilderGet(MemberAccess it) {
         isMethodInvoke && method.name == "get"
-            && system.type(createEnv(it), target).value.isVectorBuilderType
+            && system.type(null, target).value.isVectorBuilderType
     }
     
     def isVectorBuilderSet(MemberAccess it) {
         isMethodInvoke && method.name == "set"
-            && system.type(createEnv(it), target).value.isVectorBuilderType
+            && system.type(null, target).value.isVectorBuilderType
     }
     
     /**

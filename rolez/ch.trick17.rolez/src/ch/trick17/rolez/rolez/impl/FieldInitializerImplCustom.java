@@ -2,6 +2,7 @@ package ch.trick17.rolez.rolez.impl;
 
 import ch.trick17.rolez.rolez.Expr;
 import ch.trick17.rolez.rolez.Instr;
+import ch.trick17.rolez.rolez.Param;
 
 public class FieldInitializerImplCustom extends FieldInitializerImpl {
     
@@ -15,5 +16,10 @@ public class FieldInitializerImplCustom extends FieldInitializerImpl {
     @Override
     public Expr getExpr() {
         return (Expr) super.getCode();
+    }
+    
+    @Override
+    public Iterable<Param> getAllParams() {
+        return getParams();
     }
 }

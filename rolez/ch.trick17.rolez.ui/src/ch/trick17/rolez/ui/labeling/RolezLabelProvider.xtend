@@ -12,7 +12,6 @@ import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.edit.ui.provider.AdapterFactoryLabelProvider
 import org.eclipse.xtext.ui.label.DefaultEObjectLabelProvider
 
-import static ch.trick17.rolez.RolezUtils.createEnv
 import static ch.trick17.rolez.rolez.VarKind.VAL
 import static org.eclipse.jdt.ui.JavaElementImageDescriptor.*
 import static org.eclipse.xtext.common.types.JvmVisibility.PUBLIC
@@ -33,7 +32,7 @@ class RolezLabelProvider extends DefaultEObjectLabelProvider {
         '''«name»: «varType»'''
     
     private def varType(Var it) {
-        val result = system.varType(createEnv(it), it)
+        val result = system.varType(null, it)
         if(result.failed)
             "?"
         else

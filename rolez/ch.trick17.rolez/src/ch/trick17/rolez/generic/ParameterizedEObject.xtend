@@ -13,6 +13,7 @@ import ch.trick17.rolez.rolez.RoleParam
 import ch.trick17.rolez.rolez.RoleParamRef
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.SimpleClassRef
+import ch.trick17.rolez.rolez.ThisParam
 import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.TypeParam
 import ch.trick17.rolez.rolez.TypeParamRef
@@ -48,10 +49,10 @@ abstract class ParameterizedEObject<E extends EObject>
     
     /* Helper methods for subclasses */
     
-    def parameterized(NormalClass it) { new ParameterizedNormalClass(it, this, typeArgs, roleArgs)}
+    package def parameterized(NormalClass it) { new ParameterizedNormalClass(it, this, typeArgs, roleArgs)}
     
-    def Type parameterized(Type it) { switch(it) {
-        RoleType             : new ParameterizedRoleType(it, this, typeArgs, roleArgs)
+    package def Type parameterized(Type it) { switch(it) {
+        RoleType             : parameterized
         Null                 : it
         PrimitiveType        : it
         TypeParamRef         : {
@@ -81,20 +82,28 @@ abstract class ParameterizedEObject<E extends EObject>
         }
     }}
     
+    package def parameterized(RoleType it) {
+        new ParameterizedRoleType(it, this, typeArgs, roleArgs)
+    }
+    
     private def system() { (eResource as RolezResource).rolezSystem  }
     
-    def parameterized(Role it) { switch(it) {
+    package def parameterized(Role it) { switch(it) {
         BuiltInRole : it
         RoleParamRef: roleArgs.get(param) ?: it
     }}
     
-    def ClassRef parameterized(ClassRef it) { switch(it) {
+    package def ClassRef parameterized(ClassRef it) { switch(it) {
         SimpleClassRef : it
         GenericClassRef: new ParameterizedGenericClassRef(it, this, typeArgs, roleArgs)
     }}
     
-    def parameterizedParams(Executable it) {
+    package def parameterizedParams(Executable it) {
         new ParameterizedParamList(params, this as Executable, typeArgs, roleArgs)
+    }
+    
+    package def parameterized(ThisParam it) {
+        new ParameterizedThisParam(it, eContainer, typeArgs, roleArgs)
     }
     
     /* (Partially) supported eMethods */

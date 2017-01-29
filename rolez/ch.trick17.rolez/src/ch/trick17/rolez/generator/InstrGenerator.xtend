@@ -54,7 +54,6 @@ import org.eclipse.xtext.common.types.JvmAnnotationTarget
 import org.eclipse.xtext.common.types.JvmArrayType
 
 import static ch.trick17.rolez.Constants.*
-import static ch.trick17.rolez.RolezUtils.*
 import static ch.trick17.rolez.generator.CodeKind.*
 import static ch.trick17.rolez.rolez.VarKind.*
 
@@ -107,7 +106,7 @@ class InstrGenerator {
             }'''
         
         private def dispatch CharSequence generate(LocalVarDecl it) {
-            val type = system.varType(createEnv(it), variable).value
+            val type = system.varType(null, variable).value
             '''«variable.kind.generate»«type.generate» «variable.safeName»«IF initializer != null» = «initializer.generate»«ENDIF»;'''
         }
         
@@ -151,7 +150,7 @@ class InstrGenerator {
                 // Special cases for array instantiations and get
                 MemberAccess case utils.isArrayGet(it): {
                     if(args.size != 1) throw new AssertionError
-                    findSideFxExpr(target) + findSideFxExpr(args.get(0))
+                    allArgs.map[findSideFxExpr].flatten
                 }
                 New: {
                     if(args.size != 1) throw new AssertionError
@@ -244,7 +243,7 @@ class InstrGenerator {
             '''«target.genGuarded(createReadWrite, true)».«genSliceAccess("set")»(«args.get(0).generate», «args.get(1).generate»)'''
         
         private def genSliceAccess(MemberAccess it, String getOrSet) {
-            val targetType = system.type(createEnv(it), target).value
+            val targetType = system.type(null, target).value
             val componentType = ((targetType as RoleType).base as GenericClassRef).typeArg
             switch(componentType) {
                 PrimitiveType: getOrSet + componentType.name.toFirstUpper
@@ -270,7 +269,7 @@ class InstrGenerator {
             '''«target.genNested».length'''
         
         private def generateVectorBuilderSet(MemberAccess it) {
-            val targetType = system.type(createEnv(it), target).value
+            val targetType = system.type(null, target).value
             val componentType = ((targetType as RoleType).base as GenericClassRef).typeArg
             val suffix =
                 if(componentType instanceof PrimitiveType) componentType.name.toFirstUpper
@@ -292,7 +291,7 @@ class InstrGenerator {
                 // Shorter and more efficient code for access to mapped singletons, like System, Math
                 val genTarget = 
                     if(target instanceof The) (target as The).classRef.clazz.jvmClass.getQualifiedName('.')
-                    else target.genGuardedMapped(method.thisRole, true)
+                    else target.genGuardedMapped(method.thisParam.type.role, true)
                 val genInvoke = '''«genTarget».«method.safeName»(«args.map[genCoerced].join(", ")»)'''
                 if(method.jvmMethod.returnType.type instanceof JvmArrayType) {
                     val componentType = ((method.type as RoleType).base as GenericClassRef).typeArg
@@ -411,7 +410,7 @@ class InstrGenerator {
         }}
         
         private def genGuarded(Expr it, Role requiredRole, boolean nested) {
-            val type = system.type(createEnv(it), it).value
+            val type = system.type(null, it).value
             val needsGuard = !system.subroleSucceeded(roleAnalysis.dynamicRole(it), requiredRole)
             if(type.isGuarded && needsGuard)
                 switch(requiredRole) {

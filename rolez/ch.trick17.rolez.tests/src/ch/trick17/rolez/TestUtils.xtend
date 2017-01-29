@@ -28,7 +28,6 @@ import org.eclipse.xtext.naming.QualifiedName
 import org.eclipse.xtext.resource.XtextResourceSet
 import org.eclipse.xtext.util.StringInputStream
 
-import static ch.trick17.rolez.RolezUtils.*
 import static org.hamcrest.Matchers.*
 import static org.junit.Assert.assertEquals
 
@@ -66,7 +65,9 @@ class TestUtils {
         class A {
             var i: int
         }
-        class B
+        class B {
+            val a: readwrite A = new A
+        }
         class App {
             task pure frameTask(a: boolean, b: boolean): { «it» }
             def pure getA: readwrite A { return new A; }
@@ -124,7 +125,7 @@ class TestUtils {
     def lastVarRef(Executable it) { eAllContents.filter(VarRef).last }
     
     def type(Expr e) {
-        val result = system.type(createEnv(e), e)
+        val result = system.type(null, e)
         if(result.failed)
             assertEquals("", result.ruleFailedException.message)
         result.value
@@ -137,7 +138,7 @@ class TestUtils {
     }
     
     def varType(Var v) {
-        val result = system.varType(createEnv(v), v)
+        val result = system.varType(null, v)
         result.failed.assertThat(is(false))
         result.value
     }
