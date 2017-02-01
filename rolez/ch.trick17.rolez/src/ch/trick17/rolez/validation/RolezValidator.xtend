@@ -417,10 +417,6 @@ class RolezValidator extends RolezSystemValidator {
             && (e.eContainer as Assignment).left == e
     }
     
-    private def <T> all(EObject it, java.lang.Class<T> c) {
-        (#[it] + eAllContents.toIterable).filter(c)
-    }
-    
     @Check
     def checkFieldInitializer(Field it) {
         if(initializer == null) return;

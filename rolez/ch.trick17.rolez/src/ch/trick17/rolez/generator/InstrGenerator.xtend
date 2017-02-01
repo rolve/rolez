@@ -186,7 +186,7 @@ class InstrGenerator {
         }
         
         private def thrownExceptionTypes(Stmt it) {
-            val all = eAllContents.toIterable.map[switch(it) {
+            val all = all(Expr).map[switch(it) {
                 MemberAccess case isMethodInvoke: method.checkedExceptionTypes
                 New: constr.checkedExceptionTypes
                 default: emptyList

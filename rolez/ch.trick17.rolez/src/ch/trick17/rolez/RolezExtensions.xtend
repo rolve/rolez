@@ -100,4 +100,8 @@ class RolezExtensions {
                 
     private static def dispatch jvmExecutable(Method it) { jvmMethod }
     private static def dispatch jvmExecutable(Constr it) { jvmConstr }
+    
+    static def <T> all(EObject it, java.lang.Class<T> c) {
+        (#[it] + eAllContents.toIterable).filter(c)
+    }
 }

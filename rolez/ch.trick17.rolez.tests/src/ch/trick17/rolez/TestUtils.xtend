@@ -31,6 +31,7 @@ import org.eclipse.xtext.util.StringInputStream
 import static org.hamcrest.Matchers.*
 import static org.junit.Assert.assertEquals
 
+import static extension ch.trick17.rolez.RolezExtensions.*
 import static extension org.hamcrest.MatcherAssert.assertThat
 
 class TestUtils {
@@ -122,7 +123,7 @@ class TestUtils {
         stmts.filter(ExprStmt).last.expr
     }
     
-    def lastVarRef(Executable it) { eAllContents.filter(VarRef).last }
+    def lastVarRef(Executable it) { all(VarRef).last }
     
     def type(Expr e) {
         val result = system.type(null, e)

@@ -165,7 +165,7 @@ class ClassGenerator {
     }
     
     private def startsTasks(Instr it) {
-        eAllContents.filter(MemberAccess).exists[isTaskStart || isMethodInvoke && method.isAsync]
+        all(MemberAccess).exists[isTaskStart || isMethodInvoke && method.isAsync]
     }
     
     private def genTransitionArgs(Method it, Class<? extends Role> role) {
