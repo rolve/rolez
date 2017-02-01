@@ -416,7 +416,7 @@ class InstrGenerator {
                 switch(requiredRole) {
                     ReadWrite: "guardReadWrite(" + generate + ")"
                     ReadOnly : "guardReadOnly("  + generate + ")"
-                    Pure     : if(nested) genNested else generate
+                    default  : throw new AssertionError
                 }
             else
                 if(nested) genNested else generate
