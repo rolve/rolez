@@ -56,7 +56,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     }
     
     def scope_MemberAccess_member(MemberAccess it, EReference ref) {
-        val targetType = system.type(null, target).value
+        val targetType = system.type(target).value
         val memberName = crossRefText(ref)
         
         if(targetType instanceof RoleType) {
@@ -202,7 +202,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
      */
     private def maxSpecific(Iterable<? extends Executable> candidates, Argumented args) {
         val applicable = candidates.filter[
-            system.validArgsSucceeded(null, args, it)
+            system.validArgsSucceeded(args, it)
         ].toList
         
         applicable.filter[p |
@@ -217,7 +217,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     private def moreSpecificThan(Executable target, Executable other) {
         // Assume both targets have the same number of parameters
         val i = other.params.iterator
-        target.params.forall[system.subtypeSucceeded(null, it.type, i.next.type)]
+        target.params.forall[system.subtypeSucceeded(it.type, i.next.type)]
     }
     
     // IMPROVE: can replace the following with LinkingHelper.getCrossRefNodeAsString()?

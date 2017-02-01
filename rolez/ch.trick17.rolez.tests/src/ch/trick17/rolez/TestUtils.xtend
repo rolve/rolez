@@ -130,7 +130,7 @@ class TestUtils {
     def lastVarRef(Executable it) { all(VarRef).last }
     
     def type(Expr e) {
-        val result = system.type(null, e)
+        val result = system.type(e)
         if(result.failed)
             assertEquals("", result.ruleFailedException.message)
         result.value
@@ -143,7 +143,7 @@ class TestUtils {
     }
     
     def varType(Var v) {
-        val result = system.varType(null, v)
+        val result = system.varType(v)
         result.failed.assertThat(is(false))
         result.value
     }

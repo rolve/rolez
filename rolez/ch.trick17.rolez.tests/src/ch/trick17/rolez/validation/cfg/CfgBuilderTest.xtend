@@ -418,8 +418,7 @@ class CfgBuilderTest {
                 node.assertThat(instanceOf(InstrNode))
                 val instr = (node as InstrNode).instr
                 instr.assertThat(instanceOf(Expr))
-                system.type(null, instr as Expr).value
-                    .assertThat(instanceOf(Boolean))
+                system.type(instr as Expr).value.assertThat(instanceOf(Boolean))
             }
             else
                 node.successors.size.assertThat(lessThan(2))

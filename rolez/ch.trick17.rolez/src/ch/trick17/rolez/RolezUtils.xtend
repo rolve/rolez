@@ -170,23 +170,19 @@ class RolezUtils {
     }
     
     def isSliceGet(MemberAccess it) {
-        isMethodInvoke && method.name == "get"
-            && system.type(null, target).value.isSliceType
+        isMethodInvoke && method.name == "get" && system.type(target).value.isSliceType
     }
     
     def isSliceSet(MemberAccess it) {
-        isMethodInvoke && method.name == "set"
-            && system.type(null, target).value.isSliceType
+        isMethodInvoke && method.name == "set" && system.type(target).value.isSliceType
     }
     
     def isArrayGet(MemberAccess it) {
-        isMethodInvoke && method.name == "get"
-            && system.type(null, target).value.isArrayType
+        isMethodInvoke && method.name == "get" && system.type(target).value.isArrayType
     }
     
     def isArraySet(MemberAccess it) {
-        isMethodInvoke && method.name == "set"
-            && system.type(null, target).value.isArrayType
+        isMethodInvoke && method.name == "set" && system.type(target).value.isArrayType
     }
     
     def isArrayLength(MemberAccess it) {
@@ -194,8 +190,7 @@ class RolezUtils {
     }
     
     def isVectorGet(MemberAccess it) {
-        isMethodInvoke && method.name == "get"
-            && system.type(null, target).value.isVectorType
+        isMethodInvoke && method.name == "get" && system.type(target).value.isVectorType
     }
     
     def isVectorLength(MemberAccess it) {
@@ -203,13 +198,11 @@ class RolezUtils {
     }
     
     def isVectorBuilderGet(MemberAccess it) {
-        isMethodInvoke && method.name == "get"
-            && system.type(null, target).value.isVectorBuilderType
+        isMethodInvoke && method.name == "get" && system.type(target).value.isVectorBuilderType
     }
     
     def isVectorBuilderSet(MemberAccess it) {
-        isMethodInvoke && method.name == "set"
-            && system.type(null, target).value.isVectorBuilderType
+        isMethodInvoke && method.name == "set" && system.type(target).value.isVectorBuilderType
     }
     
     /**
