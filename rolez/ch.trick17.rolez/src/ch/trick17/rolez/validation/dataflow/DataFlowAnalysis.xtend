@@ -8,8 +8,6 @@ import java.util.HashMap
 import java.util.LinkedList
 import java.util.Map
 
-import static extension java.util.Objects.requireNonNull
-
 /**
  * Objects of type F must be immutable
  */
@@ -60,6 +58,6 @@ abstract class DataFlowAnalysis<F> {
     private def prevNodes(Node it) { if(forward) predecessors else successors }
     private def nextNodes(Node it) { if(forward) successors else predecessors }
     
-    protected def  inFlow(Node it) {  inFlows.get(it).requireNonNull }
-    protected def outFlow(Node it) { outFlows.get(it).requireNonNull }
+    protected def  inFlow(Node it) {  inFlows.get(it) }
+    protected def outFlow(Node it) { outFlows.get(it) }
 }
