@@ -15,6 +15,7 @@ import ch.trick17.rolez.rolez.TypeParamRef
 import ch.trick17.rolez.rolez.Void
 import javax.inject.Inject
 import org.eclipse.emf.ecore.EObject
+import org.eclipse.xtext.common.types.JvmAnnotationTarget
 import org.eclipse.xtext.common.types.JvmDeclaredType
 import org.eclipse.xtext.common.types.JvmExecutable
 import org.eclipse.xtext.common.types.JvmGenericArrayTypeReference
@@ -93,6 +94,10 @@ class JavaMapper {
     def dispatch boolean mapsTo(TypeParamRef it, JvmTypeReference other) {
         other.type instanceof JvmTypeParameter && other.type.simpleName == param.name
         // TODO: Check declaring class of param?
+    }
+      
+    def isSafe(JvmAnnotationTarget it) {
+        annotations.exists[annotation.qualifiedName == safeAnnotationName]
     }
     
     def dispatch boolean mapsTo(Null it, JvmTypeReference _) { false }

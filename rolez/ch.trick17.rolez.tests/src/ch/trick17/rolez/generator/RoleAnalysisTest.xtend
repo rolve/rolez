@@ -8,6 +8,7 @@ import ch.trick17.rolez.rolez.Program
 import ch.trick17.rolez.rolez.Pure
 import ch.trick17.rolez.rolez.ReadOnly
 import ch.trick17.rolez.rolez.ReadWrite
+import ch.trick17.rolez.rolez.VarRef
 import ch.trick17.rolez.tests.RolezInjectorProvider
 import ch.trick17.rolez.validation.cfg.CfgProvider
 import javax.inject.Inject
@@ -110,5 +111,29 @@ class RoleAnalysisTest {
         
         newRoleAnalysis(constr, constr.body.controlFlowGraph)
                 .dynamicRole(constr.lastExpr).assertThat(instanceOf(ReadWrite))
+    }
+    
+    @Test def testDataflowGuardedMethod() {
+        // since Object.hashCode is guarded, it is known that the target is readonly afterwards
+        var task = parse('''
+            val a1 = this.getA;
+            a1.hashCode;
+            a1;
+        '''.withFrame).task
+        var analysis = newRoleAnalysis(task, task.body.controlFlowGraph, TASK)
+        var varRefs = task.all(VarRef).filter[variable.name == "a1"].toList
+        analysis.dynamicRole(varRefs.get(0)).assertThat(instanceOf(Pure))
+        analysis.dynamicRole(varRefs.get(1)).assertThat(instanceOf(ReadOnly))
+        
+        // B overrides hashCode, making it non-guarded. A call to a non-guarded method does not add any information
+        task = parse('''
+            val b1 = this.getB;
+            b1.hashCode;
+            b1;
+        '''.withFrame).task
+        analysis = newRoleAnalysis(task, task.body.controlFlowGraph, TASK)
+        varRefs = task.all(VarRef).filter[variable.name == "b1"].toList
+        analysis.dynamicRole(varRefs.get(0)).assertThat(instanceOf(Pure))
+        analysis.dynamicRole(varRefs.get(1)).assertThat(instanceOf(Pure))
     }
 }

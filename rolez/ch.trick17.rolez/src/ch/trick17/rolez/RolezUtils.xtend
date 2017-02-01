@@ -24,6 +24,7 @@ import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.TypeParam
 import ch.trick17.rolez.rolez.Var
 import ch.trick17.rolez.typesystem.RolezSystem
+import ch.trick17.rolez.validation.JavaMapper
 import java.util.HashSet
 import java.util.Set
 import javax.inject.Inject
@@ -143,6 +144,7 @@ class RolezUtils {
     
     @Inject RolezSystem system
     @Inject IScopeProvider scopeProvider
+    @Inject extension JavaMapper
     
     val superclassesCache = new OnChangeEvictingCache
     
@@ -220,5 +222,21 @@ class RolezUtils {
             MemberAccess: isMethodInvoke && !isSliceGet && !isArrayGet && !isVectorGet && !isVectorBuilderGet || isTaskStart
             default: false
         }
+    }
+    
+    def isGuarded(Type it) {
+        it instanceof RoleType && (it as RoleType).base.clazz.isGuarded
+    }
+    
+    def isGuarded(Class it) {
+        if(isObjectClass)
+            true // Special case: some subclasses are guarded, some are not
+        else
+            // Otherwise, classes are guarded, except if pure or mapped to a non-guarded JVM class
+            !pure && (!isMapped || jvmClass.isSubclassOf(jvmGuardedClassName, it))
+    }
+    
+    def isGuarded(Method it) {
+        isMapped && enclosingClass.isGuarded && !jvmMethod.isSafe
     }
 }

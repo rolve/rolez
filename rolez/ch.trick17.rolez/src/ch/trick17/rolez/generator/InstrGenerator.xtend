@@ -50,7 +50,6 @@ import com.google.inject.Injector
 import java.util.ArrayList
 import java.util.regex.Pattern
 import javax.inject.Inject
-import org.eclipse.xtext.common.types.JvmAnnotationTarget
 import org.eclipse.xtext.common.types.JvmArrayType
 
 import static ch.trick17.rolez.Constants.*
@@ -326,10 +325,6 @@ class InstrGenerator {
             if(annotated.isSafe) generate else genGuarded(requiredRole, nested)
         }
         
-        private def isSafe(JvmAnnotationTarget it) {
-            annotations.exists[annotation.qualifiedName == safeAnnotationName]
-        }
-        
         private def genArgs(MemberAccess it) {
             val allArgs = new ArrayList(args.map[generate])
             if(method.isAsync)
@@ -412,7 +407,7 @@ class InstrGenerator {
         private def genGuarded(Expr it, Role requiredRole, boolean nested) {
             val type = system.type(it).value
             val needsGuard = !system.subroleSucceeded(roleAnalysis.dynamicRole(it), requiredRole)
-            if(type.isGuarded && needsGuard)
+            if(utils.isGuarded(type) && needsGuard)
                 switch(requiredRole) {
                     ReadWrite: "guardReadWrite(" + generate + ")"
                     ReadOnly : "guardReadOnly("  + generate + ")"

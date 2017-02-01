@@ -1,5 +1,6 @@
 package ch.trick17.rolez.generator
 
+import ch.trick17.rolez.RolezUtils
 import ch.trick17.rolez.generic.ParameterizedMethod
 import ch.trick17.rolez.rolez.BuiltInRole
 import ch.trick17.rolez.rolez.Constr
@@ -40,6 +41,7 @@ class ClassGenerator {
     @Inject extension SafeJavaNames
     @Inject extension CfgProvider
     @Inject extension RoleAnalysis.Provider
+    @Inject extension RolezUtils
     
     // IMPROVE: Use some kind of import manager (note: the Xtext one is incorrect when using the default pkg)
     

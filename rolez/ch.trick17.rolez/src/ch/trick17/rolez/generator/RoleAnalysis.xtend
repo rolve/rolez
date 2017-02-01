@@ -1,6 +1,7 @@
 package ch.trick17.rolez.generator
 
 import ch.trick17.rolez.RolezUtils
+import ch.trick17.rolez.generic.ParameterizedMethod
 import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.BuiltInRole
 import ch.trick17.rolez.rolez.Cast
@@ -16,6 +17,8 @@ import ch.trick17.rolez.rolez.Method
 import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.Param
 import ch.trick17.rolez.rolez.Parenthesized
+import ch.trick17.rolez.rolez.ReadOnly
+import ch.trick17.rolez.rolez.ReadWrite
 import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleParamRef
 import ch.trick17.rolez.rolez.RoleType
@@ -226,14 +229,22 @@ class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleData>> {
     }}
     
     private def isReadAccess(MemberAccess it) {
-        isFieldAccess && field.kind == VAR && !isWriteAccess
-            || isSliceGet || isArrayGet || isVectorBuilderGet
+        isMethodInvoke && method.isGuarded && method.erasedThisRole instanceof ReadOnly
+            || isFieldAccess && field.kind == VAR && !isFieldWrite
     }
     
     private def isWriteAccess(MemberAccess it) {
-        isFieldWrite || isSliceSet || isArraySet || isVectorBuilderSet
+        isMethodInvoke && method.isGuarded && method.erasedThisRole instanceof ReadWrite
+            || isFieldWrite
     }
     
+    private def erasedThisRole(Method it) {
+        var original = it
+        while(original instanceof ParameterizedMethod)
+            original = original.genericEObject
+        original.thisParam.type.role.erased
+    }
+     
     private def boolean isGlobal(Expr it) { switch(it) {
         The: true
         MemberAccess case isFieldAccess && target.isGlobal: true

@@ -59,16 +59,4 @@ class TypeGenerator {
         else
             safeQualifiedName
     }
-    
-    def isGuarded(Type it) {
-        it instanceof RoleType && (it as RoleType).base.clazz.isGuarded
-    }
-    
-    private def isGuarded(Class it) {
-        if(isObjectClass)
-            true // Special case: some subclasses are guarded, some are not
-        else
-            // Otherwise, classes are guarded, except if pure or mapped to a non-guarded JVM class
-            !pure && (!isMapped || jvmClass.isSubclassOf(jvmGuardedClassName, it))
-    }
 }
