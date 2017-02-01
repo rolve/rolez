@@ -2,6 +2,9 @@ package ch.trick17.rolez.rolez.impl;
 
 import static com.google.common.collect.Iterables.concat;
 import static java.util.Arrays.asList;
+import static org.eclipse.xtext.xbase.lib.IterableExtensions.join;
+
+import org.eclipse.xtext.xbase.lib.Functions.Function1;
 
 import ch.trick17.rolez.rolez.Executable;
 import ch.trick17.rolez.rolez.Expr;
@@ -38,4 +41,19 @@ public class MemberAccessImplCustom extends MemberAccessImpl {
     public Iterable<Expr> getAllArgs() {
         return concat(asList(target), getArgs());
     }
+    
+    @Override
+    public String toString() {
+        if(getTarget() != null && getMember() != null) {
+            String separator = isTaskStart() ? " start " : ".";
+            return getTarget() + separator + member.getQualifiedName().getLastSegment()
+                    + join(getArgs(), "(", ", ", ")", toString);
+        }
+        else
+            return super.toString();
+    }
+    
+    private static final Function1<Object, String> toString = new Function1<Object, String>() {
+        public String apply(Object obj) { return obj.toString(); }
+    };
 }
