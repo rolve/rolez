@@ -1,7 +1,10 @@
 package ch.trick17.rolez
 
+import ch.trick17.rolez.generic.ParameterizedMethod
+import ch.trick17.rolez.generic.ParameterizedParam
 import ch.trick17.rolez.rolez.Argumented
 import ch.trick17.rolez.rolez.Assignment
+import ch.trick17.rolez.rolez.BuiltInRole
 import ch.trick17.rolez.rolez.Class
 import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.Expr
@@ -14,6 +17,7 @@ import ch.trick17.rolez.rolez.Param
 import ch.trick17.rolez.rolez.Program
 import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleParam
+import ch.trick17.rolez.rolez.RoleParamRef
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
 import ch.trick17.rolez.rolez.Type
@@ -59,7 +63,7 @@ class RolezExtensions {
     
     private static def overrides(Class it, Member m) {
         switch(m) {
-            Field: false
+            Field : false
             Method: methods.exists[equalSignatureWithoutRoles(it, m)]
         }
     }
@@ -67,7 +71,7 @@ class RolezExtensions {
     static def Class enclosingClass(EObject it) {
         val container = it?.eContainer
         switch(container) {
-            Class: container
+            Class  : container
             default: container?.enclosingClass
         }
     }
@@ -104,4 +108,19 @@ class RolezExtensions {
     static def <T> all(EObject it, java.lang.Class<T> c) {
         (#[it] + eAllContents.toIterable).filter(c)
     }
+    
+    static def Method original(Method it) { switch(it) {
+        ParameterizedMethod: genericEObject.original
+        default            : it  
+    }}
+    
+    static def Param original(Param it) { switch(it) {
+        ParameterizedParam: genericEObject.original
+        default           : it  
+    }}
+    
+    static def erased(Role it) { switch(it) {
+        BuiltInRole : it
+        RoleParamRef: param.upperBound
+    }}
 }

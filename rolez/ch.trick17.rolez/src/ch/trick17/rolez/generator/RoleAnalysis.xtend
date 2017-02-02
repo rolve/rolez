@@ -1,7 +1,6 @@
 package ch.trick17.rolez.generator
 
 import ch.trick17.rolez.RolezUtils
-import ch.trick17.rolez.generic.ParameterizedMethod
 import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.BuiltInRole
 import ch.trick17.rolez.rolez.Cast
@@ -19,8 +18,6 @@ import ch.trick17.rolez.rolez.Param
 import ch.trick17.rolez.rolez.Parenthesized
 import ch.trick17.rolez.rolez.ReadOnly
 import ch.trick17.rolez.rolez.ReadWrite
-import ch.trick17.rolez.rolez.Role
-import ch.trick17.rolez.rolez.RoleParamRef
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
 import ch.trick17.rolez.rolez.StringLiteral
@@ -105,11 +102,6 @@ class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleData>> {
         }
         copyOf(flow)
     }
-    
-    private def erased(Role it) { switch(it) {
-        BuiltInRole : it
-        RoleParamRef: param.upperBound  
-    }}
     
     protected def dispatch flowThrough(LocalVarDecl d, ImmutableMap<Var, RoleData> in) {
         if(d.initializer != null) flowThroughAssign(d.variable, d.initializer, in)
@@ -239,12 +231,9 @@ class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleData>> {
     }
     
     private def erasedThisRole(Method it) {
-        var original = it
-        while(original instanceof ParameterizedMethod)
-            original = original.genericEObject
         original.thisParam.type.role.erased
     }
-     
+    
     private def boolean isGlobal(Expr it) { switch(it) {
         The: true
         MemberAccess case isFieldAccess && target.isGlobal: true

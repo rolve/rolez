@@ -12,7 +12,7 @@ import org.eclipse.emf.ecore.EStructuralFeature
 import static ch.trick17.rolez.rolez.RolezPackage.Literals.TYPED__TYPE
 import static ch.trick17.rolez.rolez.impl.InExecutableImplCustom.*
 
-package class ParameterizedParam extends ParameterizedEObject<Param> implements Param {
+class ParameterizedParam extends ParameterizedEObject<Param> implements Param {
     
     new(Param eObject, EObject eContainer, Map<TypeParam, Type> typeArgs, Map<RoleParam, Role> roleArgs) {
         super(eObject, eContainer, typeArgs, roleArgs)

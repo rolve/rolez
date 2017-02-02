@@ -2,7 +2,6 @@ package ch.trick17.rolez.generator
 
 import ch.trick17.rolez.RolezUtils
 import ch.trick17.rolez.generic.ParameterizedMethod
-import ch.trick17.rolez.rolez.BuiltInRole
 import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.Field
 import ch.trick17.rolez.rolez.Instr
@@ -15,7 +14,6 @@ import ch.trick17.rolez.rolez.ReadOnly
 import ch.trick17.rolez.rolez.ReadWrite
 import ch.trick17.rolez.rolez.ReturnNothing
 import ch.trick17.rolez.rolez.Role
-import ch.trick17.rolez.rolez.RoleParamRef
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.SingletonClass
 import ch.trick17.rolez.rolez.TypeParamRef
@@ -180,11 +178,6 @@ class ClassGenerator {
     private def needsTransition(RoleType it) {
         isGuarded && !(role.erased instanceof Pure)
     }
-    
-    private def erased(Role it) { switch(it) {
-        BuiltInRole: it
-        RoleParamRef: param.upperBound
-    }}
     
     private def needsReturnNull(Method it) {
         type instanceof Void && body.controlFlowGraph.exit.predecessors

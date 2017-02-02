@@ -290,7 +290,7 @@ class InstrGenerator {
                 // Shorter and more efficient code for access to mapped singletons, like System, Math
                 val genTarget = 
                     if(target instanceof The) (target as The).classRef.clazz.jvmClass.getQualifiedName('.')
-                    else target.genGuardedMapped(method.thisParam.type.role, true)
+                    else target.genGuardedMapped(method.original.thisParam.type.role.erased, true)
                 val genInvoke = '''«genTarget».«method.safeName»(«args.map[genCoerced].join(", ")»)'''
                 if(method.jvmMethod.returnType.type instanceof JvmArrayType) {
                     val componentType = ((method.type as RoleType).base as GenericClassRef).typeArg
@@ -304,11 +304,14 @@ class InstrGenerator {
         }
         
         private def CharSequence genCoerced(Expr it) {
-            val paramType = destParam.jvmParam.parameterType.type
-            val reqRole = 
-                if(destParam.type instanceof RoleType) (destParam.type as RoleType).role
-            if(paramType instanceof JvmArrayType) {
-                val arrayType = paramType.toString.substring(14) // IMPROVE: A little less magic, a little more robustness, please
+            val paramType = destParam.type
+            val originalParamType = destParam.original.type
+            val jvmParamType = destParam.jvmParam.parameterType.type
+            val reqRole =
+                if(originalParamType instanceof RoleType) originalParamType.role.erased
+                else if(paramType instanceof RoleType)    paramType.role
+            if(jvmParamType instanceof JvmArrayType) {
+                val arrayType = jvmParamType.toString.substring(14) // IMPROVE: A little less magic, a little more robustness, please
                 '''«jvmGuardedArrayClassName».unwrap(«genGuardedMapped(reqRole, false)», «arrayType».class)'''
             }
             else
@@ -411,7 +414,7 @@ class InstrGenerator {
                 switch(requiredRole) {
                     ReadWrite: "guardReadWrite(" + generate + ")"
                     ReadOnly : "guardReadOnly("  + generate + ")"
-                    default  : throw new AssertionError
+                    default  : throw new AssertionError("unexpected role: " + requiredRole)
                 }
             else
                 if(nested) genNested else generate

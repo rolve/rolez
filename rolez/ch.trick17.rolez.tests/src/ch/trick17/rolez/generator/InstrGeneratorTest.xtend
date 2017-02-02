@@ -397,7 +397,7 @@ class InstrGeneratorTest extends GeneratorTest {
     }
     
     @Test def testMemberAccessGuarded() {
-        // Field access is guarded, method calls are not (in case this is not obvious...)
+        // Field access is guarded, method calls are not (in general)
         parse('''
             class A {
                 var i: int = 0
@@ -454,11 +454,14 @@ class InstrGeneratorTest extends GeneratorTest {
         // (Only Guarded mapped classes can have var fields)
         parse('''
             class A {
-                def pure test(c1: readwrite IntContainer, c2: readwrite IntContainer, c3: readwrite IntContainer, c4: readwrite IntContainer, c5: readwrite IntContainer): int {
+                def pure test(c1: readwrite IntContainer, c2: readwrite IntContainer,
+                        c3: readwrite IntContainer, c4: readwrite IntContainer,
+                        c5: readwrite IntContainer, c6: readwrite IntContainer): int {
                     c1.set(42);
                     c2.get;
-                    c3.value = 2;
-                    return c4.value + c5.fortyTwo;
+                    c3.getWithRoleParam;
+                    c4.value = 2;
+                    return c5.value + c6.fortyTwo;
                 }
             }
         ''', someClasses.with('''
@@ -466,6 +469,7 @@ class InstrGeneratorTest extends GeneratorTest {
                 mapped val fortyTwo: int
                 mapped var value: int
                 mapped def readonly get: int
+                mapped def r getWithRoleParam[r includes readonly]: int
                 mapped def readwrite set(newValue: int):
             }
         ''')).onlyClass.generate.assertEqualsJava('''
@@ -477,11 +481,12 @@ class InstrGeneratorTest extends GeneratorTest {
                     super();
                 }
                 
-                public int test(final «IntContainer.canonicalName» c1, final «IntContainer.canonicalName» c2, final «IntContainer.canonicalName» c3, final «IntContainer.canonicalName» c4, final «IntContainer.canonicalName» c5) {
+                public int test(final «IntContainer.canonicalName» c1, final «IntContainer.canonicalName» c2, final «IntContainer.canonicalName» c3, final «IntContainer.canonicalName» c4, final «IntContainer.canonicalName» c5, final «IntContainer.canonicalName» c6) {
                     guardReadWrite(c1).set(42);
                     guardReadOnly(c2).get();
-                    guardReadWrite(c3).value = 2;
-                    return guardReadOnly(c4).value + c5.fortyTwo;
+                    guardReadOnly(c3).getWithRoleParam();
+                    guardReadWrite(c4).value = 2;
+                    return guardReadOnly(c5).value + c6.fortyTwo;
                 }
             }
         ''')
@@ -833,6 +838,7 @@ class InstrGeneratorTest extends GeneratorTest {
         public val fortyTwo = 42
         public var value = 0
         def int get() { value }
+        def int getWithRoleParam() { value }
         def void set(int newValue) { value = newValue }
     }
     
