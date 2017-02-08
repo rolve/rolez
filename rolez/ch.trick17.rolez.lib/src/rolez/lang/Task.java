@@ -246,6 +246,7 @@ public abstract class Task<V> implements Runnable {
         
         /* Then, find objects that are now reachable from passed objects (and the result object) and
          * release those */
+        // IMPROVE: guarding should not be necessary since child tasks are already joined!
         Set<Guarded> newPassedReachable = newIdentitySet();
         for(Guarded g : passed)
             g.guardReadWriteReachable(newPassedReachable);

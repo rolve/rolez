@@ -299,9 +299,6 @@ public abstract class Guarded {
     }
     
     private boolean mayWrite() {
-        if(!guardingInitialized())
-            return true;
-        
         return ownerThread == currentThread() && sharedCount.get() == 0
                 && !descWithReadViewExists() && !descWithReadWriteViewExists();
         // IMPROVE: Combine above two methods for efficiency
