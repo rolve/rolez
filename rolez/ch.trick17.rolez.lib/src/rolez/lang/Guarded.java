@@ -11,7 +11,6 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 import rolez.internal.ImmutableBitSet;
 
@@ -30,7 +29,8 @@ public abstract class Guarded {
     private AtomicInteger sharedCount; // atomic because tasks can share concurrently
     private Set<Task<?>> readers;
     
-    private AtomicReference<ImmutableBitSet> guardedInTasks;
+    private volatile ImmutableBitSet guardedInTasks;
+    private Object guardedInTasksLock;
     
     /**
      * Default constructor that does not initialize guarding. Initialization happens lazily, when
@@ -57,7 +57,7 @@ public abstract class Guarded {
      * Initializes the guarding "infrastructure", if guarding is not
      * {@linkplain #disableGuarding(Guarded) disabled}.
      */
-    final void ensureGuardingInitialized() {
+    private void ensureGuardingInitialized() {
         assert !guardingDisabled;
         if(!guardingInitialized()) {
             owner = currentTask();
@@ -65,7 +65,8 @@ public abstract class Guarded {
             sharedCount = new AtomicInteger(0);
             // IMPROVE: Initialize only when first used?
             readers = newSetFromMap(new ConcurrentHashMap<Task<?>, java.lang.Boolean>());
-            guardedInTasks = new AtomicReference<>(EMPTY); // IMPROVE: Add current task and fix tests that don't allow this...
+            guardedInTasks = EMPTY; // IMPROVE: Add current task and fix tests that don't allow this...
+            guardedInTasksLock = new Object();
         }
     }
     
@@ -104,9 +105,7 @@ public abstract class Guarded {
             /* First step of passing */
             owner = task;
             ownerThread = null;
-            guardedInTasks.set(EMPTY);
-            for(Guarded v : views())
-                v.guardedInTasks.set(EMPTY);
+            clearGuardedInTasks();
         }
     }
     
@@ -117,9 +116,7 @@ public abstract class Guarded {
             sharedCount.incrementAndGet();
             if(viewLock() != null)
                 readers.add(task);
-            guardedInTasks.set(EMPTY);
-            for(Guarded v : views())
-                v.guardedInTasks.set(EMPTY);
+            clearGuardedInTasks();
         }
     }
     
@@ -149,6 +146,20 @@ public abstract class Guarded {
             ownerThread = owner == null ? null : owner.getExecutingThread();
         }
         // TODO: notify tasks that wait for other views?
+    }
+    
+    private final void clearGuardedInTasks() {
+        synchronized(guardedInTasksLock) {
+            guardedInTasks = EMPTY;
+        }
+        if(viewLock() != null)
+            synchronized(viewLock()) {
+                for(Guarded v : views())
+                    if(v != null)
+                        synchronized(v.guardedInTasksLock) {
+                            v.guardedInTasks = EMPTY;
+                        }
+            }
     }
     
     /* Guarding methods. The static versions can return the guarded object with the precise type
@@ -213,15 +224,11 @@ public abstract class Guarded {
     }
     
     private boolean alreadyGuardedIn(Task<?> task) {
-        ImmutableBitSet bitSet = guardedInTasks.get();
-        boolean alreadyGuarded = bitSet.get(task.id);
-        if(!alreadyGuarded) {
-            boolean success;
-            do {
-                success = guardedInTasks.compareAndSet(bitSet, bitSet.set(task.id));
-                bitSet = guardedInTasks.get();
-            } while(!success);
-        }
+        boolean alreadyGuarded = guardedInTasks.get(task.id);
+        if(!alreadyGuarded)
+            synchronized(guardedInTasksLock) {
+                guardedInTasks = guardedInTasks.set(task.id);
+            }
         return alreadyGuarded;
     }
     
