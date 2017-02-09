@@ -160,6 +160,11 @@ public abstract class Guarded {
         return guarded;
     }
     
+    public static <G extends Guarded> G guardReadOnly(G guarded, Task<?> currentTask) {
+        ((Guarded) guarded).guardReadOnly(currentTask);
+        return guarded;
+    }
+    
     public final void guardReadOnlyReachable(Set<Guarded> processed) {
         if(processed.add(this)) {
             guardReadOnly();
@@ -171,6 +176,14 @@ public abstract class Guarded {
     
     private final void guardReadOnly() {
         if(!guardingInitialized() || alreadyGuardedIn(currentTask()))
+            return;
+        
+        while(!mayRead())
+            park();
+    }
+    
+    private final void guardReadOnly(Task<?> currentTask) {
+        if(!guardingInitialized() || alreadyGuardedIn(currentTask))
             return;
         
         while(!mayRead())
