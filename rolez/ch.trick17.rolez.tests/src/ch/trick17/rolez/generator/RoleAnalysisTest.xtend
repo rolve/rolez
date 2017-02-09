@@ -68,6 +68,15 @@ class RoleAnalysisTest {
         '''.withFrame).task
         newRoleAnalysis(task, task.body.controlFlowGraph, TASK)
                 .dynamicRole(task.lastExpr).assertThat(instanceOf(Pure))
+        
+        task = parse('''
+            val a1 = this.getA;                     // pure
+            for(var i = 0; i < a1.hashCode; i += 1) // a1 is readonly after condition
+                a1.i;                               // and should still be readonly here
+        '''.withFrame).task
+        val fieldAccess = task.all(MemberAccess).filter[isFieldAccess].map[target].head
+        newRoleAnalysis(task, task.body.controlFlowGraph, TASK)
+                .dynamicRole(fieldAccess).assertThat(instanceOf(ReadOnly))
     }
 
     @Test def testDataflowFinalFields() {
@@ -125,7 +134,8 @@ class RoleAnalysisTest {
         analysis.dynamicRole(varRefs.get(0)).assertThat(instanceOf(Pure))
         analysis.dynamicRole(varRefs.get(1)).assertThat(instanceOf(ReadOnly))
         
-        // B overrides hashCode, making it non-guarded. A call to a non-guarded method does not add any information
+        // B overrides hashCode, making it non-guarded. A call to a non-guarded method does not
+        // add any information, since method may not actually guard the object
         task = parse('''
             val b1 = this.getB;
             b1.hashCode;
