@@ -1,18 +1,17 @@
 package rolez.lang;
 
+import static java.lang.Math.max;
 import static java.lang.Thread.currentThread;
+import static java.util.Arrays.copyOf;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.newSetFromMap;
 import static java.util.concurrent.locks.LockSupport.park;
-import static rolez.internal.ImmutableBitSet.EMPTY;
 import static rolez.lang.Task.currentTask;
 
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import rolez.internal.ImmutableBitSet;
 
 /**
  * Superclass of all guarded objects
@@ -29,8 +28,8 @@ public abstract class Guarded {
     private AtomicInteger sharedCount; // atomic because tasks can share concurrently
     private Set<Task<?>> readers;
     
-    private volatile ImmutableBitSet guardedInTasks;
-    private Object guardedInTasksLock;
+    private volatile long[] guardingCache;
+    private Object guardingCacheLock;
     
     /**
      * Default constructor that does not initialize guarding. Initialization happens lazily, when
@@ -65,8 +64,8 @@ public abstract class Guarded {
             sharedCount = new AtomicInteger(0);
             // IMPROVE: Initialize only when first used?
             readers = newSetFromMap(new ConcurrentHashMap<Task<?>, java.lang.Boolean>());
-            guardedInTasks = EMPTY; // IMPROVE: Add current task and fix tests that don't allow this...
-            guardedInTasksLock = new Object();
+            initializeGuardingCache();
+            // IMPROVE: Add current task and fix tests that don't allow this...
         }
     }
     
@@ -105,7 +104,7 @@ public abstract class Guarded {
             /* First step of passing */
             owner = task;
             ownerThread = null;
-            clearGuardedInTasks();
+            invalidateGuardingCache();
         }
     }
     
@@ -116,7 +115,7 @@ public abstract class Guarded {
             sharedCount.incrementAndGet();
             if(viewLock() != null)
                 readers.add(task);
-            clearGuardedInTasks();
+            invalidateGuardingCache();
         }
     }
     
@@ -146,20 +145,6 @@ public abstract class Guarded {
             ownerThread = owner == null ? null : owner.getExecutingThread();
         }
         // TODO: notify tasks that wait for other views?
-    }
-    
-    private final void clearGuardedInTasks() {
-        synchronized(guardedInTasksLock) {
-            guardedInTasks = EMPTY;
-        }
-        if(viewLock() != null)
-            synchronized(viewLock()) {
-                for(Guarded v : views())
-                    if(v != null)
-                        synchronized(v.guardedInTasksLock) {
-                            v.guardedInTasks = EMPTY;
-                        }
-            }
     }
     
     /* Guarding methods. The static versions can return the guarded object with the precise type
@@ -224,14 +209,12 @@ public abstract class Guarded {
     }
     
     private boolean alreadyGuardedIn(Task<?> task) {
-        boolean alreadyGuarded = guardedInTasks.get(task.id);
+        boolean alreadyGuarded = isInGuardingCache(task.id);
         if(!alreadyGuarded)
-            synchronized(guardedInTasksLock) {
-                guardedInTasks = guardedInTasks.set(task.id);
-            }
+            addToGuardingCache(task.id);
         return alreadyGuarded;
     }
-    
+
     /* The following two are required for expressions of type java.lang.Object, for which it is only
      * known at runtime whether guarding is needed */
     
@@ -317,7 +300,7 @@ public abstract class Guarded {
         }
         return false;
     }
-    
+
     private boolean mayWrite() {
         return ownerThread == currentThread() && sharedCount.get() == 0
                 && !descWithReadViewExists() && !descWithReadWriteViewExists();
@@ -339,5 +322,49 @@ public abstract class Guarded {
                         return true;
         }
         return false;
+    }
+    
+    /* Guarding cache implementation, inspired by BitSet from JDK 7 */
+    
+    private void initializeGuardingCache() {
+        // guardingCache remains null, meaning nothing is cached yet
+        guardingCacheLock = new Object();
+    }
+    
+    private boolean isInGuardingCache(int taskId) {
+        assert taskId >= 0;
+        int wordIndex = wordIndex(taskId);
+        long[] words = guardingCache;
+        return words != null && wordIndex < words.length && (words[wordIndex] & 1L << taskId) != 0;
+    }
+    
+    private void addToGuardingCache(int taskId) {
+        assert taskId >= 0;
+        synchronized(guardingCacheLock) {
+            long[] words = guardingCache;
+            if(words == null)
+                words = new long[0];
+            long[] newWords = copyOf(words, max(wordIndex(taskId) + 1, words.length));
+            newWords[wordIndex(taskId)] |= (1L << taskId);
+            guardingCache = newWords;
+        }
+    }
+    
+    private static int wordIndex(int bitIndex) {
+        return bitIndex >> 6;
+    }
+    
+    private final void invalidateGuardingCache() {
+        synchronized(guardingCacheLock) {
+            guardingCache = null;
+        }
+        if(viewLock() != null)
+            synchronized(viewLock()) {
+                for(Guarded v : views())
+                    if(v != null)
+                        synchronized(v.guardingCacheLock) {
+                            v.guardingCache = null;
+                        }
+            }
     }
 }
