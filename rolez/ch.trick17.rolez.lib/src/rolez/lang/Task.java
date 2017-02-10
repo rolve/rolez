@@ -6,11 +6,11 @@ import static java.util.concurrent.locks.LockSupport.unpark;
 import static rolez.lang.Guarded.guardReadWrite;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
 public abstract class Task<V> implements Runnable {
@@ -27,9 +27,30 @@ public abstract class Task<V> implements Runnable {
         return currentTask.get();
     }
     
-    private static final AtomicInteger idCounter = new AtomicInteger();
+    private static final BitSet usedTaskIds = new BitSet();
     
-    public final int id = idCounter.getAndIncrement();
+    /**
+     * Returns the next unused task ID and checks that the max number of task IDs is not exceeded.
+     * At the moment, there can be at most 64 tasks running at the same time, because a bit set
+     * consisting of a single "long" field is used for efficient guarding.
+     */
+    private static int getUnusedTaskId() {
+        synchronized(usedTaskIds) {
+            int id = usedTaskIds.nextClearBit(0);
+            if(id >= 64)
+                throw new AssertionError("too many tasks, maximum is 64");
+            usedTaskIds.set(id);
+            return id;
+        }
+    }
+    
+    private static void releaseTaskId(int id) {
+        synchronized(usedTaskIds) {
+            usedTaskIds.clear(id);
+        }
+    }
+    
+    public final int id = getUnusedTaskId();
     private final Sync sync = new Sync();
     
     private Thread executingThread;
@@ -91,6 +112,7 @@ public abstract class Task<V> implements Runnable {
             exception = e;
         }
         taskFinishTransitions();
+        releaseTaskId(id);
         currentTask.set(prevTask);
         
         /* Unblock threads waiting to get the result. Note that not only the parent task, but also
@@ -161,15 +183,8 @@ public abstract class Task<V> implements Runnable {
      */
     public static void unregisterRootTask() {
         assert currentTask.get().parent == null;
+        releaseTaskId(currentTask.get().id);
         currentTask.set(null);
-    }
-    
-    /**
-     * Resets the counter that assigns IDs to tasks. This method is only intended for specific
-     * situations and, if used carelessly, may result in broken guarding.
-     */
-    public static void resetTaskIdCounter() {
-        idCounter.set(0);
     }
     
     /**

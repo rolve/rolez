@@ -1,8 +1,6 @@
 package rolez.lang;
 
-import static java.lang.Math.max;
 import static java.lang.Thread.currentThread;
-import static java.util.Arrays.copyOf;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.newSetFromMap;
 import static java.util.concurrent.locks.LockSupport.park;
@@ -28,7 +26,7 @@ public abstract class Guarded {
     private AtomicInteger sharedCount; // atomic because tasks can share concurrently
     private Set<Task<?>> readers;
     
-    private volatile long[] guardingCache;
+    private volatile long guardingCache;
     private Object guardingCacheLock;
     
     /**
@@ -64,8 +62,7 @@ public abstract class Guarded {
             sharedCount = new AtomicInteger(0);
             // IMPROVE: Initialize only when first used?
             readers = newSetFromMap(new ConcurrentHashMap<Task<?>, java.lang.Boolean>());
-            initializeGuardingCache();
-            // IMPROVE: Add current task and fix tests that don't allow this...
+            guardingCacheLock = new Object();
         }
     }
     
@@ -324,46 +321,28 @@ public abstract class Guarded {
         return false;
     }
     
-    /* Guarding cache implementation, inspired by BitSet from JDK 7 */
-    
-    private void initializeGuardingCache() {
-        // guardingCache remains null, meaning nothing is cached yet
-        guardingCacheLock = new Object();
-    }
-    
     private boolean isInGuardingCache(int taskId) {
-        assert taskId >= 0;
-        int wordIndex = wordIndex(taskId);
-        long[] words = guardingCache;
-        return words != null && wordIndex < words.length && (words[wordIndex] & 1L << taskId) != 0;
+        assert taskId >= 0 && taskId < 64;
+        return (guardingCache & 1L << taskId) != 0;
     }
     
     private void addToGuardingCache(int taskId) {
-        assert taskId >= 0;
+        assert taskId >= 0 && taskId < 64;
         synchronized(guardingCacheLock) {
-            long[] words = guardingCache;
-            if(words == null)
-                words = new long[0];
-            long[] newWords = copyOf(words, max(wordIndex(taskId) + 1, words.length));
-            newWords[wordIndex(taskId)] |= (1L << taskId);
-            guardingCache = newWords;
+            guardingCache |= (1L << taskId);
         }
-    }
-    
-    private static int wordIndex(int bitIndex) {
-        return bitIndex >> 6;
     }
     
     private final void invalidateGuardingCache() {
         synchronized(guardingCacheLock) {
-            guardingCache = null;
+            guardingCache = 0L;
         }
         if(viewLock() != null)
             synchronized(viewLock()) {
                 for(Guarded v : views())
                     if(v != null)
                         synchronized(v.guardingCacheLock) {
-                            v.guardingCache = null;
+                            v.guardingCache = 0L;
                         }
             }
     }
