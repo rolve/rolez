@@ -165,6 +165,14 @@ public abstract class Task<V> implements Runnable {
     }
     
     /**
+     * Resets the counter that assigns IDs to tasks. This method is only intended for specific
+     * situations and, if used carelessly, may result in broken guarding.
+     */
+    public static void resetTaskIdCounter() {
+        idCounter.set(0);
+    }
+    
+    /**
      * Implements the blocking of threads waiting to get the result of a task.
      * 
      * @author Michael Faes
