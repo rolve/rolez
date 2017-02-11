@@ -46,7 +46,6 @@
     <eOperations name="getQualifiedName" eType="#//QualifiedName"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="Constr" eSuperTypes="#//Executable">
-    <eOperations name="isMapped" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
     <eOperations name="getBody" eType="#//Block"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="jvmConstr" eType="ecore:EClass ../../org.eclipse.xtext.common.types/model/JavaVMTypes.ecore#//JvmConstructor"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="thisParam" eType="#//ThisParam"
@@ -67,7 +66,6 @@
     <eLiterals name="VAR" value="1" literal="var"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="Method" eSuperTypes="#//Member #//Executable #//Typed">
-    <eOperations name="isMapped" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
     <eOperations name="isAsync" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
     <eOperations name="isTask" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
     <eOperations name="isOverriding" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
@@ -298,6 +296,7 @@
         <eTypeArguments eClassifier="#//Param"/>
       </eGenericType>
     </eOperations>
+    <eOperations name="isMapped" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="params" upperBound="-1"
         eType="#//Param" containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="code" eType="#//Instr"
