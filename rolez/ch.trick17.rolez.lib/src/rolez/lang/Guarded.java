@@ -148,8 +148,9 @@ public abstract class Guarded {
      * (which is not possible with instance methods, due to the lack of self types). This simplifies
      * code generation a lot, since guarding can be done within an expression. */
     
+    // TODO: Remove this version at some point
     public static <G extends Guarded> G guardReadOnly(G guarded) {
-        ((Guarded) guarded).guardReadOnly();
+        ((Guarded) guarded).guardReadOnly(currentTask());
         return guarded;
     }
     
@@ -158,21 +159,13 @@ public abstract class Guarded {
         return guarded;
     }
     
-    public final void guardReadOnlyReachable(Set<Guarded> processed) {
+    public final void guardReadOnlyReachable(Set<Guarded> processed, Task<?> currentTask) {
         if(processed.add(this)) {
-            guardReadOnly();
+            guardReadOnly(currentTask);
             for(Object g : guardedRefs())
                 if(g instanceof Guarded)
-                    ((Guarded) g).guardReadOnlyReachable(processed);
+                    ((Guarded) g).guardReadOnlyReachable(processed, currentTask);
         }
-    }
-    
-    private final void guardReadOnly() {
-        if(!guardingInitialized() || alreadyGuardedIn(currentTask()))
-            return;
-        
-        while(!mayRead())
-            park();
     }
     
     private final void guardReadOnly(Task<?> currentTask) {
@@ -183,22 +176,28 @@ public abstract class Guarded {
             park();
     }
     
+    // TODO: Remove this version at some point
     public static <G extends Guarded> G guardReadWrite(G guarded) {
-        ((Guarded) guarded).guardReadWrite();
+        ((Guarded) guarded).guardReadWrite(currentTask());
         return guarded;
     }
     
-    public final void guardReadWriteReachable(Set<Guarded> processed) {
+    public static <G extends Guarded> G guardReadWrite(G guarded, Task<?> currentTask) {
+        ((Guarded) guarded).guardReadWrite(currentTask);
+        return guarded;
+    }
+    
+    public final void guardReadWriteReachable(Set<Guarded> processed, Task<?> currentTask) {
         if(processed.add(this)) {
-            guardReadWrite();
+            guardReadWrite(currentTask);
             for(Object g : guardedRefs())
                 if(g instanceof Guarded)
-                    ((Guarded) g).guardReadWriteReachable(processed);
+                    ((Guarded) g).guardReadWriteReachable(processed, currentTask);
         }
     }
     
-    private void guardReadWrite() {
-        if(!guardingInitialized() || alreadyGuardedIn(currentTask()))
+    private void guardReadWrite(Task<?> currentTask) {
+        if(!guardingInitialized() || alreadyGuardedIn(currentTask))
             return;
         
         while(!mayWrite())

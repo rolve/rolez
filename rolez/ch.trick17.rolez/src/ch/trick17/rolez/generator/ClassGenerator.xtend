@@ -3,6 +3,7 @@ package ch.trick17.rolez.generator
 import ch.trick17.rolez.RolezUtils
 import ch.trick17.rolez.generic.ParameterizedMethod
 import ch.trick17.rolez.rolez.Constr
+import ch.trick17.rolez.rolez.Executable
 import ch.trick17.rolez.rolez.Field
 import ch.trick17.rolez.rolez.Instr
 import ch.trick17.rolez.rolez.MemberAccess
@@ -84,7 +85,13 @@ class ClassGenerator {
             
             public static final «safeSimpleName» INSTANCE = new «safeSimpleName»();
             
+            «IF superclass.isMapped»
             private «safeSimpleName»() {}
+            «ELSE»
+            private «safeSimpleName»() {
+                super(«taskClassName».currentTask());
+            }
+            «ENDIF»
             « fields.map[genObjectField ].join»
             «methods.map[genObjectMethod].join»
         }
@@ -94,7 +101,7 @@ class ClassGenerator {
         val roleAnalysis = newRoleAnalysis(it, body.controlFlowGraph)
          '''
             
-            public «enclosingClass.safeSimpleName»(«params.map[gen].join(", ")») {
+            public «enclosingClass.safeSimpleName»(«genParamsWithExtra») {
                 «body.stmts.head.generate(roleAnalysis) /* super constr call */»
                 «IF body.startsTasks»
                 final «jvmTasksClassName» $tasks = new «jvmTasksClassName»();
@@ -117,10 +124,10 @@ class ClassGenerator {
     
     private def gen(Method it) '''
         
-        «IF isOverriding»
+        «IF isOverriding && !superMethod.isMapped»
         @java.lang.Override
         «ENDIF»
-        public «genReturnType» «safeName»(«genParams») {
+        public «genReturnType» «safeName»(«genParamsWithExtra») {
             «IF needsTasksJoin»
             final «jvmTasksClassName» $tasks = new «jvmTasksClassName»();
             «ENDIF»
@@ -131,12 +138,20 @@ class ClassGenerator {
             }
             «ENDIF»
         }
+        «IF isOverriding && superMethod.isMapped»
+        
+        @java.lang.Override
+        public «genReturnType» «safeName»(«params.map[gen].join(", ")») {
+            «IF !(type instanceof Void)»return «ENDIF»«genBridgeCall»;
+        }
+        «ENDIF»
         «IF isTask»
         
-        public «taskClassName»<«type.generateGeneric»> $«name»Task(«genParams») {
+        public «taskClassName»<«type.generateGeneric»> $«name»Task(«params.map[gen].join(", ")») {
             return new «taskClassName»<«type.generateGeneric»>(new Object[]{«genTransitionArgs(ReadWrite)»}, new Object[]{«genTransitionArgs(ReadOnly)»}) {
                 @java.lang.Override
                 protected «type.generateGeneric» runRolez() {
+                    final «taskClassName»<?> $task = this;
                     «body.generateWithTryCatch(newRoleAnalysis(it, body.controlFlowGraph, TASK), false)»
                     «IF needsReturnNull»
                     return null;
@@ -153,10 +168,11 @@ class ClassGenerator {
         «ENDIF»
     '''
     
-    private def genParams(Method it) {
-        var allParams = new ArrayList(params.map[gen])
-        if(isAsync)
-            allParams += "final " + jvmTasksClassName + " $tasks"
+    private def genParamsWithExtra(Executable it) {
+        val allParams = new ArrayList(params.map[gen])
+        if(it instanceof Method && (it as Method).isAsync)
+            allParams += '''final «jvmTasksClassName» $tasks'''
+        allParams += '''final «taskClassName»<?> $task'''
         allParams.join(", ")
     }
     
@@ -166,6 +182,16 @@ class ClassGenerator {
     
     private def startsTasks(Instr it) {
         all(MemberAccess).exists[isTaskStart || isMethodInvoke && method.isAsync]
+    }
+    
+    /**
+     * Generated for methods that override a mapped method and can therefore be called from Java
+     * code that does not pass the current task. The current task is retrieved from a thread-local
+     * variable and the real method is called.
+     */
+    private def genBridgeCall(Method it) {
+        val args = params.map[safeName] + #[taskClassName + ".currentTask()"]
+        '''this.«safeName»(«args.join(", ")»)'''
     }
     
     private def genTransitionArgs(Method it, Class<? extends Role> role) {
@@ -188,7 +214,10 @@ class ClassGenerator {
         if(enclosingClass.isSingleton)
             '''INSTANCE'''
         else
-            '''new «enclosingClass.safeSimpleName»()'''
+            // Since no current task exists yet, pass null to the constr for now. Nothing that
+            // requires guarding can be called in there. Same problem fir field initializers.
+            // TODO: Check this in the validator!
+            '''new «enclosingClass.safeSimpleName»(null)'''
     }
     
     // TODO: Disable guarding

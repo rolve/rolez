@@ -237,14 +237,14 @@ public abstract class Task<V> implements Runnable {
             
         passedReachable = newIdentitySet();
         for(Guarded g : passed)
-            g.guardReadWriteReachable(passedReachable);
+            g.guardReadWriteReachable(passedReachable, parent);
         
         // Objects that are reachable both from a passed and a shared object are effectively *passed*
         sharedReachable = newIdentitySet();
         sharedReachable.addAll(passedReachable);
         for(Object g : sharedObjects)
             if(g instanceof Guarded)
-                ((Guarded) g).guardReadOnlyReachable(sharedReachable);
+                ((Guarded) g).guardReadOnlyReachable(sharedReachable, parent);
         sharedReachable.removeAll(passedReachable);
         
         /* IMPROVE: Only pass (share) objects that are reachable through chain of readwrite
@@ -272,9 +272,9 @@ public abstract class Task<V> implements Runnable {
         // IMPROVE: guarding should not be necessary since child tasks are already joined!
         Set<Guarded> newPassedReachable = newIdentitySet();
         for(Guarded g : passed)
-            g.guardReadWriteReachable(newPassedReachable);
+            g.guardReadWriteReachable(newPassedReachable, this);
         if(result instanceof Guarded)
-            ((Guarded) result).guardReadWriteReachable(newPassedReachable);
+            ((Guarded) result).guardReadWriteReachable(newPassedReachable, this);
         
         for(Guarded g : newPassedReachable)
             g.releasePassed();

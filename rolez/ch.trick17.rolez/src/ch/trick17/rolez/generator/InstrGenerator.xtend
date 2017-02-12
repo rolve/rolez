@@ -1,6 +1,7 @@
 package ch.trick17.rolez.generator
 
 import ch.trick17.rolez.RolezUtils
+import ch.trick17.rolez.rolez.Argumented
 import ch.trick17.rolez.rolez.ArithmeticBinaryExpr
 import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.BinaryExpr
@@ -122,7 +123,7 @@ class InstrGenerator {
             for(«initializer.generate» «condition.generate»; «step.generate»)«body.genIndent»'''
         
         private def dispatch CharSequence generate(SuperConstrCall it) '''
-            super(«args.map[generate].join(", ")»);'''
+            super(«genArgs»);'''
         
         private def dispatch CharSequence generate(ReturnNothing _) {
             if(codeKind == TASK) '''
@@ -291,7 +292,7 @@ class InstrGenerator {
                 val genTarget = 
                     if(target instanceof The) (target as The).classRef.clazz.jvmClass.getQualifiedName('.')
                     else target.genGuardedMapped(method.original.thisParam.type.role.erased, true)
-                val genInvoke = '''«genTarget».«method.safeName»(«args.map[genCoerced].join(", ")»)'''
+                val genInvoke = '''«genTarget».«method.safeName»(«genArgs»)'''
                 if(method.jvmMethod.returnType.type instanceof JvmArrayType) {
                     val componentType = ((method.type as RoleType).base as GenericClassRef).typeArg
                     '''«jvmGuardedArrayClassName».<«componentType.generate»[]>wrap(«genInvoke»)'''
@@ -301,6 +302,39 @@ class InstrGenerator {
             }
             else
                 '''«target.genNested».«method.safeName»(«genArgs»)'''
+        }
+        
+        private def genGuardedMapped(Expr it, Role requiredRole, boolean nested) {
+            val container = eContainer
+            val annotated = switch(container) {
+                MemberAccess case it === container.target: container.method.jvmMethod
+                default: destParam.jvmParam
+            }
+            
+            if(annotated.isSafe) generate else genGuarded(requiredRole, nested)
+        }
+        
+        private def genArgs(Argumented it) {
+            val allArgs =
+                if(executable.isMapped)
+                    new ArrayList(args.map[genCoerced])
+                else
+                    new ArrayList(args.map[generate])
+            
+            if(it instanceof MemberAccess && (it as MemberAccess).method.isAsync)
+                if(codeKind == TASK)
+                    allArgs += jvmTasksClassName + ".NO_OP_INSTANCE"
+                else
+                    allArgs += "$tasks"
+            
+            if(!executable.isMapped) {
+                if(codeKind == FIELD_INITIALIZER)
+                    allArgs += taskClassName + ".currentTask()"
+                else
+                    allArgs += "$task"
+            }
+            
+            allArgs.join(", ")
         }
         
         private def CharSequence genCoerced(Expr it) {
@@ -316,26 +350,6 @@ class InstrGenerator {
             }
             else
                 genGuardedMapped(reqRole, false)
-        }
-        
-        private def genGuardedMapped(Expr it, Role requiredRole, boolean nested) {
-            val container = eContainer
-            val annotated = switch(container) {
-                MemberAccess case it === container.target: container.method.jvmMethod
-                default: destParam.jvmParam
-            }
-            
-            if(annotated.isSafe) generate else genGuarded(requiredRole, nested)
-        }
-        
-        private def genArgs(MemberAccess it) {
-            val allArgs = new ArrayList(args.map[generate])
-            if(method.isAsync)
-                if(codeKind == TASK)
-                    allArgs += jvmTasksClassName + ".NO_OP_INSTANCE"
-                else
-                    allArgs += "$tasks"
-            allArgs.join(", ")
         }
         
         private def generateTaskStart(MemberAccess it) {
@@ -359,7 +373,7 @@ class InstrGenerator {
         private def dispatch CharSequence generate(VarRef it) { variable.safeName }
         
         private def dispatch CharSequence generate(New it) {
-            val genArgs = 
+            val generatedArgs = 
                 if(classRef.clazz.isArrayClass || classRef.clazz.isVectorBuilderClass) {
                     val componentType = (classRef as GenericClassRef).typeArg
                     val withoutSize = '''new «componentType.generateErased»[]'''
@@ -367,11 +381,9 @@ class InstrGenerator {
                     matcher.find
                     withoutSize.substring(0, matcher.start) + args.head.generate + withoutSize.substring(matcher.start)
                 }
-                else if(constr.isMapped)
-                    args.map[genCoerced].join(", ")
                 else
-                    args.map[generate].join(", ")
-            '''new «classRef.generate»(«genArgs»)'''
+                    genArgs
+            '''new «classRef.generate»(«generatedArgs»)'''
         }
         
         private static val bracketPattern = Pattern.compile("\\](\\[\\])*$")
@@ -412,8 +424,8 @@ class InstrGenerator {
             val needsGuard = !system.subroleSucceeded(roleAnalysis.dynamicRole(it), requiredRole)
             if(utils.isGuarded(type) && needsGuard)
                 switch(requiredRole) {
-                    ReadWrite: "guardReadWrite(" + generate + ")"
-                    ReadOnly : "guardReadOnly("  + generate + ")"
+                    ReadWrite: "guardReadWrite(" + generate + ", $task)"
+                    ReadOnly : "guardReadOnly("  + generate + ", $task)"
                     default  : throw new AssertionError("unexpected role: " + requiredRole)
                 }
             else
