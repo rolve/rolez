@@ -29,7 +29,7 @@ class ClassGeneratorTest extends GeneratorTest {
             
             public class A extends «jvmGuardedClassName» {
                 
-                public A(final rolez.lang.Task<?> $task) {
+                public A(final long $task) {
                     super();
                 }
             }
@@ -43,7 +43,7 @@ class ClassGeneratorTest extends GeneratorTest {
             
             public class A extends «jvmGuardedClassName» {
                 
-                public A(final rolez.lang.Task<?> $task) {
+                public A(final long $task) {
                     super();
                 }
             }
@@ -58,7 +58,7 @@ class ClassGeneratorTest extends GeneratorTest {
             
             public class A extends Base {
                 
-                public A(final rolez.lang.Task<?> $task) {
+                public A(final long $task) {
                     super($task);
                 }
             }
@@ -70,7 +70,7 @@ class ClassGeneratorTest extends GeneratorTest {
             
             public class A extends foo.bar.Base {
                 
-                public A(final rolez.lang.Task<?> $task) {
+                public A(final long $task) {
                     super($task);
                 }
             }
@@ -89,7 +89,7 @@ class ClassGeneratorTest extends GeneratorTest {
             
             public class IntContainer extends «Container.canonicalName»<java.lang.Integer> {
                 
-                public IntContainer(final rolez.lang.Task<?> $task) {
+                public IntContainer(final long $task) {
                     super();
                 }
             }
@@ -104,7 +104,7 @@ class ClassGeneratorTest extends GeneratorTest {
             
             public class A extends java.lang.Object {
                 
-                public A(final rolez.lang.Task<?> $task) {
+                public A(final long $task) {
                     super();
                 }
             }
@@ -116,7 +116,7 @@ class ClassGeneratorTest extends GeneratorTest {
             
             public class A extends PureBase {
                 
-                public A(final rolez.lang.Task<?> $task) {
+                public A(final long $task) {
                     super($task);
                 }
             }
@@ -149,7 +149,7 @@ class ClassGeneratorTest extends GeneratorTest {
                 public static final A INSTANCE = new A();
                 
                 private A() {
-                    super(rolez.lang.Task.currentTask());
+                    super(rolez.lang.Task.currentTask().idBits());
                 }
             }
         ''')
@@ -257,9 +257,9 @@ class ClassGeneratorTest extends GeneratorTest {
                 
                 public foo.A a;
                 
-                public final foo.bar.Base base = new foo.bar.Base(rolez.lang.Task.currentTask());
+                public final foo.bar.Base base = new foo.bar.Base(rolez.lang.Task.currentTask().idBits());
                 
-                public A(final rolez.lang.Task<?> $task) {
+                public A(final long $task) {
                     super();
                     this.i = 0;
                 }
@@ -300,14 +300,14 @@ class ClassGeneratorTest extends GeneratorTest {
             
             public class A extends «jvmGuardedClassName» {
                 
-                public A(final rolez.lang.Task<?> $task) {
+                public A(final long $task) {
                     super();
                 }
                 
-                public void foo(final rolez.lang.Task<?> $task) {
+                public void foo(final long $task) {
                 }
                 
-                public int foo(final int i, final rolez.lang.Task<?> $task) {
+                public int foo(final int i, final long $task) {
                     return i;
                 }
             }
@@ -328,7 +328,7 @@ class ClassGeneratorTest extends GeneratorTest {
                 
                 private A() {}
                 
-                public void foo(final rolez.lang.Task<?> $task) {
+                public void foo(final long $task) {
                 }
             }
         ''')
@@ -344,17 +344,17 @@ class ClassGeneratorTest extends GeneratorTest {
             
             public class A extends «jvmGuardedClassName» {
                 
-                public A(final rolez.lang.Task<?> $task) {
+                public A(final long $task) {
                     super();
                 }
                 
-                public boolean equals(final java.lang.Object o, final rolez.lang.Task<?> $task) {
+                public boolean equals(final java.lang.Object o, final long $task) {
                     return true;
                 }
                 
                 @java.lang.Override
                 public boolean equals(final java.lang.Object o) {
-                    return this.equals(o, rolez.lang.Task.currentTask());
+                    return this.equals(o, rolez.lang.Task.currentTask().idBits());
                 }
             }
         ''')
@@ -372,26 +372,26 @@ class ClassGeneratorTest extends GeneratorTest {
             
             public class IntContainer extends «Container.canonicalName»<java.lang.Integer> {
                 
-                public IntContainer(final rolez.lang.Task<?> $task) {
+                public IntContainer(final long $task) {
                     super();
                 }
                 
-                public void set(final java.lang.Integer i, final rolez.lang.Task<?> $task) {
+                public void set(final java.lang.Integer i, final long $task) {
                     guardReadWrite(this, $task).e = i;
                 }
                 
                 @java.lang.Override
                 public void set(final java.lang.Integer i) {
-                    this.set(i, rolez.lang.Task.currentTask());
+                    this.set(i, rolez.lang.Task.currentTask().idBits());
                 }
                 
-                public java.lang.Integer get(final rolez.lang.Task<?> $task) {
+                public java.lang.Integer get(final long $task) {
                     return guardReadOnly(this, $task).e;
                 }
                 
                 @java.lang.Override
                 public java.lang.Integer get() {
-                    return this.get(rolez.lang.Task.currentTask());
+                    return this.get(rolez.lang.Task.currentTask().idBits());
                 }
             }
         ''')
@@ -406,17 +406,17 @@ class ClassGeneratorTest extends GeneratorTest {
             
             public class SpecialIntContainer extends IntContainer {
                 
-                public SpecialIntContainer(final rolez.lang.Task<?> $task) {
+                public SpecialIntContainer(final long $task) {
                     super($task);
                 }
                 
                 @java.lang.Override
-                public void set(final java.lang.Integer i, final rolez.lang.Task<?> $task) {
+                public void set(final java.lang.Integer i, final long $task) {
                     guardReadWrite(this, $task).e = 2 * i;
                 }
                 
                 @java.lang.Override
-                public java.lang.Integer get(final rolez.lang.Task<?> $task) {
+                public java.lang.Integer get(final long $task) {
                     return guardReadOnly(this, $task).e / 2;
                 }
             }
@@ -437,11 +437,11 @@ class ClassGeneratorTest extends GeneratorTest {
             
             public class A extends «jvmGuardedClassName» {
                 
-                public A(final rolez.lang.Task<?> $task) {
+                public A(final long $task) {
                     super();
                 }
                 
-                public void foo(final rolez.lang.Task<?> $task) {
+                public void foo(final long $task) {
                     final rolez.internal.Tasks $tasks = new rolez.internal.Tasks();
                     try {
                         $tasks.addInline(rolez.lang.TaskSystem.getDefault().start(this.$barTask()));
@@ -452,14 +452,14 @@ class ClassGeneratorTest extends GeneratorTest {
                     }
                 }
                 
-                public void bar(final rolez.lang.Task<?> $task) {
+                public void bar(final long $task) {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $barTask() {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            final rolez.lang.Task<?> $task = this;
+                            final long $task = idBits();
                             return null;
                         }
                     };
@@ -485,11 +485,11 @@ class ClassGeneratorTest extends GeneratorTest {
             
             public class A extends «jvmGuardedClassName» {
                 
-                public A(final rolez.lang.Task<?> $task) {
+                public A(final long $task) {
                     super();
                 }
                 
-                public void foo(final rolez.lang.Task<?> $task) {
+                public void foo(final long $task) {
                     final rolez.internal.Tasks $tasks = new rolez.internal.Tasks();
                     try {
                         this.fooAsync($tasks, $task);
@@ -499,19 +499,19 @@ class ClassGeneratorTest extends GeneratorTest {
                     }
                 }
                 
-                public void fooAsync(final rolez.internal.Tasks $tasks, final rolez.lang.Task<?> $task) {
+                public void fooAsync(final rolez.internal.Tasks $tasks, final long $task) {
                     $tasks.addInline(rolez.lang.TaskSystem.getDefault().start(this.$barTask()));
                     this.bar($task);
                 }
                 
-                public void bar(final rolez.lang.Task<?> $task) {
+                public void bar(final long $task) {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $barTask() {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            final rolez.lang.Task<?> $task = this;
+                            final long $task = idBits();
                             return null;
                         }
                     };
@@ -530,11 +530,11 @@ class ClassGeneratorTest extends GeneratorTest {
             
             public class App extends «jvmGuardedClassName» {
                 
-                public App(final rolez.lang.Task<?> $task) {
+                public App(final long $task) {
                     super();
                 }
                 
-                public Base foo(final rolez.lang.Task<?> $task) {
+                public Base foo(final long $task) {
                     return new Base($task);
                 }
                 
@@ -542,7 +542,7 @@ class ClassGeneratorTest extends GeneratorTest {
                     return new rolez.lang.Task<Base>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected Base runRolez() {
-                            final rolez.lang.Task<?> $task = this;
+                            final long $task = idBits();
                             return new Base($task);
                         }
                     };
@@ -562,11 +562,11 @@ class ClassGeneratorTest extends GeneratorTest {
                 
                 public final int magic = 42;
                 
-                public App(final rolez.lang.Task<?> $task) {
+                public App(final long $task) {
                     super();
                 }
                 
-                public int foo(final rolez.lang.Task<?> $task) {
+                public int foo(final long $task) {
                     return this.magic;
                 }
                 
@@ -574,7 +574,7 @@ class ClassGeneratorTest extends GeneratorTest {
                     return new rolez.lang.Task<java.lang.Integer>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Integer runRolez() {
-                            final rolez.lang.Task<?> $task = this;
+                            final long $task = idBits();
                             return App.this.magic;
                         }
                     };
@@ -591,11 +591,11 @@ class ClassGeneratorTest extends GeneratorTest {
             
             public class App extends «jvmGuardedClassName» {
                 
-                public App(final rolez.lang.Task<?> $task) {
+                public App(final long $task) {
                     super();
                 }
                 
-                public void foo(final int i, final int j, final rolez.lang.Task<?> $task) {
+                public void foo(final int i, final int j, final long $task) {
                     new foo.bar.Base(i + j, $task);
                 }
                 
@@ -603,7 +603,7 @@ class ClassGeneratorTest extends GeneratorTest {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            final rolez.lang.Task<?> $task = this;
+                            final long $task = idBits();
                             new foo.bar.Base(i + j, $task);
                             return null;
                         }
@@ -625,44 +625,44 @@ class ClassGeneratorTest extends GeneratorTest {
             
             public class App extends «jvmGuardedClassName» {
                 
-                public App(final rolez.lang.Task<?> $task) {
+                public App(final long $task) {
                     super();
                 }
                 
-                public void foo(final rolez.lang.Task<?> $task) {
+                public void foo(final long $task) {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $fooTask() {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            final rolez.lang.Task<?> $task = this;
+                            final long $task = idBits();
                             return null;
                         }
                     };
                 }
                 
-                public void bar(final rolez.lang.Task<?> $task) {
+                public void bar(final long $task) {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $barTask() {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{this}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            final rolez.lang.Task<?> $task = this;
+                            final long $task = idBits();
                             return null;
                         }
                     };
                 }
                 
-                public void baz(final rolez.lang.Task<?> $task) {
+                public void baz(final long $task) {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $bazTask() {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{this}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            final rolez.lang.Task<?> $task = this;
+                            final long $task = idBits();
                             return null;
                         }
                     };
@@ -681,25 +681,25 @@ class ClassGeneratorTest extends GeneratorTest {
             
             public class App extends «jvmGuardedClassName» {
                 
-                public App(final rolez.lang.Task<?> $task) {
+                public App(final long $task) {
                     super();
                 }
                 
-                public void main(final rolez.lang.Task<?> $task) {
+                public void main(final long $task) {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $mainTask() {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            final rolez.lang.Task<?> $task = this;
+                            final long $task = idBits();
                             return null;
                         }
                     };
                 }
                 
                 public static void main(final java.lang.String[] args) {
-                    rolez.lang.TaskSystem.getDefault().run(new App(null).$mainTask());
+                    rolez.lang.TaskSystem.getDefault().run(new App(0L).$mainTask());
                 }
             }
         ''')
@@ -718,14 +718,14 @@ class ClassGeneratorTest extends GeneratorTest {
                 
                 private App() {}
                 
-                public void main(final rolez.lang.Task<?> $task) {
+                public void main(final long $task) {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $mainTask() {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            final rolez.lang.Task<?> $task = this;
+                            final long $task = idBits();
                             return null;
                         }
                     };
@@ -746,11 +746,11 @@ class ClassGeneratorTest extends GeneratorTest {
             
             public class App extends «jvmGuardedClassName» {
                 
-                public App(final rolez.lang.Task<?> $task) {
+                public App(final long $task) {
                     super();
                 }
                 
-                public void main(final rolez.lang.GuardedArray<java.lang.String[]> args, final rolez.lang.Task<?> $task) {
+                public void main(final rolez.lang.GuardedArray<java.lang.String[]> args, final long $task) {
                     guardReadOnly(args, $task).data[0].length();
                 }
                 
@@ -758,7 +758,7 @@ class ClassGeneratorTest extends GeneratorTest {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{args}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            final rolez.lang.Task<?> $task = this;
+                            final long $task = idBits();
                             args.data[0].length();
                             return null;
                         }
@@ -766,7 +766,7 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public static void main(final java.lang.String[] args) {
-                    rolez.lang.TaskSystem.getDefault().run(new App(null).$mainTask(rolez.lang.GuardedArray.<java.lang.String[]>wrap(args)));
+                    rolez.lang.TaskSystem.getDefault().run(new App(0L).$mainTask(rolez.lang.GuardedArray.<java.lang.String[]>wrap(args)));
                 }
             }
         ''')
@@ -784,11 +784,11 @@ class ClassGeneratorTest extends GeneratorTest {
             
             public class App extends «jvmGuardedClassName» {
                 
-                public App(final rolez.lang.Task<?> $task) {
+                public App(final long $task) {
                     super();
                 }
                 
-                public void foo(final Base o1, final Base o2, final Base o3, final rolez.lang.Task<?> $task) {
+                public void foo(final Base o1, final Base o2, final Base o3, final long $task) {
                     java.lang.System.out.println("Hello World!");
                 }
                 
@@ -796,7 +796,7 @@ class ClassGeneratorTest extends GeneratorTest {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{this, o1}, new Object[]{o2}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            final rolez.lang.Task<?> $task = this;
+                            final long $task = idBits();
                             java.lang.System.out.println("Hello World!");
                             return null;
                         }
@@ -814,18 +814,18 @@ class ClassGeneratorTest extends GeneratorTest {
             
             public class App extends «jvmGuardedClassName» {
                 
-                public App(final rolez.lang.Task<?> $task) {
+                public App(final long $task) {
                     super();
                 }
                 
-                public void foo(final java.lang.Object o, final rolez.lang.Task<?> $task) {
+                public void foo(final java.lang.Object o, final long $task) {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $fooTask(final java.lang.Object o) {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{o}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            final rolez.lang.Task<?> $task = this;
+                            final long $task = idBits();
                             return null;
                         }
                     };
@@ -847,11 +847,11 @@ class ClassGeneratorTest extends GeneratorTest {
             
             public class App extends «jvmGuardedClassName» {
                 
-                public App(final rolez.lang.Task<?> $task) {
+                public App(final long $task) {
                     super();
                 }
                 
-                public void foo(final Base o, final rolez.lang.Task<?> $task) {
+                public void foo(final Base o, final long $task) {
                     guardReadWrite(o, $task).foo = 42;
                 }
                 
@@ -859,7 +859,7 @@ class ClassGeneratorTest extends GeneratorTest {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{o}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            final rolez.lang.Task<?> $task = this;
+                            final long $task = idBits();
                             o.foo = 42;
                             return null;
                         }
@@ -883,70 +883,70 @@ class ClassGeneratorTest extends GeneratorTest {
             
             public class App extends «jvmGuardedClassName» {
                 
-                public App(final rolez.lang.Task<?> $task) {
+                public App(final long $task) {
                     super();
                 }
                 
-                public void foo(final rolez.lang.Task<?> $task) {
+                public void foo(final long $task) {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $fooTask() {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            final rolez.lang.Task<?> $task = this;
+                            final long $task = idBits();
                             return null;
                         }
                     };
                 }
                 
-                public void foo(final int i, final rolez.lang.Task<?> $task) {
+                public void foo(final int i, final long $task) {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $fooTask(final int i) {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            final rolez.lang.Task<?> $task = this;
+                            final long $task = idBits();
                             return null;
                         }
                     };
                 }
                 
-                public void foo(final double d, final rolez.lang.Task<?> $task) {
+                public void foo(final double d, final long $task) {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $fooTask(final double d) {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            final rolez.lang.Task<?> $task = this;
+                            final long $task = idBits();
                             return null;
                         }
                     };
                 }
                 
-                public void foo(final rolez.lang.GuardedArray<int[]> a, final rolez.lang.GuardedArray<double[]> b, final rolez.lang.Task<?> $task) {
+                public void foo(final rolez.lang.GuardedArray<int[]> a, final rolez.lang.GuardedArray<double[]> b, final long $task) {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $fooTask(final rolez.lang.GuardedArray<int[]> a, final rolez.lang.GuardedArray<double[]> b) {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            final rolez.lang.Task<?> $task = this;
+                            final long $task = idBits();
                             return null;
                         }
                     };
                 }
                 
-                public void foo(final rolez.lang.GuardedArray<rolez.lang.GuardedArray<int[]>[]> a, final rolez.lang.Task<?> $task) {
+                public void foo(final rolez.lang.GuardedArray<rolez.lang.GuardedArray<int[]>[]> a, final long $task) {
                 }
                 
                 public rolez.lang.Task<java.lang.Void> $fooTask(final rolez.lang.GuardedArray<rolez.lang.GuardedArray<int[]>[]> a) {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            final rolez.lang.Task<?> $task = this;
+                            final long $task = idBits();
                             return null;
                         }
                     };
@@ -967,11 +967,11 @@ class ClassGeneratorTest extends GeneratorTest {
             
             public class A extends «jvmGuardedClassName» {
                 
-                public A(final rolez.lang.Task<?> $task) {
+                public A(final long $task) {
                     super();
                 }
                 
-                public void foo(final int i, final rolez.lang.Task<?> $task) {
+                public void foo(final int i, final long $task) {
                     return;
                 }
                 
@@ -979,7 +979,7 @@ class ClassGeneratorTest extends GeneratorTest {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            final rolez.lang.Task<?> $task = this;
+                            final long $task = idBits();
                             return null;
                         }
                     };
@@ -1003,11 +1003,11 @@ class ClassGeneratorTest extends GeneratorTest {
             
             public class A extends «jvmGuardedClassName» {
                 
-                public A(final rolez.lang.Task<?> $task) {
+                public A(final long $task) {
                     super();
                 }
                 
-                public void foo(final int i, final rolez.lang.Task<?> $task) {
+                public void foo(final int i, final long $task) {
                     if(i == 0)
                         return;
                     else {
@@ -1020,7 +1020,7 @@ class ClassGeneratorTest extends GeneratorTest {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            final rolez.lang.Task<?> $task = this;
+                            final long $task = idBits();
                             if(i == 0)
                                 return null;
                             else {
@@ -1045,7 +1045,7 @@ class ClassGeneratorTest extends GeneratorTest {
             
             public class A extends «jvmGuardedClassName» {
                 
-                public A(final rolez.lang.Task<?> $task) {
+                public A(final long $task) {
                     super();
                 }
             }
@@ -1063,11 +1063,11 @@ class ClassGeneratorTest extends GeneratorTest {
             
             public class A extends «jvmGuardedClassName» {
                 
-                public A(final rolez.lang.Task<?> $task) {
+                public A(final long $task) {
                     super();
                 }
                 
-                public A(final int i, final foo.A a, final rolez.lang.Task<?> $task) {
+                public A(final int i, final foo.A a, final long $task) {
                     super();
                 }
             }
@@ -1084,7 +1084,7 @@ class ClassGeneratorTest extends GeneratorTest {
             
             public class A extends «jvmGuardedClassName» {
                 
-                public A(final rolez.lang.Task<?> $task) {
+                public A(final long $task) {
                     super();
                     try {
                         new java.io.PrintStream("test.txt");
@@ -1108,7 +1108,7 @@ class ClassGeneratorTest extends GeneratorTest {
             
             public class A extends «jvmGuardedClassName» {
                 
-                public A(final rolez.lang.Task<?> $task) {
+                public A(final long $task) {
                     super();
                     final rolez.internal.Tasks $tasks = new rolez.internal.Tasks();
                     try {
@@ -1147,17 +1147,17 @@ class ClassGeneratorTest extends GeneratorTest {
             
             public class £final extends «jvmGuardedClassName» {
                 
-                public £final(final rolez.lang.Task<?> $task) {
+                public £final(final long $task) {
                     super();
                 }
                 
-                public int £strictfp(final int £volatile, final rolez.lang.Task<?> $task) {
+                public int £strictfp(final int £volatile, final long $task) {
                     final int £synchronized = 2 * £volatile;
                     final int _synchronized = 42;
                     return £synchronized + _synchronized;
                 }
                 
-                public void £transient(final rolez.lang.Task<?> $task) {
+                public void £transient(final long $task) {
                     final foo.£static.£native.£final £protected = new foo.£static.£native.£final($task);
                     £protected.£strictfp(5, $task);
                 }
@@ -1178,11 +1178,11 @@ class ClassGeneratorTest extends GeneratorTest {
             
             public class £strictfp extends «jvmGuardedClassName» {
                 
-                public £strictfp(final rolez.lang.Task<?> $task) {
+                public £strictfp(final long $task) {
                     super();
                 }
                 
-                public void £final(final rolez.lang.GuardedArray<int[]> £do, final rolez.lang.Task<?> $task) {
+                public void £final(final rolez.lang.GuardedArray<int[]> £do, final long $task) {
                     guardReadWrite(£do, $task).data[0] = 42;
                 }
                 
@@ -1190,7 +1190,7 @@ class ClassGeneratorTest extends GeneratorTest {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{£do}, new Object[]{this}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            final rolez.lang.Task<?> $task = this;
+                            final long $task = idBits();
                             £do.data[0] = 42;
                             return null;
                         }

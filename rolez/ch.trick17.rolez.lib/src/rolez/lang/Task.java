@@ -50,7 +50,7 @@ public abstract class Task<V> implements Runnable {
         }
     }
     
-    public final int id = getUnusedTaskId();
+    private final int id = getUnusedTaskId();
     private final Sync sync = new Sync();
     
     private Thread executingThread;
@@ -158,6 +158,10 @@ public abstract class Task<V> implements Runnable {
         return executingThread;
     }
     
+    public long idBits() {
+        return 1L << id;
+    }
+    
     /**
      * Creates a new task and registers it as the {@linkplain #currentTask() currently executing
      * task}. Subsequent Rolez code will behave as if it was executed in that task (but in the
@@ -237,14 +241,14 @@ public abstract class Task<V> implements Runnable {
             
         passedReachable = newIdentitySet();
         for(Guarded g : passed)
-            g.guardReadWriteReachable(passedReachable, parent);
+            g.guardReadWriteReachable(passedReachable, parent.idBits());
         
         // Objects that are reachable both from a passed and a shared object are effectively *passed*
         sharedReachable = newIdentitySet();
         sharedReachable.addAll(passedReachable);
         for(Object g : sharedObjects)
             if(g instanceof Guarded)
-                ((Guarded) g).guardReadOnlyReachable(sharedReachable, parent);
+                ((Guarded) g).guardReadOnlyReachable(sharedReachable, parent.idBits());
         sharedReachable.removeAll(passedReachable);
         
         /* IMPROVE: Only pass (share) objects that are reachable through chain of readwrite
@@ -272,9 +276,9 @@ public abstract class Task<V> implements Runnable {
         // IMPROVE: guarding should not be necessary since child tasks are already joined!
         Set<Guarded> newPassedReachable = newIdentitySet();
         for(Guarded g : passed)
-            g.guardReadWriteReachable(newPassedReachable, this);
+            g.guardReadWriteReachable(newPassedReachable, idBits());
         if(result instanceof Guarded)
-            ((Guarded) result).guardReadWriteReachable(newPassedReachable, this);
+            ((Guarded) result).guardReadWriteReachable(newPassedReachable, idBits());
         
         for(Guarded g : newPassedReachable)
             g.releasePassed();

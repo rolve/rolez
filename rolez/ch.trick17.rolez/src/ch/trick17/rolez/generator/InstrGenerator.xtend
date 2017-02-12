@@ -329,7 +329,7 @@ class InstrGenerator {
             
             if(!executable.isMapped) {
                 if(codeKind == FIELD_INITIALIZER)
-                    allArgs += taskClassName + ".currentTask()"
+                    allArgs += taskClassName + ".currentTask().idBits()"
                 else
                     allArgs += "$task"
             }

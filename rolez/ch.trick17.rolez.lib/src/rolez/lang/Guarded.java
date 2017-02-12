@@ -150,26 +150,26 @@ public abstract class Guarded {
     
     // TODO: Remove this version at some point
     public static <G extends Guarded> G guardReadOnly(G guarded) {
-        ((Guarded) guarded).guardReadOnly(currentTask());
+        ((Guarded) guarded).guardReadOnly(currentTask().idBits());
         return guarded;
     }
     
-    public static <G extends Guarded> G guardReadOnly(G guarded, Task<?> currentTask) {
-        ((Guarded) guarded).guardReadOnly(currentTask);
+    public static <G extends Guarded> G guardReadOnly(G guarded, long currentTaskIdBits) {
+        ((Guarded) guarded).guardReadOnly(currentTaskIdBits);
         return guarded;
     }
     
-    public final void guardReadOnlyReachable(Set<Guarded> processed, Task<?> currentTask) {
+    public final void guardReadOnlyReachable(Set<Guarded> processed, long currentTaskIdBits) {
         if(processed.add(this)) {
-            guardReadOnly(currentTask);
+            guardReadOnly(currentTaskIdBits);
             for(Object g : guardedRefs())
                 if(g instanceof Guarded)
-                    ((Guarded) g).guardReadOnlyReachable(processed, currentTask);
+                    ((Guarded) g).guardReadOnlyReachable(processed, currentTaskIdBits);
         }
     }
     
-    private final void guardReadOnly(Task<?> currentTask) {
-        if(!guardingInitialized() || alreadyGuardedIn(currentTask))
+    private final void guardReadOnly(long currentTaskIdBits) {
+        if(!guardingInitialized() || alreadyGuardedIn(currentTaskIdBits))
             return;
         
         while(!mayRead())
@@ -178,36 +178,36 @@ public abstract class Guarded {
     
     // TODO: Remove this version at some point
     public static <G extends Guarded> G guardReadWrite(G guarded) {
-        ((Guarded) guarded).guardReadWrite(currentTask());
+        ((Guarded) guarded).guardReadWrite(currentTask().idBits());
         return guarded;
     }
     
-    public static <G extends Guarded> G guardReadWrite(G guarded, Task<?> currentTask) {
-        ((Guarded) guarded).guardReadWrite(currentTask);
+    public static <G extends Guarded> G guardReadWrite(G guarded, long currentTaskIdBits) {
+        ((Guarded) guarded).guardReadWrite(currentTaskIdBits);
         return guarded;
     }
     
-    public final void guardReadWriteReachable(Set<Guarded> processed, Task<?> currentTask) {
+    public final void guardReadWriteReachable(Set<Guarded> processed, long currentTaskIdBits) {
         if(processed.add(this)) {
-            guardReadWrite(currentTask);
+            guardReadWrite(currentTaskIdBits);
             for(Object g : guardedRefs())
                 if(g instanceof Guarded)
-                    ((Guarded) g).guardReadWriteReachable(processed, currentTask);
+                    ((Guarded) g).guardReadWriteReachable(processed, currentTaskIdBits);
         }
     }
     
-    private void guardReadWrite(Task<?> currentTask) {
-        if(!guardingInitialized() || alreadyGuardedIn(currentTask))
+    private void guardReadWrite(long currentTaskIdBits) {
+        if(!guardingInitialized() || alreadyGuardedIn(currentTaskIdBits))
             return;
         
         while(!mayWrite())
             park();
     }
     
-    private boolean alreadyGuardedIn(Task<?> task) {
-        boolean alreadyGuarded = isInGuardingCache(task.id);
+    private boolean alreadyGuardedIn(long taskIdBits) {
+        boolean alreadyGuarded = isInGuardingCache(taskIdBits);
         if(!alreadyGuarded)
-            addToGuardingCache(task.id);
+            addToGuardingCache(taskIdBits);
         return alreadyGuarded;
     }
 
@@ -320,15 +320,15 @@ public abstract class Guarded {
         return false;
     }
     
-    private boolean isInGuardingCache(int taskId) {
-        assert taskId >= 0 && taskId < 64;
-        return (guardingCache & 1L << taskId) != 0;
+    private boolean isInGuardingCache(long taskIdBits) {
+        assert taskIdBits != 0;
+        return (guardingCache & taskIdBits) != 0;
     }
     
-    private void addToGuardingCache(int taskId) {
-        assert taskId >= 0 && taskId < 64;
+    private void addToGuardingCache(long taskIdBits) {
+        assert taskIdBits != 0;
         synchronized(guardingCacheLock) {
-            guardingCache |= (1L << taskId);
+            guardingCache |= taskIdBits;
         }
     }
     

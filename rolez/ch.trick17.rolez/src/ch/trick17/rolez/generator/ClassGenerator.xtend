@@ -89,7 +89,7 @@ class ClassGenerator {
             private «safeSimpleName»() {}
             «ELSE»
             private «safeSimpleName»() {
-                super(«taskClassName».currentTask());
+                super(«taskClassName».currentTask().idBits());
             }
             «ENDIF»
             « fields.map[genObjectField ].join»
@@ -151,7 +151,7 @@ class ClassGenerator {
             return new «taskClassName»<«type.generateGeneric»>(new Object[]{«genTransitionArgs(ReadWrite)»}, new Object[]{«genTransitionArgs(ReadOnly)»}) {
                 @java.lang.Override
                 protected «type.generateGeneric» runRolez() {
-                    final «taskClassName»<?> $task = this;
+                    final long $task = idBits();
                     «body.generateWithTryCatch(newRoleAnalysis(it, body.controlFlowGraph, TASK), false)»
                     «IF needsReturnNull»
                     return null;
@@ -172,7 +172,7 @@ class ClassGenerator {
         val allParams = new ArrayList(params.map[gen])
         if(it instanceof Method && (it as Method).isAsync)
             allParams += '''final «jvmTasksClassName» $tasks'''
-        allParams += '''final «taskClassName»<?> $task'''
+        allParams += '''final long $task'''
         allParams.join(", ")
     }
     
@@ -190,7 +190,7 @@ class ClassGenerator {
      * variable and the real method is called.
      */
     private def genBridgeCall(Method it) {
-        val args = params.map[safeName] + #[taskClassName + ".currentTask()"]
+        val args = params.map[safeName] + #[taskClassName + ".currentTask().idBits()"]
         '''this.«safeName»(«args.join(", ")»)'''
     }
     
@@ -214,10 +214,10 @@ class ClassGenerator {
         if(enclosingClass.isSingleton)
             '''INSTANCE'''
         else
-            // Since no current task exists yet, pass null to the constr for now. Nothing that
-            // requires guarding can be called in there. Same problem fir field initializers.
+            // Since no current task exists yet, pass 0L to the constr for now. Nothing that
+            // requires guarding can be called in there. Same problem for field initializers.
             // TODO: Check this in the validator!
-            '''new «enclosingClass.safeSimpleName»(null)'''
+            '''new «enclosingClass.safeSimpleName»(0L)'''
     }
     
     // TODO: Disable guarding
