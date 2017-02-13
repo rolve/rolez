@@ -23,5 +23,8 @@ public class Slice<T> extends Guarded {
     public native GuardedSlice<T[]> slice(int begin, int end, int step);
     
     @Safe
+    public native GuardedSlice<T[]> slice(int begin, int end);
+    
+    @Safe
     public native GuardedArray<GuardedSlice<T[]>[]> partition(Partitioner p, int n);
 }

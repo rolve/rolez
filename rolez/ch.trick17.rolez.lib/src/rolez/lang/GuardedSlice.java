@@ -116,6 +116,10 @@ public class GuardedSlice<A> extends Guarded {
         return slice(new SliceRange(begin, end, step));
     }
     
+    public final GuardedSlice<A> slice(int begin, int end) {
+        return slice(begin, end, 1);
+    }
+    
     // TODO: Replace return type with some final or even immutable array class
     @SuppressWarnings("unchecked")
     public final GuardedArray<GuardedSlice<A>[]> partition(Partitioner p, int n) {

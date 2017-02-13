@@ -12,4 +12,7 @@ public class Array<T> extends Slice<T> {
     public final int length = 0;
     
     public Array(int length) {}
+    
+    @Override
+    public native GuardedArray<T[]> clone();
 }

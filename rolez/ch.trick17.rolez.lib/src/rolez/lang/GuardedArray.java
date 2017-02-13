@@ -42,4 +42,21 @@ public final class GuardedArray<A> extends GuardedSlice<A> {
     }
     
     // TODO: Test that the stuff above actually works...
+    
+    @Override
+    @SuppressWarnings("unchecked")
+    public GuardedArray<A> clone() {
+        if(data instanceof Object[])
+            return new GuardedArray<A>((A) ((Object[]) data).clone());
+        if(data instanceof int[])
+            return new GuardedArray<A>((A) ((int[]) data).clone());
+        if(data instanceof double[])
+            return new GuardedArray<A>((A) ((double[]) data).clone());
+        if(data instanceof boolean[])
+            return new GuardedArray<A>((A) ((boolean[]) data).clone());
+        if(data instanceof char[])
+            return new GuardedArray<A>((A) ((char[]) data).clone());
+        else
+            throw new AssertionError("unexpected array type");
+    }
 }
