@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.junit.AfterClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -34,6 +35,8 @@ public class PartitionersTest {
     
     @Parameters(name = "size={0}, ns={1},{2}, modes={3}")
     public static List<Object[]> parameters() {
+        Task.registerNewRootTask(); // required for the partitioners' toString() method (yeah...)
+        
         final List<Object[]> params = new ArrayList<Object[]>();
         
         /* All combinations of sizes, ns and modes */
@@ -50,6 +53,11 @@ public class PartitionersTest {
                     params.add(new Object[]{size, 1, n2, modes});
                     
         return params;
+    }
+    
+    @AfterClass
+    public static void unregisterRootTask() {
+        Task.unregisterRootTask();
     }
     
     private final int size;
