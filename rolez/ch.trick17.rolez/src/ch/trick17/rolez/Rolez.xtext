@@ -166,10 +166,10 @@ Cast returns Expr:
     UnaryMinus ({Cast.expr=current} 'as' type=Type)*;
 
 UnaryMinus returns Expr:
-    UnaryNot | {UnaryMinus} '-' expr=UnaryNot;
+    LogicalNot | {UnaryMinus} '-' expr=LogicalNot;
 
-UnaryNot returns Expr:
-    Start | {UnaryNot} '!' expr=MemberAccess;
+LogicalNot returns Expr:
+    Start | {LogicalNot} '!' expr=Start;
 
 /* Start and MemberAccess rules have different syntax, but both create a MemberAccess object */
 

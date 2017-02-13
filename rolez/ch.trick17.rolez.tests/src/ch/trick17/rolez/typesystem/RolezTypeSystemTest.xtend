@@ -361,18 +361,18 @@ class RolezTypeSystemTest {
         parse("-null;".withFrame).assertError(UNARY_MINUS, null, "operator", "-", "undefined", "null")
     }
     
-    @Test def testTUnaryNot() {
+    @Test def testTLogicalNot() {
         parse("!true;            ".withFrame).task.lastExpr.type.assertThat(instanceOf(Boolean))
         parse("val f = false; !f;".withFrame).task.lastExpr.type.assertThat(instanceOf(Boolean))
         parse("!(true || false); ".withFrame).task.lastExpr.type.assertThat(instanceOf(Boolean))
     }
     
-    @Test def testTUnaryNotErrorInOp() {
+    @Test def testTLogicalNotErrorInOp() {
         parse("!(-'a');".withFrame).assertError(UNARY_MINUS, null, "operator", "-", "undefined", "char")
         parse("!(!5);  ".withFrame).assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
-    @Test def testTUnaryNotTypeMismatch() {
+    @Test def testTLogicalNotTypeMismatch() {
         parse('''!new Object;'''.withFrame).assertError(NEW, SUBTYPEEXPR, "Object", "boolean")
         parse('''!"Hello";'''.withFrame).assertError(STRING_LITERAL, SUBTYPEEXPR, "String", "boolean")
         

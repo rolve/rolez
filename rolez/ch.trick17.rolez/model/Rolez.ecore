@@ -188,7 +188,7 @@
     <eStructuralFeatures xsi:type="ecore:EReference" name="type" eType="#//Type" containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="UnaryMinus" eSuperTypes="#//UnaryExpr"/>
-  <eClassifiers xsi:type="ecore:EClass" name="UnaryNot" eSuperTypes="#//UnaryExpr"/>
+  <eClassifiers xsi:type="ecore:EClass" name="LogicalNot" eSuperTypes="#//UnaryExpr"/>
   <eClassifiers xsi:type="ecore:EClass" name="MemberAccess" eSuperTypes="#//Expr #//Argumented">
     <eOperations name="isFieldAccess" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
     <eOperations name="isMethodInvoke" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>

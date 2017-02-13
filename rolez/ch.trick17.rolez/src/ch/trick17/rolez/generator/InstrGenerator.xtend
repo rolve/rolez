@@ -20,6 +20,7 @@ import ch.trick17.rolez.rolez.Instr
 import ch.trick17.rolez.rolez.IntLiteral
 import ch.trick17.rolez.rolez.LocalVarDecl
 import ch.trick17.rolez.rolez.LogicalExpr
+import ch.trick17.rolez.rolez.LogicalNot
 import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.NullLiteral
@@ -41,7 +42,6 @@ import ch.trick17.rolez.rolez.The
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.UnaryExpr
 import ch.trick17.rolez.rolez.UnaryMinus
-import ch.trick17.rolez.rolez.UnaryNot
 import ch.trick17.rolez.rolez.VarKind
 import ch.trick17.rolez.rolez.VarRef
 import ch.trick17.rolez.rolez.WhileLoop
@@ -218,7 +218,7 @@ class InstrGenerator {
         private def dispatch CharSequence generate(UnaryMinus it)
             '''-«expr.genNested»'''
         
-        private def dispatch CharSequence generate(UnaryNot it)
+        private def dispatch CharSequence generate(LogicalNot it)
             '''!«expr.genNested»'''
         
         private def dispatch CharSequence generate(MemberAccess it) { switch(it) {

@@ -22,6 +22,7 @@ import ch.trick17.rolez.rolez.IntLiteral
 import ch.trick17.rolez.rolez.LocalVar
 import ch.trick17.rolez.rolez.LocalVarDecl
 import ch.trick17.rolez.rolez.LogicalExpr
+import ch.trick17.rolez.rolez.LogicalNot
 import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.Method
 import ch.trick17.rolez.rolez.New
@@ -55,7 +56,6 @@ import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.TypeParamRef
 import ch.trick17.rolez.rolez.UnaryMinus
-import ch.trick17.rolez.rolez.UnaryNot
 import ch.trick17.rolez.rolez.Var
 import ch.trick17.rolez.rolez.VarKind
 import ch.trick17.rolez.rolez.VarRef
@@ -282,8 +282,8 @@ from {
         source m
 }
 
-rule TUnaryNot
-    G |- UnaryNot n : createBoolean
+rule TLogicalNot
+    G |- LogicalNot n : createBoolean
 from {
     G |- n.expr <| createBoolean
 }
