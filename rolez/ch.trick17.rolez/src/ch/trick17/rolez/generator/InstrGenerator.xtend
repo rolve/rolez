@@ -2,7 +2,6 @@ package ch.trick17.rolez.generator
 
 import ch.trick17.rolez.RolezUtils
 import ch.trick17.rolez.rolez.Argumented
-import ch.trick17.rolez.rolez.ArithmeticBinaryExpr
 import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.BinaryExpr
 import ch.trick17.rolez.rolez.Block
@@ -10,7 +9,6 @@ import ch.trick17.rolez.rolez.BooleanLiteral
 import ch.trick17.rolez.rolez.Cast
 import ch.trick17.rolez.rolez.CharLiteral
 import ch.trick17.rolez.rolez.DoubleLiteral
-import ch.trick17.rolez.rolez.EqualityExpr
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.ExprStmt
 import ch.trick17.rolez.rolez.ForLoop
@@ -19,7 +17,6 @@ import ch.trick17.rolez.rolez.IfStmt
 import ch.trick17.rolez.rolez.Instr
 import ch.trick17.rolez.rolez.IntLiteral
 import ch.trick17.rolez.rolez.LocalVarDecl
-import ch.trick17.rolez.rolez.LogicalExpr
 import ch.trick17.rolez.rolez.LogicalNot
 import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.New
@@ -28,7 +25,6 @@ import ch.trick17.rolez.rolez.Parenthesized
 import ch.trick17.rolez.rolez.PrimitiveType
 import ch.trick17.rolez.rolez.ReadOnly
 import ch.trick17.rolez.rolez.ReadWrite
-import ch.trick17.rolez.rolez.RelationalExpr
 import ch.trick17.rolez.rolez.ReturnExpr
 import ch.trick17.rolez.rolez.ReturnNothing
 import ch.trick17.rolez.rolez.Role
@@ -202,15 +198,8 @@ class InstrGenerator {
         private def dispatch CharSequence generate(Assignment it)
             '''«left.generate» «op» «right.generate»'''
         
-        private def dispatch CharSequence generate(BinaryExpr it) {
-            val op = switch(it) {
-                LogicalExpr: op
-                EqualityExpr: op
-                RelationalExpr: op
-                ArithmeticBinaryExpr: op
-            }
+        private def dispatch CharSequence generate(BinaryExpr it)
             '''«left.genNested» «op» «right.genNested»'''
-        }
         
         private def dispatch CharSequence generate(Cast it)
             '''(«type.generate») «expr.genNested»'''
