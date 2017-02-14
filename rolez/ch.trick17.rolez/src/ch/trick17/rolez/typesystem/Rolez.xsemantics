@@ -12,6 +12,7 @@ import ch.trick17.rolez.rolez.Cast
 import ch.trick17.rolez.rolez.CharLiteral
 import ch.trick17.rolez.rolez.ClassRef
 import ch.trick17.rolez.rolez.Constr
+import ch.trick17.rolez.rolez.Double
 import ch.trick17.rolez.rolez.DoubleLiteral
 import ch.trick17.rolez.rolez.EqualityExpr
 import ch.trick17.rolez.rolez.Executable
@@ -26,6 +27,8 @@ import ch.trick17.rolez.rolez.LocalVar
 import ch.trick17.rolez.rolez.LocalVarDecl
 import ch.trick17.rolez.rolez.LogicalExpr
 import ch.trick17.rolez.rolez.LogicalNot
+import ch.trick17.rolez.rolez.Long
+import ch.trick17.rolez.rolez.LongLiteral
 import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.Method
 import ch.trick17.rolez.rolez.New
@@ -165,17 +168,10 @@ from {
             a.op == OpAssignment.PLUS_ASSIGN || a.op == OpAssignment.MINUS_ASSIGN
                 || a.op == OpAssignment.TIMES_ASSIGN || a.op == OpAssignment.DIVIDED_BY_ASSIGN
                 || a.op == OpAssignment.MODULO_ASSIGN
-            {
-                G |- leftType  <: createInt
-                G |- rightType <: createInt
-            } or {
-                G |- leftType  <: createDouble
-                G |- rightType <: createInt or G |- rightType <: createDouble
-            }
+            leftType instanceof NumericType && rightType instanceof NumericType
         } or {
             a.op == OpAssignment.PLUS_ASSIGN
             val stringType = newRoleType(createReadOnly, newClassRef(utils.findClass(stringClassName, a)))
-            
             G |- leftType <: stringType
         } or fail
             error "The operator " + a.op + " is undefined for the argument types "
@@ -194,15 +190,19 @@ from {
 }
 
 rule TBitwiseExpr
-    G |- BitwiseExpr e : createInt
+    G |- BitwiseExpr e : Type t
 from {
     G |- e.left  : var Type  leftType
     G |- e.right : var Type rightType
-    
     leftType instanceof IntegralType && rightType instanceof IntegralType or fail
         error "The operator " + e.op + " is undefined for the argument types "
             + leftType + ", " + rightType
         source e
+    
+    if(leftType instanceof Long || rightType instanceof Long)
+        t = createLong
+    else
+        t = createInt
 }
 
 rule TEqualityExpr
@@ -211,7 +211,8 @@ from {
     G |- e.left  : var Type leftType
     G |- e.right : var Type rightType
     
-    G |- leftType <: rightType
+    leftType instanceof NumericType && rightType instanceof NumericType
+        or G |- leftType <: rightType
         or G |- rightType <: leftType
         or fail
             error "Cannot compare " + leftType + " to " + rightType
@@ -224,13 +225,7 @@ from {
     G |- e.left  : var Type leftType
     G |- e.right : var Type rightType
     
-    {
-        G |- leftType  <: createInt or G |- leftType  <: createDouble
-        G |- rightType <: createInt or G |- rightType <: createDouble
-    } or {
-        G |- leftType  <: createChar
-        G |- rightType <: createChar
-    } or fail
+    {leftType instanceof NumericType && rightType instanceof NumericType} or fail
         error "Cannot compare " + leftType + " to " + rightType
         source e
 }
@@ -240,25 +235,26 @@ rule TArithmeticBinaryExpr
 from {
     G |- e.left  : var Type  leftType
     G |- e.right : var Type rightType
-    
+
+    val stringType = newRoleType(createReadOnly, newClassRef(utils.findClass(stringClassName, e)))
     {
-        G |- leftType  <: createInt
-        G |- rightType <: createInt
-        t = createInt
-    } or {
-        G |- leftType  <: createInt or G |- leftType  <: createDouble
-        G |- rightType <: createInt or G |- rightType <: createDouble
-        t = createDouble
+        leftType instanceof NumericType && rightType instanceof NumericType
     } or {
         e.op == OpArithmetic.PLUS
-        val stringType = newRoleType(createReadOnly, newClassRef(utils.findClass(stringClassName, e)))
-        
         G |- leftType <: stringType or G |- rightType <: stringType
-        t = stringType
     } or fail
         error "The operator " + e.op + " is undefined for the argument types "
             + leftType + ", " + rightType
         source e
+    
+    if(leftType instanceof RoleType || rightType instanceof RoleType) // string
+        t = stringType
+    else if(leftType instanceof Double || rightType instanceof Double)
+        t = createDouble
+    else if(leftType instanceof Long || rightType instanceof Long)
+        t = createLong
+    else
+        t = createInt
 }
 
 rule TCast
@@ -286,15 +282,16 @@ rule TUnaryMinus
     G |- UnaryMinus m : Type t
 from {
     G |- m.expr : var Type exprType
-    {
-        G |- exprType <: createInt
-        t = createInt
-    } or {
-        G |- exprType <: createDouble
-        t = createDouble
-    } or fail
+    {exprType instanceof NumericType} or fail
         error "The unary operator - is undefined for the argument type " + exprType
         source m
+    
+    if(exprType instanceof Double)
+        t = createDouble
+    else if(exprType instanceof Long)
+        t = createLong
+    else
+        t = createInt
 }
 
 rule TLogicalNot
@@ -304,13 +301,17 @@ from {
 }
 
 rule TBitwiseNot
-    G |- BitwiseNot n : createInt
+    G |- BitwiseNot n : Type t
 from {
-    G |- n.expr : var Type t
-    
-    {t instanceof IntegralType} or fail
-        error "The operator ~ is undefined for the argument type " + t
+    G |- n.expr : var Type exprType
+    {exprType instanceof IntegralType} or fail
+        error "The operator ~ is undefined for the argument type " + exprType
         source n
+    
+    if(exprType instanceof Long)
+        t = createLong
+    else
+        t = createInt
 }
 
 rule TMemberAccess
@@ -408,17 +409,20 @@ from {
 axiom TNullLiteral
     G |- NullLiteral __ : createNull
 
-axiom TIntLiteral
-    G |- IntLiteral __ : createInt
-
 axiom TDoubleLiteral
     G |- DoubleLiteral __ : createDouble
 
-axiom TBooleanLiteral
-    G |- BooleanLiteral __ : createBoolean
+axiom TLongLiteral
+    G |- LongLiteral __ : createLong
+
+axiom TIntLiteral
+    G |- IntLiteral __ : createInt
 
 axiom TCharLiteral
     G |- CharLiteral __ : createChar
+
+axiom TBooleanLiteral
+    G |- BooleanLiteral __ : createBoolean
 
 axiom VParam
     G ||- Param p : p.type

@@ -1,17 +1,5 @@
 package rolez.lang
 
-object Int mapped to java.lang.Integer {
-    mapped val MIN_VALUE: int
-    mapped val MAX_VALUE: int
-    
-    mapped def pure parseInt(s: pure String): int
-    mapped def pure parseInt(s: pure String, radix: int): int
-    mapped def pure toString(i: int): readonly String
-    
-    mapped def pure numberOfLeadingZeros(i: int): int
-    mapped def pure numberOfTrailingZeros(i: int): int
-}
-
 object Double mapped to java.lang.Double {
     mapped val POSITIVE_INFINITY: double
     mapped val NEGATIVE_INFINITY: double
@@ -26,6 +14,48 @@ object Double mapped to java.lang.Double {
     mapped def pure toString(d: double): readonly String
     mapped def pure isNaN(v: double): boolean
     mapped def pure isInfinite(v: double): boolean
+}
+
+object Long mapped to java.lang.Long {
+    mapped val MIN_VALUE: long
+    mapped val MAX_VALUE: long
+    
+    mapped def pure parseLong(s: pure String): long
+    mapped def pure parseLong(s: pure String, radix: int): long
+    mapped def pure toString(l: long): readonly String
+    
+    mapped def pure numberOfLeadingZeros(l: long): int
+    mapped def pure numberOfTrailingZeros(l: long): int
+}
+
+object Int mapped to java.lang.Integer {
+    mapped val MIN_VALUE: int
+    mapped val MAX_VALUE: int
+    
+    mapped def pure parseInt(s: pure String): int
+    mapped def pure parseInt(s: pure String, radix: int): int
+    mapped def pure toString(i: int): readonly String
+    
+    mapped def pure numberOfLeadingZeros(i: int): int
+    mapped def pure numberOfTrailingZeros(i: int): int
+}
+
+object Short mapped to java.lang.Short {
+    mapped val MIN_VALUE: short
+    mapped val MAX_VALUE: short
+    
+    mapped def pure parseShort(s: pure String): short
+    mapped def pure parseShort(s: pure String, radix: int): short
+    mapped def pure toString(s: short): readonly String
+}
+
+object Byte mapped to java.lang.Byte {
+    mapped val MIN_VALUE: byte
+    mapped val MAX_VALUE: byte
+    
+    mapped def pure parseByte(s: pure String): byte
+    mapped def pure parseByte(s: pure String, radix: int): byte
+    mapped def pure toString(b: byte): readonly String
 }
 
 object Boolean mapped to java.lang.Boolean {

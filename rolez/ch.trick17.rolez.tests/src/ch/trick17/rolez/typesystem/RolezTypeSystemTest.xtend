@@ -6,6 +6,9 @@ import ch.trick17.rolez.rolez.Char
 import ch.trick17.rolez.rolez.Double
 import ch.trick17.rolez.rolez.GenericClassRef
 import ch.trick17.rolez.rolez.Int
+import ch.trick17.rolez.rolez.Long
+import ch.trick17.rolez.rolez.Short
+import ch.trick17.rolez.rolez.Byte
 import ch.trick17.rolez.rolez.Null
 import ch.trick17.rolez.rolez.Program
 import ch.trick17.rolez.rolez.Pure
@@ -48,17 +51,26 @@ class RolezTypeSystemTest {
             class rolez.lang.Object mapped to java.lang.Object
             pure class rolez.lang.String mapped to java.lang.String
             class A {
-                var i: int
                 var d: double
+                var l: long
+                var i: int
             }
             class B extends A 
             class App {
                 task pure main: {
                     var a: readwrite A;
                     a = new B;
-                    a.i += 1;
                     a.d -= 42.0;
                     a.d *= 42;
+                    a.l += 4L;
+                    a.l /= 9;
+                    a.i += 1;
+                    a.i += 1 as short;
+                    a.i += 1 as byte;
+                    var sh: short;
+                    sh = 1 as short;
+                    var by: byte;
+                    by = 1 as byte;
                     var b = true;
                     b &= false;
                     var s = "Hello";
@@ -67,11 +79,17 @@ class RolezTypeSystemTest {
             }
         ''')
         program.task.expr(0).type.assertRoleType(ReadWrite, "A")
-        program.task.expr(1).type.assertInstanceOf(Int)
+        program.task.expr(1).type.assertInstanceOf(Double)
         program.task.expr(2).type.assertInstanceOf(Double)
-        program.task.expr(3).type.assertInstanceOf(Double)
-        program.task.expr(4).type.assertInstanceOf(Boolean)
-        program.task.expr(5).type.assertRoleType(ReadWrite, stringClassName) // Slight inconsistency in the type system, but it is safe
+        program.task.expr(3).type.assertInstanceOf(Long)
+        program.task.expr(4).type.assertInstanceOf(Long)
+        program.task.expr(5).type.assertInstanceOf(Int)
+        program.task.expr(6).type.assertInstanceOf(Int)
+        program.task.expr(7).type.assertInstanceOf(Int)
+        program.task.expr(8).type.assertInstanceOf(Short)
+        program.task.expr(9).type.assertInstanceOf(Byte)
+        program.task.expr(10).type.assertInstanceOf(Boolean)
+        program.task.expr(11).type.assertRoleType(ReadWrite, stringClassName) // Slight inconsistency in the type system, but it is safe
     }
     
     @Test def testTAssignmentErrorInOp() {
@@ -125,13 +143,14 @@ class RolezTypeSystemTest {
             i = true;
         '''.withFrame).assertError(BOOLEAN_LITERAL, SUBTYPEEXPR, "int", "boolean")
         parse('''
+            var i: int = 0;
+            var s: short;
+            s = i;
+        '''.withFrame).assertError(VAR_REF, SUBTYPEEXPR, "short", "int")
+        parse('''
             var i: int;
             i /= true;
         '''.withFrame).assertError(ASSIGNMENT, null, "operator", "undefined", "int", "boolean")
-        parse('''
-            var i: int;
-            i /= 0.2;
-        '''.withFrame).assertError(ASSIGNMENT, null, "operator", "undefined", "int", "double")
         
         parse('''
             var o = new Object;
@@ -167,10 +186,18 @@ class RolezTypeSystemTest {
         parse("4 >>  2;".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
         parse("4 >>> 2;".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
         
-        // type is always int, even if operands are not
+        parse("4L <<  2 ;".withFrame).task.lastExpr.type.assertThat(instanceOf(Long))
+        parse("4  >>  2L;".withFrame).task.lastExpr.type.assertThat(instanceOf(Long))
+        parse("4L >>> 2L;".withFrame).task.lastExpr.type.assertThat(instanceOf(Long))
+        
+        // type is int if operands are of type short, byte or char
         parse("'a' | 'b';".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
         parse("'a' |  2 ;".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
         parse(" 4  | 'b';".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
+        parse(" 4  | 'b';".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
+        
+        parse("4  | 2 as short;".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
+        parse("4 as byte |   2;".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
     }
     
     @Test def testTBitwiseExprErrorInOp() {
@@ -227,8 +254,6 @@ class RolezTypeSystemTest {
             .assertError(UNARY_MINUS, null, "operator", "-", "undefined", "boolean")
         parse("100 <= -false;".withFrame)
             .assertError(UNARY_MINUS, null, "operator", "-", "undefined", "boolean")
-        parse("-'a' > 0;".withFrame)
-            .assertError(UNARY_MINUS, null, "operator", "-", "undefined", "char")
         parse("100 >= -false;".withFrame)
             .assertError(UNARY_MINUS, null, "operator", "-", "undefined", "boolean")
     }
@@ -238,24 +263,30 @@ class RolezTypeSystemTest {
         
         parse("true <= false;".withFrame).assertError(RELATIONAL_EXPR, null, "compare", "boolean")
         parse("null >   null;".withFrame).assertError(RELATIONAL_EXPR, null, "compare", "null")
-        parse("   5 >    '5';".withFrame).assertError(RELATIONAL_EXPR, null, "compare", "int", "char")
-        parse(" 5.0 >    '5';".withFrame).assertError(RELATIONAL_EXPR, null, "compare", "double", "char")
         parse("true >    '5';".withFrame).assertError(RELATIONAL_EXPR, null, "compare", "boolean", "char")
         parse("true >    5.0;".withFrame).assertError(RELATIONAL_EXPR, null, "compare", "boolean", "double")
     }
     
     @Test def testTArithmeticExpr() {
+        parse("4.0 +  4.0;".withFrame).task.lastExpr.type.assertThat(instanceOf(Double))
+        parse("0.0 -    0;".withFrame).task.lastExpr.type.assertThat(instanceOf(Double))
+        parse("3.0 *    2;".withFrame).task.lastExpr.type.assertThat(instanceOf(Double))
+        parse("100 / -1.0;".withFrame).task.lastExpr.type.assertThat(instanceOf(Double))
+        parse("-99.0 %  3;".withFrame).task.lastExpr.type.assertThat(instanceOf(Double))
+        
+        parse("4L + 4 ;".withFrame).task.lastExpr.type.assertThat(instanceOf(Long))
+        parse("0  - 0L;".withFrame).task.lastExpr.type.assertThat(instanceOf(Long))
+        parse("4L / 2L;".withFrame).task.lastExpr.type.assertThat(instanceOf(Long))
+        
         parse("  4 +  4;".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
         parse("  0 -  0;".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
         parse("  3 *  2;".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
         parse("100 / -1;".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
         parse("-99 %  3;".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
         
-        parse("4.0 +  4.0;".withFrame).task.lastExpr.type.assertThat(instanceOf(Double))
-        parse("0.0 -    0;".withFrame).task.lastExpr.type.assertThat(instanceOf(Double))
-        parse("3.0 *    2;".withFrame).task.lastExpr.type.assertThat(instanceOf(Double))
-        parse("100 / -1.0;".withFrame).task.lastExpr.type.assertThat(instanceOf(Double))
-        parse("-99.0 %  3;".withFrame).task.lastExpr.type.assertThat(instanceOf(Double))
+        parse("1 as short + 2;".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
+        parse("1 +  2 as byte;".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
+        parse("'H' +      'W';".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
         
         parse(''' "Hi" + " World";'''.withFrame).task.lastExpr.type
             .assertRoleType(ReadOnly, stringClassName)
@@ -268,7 +299,6 @@ class RolezTypeSystemTest {
     @Test def testTArithmeticExprErrorInOp() {
         parse("!'a' + 0;    ".withFrame).assertError(CHAR_LITERAL, SUBTYPEEXPR, "char", "boolean")
         parse("100 - -false;".withFrame).assertError(UNARY_MINUS, null, "operator", "-", "undefined", "boolean")
-        parse("-'a' * 0;    ".withFrame).assertError(UNARY_MINUS, null, "operator", "-", "undefined", "char")
         parse("100 / -true; ".withFrame).assertError(UNARY_MINUS, null, "operator", "-", "undefined", "boolean")
         parse("(3*3) % !42; ".withFrame).assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
@@ -288,14 +318,8 @@ class RolezTypeSystemTest {
         parse('''null % "World";'''.withFrame)
             .assertError(ARITHMETIC_BINARY_EXPR, null, "operator", "undefined", "null", "String")
         
-        parse("'a' * 'b';".withFrame)
-            .assertError(ARITHMETIC_BINARY_EXPR, null, "operator", "undefined", "char")
         parse("null / null;".withFrame)
             .assertError(ARITHMETIC_BINARY_EXPR, null, "operator", "undefined", "null")
-        parse("5 % '5';".withFrame)
-            .assertError(ARITHMETIC_BINARY_EXPR, null, "operator", "undefined", "int", "char")
-        parse("5.0 % '5';".withFrame)
-            .assertError(ARITHMETIC_BINARY_EXPR, null, "operator", "undefined", "double", "char")
         parse("true % '5';".withFrame)
             .assertError(ARITHMETIC_BINARY_EXPR, null, "operator", "undefined", "boolean", "char")
     }
@@ -364,19 +388,20 @@ class RolezTypeSystemTest {
             .assertError(CAST, null, "cast", "readwrite rolez.lang.Array[pure A]", "readwrite rolez.lang.Array[readwrite A]")
     }
     
-    @Test def testTUnaryMinus() {
-        parse("-2;                ".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
-        parse("val i: int = 5; -i;".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
-        parse("-(4-4);            ".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
-        
-        parse("-2.0;                   ".withFrame).task.lastExpr.type.assertThat(instanceOf(Double))
-        parse("val d: double = 5.0; -d;".withFrame).task.lastExpr.type.assertThat(instanceOf(Double))
-        parse("-(4-4.0);               ".withFrame).task.lastExpr.type.assertThat(instanceOf(Double))
+    @Test def testTUnaryMinus() {        
+        parse("-2.0;           ".withFrame).task.lastExpr.type.assertThat(instanceOf(Double))
+        parse("val d = 5.0; -d;".withFrame).task.lastExpr.type.assertThat(instanceOf(Double))
+        parse("-(4-4.0);       ".withFrame).task.lastExpr.type.assertThat(instanceOf(Double))
+    
+        parse("-          2L;".withFrame).task.lastExpr.type.assertThat(instanceOf(Long))
+        parse("-           2;".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
+        parse("-(2 as short);".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
+        parse("-(2 as  byte);".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
+        parse("-         'a';".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
     }
     
     @Test def testTUnaryMinusErrorInOp() {
         parse("-!5;    ".withFrame).assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
-        parse("-(-'a');".withFrame).assertError(UNARY_MINUS, null, "operator", "-", "undefined", "char")
     }
     
     @Test def testTUnaryMinusTypeMismatch() {
@@ -385,7 +410,6 @@ class RolezTypeSystemTest {
         parse('''-"Hello";'''.withFrame)
             .assertError(UNARY_MINUS, null, "operator", "-", "undefined", "String")
         
-        parse("-'a'; ".withFrame).assertError(UNARY_MINUS, null, "operator", "-", "undefined", "char")
         parse("-true;".withFrame).assertError(UNARY_MINUS, null, "operator", "-", "undefined", "boolean")
         parse("-null;".withFrame).assertError(UNARY_MINUS, null, "operator", "-", "undefined", "null")
     }
@@ -397,7 +421,6 @@ class RolezTypeSystemTest {
     }
     
     @Test def testTLogicalNotErrorInOp() {
-        parse("!(-'a');".withFrame).assertError(UNARY_MINUS, null, "operator", "-", "undefined", "char")
         parse("!(!5);  ".withFrame).assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
@@ -412,8 +435,11 @@ class RolezTypeSystemTest {
     }
     
     @Test def testTBitwiseNot() {
-        parse("~ 2 ;".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
-        parse("~'a';".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
+        parse("~          2L;".withFrame).task.lastExpr.type.assertThat(instanceOf(Long))
+        parse("~           2;".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
+        parse("~(2 as short);".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
+        parse("~(2 as  byte);".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
+        parse("~         'a';".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
     }
     
     @Test def testTBitwiseNotErrorInOp() {

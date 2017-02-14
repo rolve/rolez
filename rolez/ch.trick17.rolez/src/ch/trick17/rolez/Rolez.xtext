@@ -132,6 +132,8 @@ enum OpAssignment:
     | PLUS_ASSIGN='+=' | MINUS_ASSIGN='-='
     | TIMES_ASSIGN='*=' | DIVIDED_BY_ASSIGN='/=' | MODULO_ASSIGN='%=';
 
+// TODO: Add bitwise assignment operators
+
 OrExpr returns Expr:
     AndExpr ({LogicalExpr.left=current} op=OpOr right=AndExpr)*;
 
@@ -237,25 +239,30 @@ The:
 Parenthesized: '(' expr=Expr ')';
 
 Literal:
-    IntLiteral | DoubleLiteral | BooleanLiteral | CharLiteral | StringLiteral | {NullLiteral} 'null';
+    DoubleLiteral | LongLiteral | IntLiteral | BooleanLiteral | CharLiteral
+    | StringLiteral | {NullLiteral} 'null';
 
 StringLiteral: value=STRING;
 
 terminal STRING: '"' ( '\\' ('b'|'t'|'n'|'f'|'r'|'u'|'"'|"'"|'\\') | !('\\'|'"') )* '"';
 
-IntLiteral: value=INT;
-
 DoubleLiteral: value=DOUBLE;
 
 terminal DOUBLE: INT '.' INT;
 
-BooleanLiteral: value=Bool;
+LongLiteral: value=LONG;
+
+terminal LONG returns ELong: INT 'L';
+
+IntLiteral: value=INT;
+
+BooleanLiteral: value=BOOL;
+
+terminal BOOL returns EBoolean: 'true' | 'false';
 
 CharLiteral: value=CHAR;
 
 terminal CHAR returns EChar: "'" ( '\\' ('b'|'t'|'n'|'f'|'r'|'u'|'"'|"'"|'\\') | !('\\'|"'") ) "'";
-
-Bool returns EBoolean: 'true' | 'false';
 
 
 Type:
@@ -265,10 +272,8 @@ ReferenceType:
     RoleType | {Null} NULL_TYPE;
 
 PrimitiveType:
-    NumericType | {Boolean} 'boolean' | {Void} 'void'?;
-
-NumericType:
-    {Int} 'int' | {Double} 'double' | {Char} 'char';
+    {Double} 'double' | {Long} 'long' | {Int} 'int' | {Short} 'short' | {Byte} 'byte'
+    | {Char} 'char' | {Boolean} 'boolean' | {Void} 'void'?;
 
 TypeParamRef:
     param=[TypeParam] ('with' restrictingRole=Role)?;

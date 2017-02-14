@@ -44,6 +44,26 @@ public class GuardedSlice<A> extends Guarded {
         ((Object[]) data)[index] = component;
     }
     
+    public double getDouble(int index) {
+        checkIndex(index);
+        return ((double[]) data)[index];
+    }
+    
+    public void setDouble(int index, double component) {
+        checkIndex(index);
+        ((double[]) data)[index] = component;
+    }
+    
+    public long getLong(int index) {
+        checkIndex(index);
+        return ((long[]) data)[index];
+    }
+    
+    public void setLong(int index, long component) {
+        checkIndex(index);
+        ((long[]) data)[index] = component;
+    }
+    
     public int getInt(int index) {
         checkIndex(index);
         return ((int[]) data)[index];
@@ -54,14 +74,24 @@ public class GuardedSlice<A> extends Guarded {
         ((int[]) data)[index] = component;
     }
     
-    public double getDouble(int index) {
+    public short getShort(int index) {
         checkIndex(index);
-        return ((double[]) data)[index];
+        return ((short[]) data)[index];
     }
     
-    public void setDouble(int index, double component) {
+    public void setShort(int index, short component) {
         checkIndex(index);
-        ((double[]) data)[index] = component;
+        ((short[]) data)[index] = component;
+    }
+    
+    public byte getByte(int index) {
+        checkIndex(index);
+        return ((byte[]) data)[index];
+    }
+    
+    public void setByte(int index, byte component) {
+        checkIndex(index);
+        ((byte[]) data)[index] = component;
     }
     
     public boolean getBoolean(int index) {

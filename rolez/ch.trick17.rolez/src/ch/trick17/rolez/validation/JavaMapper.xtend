@@ -6,6 +6,9 @@ import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.Double
 import ch.trick17.rolez.rolez.GenericClassRef
 import ch.trick17.rolez.rolez.Int
+import ch.trick17.rolez.rolez.Long
+import ch.trick17.rolez.rolez.Short
+import ch.trick17.rolez.rolez.Byte
 import ch.trick17.rolez.rolez.Method
 import ch.trick17.rolez.rolez.Null
 import ch.trick17.rolez.rolez.PrimitiveType
@@ -104,9 +107,12 @@ class JavaMapper {
     def dispatch boolean mapsTo(java.lang.Void it, JvmTypeReference _) { false } // To avoid NPEs
     def dispatch boolean mapsTo(Type it, java.lang.Void _) { false }             // To avoid NPEs
     
-    def dispatch jvmWrapperTypeName(    Int _) { "java.lang.Integer"   }
     def dispatch jvmWrapperTypeName( Double _) { "java.lang.Double"    }
-    def dispatch jvmWrapperTypeName(Boolean _) { "java.lang.Boolean"   }
+    def dispatch jvmWrapperTypeName(   Long _) { "java.lang.Long"      }
+    def dispatch jvmWrapperTypeName(    Int _) { "java.lang.Integer"   }
+    def dispatch jvmWrapperTypeName(  Short _) { "java.lang.Short"     }
+    def dispatch jvmWrapperTypeName(   Byte _) { "java.lang.Byte"      }
     def dispatch jvmWrapperTypeName(   Char _) { "java.lang.Character" }
+    def dispatch jvmWrapperTypeName(Boolean _) { "java.lang.Boolean"   }
     def dispatch jvmWrapperTypeName(   Void _) { "java.lang.Void"      }
 }

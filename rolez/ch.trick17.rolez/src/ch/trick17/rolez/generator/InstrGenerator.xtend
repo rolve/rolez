@@ -19,6 +19,7 @@ import ch.trick17.rolez.rolez.Instr
 import ch.trick17.rolez.rolez.IntLiteral
 import ch.trick17.rolez.rolez.LocalVarDecl
 import ch.trick17.rolez.rolez.LogicalNot
+import ch.trick17.rolez.rolez.LongLiteral
 import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.NullLiteral
@@ -391,8 +392,9 @@ class InstrGenerator {
         
         private def dispatch CharSequence generate(Parenthesized it) { expr.generate }
         
-        private def dispatch CharSequence generate(    IntLiteral it) { value.toString }
         private def dispatch CharSequence generate( DoubleLiteral it) { value.toString }
+        private def dispatch CharSequence generate(   LongLiteral it) { value.toString }
+        private def dispatch CharSequence generate(    IntLiteral it) { value.toString }
         private def dispatch CharSequence generate(BooleanLiteral it) { value.toString }
         
         private def dispatch CharSequence generate(StringLiteral it) {

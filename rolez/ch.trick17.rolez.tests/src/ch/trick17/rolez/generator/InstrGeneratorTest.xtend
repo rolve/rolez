@@ -643,16 +643,25 @@ class InstrGeneratorTest extends GeneratorTest {
                 def pure getFirst(a: readonly Slice[pure Object]): pure Object {
                     return a.get(0);
                 }
-                def pure getFirstInt(a: readonly Slice[int]): int {
-                    return a.get(0);
-                }
                 def pure getFirstDouble(a: readonly Slice[double]): double {
                     return a.get(0);
                 }
-                def pure getFirstBoolean(a: readonly Slice[boolean]): boolean {
+                def pure getFirstLong(a: readonly Slice[long]): long {
+                    return a.get(0);
+                }
+                def pure getFirstInt(a: readonly Slice[int]): int {
+                    return a.get(0);
+                }
+                def pure getFirstShort(a: readonly Slice[short]): short {
+                    return a.get(0);
+                }
+                def pure getFirstByte(a: readonly Slice[byte]): byte {
                     return a.get(0);
                 }
                 def pure getFirstChar(a: readonly Slice[char]): char {
+                    return a.get(0);
+                }
+                def pure getFirstBoolean(a: readonly Slice[boolean]): boolean {
                     return a.get(0);
                 }
                 
@@ -681,20 +690,32 @@ class InstrGeneratorTest extends GeneratorTest {
                     return guardReadOnly(a, $task).<java.lang.Object>get(0);
                 }
                 
-                public int getFirstInt(final rolez.lang.GuardedSlice<int[]> a, final long $task) {
-                    return guardReadOnly(a, $task).getInt(0);
-                }
-                
                 public double getFirstDouble(final rolez.lang.GuardedSlice<double[]> a, final long $task) {
                     return guardReadOnly(a, $task).getDouble(0);
                 }
                 
-                public boolean getFirstBoolean(final rolez.lang.GuardedSlice<boolean[]> a, final long $task) {
-                    return guardReadOnly(a, $task).getBoolean(0);
+                public long getFirstLong(final rolez.lang.GuardedSlice<long[]> a, final long $task) {
+                    return guardReadOnly(a, $task).getLong(0);
+                }
+                
+                public int getFirstInt(final rolez.lang.GuardedSlice<int[]> a, final long $task) {
+                    return guardReadOnly(a, $task).getInt(0);
+                }
+                
+                public short getFirstShort(final rolez.lang.GuardedSlice<short[]> a, final long $task) {
+                    return guardReadOnly(a, $task).getShort(0);
+                }
+                
+                public byte getFirstByte(final rolez.lang.GuardedSlice<byte[]> a, final long $task) {
+                    return guardReadOnly(a, $task).getByte(0);
                 }
                 
                 public char getFirstChar(final rolez.lang.GuardedSlice<char[]> a, final long $task) {
                     return guardReadOnly(a, $task).getChar(0);
+                }
+                
+                public boolean getFirstBoolean(final rolez.lang.GuardedSlice<boolean[]> a, final long $task) {
+                    return guardReadOnly(a, $task).getBoolean(0);
                 }
                 
                 public void setFirst(final rolez.lang.GuardedSlice<int[]> a, final long $task) {

@@ -20,4 +20,16 @@ class RolezValueConverterService extends DefaultTerminalConverters {
             }
         }
     }
+    
+    @ValueConverter(rule = "LONG")
+    def IValueConverter<Long> LONG() {
+        new IValueConverter<Long> {
+            override toString(Long it) {
+                it + "L"
+            }
+            override toValue(String it, INode _)  {
+                Long.valueOf(replaceAll("\\s", "").substring(0, length-1))
+            }
+        }
+    }
 }

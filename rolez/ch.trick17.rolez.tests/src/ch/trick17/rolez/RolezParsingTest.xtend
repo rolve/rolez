@@ -2,6 +2,7 @@ package ch.trick17.rolez
 
 import ch.trick17.rolez.rolez.CharLiteral
 import ch.trick17.rolez.rolez.IntLiteral
+import ch.trick17.rolez.rolez.LongLiteral
 import ch.trick17.rolez.rolez.Method
 import ch.trick17.rolez.rolez.Program
 import ch.trick17.rolez.rolez.Pure
@@ -120,6 +121,18 @@ class RolezParsingTest{
         (program.task.expr(4) as StringLiteral).value.assertThat(is("\\"))
         (program.task.expr(5) as StringLiteral).value.assertThat(is("\n\n"))
         (program.task.expr(6) as StringLiteral).value.assertThat(is("\t"))
+    }
+    
+    @Test def testLongLiteral() {
+        val program = parse('''
+            0L;
+            42L;
+            «Long.MAX_VALUE»L;
+        '''.withFrame)
+        (program.task.expr(0) as LongLiteral).value.assertThat(is(0L));
+        (program.task.expr(1) as LongLiteral).value.assertThat(is(42L));
+        (program.task.expr(2) as LongLiteral).value.assertThat(is(Long.MAX_VALUE));
+        // IMPROVE: Support for Long.MIN_VALUE
     }
     
     @Test def testIntLiteral() {
