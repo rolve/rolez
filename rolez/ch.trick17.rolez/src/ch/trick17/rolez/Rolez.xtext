@@ -138,9 +138,24 @@ OrExpr returns Expr:
 enum OpOr returns OpLogical: OR='||';
 
 AndExpr returns Expr:
-    EqualityExpr ({LogicalExpr.left=current} op=OpAnd right=EqualityExpr)*;
+    BitwiseOrExpr ({LogicalExpr.left=current} op=OpAnd right=BitwiseOrExpr)*;
 
 enum OpAnd returns OpLogical: AND='&&';
+
+BitwiseOrExpr returns Expr:
+    BitwiseXorExpr ({BitwiseExpr.left=current} op=OpBitwiseOr right=BitwiseXorExpr)*;
+
+enum OpBitwiseOr returns OpBitwise: OR='|';
+
+BitwiseXorExpr returns Expr:
+    BitwiseAndExpr ({BitwiseExpr.left=current} op=OpBitwiseXor right=BitwiseAndExpr)*;
+
+enum OpBitwiseXor returns OpBitwise: XOR='^';
+
+BitwiseAndExpr returns Expr:
+    EqualityExpr ({BitwiseExpr.left=current} op=OpBitwiseAnd right=EqualityExpr)*;
+
+enum OpBitwiseAnd returns OpBitwise: AND='&';
 
 EqualityExpr returns Expr:
     RelationalExpr ({EqualityExpr.left=current} op=OpEquality right=RelationalExpr)?;
@@ -148,9 +163,14 @@ EqualityExpr returns Expr:
 enum OpEquality: EQUALS='==' | NOT_EQUALS='!=';
 
 RelationalExpr returns Expr:
-    AdditiveExpr ({RelationalExpr.left=current} op=OpRelational right=AdditiveExpr)?;
+    ShiftExpr ({RelationalExpr.left=current} op=OpRelational right=ShiftExpr)?;
 
 enum OpRelational: SMALLER='<' | GREATER='>' | SMALLER_EQUALS='<=' | GREATER_EQUALS='>=';
+
+ShiftExpr returns Expr: 
+    AdditiveExpr ({BitwiseExpr.left=current} op=OpShift right=AdditiveExpr)*;
+
+enum OpShift returns OpBitwise: LEFT_SHIFT='<<' | RIGHT_SHIFT='>>' |  UNSIGNED_RIGHT_SHIFT='>>>';
 
 AdditiveExpr returns Expr:
     MultiplicativeExpr ({ArithmeticBinaryExpr.left=current} op=OpAdditive right=MultiplicativeExpr)*;
@@ -169,7 +189,10 @@ UnaryMinus returns Expr:
     LogicalNot | {UnaryMinus} '-' expr=LogicalNot;
 
 LogicalNot returns Expr:
-    Start | {LogicalNot} '!' expr=Start;
+    BitwiseNot | {LogicalNot} '!' expr=BitwiseNot;
+
+BitwiseNot returns Expr:
+    Start | {BitwiseNot} '~' expr=Start;
 
 /* Start and MemberAccess rules have different syntax, but both create a MemberAccess object */
 

@@ -158,6 +158,17 @@
     <eLiterals name="OR" literal="||"/>
     <eLiterals name="AND" value="1" literal="&amp;&amp;"/>
   </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="BitwiseExpr" eSuperTypes="#//BinaryExpr">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="op" eType="#//OpBitwise"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EEnum" name="OpBitwise">
+    <eLiterals name="OR" literal="|"/>
+    <eLiterals name="XOR" value="1" literal="^"/>
+    <eLiterals name="AND" value="2" literal="&amp;"/>
+    <eLiterals name="LEFT_SHIFT" value="3" literal="&lt;&lt;"/>
+    <eLiterals name="RIGHT_SHIFT" value="4" literal=">>"/>
+    <eLiterals name="UNSIGNED_RIGHT_SHIFT" value="5" literal=">>>"/>
+  </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="EqualityExpr" eSuperTypes="#//BinaryExpr">
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="op" eType="#//OpEquality"/>
   </eClassifiers>
@@ -189,6 +200,7 @@
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="UnaryMinus" eSuperTypes="#//UnaryExpr"/>
   <eClassifiers xsi:type="ecore:EClass" name="LogicalNot" eSuperTypes="#//UnaryExpr"/>
+  <eClassifiers xsi:type="ecore:EClass" name="BitwiseNot" eSuperTypes="#//UnaryExpr"/>
   <eClassifiers xsi:type="ecore:EClass" name="MemberAccess" eSuperTypes="#//Expr #//Argumented">
     <eOperations name="isFieldAccess" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
     <eOperations name="isMethodInvoke" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EBoolean"/>
@@ -243,6 +255,7 @@
     <eOperations name="getName" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="NumericType" eSuperTypes="#//PrimitiveType"/>
+  <eClassifiers xsi:type="ecore:EClass" name="IntegralType" eSuperTypes="#//NumericType"/>
   <eClassifiers xsi:type="ecore:EClass" name="TypeParamRef" eSuperTypes="#//Type">
     <eStructuralFeatures xsi:type="ecore:EReference" name="param" eType="#//TypeParam"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="restrictingRole" eType="#//Role"
@@ -310,9 +323,9 @@
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="NullLiteral" eSuperTypes="#//Literal"/>
   <eClassifiers xsi:type="ecore:EClass" name="Null" eSuperTypes="#//ReferenceType"/>
-  <eClassifiers xsi:type="ecore:EClass" name="Int" eSuperTypes="#//NumericType"/>
+  <eClassifiers xsi:type="ecore:EClass" name="Int" eSuperTypes="#//IntegralType"/>
   <eClassifiers xsi:type="ecore:EClass" name="Double" eSuperTypes="#//NumericType"/>
-  <eClassifiers xsi:type="ecore:EClass" name="Char" eSuperTypes="#//NumericType"/>
+  <eClassifiers xsi:type="ecore:EClass" name="Char" eSuperTypes="#//IntegralType"/>
   <eClassifiers xsi:type="ecore:EClass" name="Boolean" eSuperTypes="#//PrimitiveType"/>
   <eClassifiers xsi:type="ecore:EClass" name="Void" eSuperTypes="#//PrimitiveType"/>
   <eClassifiers xsi:type="ecore:EClass" name="Pure" eSuperTypes="#//BuiltInRole"/>

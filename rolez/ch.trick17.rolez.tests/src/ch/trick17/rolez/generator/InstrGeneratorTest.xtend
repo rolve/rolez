@@ -307,6 +307,9 @@ class InstrGeneratorTest extends GeneratorTest {
             var k = 3 - 2 - 1;
             var l = 3 - (2 - 1);
             var m = (1 + 2) * (3 + 4);
+            var n = 1 * 2 + 3 * 4;
+            var o = 1 << 2 | 3 ^ 4;
+            var p = 1 >> 2 & 3 >>> 4 + 5 & 6;
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
             boolean c = true || new Base($task).equals(new Base($task));
             boolean d = (b && false) || true;
@@ -316,6 +319,9 @@ class InstrGeneratorTest extends GeneratorTest {
             int k = (3 - 2) - 1;
             int l = 3 - (2 - 1);
             int m = (1 + 2) * (3 + 4);
+            int n = (1 * 2) + (3 * 4);
+            int o = (1 << 2) | (3 ^ 4);
+            int p = ((1 >> 2) & (3 >>> (4 + 5))) & 6;
         '''.withJavaFrame)
     }
     
@@ -335,16 +341,25 @@ class InstrGeneratorTest extends GeneratorTest {
             var d = !(b && false);
             var e = !new Base.equals(new Base);
             
-            var j = -3;
-            var k = -(3 - 2);
-            var l = -new Base.hashCode;
+            var j = ~3;
+            var k = ~(3 - 2);
+            var l = ~new Base.hashCode;
+            var m = ~'a';
+            
+            var n = -3;
+            var o = -(3 - 2);
+            var p = -new Base.hashCode;
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
             boolean c = !false;
             boolean d = !(b && false);
             boolean e = !new Base($task).equals(new Base($task));
-            int j = -3;
-            int k = -(3 - 2);
-            int l = -new Base($task).hashCode();
+            int j = ~3;
+            int k = ~(3 - 2);
+            int l = ~new Base($task).hashCode();
+            int m = ~'a';
+            int n = -3;
+            int o = -(3 - 2);
+            int p = -new Base($task).hashCode();
         '''.withJavaFrame)
     }
     

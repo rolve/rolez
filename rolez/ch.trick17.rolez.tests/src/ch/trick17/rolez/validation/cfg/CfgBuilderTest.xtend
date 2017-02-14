@@ -349,6 +349,15 @@ class CfgBuilderTest {
             4 -> 5
             5 -> exit
         ''')
+        
+        parse("1 << 2;".withFrame).task.body.cfg.assertStructure('''
+            entry -> 1
+            1 -> 2
+            2 -> 3
+            3 -> 4
+            4 -> 5
+            5 -> exit
+        ''')
     }
     
     @Test def testUnaryExpr() {
@@ -367,6 +376,13 @@ class CfgBuilderTest {
             4 -> exit
         ''')
         parse("!true;".withFrame).task.body.cfg.assertStructure('''
+            entry -> 1
+            1 -> 2
+            2 -> 3
+            3 -> 4
+            4 -> exit
+        ''')
+        parse("~2;".withFrame).task.body.cfg.assertStructure('''
             entry -> 1
             1 -> 2
             2 -> 3

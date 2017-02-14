@@ -4,6 +4,7 @@ import ch.trick17.rolez.RolezUtils
 import ch.trick17.rolez.rolez.Argumented
 import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.BinaryExpr
+import ch.trick17.rolez.rolez.BitwiseNot
 import ch.trick17.rolez.rolez.Block
 import ch.trick17.rolez.rolez.BooleanLiteral
 import ch.trick17.rolez.rolez.Cast
@@ -209,6 +210,9 @@ class InstrGenerator {
         
         private def dispatch CharSequence generate(LogicalNot it)
             '''!«expr.genNested»'''
+        
+        private def dispatch CharSequence generate(BitwiseNot it)
+            '''~«expr.genNested»'''
         
         private def dispatch CharSequence generate(MemberAccess it) { switch(it) {
             case utils.isSliceGet(it):         generateSliceGet

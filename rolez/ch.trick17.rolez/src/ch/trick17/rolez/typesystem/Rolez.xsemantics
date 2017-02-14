@@ -3,6 +3,8 @@ import ch.trick17.rolez.generic.ParameterizedMethod
 import ch.trick17.rolez.rolez.Argumented
 import ch.trick17.rolez.rolez.ArithmeticBinaryExpr
 import ch.trick17.rolez.rolez.Assignment
+import ch.trick17.rolez.rolez.BitwiseExpr
+import ch.trick17.rolez.rolez.BitwiseNot
 import ch.trick17.rolez.rolez.Block
 import ch.trick17.rolez.rolez.BooleanLiteral
 import ch.trick17.rolez.rolez.BuiltInRole
@@ -19,6 +21,7 @@ import ch.trick17.rolez.rolez.ForLoop
 import ch.trick17.rolez.rolez.GenericClassRef
 import ch.trick17.rolez.rolez.IfStmt
 import ch.trick17.rolez.rolez.IntLiteral
+import ch.trick17.rolez.rolez.IntegralType
 import ch.trick17.rolez.rolez.LocalVar
 import ch.trick17.rolez.rolez.LocalVarDecl
 import ch.trick17.rolez.rolez.LogicalExpr
@@ -190,6 +193,18 @@ from {
     G |- e.right <| createBoolean
 }
 
+rule TBitwiseExpr
+    G |- BitwiseExpr e : createInt
+from {
+    G |- e.left  : var Type  leftType
+    G |- e.right : var Type rightType
+    
+    leftType instanceof IntegralType && rightType instanceof IntegralType or fail
+        error "The operator " + e.op + " is undefined for the argument types "
+            + leftType + ", " + rightType
+        source e
+}
+
 rule TEqualityExpr
     G |- EqualityExpr e : createBoolean
 from {
@@ -223,7 +238,7 @@ from {
 rule TArithmeticBinaryExpr
     G |- ArithmeticBinaryExpr e : Type t
 from {
-    G |- e.left  : var Type leftType
+    G |- e.left  : var Type  leftType
     G |- e.right : var Type rightType
     
     {
@@ -286,6 +301,16 @@ rule TLogicalNot
     G |- LogicalNot n : createBoolean
 from {
     G |- n.expr <| createBoolean
+}
+
+rule TBitwiseNot
+    G |- BitwiseNot n : createInt
+from {
+    G |- n.expr : var Type t
+    
+    {t instanceof IntegralType} or fail
+        error "The operator ~ is undefined for the argument type " + t
+        source n
 }
 
 rule TMemberAccess

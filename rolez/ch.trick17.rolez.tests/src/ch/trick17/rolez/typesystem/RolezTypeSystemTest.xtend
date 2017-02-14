@@ -143,19 +143,48 @@ class RolezTypeSystemTest {
         '''.withFrame).assertError(ASSIGNMENT, null, "operator", "undefined", "Object")
     }
     
-    @Test def testTBooleanExpr() {
+    @Test def testTLogicalExpr() {
         parse("true || false;".withFrame).task.lastExpr.type.assertThat(instanceOf(Boolean))
         parse("true && false;".withFrame).task.lastExpr.type.assertThat(instanceOf(Boolean))
     }
     
-    @Test def testTBooleanExprErrorInOp() {
+    @Test def testTLogicalExprErrorInOp() {
         parse("  !5 || false;".withFrame).assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
         parse("true ||    !5;".withFrame).assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
-    @Test def testTBooleanExprTypeMismatch() {
+    @Test def testTLogicalExprTypeMismatch() {
         parse("5 || false;".withFrame).assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
         parse("true  || 5;".withFrame).assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
+    }
+    
+    @Test def testTBitwiseExpr() {
+        parse("4 | 2;".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
+        parse("4 ^ 2;".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
+        parse("4 & 2;".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
+        
+        parse("4 <<  2;".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
+        parse("4 >>  2;".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
+        parse("4 >>> 2;".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
+        
+        // type is always int, even if operands are not
+        parse("'a' | 'b';".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
+        parse("'a' |  2 ;".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
+        parse(" 4  | 'b';".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
+    }
+    
+    @Test def testTBitwiseExprErrorInOp() {
+        parse("  !5 | false;".withFrame).assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
+        parse("true |    !5;".withFrame).assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
+    }
+    
+    @Test def testTBitwiseExprTypeMismatch() {
+        parse("5 | false;".withFrame)
+            .assertError(BITWISE_EXPR, null, "operator", "|", "undefined", "boolean")
+        parse("true | 5;".withFrame)
+            .assertError(BITWISE_EXPR, null, "operator", "|", "undefined", "boolean")
+        parse("true | false;".withFrame)
+            .assertError(BITWISE_EXPR, null, "operator", "|", "undefined", "boolean")
     }
     
     @Test def testTEqualityExpr() {
@@ -374,12 +403,32 @@ class RolezTypeSystemTest {
     
     @Test def testTLogicalNotTypeMismatch() {
         parse('''!new Object;'''.withFrame).assertError(NEW, SUBTYPEEXPR, "Object", "boolean")
-        parse('''!"Hello";'''.withFrame).assertError(STRING_LITERAL, SUBTYPEEXPR, "String", "boolean")
+        parse('''!"Hello";   '''.withFrame).assertError(STRING_LITERAL, SUBTYPEEXPR, "String", "boolean")
         
         parse("!'a'; ".withFrame).assertError(  CHAR_LITERAL, SUBTYPEEXPR, "char",   "boolean")
         parse("!5;   ".withFrame).assertError(   INT_LITERAL, SUBTYPEEXPR, "int",    "boolean")
         parse("!5.0; ".withFrame).assertError(DOUBLE_LITERAL, SUBTYPEEXPR, "double", "boolean")
         parse("!null;".withFrame).assertError(  NULL_LITERAL, SUBTYPEEXPR, "null",   "boolean")
+    }
+    
+    @Test def testTBitwiseNot() {
+        parse("~ 2 ;".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
+        parse("~'a';".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
+    }
+    
+    @Test def testTBitwiseNotErrorInOp() {
+        parse("~(!5);  ".withFrame).assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
+    }
+    
+    @Test def testTBitwiseNotTypeMismatch() {
+        parse('''~new Object;'''.withFrame)
+            .assertError(BITWISE_NOT, null, "operator", "~", "undefined", "rolez.lang.Object")
+        parse('''~"Hello";   '''.withFrame)
+            .assertError(BITWISE_NOT, null, "operator", "~", "undefined", "rolez.lang.String")
+        
+        parse("~5.0; ".withFrame).assertError(BITWISE_NOT, null, "operator", "~", "undefined", "double")
+        parse("~true;".withFrame).assertError(BITWISE_NOT, null, "operator", "~", "undefined", "boolean")
+        parse("~null;".withFrame).assertError(BITWISE_NOT, null, "operator", "~", "undefined", "Null")
     }
     
     @Test def testTMemberAccessErrorInTarget() {
