@@ -1022,10 +1022,10 @@ class RolezLinkingTest {
                     val j = 5;
                     j;
                     
-                    for(var k = 0; k < 10; k += 1)
+                    for(var k = 0; k < 10; k++)
                         k;
                     
-                    for(var k = 0; k < 10; k += 1) {
+                    for(var k = 0; k < 10; k++) {
                         k;
                     }
                     

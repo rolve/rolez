@@ -111,19 +111,19 @@ class InstrGeneratorTest extends GeneratorTest {
     
     @Test def testForLoop() {
         parse('''
-            for(var n = 0; n < 10; n += 1)
+            for(var n = 0; n < 10; n++)
                 this.bar;
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
-            for(int n = 0; n < 10; n += 1)
+            for(int n = 0; n < 10; n++)
                 this.bar($task);
         '''.withJavaFrame)
         
         parse('''
-            for(var n = 0; n < 10; n += 1) {
+            for(var n = 0; n < 10; n++) {
                 this.bar;
             }
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
-            for(int n = 0; n < 10; n += 1) {
+            for(int n = 0; n < 10; n++) {
                 this.bar($task);
             }
         '''.withJavaFrame)
@@ -346,9 +346,13 @@ class InstrGeneratorTest extends GeneratorTest {
             var l = ~new Base.hashCode;
             var m = ~'a';
             
-            var n = -3;
-            var o = -(3 - 2);
+            var n = -3L;
+            var o = -(3 - 2.0);
             var p = -new Base.hashCode;
+            
+            n++;
+            o--;
+            ++p;
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
             boolean c = !false;
             boolean d = !(b && false);
@@ -357,9 +361,12 @@ class InstrGeneratorTest extends GeneratorTest {
             int k = ~(3 - 2);
             int l = ~new Base($task).hashCode();
             int m = ~'a';
-            int n = -3;
-            int o = -(3 - 2);
+            long n = -3L;
+            double o = -(3 - 2.0);
             int p = -new Base($task).hashCode();
+            n++;
+            o--;
+            ++p;
         '''.withJavaFrame)
     }
     

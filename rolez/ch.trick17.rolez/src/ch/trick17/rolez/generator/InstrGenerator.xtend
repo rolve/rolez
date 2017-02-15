@@ -2,6 +2,7 @@ package ch.trick17.rolez.generator
 
 import ch.trick17.rolez.RolezUtils
 import ch.trick17.rolez.rolez.Argumented
+import ch.trick17.rolez.rolez.ArithmeticUnaryExpr
 import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.BinaryExpr
 import ch.trick17.rolez.rolez.BitwiseNot
@@ -39,7 +40,6 @@ import ch.trick17.rolez.rolez.SuperConstrCall
 import ch.trick17.rolez.rolez.The
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.UnaryExpr
-import ch.trick17.rolez.rolez.UnaryMinus
 import ch.trick17.rolez.rolez.VarKind
 import ch.trick17.rolez.rolez.VarRef
 import ch.trick17.rolez.rolez.WhileLoop
@@ -53,6 +53,7 @@ import org.eclipse.xtext.common.types.JvmArrayType
 
 import static ch.trick17.rolez.Constants.*
 import static ch.trick17.rolez.generator.CodeKind.*
+import static ch.trick17.rolez.rolez.OpArithmeticUnary.*
 import static ch.trick17.rolez.rolez.VarKind.*
 
 import static extension ch.trick17.rolez.RolezExtensions.*
@@ -206,8 +207,13 @@ class InstrGenerator {
         private def dispatch CharSequence generate(Cast it)
             '''(«type.generate») «expr.genNested»'''
         
-        private def dispatch CharSequence generate(UnaryMinus it)
-            '''-«expr.genNested»'''
+        private def dispatch CharSequence generate(ArithmeticUnaryExpr it) {
+            if(op == POST_INCREMENT || op == POST_DECREMENT)
+                // duplicate enum literals are forbidden, so the POST_* operators contain "post"
+                expr.genNested + op.literal.replace("post", "")
+            else
+                op.literal + expr.genNested
+        }
         
         private def dispatch CharSequence generate(LogicalNot it)
             '''!«expr.genNested»'''

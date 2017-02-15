@@ -1022,6 +1022,24 @@ class RolezValidatorTest {
                 }
             }
         ''').assertError(MEMBER_ACCESS, VAL_FIELD_NOT_INITIALIZED)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                val i: int
+                new(a: boolean, b: boolean) {
+                    this.i++;
+                }
+            }
+        ''').assertError(MEMBER_ACCESS, VAL_FIELD_NOT_INITIALIZED)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                val i: int
+                new(a: boolean, b: boolean) {
+                    --this.i;
+                }
+            }
+        ''').assertError(MEMBER_ACCESS, VAL_FIELD_NOT_INITIALIZED)
         
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -1053,6 +1071,16 @@ class RolezValidatorTest {
                 }
             }
         ''').assertError(ASSIGNMENT, VAL_FIELD_OVERINITIALIZED)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                val x: int
+                new(b: boolean) {
+                    this.x = 3;
+                    this.x++;
+                }
+            }
+        ''').assertError(ARITHMETIC_UNARY_EXPR, VAL_FIELD_OVERINITIALIZED)
         program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
@@ -1294,6 +1322,15 @@ class RolezValidatorTest {
                     if(x > 0)
                         i = 5;
                     return i;
+                }
+            }
+        ''').assertError(VAR_REF, VAR_NOT_INITIALIZED, "variable i")
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def pure foo(x: int): int {
+                    var i: int;
+                    i++;
                 }
             }
         ''').assertError(VAR_REF, VAR_NOT_INITIALIZED, "variable i")

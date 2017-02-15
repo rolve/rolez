@@ -389,8 +389,8 @@ class RolezValidator extends RolezSystemValidator {
                 error("Value field " + f.name + " may not have been initialized",
                     null, VAL_FIELD_NOT_INITIALIZED)
         
-        for(a : all(Assignment).filter[isValFieldInit(it)]) {
-            val f = assignedField(a)
+        for(a : all(Expr).filter[isValFieldInit]) {
+            val f = a.assignedField
             if(f.possiblyInitializedBefore(cfg.nodeOf(a)))
                 error("Value field " + f.name + " may already have been initialized",
                     a, null, VAL_FIELD_OVERINITIALIZED)
@@ -398,7 +398,7 @@ class RolezValidator extends RolezSystemValidator {
         
         for(a : all(MemberAccess).filter[isFieldAccess]) {
             val f = a.field
-            if(f.kind == VAL && !a.isAssignmentTarget && a.target instanceof This
+            if(f.kind == VAL && a.isVarOrFieldRead && a.target instanceof This
                     && !f.definitelyInitializedBefore(cfg.nodeOf(a)))
                 error("Value field " + f.name + " may not have been initialized",
                     a, MEMBER_ACCESS__MEMBER, VAL_FIELD_NOT_INITIALIZED)
@@ -412,9 +412,8 @@ class RolezValidator extends RolezSystemValidator {
                     NAMED__NAME, VAL_FIELD_NOT_INITIALIZED)
     }
     
-    private def isAssignmentTarget(Expr e) {
-        e.eContainer instanceof Assignment
-            && (e.eContainer as Assignment).left == e
+    private def isVarOrFieldRead(Expr e) {
+        !(e.eContainer instanceof Assignment) || (e.eContainer as Assignment).left != e
     }
     
     @Check
@@ -488,7 +487,7 @@ class RolezValidator extends RolezSystemValidator {
         val cfg = code.controlFlowGraph
         val extension analysis = new LocalVarsInitializedAnalysis(cfg)
         for(v : all(VarRef))
-            if(v.variable instanceof LocalVar && !v.isAssignmentTarget
+            if(v.variable instanceof LocalVar && v.isVarOrFieldRead
                     && !v.variable.isInitializedBefore(cfg.nodeOf(v)))
                 error("Variable " + v.variable.name + " may not have been initialized",
                     v, null, VAR_NOT_INITIALIZED)

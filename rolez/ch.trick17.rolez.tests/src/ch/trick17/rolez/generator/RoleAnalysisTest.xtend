@@ -54,7 +54,7 @@ class RoleAnalysisTest {
         
         task = parse('''
             val a1 = new A; // new instances are readwrite
-            for(var i = 0; i < 10; i += 1) {}
+            for(var i = 0; i < 10; i++) {}
             a1;             // still readwrite
         '''.withFrame).task
         newRoleAnalysis(task, task.body.controlFlowGraph, TASK)
@@ -62,7 +62,7 @@ class RoleAnalysisTest {
         
         task = parse('''
             val a1 = this.getA; // pure
-            for(var i = 0; i < "hi".hashCode; i += 1)
+            for(var i = 0; i < "hi".hashCode; i++)
                 a1.i += 42;
             a1;                 // still pure, since loop may have been skipped
         '''.withFrame).task
@@ -70,9 +70,9 @@ class RoleAnalysisTest {
                 .dynamicRole(task.lastExpr).assertThat(instanceOf(Pure))
         
         task = parse('''
-            val a1 = this.getA;                     // pure
-            for(var i = 0; i < a1.hashCode; i += 1) // a1 is readonly after condition
-                a1.i;                               // and should still be readonly here
+            val a1 = this.getA;                  // pure
+            for(var i = 0; i < a1.hashCode; i++) // a1 is readonly after condition
+                a1.i;                            // and should still be readonly here
         '''.withFrame).task
         val fieldAccess = task.all(MemberAccess).filter[isFieldAccess].map[target].head
         newRoleAnalysis(task, task.body.controlFlowGraph, TASK)
@@ -101,7 +101,7 @@ class RoleAnalysisTest {
         task = parse('''
             val a1 = this.getA;
             var sum = 0;
-            for(var i = 0; i < a1.array.length; i += 1)
+            for(var i = 0; i < a1.array.length; i++)
                 sum += a1.array.get(i) * a1.array.get(i);
         '''.withFrame).task
         val analysis = newRoleAnalysis(task, task.body.controlFlowGraph, TASK)

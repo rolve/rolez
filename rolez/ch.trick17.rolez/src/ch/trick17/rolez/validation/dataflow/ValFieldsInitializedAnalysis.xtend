@@ -48,6 +48,8 @@ class ValFieldsInitializedAnalysis extends DataFlowAnalysis<Initialized> {
     }
     
     protected def dispatch flowThrough(Assignment a, Initialized in) {
+        // while isValFieldInit may also be true for increment or decrement ops,
+        // here we only consider assignments, since the latter are an error anyway
         if(isValFieldInit(a)) in.with(assignedField(a))
         else in
     }

@@ -198,7 +198,16 @@
   <eClassifiers xsi:type="ecore:EClass" name="Cast" eSuperTypes="#//UnaryExpr">
     <eStructuralFeatures xsi:type="ecore:EReference" name="type" eType="#//Type" containment="true"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="UnaryMinus" eSuperTypes="#//UnaryExpr"/>
+  <eClassifiers xsi:type="ecore:EClass" name="ArithmeticUnaryExpr" eSuperTypes="#//UnaryExpr">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="op" eType="#//OpArithmeticUnary"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EEnum" name="OpArithmeticUnary">
+    <eLiterals name="MINUS" literal="-"/>
+    <eLiterals name="PRE_INCREMENT" value="1" literal="++"/>
+    <eLiterals name="PRE_DECREMENT" value="2" literal="--"/>
+    <eLiterals name="POST_INCREMENT" value="3" literal="post++"/>
+    <eLiterals name="POST_DECREMENT" value="4" literal="post--"/>
+  </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="LogicalNot" eSuperTypes="#//UnaryExpr"/>
   <eClassifiers xsi:type="ecore:EClass" name="BitwiseNot" eSuperTypes="#//UnaryExpr"/>
   <eClassifiers xsi:type="ecore:EClass" name="MemberAccess" eSuperTypes="#//Expr #//Argumented">

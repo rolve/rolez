@@ -185,16 +185,24 @@ MultiplicativeExpr returns Expr:
 enum OpMultiplicative returns OpArithmetic: TIMES='*' | DIVIDED_BY='/' | MODULO='%';
 
 Cast returns Expr:
-    UnaryMinus ({Cast.expr=current} 'as' type=Type)*;
+    ArithmeticUnaryPreExpr ({Cast.expr=current} 'as' type=Type)*;
 
-UnaryMinus returns Expr:
-    LogicalNot | {UnaryMinus} '-' expr=LogicalNot;
+ArithmeticUnaryPreExpr returns Expr:
+    LogicalNot | {ArithmeticUnaryExpr} op=OpArithmeticUnaryPre expr=LogicalNot;
+
+enum OpArithmeticUnaryPre returns OpArithmeticUnary:
+    MINUS='-' | PRE_INCREMENT='++' | PRE_DECREMENT='--';
 
 LogicalNot returns Expr:
     BitwiseNot | {LogicalNot} '!' expr=BitwiseNot;
 
 BitwiseNot returns Expr:
-    Start | {BitwiseNot} '~' expr=Start;
+    ArithmeticUnaryPostExpr | {BitwiseNot} '~' expr=ArithmeticUnaryPostExpr;
+
+ArithmeticUnaryPostExpr returns Expr:
+    Start ({ArithmeticUnaryExpr.expr=current} op=OpArithmeticUnaryPost)?;
+
+enum OpArithmeticUnaryPost returns OpArithmeticUnary: POST_INCREMENT='++' | POST_DECREMENT='--';
 
 /* Start and MemberAccess rules have different syntax, but both create a MemberAccess object */
 

@@ -103,7 +103,7 @@ class RolezTypeSystemTest {
         parse('''
             var i = 0;
             i += -false;
-        '''.withFrame).assertError(UNARY_MINUS, null, "operator", "-", "undefined", "boolean")
+        '''.withFrame).assertError(ARITHMETIC_UNARY_EXPR, null, "operator", "-", "undefined", "boolean")
     }
     
     @Test def testTAssignmentNotAssignable() {
@@ -251,11 +251,11 @@ class RolezTypeSystemTest {
     
     @Test def testTRelationalExprErrorInOp() {
         parse("-true < 0;".withFrame)
-            .assertError(UNARY_MINUS, null, "operator", "-", "undefined", "boolean")
+            .assertError(ARITHMETIC_UNARY_EXPR, null, "operator", "-", "undefined", "boolean")
         parse("100 <= -false;".withFrame)
-            .assertError(UNARY_MINUS, null, "operator", "-", "undefined", "boolean")
+            .assertError(ARITHMETIC_UNARY_EXPR, null, "operator", "-", "undefined", "boolean")
         parse("100 >= -false;".withFrame)
-            .assertError(UNARY_MINUS, null, "operator", "-", "undefined", "boolean")
+            .assertError(ARITHMETIC_UNARY_EXPR, null, "operator", "-", "undefined", "boolean")
     }
     
     @Test def testTRelationalExprIncompatibleTypes() {
@@ -298,8 +298,8 @@ class RolezTypeSystemTest {
     
     @Test def testTArithmeticExprErrorInOp() {
         parse("!'a' + 0;    ".withFrame).assertError(CHAR_LITERAL, SUBTYPEEXPR, "char", "boolean")
-        parse("100 - -false;".withFrame).assertError(UNARY_MINUS, null, "operator", "-", "undefined", "boolean")
-        parse("100 / -true; ".withFrame).assertError(UNARY_MINUS, null, "operator", "-", "undefined", "boolean")
+        parse("100 - -false;".withFrame).assertError(ARITHMETIC_UNARY_EXPR, null, "operator", "-", "undefined", "boolean")
+        parse("100 / -true; ".withFrame).assertError(ARITHMETIC_UNARY_EXPR, null, "operator", "-", "undefined", "boolean")
         parse("(3*3) % !42; ".withFrame).assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
@@ -388,7 +388,7 @@ class RolezTypeSystemTest {
             .assertError(CAST, null, "cast", "readwrite rolez.lang.Array[pure A]", "readwrite rolez.lang.Array[readwrite A]")
     }
     
-    @Test def testTUnaryMinus() {        
+    @Test def testTArithmeticUnaryExpr() {        
         parse("-2.0;           ".withFrame).task.lastExpr.type.assertThat(instanceOf(Double))
         parse("val d = 5.0; -d;".withFrame).task.lastExpr.type.assertThat(instanceOf(Double))
         parse("-(4-4.0);       ".withFrame).task.lastExpr.type.assertThat(instanceOf(Double))
@@ -398,20 +398,33 @@ class RolezTypeSystemTest {
         parse("-(2 as short);".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
         parse("-(2 as  byte);".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
         parse("-         'a';".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
+        
+        parse("var d = 0.0; d++;".withFrame).task.lastExpr.type.assertThat(instanceOf(Double))
+        parse("var l = 0L ; l--;".withFrame).task.lastExpr.type.assertThat(instanceOf(Long))
+        parse("var i = 0  ; ++i;".withFrame).task.lastExpr.type.assertThat(instanceOf(Int))
+        parse("var s = 0 as short; --s;".withFrame).task.lastExpr.type.assertThat(instanceOf(Short))
+        parse("var y = 0 as byte; y++;".withFrame).task.lastExpr.type.assertThat(instanceOf(Byte))
+        parse("var c = 'a'; c++;".withFrame).task.lastExpr.type.assertThat(instanceOf(Char))
     }
     
-    @Test def testTUnaryMinusErrorInOp() {
+    @Test def testTArithmeticUnaryExprErrorInOp() {
         parse("-!5;    ".withFrame).assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }
     
-    @Test def testTUnaryMinusTypeMismatch() {
+    @Test def testTArithmeticUnaryExprTypeMismatch() {
         parse('''-new Object;'''.withFrame)
-            .assertError(UNARY_MINUS, null, "operator", "-", "undefined", "Object")
+            .assertError(ARITHMETIC_UNARY_EXPR, null, "operator", "-", "undefined", "Object")
         parse('''-"Hello";'''.withFrame)
-            .assertError(UNARY_MINUS, null, "operator", "-", "undefined", "String")
+            .assertError(ARITHMETIC_UNARY_EXPR, null, "operator", "-", "undefined", "String")
         
-        parse("-true;".withFrame).assertError(UNARY_MINUS, null, "operator", "-", "undefined", "boolean")
-        parse("-null;".withFrame).assertError(UNARY_MINUS, null, "operator", "-", "undefined", "null")
+        parse("-true;".withFrame).assertError(ARITHMETIC_UNARY_EXPR, null, "operator", "-", "undefined", "boolean")
+        parse("-null;".withFrame).assertError(ARITHMETIC_UNARY_EXPR, null, "operator", "-", "undefined", "null")
+    }
+    
+    @Test def testTArithmeticUnaryExprNotAssignable() {
+        parse("1++;".withFrame).assertError(INT_LITERAL, AEXPR, "assign")
+        parse("val i = 1; i--;".withFrame).assertError(VAR_REF, AVARREF, "assign")
+        parse("var i = 1; --(++i);".withFrame).assertError(PARENTHESIZED, AEXPR, "assign")
     }
     
     @Test def testTLogicalNot() {
@@ -1237,7 +1250,7 @@ class RolezTypeSystemTest {
     
     @Test def testWForLoop() {
         parse('''
-            for(var i = 0; i < 10; i += 1)
+            for(var i = 0; i < 10; i++)
                 new Object;
             
             for(var i = 0; true; true) {

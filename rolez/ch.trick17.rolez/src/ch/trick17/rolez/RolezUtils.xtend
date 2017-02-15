@@ -1,5 +1,6 @@
 package ch.trick17.rolez
 
+import ch.trick17.rolez.rolez.ArithmeticUnaryExpr
 import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.Block
 import ch.trick17.rolez.rolez.Class
@@ -14,6 +15,7 @@ import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.Method
 import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.NormalClass
+import ch.trick17.rolez.rolez.OpArithmeticUnary
 import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
@@ -113,12 +115,20 @@ class RolezUtils {
         EcoreUtil.equals(it, other)
     }
     
-    static def isValFieldInit(Assignment it) {
-        !(#[left].filter(MemberAccess).filter[isFieldAccess && target instanceof This]
-            .map[field].filter[kind == VAL].isEmpty)
+    static def isValFieldInit(Expr it) {
+        val lhs = assignmentLhs
+        if(lhs instanceof MemberAccess)
+            lhs.isFieldAccess && lhs.target instanceof This && lhs.field.kind == VAL
+        else
+            false
     }
     
-    static def assignedField(Assignment it) { (left as MemberAccess).field }
+    private static def assignmentLhs(Expr it) { switch(it) {
+        Assignment: left
+        ArithmeticUnaryExpr case op != OpArithmeticUnary.MINUS: expr
+    }}
+    
+    static def assignedField(Expr it) { (assignmentLhs as MemberAccess).field }
     
     static def dispatch Iterable<? extends Var> varsAbove(Block container, Stmt s) {
         container.stmts.takeWhile[it != s].filter(LocalVarDecl).map[variable]
@@ -218,6 +228,7 @@ class RolezUtils {
     def isSideFxExpr(Expr it) {
         switch(it) {
             Assignment: true
+            ArithmeticUnaryExpr: op != OpArithmeticUnary.MINUS
             New: !classRef.clazz.isArrayClass
             MemberAccess: isMethodInvoke && !isSliceGet && !isArrayGet && !isVectorGet && !isVectorBuilderGet || isTaskStart
             default: false

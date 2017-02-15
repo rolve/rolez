@@ -2,6 +2,7 @@ import ch.trick17.rolez.RolezUtils
 import ch.trick17.rolez.generic.ParameterizedMethod
 import ch.trick17.rolez.rolez.Argumented
 import ch.trick17.rolez.rolez.ArithmeticBinaryExpr
+import ch.trick17.rolez.rolez.ArithmeticUnaryExpr
 import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.BitwiseExpr
 import ch.trick17.rolez.rolez.BitwiseNot
@@ -36,6 +37,7 @@ import ch.trick17.rolez.rolez.Null
 import ch.trick17.rolez.rolez.NullLiteral
 import ch.trick17.rolez.rolez.NumericType
 import ch.trick17.rolez.rolez.OpArithmetic
+import ch.trick17.rolez.rolez.OpArithmeticUnary
 import ch.trick17.rolez.rolez.OpAssignment
 import ch.trick17.rolez.rolez.Param
 import ch.trick17.rolez.rolez.Parenthesized
@@ -61,7 +63,6 @@ import ch.trick17.rolez.rolez.The
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.TypeParamRef
-import ch.trick17.rolez.rolez.UnaryMinus
 import ch.trick17.rolez.rolez.Var
 import ch.trick17.rolez.rolez.VarKind
 import ch.trick17.rolez.rolez.VarRef
@@ -278,15 +279,18 @@ from {
     t = c.type
 }
 
-rule TUnaryMinus
-    G |- UnaryMinus m : Type t
+rule TArithmeticUnaryExpr
+    G |- ArithmeticUnaryExpr e : Type t
 from {
-    G |- m.expr : var Type exprType
+    G |- e.expr : var Type exprType
     {exprType instanceof NumericType} or fail
-        error "The unary operator - is undefined for the argument type " + exprType
-        source m
+        error "The unary operator " + e.op + " is undefined for the argument type " + exprType
+        source e
+    e.op == OpArithmeticUnary.MINUS or G |= e.expr
     
-    if(exprType instanceof Double)
+    if(e.op != OpArithmeticUnary.MINUS) // type equals the variable type
+        t = exprType
+    else if(exprType instanceof Double)
         t = createDouble
     else if(exprType instanceof Long)
         t = createLong
