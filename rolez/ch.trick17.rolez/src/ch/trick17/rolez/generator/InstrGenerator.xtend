@@ -392,8 +392,8 @@ class InstrGenerator {
         
         private def dispatch CharSequence generate(Parenthesized it) { expr.generate }
         
-        private def dispatch CharSequence generate( DoubleLiteral it) { value.toString }
-        private def dispatch CharSequence generate(   LongLiteral it) { value.toString }
+        private def dispatch CharSequence generate( DoubleLiteral it) { value }
+        private def dispatch CharSequence generate(   LongLiteral it) { value + "L" }
         private def dispatch CharSequence generate(    IntLiteral it) { value.toString }
         private def dispatch CharSequence generate(BooleanLiteral it) { value.toString }
         
