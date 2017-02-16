@@ -120,3 +120,8 @@ object MathExtra {
         else return 31 - the Int.numberOfLeadingZeros(i);
     }
 }
+
+class Assertion mapped to Assertion {
+    mapped new(condition: boolean)
+    mapped new(condition: boolean, message: pure String)
+}
