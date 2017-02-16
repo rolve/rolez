@@ -35,3 +35,35 @@ object StripedPartitioner extends Partitioner {
     
     override pure toString: readonly String { return "StripedPartitioner"; }
 }
+
+class BlockPartitioner extends Partitioner {
+    
+    val blockSize: int
+    
+    new(blockSize: int) {
+        new Assertion(blockSize > 0, "block size must be positive");
+        this.blockSize = blockSize;
+    }
+    
+    override pure partition(orig: pure SliceRange, n: int): readonly Array[readonly SliceRange] {
+        new Assertion(orig.size % this.blockSize == 0, "size not a multiple of " + this.blockSize);
+        
+        val blocks = orig.size / this.blockSize;
+        val baseSize = (blocks / n) * this.blockSize;
+        val largeRanges = blocks % n;
+        
+        val ranges = new Array[readonly SliceRange](n);
+        var begin = orig.begin;
+        for(var i = 0; i < n; i++) {
+            var size = orig.step * baseSize;
+            if(i < largeRanges)
+                size += orig.step * this.blockSize;
+            val end = the Math.min(begin + size, orig.end);
+            ranges.set(i, new SliceRange(begin, end, orig.step));
+            begin = end;
+        }
+        return ranges;
+    }
+    
+    override pure toString: readonly String { return this.blockSize + "-BlockPartitioner"; }
+}

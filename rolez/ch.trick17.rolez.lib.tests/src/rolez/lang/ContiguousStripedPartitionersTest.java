@@ -2,13 +2,10 @@ package rolez.lang;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.junit.AfterClass;
 import org.junit.Test;
@@ -17,7 +14,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
-public class PartitionersTest {
+public class ContiguousStripedPartitionersTest extends PartitionerTest {
     
     static final int[] INTERESTING_SIZES = {2, 4, 5, 7, 8, 20, 49, 97};
     static final int[] INTERESTING_NS = {1, 2, 3, 4, 5, 7, 8};
@@ -65,7 +62,7 @@ public class PartitionersTest {
     private final int n2;
     private final List<Partitioner> modes;
     
-    public PartitionersTest(final int size, final int n1, final int n2,
+    public ContiguousStripedPartitionersTest(final int size, final int n1, final int n2,
             final List<Partitioner> modes) {
         this.size = size;
         this.n1 = n1;
@@ -88,30 +85,5 @@ public class PartitionersTest {
         assertEquals(n1 * n2, slices2.size());
         assertCover(orig, slices2);
         assertBalanced(slices2);
-    }
-    
-    private static void assertCover(final SliceRange original,
-            final Collection<SliceRange> slices) {
-        final Set<Integer> indices = new HashSet<Integer>();
-        
-        for(final SliceRange slice : slices)
-            for(int i = slice.begin; i < slice.end; i += slice.step)
-                assertTrue(indices.add(i));
-                
-        for(int i = original.begin; i < original.end; i++)
-            assertTrue(indices.contains(i));
-    }
-    
-    private static void assertBalanced(final Collection<SliceRange> slices) {
-        int min = Integer.MAX_VALUE;
-        int max = 0;
-        for(final SliceRange slice : slices) {
-            final int length = slice.size();
-            if(length < min)
-                min = length;
-            if(length > max)
-                max = length;
-        }
-        assertTrue(max - min <= 1);
     }
 }
