@@ -1,9 +1,12 @@
 package rolez.lang;
 
-// TODO: Convert to Rolez (would profit from interfaces or at least abstract classes)
-
+/**
+ * Java-side of the Partitioner class, the superclass of all partitioners. Needs to be mapped
+ * because the mapped method Slice.partition depends on it and it is impossible to map to methods
+ * that use classes generated from Rolez (in the same project).
+ * 
+ * @author Michael Faes
+ */
 public abstract class Partitioner {
-    
-    // TODO: Replace return type with some final or even immutable array class
-    public abstract GuardedArray<SliceRange[]> partition(SliceRange original, int n);
+    public abstract SliceRange[] partition(SliceRange original, int n);
 }

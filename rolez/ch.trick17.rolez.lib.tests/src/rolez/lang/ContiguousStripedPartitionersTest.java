@@ -74,14 +74,14 @@ public class ContiguousStripedPartitionersTest extends PartitionerTest {
     public void testPartition() {
         final SliceRange orig = new SliceRange(0, size, 1);
         
-        final Collection<SliceRange> slices1 = asList(modes.get(0).partition(orig, n1).data);
+        final Collection<SliceRange> slices1 = asList(modes.get(0).partition(orig, n1));
         assertEquals(n1, slices1.size());
         assertCover(orig, slices1);
         assertBalanced(slices1);
         
         final List<SliceRange> slices2 = new ArrayList<>(n1 * n2);
         for(final SliceRange s1 : slices1)
-            slices2.addAll(asList(modes.get(1).partition(s1, n2).data));
+            slices2.addAll(asList(modes.get(1).partition(s1, n2)));
         assertEquals(n1 * n2, slices2.size());
         assertCover(orig, slices2);
         assertBalanced(slices2);

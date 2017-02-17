@@ -64,7 +64,7 @@ public class BlockPartitionerTest extends PartitionerTest {
         SliceRange orig = new SliceRange(0, size, 1);
         
         BlockPartitioner partitioner = new BlockPartitioner(blockSize, currentTask().idBits());
-        Collection<SliceRange> slices = asList(partitioner.partition(orig, n).data);
+        Collection<SliceRange> slices = asList(partitioner.partition(orig, n));
         assertEquals(n, slices.size());
         assertCover(orig, slices);
         assertBlockSizes(slices);

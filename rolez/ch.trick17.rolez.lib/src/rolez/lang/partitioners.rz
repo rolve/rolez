@@ -2,15 +2,15 @@ package rolez.lang
 
 class Partitioner mapped to rolez.lang.Partitioner {
     mapped new
-    mapped def readonly partition(original: pure SliceRange, n: int): readonly Array[readonly SliceRange]
+    mapped def readonly partition(original: pure SliceRange, n: int): pure Vector[pure SliceRange]
 }
 
 object ContiguousPartitioner extends Partitioner {
-    override pure partition(orig: pure SliceRange, n: int): readonly Array[readonly SliceRange] {
+    override pure partition(orig: pure SliceRange, n: int): pure Vector[pure SliceRange] {
         val baseSize = orig.size / n;
         val largeRanges = orig.size % n;
         
-        val ranges = new Array[readonly SliceRange](n);
+        val ranges = new VectorBuilder[pure SliceRange](n);
         var begin = orig.begin;
         for(var i = 0; i < n; i++) {
             var size = orig.step * baseSize;
@@ -20,18 +20,18 @@ object ContiguousPartitioner extends Partitioner {
             ranges.set(i, new SliceRange(begin, end, orig.step));
             begin = end;
         }
-        return ranges;
+        return ranges.build;
     }
     
     override pure toString: readonly String { return "ContiguousPartitioner"; }
 }
 
 object StripedPartitioner extends Partitioner {
-    override pure partition(orig: pure SliceRange, n: int): readonly Array[readonly SliceRange] {
-        val ranges = new Array[readonly SliceRange](n);
+    override pure partition(orig: pure SliceRange, n: int): pure Vector[pure SliceRange] {
+        val ranges = new VectorBuilder[pure SliceRange](n);
         for(var i = 0; i < n; i++)
             ranges.set(i, new SliceRange(the Math.min(orig.begin + i * orig.step, orig.end), orig.end, orig.step * n));
-        return ranges;
+        return ranges.build;
     }
     
     override pure toString: readonly String { return "StripedPartitioner"; }
@@ -46,14 +46,14 @@ class BlockPartitioner extends Partitioner {
         this.blockSize = blockSize;
     }
     
-    override pure partition(orig: pure SliceRange, n: int): readonly Array[readonly SliceRange] {
+    override pure partition(orig: pure SliceRange, n: int): pure Vector[pure SliceRange] {
         new Assertion(orig.size % this.blockSize == 0, "size not a multiple of " + this.blockSize);
         
         val blocks = orig.size / this.blockSize;
         val baseSize = (blocks / n) * this.blockSize;
         val largeRanges = blocks % n;
         
-        val ranges = new Array[readonly SliceRange](n);
+        val ranges = new VectorBuilder[pure SliceRange](n);
         var begin = orig.begin;
         for(var i = 0; i < n; i++) {
             var size = orig.step * baseSize;
@@ -63,7 +63,7 @@ class BlockPartitioner extends Partitioner {
             ranges.set(i, new SliceRange(begin, end, orig.step));
             begin = end;
         }
-        return ranges;
+        return ranges.build;
     }
     
     override pure toString: readonly String { return this.blockSize + "-BlockPartitioner"; }

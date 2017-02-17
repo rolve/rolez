@@ -153,10 +153,10 @@ public class GuardedSlice<A> extends Guarded {
     // TODO: Replace return type with some final or even immutable array class
     @SuppressWarnings("unchecked")
     public final GuardedArray<GuardedSlice<A>[]> partition(Partitioner p, int n) {
-        final GuardedArray<SliceRange[]> ranges = p.partition(range, n);
+        SliceRange[] ranges = p.partition(range, n);
         GuardedSlice<A>[] slices = new GuardedSlice[n];
-        for(int i = 0; i < ranges.data.length; i++)
-            slices[i] = slice(ranges.data[i]);
+        for(int i = 0; i < ranges.length; i++)
+            slices[i] = slice(ranges[i]);
         return new GuardedArray<>(slices);
     }
     
