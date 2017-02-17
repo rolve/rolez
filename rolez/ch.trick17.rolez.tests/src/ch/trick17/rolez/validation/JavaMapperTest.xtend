@@ -67,6 +67,7 @@ class JavaMapperTest {
             class rolez.lang.Object   mapped to java.lang.Object
             class rolez.lang.Array[T] mapped to rolez.lang.Array
             class rolez.lang.Task[V]  mapped to rolez.lang.Task
+            pure class rolez.lang.Vector[T] mapped to rolez.lang.Vector
         ''')
         
         p.newRoleType(createReadWrite, "rolez.lang.Object").mapsTo(jvmTypeRef("Object")).assertTrue
@@ -75,6 +76,8 @@ class JavaMapperTest {
         
         p.newRoleType(createReadWrite, "rolez.lang.Array", createInt).mapsTo(jvmTypeRef("intArray")).assertTrue
         p.newRoleType(createReadWrite, "rolez.lang.Array", createInt).mapsTo(jvmTypeRef("intGArray")).assertTrue
+        
+        p.newRoleType(createReadWrite, "rolez.lang.Vector", createInt).mapsTo(jvmTypeRef("intArray")).assertTrue
         
         p.newRoleType(createPure, "rolez.lang.Array", p.newRoleType(createReadOnly, "rolez.lang.Array", createInt))
             .mapsTo(jvmTypeRef("intArrayArray")).assertTrue
@@ -95,9 +98,13 @@ class JavaMapperTest {
             class rolez.lang.Slice[T] mapped to rolez.lang.Slice
             class rolez.lang.Array[T] mapped to rolez.lang.Array
             class rolez.lang.Task[V]  mapped to rolez.lang.Task
+            pure class rolez.lang.Vector[T] mapped to rolez.lang.Vector
         ''')
         p.newRoleType(createPure, "rolez.lang.Array", ref).mapsTo(jvmTypeRef("TArray")).assertTrue
         p.newRoleType(createPure, "rolez.lang.Array", ref).mapsTo(jvmTypeRef("TGArray")).assertTrue
+        
+        p.newRoleType(createPure, "rolez.lang.Vector", ref).mapsTo(jvmTypeRef("TArray")).assertTrue
+        
         p.newRoleType(createPure, "rolez.lang.Array", p.newRoleType(createPure, "rolez.lang.Array", ref))
             .mapsTo(jvmTypeRef("TGArrayGArray")).assertTrue
         p.newRoleType(createPure, "rolez.lang.Array", p.newRoleType(createPure, "rolez.lang.Slice", ref))

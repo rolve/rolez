@@ -859,9 +859,9 @@ class InstrGeneratorTest extends GeneratorTest {
             class ClassWithArrays mapped to «ClassWithArrays.canonicalName» {
                 mapped new(a: pure Array[int])
                 
-                mapped def pure      takesIntArray(a: pure Array[int]            ):
+                mapped def pure      takesIntArray(a: pure Array[int]):
                 mapped def pure takesIntArrayArray(a: pure Array[pure Array[int]]):
-                mapped def pure   takesStringArray(a: pure Array[pure String]    ):
+                mapped def pure   takesStringArray(a: pure Array[pure String]):
                 
                 mapped def pure      returnsIntArray: pure Array[int]
                 mapped def pure returnsIntArrayArray: pure Array[pure Array[int]]
@@ -876,6 +876,40 @@ class InstrGeneratorTest extends GeneratorTest {
             c.takesIntArrayArray(rolez.lang.GuardedArray.unwrap(iaa, int[][].class));
             rolez.lang.GuardedArray<java.lang.String[]> sa = rolez.lang.GuardedArray.<java.lang.String[]>wrap(c.returnsStringArray());
             c.takesStringArray(rolez.lang.GuardedArray.unwrap(sa, java.lang.String[].class));
+        '''.withJavaFrame)
+        
+        parse('''
+            var iv: pure Vector[int] = new VectorBuilder[int](0).build;
+            val c = new ClassWithVectors(iv);
+            iv = c.returnsIntArray;
+            c.takesIntArray(iv);
+            
+            var ivv = c.returnsIntArrayArray;
+            c.takesIntArrayArray(ivv);
+            
+            var sv = c.returnsStringArray;
+            c.takesStringArray(sv);
+        '''.withFrame, someClasses.with('''
+            class ClassWithVectors mapped to «ClassWithArrays.canonicalName» {
+                mapped new(a: pure Vector[int])
+                
+                mapped def pure      takesIntArray(a: pure Vector[int]):
+                mapped def pure takesIntArrayArray(a: pure Vector[pure Vector[int]]):
+                mapped def pure   takesStringArray(a: pure Vector[pure String]):
+                
+                mapped def pure      returnsIntArray: pure Vector[int]
+                mapped def pure returnsIntArrayArray: pure Vector[pure Vector[int]]
+                mapped def pure   returnsStringArray: pure Vector[pure String]
+            }
+        ''')).onlyClass.generate.assertEqualsJava('''
+            int[] iv = new rolez.lang.GuardedVectorBuilder<int[]>(new int[0]).build();
+            final «ClassWithArrays.canonicalName» c = new «ClassWithArrays.canonicalName»(iv);
+            iv = c.returnsIntArray();
+            c.takesIntArray(iv);
+            int[][] ivv = c.returnsIntArrayArray();
+            c.takesIntArrayArray(ivv);
+            java.lang.String[] sv = c.returnsStringArray();
+            c.takesStringArray(sv);
         '''.withJavaFrame)
     }
     

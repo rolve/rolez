@@ -70,7 +70,7 @@ class JavaMapper {
     }
     
     def dispatch boolean mapsTo(RoleType it, JvmGenericArrayTypeReference other) {
-        base.clazz.isArrayClass && base instanceof GenericClassRef
+        (base.clazz.isArrayClass || base.clazz.isVectorClass) && base instanceof GenericClassRef
             && (base as GenericClassRef).typeArg.mapsTo(other.componentType)
     }
     

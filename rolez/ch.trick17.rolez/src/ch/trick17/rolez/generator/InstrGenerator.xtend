@@ -293,7 +293,7 @@ class InstrGenerator {
                     if(target instanceof The) (target as The).classRef.clazz.jvmClass.getQualifiedName('.')
                     else target.genGuardedMapped(method.original.thisParam.type.role.erased, true)
                 val genInvoke = '''«genTarget».«method.safeName»(«genArgs»)'''
-                if(method.jvmMethod.returnType.type instanceof JvmArrayType) {
+                if(method.type.isArrayType && method.jvmMethod.returnType.type instanceof JvmArrayType) {
                     val componentType = ((method.type as RoleType).base as GenericClassRef).typeArg
                     '''«jvmGuardedArrayClassName».<«componentType.generate»[]>wrap(«genInvoke»)'''
                 }
@@ -344,7 +344,7 @@ class InstrGenerator {
             val reqRole =
                 if(originalParamType instanceof RoleType) originalParamType.role.erased
                 else if(paramType instanceof RoleType)    paramType.role
-            if(jvmParamType instanceof JvmArrayType) {
+            if(paramType.isArrayType && jvmParamType instanceof JvmArrayType) {
                 val arrayType = jvmParamType.toString.substring(14) // IMPROVE: A little less magic, a little more robustness, please
                 '''«jvmGuardedArrayClassName».unwrap(«genGuardedMapped(reqRole, false)», «arrayType».class)'''
             }
