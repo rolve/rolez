@@ -1,6 +1,7 @@
 package rolez.lang
 
 class Partitioner mapped to rolez.lang.Partitioner {
+    mapped new
     mapped def readonly partition(original: pure SliceRange, n: int): readonly Array[readonly SliceRange]
 }
 
