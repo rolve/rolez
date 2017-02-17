@@ -46,3 +46,23 @@ class Random mapped to java.util.Random {
     mapped def readwrite nextDouble: double
     mapped def readwrite nextGaussian: double
 }
+
+object Arrays mapped to java.util.Arrays {
+    mapped def pure equals(a: readonly Array[double], a2: readonly Array[double]): boolean
+    mapped def pure equals(a: readonly Array[long],   a2: readonly Array[long]): boolean
+    mapped def pure equals(a: readonly Array[int],    a2: readonly Array[int]): boolean
+    mapped def pure equals(a: readonly Array[short],  a2: readonly Array[short]): boolean
+    mapped def pure equals(a: readonly Array[byte],   a2: readonly Array[byte]): boolean
+    mapped def pure equals(a: readonly Array[char],   a2: readonly Array[char]): boolean
+    // TODO: Enable mapping to generic methods
+}
+
+object Vectors mapped to java.util.Arrays {
+    mapped def pure equals(a: pure Vector[double], a2: pure Vector[double]): boolean
+    mapped def pure equals(a: pure Vector[long],   a2: pure Vector[long]): boolean
+    mapped def pure equals(a: pure Vector[int],    a2: pure Vector[int]): boolean
+    mapped def pure equals(a: pure Vector[short],  a2: pure Vector[short]): boolean
+    mapped def pure equals(a: pure Vector[byte],   a2: pure Vector[byte]): boolean
+    mapped def pure equals(a: pure Vector[char],   a2: pure Vector[char]): boolean
+    // TODO: Enable mapping to generic methods
+}
