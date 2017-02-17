@@ -238,19 +238,18 @@ public abstract class Task<V> implements Runnable {
         for(Object g : passedObjects)
             if(g instanceof Guarded)
                 passed.add((Guarded) g);
-            
+        
+        long idBits = parent == null ? 0L : parent.idBits();
         passedReachable = newIdentitySet();
         for(Guarded g : passed)
-            g.guardReadWriteReachable(passedReachable, parent.idBits());
+            g.guardReadWriteReachable(passedReachable, idBits);
         
         // Objects that are reachable both from a passed and a shared object are effectively *passed*
         sharedReachable = newIdentitySet();
         sharedReachable.addAll(passedReachable);
         for(Object g : sharedObjects)
-            if(g instanceof Guarded) {
-                long idBits = parent == null ? 0L : parent.idBits();
+            if(g instanceof Guarded)
                 ((Guarded) g).guardReadOnlyReachable(sharedReachable, idBits);
-            }
         sharedReachable.removeAll(passedReachable);
         
         /* IMPROVE: Only pass (share) objects that are reachable through chain of readwrite
