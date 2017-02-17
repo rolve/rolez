@@ -18,24 +18,39 @@ public class GuardedVectorBuilder<A> extends Guarded {
         ((Object[]) data)[index] = component;
     }
     
-    public void setInt(int index, int component) {
-        checkNotBuilt();
-        ((int[]) data)[index] = component;
-    }
-    
     public void setDouble(int index, double component) {
         checkNotBuilt();
         ((double[]) data)[index] = component;
     }
     
-    public void setBoolean(int index, boolean component) {
+    public void setLong(int index, long component) {
         checkNotBuilt();
-        ((boolean[]) data)[index] = component;
+        ((long[]) data)[index] = component;
+    }
+    
+    public void setInt(int index, int component) {
+        checkNotBuilt();
+        ((int[]) data)[index] = component;
+    }
+    
+    public void setShort(int index, short component) {
+        checkNotBuilt();
+        ((short[]) data)[index] = component;
+    }
+    
+    public void setByte(int index, byte component) {
+        checkNotBuilt();
+        ((byte[]) data)[index] = component;
     }
     
     public void setChar(int index, char component) {
         checkNotBuilt();
         ((char[]) data)[index] = component;
+    }
+    
+    public void setBoolean(int index, boolean component) {
+        checkNotBuilt();
+        ((boolean[]) data)[index] = component;
     }
     
     private final void checkNotBuilt() {
