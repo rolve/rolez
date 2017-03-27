@@ -59,6 +59,28 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     }
     
     @Test
+    public void testShareReadFirst() {
+        assumeVerifyCorrectness();
+        verifyTask(new Runnable() {
+            public void run() {
+                final Int i = new Int();
+                
+                Task<?> task = new Task<Void>(new Object[]{}, new Object[]{i}) {
+                    @Override
+                    protected Void runRolez() {
+                        assertEquals(0, i.value);
+                        return null;
+                    }
+                };
+                s.start(task);
+                
+                int v = guardReadOnly(i).value + 1;
+                guardReadWrite(i).value = v;
+            }
+        });
+    }
+    
+    @Test
     public void testShareMissingGuard() {
         assumeMultithreaded();
         verifyTaskAssertionError(new Runnable() {

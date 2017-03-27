@@ -18,16 +18,20 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public abstract class Guarded {
     
+    // IMPROVE: Create separate, optimized class for objects without views?
+    
     private boolean guardingDisabled = false;
     
     private volatile Task<?> owner; // volatile, so tasks stuck in a guarding op don't read stale info
     private volatile Thread ownerThread; // same
+    // IMPROVE: Replace ownerThread-based check with ID bits check
     
     private AtomicInteger sharedCount; // atomic because tasks can share concurrently
     private Set<Task<?>> readers;
     
-    private volatile long guardingCache;
-    private Object guardingCacheLock;
+    private Object guardingCachesLock; // IMPROVE: replace with CAS using Java 9's VarHandles?
+    private volatile long readGuardingCache;
+    private volatile long writeGuardingCache;
     
     /**
      * Default constructor that does not initialize guarding. Initialization happens lazily, when
@@ -62,7 +66,7 @@ public abstract class Guarded {
             sharedCount = new AtomicInteger(0);
             // IMPROVE: Initialize only when first used?
             readers = newSetFromMap(new ConcurrentHashMap<Task<?>, java.lang.Boolean>());
-            guardingCacheLock = new Object();
+            guardingCachesLock = new Object();
         }
     }
     
@@ -101,7 +105,7 @@ public abstract class Guarded {
             /* First step of passing */
             owner = task;
             ownerThread = null;
-            invalidateGuardingCache();
+            invalidateGuardingCaches();
         }
     }
     
@@ -112,7 +116,7 @@ public abstract class Guarded {
             sharedCount.incrementAndGet();
             if(viewLock() != null)
                 readers.add(task);
-            invalidateGuardingCache();
+            invalidateGuardingCaches();
         }
     }
     
@@ -169,7 +173,7 @@ public abstract class Guarded {
     }
     
     private final void guardReadOnly(long currentTaskIdBits) {
-        if(!guardingInitialized() || alreadyGuardedIn(currentTaskIdBits))
+        if(!guardingInitialized() || alreadyReadOnlyGuardedIn(currentTaskIdBits))
             return;
         
         while(!mayRead())
@@ -197,17 +201,28 @@ public abstract class Guarded {
     }
     
     private void guardReadWrite(long currentTaskIdBits) {
-        if(!guardingInitialized() || alreadyGuardedIn(currentTaskIdBits))
+        if(!guardingInitialized() || alreadyReadWriteGuardedIn(currentTaskIdBits))
             return;
         
         while(!mayWrite())
             park();
     }
     
-    private boolean alreadyGuardedIn(long taskIdBits) {
-        boolean alreadyGuarded = isInGuardingCache(taskIdBits);
+    // IMPROVE: Deduplicate guarding cache code using Java 9 VarHandles?
+    
+    private boolean alreadyReadOnlyGuardedIn(long taskIdBits) {
+        boolean alreadyGuarded = isInReadGuardingCache(taskIdBits);
         if(!alreadyGuarded)
-            addToGuardingCache(taskIdBits);
+            addToReadGuardingCache(taskIdBits);
+        return alreadyGuarded;
+    }
+    
+    private boolean alreadyReadWriteGuardedIn(long taskIdBits) {
+        boolean alreadyGuarded = isInWriteGuardingCache(taskIdBits);
+        if(!alreadyGuarded) {
+            addToWriteGuardingCache(taskIdBits);
+            addToReadGuardingCache(taskIdBits);
+        }
         return alreadyGuarded;
     }
 
@@ -320,28 +335,42 @@ public abstract class Guarded {
         return false;
     }
     
-    private boolean isInGuardingCache(long taskIdBits) {
+    private boolean isInReadGuardingCache(long taskIdBits) {
         assert taskIdBits != 0;
-        return (guardingCache & taskIdBits) != 0;
+        return (readGuardingCache & taskIdBits) != 0;
     }
     
-    private void addToGuardingCache(long taskIdBits) {
+    private boolean isInWriteGuardingCache(long taskIdBits) {
         assert taskIdBits != 0;
-        synchronized(guardingCacheLock) {
-            guardingCache |= taskIdBits;
+        return (writeGuardingCache & taskIdBits) != 0;
+    }
+    
+    private void addToReadGuardingCache(long taskIdBits) {
+        assert taskIdBits != 0;
+        synchronized(guardingCachesLock) {
+            readGuardingCache |= taskIdBits;
         }
     }
     
-    private final void invalidateGuardingCache() {
-        synchronized(guardingCacheLock) {
-            guardingCache = 0L;
+    private void addToWriteGuardingCache(long taskIdBits) {
+        assert taskIdBits != 0;
+        synchronized(guardingCachesLock) {
+            writeGuardingCache |= taskIdBits;
+        }
+    }
+    
+    private final void invalidateGuardingCaches() {
+        synchronized(guardingCachesLock) {
+            readGuardingCache = 0L;
+            writeGuardingCache = 0L;
         }
         if(viewLock() != null)
             synchronized(viewLock()) {
                 for(Guarded v : views())
                     if(v != null)
-                        synchronized(v.guardingCacheLock) {
-                            v.guardingCache = 0L;
+                        synchronized(v.guardingCachesLock) {
+                            v.readGuardingCache = 0L;
+                            v.writeGuardingCache = 0L;
                         }
             }
     }
