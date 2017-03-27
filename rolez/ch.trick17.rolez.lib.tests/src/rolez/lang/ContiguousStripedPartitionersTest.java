@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -30,7 +31,7 @@ public class ContiguousStripedPartitionersTest extends PartitionerTest {
     static final int[] SPECIAL_SIZES = {0, 1};
     static final int[] SOME_NS = {2, 4, 7};
     
-    @Parameters(name = "size={0}, ns={1},{2}, modes={3}")
+    @Parameters(name = "size={0}, ns={1},{2}, modes={4}")
     public static List<Object[]> parameters() {
         Task.registerNewRootTask(); // required for the partitioners' toString() method (yeah...)
         
@@ -41,15 +42,22 @@ public class ContiguousStripedPartitionersTest extends PartitionerTest {
             for(final int n1 : INTERESTING_NS)
                 for(final int n2 : INTERESTING_NS)
                     for(final List<? extends Partitioner> modes : INTERESTING_MODES)
-                        params.add(new Object[]{size, n1, n2, modes});
+                        params.add(new Object[]{size, n1, n2, modes, modes.toString()});
                         
         /* Combinations of special sizes, some ns and some modes */
         for(final int size : SPECIAL_SIZES)
             for(final int n2 : SOME_NS)
                 for(final List<? extends Partitioner> modes : INTERESTING_MODES)
-                    params.add(new Object[]{size, 1, n2, modes});
-                    
+                    params.add(new Object[]{size, 1, n2, modes, modes.toString()});
+                
+        Task.unregisterRootTask(); // unregister again, since other tests (that register a new root
+                                   // task themselves) may run first
         return params;
+    }
+    
+    @BeforeClass
+    public static void registerNewRootTask() {
+        Task.registerNewRootTask();
     }
     
     @AfterClass
@@ -63,7 +71,7 @@ public class ContiguousStripedPartitionersTest extends PartitionerTest {
     private final List<Partitioner> modes;
     
     public ContiguousStripedPartitionersTest(final int size, final int n1, final int n2,
-            final List<Partitioner> modes) {
+            final List<Partitioner> modes, @SuppressWarnings("unused") String modesString) {
         this.size = size;
         this.n1 = n1;
         this.n2 = n2;
