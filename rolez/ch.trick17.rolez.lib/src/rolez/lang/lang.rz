@@ -9,7 +9,7 @@ class Object mapped to java.lang.Object {
     mapped def readonly toString: readonly String
 }
 
-class Slice[T] mapped to rolez.lang.Slice {
+class Slice[T] mapped to Slice {
     mapped val range: readonly SliceRange
     
     mapped def pure arrayLength: int
@@ -22,14 +22,14 @@ class Slice[T] mapped to rolez.lang.Slice {
     mapped def r partition[r](p: pure Partitioner, n: int): readwrite Array[r Slice[T]]
 }
 
-class Array[T] mapped to rolez.lang.Array extends Slice[T] {
+class Array[T] mapped to Array extends Slice[T] {
     mapped val length: int
     mapped new(length: int)
     
     mapped def r clone[r includes readonly]: r Array[T]
 }
 
-pure class SliceRange mapped to rolez.lang.SliceRange {
+pure class SliceRange mapped to SliceRange {
     mapped val begin: int
     mapped val end: int
     mapped val step: int
@@ -42,12 +42,12 @@ pure class SliceRange mapped to rolez.lang.SliceRange {
     mapped def pure intersectWith(other: pure SliceRange): readonly SliceRange
 }
 
-pure class Vector[T] mapped to rolez.lang.Vector {
+pure class Vector[T] mapped to Vector {
     mapped val length: int
     mapped def pure get(i: int): T
 }
 
-class VectorBuilder[T] mapped to rolez.lang.VectorBuilder {
+class VectorBuilder[T] mapped to VectorBuilder {
     mapped new(length: int)
     mapped def readonly get(index: int): T
     mapped def readwrite set(index: int, component: T): readwrite VectorBuilder[T]
@@ -64,7 +64,7 @@ pure class String mapped to java.lang.String {
     mapped def pure split(regex: pure String): readwrite Array[pure String]
 }
 
-class Task[V] mapped to rolez.lang.Task {
+class Task[V] mapped to Task {
     mapped def pure get: V
 }
 

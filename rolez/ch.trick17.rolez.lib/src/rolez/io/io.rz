@@ -20,6 +20,7 @@ class PrintStream mapped to java.io.PrintStream {
     mapped def readonly print(o: readonly Object):
     mapped def readonly print(s: readonly String):
     
+    mapped def readonly println:
     mapped def readonly println(i: int):
     mapped def readonly println(b: boolean):
     mapped def readonly println(c: char):
