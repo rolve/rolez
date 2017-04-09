@@ -83,7 +83,14 @@ class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleData>> {
         this.system = system
         this.utils = utils
         
-        analyze
+        if(childTasksMayExist)
+            analyze
+    }
+    
+    private def childTasksMayExist() {
+        codeKind != TASK || code.all(MemberAccess).exists[
+            isTaskStart || isMethodInvoke && method.isAsync
+        ]
     }
     
     protected override newFlow() { null } // represents a not-yet-computed flow
@@ -243,7 +250,12 @@ class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleData>> {
     /* Interface of the analysis */
     
     def dynamicRole(Expr it) {
-        roleData(it, cfg.nodeOf(it).inFlow ?: ImmutableMap.of).ownRole
+        if(childTasksMayExist)
+            roleData(it, cfg.nodeOf(it).inFlow ?: ImmutableMap.of).ownRole
+        else
+            // Special case: if we know that no child task may run in parallel to statements
+            // in this piece of code, no guarding is required. So just return the static role.
+            (system.type(it).value as RoleType).role
     }
 }
 
