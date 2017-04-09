@@ -19,14 +19,31 @@ public class StopWatch {
     }
     
     /**
-     * @return the elapsed time (in seconds) since the last call to {@link #go()}. The result is
-     *         returned as a double for now, since there is no <code>long</code> type in Rolez yet.
+     * @return the elapsed time (in seconds) since the last call to {@link #go()}.
      * @throws IllegalStateException
      *             If {@link #go()} has not been called yet.
      */
     public double get() {
+        return getNs() / 1000000000.0;
+    }
+    
+    /**
+     * @return the elapsed time (in milliseconds) since the last call to {@link #go()}.
+     * @throws IllegalStateException
+     *             If {@link #go()} has not been called yet.
+     */
+    public long getMs() {
+        return getNs() / 1000000;
+    }
+    
+    /**
+     * @return the elapsed time (in nanoseconds) since the last call to {@link #go()}.
+     * @throws IllegalStateException
+     *             If {@link #go()} has not been called yet.
+     */
+    public long getNs() {
         if(goTime == 0)
             throw new IllegalStateException("go() has not been called yet");
-        return (System.nanoTime() - goTime) / 1000000000.0;
+        return(System.nanoTime() - goTime);
     }
 }
