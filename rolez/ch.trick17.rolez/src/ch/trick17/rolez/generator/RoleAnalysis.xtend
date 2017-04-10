@@ -252,10 +252,16 @@ class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleData>> {
     def dynamicRole(Expr it) {
         if(childTasksMayExist)
             roleData(it, cfg.nodeOf(it).inFlow ?: ImmutableMap.of).ownRole
-        else
+        else {
             // Special case: if we know that no child task may run in parallel to statements
             // in this piece of code, no guarding is required. So just return the static role.
-            (system.type(it).value as RoleType).role
+            val type = system.type(it).value
+            if(type instanceof RoleType)
+                type.role
+            else
+                RolezFactory.eINSTANCE.createPure
+            // TODO: Why are non-roletype instances passed to this method?...
+        }
     }
 }
 
