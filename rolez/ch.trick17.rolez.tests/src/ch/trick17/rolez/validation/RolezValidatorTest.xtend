@@ -532,7 +532,6 @@ class RolezValidatorTest {
                 def pure foo(o: readonly Object): {}
                 def pure foo(a: readonly A): {}
                 def pure foo(a: readwrite A, b: readwrite A): {}
-                def pure foo(a: pure Array[int]): {}
             }
             class B {
                 task pure foo: {}
@@ -541,7 +540,6 @@ class RolezValidatorTest {
                 task pure foo(o: readonly Object): {}
                 task pure foo(a: readonly A): {}
                 task pure foo(a: readwrite A, b: readwrite A): {}
-                task pure foo(a: pure Array[int]): {}
             }
             class C {
                 def  pure foo: {}
@@ -550,7 +548,6 @@ class RolezValidatorTest {
                 task pure foo(o: readonly Object): {}
                 def  pure foo(a: readonly A): {}
                 task pure foo(a: readwrite A, b: readwrite A): {}
-                def  pure foo(a: pure Array[int]): {}
             }
         ''').assertNoErrors
         
