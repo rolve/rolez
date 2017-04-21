@@ -88,30 +88,37 @@ class RolezUtils {
     }
     
     /**
-     * Returns <code>true</code> if the name and the types of the parameters of
-     * the two given methods are the same, ignoring roles.
+     * Returns <code>true</code> if the name and the types of the parameters of the two given
+     * methods are the same, ignoring roles and type arguments (which are "erased").
+     * If eraseArrays is false, type arguments to classes that map to Java arrays are NOT ignored.
      */
-    static def equalSignatureWithoutRoles(Method it, Method other) {
-        name == other.name && equalParamsWithoutRoles(other)
+    static def equalErasedSignature(Method it, Method other, boolean eraseArrays) {
+        name == other.name && equalErasedParams(other, eraseArrays)
     }
     
-    static def equalParamsWithoutRoles(Executable it, Executable other) {
+    static def equalErasedParams(Executable it, Executable other, boolean eraseArrays) {
         val i = other.params.map[type].iterator
         params.size == other.params.size
-            && params.map[type].forall[equalTypeWithoutRoles(i.next)]
+            && params.map[type].forall[equalErasedType(i.next, eraseArrays)]
     }
     
-    private static def dispatch boolean equalTypeWithoutRoles(RoleType it, RoleType other) {
-        base.equalRefWithoutRoles(other.base)
+    private static def dispatch equalErasedType(RoleType it, RoleType other, boolean eraseArrays) {
+        base.equalErasedClassRef(other.base, eraseArrays)
     }
-    private static def dispatch boolean equalTypeWithoutRoles(Type it, Type other) {
+    private static def dispatch equalErasedType(Type it, Type other, boolean eraseArrays) {
         EcoreUtil.equals(it, other)
     }
     
-    private static def dispatch boolean equalRefWithoutRoles(GenericClassRef it, GenericClassRef other) {
-        clazz.qualifiedName == other.clazz.qualifiedName && typeArg.equalTypeWithoutRoles(other.typeArg)
+    private static def dispatch boolean equalErasedClassRef(GenericClassRef it,
+            GenericClassRef other, boolean eraseArrays) {
+        val sameName = clazz.qualifiedName == other.clazz.qualifiedName
+        if(!eraseArrays && (clazz.isArrayClass || clazz.isVectorClass))
+            sameName && typeArg.equalErasedType(other.typeArg, false)
+        else
+            sameName
     }
-    private static def dispatch boolean equalRefWithoutRoles(ClassRef it, ClassRef other) {
+    private static def dispatch boolean equalErasedClassRef(ClassRef it, ClassRef other,
+            boolean eraseArrays) {
         EcoreUtil.equals(it, other)
     }
     

@@ -64,7 +64,7 @@ class RolezExtensions {
     private static def overrides(Class it, Member m) {
         switch(m) {
             Field : false
-            Method: methods.exists[equalSignatureWithoutRoles(it, m)]
+            Method: methods.exists[equalErasedSignature(it, m, !m.mapped)]
         }
     }
     

@@ -533,7 +533,6 @@ class RolezValidatorTest {
                 def pure foo(a: readonly A): {}
                 def pure foo(a: readwrite A, b: readwrite A): {}
                 def pure foo(a: pure Array[int]): {}
-                def pure foo(a: pure Array[double]): {}
             }
             class B {
                 task pure foo: {}
@@ -543,7 +542,6 @@ class RolezValidatorTest {
                 task pure foo(a: readonly A): {}
                 task pure foo(a: readwrite A, b: readwrite A): {}
                 task pure foo(a: pure Array[int]): {}
-                task pure foo(a: pure Array[double]): {}
             }
             class C {
                 def  pure foo: {}
@@ -553,11 +551,8 @@ class RolezValidatorTest {
                 def  pure foo(a: readonly A): {}
                 task pure foo(a: readwrite A, b: readwrite A): {}
                 def  pure foo(a: pure Array[int]): {}
-                task pure foo(a: pure Array[double]): {}
             }
         ''').assertNoErrors
-        
-        // FIXME: generic overloading not supported by code generation!
         
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -652,8 +647,8 @@ class RolezValidatorTest {
                 mapped new(length: int)
             }
             class A {
-                def readwrite foo(a: readwrite Array[readwrite Object]): {}
-                def readwrite foo(b: readonly  Array[readonly  Object]): {}
+                def readwrite foo(a: readwrite Array[int]): {}
+                def readwrite foo(b: readonly  Array[double]): {}
             }
         ''').assertError(METHOD, DUPLICATE_METHOD)
     }

@@ -223,9 +223,11 @@ class RolezValidator extends RolezSystemValidator {
     }
 	
 	/**
-	 * Checks that there are no other methods in the same class with the same signature. The
-	 * signature does not comprise roles, therefore <code>this</code>-role-based overloading is not
-	 * possible, which greatly simplifies code generation.
+	 * Checks that there are no other methods in the same class with the same "erased" signature.
+	 * The erased signature does not comprise roles, therefore <code>this</code>-role-based
+	 * overloading is not possible, which greatly simplifies code generation. The erased signature
+	 * does not include type arguments either, to avoid problems with Java erasure. One exception
+	 * are parameter types that map to Java arrays, but only for mapped methods and constructors.
 	 * <p>
 	 * An additional reason for ignoring the "this" role is that it might be surprising to
 	 * programmers if methods are virtually dispatched based on the class of the target, but
@@ -233,23 +235,27 @@ class RolezValidator extends RolezSystemValidator {
 	 */
     @Check
     def checkNoDuplicateMethods(Method it) {
-        // TODO: Shouldn't we also ignore type args while comparing?
         val matching = enclosingClass.methods.filter[m |
-            it !== m && equalSignatureWithoutRoles(m, it)
+            it !== m && equalErasedSignature(m, it, !mapped)
         ]
         if(matching.size > 0)
-           error("Duplicate method " + name + "("+ params.map[type.toStringWithoutRoles].join(", ") + ")",
+           error("Duplicate method " + name + "(" +
+               params.map[p | p.type.toErasedString(!mapped)].join(", ") + ")",
                NAMED__NAME, DUPLICATE_METHOD)
     }
     
-    private def String toStringWithoutRoles(Type it) { switch(it) {
-        RoleType: base.toStringWithoutRoles
+    private def String toErasedString(Type it, boolean eraseArrays) { switch(it) {
+        RoleType: base.toErasedString(eraseArrays)
         default : toString
     }}
     
-    private def toStringWithoutRoles(ClassRef it) { switch(it) {
-        GenericClassRef: clazz.qualifiedName + "[" + typeArg.toStringWithoutRoles + "]"
-        default        : toString
+    private def toErasedString(ClassRef it, boolean eraseArrays) { switch(it) {
+        GenericClassRef case !eraseArrays && (clazz.isArrayClass || clazz.isVectorClass):
+            clazz.qualifiedName.toString + "[" + typeArg.toErasedString(false) + "]"
+        GenericClassRef:
+            clazz.qualifiedName.toString
+        default:
+            toString
     }}
     
     @Check
@@ -266,7 +272,7 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkNoDuplicateConstrs(Constr it) {
-        val matching = enclosingClass.constrs.filter[c | equalParamsWithoutRoles(c, it)]
+        val matching = enclosingClass.constrs.filter[c | equalErasedParams(c, it, !mapped)]
         if(matching.size < 1)
            throw new AssertionError
         if(matching.size > 1)
@@ -290,14 +296,14 @@ class RolezValidator extends RolezSystemValidator {
 	/**
 	 * For overriding methods, checks that the return type is co- and the parameter types and the
 	 * "this" role are contravariant. Note that the parameter types are already guaranteed to be
-	 * equal to the corresponding types in the overridden method, except for the roles (including
-	 * roles of type arguments).
+	 * equal to the corresponding types in the overridden method, except for the roles and type
+	 * arguments.
 	 */
 	@Check
 	def checkValidOverride(Method it) {
         if(!overriding) return;
         
-        if(system.subtype(null, type, superMethod.type).failed)
+        if(system.subtype(type, superMethod.type).failed)
             error("The return type " + type + " is incompatible with overridden method "
                 + superMethod, TYPED__TYPE, INCOMPATIBLE_RETURN_TYPE)
         if(system.subrole(superMethod.thisParam.type.role, thisParam.type.role).failed)
@@ -306,7 +312,7 @@ class RolezValidator extends RolezSystemValidator {
         
         for(p : params) {
             val superParamType = superMethod.params.get(p.paramIndex).type
-            if(system.subtype(null, superParamType, p.type).failed)
+            if(system.subtype(superParamType, p.type).failed)
                 error("This parameter type is incompatible with overridden method "
                     + superMethod, p, TYPED__TYPE, RolezValidator.INCOMPATIBLE_PARAM_TYPE)
         }
@@ -317,7 +323,9 @@ class RolezValidator extends RolezSystemValidator {
     
 	/**
      * For non-overriding methods, checks that they are not actually overriding a method from the
-     * superclass.
+     * superclass. Note that due to the erasure of roles and type arguments, methods may have the
+     * same erased signature as a superclass method but cannot override it because their full
+     * signature is incompatible.
 	 */
 	@Check
 	def checkMissingOverride(Method it) {
@@ -325,8 +333,8 @@ class RolezValidator extends RolezSystemValidator {
 	    
         val scope = scopeProvider.scope_Method_superMethod(it, METHOD__SUPER_METHOD)
         if(!scope.allElements.isEmpty)
-            error("Method must be declared with \"override\" since it "
-                    + "actually overrides a superclass method",
+            error("Method must be declared with \"override\" since it has the same (erased) "
+                    + "signature as a superclass method",
                 NAMED__NAME, MISSING_OVERRIDE)
 	}
 	
