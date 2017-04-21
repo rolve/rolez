@@ -25,4 +25,12 @@
         <sourceDirectory>src</sourceDirectory>
         <testSourceDirectory>src</testSourceDirectory>
     </build>
+    
+    <repositories>
+        <repository>
+            <id>in-project</id>
+            <name>In Project Repo</name>
+            <url>file://${project.basedir}/lib</url>
+        </repository>
+    </repositories>
 </project>

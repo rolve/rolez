@@ -1,0 +1,39 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>ch.trick17.simple-jpf</groupId>
+        <artifactId>simple-jpf</artifactId>
+        <version>1139.0.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>simple-jpf-core</artifactId>
+    <name>Simple JPF Core</name>
+
+    <dependencies>
+        <dependency>
+            <!-- Installed main artifact using command: mvn install:install-file 
+                -Dfile=jpf.jar -DgroupId=gov.nasa.jpf -DartifactId=jpf-core -Dversion=1139 -Dpackaging=jar 
+                -DlocalRepositoryPath=lib -DcreateChecksum=true -->
+            <!-- Installed sources using command: mvn install:install-file -Dfile=jpf.jar 
+                -DgroupId=gov.nasa.jpf -DartifactId=jpf-core -Dversion=1139 -Dpackaging=jar -Dclassifier=sources 
+                -DlocalRepositoryPath=lib -DcreateChecksum=true -->
+            <groupId>gov.nasa.jpf</groupId>
+            <artifactId>jpf-core</artifactId>
+            <version>1139</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <repositories>
+        <repository>
+            <id>in-project</id>
+            <name>In Project Repo</name>
+            <url>file://${project.basedir}/lib</url>
+        </repository>
+    </repositories>
+</project>
