@@ -7,8 +7,10 @@ import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.BuiltInRole
 import ch.trick17.rolez.rolez.Class
 import ch.trick17.rolez.rolez.Constr
+import ch.trick17.rolez.rolez.Executable
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.Field
+import ch.trick17.rolez.rolez.InExecutable
 import ch.trick17.rolez.rolez.Member
 import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.Method
@@ -68,6 +70,14 @@ class RolezExtensions {
         }
     }
     
+    static def Program enclosingProgram(EObject it) {
+        val container = it?.eContainer
+        switch(container) {
+            Program: container
+            default: container?.enclosingProgram
+        }
+    }
+    
     static def Class enclosingClass(EObject it) {
         val container = it?.eContainer
         switch(container) {
@@ -80,12 +90,24 @@ class RolezExtensions {
         (it as EObject).enclosingClass as NormalClass
     }
     
-    static def Program enclosingProgram(EObject it) {
-        val container = it?.eContainer
-        switch(container) {
-            Program: container
-            default: container?.enclosingProgram
-        }
+    static def Executable enclosingExecutable(InExecutable it) {
+        val container = eContainer
+        if(container instanceof Executable)
+            container
+        else if(container instanceof InExecutable)
+            container.enclosingExecutable
+        else
+            null
+    }
+    
+    def static Method enclosingMethod(InExecutable it) {
+        val container = eContainer
+        if(container instanceof Method)
+            container
+        else if(container instanceof InExecutable)
+            container.enclosingMethod
+        else
+            null
     }
     
     static def isFieldWrite(MemberAccess it) {

@@ -1,0 +1,562 @@
+@Ecore(nsURI="http://trick17.ch/rolez/Rolez")
+@GenModel(
+    fileExtensions = "rz,rolez",
+    modelDirectory = "/ch.trick17.rolez/xcore-gen",
+    forceOverwrite = "true",
+    updateClasspath = "false"
+)
+package ch.trick17.rolez.rolez
+
+import org.eclipse.emf.ecore.EEnumerator
+import org.eclipse.xtext.common.types.Iterable
+import org.eclipse.xtext.common.types.JvmConstructor
+import org.eclipse.xtext.common.types.JvmField
+import org.eclipse.xtext.common.types.JvmGenericType
+import org.eclipse.xtext.common.types.JvmOperation
+import org.eclipse.xtext.naming.QualifiedName
+
+/*
+ * Programs, Imports, Classes
+ */
+
+class Program {
+    String name
+    contains Import[] imports
+    contains Class[] classes
+}
+
+class Import {
+    String importedNamespace
+}
+
+class Named {
+    String name
+}
+
+type QualifiedName wraps QualifiedName
+
+class Class extends Named {
+    refers JvmGenericType jvmClass
+    contains ClassRef superclassRef
+    contains Member[] members
+    
+    op boolean isSingleton()
+    op boolean isPure()
+    
+    op boolean isMapped() { jvmClass !== null }
+    
+    op NormalClass getSuperclass() {
+        val clazz = superclassRef?.clazz
+        if(clazz instanceof NormalClass)
+            clazz
+        else
+            null
+    }
+    
+    op Iterable<Field> getFields() {
+        members.filter(Field)
+    }
+    
+    op Iterable<Method> getMethods() {
+        members.filter(Method)
+    }
+    
+    op QualifiedName getQualifiedName() {
+        // no import for RolezResource, to avoid error during MWE2 workflow
+        (eResource as ch.trick17.rolez.RolezResource).qualifiedNameProvider
+                .getFullyQualifiedName(this)
+    }
+}
+
+class NormalClass extends Class {
+    contains TypeParam typeParam
+    contains Constr[] constrs
+    boolean pure
+    
+    op boolean isSingleton() { false }
+    
+    op String toString() {
+        qualifiedName.toString + if(typeParam !== null) "" else "[" + typeParam + "]"
+    }
+}
+
+class TypeParam extends Named {
+    op String toString() { name }
+}
+
+class SingletonClass extends Class {
+    op boolean isSingleton() { true }
+    op boolean isPure()      { true }
+    op String toString()     { qualifiedName.toString }
+}
+
+/*
+ * Members
+ */
+
+class Member {
+    op QualifiedName getQualifiedName() {
+        // see above
+        (eResource as ch.trick17.rolez.RolezResource).qualifiedNameProvider
+                .getFullyQualifiedName(this)
+    }
+}
+
+class Executable {
+    contains Param[] params
+    contains Instr code
+    op Iterable<Param> getAllParams()
+    op boolean isMapped()
+}
+
+class Typed extends Named {
+    contains Type ^type
+}
+
+class Constr extends Executable {
+    refers JvmConstructor jvmConstr
+    contains ThisParam thisParam
+    
+    op boolean isMapped() { jvmConstr !== null }
+    
+    op Block getBody() { code as Block }
+    
+    op Iterable<Param> getAllParams() { #[thisParam] + params }
+}
+
+class Field extends Member, Typed {
+    refers JvmField jvmField
+    VarKind kind
+    contains FieldInitializer initializer
+    
+    op boolean isMapped() { jvmField !== null }
+    
+    op String toString()  { qualifiedName ": " + ^type }
+}
+
+class FieldInitializer extends Executable {
+    op boolean isMapped() { false }
+    
+    op Expr getExpr() { code as Expr }
+    
+    op Iterable<Param> getAllParams() { params }
+}
+
+enum VarKind {
+    VAL as "val"
+    VAR as "var"
+}
+
+class Method extends Member, Executable, Typed {
+    refers JvmOperation jvmMethod
+    refers Method superMethod
+    contains ThisParam thisParam
+    contains RoleParam[] roleParams
+    boolean declaredAsync
+    boolean declaredTask
+    
+    op boolean isMapped()     { jvmMethod !== null }
+    op boolean isAsync()      { isDeclaredAsync || overriding && superMethod.isAsync }
+    op boolean isTask()       { isDeclaredTask  || overriding && superMethod.isTask  }
+    op boolean isMain()       { name == "main" }
+    op boolean isOverriding() { superMethod !== null && !superMethod.eIsProxy }
+    
+    op Block getBody() { code as Block }
+    
+    op Iterable<Param> getAllParams() { #[thisParam] + params }
+    
+    op String toString() {
+        thisParam.^type.role + " " + qualifiedName + roleParams.join("[", ", ", "]", [toString]) +
+                params.join("(", ", ", ")", [^type.toString]) + ": " + ^type
+    }
+}
+
+class InExecutable {
+    op Executable enclosingExecutable() {
+        // no import for RolezExtensions, to avoid error during MWE2 workflow
+        ch.trick17.rolez.RolezExtensions.enclosingExecutable(this)
+    }
+    op Method enclosingMethod() {
+        // see above
+        ch.trick17.rolez.RolezExtensions.enclosingMethod(this)
+    }
+}
+
+class RoleParam extends InExecutable {
+    String name
+    contains BuiltInRole upperBound
+    
+    op String toString() { name + " includes " + upperBound }
+}
+
+class Var extends InExecutable, Typed {
+    op VarKind getKind()
+}
+
+class Param extends Var {
+    op VarKind getKind() { VarKind.VAL }
+    
+    op String toString() { if(name !== null) name else super.toString }
+}
+
+class ThisParam extends Param {
+    op RoleType getType() { super.^type as RoleType }
+}
+
+/*
+ * Statements
+ */
+
+class Instr extends InExecutable {}
+
+class Stmt extends Instr {}
+
+class Block extends Stmt {
+    contains Stmt[] stmts
+}
+
+class LocalVarDecl extends Stmt {
+    contains LocalVar variable opposite decl
+    contains Expr initializer
+}
+
+class LocalVar extends Var {
+    VarKind kind
+    container LocalVarDecl decl opposite variable
+    
+    op String toString() { if(name !== null) name else super.toString }
+}
+
+class IfStmt extends Stmt {
+    contains Expr condition
+    contains Stmt thenPart
+    contains Stmt elsePart
+}
+
+class WhileLoop extends Stmt {
+    contains Expr condition
+    contains Stmt body
+}
+
+class ForLoop extends Stmt {
+    contains LocalVarDecl initializer
+    contains Expr condition
+    contains Expr step
+    contains Stmt body
+}
+
+class Argumented extends InExecutable {
+    contains Expr[] args
+    op Executable getExecutable()
+}
+
+class SuperConstrCall extends Stmt, Argumented {
+    refers Constr constr
+    
+    op Executable getExecutable() { constr }
+}
+
+class Return extends Stmt {}
+
+class ReturnNothing extends Return {}
+
+class ReturnExpr extends Return {
+    contains Expr expr
+}
+
+class ExprStmt extends Stmt {
+    contains Expr expr
+}
+
+/*
+ * Expressions
+ */
+
+class Expr extends Instr {}
+
+class UnaryExpr extends Expr {
+    contains Expr expr
+}
+
+class BinaryExpr extends Expr {
+    contains Expr left
+    contains Expr right
+    op EEnumerator getOp()
+}
+
+class Assignment extends BinaryExpr {
+    OpAssignment ^op
+}
+
+enum OpAssignment {
+    ASSIGN as "="
+    OR_ASSIGN as "|="
+    AND_ASSIGN as "&="
+    PLUS_ASSIGN as "+="
+    MINUS_ASSIGN as "-="
+    TIMES_ASSIGN as "*="
+    DIVIDED_BY_ASSIGN as "/="
+    MODULO_ASSIGN as "%="
+}
+
+class LogicalExpr extends BinaryExpr {
+    OpLogical ^op
+}
+
+enum OpLogical {
+    OR as "||"
+    AND as "&&"
+}
+
+class BitwiseExpr extends BinaryExpr {
+    OpBitwise ^op
+}
+
+enum OpBitwise {
+    OR as "|"
+    XOR as "^"
+    AND as "&"
+    LEFT_SHIFT as "<<"
+    RIGHT_SHIFT as ">>"
+    UNSIGNED_RIGHT_SHIFT as ">>>"
+}
+
+class EqualityExpr extends BinaryExpr {
+    OpEquality ^op
+}
+
+enum OpEquality {
+    EQUALS as "=="
+    NOT_EQUALS as "!="
+}
+
+class RelationalExpr extends BinaryExpr {
+    OpRelational ^op
+}
+
+enum OpRelational {
+    SMALLER as "<"
+    GREATER as ">"
+    SMALLER_EQUALS as "<="
+    GREATER_EQUALS as ">="
+}
+
+class ArithmeticBinaryExpr extends BinaryExpr {
+    OpArithmetic ^op
+}
+
+enum OpArithmetic {
+    PLUS as "+"
+    MINUS as "-"
+    TIMES as "*"
+    DIVIDED_BY as "/"
+    MODULO as "%"
+}
+
+class Cast extends UnaryExpr {
+    contains Type ^type
+}
+
+class ArithmeticUnaryExpr extends UnaryExpr {
+    OpArithmeticUnary ^op
+}
+
+enum OpArithmeticUnary {
+    MINUS as "-"
+    PRE_INCREMENT as "++"
+    PRE_DECREMENT as "--"
+    POST_INCREMENT as "post++"
+    POST_DECREMENT as "post--"
+}
+
+class LogicalNot extends UnaryExpr {}
+
+class BitwiseNot extends UnaryExpr {}
+
+class MemberAccess extends Expr, Argumented {
+    boolean taskStart
+    refers Member member
+    contains Expr target
+    contains Role[] roleArgs
+    
+    op boolean isFieldAccess()     { member instanceof Field }
+    op boolean isMethodInvoke()    { member instanceof Method }
+    op Field getField()            { member as Field }
+    op Method getMethod()          { member as Method }
+    op Executable getExecutable()  { method }
+    op Iterable<Expr> getAllArgs() { #[target] + args }
+    
+    op String toString() {
+        if(target !== null && member !== null)
+            target + (if(isTaskStart) " start " else ".") + member.qualifiedName.lastSegment +
+                args.join("(", ", ", ")", [toString])
+        else
+            return super.toString
+    }
+}
+
+class VarRef extends Expr {
+    refers Var variable
+    
+    op String toString() {
+        if(variable !== null && variable.name !== null)
+            variable.name
+        else
+            super.toString
+    }
+}
+
+class This extends VarRef {}
+
+class Super extends VarRef {}
+
+class New extends Expr, Argumented {
+    refers Constr constr
+    contains ClassRef classRef
+    
+    op Executable getExecutable() { constr }
+}
+
+class The extends Expr {
+    contains ClassRef classRef
+}
+
+class Parenthesized extends UnaryExpr {}
+
+class Literal extends Expr {}
+
+class StringLiteral extends Literal {
+    String value
+}
+
+class DoubleLiteral extends Literal {
+    String value
+}
+
+class LongLiteral extends Literal {
+    long value
+}
+
+class IntLiteral extends Literal {
+    int value
+}
+
+class BooleanLiteral extends Literal {
+    boolean value
+}
+
+class CharLiteral extends Literal {
+    char value
+}
+
+class NullLiteral extends Literal {}
+
+/*
+ * Types & Roles
+ */
+
+class Type {}
+
+class ReferenceType extends Type {}
+
+class TypeParamRef extends Type {
+    refers TypeParam param
+    contains Role restrictingRole
+    
+    op String toString() {
+        param.name + if(restrictingRole !== null) " with " + restrictingRole else ""
+    }
+}
+
+class PrimitiveType extends Type {
+    op String getName() { eClass.name.toLowerCase }
+    
+    op String toString() { name }
+}
+
+class RoleType extends ReferenceType {
+    contains Role role
+    contains ClassRef base
+    
+    op String toString() { role + " " + base }
+}
+
+class Role {
+    op String getName()
+    op String toString() { name }
+}
+
+class RoleParamRef extends Role {
+    refers RoleParam param
+    
+    op String toString() { param.name }
+}
+
+class BuiltInRole extends Role {
+    op int hashCode() {
+        getClass.hashCode
+    }
+    
+    op boolean equals(Object obj) {
+        if(this === obj)
+            return true
+        if(obj === null)
+            return false
+        if(getClass !== obj.getClass)
+            return false
+        return true
+    }
+}
+
+class Pure extends BuiltInRole {
+    op String getName() { "pure" }
+}
+
+class ReadOnly extends BuiltInRole {
+    op String getName() { "readonly" }
+}
+
+class ReadWrite extends BuiltInRole {
+    op String getName() { "readwrite" }
+}
+
+class ClassRef {
+    op Class getClazz()
+}
+
+class SimpleClassRef extends ClassRef {
+    refers Class clazz
+    
+    op String toString() { clazz.qualifiedName.toString }
+}
+
+class GenericClassRef extends ClassRef {
+    refers NormalClass clazz
+    contains Type typeArg
+    
+    op String toString() { clazz.qualifiedName + "[" + typeArg + "]" }
+}
+
+class Null extends ReferenceType {
+    op String toString() { "Null" }
+}
+
+class NumericType extends PrimitiveType {}
+
+class IntegralType extends NumericType {}
+
+class Double extends NumericType {}
+
+class Long extends IntegralType {}
+
+class Int extends IntegralType {}
+
+class Short extends IntegralType {}
+
+class Byte extends IntegralType {}
+
+class Char extends IntegralType {}
+
+class Boolean extends PrimitiveType {}
+
+class Void extends PrimitiveType {}

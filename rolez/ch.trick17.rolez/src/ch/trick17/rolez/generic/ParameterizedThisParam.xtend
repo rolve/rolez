@@ -9,8 +9,8 @@ import java.util.Map
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.EStructuralFeature
 
+import static ch.trick17.rolez.RolezExtensions.*
 import static ch.trick17.rolez.rolez.RolezPackage.Literals.TYPED__TYPE
-import static ch.trick17.rolez.rolez.impl.InExecutableImplCustom.*
 
 package class ParameterizedThisParam extends ParameterizedEObject<ThisParam> implements ThisParam {
     

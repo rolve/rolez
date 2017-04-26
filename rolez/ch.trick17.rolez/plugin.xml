@@ -5,6 +5,6 @@
 		<package 
 			uri = "http://trick17.ch/rolez/Rolez"
 			class = "ch.trick17.rolez.rolez.RolezPackage"
-			genModel = "model/Rolez.genmodel" />
+			genModel = "model/Rolez.xcore" />
 	</extension>
 </plugin>

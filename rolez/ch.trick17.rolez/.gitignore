@@ -1,6 +1,6 @@
 /target
 /src-gen
-/emf-gen
+/xcore-gen
 /xtend-gen
 /xsemantics-gen
 /plugin.properties

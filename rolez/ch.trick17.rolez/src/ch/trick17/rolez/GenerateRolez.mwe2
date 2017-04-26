@@ -3,13 +3,11 @@ module ch.trick17.rolez.GenerateRolez
 import org.eclipse.xtext.xtext.generator.*
 import org.eclipse.xtext.xtext.generator.model.project.*
 import org.eclipse.emf.mwe2.ecore.EcoreGenerator
-import org.eclipse.emf.mwe.utils.StandaloneSetup
 
 var projectName = "ch.trick17.rolez"
 var rootPath = ".."
 
 Workflow {
-	
 	component = XtextGenerator {
 		configuration = {
 			project = StandardProjectConfig {
@@ -33,15 +31,11 @@ Workflow {
 		language = StandardLanguage {
 			name = "${projectName}.Rolez"
 			fileExtensions = "rz,rolez"
-            referencedResource = "platform:/resource/${projectName}/model/Rolez.genmodel"
+            referencedResource = "platform:/resource/${projectName}/model/Rolez.xcore"
             serializer = {
                 generateStub = false
             }
 			fragment = types.TypesGeneratorFragment2 {}
 		}
 	}
-    component = EcoreGenerator {
-        genModel = "platform:/resource/${projectName}/model/Rolez.genmodel"
-        srcPath = "platform:/resource/${projectName}/src"
-    }
 }
