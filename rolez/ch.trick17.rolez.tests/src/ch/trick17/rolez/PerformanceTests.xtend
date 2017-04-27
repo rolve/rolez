@@ -21,21 +21,18 @@ class PerformanceTests {
         for(i : 1..10)
             parse('''class rolez.lang.Object mapped to java.lang.Object''').assertNoErrors
         
-        for(i : 0..3) {
+        for(i : 0..7) {
             println(i)
             
             val start = System.nanoTime
             val program = parse('''
-                class rolez.lang.Object mapped to java.lang.Object {
-                    mapped def readonly hashCode: int
-                }
-                object rolez.lang.System mapped to java.lang.System
+                class rolez.lang.Object mapped to java.lang.Object
                 class Main {
                     task readonly main: {
                         «FOR j : 0..i»
-                        if(true) {
+                        {
                         «ENDFOR»
-                            the System.hashCode;
+                            new Object;
                         «FOR j : 0..i»
                         }
                         «ENDFOR»
