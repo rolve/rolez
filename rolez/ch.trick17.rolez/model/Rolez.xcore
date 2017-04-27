@@ -15,11 +15,13 @@ import org.eclipse.xtext.common.types.JvmGenericType
 import org.eclipse.xtext.common.types.JvmOperation
 import org.eclipse.xtext.naming.QualifiedName
 
-/*
- * Programs, Imports, Classes
- */
+// -----------------------------------------
+// Programs, Imports, Classes
+// -----------------------------------------
 
+/* A Rolez "program" (a source file) contains a package name, imports and classes. */
 class Program {
+    /* The name of the package that all classes in a source file are in. */
     String name
     contains Import[] imports
     contains Class[] classes
@@ -90,9 +92,9 @@ class SingletonClass extends Class {
     op String toString()     { qualifiedName.toString }
 }
 
-/*
- * Members
- */
+// -----------------------------------------
+// Members
+// -----------------------------------------
 
 class Member {
     op QualifiedName getQualifiedName() {
@@ -203,9 +205,9 @@ class ThisParam extends Param {
     op RoleType getType() { super.^type as RoleType }
 }
 
-/*
- * Statements
- */
+// -----------------------------------------
+// Statements
+// -----------------------------------------
 
 class Instr extends InExecutable {}
 
@@ -268,9 +270,9 @@ class ExprStmt extends Stmt {
     contains Expr expr
 }
 
-/*
- * Expressions
- */
+// -----------------------------------------
+// Expressions
+// -----------------------------------------
 
 class Expr extends Instr {}
 
@@ -451,9 +453,9 @@ class CharLiteral extends Literal {
 
 class NullLiteral extends Literal {}
 
-/*
- * Types & Roles
- */
+// -----------------------------------------
+// Types & Roles
+// -----------------------------------------
 
 class Type {}
 
