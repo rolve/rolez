@@ -21,7 +21,7 @@ class PerformanceTests {
         for(i : 1..10)
             parse('''class rolez.lang.Object mapped to java.lang.Object''').assertNoErrors
         
-        for(i : 0..7) {
+        for(i : 0..100) {
             println(i)
             
             val start = System.nanoTime
