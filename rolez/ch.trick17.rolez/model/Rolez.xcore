@@ -380,7 +380,7 @@ class MemberAccess extends Expr, Argumented {
     contains Role[] roleArgs
     
     op boolean isFieldAccess()     { member instanceof Field }
-    op boolean isMethodInvoke()    { member instanceof Method }
+    op boolean isMethodInvoke()    { member instanceof Method && !isTaskStart }
     op Field getField()            { member as Field }
     op Method getMethod()          { member as Method }
     op Executable getExecutable()  { method }
