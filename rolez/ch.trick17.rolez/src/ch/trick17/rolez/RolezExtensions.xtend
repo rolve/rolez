@@ -37,13 +37,13 @@ class RolezExtensions {
         newRoleType(RolezFactory.eINSTANCE.createReadWrite, newClassRef(enclosingClass))
     }
     
-    static def isObjectClass        (Class it) { qualifiedName ==        objectClassName }
-    static def isSliceClass         (Class it) { qualifiedName ==         sliceClassName }
-    static def isArrayClass         (Class it) { qualifiedName ==         arrayClassName }
-    static def isVectorClass        (Class it) { qualifiedName ==        vectorClassName }
-    static def isVectorBuilderClass (Class it) { qualifiedName == vectorBuilderClassName }
-    static def isStringClass        (Class it) { qualifiedName ==        stringClassName }
-    static def isTaskClass          (Class it) { qualifiedName ==          taskClassName }
+    static def isObjectClass       (Class it) { qualifiedName ==        objectClassName }
+    static def isSliceClass        (Class it) { qualifiedName ==         sliceClassName }
+    static def isArrayClass        (Class it) { qualifiedName ==         arrayClassName }
+    static def isVectorClass       (Class it) { qualifiedName ==        vectorClassName }
+    static def isVectorBuilderClass(Class it) { qualifiedName == vectorBuilderClassName }
+    static def isStringClass       (Class it) { qualifiedName ==        stringClassName }
+    static def isTaskClass         (Class it) { qualifiedName ==          taskClassName }
     
     static def dispatch isSliceType(RoleType it) { base.clazz.isSliceClass }
     static def dispatch isSliceType(    Type it) { false }
@@ -66,7 +66,7 @@ class RolezExtensions {
     private static def overrides(Class it, Member m) {
         switch(m) {
             Field : false
-            Method: methods.exists[equalErasedSignature(it, m, !m.mapped)]
+            Method: methods.exists[equalErasedSignature(it, m)]
         }
     }
     

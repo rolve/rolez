@@ -90,10 +90,10 @@ class RolezUtils {
     /**
      * Returns <code>true</code> if the name and the types of the parameters of the two given
      * methods are the same, ignoring roles and type arguments (which are "erased").
-     * If eraseArrays is false, type arguments to classes that map to Java arrays are NOT ignored.
+     * For mapped methods, type arguments to classes that map to Java arrays are NOT ignored.
      */
-    static def equalErasedSignature(Method it, Method other, boolean eraseArrays) {
-        name == other.name && equalErasedParams(other, eraseArrays)
+    static def equalErasedSignature(Method it, Method other) {
+        name == other.name && equalErasedParams(other, !other.mapped)
     }
     
     static def equalErasedParams(Executable it, Executable other, boolean eraseArrays) {

@@ -236,7 +236,7 @@ class RolezValidator extends RolezSystemValidator {
     @Check
     def checkNoDuplicateMethods(Method it) {
         val matching = enclosingClass.methods.filter[m |
-            it !== m && equalErasedSignature(m, it, !mapped)
+            it !== m && equalErasedSignature(m, it)
         ]
         if(matching.size > 0)
            error("Duplicate method " + name + "(" +
