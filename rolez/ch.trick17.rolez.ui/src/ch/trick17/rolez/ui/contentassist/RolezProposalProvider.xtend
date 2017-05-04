@@ -35,7 +35,7 @@ class RolezProposalProvider extends AbstractRolezProposalProvider {
             }
         }
         
-        if (target != null) {
+        if (target !== null) {
             val targetType = system.type(target).value
             if (targetType instanceof RoleType) {
                 val factory = getProposalFactory("MemberAccess", context)

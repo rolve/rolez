@@ -7,7 +7,6 @@ package rolez.lang;
  * 
  * @author Michael Faes
  */
-@SuppressWarnings("unused")
 public class VectorBuilder<T> extends Guarded {
     
     public VectorBuilder(int length) {}

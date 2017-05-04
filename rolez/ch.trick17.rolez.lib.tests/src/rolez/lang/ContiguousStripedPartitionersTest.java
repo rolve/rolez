@@ -35,7 +35,7 @@ public class ContiguousStripedPartitionersTest extends PartitionerTest {
     public static List<Object[]> parameters() {
         Task.registerNewRootTask(); // required for the partitioners' toString() method (yeah...)
         
-        final List<Object[]> params = new ArrayList<Object[]>();
+        final List<Object[]> params = new ArrayList<>();
         
         /* All combinations of sizes, ns and modes */
         for(final int size : INTERESTING_SIZES)

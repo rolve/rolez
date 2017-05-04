@@ -9,7 +9,7 @@ import java.util.Set;
 public abstract class PartitionerTest {
     
     protected void assertCover(final SliceRange original, final Collection<SliceRange> slices) {
-        final Set<Integer> indices = new HashSet<Integer>();
+        final Set<Integer> indices = new HashSet<>();
         
         for(final SliceRange slice : slices)
             for(int i = slice.begin; i < slice.end; i += slice.step)

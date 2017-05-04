@@ -61,7 +61,7 @@ class JavaMapper {
     def boolean isSubclassOf(JvmDeclaredType it, JvmType other) {
         // IMPROVE: Find an existing method that does this
         if(it == other) true
-        else if(extendedClass == null) false
+        else if(extendedClass === null) false
         else (extendedClass.type as JvmDeclaredType).isSubclassOf(other)
     }
     

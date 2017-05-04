@@ -43,7 +43,7 @@ class ValFieldsInitializedAnalysis extends DataFlowAnalysis<Initialized> {
     protected override newFlow()   { newFlow }
     
     protected override entryFlow() {
-        val initialized = clazz.fields.filter[kind == VAL && initializer != null].toSet
+        val initialized = clazz.fields.filter[kind == VAL && initializer !== null].toSet
         new Initialized(initialized, initialized)
     }
     
@@ -100,8 +100,8 @@ class ValFieldsInitializedAnalysis extends DataFlowAnalysis<Initialized> {
         override int hashCode() {
             val prime = 31;
             var result = 1;
-            result = prime * result + if(definitely == null) 0 else definitely.hashCode;
-            result = prime * result + if(possibly == null) 0 else possibly.hashCode;
+            result = prime * result + if(definitely === null) 0 else definitely.hashCode;
+            result = prime * result + if(possibly === null) 0 else possibly.hashCode;
             return result;
         }
     }

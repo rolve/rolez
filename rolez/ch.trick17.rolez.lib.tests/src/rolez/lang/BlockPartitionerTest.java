@@ -26,7 +26,7 @@ public class BlockPartitionerTest extends PartitionerTest {
     
     @Parameters(name = "size={0}, blockSize= {1}, n={2}")
     public static List<Object[]> parameters() {
-        final List<Object[]> params = new ArrayList<Object[]>();
+        final List<Object[]> params = new ArrayList<>();
         
         /* All combinations of block sizes, sizes, and ns */
         for(int size : SIZES)

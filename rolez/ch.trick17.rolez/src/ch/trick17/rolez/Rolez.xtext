@@ -252,6 +252,7 @@ Literal:
 
 StringLiteral: value=STRING;
 
+@Override 
 terminal STRING: '"' ( '\\' ('b'|'t'|'n'|'f'|'r'|'u'|'"'|"'"|'\\') | !('\\'|'"') )* '"';
 
 DoubleLiteral: value=DOUBLE;
@@ -335,5 +336,6 @@ fragment WithArgs returns Argumented: ('(' args+=Expr (',' args+=Expr)* ')')?;
 
 /* Doc */
 
+@Override 
 terminal ML_COMMENT: '/*'!'*' -> '*/'; // Apparently, need to exclude the /** pattern explicitly
 terminal DOCUMENTATION: '/**' -> '*/';

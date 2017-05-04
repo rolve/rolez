@@ -43,7 +43,7 @@ abstract class AbstractDeclarativeDesugarer implements IDesugarer {
             for(var i = 0; i < contents.size; i++) {
                 val orig = contents.get(i)
                 val repl = orig.desugar
-                if(repl != null && repl !== orig)
+                if(repl !== null && repl !== orig)
                     contents.set(i, repl)
                 contents.get(i).desugarChildren
             }
@@ -57,7 +57,7 @@ abstract class AbstractDeclarativeDesugarer implements IDesugarer {
             val value = eGet(ref)
             if(value instanceof EObject) {
                 val repl = value.desugar
-                if(repl != null && repl !== value)
+                if(repl !== null && repl !== value)
                     eSet(ref, repl)
                 (eGet(ref) as EObject).desugarChildren
             }
@@ -65,7 +65,7 @@ abstract class AbstractDeclarativeDesugarer implements IDesugarer {
                 for(var i = 0; i < value.size; i++) {
                     val orig = value.get(i) as EObject
                     val repl = orig.desugar
-                    if(repl != null && repl !== orig)
+                    if(repl !== null && repl !== orig)
                         (value as EObjectEList<EObject>).set(i, repl)
                     (value.get(i) as EObject).desugarChildren
                 }
@@ -79,7 +79,7 @@ abstract class AbstractDeclarativeDesugarer implements IDesugarer {
                 m.invoke(this, it)
             else {
                 val repl = m.invoke(this, it) as EObject
-                if(repl == null)
+                if(repl === null)
                     throw new AssertionError("A @Rule method must not return null")
                 return repl
             }

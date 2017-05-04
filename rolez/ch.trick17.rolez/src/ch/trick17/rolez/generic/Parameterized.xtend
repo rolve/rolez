@@ -45,7 +45,7 @@ abstract class Parameterized {
     public val Map<RoleParam, Role> roleArgs // need to be public so that type system can check validity
     
     package new(Map<TypeParam, Type> typeArgs, Map<RoleParam, Role> roleArgs) {
-        if(typeArgs == null || roleArgs == null)
+        if(typeArgs === null || roleArgs === null)
             throw new NullPointerException
         this.typeArgs = typeArgs
         this.roleArgs = roleArgs

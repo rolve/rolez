@@ -35,7 +35,7 @@ public class SliceRangeTest {
         /* May add more specific ranges later... */
         
         final ArrayList<SliceRange> rangesList = new ArrayList<>(ranges);
-        final List<Object[]> params = new ArrayList<Object[]>();
+        final List<Object[]> params = new ArrayList<>();
         for(int i = 0; i < rangesList.size(); i++)
             for(int j = i; j < rangesList.size(); j++)
                 params.add(new Object[]{rangesList.get(i), rangesList.get(j)});

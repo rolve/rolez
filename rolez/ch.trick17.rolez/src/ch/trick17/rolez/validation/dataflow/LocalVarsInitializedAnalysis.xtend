@@ -35,7 +35,7 @@ class LocalVarsInitializedAnalysis extends DataFlowAnalysis<Set<Var>> {
     }
     
     protected def dispatch flowThrough(LocalVarDecl d, Set<Var> in) {
-        if(d.initializer != null) in.with(d.variable)
+        if(d.initializer !== null) in.with(d.variable)
         else in
     }
     

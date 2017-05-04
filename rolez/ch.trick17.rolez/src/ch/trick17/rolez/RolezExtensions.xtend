@@ -59,7 +59,7 @@ class RolezExtensions {
     
     static def Iterable<Member> allMembers(Class it) {
         members +
-            if(superclass == null) emptyList
+            if(superclass === null) emptyList
             else superclass.allMembers.filter[m | !overrides(m)]
     }
     

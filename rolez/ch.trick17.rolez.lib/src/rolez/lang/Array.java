@@ -6,7 +6,6 @@ package rolez.lang;
  * 
  * @author Michael Faes
  */
-@SuppressWarnings("unused")
 public class Array<T> extends Slice<T> {
     
     public final int length = 0;

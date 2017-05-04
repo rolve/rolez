@@ -56,7 +56,7 @@ class CfgBuilder {
     val Map<Instr, Node> instrMap = new HashMap
     
     package new(Instr instr) {
-        if(instr == null) throw new AssertionError
+        if(instr === null) throw new AssertionError
         this.instr = instr
         this.exit = new ExitNode
     }
@@ -80,7 +80,7 @@ class CfgBuilder {
     
     private def dispatch Linker process(LocalVarDecl d, Linker prev) {
         val linker =
-            if(d.initializer == null) prev
+            if(d.initializer === null) prev
             else process(d.initializer, prev)
         linker.linkAndReturn(newInstrNode(d))
     }
@@ -89,7 +89,7 @@ class CfgBuilder {
         val conditionLinker = process(s.condition, prev)
         val thenLinker = process(s.thenPart, conditionLinker)
         val elseLinker = 
-            if(s.elsePart == null) conditionLinker
+            if(s.elsePart === null) conditionLinker
             else process(s.elsePart, conditionLinker)
         
         (thenLinker + elseLinker).linkAndReturn(newInstrNode(s))

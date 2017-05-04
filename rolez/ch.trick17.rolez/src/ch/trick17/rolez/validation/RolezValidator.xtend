@@ -154,7 +154,7 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkSingletonSuperclass(Class it) {
-        if(superclassRef != null && superclassRef.clazz instanceof SingletonClass)
+        if(superclassRef !== null && superclassRef.clazz instanceof SingletonClass)
             error("Singleton classes cannot be extended", CLASS__SUPERCLASS_REF, SINGLETON_SUPERCLASS)
     }
     
@@ -208,7 +208,7 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkTypeParam(NormalClass it) {
-        if(typeParam != null && !isMapped)
+        if(typeParam !== null && !isMapped)
             error("Only mapped classes may declare a type parameter",
                 NORMAL_CLASS__TYPE_PARAM, INCORRECT_TYPE_PARAM)
     }
@@ -346,7 +346,7 @@ class RolezValidator extends RolezSystemValidator {
 	
 	@Check
 	def checkReturnExpr(Method it) {
-        if(body == null || type instanceof Void) return;
+        if(body === null || type instanceof Void) return;
         
 	    val cfg = body.controlFlowGraph
         for(p : cfg.exit.predecessors) {
@@ -374,21 +374,21 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkSimpleClassRef(SimpleClassRef it) {
-        if(clazz instanceof NormalClass && (clazz as NormalClass).typeParam != null)
+        if(clazz instanceof NormalClass && (clazz as NormalClass).typeParam !== null)
             error("Class " + clazz.name + " takes a type argument",
                 SIMPLE_CLASS_REF__CLAZZ, MISSING_TYPE_ARG)
     }
     
     @Check
     def checkGenericClassRef(GenericClassRef it) {
-        if(clazz.typeParam == null)
+        if(clazz.typeParam === null)
             error("Class " + clazz.name + " does not take a type argument",
                 GENERIC_CLASS_REF__TYPE_ARG, INCORRECT_TYPE_ARG)
     }
     
     @Check
     def checkValFieldsInitialized(Constr it) {
-        if(body == null) return
+        if(body === null) return
         
         val cfg = body.controlFlowGraph
         val extension analysis = valFieldsAnalysis.analyze(cfg, enclosingClass)
@@ -416,7 +416,7 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkValFieldInitialized(Field it) {
-        if(enclosingClass.isSingleton && !isMapped && initializer == null)
+        if(enclosingClass.isSingleton && !isMapped && initializer === null)
             error("Value field " + name + " is not being initialized",
                     NAMED__NAME, VAL_FIELD_NOT_INITIALIZED)
     }
@@ -427,7 +427,7 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkFieldInitializer(Field it) {
-        if(initializer == null) return;
+        if(initializer === null) return;
         
         val subtypeResult = system.subtypeExpr(initializer.expr, type)
         if(subtypeResult.failed)
@@ -485,13 +485,13 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkLocalValInitialized(LocalVarDecl it) {
-        if(variable.kind == VAL && initializer == null)
+        if(variable.kind == VAL && initializer === null)
             error("Value is not initialized", variable, NAMED__NAME, VAL_NOT_INITIALIZED)
     }
     
     @Check
     def checkLocalVarsInitialized(Executable it) {
-        if(code == null) return
+        if(code === null) return
         
         val cfg = code.controlFlowGraph
         val extension analysis = new LocalVarsInitializedAnalysis(cfg)
@@ -514,7 +514,7 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkSuperConstrCall(Constr it) {
-        if(body == null || enclosingClass.isObjectClass) return
+        if(body === null || enclosingClass.isObjectClass) return
         
         val cfg = body.controlFlowGraph
         val extension analysis = new SuperConstrCallAnalysis(cfg)
@@ -569,18 +569,18 @@ class RolezValidator extends RolezSystemValidator {
                 if(jvmClass.typeParameters.size > 1)
                     error("Cannot map to a class with multiple type parameters",
                         CLASS__JVM_CLASS, INCORRECT_MAPPED_CLASS)
-                else if(typeParam == null)
+                else if(typeParam === null)
                     error("Missing type parameter for mapped class",
                         NAMED__NAME, MISSING_TYPE_PARAM)
                 else if(typeParam.name != jvmClass.typeParameters.head.name)
                     error("Incorrect type parameter name for mapped class: expected " + jvmClass.typeParameters.head.name,
                         typeParam, NAMED__NAME, INCORRECT_TYPE_PARAM)
             }
-            else if(typeParam != null)
+            else if(typeParam !== null)
                 error(qualifiedName + " must not declare a type parameter",
                     typeParam, NAMED__NAME, INCORRECT_TYPE_PARAM)
             
-            if(superclass != null) {
+            if(superclass !== null) {
                 if(!superclass.isMapped)
                     error("A mapped class cannot extend a non-mapped class",
                         CLASS__SUPERCLASS_REF, INCORRECT_MAPPED_CLASS)
@@ -592,7 +592,7 @@ class RolezValidator extends RolezSystemValidator {
     }
     
     private def Iterable<JvmType> superclasses(JvmDeclaredType it) {
-        if(extendedClass == null) #[]
+        if(extendedClass === null) #[]
         else (extendedClass.type as JvmDeclaredType).superclasses + #[extendedClass.type]
     }
     
@@ -626,7 +626,7 @@ class RolezValidator extends RolezSystemValidator {
             if(!enclosingClass.isMapped)
                 error("Mapped methods are allowed in mapped classes only",
                     METHOD__JVM_METHOD, MAPPED_IN_NORMAL_CLASS)
-            if(body != null)
+            if(body !== null)
                 error("Mapped methods cannot have a body", body, null, MAPPED_WITH_BODY)
             
             if(!type.mapsTo(jvmMethod.returnType))
@@ -637,7 +637,7 @@ class RolezValidator extends RolezSystemValidator {
             if(enclosingClass.isMapped)
                 error("Methods of mapped classes must be mapped",
                     NAMED__NAME, NON_MAPPED_METHOD)
-            if(body == null)
+            if(body === null)
                 error("Missing body", NAMED__NAME, MISSING_BODY)
         }
     }
@@ -648,14 +648,14 @@ class RolezValidator extends RolezSystemValidator {
             if(!enclosingClass.isMapped)
                 error("Mapped constructors are allowed in mapped classes only",
                     CONSTR__JVM_CONSTR, MAPPED_IN_NORMAL_CLASS)
-            if(body != null)
+            if(body !== null)
                 error("Mapped constructors cannot have a body", body, null, MAPPED_WITH_BODY)
         }
         else {
             if(enclosingClass.isMapped)
                 error("Constructors of mapped classes must be mapped",
                     null, NON_MAPPED_CONSTR)
-            if(body == null)
+            if(body === null)
                 error("Missing body", null, MISSING_BODY)
         }
     }
@@ -667,7 +667,7 @@ class RolezValidator extends RolezSystemValidator {
         checkClassKind(false)
         checkPurity(false)
         checkMapped
-        if(superclass != null)
+        if(superclass !== null)
            error(qualifiedName + " must not have a superclass",
                CLASS__SUPERCLASS_REF, INCORRECT_MAPPED_CLASS)
     }

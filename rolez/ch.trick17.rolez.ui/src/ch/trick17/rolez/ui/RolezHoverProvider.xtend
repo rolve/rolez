@@ -23,16 +23,16 @@ class RolezHoverProvider extends DefaultEObjectHoverProvider {
     override protected getFirstLine(EObject o) {
         val imageTag = imageTag(o)
         val label = HTMLPrinter.convertToHTMLContent(getLabel(o))
-        if(imageTag != null)
+        if(imageTag !== null)
             '''«FIRST_LINE_BEGIN»«imageTag» <b>«label»</b>«FIRST_LINE_END»'''
     }
 
     private def imageTag(EObject o) {
         if (labelProvider instanceof ILabelProviderImageDescriptorExtension) {
             val descriptor = labelProvider.getImageDescriptor(o)
-            if(descriptor != null) {
+            if(descriptor !== null) {
                 val url = JavaPlugin.getDefault().getImagesOnFSRegistry().getImageURL(descriptor)
-                if (url != null)
+                if (url !== null)
                     '''<image src='«url.toExternalForm()»' style='vertical-align:middle;' />'''
             }
         }

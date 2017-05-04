@@ -111,7 +111,7 @@ class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleData>> {
     }
     
     protected def dispatch flowThrough(LocalVarDecl d, ImmutableMap<Var, RoleData> in) {
-        if(d.initializer != null) flowThroughAssign(d.variable, d.initializer, in)
+        if(d.initializer !== null) flowThroughAssign(d.variable, d.initializer, in)
         else in
     }
     

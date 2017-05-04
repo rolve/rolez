@@ -84,7 +84,7 @@ class RolezUtils {
     }
     
     private static def <T extends EObject> copyIfNecessary(T it) {
-        if(eContainer == null) it else EcoreUtil.copy(it)
+        if(eContainer === null) it else EcoreUtil.copy(it)
     }
     
     /**

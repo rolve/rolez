@@ -21,7 +21,7 @@ class RolezSemanticHighlightCalculator implements ISemanticHighlightingCalculato
     static val rolez = RolezPackage.eINSTANCE
     
     override provideHighlightingFor(XtextResource res, IHighlightedPositionAcceptor acceptor, CancelIndicator canceler) {
-        if(res?.parseResult == null) return
+        if(res?.parseResult === null) return
         
         val iter = EcoreUtil.getAllContents(res, true)
         while(iter.hasNext) {
@@ -29,7 +29,7 @@ class RolezSemanticHighlightCalculator implements ISemanticHighlightingCalculato
             switch(object) {
                 Var: {
                     val node = findNodesForFeature(object, rolez.named_Name).head
-                    if(node != null) // skip synthetic vars like the "this" parameter
+                    if(node !== null) // skip synthetic vars like the "this" parameter
                         acceptor.addPosition(node.offset, node.length, VARIABLE_ID)
                 }
                 This, Super: {} // skip this and super (they're VarRefs too)

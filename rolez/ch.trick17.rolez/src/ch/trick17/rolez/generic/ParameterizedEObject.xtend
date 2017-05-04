@@ -40,7 +40,7 @@ abstract class ParameterizedEObject<E extends EObject>
     
     package new(E eObject, EObject eContainer, Map<TypeParam, Type> typeArgs, Map<RoleParam, Role> roleArgs) {
         super(typeArgs, roleArgs)
-        if(eObject == null || eContainer == null) throw new NullPointerException
+        if(eObject === null || eContainer === null) throw new NullPointerException
         this.eObject = eObject;
         this.eContainer = eContainer
     }
@@ -59,12 +59,12 @@ abstract class ParameterizedEObject<E extends EObject>
             if(typeArgs.containsKey(param)) {
                 val type = typeArgs.get(param)
                 switch(type) {
-                    RoleType case restrictingRole != null: {
+                    RoleType case restrictingRole !== null: {
                         if(type.role instanceof RoleParamRef && restrictingRole instanceof RoleParamRef)
                             throw new AssertionError
                         newRoleType(system.leastCommonSuperrole(type.role, restrictingRole.parameterized), type.base) 
                     }
-                    TypeParamRef case restrictingRole != null:
+                    TypeParamRef case restrictingRole !== null:
                         newTypeParamRef(type.param, restrictingRole /* .parameterized??? */)
                     default: type
                 }

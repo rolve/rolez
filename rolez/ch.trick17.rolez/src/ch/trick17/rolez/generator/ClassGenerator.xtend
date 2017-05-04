@@ -119,7 +119,7 @@ class ClassGenerator {
     // IMPROVE: Support initializer code that may throw checked exceptions
     private def gen(Field it) '''
         
-        public «kind.generate»«type.generate» «safeName»«IF initializer != null» = «initializer.expr.generate(newRoleAnalysis(initializer, initializer.expr.controlFlowGraph))»«ENDIF»;
+        public «kind.generate»«type.generate» «safeName»«IF initializer !== null» = «initializer.expr.generate(newRoleAnalysis(initializer, initializer.expr.controlFlowGraph))»«ENDIF»;
     '''
     
     private def gen(Method it) '''
@@ -267,7 +267,7 @@ class ClassGenerator {
                 superMethod?.params?.get(paramIndex)
         
         superParam?.type instanceof TypeParamRef
-            || superParam != null && superParam.overridesGenericParam
+            || superParam !== null && superParam.overridesGenericParam
     }
     
     private def genReturnType(Method it) {
@@ -283,6 +283,6 @@ class ClassGenerator {
                 superMethod?.type
         
         superReturnType instanceof TypeParamRef
-            || superMethod != null && superMethod.overridesGenericReturnType
+            || superMethod !== null && superMethod.overridesGenericReturnType
     }
 }

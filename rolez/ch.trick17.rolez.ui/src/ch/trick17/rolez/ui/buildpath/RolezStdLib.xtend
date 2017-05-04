@@ -24,7 +24,7 @@ class RolezStdLib implements IClasspathContainer {
     }
     
     override getClasspathEntries() {
-        if(classpathEntries == null) {
+        if(classpathEntries === null) {
             val libBundle = Platform.getBundle(ROLEZ_LIB_BUNDLE_ID)
             val libPath = new Path(FileLocator.getBundleFile(libBundle).absolutePath)
             val sourcePath =

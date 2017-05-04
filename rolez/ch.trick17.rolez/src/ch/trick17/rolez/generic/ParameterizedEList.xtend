@@ -20,7 +20,7 @@ package abstract class ParameterizedEList<E extends EObject, C extends EObject> 
     
     new(List<E> list, C eContainer, Map<TypeParam, Type> typeArgs, Map<RoleParam, Role> roleArgs) {
         super(typeArgs, roleArgs)
-        if(list == null || eContainer == null)
+        if(list === null || eContainer === null)
             throw new NullPointerException
         this.list = list
         this.eContainer = eContainer

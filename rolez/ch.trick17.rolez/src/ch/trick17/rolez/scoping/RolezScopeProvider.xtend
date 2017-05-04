@@ -112,7 +112,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     }
     
     def scope_Method_superMethod(Method it, EReference ref) {
-        if(enclosingClass.superclass == null)
+        if(enclosingClass.superclass === null)
             return IScope.NULLSCOPE
         
         val allMethods = enclosingClass.superclass.allMembers.filter(Method)
@@ -139,7 +139,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     }
     
     def scope_Field_jvmField(Field it, EReference ref) {
-        if(enclosingClass.jvmClass == null)
+        if(enclosingClass.jvmClass === null)
             return IScope.NULLSCOPE
         
         // TODO: Allow to map to inherited fields, like with methods
@@ -153,7 +153,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     }
     
     def scope_Method_jvmMethod(Method it, EReference ref) {
-        if(enclosingClass.jvmClass == null)
+        if(enclosingClass.jvmClass === null)
             return IScope.NULLSCOPE
         
         val filter = [JvmOperation m |
@@ -176,7 +176,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     }
     
     def scope_Constr_jvmConstr(Constr it, EReference ref) {
-        if(enclosingClass.jvmClass == null)
+        if(enclosingClass.jvmClass === null)
             return IScope.NULLSCOPE
         
         val candidates = enclosingClass.jvmClass.declaredConstructors.filter[c |

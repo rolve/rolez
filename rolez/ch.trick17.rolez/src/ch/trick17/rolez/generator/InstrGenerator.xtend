@@ -106,12 +106,12 @@ class InstrGenerator {
         
         private def dispatch CharSequence generate(LocalVarDecl it) {
             val type = system.varType(variable).value
-            '''«variable.kind.generate»«type.generate» «variable.safeName»«IF initializer != null» = «initializer.generate»«ENDIF»;'''
+            '''«variable.kind.generate»«type.generate» «variable.safeName»«IF initializer !== null» = «initializer.generate»«ENDIF»;'''
         }
         
         private def dispatch CharSequence generate(IfStmt it) '''
             if(«condition.generate»)«thenPart.genIndent»
-            «IF elsePart != null»
+            «IF elsePart !== null»
             else«elsePart.genIndent»
             «ENDIF»'''
         

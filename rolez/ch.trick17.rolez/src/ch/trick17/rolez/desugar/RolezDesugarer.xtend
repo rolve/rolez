@@ -37,7 +37,7 @@ class RolezDesugarer extends AbstractDeclarativeDesugarer {
     
     @Rule
     def addSuperClassRef(Class it) {
-        if(superclassRef == null && !isObjectClass)
+        if(superclassRef === null && !isObjectClass)
             superclassRef = createSimpleClassRef => [
                 createReference(SIMPLE_CLASS_REF__CLAZZ, objectClassName.toString)
             ]
@@ -45,13 +45,13 @@ class RolezDesugarer extends AbstractDeclarativeDesugarer {
     
     @Rule
     def addUpperBound(RoleParam it) {
-        if(upperBound == null)
+        if(upperBound === null)
             upperBound = createPure
     }
     
     @Rule
     def addSuperConstrCall(Constr it) {
-        if(body != null && !(body.stmts.head instanceof SuperConstrCall)
+        if(body !== null && !(body.stmts.head instanceof SuperConstrCall)
                 && !enclosingClass.isObjectClass) {
             val supr = createSuperConstrCall
             body.stmts.add(0, supr)
@@ -61,7 +61,7 @@ class RolezDesugarer extends AbstractDeclarativeDesugarer {
     
     @Rule
     def addThisParam(Constr it) {
-        if(thisParam == null)
+        if(thisParam === null)
             thisParam = createThisParam => [
                 type = createRoleType => [
                     role = createReadWrite
@@ -71,10 +71,10 @@ class RolezDesugarer extends AbstractDeclarativeDesugarer {
     
     @Rule
     def completeThisParam(ThisParam it) {
-        if(name == null) {
+        if(name === null) {
             name = "this"
             val clazz = enclosingClass
-            if(clazz instanceof NormalClass && (clazz as NormalClass).typeParam != null) {
+            if(clazz instanceof NormalClass && (clazz as NormalClass).typeParam !== null) {
                 type.base = createGenericClassRef => [
                     typeArg = createTypeParamRef => [
                         param = (clazz as NormalClass).typeParam
