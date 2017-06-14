@@ -1,5 +1,8 @@
 package rolez.annotation.processing;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -24,24 +27,31 @@ public class Processor extends AbstractProcessor {
 	private Messager messager;
 	
 	public void init(ProcessingEnvironment env) {
-        messager = env.getMessager();
-    }
+    	messager = env.getMessager();
+	}
 	
 	@Override
 	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment env) {
-		for (Element element : env.getElementsAnnotatedWith(Roleztask.class)) {
+		for (Element annotatedElement : env.getElementsAnnotatedWith(Roleztask.class)) {
 			
-			if (!(element instanceof ExecutableElement)) {
-				messager.printMessage(Kind.ERROR, "Only Methods can use this Annotation.", element);
+			if (!(annotatedElement instanceof ExecutableElement)) {
+				messager.printMessage(Kind.ERROR, "Only Methods can use this Annotation.", annotatedElement);
 			}
+			ExecutableElement execElem = (ExecutableElement)annotatedElement;
 			
-			ExecutableElement execElem = (ExecutableElement)element;
-			String[] readonly = execElem.getAnnotation(Roleztask.class).readonly();
-			String[] readwrite = execElem.getAnnotation(Roleztask.class).readwrite();
-
+			// Use sets, so double declarations inside readonly and readwrite are ignored
+			HashSet<String> readonly = new HashSet<String>(Arrays.asList(execElem.getAnnotation(Roleztask.class).readonly()));
+			HashSet<String> readwrite = new HashSet<String>(Arrays.asList(execElem.getAnnotation(Roleztask.class).readwrite()));
+			
+			if (hasDoubleDeclaration(readonly, readwrite)) {
+				messager.printMessage(Kind.ERROR, "Parameters can't be declared as readonly AND readwrite.", annotatedElement);
+			}
+			HashSet<String> annotationParams = new HashSet<String>();
+			
 			String message = "ro: ";
 			
 			for (String s : readonly) {
+				annotationParams.add(s);
 				message += s;
 				message += " ";
 			}
@@ -49,57 +59,57 @@ public class Processor extends AbstractProcessor {
 			message += "\nrw: ";
 			
 			for (String s : readwrite) {
+				annotationParams.add(s);
 				message += s;
 				message += " ";
 			}
 
 			message += "\nparams: ";
 			
-			for (VariableElement e : execElem.getParameters()) {
+			checkMethodParameters(execElem.getParameters(), annotationParams, annotatedElement);
+			
+			for (VariableElement e : execElem.getParameters()) {				
 				message += " ";
 				message += e.asType().toString();
 				message += " ";
 				message += e.toString();
 			}
 			
-			messager.printMessage(Kind.WARNING, message, execElem);
-			
-			/*
-			if (element.getSimpleName().toString().startsWith("Silly")) {
-				// We don't want generate new silly classes 
-				// for auto-generated silly classes
-				continue;
-			}
-
-			if (element.getSimpleName().toString().startsWith("T")) {
-				messager.printMessage(Kind.WARNING, 
-					"This class name starts with a T!", 
-					element);	
-			}
-
-			String sillyClassName = "Silly" + element.getSimpleName();
-			String sillyClassContent = 
-					"package silly;\n" 
-				+	"public class " + sillyClassName + " {\n"
-				+	"	public String foobar;\n"
-				+	"}";
-
-			JavaFileObject file = null;
-
-			try {
-				file = filer.createSourceFile(
-						"silly/" + sillyClassName, 
-						element);
-				file.openWriter()
-					.append(sillyClassContent)
-					.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			*/
+			messager.printMessage(Kind.NOTE, message, execElem);
 		}
 
 		return true;
 	}
 	
+	private void checkMethodParameters(List<? extends VariableElement> methodParams, Set<String> annotationParams, Element annotatedElement) {
+		for (VariableElement e : methodParams) {
+			if (!annotationParams.contains(e.toString())) {
+				messager.printMessage(Kind.ERROR, "The Annotation must contain all method parameters (" + e.toString() + " is not included).", annotatedElement);
+			}
+		}
+
+		for (String s : annotationParams) {
+			boolean paramFound = false;
+			for (VariableElement e : methodParams) {
+				if (e.toString().equals(s)) {
+					paramFound = true;
+					break;
+				}
+			}
+			if (!paramFound) {
+				messager.printMessage(Kind.ERROR, "The method paramets must contain all annotation parameters (" + s + " is not included).", annotatedElement);
+			}
+		}
+	}
+	
+	private boolean hasDoubleDeclaration(HashSet<String> ro, HashSet<String> rw) {
+		for (String ros : ro) {
+			for (String rws : rw) {
+				if (ros.equals(rws)) return true;
+			}
+		}
+		return false;
+	}
+	
+
 }
