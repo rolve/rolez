@@ -8,7 +8,7 @@ import java.lang.annotation.RetentionPolicy;
 
 /**
  * Annotation for Rolez Tasks. It's used to annotate threads.
- * @author Michael
+ * @author Michael Giger
  *
  */
 @Target({ElementType.METHOD}) 

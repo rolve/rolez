@@ -10,8 +10,9 @@ import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.Modifier;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 import javax.tools.Diagnostic.Kind;
 
 import rolez.annotation.Roleztask;
@@ -30,22 +31,39 @@ public class Processor extends AbstractProcessor {
 	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment env) {
 		for (Element element : env.getElementsAnnotatedWith(Roleztask.class)) {
 			
+			if (!(element instanceof ExecutableElement)) {
+				messager.printMessage(Kind.ERROR, "Only Methods can use this Annotation.", element);
+			}
 			
-			String message = "";
-			for (Element e : element.getEnclosedElements()) {
+			ExecutableElement execElem = (ExecutableElement)element;
+			String[] readonly = execElem.getAnnotation(Roleztask.class).readonly();
+			String[] readwrite = execElem.getAnnotation(Roleztask.class).readwrite();
+
+			String message = "ro: ";
+			
+			for (String s : readonly) {
+				message += s;
+				message += " ";
+			}
+			
+			message += "\nrw: ";
+			
+			for (String s : readwrite) {
+				message += s;
+				message += " ";
+			}
+
+			message += "\nparams: ";
+			
+			for (VariableElement e : execElem.getParameters()) {
+				message += " ";
+				message += e.asType().toString();
 				message += " ";
 				message += e.toString();
 			}
 			
-			Element enclosing = element.getEnclosingElement();
-			message += " || " + enclosing;
-
-			message += " || ";
-			for (Modifier modifier : element.getModifiers()) {
-				message += modifier.toString();
-			}
+			messager.printMessage(Kind.WARNING, message, execElem);
 			
-			messager.printMessage(Kind.WARNING, message, element);
 			/*
 			if (element.getSimpleName().toString().startsWith("Silly")) {
 				// We don't want generate new silly classes 
