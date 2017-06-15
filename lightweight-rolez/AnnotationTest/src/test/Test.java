@@ -1,36 +1,34 @@
 package test;
 
-import rolez.annotation.Roleztask;
+import rolez.annotation.*;
 
 public class Test {
 
+	private A a;
+	private B b;
+	
+	public Test() {
+		this.a = new A();
+		this.b = new B();
+	}
+	
 	public void run() {
-		final A a = new A();
-		final B b = new B();
 		rolezTask(a, b);
 	}
 
-	@Roleztask(readonly={"b"}, readwrite={"a"}) 
-	private void rolezTask(final A a, final B b) {
-		Thread t = new Thread() {
-			public void run() {
-				int i = b.getValue();
-				a.setValue(i);
-				
-				// Start another task
-				anotherTask(a);
-			}
-		};
-		t.start();
+	@Roleztask
+	private void rolezTask(@Readwrite A a, @Readonly B b) {
+
 	}
 
-	@Roleztask(readonly={},readwrite={"a"})
-	private void anotherTask(final A a) {
-		Thread t = new Thread() {
-			public void run() {
-				a.setValue(2);
-			}
-		};
-		t.start();
+	@Roleztask
+	private void anotherTask(@Readonly A a) {
+		
 	}
+	
+	@Roleztask
+	private void foo(@Readwrite A a) {
+		
+	}
+	
 }

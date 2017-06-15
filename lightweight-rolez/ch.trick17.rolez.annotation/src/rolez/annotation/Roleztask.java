@@ -14,6 +14,5 @@ import java.lang.annotation.RetentionPolicy;
 @Target({ElementType.METHOD}) 
 @Retention(RetentionPolicy.SOURCE)
 public @interface Roleztask {
-	String[] readwrite() default {""};
-	String[] readonly() default {""};
+	
 }
