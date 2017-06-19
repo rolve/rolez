@@ -1,4 +1,4 @@
 <factorypath>
     <factorypathentry kind="PLUGIN" id="org.eclipse.jst.ws.annotations.core" enabled="true" runInBatchMode="false"/>
-    <factorypathentry kind="WKSPJAR" id="/AnnotationTest/lib/processor.jar" enabled="true" runInBatchMode="false"/>
+    <factorypathentry kind="WKSPJAR" id="/AnnotationTest/lib/annotation-processor.jar" enabled="true" runInBatchMode="false"/>
 </factorypath>

@@ -7,7 +7,10 @@ import java.lang.annotation.RetentionPolicy;
 
 
 /**
- * Annotation for Rolez Tasks. It's used to annotate threads.
+ * This annotation is used to declare methods as Rolez tasks. Classes including
+ * Rolez tasks need to be annotated with the <code>@Guarded</code> annotation and
+ * therefore extending the Guarded class from the Rolez runtime library.
+ * 
  * @author Michael Giger
  *
  */
