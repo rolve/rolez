@@ -24,7 +24,7 @@ public class Test {
 	}
 	
 	@Roleztask
-	private void readonlyTask(@Readonly A a) {
+	private void readonlyTask(@Readonly A a, final boolean $asTask) {
 		int i = a.getValue();
 	}
 
@@ -46,30 +46,30 @@ public class Test {
 	*/
 	
 	@Roleztask
-	private void readwriteTask(@Readwrite A a) {
+	private void readwriteTask(@Readwrite A a, final boolean $asTask) {
 		a.setValue(1);
 	}
 
 	@Roleztask
-	private void twoParamsTask(@Readwrite A a, @Readonly B b) {
+	private void twoParamsTask(@Readwrite A a, @Readonly B b, final boolean $asTask) {
 		int i = b.getValue();
 		a.setValue(i);
 	}
 	
 	@Roleztask
-	private void nestedTask(@Readwrite A a) {
-		readonlyTask(a);
+	private void nestedTask(@Readwrite A a, final boolean $asTask) {
+		readonlyTask(a, true);
 	}
 	
 	//TODO: Can tasks return something?
 	@Roleztask
-	private int readonlyReturnTask(@Readonly A a) {
+	private int readonlyReturnTask(@Readonly A a, final boolean $asTask) {
 		return a.getValue();
 	}
 	
 	//TODO: Illegal operation, how and moreover WHEN to handle this?
 	@Roleztask
-	private void illegalTask(@Readonly A a) {
+	private void illegalTask(@Readonly A a, final boolean $asTask) {
 		a.setValue(1);
 	}
 }

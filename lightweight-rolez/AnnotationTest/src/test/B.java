@@ -7,7 +7,7 @@ import rolez.annotation.Roleztask;
 public class B extends A{
 
 	@Roleztask
-	private void task() {
+	private void task(final boolean $asTask) {
 		int i = 1;
 	}
 }

@@ -12,6 +12,7 @@ import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.ArrayType;
@@ -49,7 +50,7 @@ public class Processor extends AbstractProcessor {
 		processGuardedAnnotations(env);
 		return true;
 	}
-	
+
 	/**
 	 * Processes classes annotated with the <code>@Guareded</code> annotation, which indicates that
 	 * this class will inherit from the Guarded class of the Rolez runtime library.
@@ -61,11 +62,12 @@ public class Processor extends AbstractProcessor {
 	
 	/**
 	 * Processes the methods that are annotated with <code>@Roleztask</code> and checks whether all 
-	 * method parameters have a role declared.
+	 * method parameters have a role declared and are able to be guarded.
 	 * @param env
 	 */
 	private void processTaskAnnotations(RoundEnvironment env) {
 		for (Element annotatedElement : env.getElementsAnnotatedWith(Roleztask.class)) {
+			
 			if (!(annotatedElement instanceof ExecutableElement)) {
 				Message message = new Message(Kind.ERROR, "Only methods can be annotated as Rolez tasks", annotatedElement);
 				message.print(messager);
@@ -73,20 +75,32 @@ public class Processor extends AbstractProcessor {
 			
 			ExecutableElement task = (ExecutableElement) annotatedElement;
 			
+			boolean hasAsTaskParameter = false;
 			for (VariableElement parameter : task.getParameters()) {
+				
+				if(parameter.toString().equals("$asTask") && isOfBooleanType(parameter)) {
+					hasAsTaskParameter = true;
+					continue;
+				}
+				
+				checkClassIsGuarded(parameter);
+				
 				Annotation roAnnotation = parameter.getAnnotation(Readonly.class);
 				Annotation rwAnnotation = parameter.getAnnotation(Readwrite.class);
 				
 				// Check whether parameter is annotated properly
 				if (roAnnotation == null && rwAnnotation == null) {
-					Message message = new Message(Kind.ERROR, "Method parameters have to be annotated with either @Readonly or @Readwrite", task);
-					message.print(messager);
+					Message noRoleDeclared = new Message(Kind.ERROR, "Method parameters have to be annotated with either @Readonly or @Readwrite", task);
+					noRoleDeclared.print(messager);
 				}
-				
-				checkClassIsGuarded(parameter);
 				
 				// TODO: What happens when parameters are annotated?
 
+			}
+			
+			if (!hasAsTaskParameter) {
+				Message message = new Message(Kind.ERROR, "A task needs a parameter $asTask and it needs to be a final boolean.", task);
+				message.print(messager);
 			}
 		}
 	}
@@ -101,8 +115,21 @@ public class Processor extends AbstractProcessor {
 		}
 	}
 	
+	//TODO: This method doesn't work since final modifiers on method parameters are erased after compilation
+	//      and therefore element.getModifiers() cannot find the final modifier.
+	@SuppressWarnings(value = {"unused"})
+	private boolean hasFinalModifier(Element element) {
+		Set<Modifier> modifiers = element.getModifiers();
+		if (modifiers.size() > 1) return false;
+		return modifiers.contains(Modifier.FINAL);
+	}
+	
+	private boolean isOfBooleanType(Element element) {
+		return element.asType().toString().equals("boolean");
+	}
+	
+	
 	private class ParameterTypeVisitor implements TypeVisitor<Message,Void> {
-		
 		@Override
 		public Message visit(TypeMirror t, Void p) {
 			return null;
@@ -173,6 +200,5 @@ public class Processor extends AbstractProcessor {
 		public Message visitUnion(UnionType t, Void p) {
 			return null;
 		}
-		
 	}
 }
