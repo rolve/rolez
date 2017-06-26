@@ -1,9 +1,7 @@
 package test;
-
-import rolez.annotation.Guarded;
+	
 import rolez.annotation.Roleztask;
 
-@Guarded
 public class B extends A{
 
 	@Roleztask

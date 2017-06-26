@@ -1,6 +1,7 @@
 package test;
 
 import rolez.annotation.*;
+import rolez.wrappers.Random;
 
 /**
  * Class to test annotations for different Rolez tasks. Annotated elements are compiled into tasks from the Rolez runtime library and executed in separate threads.
@@ -21,6 +22,11 @@ public class Test {
 	
 	public void run() {
 		
+	}
+	
+	@Roleztask
+	private int randomTask(@Readonly Random r, final boolean $asTask) {
+		return r.nextInt();
 	}
 	
 	@Roleztask

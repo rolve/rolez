@@ -1,6 +1,7 @@
 package rolez.annotation.processing;
 
 import java.lang.annotation.Annotation;
+import java.util.List;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -17,6 +18,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic.Kind;
+import javax.lang.model.util.Types;
 
 import rolez.annotation.Readonly;
 import rolez.annotation.Readwrite;
@@ -27,9 +29,13 @@ import rolez.annotation.Roleztask;
 public class Processor extends AbstractProcessor {
 	
 	private Messager messager;
+	private Types types;
+	
+	Message debugMessage;
 	
 	public void init(ProcessingEnvironment env) {
     	messager = env.getMessager();
+    	types = env.getTypeUtils();
 	}
 
 	@Override
@@ -95,12 +101,27 @@ public class Processor extends AbstractProcessor {
 	
 	private void checkClassIsGuarded(VariableElement parameter) {
 		TypeMirror parameterType = parameter.asType();
-		ParameterTypeVisitor visitor = new ParameterTypeVisitor();
-		Message message = parameterType.accept(visitor, null);
-		if (message != null) {
-			message.setElement(parameter);
+		if (!isGuardedType(parameterType)) {
+			Message message = new Message(Kind.ERROR, "Type is not guarded.", parameter); 
 			message.print(messager);
 		}
+	}
+	
+	private boolean isGuardedType(TypeMirror type) {
+		// Get the super type of the current type (first in list is always a class)
+		List<? extends TypeMirror> supertypes = types.directSupertypes(type);
+		TypeMirror supertype = supertypes.get(0);
+		if(supertype.toString().equals(Object.class.getName())) {
+			// If the super type is object, then the current type has to be annotated with guarded.
+			ParameterTypeVisitor typeVisitor = new ParameterTypeVisitor();
+			return type.accept(typeVisitor, types);
+		} else if (supertype.toString().equals("rolez.lang.Guarded")) {
+			// If the super type is the Guarded class, then we are done.
+			return true;
+		}
+		// If nothing above is true, then we can further climb the inheritance tree to find an annotation
+		// or the Guarded class itself.
+		return isGuardedType(supertype);
 	}
 	
 	//TODO: This method doesn't work since final modifiers on method parameters are erased after compilation
