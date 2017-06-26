@@ -20,6 +20,7 @@ import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic.Kind;
 import javax.lang.model.util.Types;
 
+import rolez.annotation.Guarded;
 import rolez.annotation.Readonly;
 import rolez.annotation.Readwrite;
 import rolez.annotation.Roleztask;
@@ -51,7 +52,14 @@ public class Processor extends AbstractProcessor {
 	 * @param env
 	 */
 	private void processGuardedAnnotations(RoundEnvironment env) {
-		//TODO: Process classes annotated with Guarded if necessary.
+		for (Element annotatedElement : env.getElementsAnnotatedWith(Guarded.class)) {
+			TypeMirror type = annotatedElement.asType();
+			TypeMirror supertype = getSupertype(type);
+			if(!supertype.toString().equals(Object.class.getName())) {
+				Message message = new Message(Kind.ERROR, "The @Guarded annotation is only legal on classes which are direct subtypes of java.lang.Object.", annotatedElement);
+				message.print(messager);
+			}
+		}
 	}
 	
 	/**
@@ -107,10 +115,9 @@ public class Processor extends AbstractProcessor {
 		}
 	}
 	
+	//TODO: allow types from whitelist and moreover create the whitelist
 	private boolean isGuardedType(TypeMirror type) {
-		// Get the super type of the current type (first in list is always a class)
-		List<? extends TypeMirror> supertypes = types.directSupertypes(type);
-		TypeMirror supertype = supertypes.get(0);
+		TypeMirror supertype = getSupertype(type);
 		if(supertype.toString().equals(Object.class.getName())) {
 			// If the super type is object, then the current type has to be annotated with guarded.
 			ParameterTypeVisitor typeVisitor = new ParameterTypeVisitor();
@@ -131,6 +138,12 @@ public class Processor extends AbstractProcessor {
 		Set<Modifier> modifiers = element.getModifiers();
 		if (modifiers.size() > 1) return false;
 		return modifiers.contains(Modifier.FINAL);
+	}
+	
+	private TypeMirror getSupertype(TypeMirror type) {
+		// Get the super type of the current type (first in list is always a class, further are interfaces)
+		List<? extends TypeMirror> supertypes = types.directSupertypes(type);
+		return supertypes.get(0);
 	}
 	
 	private boolean isOfBooleanType(Element element) {
