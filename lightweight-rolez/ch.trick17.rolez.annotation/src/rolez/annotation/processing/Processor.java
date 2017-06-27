@@ -34,6 +34,18 @@ public class Processor extends AbstractProcessor {
 	
 	Message debugMessage;
 	
+	public static final String[] WHITELIST = new String[] {
+		"java.lang.String",
+		"java.lang.Integer",
+		"java.lang.Boolean",
+		"java.lang.Byte",
+		"java.lang.Character",
+		"java.lang.Short",
+		"java.lang.Long",
+		"java.lang.Double",
+		"java.lang.Float"
+	};
+	
 	public void init(ProcessingEnvironment env) {
     	messager = env.getMessager();
     	types = env.getTypeUtils();
@@ -109,10 +121,21 @@ public class Processor extends AbstractProcessor {
 	
 	private void checkClassIsGuarded(VariableElement parameter) {
 		TypeMirror parameterType = parameter.asType();
+		if (isWhitelisted(parameterType)) 
+			return;
 		if (!isGuardedType(parameterType)) {
 			Message message = new Message(Kind.ERROR, "Type is not guarded.", parameter); 
 			message.print(messager);
 		}
+	}
+	
+	private boolean isWhitelisted(TypeMirror parameterType) {
+		for (String element : Processor.WHITELIST) {
+			if (element.equals(parameterType.toString())) {
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	//TODO: allow types from whitelist and moreover create the whitelist

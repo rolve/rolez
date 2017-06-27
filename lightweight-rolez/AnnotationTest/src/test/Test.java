@@ -52,6 +52,11 @@ public class Test {
 	*/
 	
 	@Roleztask
+	private String stringTask(@Readonly String s, final boolean $asTask) {
+		return s.concat("foo");
+	}
+	
+	@Roleztask
 	private void readwriteTask(@Readwrite A a, final boolean $asTask) {
 		a.setValue(1);
 	}
