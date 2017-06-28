@@ -20,7 +20,7 @@ import static rolez.lang.Guarded.*;
  
 public class A extends rolez.lang.Guarded {
 	
-	public final int value;
+	public int value;
 	
 	public A (final long $task) {
 		super();

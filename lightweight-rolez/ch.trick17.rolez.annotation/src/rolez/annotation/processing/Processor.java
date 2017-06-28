@@ -34,6 +34,7 @@ public class Processor extends AbstractProcessor {
 	
 	Message debugMessage;
 	
+	// Whitelist that contains java standard classes which are allowed to be used in rolez tasks
 	public static final String[] WHITELIST = new String[] {
 		"java.lang.String",
 		"java.lang.Integer",
@@ -92,20 +93,24 @@ public class Processor extends AbstractProcessor {
 			boolean hasAsTaskParameter = false;
 			for (VariableElement parameter : task.getParameters()) {
 				
+				// Check if it is $asTask parameter
 				if(parameter.toString().equals("$asTask") && isOfBooleanType(parameter)) {
 					hasAsTaskParameter = true;
 					continue;
 				}
 				
-				checkClassIsGuarded(parameter);
+				// Check type
+				if (!isValidParameterType(parameter)) {
+					Message message = new Message(Kind.ERROR, "Type is not guarded or on the whitelist.", parameter); 
+					message.print(messager);
+				}
 				
+				// Check annotation
 				Annotation roAnnotation = parameter.getAnnotation(Readonly.class);
 				Annotation rwAnnotation = parameter.getAnnotation(Readwrite.class);
-				
-				// Check whether parameter is annotated properly
 				if (roAnnotation == null && rwAnnotation == null) {
-					Message noRoleDeclared = new Message(Kind.ERROR, "Method parameters have to be annotated with either @Readonly or @Readwrite", task);
-					noRoleDeclared.print(messager);
+					Message message = new Message(Kind.ERROR, "Method parameters have to be annotated with either @Readonly or @Readwrite", parameter);
+					message.print(messager);
 				}
 				
 				// TODO: What happens when parameters are annotated?
@@ -119,14 +124,14 @@ public class Processor extends AbstractProcessor {
 		}
 	}
 	
-	private void checkClassIsGuarded(VariableElement parameter) {
+	private boolean isValidParameterType(VariableElement parameter) {
 		TypeMirror parameterType = parameter.asType();
 		if (isWhitelisted(parameterType)) 
-			return;
+			return true;
 		if (!isGuardedType(parameterType)) {
-			Message message = new Message(Kind.ERROR, "Type is not guarded.", parameter); 
-			message.print(messager);
+			return false;
 		}
+		return true;
 	}
 	
 	private boolean isWhitelisted(TypeMirror parameterType) {
@@ -138,7 +143,6 @@ public class Processor extends AbstractProcessor {
 		return false;
 	}
 	
-	//TODO: allow types from whitelist and moreover create the whitelist
 	private boolean isGuardedType(TypeMirror type) {
 		TypeMirror supertype = getSupertype(type);
 		if(supertype.toString().equals(Object.class.getName())) {
@@ -162,6 +166,10 @@ public class Processor extends AbstractProcessor {
 		if (modifiers.size() > 1) return false;
 		return modifiers.contains(Modifier.FINAL);
 	}
+
+	private boolean isOfBooleanType(Element element) {
+		return element.asType().toString().equals("boolean");
+	}
 	
 	private TypeMirror getSupertype(TypeMirror type) {
 		// Get the super type of the current type (first in list is always a class, further are interfaces)
@@ -169,7 +177,4 @@ public class Processor extends AbstractProcessor {
 		return supertypes.get(0);
 	}
 	
-	private boolean isOfBooleanType(Element element) {
-		return element.asType().toString().equals("boolean");
-	}
 }
