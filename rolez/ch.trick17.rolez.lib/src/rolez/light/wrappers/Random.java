@@ -1,4 +1,4 @@
-package rolez.wrappers;
+package rolez.light.wrappers;
 
 import rolez.lang.Guarded;
 
