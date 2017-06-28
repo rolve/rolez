@@ -1,7 +1,8 @@
 package test;
 
 import rolez.annotation.*;
-import rolez.wrappers.Random;
+import rolez.annotation.Roleztask.ThisRole;
+import rolez.light.wrappers.Random;
 
 /**
  * Class to test annotations for different Rolez tasks. Annotated elements are compiled into tasks from the Rolez runtime library and executed in separate threads.
@@ -24,32 +25,20 @@ public class Test {
 		
 	}
 	
+	@Roleztask(ThisRole.READONLY)
+	private A thisRead(final boolean $asTask) {
+		return this.a;
+	}
+	
+	@Roleztask(ThisRole.READWRITE)
+	private void thisWrite(final boolean $asTask) {
+		this.b = new B();
+	}
+	
 	@Roleztask
 	private int randomTask(@Readonly Random r, final boolean $asTask) {
 		return r.nextInt();
 	}
-	
-	@Roleztask
-	private void readonlyTask(@Readonly A a, final boolean $asTask) {
-		int i = a.getValue();
-	}
-
-	/*
-	public void readonlyTask(final A a, final long $task) {
-		int i = a.getValue();
-	}
-    
-    public rolez.lang.Task<java.lang.Void> $readonlyTaskTask() {
-        return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{a}) {
-            @java.lang.Override
-            protected java.lang.Void runRolez() {
-                final long $task = idBits();
-                int i = a.getValue();
-                return null;
-            }
-        };
-    }
-	*/
 	
 	@Roleztask
 	private String stringTask(@Readonly String s, final boolean $asTask) {
@@ -83,4 +72,26 @@ public class Test {
 	private void illegalTask(@Readonly A a, final boolean $asTask) {
 		a.setValue(1);
 	}
+	
+	@Roleztask
+	private void readonlyTask(@Readonly A a, final boolean $asTask) {
+		int i = a.getValue();
+	}
+
+	/*
+	public void readonlyTask(final A a, final long $task) {
+		int i = a.getValue();
+	}
+    
+    public rolez.lang.Task<java.lang.Void> $readonlyTaskTask() {
+        return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{a}) {
+            @java.lang.Override
+            protected java.lang.Void runRolez() {
+                final long $task = idBits();
+                int i = a.getValue();
+                return null;
+            }
+        };
+    }
+	*/
 }

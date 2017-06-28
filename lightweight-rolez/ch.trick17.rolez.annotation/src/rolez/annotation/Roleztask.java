@@ -22,5 +22,8 @@ import java.lang.annotation.RetentionPolicy;
 @Target({ElementType.METHOD}) 
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Roleztask {
-	
+	public enum ThisRole {
+	   PURE, READONLY, READWRITE
+	}
+	ThisRole value() default ThisRole.PURE;
 }
