@@ -1,5 +1,8 @@
 package rolez.annotation.processing;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.lang.annotation.Annotation;
 import java.util.HashMap;
@@ -58,13 +61,27 @@ public class Processor extends AbstractProcessor {
 	    super.init(env);
     	messager = env.getMessager();
     	types = env.getTypeUtils();
+    	try {
+    		File file = new File("annotation.out");
+    		file.delete();
+			writer = new PrintWriter(new FileOutputStream("annotation.out", true));
+			writer.print("");
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	@Override
 	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment env) {
 		processTaskAnnotations(env);
 		processGuardedAnnotations(env);
-		
+		writeAnnotationProcessorOutput();
+		writer.close();
+		return true;
+	}
+
+	private void writeAnnotationProcessorOutput() {
 		StringBuilder sb = new StringBuilder();
 		for (ExecutableElement task : rolezTasks.keySet()) {
 			sb.append(task.toString());
@@ -78,11 +95,9 @@ public class Processor extends AbstractProcessor {
 			sb.append("\n\n");
 		}
 		
-		writer.write(sb.toString());
-		
-		return true;
+		writer.append(sb.toString());
 	}
-
+	
 	/**
 	 * Processes classes annotated with the <code>@Guareded</code> annotation, which indicates that
 	 * this class will inherit from the Guarded class of the Rolez runtime library.
