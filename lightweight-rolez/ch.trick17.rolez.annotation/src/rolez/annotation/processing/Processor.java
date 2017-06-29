@@ -37,12 +37,11 @@ public class Processor extends AbstractProcessor {
 	
 	private Messager messager;
 	private Types types;
-	private PrintWriter writer;
 	
 	Message debugMessage;
 	
 	// Map containing all rolez tasks found by the processor
-	Map<ExecutableElement, Map<String,Role>> rolezTasks = new HashMap<ExecutableElement, Map<String,Role>>();
+	Map<Element,Map<ExecutableElement, Map<String,Role>>> rolezTasks = new HashMap<Element,Map<ExecutableElement, Map<String,Role>>>();
 	
 	// Whitelist that contains java standard classes which are allowed to be used in rolez tasks
 	public static final String[] WHITELIST = new String[] {
@@ -61,15 +60,6 @@ public class Processor extends AbstractProcessor {
 	    super.init(env);
     	messager = env.getMessager();
     	types = env.getTypeUtils();
-    	try {
-    		File file = new File("annotation.out");
-    		file.delete();
-			writer = new PrintWriter(new FileOutputStream("annotation.out", true));
-			writer.print("");
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 	}
 
 	@Override
@@ -77,25 +67,35 @@ public class Processor extends AbstractProcessor {
 		processTaskAnnotations(env);
 		processGuardedAnnotations(env);
 		writeAnnotationProcessorOutput();
-		writer.close();
 		return true;
 	}
 
 	private void writeAnnotationProcessorOutput() {
-		StringBuilder sb = new StringBuilder();
-		for (ExecutableElement task : rolezTasks.keySet()) {
-			sb.append(task.toString());
-			sb.append("\n");
-			for (String parameter : rolezTasks.get(task).keySet()) {
-				sb.append(parameter);
-				sb.append(" ");
-				sb.append(rolezTasks.get(task).get(parameter).toString());
+		for (Element clazz : rolezTasks.keySet()) {
+			StringBuilder sb = new StringBuilder();
+			for (ExecutableElement task : rolezTasks.get(clazz).keySet()) {
+				sb.append(task.toString());
 				sb.append("\n");
+				for (String parameter : rolezTasks.get(clazz).get(task).keySet()) {
+					sb.append(parameter);
+					sb.append(" ");
+					sb.append(rolezTasks.get(clazz).get(task).get(parameter).toString());
+					sb.append("\n");
+				}
+				sb.append("\n\n");
 			}
-			sb.append("\n\n");
+			try {
+	    		File file = new File(clazz.toString() + ".annotation.out");
+	    		file.delete();
+	    		PrintWriter writer = new PrintWriter(new FileOutputStream(clazz.toString() + ".annotation.out", true));
+				writer.print("");
+				writer.append(sb.toString());
+				writer.close();
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
-		
-		writer.append(sb.toString());
 	}
 	
 	/**
@@ -133,6 +133,12 @@ public class Processor extends AbstractProcessor {
 	}
 
 	private void processTask(ExecutableElement task) {
+
+		Element clazz = task.getEnclosingElement();
+		if (rolezTasks.get(clazz) == null) {
+			rolezTasks.put(clazz, new HashMap<ExecutableElement,Map<String,Role>>());
+		}
+		
 		HashMap<String, Role> taskParameters = new HashMap<String, Role>();
 		
 		boolean hasAsTaskParameter = false;
@@ -181,7 +187,7 @@ public class Processor extends AbstractProcessor {
 			taskParameters.put("this", Role.PURE);
 		}
 		
-		this.rolezTasks.put(task, taskParameters);
+		this.rolezTasks.get(clazz).put(task, taskParameters);
 	}
 
 	private boolean isValidParameterType(VariableElement parameter) {
