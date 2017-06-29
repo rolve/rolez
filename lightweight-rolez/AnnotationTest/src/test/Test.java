@@ -1,7 +1,6 @@
 package test;
 
 import rolez.annotation.*;
-import rolez.annotation.Roleztask.ThisRole;
 import rolez.light.wrappers.Random;
 
 /**
@@ -24,17 +23,20 @@ public class Test {
 	public void run() {
 		
 	}
-	
-	@Roleztask(ThisRole.READONLY)
+
+
+	@Readonly
+	@Roleztask
 	private A thisRead(final boolean $asTask) {
 		return this.a;
 	}
 	
-	@Roleztask(ThisRole.READWRITE)
+	@Readwrite
+	@Roleztask
 	private void thisWrite(final boolean $asTask) {
 		this.b = new B();
 	}
-	
+
 	@Roleztask
 	private int randomTask(@Readonly Random r, final boolean $asTask) {
 		return r.nextInt();

@@ -1,7 +1,10 @@
 package rolez.annotation.processing;
 
+import java.io.PrintWriter;
 import java.lang.annotation.Annotation;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -17,8 +20,8 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
-import javax.tools.Diagnostic.Kind;
 import javax.lang.model.util.Types;
+import javax.tools.Diagnostic.Kind;
 
 import rolez.annotation.Guarded;
 import rolez.annotation.Readonly;
@@ -31,8 +34,12 @@ public class Processor extends AbstractProcessor {
 	
 	private Messager messager;
 	private Types types;
+	private PrintWriter writer;
 	
 	Message debugMessage;
+	
+	// Map containing all rolez tasks found by the processor
+	Map<ExecutableElement, Map<String,Role>> rolezTasks = new HashMap<ExecutableElement, Map<String,Role>>();
 	
 	// Whitelist that contains java standard classes which are allowed to be used in rolez tasks
 	public static final String[] WHITELIST = new String[] {
@@ -48,6 +55,7 @@ public class Processor extends AbstractProcessor {
 	};
 	
 	public void init(ProcessingEnvironment env) {
+	    super.init(env);
     	messager = env.getMessager();
     	types = env.getTypeUtils();
 	}
@@ -56,6 +64,22 @@ public class Processor extends AbstractProcessor {
 	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment env) {
 		processTaskAnnotations(env);
 		processGuardedAnnotations(env);
+		
+		StringBuilder sb = new StringBuilder();
+		for (ExecutableElement task : rolezTasks.keySet()) {
+			sb.append(task.toString());
+			sb.append("\n");
+			for (String parameter : rolezTasks.get(task).keySet()) {
+				sb.append(parameter);
+				sb.append(" ");
+				sb.append(rolezTasks.get(task).get(parameter).toString());
+				sb.append("\n");
+			}
+			sb.append("\n\n");
+		}
+		
+		writer.write(sb.toString());
+		
 		return true;
 	}
 
@@ -89,49 +113,70 @@ public class Processor extends AbstractProcessor {
 			}
 			
 			ExecutableElement task = (ExecutableElement) annotatedElement;
-			
-			boolean hasAsTaskParameter = false;
-			for (VariableElement parameter : task.getParameters()) {
-				
-				// Check if it is $asTask parameter
-				if(parameter.toString().equals("$asTask") && isOfBooleanType(parameter)) {
-					hasAsTaskParameter = true;
-					continue;
-				}
-				
-				// Check type
-				if (!isValidParameterType(parameter)) {
-					Message message = new Message(Kind.ERROR, "Type is not guarded or on the whitelist.", parameter); 
-					message.print(messager);
-				}
-				
-				// Check annotation
-				Annotation roAnnotation = parameter.getAnnotation(Readonly.class);
-				Annotation rwAnnotation = parameter.getAnnotation(Readwrite.class);
-				if (roAnnotation == null && rwAnnotation == null) {
-					Message message = new Message(Kind.ERROR, "Method parameters have to be annotated with either @Readonly or @Readwrite", parameter);
-					message.print(messager);
-				}
-				
-				// TODO: What happens when parameters are annotated?
+			processTask(task);
+		}
+	}
 
+	private void processTask(ExecutableElement task) {
+		HashMap<String, Role> taskParameters = new HashMap<String, Role>();
+		
+		boolean hasAsTaskParameter = false;
+		for (VariableElement parameter : task.getParameters()) {
+			
+			// Check if it is $asTask parameter
+			if(parameter.toString().equals("$asTask") && isOfBooleanType(parameter)) {
+				hasAsTaskParameter = true;
+				continue;
 			}
 			
-			if (!hasAsTaskParameter) {
-				Message message = new Message(Kind.ERROR, "A task needs a parameter $asTask and it needs to be a final boolean.", task);
+			// Check type
+			if (!isValidParameterType(parameter)) {
+				Message message = new Message(Kind.ERROR, "Type is not guarded or on the whitelist.", parameter); 
+				message.print(messager);
+			}
+			
+			// Check annotation
+			Annotation roAnnotation = parameter.getAnnotation(Readonly.class);
+			Annotation rwAnnotation = parameter.getAnnotation(Readwrite.class);
+			if (roAnnotation != null) {
+				taskParameters.put(parameter.toString(), Role.READONLY);
+			} else if (rwAnnotation != null) {
+				taskParameters.put(parameter.toString(), Role.READWRITE);
+			} else {
+				// TODO: Allow pure task parameters by setting no annotation
+				//taskParameters.put(parameter.toString(), Role.PURE);
+				Message message = new Message(Kind.ERROR, "Method parameters have to be annotated with either @Readonly or @Readwrite", parameter);
 				message.print(messager);
 			}
 		}
+		
+		if (!hasAsTaskParameter) {
+			Message message = new Message(Kind.ERROR, "A task needs a parameter $asTask and it needs to be a final boolean.", task);
+			message.print(messager);
+		}
+		
+		// Process the role of "this", which uses the same annotations but on a method declared as roleztask
+		Annotation roAnnotation = task.getAnnotation(Readonly.class);
+		Annotation rwAnnotation = task.getAnnotation(Readwrite.class);
+		if (roAnnotation != null) {
+			taskParameters.put("this", Role.READONLY);
+		} else if (rwAnnotation != null) {
+			taskParameters.put("this", Role.READWRITE);
+		} else {
+			taskParameters.put("this", Role.PURE);
+		}
+		
+		this.rolezTasks.put(task, taskParameters);
 	}
-	
+
 	private boolean isValidParameterType(VariableElement parameter) {
 		TypeMirror parameterType = parameter.asType();
 		if (isWhitelisted(parameterType)) 
 			return true;
-		if (!isGuardedType(parameterType)) {
-			return false;
+		if (isGuardedType(parameterType)) {
+			return true;
 		}
-		return true;
+		return false;
 	}
 	
 	private boolean isWhitelisted(TypeMirror parameterType) {
