@@ -27,7 +27,7 @@ public abstract class Guarded {
     // IMPROVE: Replace ownerThread-based check with ID bits check
     
     private AtomicInteger sharedCount; // atomic because tasks can share concurrently
-    private Set<Task<?>> readers;
+ 	private Set<Task<?>> readers;
     
     private Object guardingCachesLock; // IMPROVE: replace with CAS using Java 9's VarHandles?
     private volatile long readGuardingCache;
@@ -49,6 +49,14 @@ public abstract class Guarded {
         if(initializeGuarding)
             ensureGuardingInitialized();
     }
+
+    public Task<?> getOwner() {
+		return owner;
+	}
+    
+    public AtomicInteger getSharedCount() {
+ 		return sharedCount;
+ 	}
     
     private boolean guardingInitialized() {
         return owner != null;

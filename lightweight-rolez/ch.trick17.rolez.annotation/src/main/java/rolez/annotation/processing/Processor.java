@@ -30,6 +30,7 @@ import rolez.annotation.Guarded;
 import rolez.annotation.Readonly;
 import rolez.annotation.Readwrite;
 import rolez.annotation.Roleztask;
+import rolez.checked.lang.Role;
 
 @SupportedAnnotationTypes({"rolez.annotation.Roleztask","rolez.annotation.Readonly","rolez.annotation.Readwrite","rolez.annotation.Guarded"})
 @SupportedSourceVersion(SourceVersion.RELEASE_7)
