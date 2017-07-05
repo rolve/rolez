@@ -24,6 +24,7 @@ public class Checked extends Guarded {
 		// Case 2: Current role is less permissive as the declared role
 		Role currentRole = getCurrentRole(checked);
 		if (currentRole == Role.PURE) {
+			System.out.println("GUARDING!!");
 			return guardReadOnly(checked);
 		}
 
@@ -41,6 +42,7 @@ public class Checked extends Guarded {
 		// Case 2: Current role is less permissive as the declared role
 		Role currentRole = getCurrentRole(checked);
 		if (currentRole == Role.PURE || currentRole == Role.READONLY) {
+			System.out.println("GUARDING!!");
 			return guardReadWrite(checked);
 		}
 		

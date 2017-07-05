@@ -10,7 +10,9 @@ import static rolez.checked.lang.Checked.checkLegalRead;
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
@@ -21,7 +23,6 @@ import rolez.lang.SomeCheckedClasses.*;
 @RunWith(Parameterized.class)
 public class ObjectCheckingTest extends TaskBasedJpfTest {
 
-	
 	@Parameters(name = "{0}, {1}")
     public static List<?> taskSystems() {
         return Arrays.asList(new Object[][]{
@@ -105,6 +106,21 @@ public class ObjectCheckingTest extends TaskBasedJpfTest {
                 
                 assertNotEquals(a,checkLegalRead(b, Role.READWRITE).a);
                 region(3);
+            }
+        });
+    }
+    
+    
+    // TODO: Find a way to test for the specific exception that will be thrown. 
+    //		 This is not clean since the assertion error could be thrown by a 
+    //		 real bug in the code...
+    @Test(expected = AssertionError.class)
+    public void testRuntimeException() {
+        assumeVerifyCorrectness();
+    	verifyTask(new Runnable() {
+    		public void run() {
+            	A a = new A();
+                checkLegalWrite(a, Role.READONLY).value = 1;
             }
         });
     }
