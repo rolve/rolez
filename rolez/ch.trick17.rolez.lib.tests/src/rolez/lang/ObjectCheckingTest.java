@@ -51,6 +51,7 @@ public class ObjectCheckingTest extends TaskBasedJpfTest {
                         return null;
                     }
                 };
+                
                 s.start(task);
                 region(2);
                 

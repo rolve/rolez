@@ -5,7 +5,7 @@ import static rolez.lang.Task.currentTask;
 
 public class Checked extends Guarded {
 	
-	public Checked() {
+	protected Checked() {
 		super();
 	}
 	
@@ -49,11 +49,11 @@ public class Checked extends Guarded {
 	}
 	
 	private static <G extends Checked> Role getCurrentRole(G checked) {
-		if (((Checked)checked).getOwner() == currentTask()) {
-			return Role.READWRITE;
-		}
 		if (((Checked)checked).getSharedCount().get() > 0) {
 			return Role.READONLY;
+		}
+		if (((Checked)checked).getOwner() == currentTask()) {
+			return Role.READWRITE;
 		}
 		return Role.PURE;
 	}
