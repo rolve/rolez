@@ -49,10 +49,10 @@ public class Checked extends Guarded {
 	}
 	
 	private static <G extends Checked> Role getCurrentRole(G checked) {
-		if (((Checked)checked).getSharedCount().get() > 0) {
+		if (((Guarded)checked).getSharedCount().get() > 0) {
 			return Role.READONLY;
 		}
-		if (((Checked)checked).getOwner() == currentTask()) {
+		if (((Guarded)checked).getOwner() == currentTask()) {
 			return Role.READWRITE;
 		}
 		return Role.PURE;
