@@ -3,7 +3,7 @@ package rolez.lang;
 import static ch.trick17.simplejpf.test.JpfParallelismTest.VerifyMode.CORRECTNESS;
 import static ch.trick17.simplejpf.test.JpfParallelismTest.VerifyMode.PARALLELISM;
 import static org.junit.Assert.assertEquals;
-import static rolez.lang.Guarded.guardReadWrite;
+import static org.junit.Assert.assertNotEquals;
 import static rolez.checked.lang.Checked.checkLegalWrite;
 import static rolez.checked.lang.Checked.checkLegalRead;
 
@@ -15,7 +15,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-import rolez.lang.SomeClasses.Int;
 import rolez.checked.lang.Role;
 import rolez.lang.SomeCheckedClasses.*;
 
@@ -60,5 +59,53 @@ public class ObjectCheckingTest extends TaskBasedJpfTest {
             }
         });
     }
-	
+
+    @Test
+    public void testPass() {
+    	verifyTask(new int[][]{{2, 3}, {0, 3}}, new Runnable() {
+            public void run() {
+            	final A a = new A();
+                
+                Task<?> task = new Task<Void>(new Object[]{a}, new Object[]{}) {
+                    @Override
+                    protected Void runRolez() {
+                        region(0);
+                        a.value = 1;
+                        return null;
+                    }
+                };
+                
+                s.start(task);
+                region(2);
+                
+                assertEquals(1,checkLegalRead(a, Role.READWRITE).value);
+                region(3);
+            }
+        });
+    }
+    
+    @Test
+    public void testRef() {
+        verifyTask(new int[][]{{2, 3}, {0, 3}}, new Runnable() {
+            public void run() {
+            	final A a = new A();
+            	final B b = new B(a);
+                
+                Task<?> task = new Task<Void>(new Object[]{b}, new Object[]{}) {
+                    @Override
+                    protected Void runRolez() {
+                        region(0);
+                        b.a = new A();
+                        return null;
+                    }
+                };
+                
+                s.start(task);
+                region(2);
+                
+                assertNotEquals(a,checkLegalRead(b, Role.READWRITE).a);
+                region(3);
+            }
+        });
+    }
 }

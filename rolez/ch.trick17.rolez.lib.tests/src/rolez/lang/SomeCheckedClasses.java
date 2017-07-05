@@ -1,5 +1,8 @@
 package rolez.lang;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import java.util.Collection;
 import rolez.checked.lang.Checked;
 
 public class SomeCheckedClasses {
@@ -24,8 +27,18 @@ public class SomeCheckedClasses {
 	public static class B extends Checked {
 		public A a;
 		
-		public B() {
-			this.a = new A();
+		public B(A a) {
+			this.a = a;
 		}
+		
+        @Override
+        protected Iterable<? extends Guarded> guardedRefs() {
+            return asList(a);
+        }
+        
+        @Override
+        protected Collection<? extends Guarded> views() {
+            return emptyList();
+        }
 	}
 }
