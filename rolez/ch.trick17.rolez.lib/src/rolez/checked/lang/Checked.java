@@ -14,45 +14,45 @@ public class Checked extends Guarded {
 	}
 	
 	
-	public static <G extends Guarded> G checkLegalRead(G guarded, Role declaredRole) {
+	public static <G extends Checked> G checkLegalRead(G checked, Role declaredRole) {
 		// Case 1: Operation not allowed because of the declared role
 		if (declaredRole == Role.PURE) {
-			throw new RuntimeException("Cannot perform read operation on " + guarded.toString() + " declared role is "
+			throw new RuntimeException("Cannot perform read operation on " + checked.toString() + " declared role is "
 									 + declaredRole.toString() + ".");
 		}
 
 		// Case 2: Current role is less permissive as the declared role
-		Role currentRole = getCurrentRole(guarded);
+		Role currentRole = getCurrentRole(checked);
 		if (currentRole == Role.PURE) {
-			return guardReadOnly(guarded);
+			return guardReadOnly(checked);
 		}
 
 		// Case 3: Current role matches the declared role
-		return guarded;
+		return checked;
 	}
 	
-	public static <G extends Guarded> G checkLegalWrite(G guarded, Role declaredRole) {
+	public static <G extends Checked> G checkLegalWrite(G checked, Role declaredRole) {
 		// Case 1: Operation not allowed because of the declared role
 		if (declaredRole == Role.PURE || declaredRole == Role.READONLY) {
-			throw new RuntimeException("Cannot perform write operation on " + guarded.toString() + " declared role is "
+			throw new RuntimeException("Cannot perform write operation on " + checked.toString() + " declared role is "
 									 + declaredRole.toString() + ".");
 		}
 
 		// Case 2: Current role is less permissive as the declared role
-		Role currentRole = getCurrentRole(guarded);
+		Role currentRole = getCurrentRole(checked);
 		if (currentRole == Role.PURE || currentRole == Role.READONLY) {
-			return guardReadWrite(guarded);
+			return guardReadWrite(checked);
 		}
 		
 		// Case 3: Current role matches the declared role
-		return guarded;
+		return checked;
 	}
 	
-	private static <G extends Guarded> Role getCurrentRole(G guarded) {
-		if (guarded.getOwner() == currentTask()) {
+	private static <G extends Checked> Role getCurrentRole(G checked) {
+		if (((Checked)checked).getOwner() == currentTask()) {
 			return Role.READWRITE;
 		}
-		if (guarded.getSharedCount().get() > 0) {
+		if (((Checked)checked).getSharedCount().get() > 0) {
 			return Role.READONLY;
 		}
 		return Role.PURE;
