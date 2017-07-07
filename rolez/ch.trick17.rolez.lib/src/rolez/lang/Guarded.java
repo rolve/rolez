@@ -54,8 +54,8 @@ public abstract class Guarded {
 		return owner;
 	}
     
-    public AtomicInteger getSharedCount() {
- 		return sharedCount;
+    public int getSharedCount() {
+ 		return sharedCount.get();
  	}
     
     private boolean guardingInitialized() {
