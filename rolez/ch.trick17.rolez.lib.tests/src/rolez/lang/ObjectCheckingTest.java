@@ -55,7 +55,7 @@ public class ObjectCheckingTest extends TaskBasedJpfTest {
                 s.start(task);
                 region(2);
                 
-                checkLegalWrite(a, Role.READWRITE).value = 1;
+                checkLegalWrite(a).value = 1;
                 region(3);
             }
         });
@@ -79,7 +79,7 @@ public class ObjectCheckingTest extends TaskBasedJpfTest {
                 s.start(task);
                 region(2);
                 
-                assertEquals(1,checkLegalRead(a, Role.READWRITE).value);
+                assertEquals(1,checkLegalRead(a).value);
                 region(3);
             }
         });
@@ -104,7 +104,7 @@ public class ObjectCheckingTest extends TaskBasedJpfTest {
                 s.start(task);
                 region(2);
                 
-                assertNotEquals(a,checkLegalRead(b, Role.READWRITE).a);
+                assertNotEquals(a,checkLegalRead(b).a);
                 region(3);
             }
         });
@@ -119,8 +119,18 @@ public class ObjectCheckingTest extends TaskBasedJpfTest {
         assumeVerifyCorrectness();
     	verifyTask(new Runnable() {
     		public void run() {
-            	A a = new A();
-                checkLegalWrite(a, Role.READONLY).value = 1;
+            	final A a = new A();
+            	
+            	Task<?> task = new Task<Void>(new Object[]{}, new Object[]{a}) {
+                    @Override
+                    protected Void runRolez() {
+                        region(0);
+                        checkLegalWrite(a).value = 1;
+                        return null;
+                    }
+                };
+                
+                s.start(task);
             }
         });
     }

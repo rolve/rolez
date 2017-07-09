@@ -1,6 +1,9 @@
 package rolez.checked.lang;
 
+import java.util.Set;
+
 import rolez.lang.Guarded;
+import rolez.lang.Task;
 import static rolez.lang.Task.currentTask;
 
 public class Checked extends Guarded {
@@ -14,45 +17,52 @@ public class Checked extends Guarded {
 	}
 	
 	
-	public static <G extends Checked> G checkLegalRead(G checked, Role declaredRole) {
-		// Case 1: Operation not allowed because of the declared role
+	public static <G extends Checked> G checkLegalRead(G checked) {
+		Role declaredRole = getDeclaredRole(checked);
 		if (declaredRole == Role.PURE) {
 			throw new RuntimeException("Cannot perform read operation on " + checked.toString() + " declared role is "
 									 + declaredRole.toString() + ".");
 		}
-
-		// Case 2: Current role is less permissive as the declared role
-		Role currentRole = getCurrentRole(checked);
-		if (currentRole == Role.PURE) {
-			return guardReadOnly(checked);
-		}
-
-		// Case 3: Current role matches the declared role
-		return checked;
+		return guardReadOnly(checked);
 	}
 	
-	public static <G extends Checked> G checkLegalWrite(G checked, Role declaredRole) {
-		// Case 1: Operation not allowed because of the declared role
+	public static <G extends Checked> G checkLegalWrite(G checked) {
+		Role declaredRole = getDeclaredRole(checked);
 		if (declaredRole == Role.PURE || declaredRole == Role.READONLY) {
 			throw new RuntimeException("Cannot perform write operation on " + checked.toString() + " declared role is "
 									 + declaredRole.toString() + ".");
 		}
-
-		// Case 2: Current role is less permissive as the declared role
-		Role currentRole = getCurrentRole(checked);
-		if (currentRole == Role.PURE || currentRole == Role.READONLY) {
-			return guardReadWrite(checked);
-		}
-		
-		// Case 3: Current role matches the declared role
-		return checked;
+		return guardReadWrite(checked);
 	}
 	
-	private static <G extends Checked> Role getCurrentRole(G checked) {
-		if (((Guarded)checked).getSharedCount() > 0) {
+	private static <G extends Checked> Role getDeclaredRole(G checked) {
+		
+		Set<Guarded> passed = currentTask().getPassedReachable();
+		if (passed.contains(checked)) {
+			return Role.READWRITE;
+		}
+		
+		Set<Guarded> shared = currentTask().getSharedReachable();
+		if (shared.contains(checked)) {
 			return Role.READONLY;
 		}
-		if (((Guarded)checked).getOwner() == currentTask()) {
+		
+		if (checked.hasAncestorTaskAsOwner()) {
+			return Role.PURE;
+		}
+		
+		return Role.READWRITE;
+	}
+	
+	protected <G extends Checked> boolean hasAncestorTaskAsOwner() {
+		return currentTask().isDescendantOf(((Guarded)this).getOwner());
+	}
+	
+	protected <G extends Checked> Role getCurrentRole() {
+		if (((Guarded)this).getSharedCount() > 0) {
+			return Role.READONLY;
+		}
+		if (((Guarded)this).getOwner() == currentTask()) {
 			return Role.READWRITE;
 		}
 		return Role.PURE;

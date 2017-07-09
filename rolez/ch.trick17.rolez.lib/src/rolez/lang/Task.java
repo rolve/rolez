@@ -64,7 +64,16 @@ public abstract class Task<V> implements Runnable {
      * anymore. To be able to release those, they are stored here.
      */
     private Set<Guarded> passedReachable;
-    private Set<Guarded> sharedReachable;
+	private Set<Guarded> sharedReachable;
+    
+    public Set<Guarded> getPassedReachable() {
+		return passedReachable;
+	}
+
+	public Set<Guarded> getSharedReachable() {
+		return sharedReachable;
+	}
+
     
     /**
      * The parent task. Parent links are followed to efficiently detect a parent-child relation
@@ -147,7 +156,7 @@ public abstract class Task<V> implements Runnable {
         return !sync.isDone();
     }
     
-    boolean isDescendantOf(Task<?> other) {
+    public boolean isDescendantOf(Task<?> other) {
         for(Task<?> ancestor = parent; ancestor != null; ancestor = ancestor.parent)
             if(ancestor == other)
                 return true;
