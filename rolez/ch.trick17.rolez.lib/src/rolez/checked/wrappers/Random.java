@@ -1,8 +1,8 @@
 package rolez.checked.wrappers;
 
-import rolez.lang.Guarded;
+import rolez.checked.lang.Checked;
 
-public class Random extends Guarded {
+public class Random extends Checked {
 	
 	private java.util.Random random;
 	

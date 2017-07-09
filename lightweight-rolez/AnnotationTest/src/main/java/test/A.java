@@ -1,8 +1,8 @@
 package test;
 
-import rolez.annotation.Guarded;
+import rolez.annotation.Checked;
 
-@Guarded
+@Checked
 public class A {
 	int value;
 

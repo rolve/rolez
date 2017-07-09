@@ -46,7 +46,7 @@ public class ParameterTypeVisitor implements TypeVisitor<Boolean,Types> {
 	@Override
 	public Boolean visitDeclared(DeclaredType t, Types p) {
 		TypeElement declaredType = (TypeElement) t.asElement();
-		rolez.annotation.Guarded annotation = declaredType.getAnnotation(rolez.annotation.Guarded.class);
+		rolez.annotation.Checked annotation = declaredType.getAnnotation(rolez.annotation.Checked.class);
 		return annotation != null;
 	}
 

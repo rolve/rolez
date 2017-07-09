@@ -26,13 +26,13 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic.Kind;
 
-import rolez.annotation.Guarded;
+import rolez.annotation.Checked;
 import rolez.annotation.Readonly;
 import rolez.annotation.Readwrite;
 import rolez.annotation.Roleztask;
 import rolez.checked.lang.Role;
 
-@SupportedAnnotationTypes({"rolez.annotation.Roleztask","rolez.annotation.Readonly","rolez.annotation.Readwrite","rolez.annotation.Guarded"})
+@SupportedAnnotationTypes({"rolez.annotation.Roleztask","rolez.annotation.Readonly","rolez.annotation.Readwrite","rolez.annotation.Checked"})
 @SupportedSourceVersion(SourceVersion.RELEASE_7)
 public class Processor extends AbstractProcessor {
 	
@@ -66,7 +66,7 @@ public class Processor extends AbstractProcessor {
 	@Override
 	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment env) {
 		processTaskAnnotations(env);
-		processGuardedAnnotations(env);
+		processCheckedAnnotations(env);
 		writeAnnotationProcessorOutput();
 		return true;
 	}
@@ -101,15 +101,15 @@ public class Processor extends AbstractProcessor {
 	
 	/**
 	 * Processes classes annotated with the <code>@Guareded</code> annotation, which indicates that
-	 * this class will inherit from the Guarded class of the Rolez runtime library.
+	 * this class will inherit from the Checked class of the Rolez runtime library.
 	 * @param env
 	 */
-	private void processGuardedAnnotations(RoundEnvironment env) {
-		for (Element annotatedElement : env.getElementsAnnotatedWith(Guarded.class)) {
+	private void processCheckedAnnotations(RoundEnvironment env) {
+		for (Element annotatedElement : env.getElementsAnnotatedWith(Checked.class)) {
 			TypeMirror type = annotatedElement.asType();
 			TypeMirror supertype = getSupertype(type);
 			if(!supertype.toString().equals(Object.class.getName())) {
-				Message message = new Message(Kind.ERROR, "The @Guarded annotation is only legal on classes which are direct subtypes of java.lang.Object.", annotatedElement);
+				Message message = new Message(Kind.ERROR, "The @Checked annotation is only legal on classes which are direct subtypes of java.lang.Object.", annotatedElement);
 				message.print(messager);
 			}
 		}
@@ -117,7 +117,7 @@ public class Processor extends AbstractProcessor {
 	
 	/**
 	 * Processes the methods that are annotated with <code>@Roleztask</code> and checks whether all 
-	 * method parameters have a role declared and are able to be guarded.
+	 * method parameters have a role declared and are able to be checked.
 	 * @param env
 	 */
 	private void processTaskAnnotations(RoundEnvironment env) {
@@ -153,7 +153,7 @@ public class Processor extends AbstractProcessor {
 			
 			// Check type
 			if (!isValidParameterType(parameter)) {
-				Message message = new Message(Kind.ERROR, "Type is not guarded or on the whitelist.", parameter); 
+				Message message = new Message(Kind.ERROR, "Type is not checked or on the whitelist.", parameter); 
 				message.print(messager);
 			}
 			
@@ -195,7 +195,7 @@ public class Processor extends AbstractProcessor {
 		TypeMirror parameterType = parameter.asType();
 		if (isWhitelisted(parameterType)) 
 			return true;
-		if (isGuardedType(parameterType)) {
+		if (isCheckedType(parameterType)) {
 			return true;
 		}
 		return false;
@@ -210,19 +210,19 @@ public class Processor extends AbstractProcessor {
 		return false;
 	}
 	
-	private boolean isGuardedType(TypeMirror type) {
+	private boolean isCheckedType(TypeMirror type) {
 		TypeMirror supertype = getSupertype(type);
 		if(supertype.toString().equals(Object.class.getName())) {
-			// If the super type is object, then the current type has to be annotated with guarded.
+			// If the super type is object, then the current type has to be annotated with @Checked.
 			ParameterTypeVisitor typeVisitor = new ParameterTypeVisitor();
 			return type.accept(typeVisitor, types);
-		} else if (supertype.toString().equals("rolez.lang.Guarded")) {
-			// If the super type is the Guarded class, then we are done.
+		} else if (supertype.toString().equals("rolez.checked.lang.Checked")) {
+			// If the super type is the Checked class, then we are done.
 			return true;
 		}
 		// If nothing above is true, then we can further climb the inheritance tree to find an annotation
-		// or the Guarded class itself.
-		return isGuardedType(supertype);
+		// or the Checked class itself.
+		return isCheckedType(supertype);
 	}
 	
 	//TODO: This method doesn't work since final modifiers on method parameters are erased after compilation
