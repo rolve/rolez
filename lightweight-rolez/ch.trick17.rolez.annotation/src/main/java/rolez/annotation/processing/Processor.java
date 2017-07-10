@@ -27,22 +27,25 @@ import javax.lang.model.util.Types;
 import javax.tools.Diagnostic.Kind;
 
 import rolez.annotation.Checked;
+import rolez.annotation.Pure;
 import rolez.annotation.Readonly;
 import rolez.annotation.Readwrite;
 import rolez.annotation.Roleztask;
 import rolez.checked.lang.Role;
 
-@SupportedAnnotationTypes({"rolez.annotation.Roleztask","rolez.annotation.Readonly","rolez.annotation.Readwrite","rolez.annotation.Checked"})
+@SupportedAnnotationTypes({"rolez.annotation.Roleztask",
+						   "rolez.annotation.Pure", 
+						   "rolez.annotation.Readonly",
+						   "rolez.annotation.Readwrite",
+						   "rolez.annotation.Checked"})
 @SupportedSourceVersion(SourceVersion.RELEASE_7)
 public class Processor extends AbstractProcessor {
 	
 	private Messager messager;
 	private Types types;
 	
-	Message debugMessage;
-	
 	// Map containing all rolez tasks found by the processor
-	Map<Element,Map<ExecutableElement, Map<String,Role>>> rolezTasks = new HashMap<Element,Map<ExecutableElement, Map<String,Role>>>();
+	Map<Element, Map<ExecutableElement, Map<String,Role>>> rolezTasks = new HashMap<Element, Map<ExecutableElement, Map<String,Role>>>();
 	
 	// Whitelist that contains java standard classes which are allowed to be used in rolez tasks
 	public static final String[] WHITELIST = new String[] {
@@ -135,11 +138,6 @@ public class Processor extends AbstractProcessor {
 
 	private void processTask(ExecutableElement task) {
 
-		Element clazz = task.getEnclosingElement();
-		if (rolezTasks.get(clazz) == null) {
-			rolezTasks.put(clazz, new HashMap<ExecutableElement,Map<String,Role>>());
-		}
-		
 		HashMap<String, Role> taskParameters = new HashMap<String, Role>();
 		
 		boolean hasAsTaskParameter = false;
@@ -158,16 +156,17 @@ public class Processor extends AbstractProcessor {
 			}
 			
 			// Check annotation
+			Annotation pureAnnotation = parameter.getAnnotation(Pure.class);
 			Annotation roAnnotation = parameter.getAnnotation(Readonly.class);
 			Annotation rwAnnotation = parameter.getAnnotation(Readwrite.class);
-			if (roAnnotation != null) {
+			if (pureAnnotation != null) {
+				taskParameters.put(parameter.toString(), Role.PURE);
+			} else if (roAnnotation != null) {
 				taskParameters.put(parameter.toString(), Role.READONLY);
 			} else if (rwAnnotation != null) {
 				taskParameters.put(parameter.toString(), Role.READWRITE);
 			} else {
-				// TODO: Allow pure task parameters by setting no annotation
-				//taskParameters.put(parameter.toString(), Role.PURE);
-				Message message = new Message(Kind.ERROR, "Method parameters have to be annotated with either @Readonly or @Readwrite", parameter);
+				Message message = new Message(Kind.ERROR, "Method parameters have to be annotated with either @Pure, @Readonly or @Readwrite", parameter);
 				message.print(messager);
 			}
 		}
@@ -178,16 +177,25 @@ public class Processor extends AbstractProcessor {
 		}
 		
 		// Process the role of "this", which uses the same annotations but on a method declared as roleztask
+		Annotation pureAnnotation = task.getAnnotation(Pure.class);
 		Annotation roAnnotation = task.getAnnotation(Readonly.class);
 		Annotation rwAnnotation = task.getAnnotation(Readwrite.class);
-		if (roAnnotation != null) {
+		if (pureAnnotation != null) {
+			taskParameters.put("this", Role.PURE);
+		} else if (roAnnotation != null) {
 			taskParameters.put("this", Role.READONLY);
 		} else if (rwAnnotation != null) {
 			taskParameters.put("this", Role.READWRITE);
 		} else {
+			// Default is Pure
 			taskParameters.put("this", Role.PURE);
 		}
 		
+		// Add task to the class
+		Element clazz = task.getEnclosingElement();
+		if (rolezTasks.get(clazz) == null) {
+			rolezTasks.put(clazz, new HashMap<ExecutableElement,Map<String,Role>>());
+		}
 		this.rolezTasks.get(clazz).put(task, taskParameters);
 	}
 
