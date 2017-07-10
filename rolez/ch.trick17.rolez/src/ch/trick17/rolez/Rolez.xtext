@@ -266,7 +266,7 @@ IntLiteral: value=INT;
 
 BooleanLiteral: value=BOOL;
 
-terminal BOOL returns EBoolean: 'true' | 'false';
+BOOL returns EBoolean: 'true' | 'false';
 
 CharLiteral: value=CHAR;
 
