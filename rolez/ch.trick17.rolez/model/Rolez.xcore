@@ -420,7 +420,7 @@ class New extends Expr, Argumented {
 }
 
 class The extends Expr {
-    contains ClassRef classRef
+    contains SimpleClassRef classRef
 }
 
 class Parenthesized extends UnaryExpr {}

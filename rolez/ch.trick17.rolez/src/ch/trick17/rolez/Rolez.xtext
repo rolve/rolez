@@ -314,9 +314,8 @@ NewClassRef returns ClassRef:
     {SimpleClassRef} (clazz=[NormalClass] | '(' clazz=[NormalClass|QualifiedName] ')')
     | {GenericClassRef} (clazz=[NormalClass] | '(' clazz=[NormalClass|QualifiedName] ')') '[' typeArg=Type ']';
 
-TheClassRef returns ClassRef:
-    {SimpleClassRef} clazz=[SingletonClass]
-    | {SimpleClassRef} '(' clazz=[SingletonClass|QualifiedName] ')';
+TheClassRef returns SimpleClassRef:
+    clazz=[SingletonClass] | '(' clazz=[SingletonClass|QualifiedName] ')';
 
 /* Fragments */
 
