@@ -95,7 +95,6 @@ public class ObjectCheckingTest extends TaskBasedJpfTest {
                 Task<?> task = new Task<Void>(new Object[]{}, new Object[]{}, new Object[]{a}) {
                     @Override
                     protected Void runRolez() {
-                		java.lang.System.out.println(((Guarded)a).getOwner());
                         region(0);
                         // This line is an illegal operation since it is not allowed to read non-final fields
                         int i = checkLegalRead(a).value;
