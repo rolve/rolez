@@ -133,7 +133,7 @@ class Field extends Member, Typed {
     
     op boolean isMapped() { jvmField !== null }
     
-    op String toString()  { qualifiedName ": " + ^type }
+    op String toString()  { qualifiedName + ": " + ^type }
 }
 
 class FieldInitializer extends Executable {
