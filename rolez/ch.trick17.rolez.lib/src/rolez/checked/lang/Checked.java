@@ -3,6 +3,7 @@ package rolez.checked.lang;
 import java.util.Set;
 
 import rolez.lang.Guarded;
+import rolez.lang.System;
 import rolez.lang.Task;
 import static rolez.lang.Task.currentTask;
 
@@ -16,9 +17,8 @@ public class Checked extends Guarded {
 		super(initializeGuarding);
 	}
 	
-	
 	public static <G extends Checked> G checkLegalRead(G checked) {
-		Role declaredRole = getDeclaredRole(checked);
+		Role declaredRole = checked.getDeclaredRole();
 		if (declaredRole == Role.PURE) {
 			throw new RuntimeException("Cannot perform read operation on " + checked.toString() + " declared role is "
 									 + declaredRole.toString() + ".");
@@ -27,7 +27,7 @@ public class Checked extends Guarded {
 	}
 	
 	public static <G extends Checked> G checkLegalWrite(G checked) {
-		Role declaredRole = getDeclaredRole(checked);
+		Role declaredRole = checked.getDeclaredRole();
 		if (declaredRole == Role.PURE || declaredRole == Role.READONLY) {
 			throw new RuntimeException("Cannot perform write operation on " + checked.toString() + " declared role is "
 									 + declaredRole.toString() + ".");
@@ -35,22 +35,26 @@ public class Checked extends Guarded {
 		return guardReadWrite(checked);
 	}
 	
-	private static <G extends Checked> Role getDeclaredRole(G checked) {
-		
+	protected <G extends Checked> Role getDeclaredRole() {
+		// Was passed to this task
 		Set<Guarded> passed = currentTask().getPassedReachable();
-		if (passed.contains(checked)) {
+		if (passed.contains(this)) {
 			return Role.READWRITE;
 		}
 		
+		// Was shared with this task
 		Set<Guarded> shared = currentTask().getSharedReachable();
-		if (shared.contains(checked)) {
+		if (shared.contains(this)) {
 			return Role.READONLY;
 		}
 		
-		if (checked.hasAncestorTaskAsOwner()) {
+		// Was declared in an ancestor task but accessible in this task 
+		// -> must therefore be shared pure
+		if (this.hasAncestorTaskAsOwner()) {
 			return Role.PURE;
 		}
 		
+		// Was declared in this task and not shared or passed
 		return Role.READWRITE;
 	}
 	

@@ -138,7 +138,7 @@ public class TaskSystemTest extends JpfParallelismTest {
     public void testReturnValue() throws Throwable {
         if(verifyNoPropertyViolation()) {
             final Task<Integer> task = system.start(new Task<Integer>(new Object[]{},
-                    new Object[]{}) {
+                    new Object[]{}, new Object[]{}) {
                 @Override
                 protected Integer runRolez() {
                     return 42;

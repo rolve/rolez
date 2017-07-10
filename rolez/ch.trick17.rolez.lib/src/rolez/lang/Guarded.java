@@ -128,6 +128,21 @@ public abstract class Guarded {
         }
     }
     
+    /* TODO: Is this the correct way to do it? 
+     * 		 We have to explicitly set the owner such that 
+     * 		 the getDeclaredRole method in the Checked class
+     * 		 works.
+     */
+    final void sharePure(Task<?> task) {
+    	if (!guardingDisabled) {
+    		// If the object already has an owner than we do nothing
+    		if (owner == null) {
+    			owner = currentTask();
+    			ownerThread = null;
+    		}
+    	}
+    }
+    
     final void completePass() {
         if(!guardingDisabled) {
             assert ownerThread == null;

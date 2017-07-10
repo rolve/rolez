@@ -73,7 +73,6 @@ public abstract class Task<V> implements Runnable {
 	public Set<Guarded> getSharedReachable() {
 		return sharedReachable;
 	}
-
     
     /**
      * The parent task. Parent links are followed to efficiently detect a parent-child relation
@@ -88,12 +87,12 @@ public abstract class Task<V> implements Runnable {
      */
     private final List<Task<?>> children = new ArrayList<>();
     
-    public Task(Object[] passedObjects, Object[] sharedObjects) {
+    public Task(Object[] passedObjects, Object[] sharedObjects, Object[] pureObjects) {
         this.parent = currentTask();
         if(parent != null)
             parent.children.add(this);
         
-        taskStartTransitions(passedObjects, sharedObjects);
+        taskStartTransitions(passedObjects, sharedObjects, pureObjects);
     }
     
     /**
@@ -179,7 +178,7 @@ public abstract class Task<V> implements Runnable {
      */
     public static void registerNewRootTask() {
         assert currentTask.get() == null;
-        Task<Void> task = new Task<Void>(new Object[]{}, new Object[]{}) {
+        Task<Void> task = new Task<Void>(new Object[]{}, new Object[]{}, new Object[]{}) {
             @Override
             protected Void runRolez() {
                 return null;
@@ -242,7 +241,7 @@ public abstract class Task<V> implements Runnable {
     
     /* Transitions */
     
-    private void taskStartTransitions(Object[] passedObjects, Object[] sharedObjects) {
+    private void taskStartTransitions(Object[] passedObjects, Object[] sharedObjects, Object[] pureObjects) {
         passed = new ArrayList<>(passedObjects.length);
         for(Object g : passedObjects)
             if(g instanceof Guarded)
@@ -261,6 +260,8 @@ public abstract class Task<V> implements Runnable {
                 ((Guarded) g).guardReadOnlyReachable(sharedReachable, idBits);
         sharedReachable.removeAll(passedReachable);
         
+        //TODO: What has to be done with pure objects?
+        
         /* IMPROVE: Only pass (share) objects that are reachable through chain of readwrite
          * (readonly) references? Would enable programmers to express more parallelism (especially
          * with parameterized classes) and could be more efficient (or less...). */
@@ -268,6 +269,10 @@ public abstract class Task<V> implements Runnable {
             g.pass(this);
         for(Guarded g : sharedReachable)
             g.share(this);
+        for(Object g : pureObjects) {
+        	if (g instanceof Guarded)
+        	((Guarded)g).sharePure(this);
+        }
     }
     
     private void completeTaskStartTransitions() {

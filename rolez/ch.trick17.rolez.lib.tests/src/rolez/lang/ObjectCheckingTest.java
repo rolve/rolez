@@ -43,7 +43,7 @@ public class ObjectCheckingTest extends TaskBasedJpfTest {
             public void run() {
             	final A a = new A();
                 
-                Task<?> task = new Task<Void>(new Object[]{}, new Object[]{a}) {
+                Task<?> task = new Task<Void>(new Object[]{}, new Object[]{a}, new Object[]{}) {
                     @Override
                     protected Void runRolez() {
                         region(0);
@@ -67,7 +67,7 @@ public class ObjectCheckingTest extends TaskBasedJpfTest {
             public void run() {
             	final A a = new A();
                 
-                Task<?> task = new Task<Void>(new Object[]{a}, new Object[]{}) {
+                Task<?> task = new Task<Void>(new Object[]{a}, new Object[]{}, new Object[]{}) {
                     @Override
                     protected Void runRolez() {
                         region(0);
@@ -85,6 +85,32 @@ public class ObjectCheckingTest extends TaskBasedJpfTest {
         });
     }
     
+    @Test(expected = AssertionError.class)
+    public void testPure() {
+        assumeVerifyCorrectness();
+    	verifyTask(new int[][]{{2, 3}, {0, 3}}, new Runnable() {
+            public void run() {
+            	final A a = new A();
+                
+                Task<?> task = new Task<Void>(new Object[]{}, new Object[]{}, new Object[]{a}) {
+                    @Override
+                    protected Void runRolez() {
+                		java.lang.System.out.println(((Guarded)a).getOwner());
+                        region(0);
+                        // This line is an illegal operation since it is not allowed to read non-final fields
+                        int i = checkLegalRead(a).value;
+                        return null;
+                    }
+                };
+                
+                s.start(task);
+                region(2);
+                
+                region(3);
+            }
+        });
+    }
+    
     @Test
     public void testRef() {
         verifyTask(new int[][]{{2, 3}, {0, 3}}, new Runnable() {
@@ -92,7 +118,7 @@ public class ObjectCheckingTest extends TaskBasedJpfTest {
             	final A a = new A();
             	final B b = new B(a);
                 
-                Task<?> task = new Task<Void>(new Object[]{b}, new Object[]{}) {
+                Task<?> task = new Task<Void>(new Object[]{b}, new Object[]{}, new Object[]{}) {
                     @Override
                     protected Void runRolez() {
                         region(0);
@@ -121,7 +147,7 @@ public class ObjectCheckingTest extends TaskBasedJpfTest {
     		public void run() {
             	final A a = new A();
             	
-            	Task<?> task = new Task<Void>(new Object[]{}, new Object[]{a}) {
+            	Task<?> task = new Task<Void>(new Object[]{}, new Object[]{a}, new Object[]{}) {
                     @Override
                     protected Void runRolez() {
                         region(0);
