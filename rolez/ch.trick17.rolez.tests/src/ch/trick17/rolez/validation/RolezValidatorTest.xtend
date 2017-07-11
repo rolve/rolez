@@ -1705,6 +1705,22 @@ class RolezValidatorTest {
         ''').assertError(CLASS, INCORRECT_MAPPED_CLASS)
     }
     
+    @Test def testSliceInMappedClass() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            pure class rolez.lang.String mapped to java.lang.String {
+                slice a { val i: int = 0 }
+            }
+        ''').assertError(SLICE, SLICE_IN_MAPPED_CLASS)
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                slice a { var i: int }
+            }
+        ''').assertNoErrors
+    }
+    
     @Test def testMappedField() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object

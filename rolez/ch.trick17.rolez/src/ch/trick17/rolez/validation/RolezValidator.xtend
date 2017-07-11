@@ -28,6 +28,7 @@ import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
 import ch.trick17.rolez.rolez.SimpleClassRef
 import ch.trick17.rolez.rolez.SingletonClass
+import ch.trick17.rolez.rolez.Slice
 import ch.trick17.rolez.rolez.SuperConstrCall
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.Type
@@ -110,6 +111,7 @@ class RolezValidator extends RolezSystemValidator {
     public static val NULL_TYPE_USED = "null type used"
     public static val VOID_NOT_RETURN_TYPE = "void not return type"
     public static val MAPPED_IN_NORMAL_CLASS = "mapped member in normal class"
+    public static val SLICE_IN_MAPPED_CLASS = "slice in mapped class"
     public static val NON_MAPPED_FIELD = "non-mapped field"
     public static val NON_MAPPED_METHOD = "non-mapped method"
     public static val NON_MAPPED_CONSTR = "non-mapped constructor"
@@ -597,6 +599,12 @@ class RolezValidator extends RolezSystemValidator {
                         + jvmClass.superclasses.join(", "), CLASS__SUPERCLASS_REF, INCORRECT_MAPPED_CLASS)
             }
         }
+    }
+    
+    @Check
+    def checkMappedSlice(Slice it) {
+        if(enclosingClass.isMapped)
+            error("A mapped class cannot contain slices", NAMED__NAME, SLICE_IN_MAPPED_CLASS)
     }
     
     private def Iterable<JvmType> superclasses(JvmDeclaredType it) {
