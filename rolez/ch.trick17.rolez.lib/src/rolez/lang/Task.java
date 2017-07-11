@@ -67,12 +67,12 @@ public abstract class Task<V> implements Runnable {
 	private Set<Guarded> sharedReachable;
     
     public Set<Guarded> getPassedReachable() {
-		return passedReachable;
-	}
+        return passedReachable;
+    }
 
-	public Set<Guarded> getSharedReachable() {
-		return sharedReachable;
-	}
+    public Set<Guarded> getSharedReachable() {
+        return sharedReachable;
+    }
     
     /**
      * The parent task. Parent links are followed to efficiently detect a parent-child relation

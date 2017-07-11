@@ -51,12 +51,12 @@ public abstract class Guarded {
     }
 
     public Task<?> getOwner() {
-		return owner;
-	}
+        return owner;
+    }
     
     public int getSharedCount() {
- 		return sharedCount.get();
- 	}
+        return sharedCount.get();
+    }
     
     private boolean guardingInitialized() {
         return owner != null;
