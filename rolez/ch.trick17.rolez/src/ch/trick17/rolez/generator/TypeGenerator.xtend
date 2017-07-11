@@ -12,12 +12,12 @@ import javax.inject.Inject
 import static ch.trick17.rolez.Constants.*
 
 import static extension ch.trick17.rolez.RolezExtensions.*
+import static extension ch.trick17.rolez.generator.SafeJavaNames.*
 import static extension java.util.Objects.requireNonNull
 
 class TypeGenerator {
     
     @Inject extension JavaMapper
-    @Inject extension SafeJavaNames
     
     def CharSequence generate(Type it) { switch(it) {
         PrimitiveType: name

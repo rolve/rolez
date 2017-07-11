@@ -57,6 +57,7 @@ import static ch.trick17.rolez.rolez.OpArithmeticUnary.*
 import static ch.trick17.rolez.rolez.VarKind.*
 
 import static extension ch.trick17.rolez.RolezExtensions.*
+import static extension ch.trick17.rolez.generator.SafeJavaNames.*
 import static extension org.eclipse.xtext.util.Strings.convertToJavaString
 
 class InstrGenerator {
@@ -87,7 +88,6 @@ class InstrGenerator {
         @Inject RolezSystem system
         
         @Inject extension TypeGenerator
-        @Inject extension SafeJavaNames
         
         val RoleAnalysis roleAnalysis
         val CodeKind codeKind

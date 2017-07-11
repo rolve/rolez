@@ -14,22 +14,22 @@ class SafeJavaNames {
         "short", "static", "strictfp", "super", "switch", "synchronized", "this",
         "throw", "throws", "transient", "try", "void", "volatile", "while"}
     
-    def safeName(Named it) { safe(name) }
+    static def safeName(Named it) { safe(name) }
     
-    def safeQualifiedName(Class it) {
+    static def safeQualifiedName(Class it) {
         qualifiedName.segments.map[safe].join(".")
     }
     
-    def safeSimpleName(Class it) {
+    static def safeSimpleName(Class it) {
         safe(qualifiedName.lastSegment)
     }
     
-    def safePackage(Class it) {
+    static def safePackage(Class it) {
         val segments = qualifiedName.segments
         segments.takeWhile[it != segments.last].map[safe].join(".")
     }
     
-    private def safe(String name) {
+    private static def safe(String name) {
         if(javaKeywords.contains(name))
             "£" + name
         else

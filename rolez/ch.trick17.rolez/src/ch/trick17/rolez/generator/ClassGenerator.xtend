@@ -31,13 +31,13 @@ import static ch.trick17.rolez.generator.CodeKind.*
 
 import static extension ch.trick17.rolez.RolezExtensions.*
 import static extension ch.trick17.rolez.generator.InstrGenerator.generate
+import static extension ch.trick17.rolez.generator.SafeJavaNames.*
 
 class ClassGenerator {
         
     @Inject extension InstrGenerator
     @Inject extension TypeGenerator
     @Inject extension JavaMapper
-    @Inject extension SafeJavaNames
     @Inject extension CfgProvider
     @Inject extension RoleAnalysis.Provider
     @Inject extension RolezUtils
