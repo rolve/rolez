@@ -6,6 +6,7 @@ import static java.util.Collections.newSetFromMap;
 import java.lang.reflect.Array;
 import java.util.AbstractList;
 import java.util.Collection;
+import java.util.List;
 import java.util.RandomAccess;
 import java.util.Set;
 import java.util.WeakHashMap;
@@ -161,7 +162,7 @@ public class GuardedSlice<A> extends Guarded {
     }
     
     @Override
-    protected final Iterable<?> guardedRefs() {
+    protected final List<?> guardedRefs() {
         if(data instanceof Object[])
             return new SliceList();
         else
@@ -169,12 +170,12 @@ public class GuardedSlice<A> extends Guarded {
     }
     
     @Override
-    protected final Collection<? extends Guarded> views() {
+    protected final Set<? extends Guarded> views() {
         return overlappingSlices;
     }
     
     @Override
-    protected Object viewLock() {
+    protected final Object viewLock() {
         return data; // The data array is the same for all slices, so it can act as the view lock.
                      // However, care must be taken to not expose the array to code that may lock it.
     }
