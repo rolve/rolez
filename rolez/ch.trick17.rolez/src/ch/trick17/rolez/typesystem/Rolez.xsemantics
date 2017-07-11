@@ -557,6 +557,7 @@ rule SubtypeRoleTypes
 from {
     G |- left.role <! right.role // Subrole
     G |- left.base <~ right.base // Subclass
+    left.slice === right.slice
 }
 
 axiom SubtypeNull

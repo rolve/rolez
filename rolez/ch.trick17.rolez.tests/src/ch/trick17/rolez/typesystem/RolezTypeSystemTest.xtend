@@ -1380,6 +1380,10 @@ class RolezTypeSystemTest {
             }
             class rolez.lang.Partitioner mapped to rolez.lang.Partitioner
             class A
+            class S {
+                slice a { var i: int }
+                slice b { var j: int }
+            }
             class App {
                 task pure main: {
                     val i: int = 5;
@@ -1405,6 +1409,10 @@ class RolezTypeSystemTest {
                     var oa: readwrite Array[pure Object] = new Array[pure Object](1);
                     oa = null;
                     val slices: readonly Array[readwrite Slice[pure Object]] = oa.partition(null, 1);
+                    
+                    var s: readwrite S = new S;
+                    var sa: readwrite S\a = s slice a;
+                    var sb: readwrite S\b = s slice b;
                 }
             }
         ''').assertNoErrors
@@ -1443,12 +1451,21 @@ class RolezTypeSystemTest {
     }
     
     @Test def testSubtypeRoleMismatch() {
-        parse("val array: readwrite A = new A as readonly A;".withFrame)
+        parse("val a: readwrite A = new A as readonly A;".withFrame)
             .assertError(CAST, SUBTYPEEXPR, "readonly A", "readwrite A")
-        parse("val array: readwrite A = new A as pure A;".withFrame)
+        parse("val a: readwrite A = new A as pure A;".withFrame)
             .assertError(CAST, SUBTYPEEXPR, "pure A", "readwrite A")
-        parse("val array: readonly A = new A as pure A;".withFrame)
+        parse("val a: readonly A = new A as pure A;".withFrame)
             .assertError(CAST, SUBTYPEEXPR, "pure A", "readonly A")
+    }
+    
+    @Test def testSubtypeSlice() {
+        parse("val s: readwrite S\\a = new S slice a;".withFrame).assertNoErrors
+    }
+    
+    @Test def testSubtypeSliceMismatch() {
+        parse("val s: readwrite S\\a = new S slice b;".withFrame)
+            .assertError(SLICING, SUBTYPEEXPR, "S\\a", "S\\b")
     }
 }
 					

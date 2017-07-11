@@ -76,6 +76,10 @@ class TestUtils {
             val a: readwrite A = new A
             override readonly hashCode: int { return this.a.hashCode; }
         }
+        class S {
+            slice a { var i: int }
+            slice b { var j: int }
+        }
         class App {
             task pure frameTask(a: boolean, b: boolean): { «it» }
             def pure getA: readwrite A { return new A; }
