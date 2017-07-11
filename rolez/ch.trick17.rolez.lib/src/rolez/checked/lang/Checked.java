@@ -3,8 +3,6 @@ package rolez.checked.lang;
 import java.util.Set;
 
 import rolez.lang.Guarded;
-import rolez.lang.System;
-import rolez.lang.Task;
 import static rolez.lang.Task.currentTask;
 
 public class Checked extends Guarded {
@@ -38,13 +36,13 @@ public class Checked extends Guarded {
 	protected <G extends Checked> Role getDeclaredRole() {
 		// Was passed to this task
 		Set<Guarded> passed = currentTask().getPassedReachable();
-		if (passed.contains(this)) {
+		if (passed.contains((Guarded)this)) {
 			return Role.READWRITE;
 		}
 		
 		// Was shared with this task
 		Set<Guarded> shared = currentTask().getSharedReachable();
-		if (shared.contains(this)) {
+		if (shared.contains((Guarded)this)) {
 			return Role.READONLY;
 		}
 		
