@@ -11,6 +11,7 @@ import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
+import ch.trick17.rolez.rolez.Slicing
 import ch.trick17.rolez.rolez.SuperConstrCall
 import ch.trick17.rolez.rolez.VarRef
 import ch.trick17.rolez.typesystem.RolezSystem
@@ -55,17 +56,39 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
         ])
     }
     
+    def scope_RoleType_slice(RoleType it, EReference ref) {
+        val clazz = base.clazz
+        switch(clazz) {
+            NormalClass: scopeFor(clazz.slices)
+            default    : IScope.NULLSCOPE
+        }
+    }
+    
+    def scope_Slicing_slice(Slicing it, EReference ref) {
+        val targetType = system.type(target).value
+        if(targetType instanceof RoleType) {
+            val clazz = targetType.base.clazz
+            switch(clazz) {
+                NormalClass: scopeFor(clazz.slices)
+                default    : IScope.NULLSCOPE
+            }
+        }
+        else
+            IScope.NULLSCOPE
+    }
+    
     def scope_MemberAccess_member(MemberAccess it, EReference ref) {
         val targetType = system.type(target).value
         val memberName = crossRefText(ref)
         
         if(targetType instanceof RoleType) {
-            val fields = targetType.base.clazz.allMembers.filter(Field)
-                .filter[f | f.name == memberName]
+            val members = if(targetType.isSliced) targetType.slice.members
+                          else targetType.base.clazz.allMembers
+            val fields = members.filter(Field).filter[f | f.name == memberName]
             if(args.isEmpty && roleArgs.isEmpty && !isTaskStart && !fields.isEmpty)
                 scopeFor(fields)
             else {
-                val candidates = targetType.base.clazz.allMembers.filter(Method)
+                val candidates = members.filter(Method)
                     .filter[m | m.name == memberName && (!isTaskStart || m.isTask)]
                     .map[m |
                         val roleArgs = system.inferRoleArgs(it, m)

@@ -20,6 +20,7 @@ import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
 import ch.trick17.rolez.rolez.SimpleClassRef
+import ch.trick17.rolez.rolez.Slice
 import ch.trick17.rolez.rolez.Stmt
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.Type
@@ -60,6 +61,14 @@ class RolezUtils {
         val result = createRoleType
         result.role = role.copyIfNecessary
         result.base = base.copyIfNecessary
+        result
+    }
+    
+    static def newRoleType(Role role, ClassRef base, Slice slice) {
+        val result = createRoleType
+        result.role = role.copyIfNecessary
+        result.base = base.copyIfNecessary
+        result.slice = slice
         result
     }
     

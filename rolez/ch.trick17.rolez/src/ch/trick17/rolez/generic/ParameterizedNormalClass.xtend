@@ -2,6 +2,7 @@ package ch.trick17.rolez.generic
 
 import ch.trick17.rolez.rolez.ClassRef
 import ch.trick17.rolez.rolez.Field
+import ch.trick17.rolez.rolez.Member
 import ch.trick17.rolez.rolez.Method
 import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.Role
@@ -21,13 +22,15 @@ class ParameterizedNormalClass extends ParameterizedEObject<NormalClass> impleme
         super(eObject, eContainer, typeArgs, roleArgs)
     }
     
-    override isPure()           { eObject.pure }
-    override getName()          { eObject.name }
-    override getTypeParam()     { eObject.typeParam }
-    override getJvmClass()      { eObject.jvmClass }
-    override getSuperclassRef() { eObject.superclassRef.parameterized }
-    override getConstrs()       { new ParameterizedConstrList(eObject.constrs, this, typeArgs, roleArgs) }
-    override getMembers()       { new ParameterizedMemberList(eObject.members, this, typeArgs, roleArgs) }
+    override isPure()             { eObject.pure }
+    override getName()            { eObject.name }
+    override getTypeParam()       { eObject.typeParam }
+    override getJvmClass()        { eObject.jvmClass }
+    override getSuperclassRef()   { eObject.superclassRef.parameterized }
+    override getConstrs()         { new ParameterizedConstrList(eObject.constrs, this, typeArgs, roleArgs) }
+    override getUnslicedMembers() { new ParameterizedMemberList(eObject.unslicedMembers, this, typeArgs, roleArgs) }
+    override getMembers()         { eObject.members.map[parameterized] }
+    override getSlices()          { eObject.slices } // should be fine as long as generic classes (which are mapped) cannot be sliced
     
     override isSingleton()      { eObject.isSingleton }
     override isMapped()         { eObject.isMapped }
@@ -39,7 +42,7 @@ class ParameterizedNormalClass extends ParameterizedEObject<NormalClass> impleme
     override eGet(EStructuralFeature feature) {
         if(feature === CLASS__SUPERCLASS_REF) superclassRef
         else if(feature === NORMAL_CLASS__CONSTRS) constrs
-        else if(feature === CLASS__MEMBERS) members
+        else if(feature === CLASS__UNSLICED_MEMBERS) unslicedMembers
         else eObject.eGet(feature)
     }
     
@@ -51,4 +54,5 @@ class ParameterizedNormalClass extends ParameterizedEObject<NormalClass> impleme
     
     def parameterized(Field  it) { new ParameterizedField (it, this, typeArgs, roleArgs) }
     def parameterized(Method it) { new ParameterizedMethod(it, this, typeArgs, roleArgs) }
+    def Member parameterized(Member it) { switch(it) { Field: parameterized Method: parameterized }}
 }

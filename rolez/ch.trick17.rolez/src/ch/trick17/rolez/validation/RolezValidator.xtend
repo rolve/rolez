@@ -66,6 +66,7 @@ class RolezValidator extends RolezSystemValidator {
     public static val CIRCULAR_INHERITANCE = "circular inheritance"
     public static val SINGLETON_SUPERCLASS = "singleton superclass"
     public static val INCORRECT_SUPERCLASS_PURITY = "incorrect superclass purity"
+    public static val SLICED_SUPERCLASS = "sliced superclass"
     public static val INCORRECT_TYPE_PARAM = "incorrect type parameter"
     public static val MISSING_TYPE_PARAM = "missing type parameter"
     public static val DUPLICATE_FIELD = "duplicate field"
@@ -167,6 +168,13 @@ class RolezValidator extends RolezSystemValidator {
             error("Pure classes cannot extend non-pure classes", CLASS__SUPERCLASS_REF, INCORRECT_SUPERCLASS_PURITY)
         else if(!isPure && !isObjectClass && superclass.isPure)
             error("Non-pure classes cannot extend pure classes", CLASS__SUPERCLASS_REF, INCORRECT_SUPERCLASS_PURITY)
+    }
+    
+    @Check
+    def checkSlicedSuperclass(Class it) {
+        /* At the moment, sliced classes cannot be extended, for simplicity's sake. */
+        if(superclass != null && !superclass.slices.isEmpty)
+            error("Cannot extend class with slices", CLASS__SUPERCLASS_REF, SLICED_SUPERCLASS)
     }
     
     @Check

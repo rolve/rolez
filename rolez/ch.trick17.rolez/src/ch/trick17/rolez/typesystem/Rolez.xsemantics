@@ -55,6 +55,7 @@ import ch.trick17.rolez.rolez.RoleParamRef
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
 import ch.trick17.rolez.rolez.SimpleClassRef
+import ch.trick17.rolez.rolez.Slicing
 import ch.trick17.rolez.rolez.Stmt
 import ch.trick17.rolez.rolez.StringLiteral
 import ch.trick17.rolez.rolez.Super
@@ -316,6 +317,13 @@ from {
         t = createLong
     else
         t = createInt
+}
+
+rule TSlicing
+    G |- Slicing s : Type t
+from {
+    G |- s.target : var RoleType targetType
+    t = newRoleType(targetType.role, targetType.base, s.slice)
 }
 
 rule TMemberAccess

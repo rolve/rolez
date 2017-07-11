@@ -15,6 +15,7 @@ import static ch.trick17.rolez.ui.syntaxcoloring.RolezHighlightingConfiguration.
 import static org.eclipse.xtext.nodemodel.util.NodeModelUtils.*
 import ch.trick17.rolez.rolez.Super
 import ch.trick17.rolez.rolez.This
+import ch.trick17.rolez.rolez.Method
 
 class RolezSemanticHighlightCalculator implements ISemanticHighlightingCalculator {
     
@@ -27,6 +28,7 @@ class RolezSemanticHighlightCalculator implements ISemanticHighlightingCalculato
         while(iter.hasNext) {
             val object = iter.next
             switch(object) {
+                // local variables
                 Var: {
                     val node = findNodesForFeature(object, rolez.named_Name).head
                     if(node !== null) // skip synthetic vars like the "this" parameter
@@ -37,6 +39,7 @@ class RolezSemanticHighlightCalculator implements ISemanticHighlightingCalculato
                     val node = findActualNodeFor(object)
                     acceptor.addPosition(node.offset, node.length, VARIABLE_ID)
                 }
+                // fields
                 Field: {
                     val node = findNodesForFeature(object, rolez.named_Name).head
                     acceptor.addPosition(node.offset, node.length, FIELD_ID)
@@ -44,6 +47,15 @@ class RolezSemanticHighlightCalculator implements ISemanticHighlightingCalculato
                 MemberAccess case object.isFieldAccess: {
                     val node = findNodesForFeature(object, rolez.memberAccess_Member).head
                     acceptor.addPosition(node.offset, node.length, FIELD_ID)
+                }
+                // methods (which may have the same name as a keyword)
+                Method: {
+                    val node = findNodesForFeature(object, rolez.named_Name).head
+                    acceptor.addPosition(node.offset, node.length, DEFAULT_ID)
+                }
+                MemberAccess case object.isMethodInvoke || object.isTaskStart: {
+                    val node = findNodesForFeature(object, rolez.memberAccess_Member).head
+                    acceptor.addPosition(node.offset, node.length, DEFAULT_ID)
                 }
             }
         }

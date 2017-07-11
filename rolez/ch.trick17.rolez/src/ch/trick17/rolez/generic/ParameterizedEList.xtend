@@ -96,7 +96,7 @@ package abstract class ParameterizedEList<E extends EObject, C extends EObject> 
     override retainAll(Collection<?> c)                   { throw new AssertionError }
     override set(int index, E element)                    { throw new AssertionError }
     
-    /* To be on the safe side, implement equals and hachCode */
+    /* To be on the safe side, implement equals and hashCode */
     
     override equals(Object other) {
         if(this === other)

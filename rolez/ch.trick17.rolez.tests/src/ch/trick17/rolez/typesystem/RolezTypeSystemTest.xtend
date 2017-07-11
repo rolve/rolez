@@ -470,6 +470,46 @@ class RolezTypeSystemTest {
         parse("~null;".withFrame).assertError(BITWISE_NOT, null, "operator", "~", "undefined", "Null")
     }
     
+    @Test def testTSlicingErrorInTarget() {
+        parse("(!5) slice s".withFrame).assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
+    }
+    
+    @Test def testTSlicing() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                slice a {
+                    var i: int
+                }
+            }
+            class App {
+                task pure main: { new A slice a; }
+            }
+        ''').task.lastExpr.type.assertRoleType(ReadWrite, "A", "a")
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                slice a {
+                    var i: int
+                }
+            }
+            class App {
+                task pure main: { (new A as readonly A) slice a; }
+            }
+        ''').task.lastExpr.type.assertRoleType(ReadOnly, "A", "a")
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                slice a {
+                    var i: int
+                }
+            }
+            class App {
+                task pure main: { (new A as pure A) slice a; }
+            }
+        ''').task.lastExpr.type.assertRoleType(Pure, "A", "a")
+    }
+    
     @Test def testTMemberAccessErrorInTarget() {
         parse("(!5).a;".withFrame).assertError(INT_LITERAL, SUBTYPEEXPR, "int", "boolean")
     }

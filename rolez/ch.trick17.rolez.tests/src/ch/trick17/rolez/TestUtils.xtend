@@ -14,6 +14,7 @@ import ch.trick17.rolez.rolez.Program
 import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.SimpleClassRef
+import ch.trick17.rolez.rolez.Slice
 import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.Var
 import ch.trick17.rolez.rolez.VarRef
@@ -157,28 +158,36 @@ class TestUtils {
         clazz.cast(it)
     }
     
-    def void assertRoleType(Type it, Class<? extends Role> r, String n) {
+    def void assertRoleType(Type it, Class<? extends Role> r, String c) {
         assertInstanceOf(RoleType) => [
             role.assertThat(instanceOf(r))
-            base.assertInstanceOf(SimpleClassRef) => [ clazz.name.assertThat(is(n)) ]
+            base.assertInstanceOf(SimpleClassRef) => [ clazz.name.assertThat(is(c)) ]
         ]
     }
     
-    def void assertRoleType(Type it, Class<? extends Role> r, QualifiedName n) {
-        assertRoleType(r, n.toString)
+    def void assertRoleType(Type it, Class<? extends Role> r, String c, String s) {
+        assertInstanceOf(RoleType) => [
+            role.assertThat(instanceOf(r))
+            base.assertInstanceOf(SimpleClassRef) => [ clazz.name.assertThat(is(c)) ]
+            slice.assertInstanceOf(Slice) => [ name.assertThat(is(s)) ]
+        ]
     }
     
-    def void assertRoleType(Type it, Class<? extends Role> r, String n, Class<? extends PrimitiveType> t) {
+    def void assertRoleType(Type it, Class<? extends Role> r, QualifiedName c) {
+        assertRoleType(r, c.toString)
+    }
+    
+    def void assertRoleType(Type it, Class<? extends Role> r, String c, Class<? extends PrimitiveType> t) {
         assertInstanceOf(RoleType) => [
             role.assertThat(instanceOf(r))
             base.assertInstanceOf(GenericClassRef) => [
-                clazz.name.assertThat(is(n))
+                clazz.name.assertThat(is(c))
                 typeArg.class == t
             ]
         ]
     }
     
-    def void assertRoleType(Type it, Class<? extends Role> r, QualifiedName n, Class<? extends PrimitiveType> t) {
-        assertRoleType(r, n.toString, t)
+    def void assertRoleType(Type it, Class<? extends Role> r, QualifiedName c, Class<? extends PrimitiveType> t) {
+        assertRoleType(r, c.toString, t)
     }
 }

@@ -77,6 +77,24 @@ class RolezValidatorTest {
         ''').assertError(CLASS, INCORRECT_SUPERCLASS_PURITY)
     }
     
+    @Test def testSlicedSuperclass() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A extends Object {
+                slice a { var i: int }
+            }
+            class B extends A
+        ''').assertError(CLASS, SLICED_SUPERCLASS)
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A
+            class B extends A {
+                slice a { var i: int }
+            }
+        ''').assertNoErrors
+    }
+    
     @Test def testTypeParam() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object

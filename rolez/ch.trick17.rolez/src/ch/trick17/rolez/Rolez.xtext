@@ -24,7 +24,7 @@ Class:
 
 NormalClass:
     (pure?='pure')? 'class' name=QualifiedName ('[' typeParam=TypeParam ']')? WithMappedClass WithSuperclass ('{'
-        (constrs+=Constr | members+=Member)+
+        (constrs+=Constr | unslicedMembers+=Member | slices+=Slice)+
     '}')?;
 
 // TODO: Understand mapped classes better. E.g., transitions do not work for guarded objects
@@ -32,13 +32,18 @@ NormalClass:
 
 SingletonClass:
     'object' name=QualifiedName WithMappedClass WithSuperclass ('{'
-        members+=Member+
+        unslicedMembers+=Member+
     '}')?;
 
 // FIXME: Singleton classes must not extend classes with no no-args constructor!
 // TODO : Or even better, allow singleton classes to specify args to super constr: object Black extends Color(0, 0, 0)
 
 TypeParam: name=ID;
+
+Slice:
+    'slice' name=ID '{'
+        members+=Member+
+    '}';
 
 Member:
     Field | Method;
@@ -71,7 +76,7 @@ Mapped: 'mapped';
 
 Override: 'override';
 
-MethodName: ID | 'main';
+MethodName: ID | 'main' | 'slice';
 
 RoleParam:
     name=ID ('includes' upperBound=BuiltInRole)?; // IMPROVE: Allow role parameter refs as upper bounds
@@ -200,9 +205,12 @@ BitwiseNot returns Expr:
     ArithmeticUnaryPostExpr | {BitwiseNot} '~' expr=ArithmeticUnaryPostExpr;
 
 ArithmeticUnaryPostExpr returns Expr:
-    Start ({ArithmeticUnaryExpr.expr=current} op=OpArithmeticUnaryPost)?;
+    Slicing ({ArithmeticUnaryExpr.expr=current} op=OpArithmeticUnaryPost)?;
 
 enum OpArithmeticUnaryPost returns OpArithmeticUnary: POST_INCREMENT='++' | POST_DECREMENT='--';
+
+Slicing returns Expr:
+    Start ({Slicing.target=current} 'slice' slice=[Slice])?;
 
 /* Start and MemberAccess rules have different syntax, but both create a MemberAccess object */
 
@@ -287,7 +295,7 @@ TypeParamRef:
     param=[TypeParam] ('with' restrictingRole=Role)?;
 
 RoleType:
-    role=Role base=ClassRef;
+    role=Role base=ClassRef ('\\' slice=[Slice])?;
 
 terminal NULL_TYPE: 'Null';
 

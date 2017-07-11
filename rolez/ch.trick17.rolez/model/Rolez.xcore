@@ -40,7 +40,7 @@ type QualifiedName wraps QualifiedName
 class Class extends Named {
     refers JvmGenericType jvmClass
     contains ClassRef superclassRef
-    contains Member[] members
+    contains Member[] unslicedMembers
     
     op boolean isSingleton()
     op boolean isPure()
@@ -54,6 +54,8 @@ class Class extends Named {
         else
             null
     }
+    
+    op Iterable<Member> getMembers()
     
     op Iterable<Field> getFields() {
         members.filter(Field)
@@ -73,12 +75,17 @@ class Class extends Named {
 class NormalClass extends Class {
     contains TypeParam typeParam
     contains Constr[] constrs
+    contains Slice[] slices
     boolean pure
     
     op boolean isSingleton() { false }
     
+    op Iterable<Member> getMembers() {
+        unslicedMembers + slices.map[members].flatten
+    }
+    
     op String toString() {
-        qualifiedName.toString + if(typeParam !== null) "" else "[" + typeParam + "]"
+        qualifiedName.toString + if(typeParam === null) "" else "[" + typeParam + "]"
     }
 }
 
@@ -86,10 +93,20 @@ class TypeParam extends Named {
     op String toString() { name }
 }
 
+class Slice extends Named {
+    contains Member[] members
+    
+    op String toString() {
+        /// same as for RolezResource
+        ch.trick17.rolez.RolezExtensions.enclosingClass(this) + "\\" + name
+    }
+}
+
 class SingletonClass extends Class {
-    op boolean isSingleton() { true }
-    op boolean isPure()      { true }
-    op String toString()     { qualifiedName.toString }
+    op boolean isSingleton()         { true }
+    op boolean isPure()              { true }
+    op Iterable<Member> getMembers() { unslicedMembers }
+    op String toString()             { qualifiedName.toString }
 }
 
 // -----------------------------------------
@@ -375,6 +392,11 @@ class LogicalNot extends UnaryExpr {}
 
 class BitwiseNot extends UnaryExpr {}
 
+class Slicing extends Expr {
+    contains Expr target
+    refers Slice slice
+}
+
 class MemberAccess extends Expr, Argumented {
     boolean taskStart
     refers Member member
@@ -479,8 +501,11 @@ class PrimitiveType extends Type {
 class RoleType extends ReferenceType {
     contains Role role
     contains ClassRef base
+    refers Slice slice
     
-    op String toString() { role + " " + base }
+    op boolean isSliced() { slice !== null }
+    
+    op String toString() { role + " " + if(isSliced) slice else base }
 }
 
 class Role {

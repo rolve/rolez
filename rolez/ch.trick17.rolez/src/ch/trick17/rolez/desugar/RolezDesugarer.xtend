@@ -81,11 +81,13 @@ class RolezDesugarer extends AbstractDeclarativeDesugarer {
                     ]
                 ]
                 type.base.createReference(GENERIC_CLASS_REF__CLAZZ, clazz.qualifiedName.toString)
-            }            
+            }
             else {
                 type.base = createSimpleClassRef
                 type.base.createReference(SIMPLE_CLASS_REF__CLAZZ, clazz.qualifiedName.toString)
             }
+            if(enclosingSlice !== null)
+                type.createReference(ROLE_TYPE__SLICE, enclosingSlice.name)
         }
     }
     

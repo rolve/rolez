@@ -22,6 +22,7 @@ import ch.trick17.rolez.rolez.RoleParam
 import ch.trick17.rolez.rolez.RoleParamRef
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
+import ch.trick17.rolez.rolez.Slice
 import ch.trick17.rolez.rolez.Type
 import org.eclipse.emf.ecore.EObject
 
@@ -88,6 +89,14 @@ class RolezExtensions {
     
     static def enclosingClass(Constr it) {
         (it as EObject).enclosingClass as NormalClass
+    }
+    
+    static def Slice enclosingSlice(EObject it) {
+        val container = it?.eContainer
+        switch(container) {
+            Slice  : container
+            default: container?.enclosingSlice
+        }
     }
     
     static def Executable enclosingExecutable(InExecutable it) {
