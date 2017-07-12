@@ -33,6 +33,7 @@ import ch.trick17.rolez.rolez.ReturnNothing
 import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
+import ch.trick17.rolez.rolez.Slicing
 import ch.trick17.rolez.rolez.Stmt
 import ch.trick17.rolez.rolez.StringLiteral
 import ch.trick17.rolez.rolez.Super
@@ -221,6 +222,9 @@ class InstrGenerator {
         private def dispatch CharSequence generate(BitwiseNot it)
             '''~«expr.genNested»'''
         
+        private def dispatch CharSequence generate(Slicing it)
+            '''«target.generate».$«slice.safeName»Slice()'''
+        
         private def dispatch CharSequence generate(MemberAccess it) { switch(it) {
             case utils.isSliceGet(it):         generateSliceGet
             case utils.isSliceSet(it):         generateSliceSet
@@ -283,7 +287,9 @@ class InstrGenerator {
                 if(isFieldWrite)           createReadWrite
                 else if(field.kind == VAR) createReadOnly
                 else                       createPure
-            '''«target.genGuarded(requiredRole, true)».«field.safeName»'''
+            val targetType = system.type(target).value as RoleType
+            val redirect = if(targetType.isSliced) ".$object()" else ""
+            '''«target.genGuarded(requiredRole, true)»«redirect».«field.safeName»'''
         }
         
         private def generateMethodInvoke(MemberAccess it) {

@@ -370,6 +370,16 @@ class InstrGeneratorTest extends GeneratorTest {
         '''.withJavaFrame)
     }
     
+    @Test def testSlicing() {
+        parse('''
+            var aSlice = new S slice a;
+            var bSlice = new S slice b;
+        '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
+            S£a aSlice = new S($task).$aSlice();
+            S£b bSlice = new S($task).$bSlice();
+        '''.withJavaFrame)
+    }
+    
     @Test def testMemberAccessStartTask() {
         parse('''
             the Tasks start foo;
@@ -405,6 +415,10 @@ class InstrGeneratorTest extends GeneratorTest {
             val answer = the Constants.answer;
             val out = the System.out;
             the System.exit(answer);
+            var a = new S slice a;
+            a.i = 0;
+            val j = a.i;
+            (new S slice b).foo(j);
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
             "Hello".toString().length();
             "Hello".equals("Hi");
@@ -416,6 +430,10 @@ class InstrGeneratorTest extends GeneratorTest {
             final int answer = Constants.INSTANCE.answer;
             final java.io.PrintStream out = java.lang.System.out;
             java.lang.System.exit(answer);
+            S£a a = new S($task).$aSlice();
+            a.$object().i = 0;
+            final int j = a.$object().i;
+            (new S($task).$bSlice()).foo(j, $task);
         '''.withJavaFrame)
     }
     

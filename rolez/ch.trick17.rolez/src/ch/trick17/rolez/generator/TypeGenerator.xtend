@@ -21,7 +21,7 @@ class TypeGenerator {
     
     def CharSequence generate(Type it) { switch(it) {
         PrimitiveType: name
-        RoleType: base.generate
+        RoleType: base.generate + if(isSliced) "£" + slice.safeName else ""
         default: throw new AssertionError // Null or TypeParamRef
         // FIXME: val v = null; triggers the above error!
     }}

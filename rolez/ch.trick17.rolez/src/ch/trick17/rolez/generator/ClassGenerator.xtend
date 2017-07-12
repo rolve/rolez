@@ -6,6 +6,7 @@ import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.Executable
 import ch.trick17.rolez.rolez.Field
 import ch.trick17.rolez.rolez.Instr
+import ch.trick17.rolez.rolez.Member
 import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.Method
 import ch.trick17.rolez.rolez.NormalClass
@@ -17,6 +18,7 @@ import ch.trick17.rolez.rolez.ReturnNothing
 import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.SingletonClass
+import ch.trick17.rolez.rolez.Slice
 import ch.trick17.rolez.rolez.TypeParamRef
 import ch.trick17.rolez.rolez.Void
 import ch.trick17.rolez.validation.JavaMapper
@@ -51,27 +53,117 @@ class ClassGenerator {
         «ENDIF»
         import static «jvmGuardedClassName».*;
         
-        public class «safeSimpleName» extends «generateGuardedSuperclassName» {
+        public«IF isSliced» final«ENDIF» class «safeSimpleName» extends «generateGuardedSuperclassName»«IF isSliced» implements «slices.map[interfaceName].join(", ")»«ENDIF» {
             « fields.map[gen].join»
             «constrs.map[gen].join»
             «methods.map[gen].join»
-            «IF !guardedFields.isEmpty»
+            «IF !allMembers.guardedFields.isEmpty»
             
             @java.lang.Override
-            protected java.lang.Iterable<?> guardedRefs() {
-                return java.util.Arrays.asList(«guardedFields.map[name].join(", ")»);
+            protected java.util.List<?> guardedRefs() {
+                return java.util.Arrays.asList(«allMembers.guardedFields.map[name].join(", ")»);
             }
+            «ENDIF»
+            «IF isSliced»
+            
+            @java.lang.Override
+            public «safeSimpleName» $object() {
+                return this;
+            }
+            
+            private final java.util.Map<java.lang.String, «jvmGuardedClassName»> $slices = new java.util.HashMap<java.lang.String, «jvmGuardedClassName»>();
+            
+            @java.lang.Override
+            protected final java.util.Collection<«jvmGuardedClassName»> views() {
+                return $slices.values();
+            }
+            
+            @java.lang.Override
+            protected final «safeSimpleName» viewLock() {
+                return this;
+            }
+            «FOR slice : slices»
+            
+            public final «slice.interfaceName» $«slice.safeName»Slice() {
+                synchronized(this) {
+                    «slice.implName» slice = («slice.implName») $slices.get("«slice.name»");
+                    if(slice == null) {
+                        slice = new «slice.implName»(this);
+                        $slices.put("«slice.name»", slice);
+                    }
+                    return slice;
+                }
+            }
+            «ENDFOR»
             «ENDIF»
         }
     '''
+    
+    def generateSlice(Slice it) '''
+        «IF !enclosingClass.safePackage.isEmpty»
+        package «enclosingClass.safePackage»;
+        
+        «ENDIF»
+        import static «jvmGuardedClassName».*;
+        
+        public interface «simpleInterfaceName» {
+            
+            «enclosingClass.safeName» $object();
+            «FOR method : members.filter(Method)»
+            «method.genReturnType» «method.safeName»(«method.genParamsWithExtra»);
+            «ENDFOR»
+            
+            final class Impl extends «jvmGuardedClassName» implements «simpleInterfaceName» {
+                
+                final «enclosingClass.safeName» object;
+                
+                Impl(final «enclosingClass.safeName» object) {
+                    this.object = object;
+                }
+                «members.filter(Method).map[gen].join»
+                
+                @java.lang.Override
+                public «enclosingClass.safeName» $object() {
+                    return object;
+                }
+                «IF !members.guardedFields.isEmpty»
+                
+                @java.lang.Override
+                protected final java.util.List<?> guardedRefs() {
+                    return java.util.Arrays.asList(«members.guardedFields.map["object." + name].join(", ")»);
+                }
+                «ENDIF»
+                
+                @java.lang.Override
+                protected final java.util.List<«enclosingClass.safeName»> views() {
+                    return java.util.Arrays.asList(object);
+                }
+                
+                @java.lang.Override
+                protected final «enclosingClass.safeName» viewLock() {
+                    return object;
+                }
+            }
+        }
+    '''
+    
+    // IMPROVE: Don't generate two versions for methods in slices
     
     private def generateGuardedSuperclassName(NormalClass it) {
         if(superclass.isObjectClass && !pure) jvmGuardedClassName
         else superclassRef.generate
     }
     
-    private def guardedFields(NormalClass it) {
-        allMembers.filter(Field).filter[type.isGuarded]
+    private def guardedFields(Iterable<Member> it) {
+        filter(Field).filter[type.isGuarded]
+    }
+    
+    private def interfaceName(Slice it) { enclosingClass.safeName + "£" + safeName }
+    
+    private def implName(Slice it) { interfaceName + ".Impl" }
+    
+    private def simpleInterfaceName(Slice it) {
+        enclosingClass.safeSimpleName + "£" + safeName
     }
     
     def dispatch generate(SingletonClass it) '''

@@ -85,6 +85,10 @@ abstract class GeneratorTest {
                 new(i: int) {}
                 new(i: int, j: int) {}
             }
+            class S {
+                slice a { var i: int }
+                slice b { def pure foo(i: int): {} }
+            }
             class Container[E] mapped to «Container.canonicalName» {
                 mapped var e: E
                 mapped new
@@ -135,14 +139,14 @@ abstract class GeneratorTest {
         javaCode.toString.assertEquals(toString)
     }
     
-    static val className = Pattern.compile("public (final )?class ([A-Za-z0-9_£]+) ")
+    static val className = Pattern.compile("public (final )?(class|interface) ([A-Za-z0-9_£]+) ")
 
     protected def assertCompilable(Iterable<CharSequence> sources) {
         val compilationUnits = sources.map[code |
             val matcher = className.matcher(code)
             matcher.find.assertTrue
             
-            val uri = URI.create("string:///" + matcher.group(2) + ".java")
+            val uri = URI.create("string:///" + matcher.group(3) + ".java")
             new SimpleJavaFileObject(uri, JavaFileObject.Kind.SOURCE) {
                 override getCharContent(boolean _) { code }
             }

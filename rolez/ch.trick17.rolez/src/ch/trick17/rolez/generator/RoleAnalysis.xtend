@@ -20,6 +20,7 @@ import ch.trick17.rolez.rolez.ReadOnly
 import ch.trick17.rolez.rolez.ReadWrite
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
+import ch.trick17.rolez.rolez.Slicing
 import ch.trick17.rolez.rolez.StringLiteral
 import ch.trick17.rolez.rolez.The
 import ch.trick17.rolez.rolez.ThisParam
@@ -221,6 +222,7 @@ class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleData>> {
         }
         Cast, Parenthesized       : roleData(expr, roles)
         Assignment                : roleData(right, roles)
+        Slicing                   : roleData(target, roles)
         New                       : RoleData.readWrite
         The, StringLiteral        : RoleData.readOnly
         MemberAccess case isGlobal: RoleData.readOnly

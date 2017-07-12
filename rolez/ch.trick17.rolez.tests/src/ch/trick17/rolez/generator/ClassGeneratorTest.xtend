@@ -1,6 +1,7 @@
 package ch.trick17.rolez.generator
 
 import ch.trick17.rolez.TestUtils
+import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.Program
 import ch.trick17.rolez.tests.RolezInjectorProvider
 import javax.inject.Inject
@@ -121,6 +122,170 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
             }
         ''')
+    }
+    
+    @Test def testSlicedClass() {
+        val program = parse('''
+            class A {
+                slice a {
+                    var a: readwrite A
+                }
+                slice b {
+                    var j: int
+                    def readwrite foo: readwrite A\b {
+                        this.j = 0;
+                        var t = this;
+                        return t;
+                    }
+                }
+            }
+        ''', someClasses)
+        
+        val genClass = program.onlyClass.generate
+        val genSlices = (program.onlyClass as NormalClass).slices.map[generateSlice].toList
+        
+        genClass.assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
+            
+            public final class A extends «jvmGuardedClassName» implements A£a, A£b {
+                
+                public A a;
+                
+                public int j;
+                
+                public A(final long $task) {
+                    super();
+                }
+                
+                public A£b foo(final long $task) {
+                    guardReadWrite(this, $task).$object().j = 0;
+                    A£b t = this;
+                    return t;
+                }
+                
+                @java.lang.Override
+                protected java.util.List<?> guardedRefs() {
+                    return java.util.Arrays.asList(a);
+                }
+                
+                @java.lang.Override
+                public A $object() {
+                    return this;
+                }
+                
+                private final java.util.Map<java.lang.String, «jvmGuardedClassName»> $slices = new java.util.HashMap<java.lang.String, «jvmGuardedClassName»>();
+                
+                @java.lang.Override
+                protected final java.util.Collection<«jvmGuardedClassName»> views() {
+                    return $slices.values();
+                }
+                
+                @java.lang.Override
+                protected final A viewLock() {
+                    return this;
+                }
+                
+                public final A£a $aSlice() {
+                    synchronized(this) {
+                        A£a.Impl slice = (A£a.Impl) $slices.get("a");
+                        if(slice == null) {
+                            slice = new A£a.Impl(this);
+                            $slices.put("a", slice);
+                        }
+                        return slice;
+                    }
+                }
+                
+                public final A£b $bSlice() {
+                    synchronized(this) {
+                        A£b.Impl slice = (A£b.Impl) $slices.get("b");
+                        if(slice == null) {
+                            slice = new A£b.Impl(this);
+                            $slices.put("b", slice);
+                        }
+                        return slice;
+                    }
+                }
+            }
+        ''', genSlices)
+        
+        genSlices.get(0).assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
+            
+            public interface A£a {
+                
+                A $object();
+                
+                final class Impl extends «jvmGuardedClassName» implements A£a {
+                    
+                    final A object;
+                    
+                    Impl(final A object) {
+                        this.object = object;
+                    }
+                    
+                    @java.lang.Override
+                    public A $object() {
+                        return object;
+                    }
+                    
+                    @java.lang.Override
+                    protected final java.util.List<?> guardedRefs() {
+                        return java.util.Arrays.asList(object.a);
+                    }
+                    
+                    @java.lang.Override
+                    protected final java.util.List<A> views() {
+                        return java.util.Arrays.asList(object);
+                    }
+                    
+                    @java.lang.Override
+                    protected final A viewLock() {
+                        return object;
+                    }
+                }
+            }
+        ''', genClass, genSlices.get(1))
+        
+        genSlices.get(1).assertEqualsJava('''
+            import static «jvmGuardedClassName».*;
+            
+            public interface A£b {
+                
+                A $object();
+                A£b foo(final long $task);
+                
+                final class Impl extends «jvmGuardedClassName» implements A£b {
+                    
+                    final A object;
+                    
+                    Impl(final A object) {
+                        this.object = object;
+                    }
+                    
+                    public A£b foo(final long $task) {
+                        guardReadWrite(this, $task).$object().j = 0;
+                        A£b t = this;
+                        return t;
+                    }
+                    
+                    @java.lang.Override
+                    public A $object() {
+                        return object;
+                    }
+                    
+                    @java.lang.Override
+                    protected final java.util.List<A> views() {
+                        return java.util.Arrays.asList(object);
+                    }
+                    
+                    @java.lang.Override
+                    protected final A viewLock() {
+                        return object;
+                    }
+                }
+            }
+        ''', genClass, genSlices.get(0))
     }
     
     @Test def testSingletonClass() {
@@ -265,7 +430,7 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 @java.lang.Override
-                protected java.lang.Iterable<?> guardedRefs() {
+                protected java.util.List<?> guardedRefs() {
                     return java.util.Arrays.asList(a, base);
                 }
             }
