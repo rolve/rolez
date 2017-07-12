@@ -26,10 +26,10 @@ class SafeJavaNames {
     
     static def safePackage(Class it) {
         val segments = qualifiedName.segments
-        segments.takeWhile[it != segments.last].map[safe].join(".")
+        segments.subList(0, segments.size-1).map[safe].join(".")
     }
     
-    private static def safe(String name) {
+    static def safe(String name) {
         if(javaKeywords.contains(name))
             "£" + name
         else

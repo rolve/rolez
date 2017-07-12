@@ -8,6 +8,8 @@ import org.eclipse.xtext.generator.AbstractGenerator
 import org.eclipse.xtext.generator.IFileSystemAccess2
 import org.eclipse.xtext.generator.IGeneratorContext
 
+import static extension ch.trick17.rolez.generator.SafeJavaNames.*
+
 class RolezGenerator extends AbstractGenerator {
     
     @Inject ClassGenerator classGenerator
@@ -15,7 +17,7 @@ class RolezGenerator extends AbstractGenerator {
     override void doGenerate(Resource resource, IFileSystemAccess2 fsa, IGeneratorContext _) {
         val program = resource.contents.head as Program
         for (c : program.classes.filter[!mapped || isSingleton]) {
-            val name = c.qualifiedName.segments.join(File.separator) + ".java"
+            val name = c.qualifiedName.segments.map[safe].join(File.separator) + ".java"
             fsa.generateFile(name, classGenerator.generate(c))
         }
     }
