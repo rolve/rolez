@@ -17,12 +17,12 @@
   </build>
   <dependencies>
   	<dependency>
-  		<groupId>ch.trick17.rolez</groupId>
+  		<groupId>ch.trick17.checked.rolez</groupId>
   		<artifactId>ch.trick17.rolez.lib</artifactId>
   		<version>1.0.0-SNAPSHOT</version>
   	</dependency>
   	<dependency>
-  		<groupId>ch.trick17.rolez.annotation</groupId>
+  		<groupId>ch.trick17.checked.rolez</groupId>
   		<artifactId>ch.trick17.rolez.annotation</artifactId>
   		<version>1.0.0-SNAPSHOT</version>
   	</dependency>
