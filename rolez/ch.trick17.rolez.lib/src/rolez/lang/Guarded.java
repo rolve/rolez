@@ -28,6 +28,14 @@ public abstract class Guarded {
     
     private AtomicInteger sharedCount; // atomic because tasks can share concurrently
  	private Set<Task<?>> readers;
+
+    protected Task<?> getOwner() {
+        return owner;
+    }
+    
+    protected int getSharedCount() {
+        return sharedCount.get();
+    }
     
     private Object guardingCachesLock; // IMPROVE: replace with CAS using Java 9's VarHandles?
     private volatile long readGuardingCache;
@@ -48,14 +56,6 @@ public abstract class Guarded {
     protected Guarded(boolean initializeGuarding) {
         if(initializeGuarding)
             ensureGuardingInitialized();
-    }
-
-    public Task<?> getOwner() {
-        return owner;
-    }
-    
-    public int getSharedCount() {
-        return sharedCount.get();
     }
     
     private boolean guardingInitialized() {
@@ -135,11 +135,8 @@ public abstract class Guarded {
      */
     final void sharePure(Task<?> task) {
     	if (!guardingDisabled) {
-    		// If the object already has an owner than we do nothing
-    		if (owner == null) {
-    			owner = currentTask();
-    			ownerThread = null;
-    		}
+    		// Just ensure that guarding is initialized -> sets owner of object
+    		ensureGuardingInitialized();
     	}
     }
     
