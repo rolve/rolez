@@ -29,6 +29,7 @@ import ch.trick17.rolez.rolez.RolezFactory
 import ch.trick17.rolez.rolez.SimpleClassRef
 import ch.trick17.rolez.rolez.SingletonClass
 import ch.trick17.rolez.rolez.Slice
+import ch.trick17.rolez.rolez.Super
 import ch.trick17.rolez.rolez.SuperConstrCall
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.Type
@@ -80,6 +81,7 @@ class RolezValidator extends RolezSystemValidator {
     public static val INCOMPATIBLE_RETURN_TYPE = "incompatible return type"
     public static val INCOMPATIBLE_THIS_ROLE = "incompatible \"this\" role"
     public static val INCOMPATIBLE_PARAM_TYPE = "incompatible param type"
+    public static val OVERRIDE_IN_SLICE = "override in slice"
     public static val MAPPED_ASYNC = "mapped 'async'"
     public static val MISSING_RETURN_EXPR = "missing return statement"
     public static val MISSING_TYPE_ARG = "missing type argument"
@@ -91,6 +93,7 @@ class RolezValidator extends RolezSystemValidator {
     public static val FIELD_INIT_TYPE_MISMATCH = "field initializer type mismatch"
     public static val MAPPED_FIELD_WITH_INIT = "mapped with with initializer"
     public static val THIS_IN_FIELD_INIT = "'this' in field initializer"
+    public static val SUPER_IN_SLICE = "'super' in slice"
     public static val TASK_START_IN_FIELD_INIT = "task start in field initializer"
     public static val ASYNC_IN_FIELD_INIT = "'async' in field initializer"
     public static val VAR_FIELD_IN_SINGLETON_CLASS = "var field in singleton class"
@@ -134,7 +137,7 @@ class RolezValidator extends RolezSystemValidator {
     @Inject RolezSystem system
     @Inject RolezUtils utils
     
-	@Check
+    @Check
     def checkClassNameStartsWithCapital(Class it) {
         if(!Character.isUpperCase(qualifiedName.lastSegment.charAt(0)))
             warning("Name should start with a capital",
@@ -175,8 +178,8 @@ class RolezValidator extends RolezSystemValidator {
     @Check
     def checkSlicedSuperclass(Class it) {
         /* At the moment, sliced classes cannot be extended, for simplicity's sake. */
-        if(superclass != null && !superclass.slices.isEmpty)
-            error("Cannot extend class with slices", CLASS__SUPERCLASS_REF, SLICED_SUPERCLASS)
+        if(superclass != null && superclass.isSliced)
+            error("Cannot extend sliced class", CLASS__SUPERCLASS_REF, SLICED_SUPERCLASS)
     }
     
     @Check
@@ -231,18 +234,18 @@ class RolezValidator extends RolezSystemValidator {
         if(matching.size > 1)
            error("Duplicate field " + name, NAMED__NAME, DUPLICATE_FIELD)
     }
-	
-	/**
-	 * Checks that there are no other methods in the same class with the same "erased" signature.
-	 * The erased signature does not comprise roles, therefore <code>this</code>-role-based
-	 * overloading is not possible, which greatly simplifies code generation. The erased signature
-	 * does not include type arguments either, to avoid problems with Java erasure. One exception
-	 * are parameter types that map to Java arrays, but only for mapped methods and constructors.
-	 * <p>
-	 * An additional reason for ignoring the "this" role is that it might be surprising to
-	 * programmers if methods are virtually dispatched based on the class of the target, but
-	 * statically dispatched based on its role.
-	 */
+    
+    /**
+     * Checks that there are no other methods in the same class with the same "erased" signature.
+     * The erased signature does not comprise roles, therefore <code>this</code>-role-based
+     * overloading is not possible, which greatly simplifies code generation. The erased signature
+     * does not include type arguments either, to avoid problems with Java erasure. One exception
+     * are parameter types that map to Java arrays, but only for mapped methods and constructors.
+     * <p>
+     * An additional reason for ignoring the "this" role is that it might be surprising to
+     * programmers if methods are virtually dispatched based on the class of the target, but
+     * statically dispatched based on its role.
+     */
     @Check
     def checkNoDuplicateMethods(Method it) {
         val matching = enclosingClass.methods.filter[m |
@@ -302,15 +305,15 @@ class RolezValidator extends RolezSystemValidator {
             if(params.exists[p !== it && p.name == name])
                 error("Duplicate parameter " + p.name, p, NAMED__NAME, DUPLICATE_VAR)
     }
-	
-	/**
-	 * For overriding methods, checks that the return type is co- and the parameter types and the
-	 * "this" role are contravariant. Note that the parameter types are already guaranteed to be
-	 * equal to the corresponding types in the overridden method, except for the roles and type
-	 * arguments.
-	 */
-	@Check
-	def checkValidOverride(Method it) {
+    
+    /**
+     * For overriding methods, checks that the return type is co- and the parameter types and the
+     * "this" role are contravariant. Note that the parameter types are already guaranteed to be
+     * equal to the corresponding types in the overridden method, except for the roles and type
+     * arguments.
+     */
+    @Check
+    def checkValidOverride(Method it) {
         if(!overriding) return;
         
         if(system.subtype(type, superMethod.type).failed)
@@ -326,39 +329,45 @@ class RolezValidator extends RolezSystemValidator {
                 error("This parameter type is incompatible with overridden method "
                     + superMethod, p, TYPED__TYPE, RolezValidator.INCOMPATIBLE_PARAM_TYPE)
         }
-	}
+    }
     
     /* To reuse the code that finds overridden methods */
     @Inject RolezScopeProvider scopeProvider
     
-	/**
+    /**
      * For non-overriding methods, checks that they are not actually overriding a method from the
      * superclass. Note that due to the erasure of roles and type arguments, methods may have the
      * same erased signature as a superclass method but cannot override it because their full
      * signature is incompatible.
-	 */
-	@Check
-	def checkMissingOverride(Method it) {
-	    if(overriding) return
-	    
+     */
+    @Check
+    def checkMissingOverride(Method it) {
+        if(overriding) return
+        
         val scope = scopeProvider.scope_Method_superMethod(it, METHOD__SUPER_METHOD)
         if(!scope.allElements.isEmpty)
             error("Method must be declared with \"override\" since it has the same (erased) "
                     + "signature as a superclass method",
                 NAMED__NAME, MISSING_OVERRIDE)
-	}
-	
-	@Check
-	def checkMappedAsync(Method it) {
-	    if(mapped && declaredAsync)
-	       error("Mapped method cannot be 'async'", METHOD__DECLARED_ASYNC, MAPPED_ASYNC)
-	}
-	
-	@Check
-	def checkReturnExpr(Method it) {
+    }
+    
+    @Check
+    def checkOverrideInSlice(Method it) {
+        if(overriding && enclosingSlice !== null)
+           error("Cannot override a method in a slice", METHOD__SUPER_METHOD, OVERRIDE_IN_SLICE)
+    }
+    
+    @Check
+    def checkMappedAsync(Method it) {
+        if(mapped && declaredAsync)
+           error("Mapped method cannot be 'async'", METHOD__DECLARED_ASYNC, MAPPED_ASYNC)
+    }
+    
+    @Check
+    def checkReturnExpr(Method it) {
         if(body === null || type instanceof Void) return;
         
-	    val cfg = body.controlFlowGraph
+        val cfg = body.controlFlowGraph
         for(p : cfg.exit.predecessors) {
             if(p instanceof InstrNode) {
                 if(!(p.instr instanceof ReturnExpr))
@@ -366,21 +375,21 @@ class RolezValidator extends RolezSystemValidator {
                         nonReturningNode(p).instr, null, MISSING_RETURN_EXPR)
             }
             else throw new AssertionError
-	    }
-	}
-	
-	private def InstrNode nonReturningNode(InstrNode n) {
-	    val instr = n.instr
-	    switch(instr) {
-	        Block:
-	           if(instr.stmts.isEmpty) n
-	           else nonReturningNode(n.solePredecessor as InstrNode)
-	        IfStmt:
-	           if(n.isJoin || n.solePredecessor.isSplit) n
-	           else nonReturningNode(n.solePredecessor as InstrNode)
-	        default: n
-	    }
-	}
+        }
+    }
+    
+    private def InstrNode nonReturningNode(InstrNode n) {
+        val instr = n.instr
+        switch(instr) {
+            Block:
+               if(instr.stmts.isEmpty) n
+               else nonReturningNode(n.solePredecessor as InstrNode)
+            IfStmt:
+               if(n.isJoin || n.solePredecessor.isSplit) n
+               else nonReturningNode(n.solePredecessor as InstrNode)
+            default: n
+        }
+    }
     
     @Check
     def checkSimpleClassRef(SimpleClassRef it) {
@@ -452,6 +461,12 @@ class RolezValidator extends RolezSystemValidator {
                 error("Cannot start task in a field initializer", access, null, TASK_START_IN_FIELD_INIT)
             else if(access.isMethodInvoke && access.method.isAsync)
                 error("Cannot invoke 'async' method in a field initializer", access, null, ASYNC_IN_FIELD_INIT)
+    }
+    
+    @Check
+    def checkSuperInSlice(Super it) {
+        if(enclosingSlice !== null)
+            error("Cannot refer to 'super' in a slice", null, SUPER_IN_SLICE)
     }
     
     @Check
@@ -754,16 +769,16 @@ class RolezValidator extends RolezSystemValidator {
     }
     
     /*
-	 * Delayed errors
-	 */
-	
-	private val Set<Error> delayedErrors = new HashSet
-	
-	/**
-	 * Can be called by other classes (e.g. the scope provider) to create
-	 * errors before the actual validation phase. The validator will later
-	 * report these errors.
-	 */
+     * Delayed errors
+     */
+    
+    private val Set<Error> delayedErrors = new HashSet
+    
+    /**
+     * Can be called by other classes (e.g. the scope provider) to create
+     * errors before the actual validation phase. The validator will later
+     * report these errors.
+     */
     def delayedError(String message, EObject source, EStructuralFeature feature,
             String code, String... issueData) {
         delayedErrors.add(new Error(message, source, feature, code, issueData))
