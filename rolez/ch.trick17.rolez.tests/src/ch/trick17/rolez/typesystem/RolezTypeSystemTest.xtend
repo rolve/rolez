@@ -1412,7 +1412,9 @@ class RolezTypeSystemTest {
                     
                     var s: readwrite S = new S;
                     var sa: readwrite S\a = s slice a;
+                    sa = s;
                     var sb: readwrite S\b = s slice b;
+                    sb = s;
                 }
             }
         ''').assertNoErrors
@@ -1457,10 +1459,6 @@ class RolezTypeSystemTest {
             .assertError(CAST, SUBTYPEEXPR, "pure A", "readwrite A")
         parse("val a: readonly A = new A as pure A;".withFrame)
             .assertError(CAST, SUBTYPEEXPR, "pure A", "readonly A")
-    }
-    
-    @Test def testSubtypeSlice() {
-        parse("val s: readwrite S\\a = new S slice a;".withFrame).assertNoErrors
     }
     
     @Test def testSubtypeSliceMismatch() {
