@@ -79,6 +79,7 @@ class NormalClass extends Class {
     boolean pure
     
     op boolean isSingleton() { false }
+    op boolean isSliced() { !slices.isEmpty }
     
     op Iterable<Member> getMembers() {
         unslicedMembers + slices.map[members].flatten

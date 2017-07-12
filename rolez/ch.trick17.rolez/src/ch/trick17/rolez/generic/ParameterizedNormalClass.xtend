@@ -33,6 +33,7 @@ class ParameterizedNormalClass extends ParameterizedEObject<NormalClass> impleme
     override getSlices()          { eObject.slices } // should be fine as long as generic classes (which are mapped) cannot be sliced
     
     override isSingleton()      { eObject.isSingleton }
+    override isSliced()         { eObject.isSliced }
     override isMapped()         { eObject.isMapped }
     override getSuperclass()    { eObject.superclass?.parameterized }
     override getFields()        { eObject.fields.map[parameterized] }
