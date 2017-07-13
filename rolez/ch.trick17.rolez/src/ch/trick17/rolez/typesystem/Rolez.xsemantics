@@ -342,7 +342,7 @@ from {
         t = switch(fieldType) {
             RoleType: {
                 val role = leastCommonSuperrole(targetRole, fieldType.role)
-                newRoleType(role, fieldType.base)
+                newRoleType(role, fieldType.base, fieldType.slice)
             }
             default: fieldType
         }

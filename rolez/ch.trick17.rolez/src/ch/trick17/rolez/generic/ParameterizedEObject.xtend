@@ -62,7 +62,7 @@ abstract class ParameterizedEObject<E extends EObject>
                     RoleType case restrictingRole !== null: {
                         if(type.role instanceof RoleParamRef && restrictingRole instanceof RoleParamRef)
                             throw new AssertionError
-                        newRoleType(system.leastCommonSuperrole(type.role, restrictingRole.parameterized), type.base) 
+                        newRoleType(system.leastCommonSuperrole(type.role, restrictingRole.parameterized), type.base, type.slice) 
                     }
                     TypeParamRef case restrictingRole !== null:
                         newTypeParamRef(type.param, restrictingRole /* .parameterized??? */)
