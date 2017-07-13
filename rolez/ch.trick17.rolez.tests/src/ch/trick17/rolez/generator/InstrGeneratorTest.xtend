@@ -976,6 +976,7 @@ class InstrGeneratorTest extends GeneratorTest {
             new (foo.bar.Base)("Hello".length, 0);
             var ai : pure Object = new Array[int](10 * 10);
             var ab : pure Object = new Array[pure Base](42);
+            var ass: pure Object = new Array[pure S\a](0);
             var aai: pure Object = new Array[pure Array[int]](0);
             var avi: pure Object = new Array[pure Vector[int]](0);
             var avvi: pure Object = new Array[pure Vector[pure Vector[int]]](0);
@@ -987,6 +988,7 @@ class InstrGeneratorTest extends GeneratorTest {
             new foo.bar.Base("Hello".length(), 0, $task);
             java.lang.Object ai = new rolez.lang.GuardedArray<int[]>(new int[10 * 10]);
             java.lang.Object ab = new rolez.lang.GuardedArray<Base[]>(new Base[42]);
+            java.lang.Object ass = new rolez.lang.GuardedArray<S£a[]>(new S£a[0]);
             java.lang.Object aai = new rolez.lang.GuardedArray<rolez.lang.GuardedArray<int[]>[]>(new rolez.lang.GuardedArray[0]);
             java.lang.Object avi = new rolez.lang.GuardedArray<int[][]>(new int[0][]);
             java.lang.Object avvi = new rolez.lang.GuardedArray<int[][][]>(new int[0][][]);

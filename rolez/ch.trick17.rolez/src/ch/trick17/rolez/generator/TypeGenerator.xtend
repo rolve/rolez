@@ -32,7 +32,7 @@ class TypeGenerator {
     }}
     
     def generateErased(Type it) { switch(it) {
-        RoleType: base.generateErased
+        RoleType: base.generateErased + if(isSliced) "£" + slice.safeName else ""
         default: generate
     }}
     
