@@ -226,21 +226,6 @@ public abstract class Guarded {
         return alreadyGuarded;
     }
 
-    /* The following two are required for expressions of type java.lang.Object, for which it is only
-     * known at runtime whether guarding is needed */
-    
-    public static <G> G guardReadOnlyIfNeeded(G guarded) {
-        if(guarded instanceof Guarded)
-            guardReadOnly((Guarded) guarded);
-        return guarded;
-    }
-    
-    public static <G> G guardReadWriteIfNeeded(G guarded) {
-        if(guarded instanceof Guarded)
-            guardReadWrite((Guarded) guarded);
-        return guarded;
-    }
-    
     /* Methods that can be overridden by concrete Guarded classes */
     
     /**
