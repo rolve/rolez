@@ -85,6 +85,7 @@ class ClassGenerator {
             «FOR slice : slices»
             
             public final «slice.interfaceName» $«slice.safeName»Slice() {
+                ensureGuardingInitialized();
                 synchronized(this) {
                     «slice.implName» slice = («slice.implName») $slices.get("«slice.name»");
                     if(slice == null) {
@@ -118,6 +119,7 @@ class ClassGenerator {
                 final «enclosingClass.safeName» object;
                 
                 Impl(final «enclosingClass.safeName» object) {
+                    super(true);
                     this.object = object;
                 }
                 «members.filter(Method).map[gen].join»

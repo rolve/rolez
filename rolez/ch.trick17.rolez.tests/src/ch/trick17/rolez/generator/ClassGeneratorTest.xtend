@@ -186,6 +186,7 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public final A£a $aSlice() {
+                    ensureGuardingInitialized();
                     synchronized(this) {
                         A£a.Impl slice = (A£a.Impl) $slices.get("a");
                         if(slice == null) {
@@ -197,6 +198,7 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public final A£b $bSlice() {
+                    ensureGuardingInitialized();
                     synchronized(this) {
                         A£b.Impl slice = (A£b.Impl) $slices.get("b");
                         if(slice == null) {
@@ -221,6 +223,7 @@ class ClassGeneratorTest extends GeneratorTest {
                     final A object;
                     
                     Impl(final A object) {
+                        super(true);
                         this.object = object;
                     }
                     
@@ -260,6 +263,7 @@ class ClassGeneratorTest extends GeneratorTest {
                     final A object;
                     
                     Impl(final A object) {
+                        super(true);
                         this.object = object;
                     }
                     

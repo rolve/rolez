@@ -58,7 +58,7 @@ public abstract class Guarded {
      * Initializes the guarding "infrastructure", if guarding is not
      * {@linkplain #disableGuarding(Guarded) disabled}.
      */
-    private void ensureGuardingInitialized() {
+    protected final void ensureGuardingInitialized() {
         assert !guardingDisabled;
         if(!guardingInitialized()) {
             owner = currentTask();

@@ -5,7 +5,6 @@ import static java.util.Collections.newSetFromMap;
 
 import java.lang.reflect.Array;
 import java.util.AbstractList;
-import java.util.Collection;
 import java.util.List;
 import java.util.RandomAccess;
 import java.util.Set;
