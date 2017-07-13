@@ -428,13 +428,16 @@ class InstrGenerator {
         
         private def genGuarded(Expr it, Role requiredRole, boolean nested) {
             val type = system.type(it).value
-            val needsGuard = !system.subroleSucceeded(roleAnalysis.dynamicRole(it), requiredRole)
-            if(utils.isGuarded(type) && needsGuard)
+            val dynamicRole = roleAnalysis.dynamicRole(it)
+            val needsGuard = !system.subroleSucceeded(dynamicRole, requiredRole)
+            if(utils.isGuarded(type) && needsGuard) {
+                val slice = if((type as RoleType).isSliced) "Slice" else ""
                 switch(requiredRole) {
-                    ReadWrite: "guardReadWrite(" + generate + ", $task)"
-                    ReadOnly : "guardReadOnly("  + generate + ", $task)"
+                    ReadWrite: "guardReadWrite" + slice + "(" + generate + ", $task)"
+                    ReadOnly : "guardReadOnly"  + slice + "(" + generate + ", $task)"
                     default  : throw new AssertionError("unexpected role: " + requiredRole)
                 }
+            }
             else
                 if(nested) genNested else generate
             

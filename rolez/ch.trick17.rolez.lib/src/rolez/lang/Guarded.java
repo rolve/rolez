@@ -226,6 +226,19 @@ public abstract class Guarded {
         return alreadyGuarded;
     }
 
+    /* The following two are required for expressions of sliced types, which are mapped to interface
+     * types in Java (which don't extend Guarded...) */
+    
+    public static <S> S guardReadOnlySlice(S slice, long $task) {
+        guardReadOnly((Guarded) slice, $task);
+        return slice;
+    }
+    
+    public static <S> S guardReadWriteSlice(S slice, long $task) {
+        guardReadWrite((Guarded) slice, $task);
+        return slice;
+    }
+    
     /* Methods that can be overridden by concrete Guarded classes */
     
     /**

@@ -447,12 +447,13 @@ class InstrGeneratorTest extends GeneratorTest {
                 def readonly  bar: {}
                 def pure      baz: {}
                 def readwrite test(a1: readwrite A, a2: readwrite A, a3: readwrite A,
-                        a4: readwrite A, a5: readwrite A, a6: readwrite A): int {
+                        a4: readwrite A, a5: readwrite A, a6: readwrite A, s: readwrite S\a): int {
                     a1.foo;
                     a2.bar;
                     a3.baz;
                     new A.i = 1;
                     a4.i = 2;
+                    s.i = 0;
                     return a5.i + a6.j;
                 }
             }
@@ -478,12 +479,13 @@ class InstrGeneratorTest extends GeneratorTest {
                 public void baz(final long $task) {
                 }
                 
-                public int test(final A a1, final A a2, final A a3, final A a4, final A a5, final A a6, final long $task) {
+                public int test(final A a1, final A a2, final A a3, final A a4, final A a5, final A a6, final S£a s, final long $task) {
                     a1.foo($task);
                     a2.bar($task);
                     a3.baz($task);
                     new A($task).i = 1;
                     guardReadWrite(a4, $task).i = 2;
+                    guardReadWriteSlice(s, $task).$object().i = 0;
                     return guardReadOnly(a5, $task).i + a6.j;
                 }
             }
