@@ -158,7 +158,7 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public A£b foo(final long $task) {
-                    guardReadWrite(this, $task).$object().j = 0;
+                    guardReadWriteSlice(this, $task).$object().j = 0;
                     A£b t = this;
                     return t;
                 }
@@ -264,7 +264,7 @@ class ClassGeneratorTest extends GeneratorTest {
                     }
                     
                     public A£b foo(final long $task) {
-                        guardReadWrite(this, $task).$object().j = 0;
+                        guardReadWriteSlice(this, $task).$object().j = 0;
                         A£b t = this;
                         return t;
                     }
