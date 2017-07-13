@@ -97,6 +97,7 @@ public class ObjectCheckingTest extends TaskBasedJpfTest {
                     protected Void runRolez() {
                         region(0);
                         // This line is an illegal operation since it is not allowed to read non-final fields
+                        // TODO: Try catch for runtime exception and try to propagate it outside
                         int i = checkLegalRead(a).value;
                         return null;
                     }
