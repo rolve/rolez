@@ -2,7 +2,7 @@ package rolez.lang;
 
 /**
  * This class represents the interface of the <code>Array</code> class in the Rolez compiler, but is
- * not actually used in Rolez programs. Instead, the {@link GuardedArray} class is used.
+ * not actually used in Rolez programs. Instead, the {@link CheckedArray} class is used.
  * 
  * @author Michael Faes
  */
@@ -13,5 +13,5 @@ public class Array<T> extends Slice<T> {
     public Array(int length) {}
     
     @Override
-    public native GuardedArray<T[]> clone();
+    public native CheckedArray<T[]> clone();
 }

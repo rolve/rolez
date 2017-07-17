@@ -4,8 +4,8 @@ import static ch.trick17.simplejpf.test.JpfParallelismTest.VerifyMode.CORRECTNES
 import static ch.trick17.simplejpf.test.JpfParallelismTest.VerifyMode.PARALLELISM;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
-import static rolez.lang.Guarded.guardReadOnly;
-import static rolez.lang.Guarded.guardReadWrite;
+import static rolez.lang.Checked.checkLegalRead;
+import static rolez.lang.Checked.checkLegalWrite;
 
 import java.util.List;
 
@@ -14,11 +14,11 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-import rolez.lang.SomeClasses.Int;
-import rolez.lang.SomeClasses.Ref;
+import rolez.lang.SomeCheckedClasses.Int;
+import rolez.lang.SomeCheckedClasses.Ref;
 
 @RunWith(Parameterized.class)
-public class ArrayGuardingTest extends TaskBasedJpfTest {
+public class ArrayCheckingTest extends TaskBasedJpfTest {
     
     @Parameters(name = "{0}, {1}")
     public static List<?> taskSystems() {
@@ -31,7 +31,7 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
         });
     }
     
-    public ArrayGuardingTest(final TaskSystem s, final VerifyMode mode) {
+    public ArrayCheckingTest(final TaskSystem s, final VerifyMode mode) {
         super(s, mode);
     }
     
@@ -52,7 +52,7 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 };
                 s.start(task);
                 
-                guardReadWrite(guardReadOnly(a).data[2]).value = 1;
+                checkLegalRead(checkLegalWrite(a).data[2]).value = 1;
             }
         });
     }
@@ -75,9 +75,9 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 };
                 s.start(task);
                 
-                guardReadOnly(a);
+                checkLegalRead(a);
                 for(int i = 0; i < a.data.length; i++)
-                    assertEquals(i + 1, guardReadOnly(a.data[i]).value);
+                    assertEquals(i + 1, checkLegalRead(a.data[i]).value);
             }
         });
     }
@@ -97,7 +97,7 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 };
                 s.start(task);
                 
-                guardReadWrite(a).data[0] = 1;
+                checkLegalWrite(a).data[0] = 1;
             }
         });
     }
@@ -118,7 +118,7 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 };
                 s.start(task);
                 
-                guardReadOnly(a);
+                checkLegalRead(a);
                 for(int i = 0; i < a.data.length; i++)
                     assertEquals(i + 1, a.data[i]);
             }
@@ -159,7 +159,7 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 };
                 s.start(task3);
                 
-                guardReadWrite(i).value = 1;
+                checkLegalWrite(i).value = 1;
             }
         });
     }
@@ -198,7 +198,7 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 };
                 s.start(task3);
                 
-                assertEquals(3, guardReadOnly(i).value);
+                assertEquals(3, checkLegalRead(i).value);
             }
         });
     }
@@ -226,7 +226,7 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                         };
                         s.start(task2);
                         
-                        assertEquals(2, guardReadWrite(i2).value);
+                        assertEquals(2, checkLegalWrite(i2).value);
                         i2.value++;
                         
                         return null;
@@ -234,7 +234,7 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 };
                 s.start(task1);
                 
-                assertEquals(3, guardReadOnly(guardReadOnly(a).data[0]).value);
+                assertEquals(3, checkLegalRead(checkLegalRead(a).data[0]).value);
             }
         });
     }
@@ -251,14 +251,14 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 Task<?> task = new Task<Void>(new Object[]{}, new Object[]{slice}, new Object[]{}) {
                     @Override
                     protected Void runRolez() {
-                        guardReadOnly(slice); // Not necessary, but could happen
+                        checkLegalRead(slice); // Not necessary, but could happen
                         assertEquals(1, slice.data[1].value);
                         return null;
                     }
                 };
                 s.start(task);
                 
-                guardReadWrite(guardReadOnly(a).data[1]).value = 0;
+                checkLegalWrite(checkLegalRead(a).data[1]).value = 0;
             }
         });
     }
@@ -274,7 +274,7 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 final CheckedSlice<Int[]> slice = a.slice(0, 5, 1);
                 Task<?> task = new Task<Void>(new Object[]{slice}, new Object[]{}, new Object[]{}) {      @Override
                     protected Void runRolez() {
-                        guardReadWrite(slice); // Not necessary, but could happen
+                        checkLegalWrite(slice); // Not necessary, but could happen
                         for(int i = slice.range.begin; i < slice.range.end; i++)
                             slice.data[i].value++;
                         return null;
@@ -282,11 +282,11 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 };
                 s.start(task);
                 
-                guardReadOnly(a);
+                checkLegalRead(a);
                 for(int i = 0; i < slice.range.end; i++)
-                    assertEquals(i + 1, guardReadOnly(a.data[i]).value);
+                    assertEquals(i + 1, checkLegalRead(a.data[i]).value);
                 for(int i = slice.range.end; i < a.data.length; i++)
-                    assertEquals(i, guardReadOnly(a.data[i]).value);
+                    assertEquals(i, checkLegalRead(a.data[i]).value);
             }
         });
     }
@@ -300,7 +300,7 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                     a.data[i] = i;
                 
                 // say a is guarded here for some reason (so that it's "alreadyGuardedIn" this task)
-                guardReadWrite(a);
+                checkLegalWrite(a);
                 
                 final CheckedSlice<int[]> slice = a.slice(0, 3, 1);
                 Task<?> task = new Task<Void>(new Object[]{slice}, new Object[]{}, new Object[]{}) {
@@ -312,7 +312,7 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 };
                 s.start(task);
                 
-                guardReadWrite(a).data[0] = 1;
+                checkLegalWrite(a).data[0] = 1;
             }
         });
     }
@@ -333,7 +333,7 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 };
                 s.start(task);
                 
-                guardReadWrite(a).data[0] = 1;
+                checkLegalWrite(a).data[0] = 1;
             }
         });
     }
@@ -355,7 +355,7 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 };
                 s.start(task);
                 
-                guardReadOnly(a);
+                checkLegalRead(a);
                 for(int i = 0; i < slice.range.end; i++)
                     assertEquals(i + 1, a.data[i]);
                 for(int i = slice.range.end; i < a.data.length; i++)
@@ -382,7 +382,7 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 };
                 s.start(task);
                 
-                guardReadWrite(a).data[1] = new Int(100);
+                checkLegalWrite(a).data[1] = new Int(100);
             }
         });
     }
@@ -407,7 +407,7 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 };
                 s.start(task);
                 
-                guardReadWrite(a).data[0] = new Int(1);
+                checkLegalWrite(a).data[0] = new Int(1);
             }
         });
     }
@@ -440,7 +440,7 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 };
                 s.start(task1);
                 
-                guardReadWrite(a).data[0] = new Int(1);
+                checkLegalWrite(a).data[0] = new Int(1);
             }
         });
     }
@@ -463,7 +463,7 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 s.start(task);
                 
                 CheckedSlice<Int[]> slice = a.slice(0, 2, 1);
-                guardReadWrite(slice).data[1] = new Int(0);
+                checkLegalWrite(slice).data[1] = new Int(0);
             }
         });
     }
@@ -485,7 +485,7 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 s.start(task);
                 
                 CheckedSlice<int[]> slice2 = a.slice(0, 1, 1);
-                assertEquals(1, guardReadOnly(slice2).data[0]);
+                assertEquals(1, checkLegalRead(slice2).data[0]);
             }
         });
     }
@@ -509,7 +509,7 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 };
                 s.start(task);
                 
-                guardReadWrite(slice2).data[1] = new Int(100);
+                checkLegalWrite(slice2).data[1] = new Int(100);
                 
             }
         });
@@ -535,7 +535,7 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 };
                 s.start(task);
                 
-                guardReadWrite(a).data[1] = 0;
+                checkLegalWrite(a).data[1] = 0;
             }
         });
     }
@@ -557,7 +557,7 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 };
                 s.start(task);
                 
-                guardReadWrite(slice2).data[1] = 2;
+                checkLegalWrite(slice2).data[1] = 2;
             }
         });
     }
@@ -585,7 +585,7 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 };
                 s.start(task);
                 
-                guardReadWrite(a).data[0] = new Int(1);
+                checkLegalWrite(a).data[0] = new Int(1);
             }
         });
     }
@@ -610,7 +610,7 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 };
                 s.start(task);
                 
-                guardReadOnly(a);
+                checkLegalRead(a);
                 for(int i = 0; i < slice.range.end; i++)
                     assertEquals(i + 1, a.data[i]);
                 for(int i = slice.range.end; i < a.data.length; i++)
@@ -654,7 +654,7 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 };
                 s.start(task3);
                 
-                guardReadWrite(i).value = 1;
+                checkLegalWrite(i).value = 1;
             }
         });
     }
@@ -694,7 +694,7 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 };
                 s.start(task3);
                 
-                assertEquals(3, guardReadOnly(i).value);
+                assertEquals(3, checkLegalRead(i).value);
             }
         });
     }
@@ -733,9 +733,9 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 s.start(task2);
                 region(2);
                 
-                guardReadOnly(a);
+                checkLegalRead(a);
                 for(int i = 0; i < a.data.length; i++)
-                    assertEquals(i + 1, guardReadOnly(a.data[i]).value);
+                    assertEquals(i + 1, checkLegalRead(a.data[i]).value);
             }
         });
     }
@@ -778,9 +778,9 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 a.data[2].value++;
                 region(3);
                 
-                guardReadOnly(a);
+                checkLegalRead(a);
                 for(int i = 0; i < a.data.length; i++)
-                    assertEquals(i + 1, guardReadOnly(a.data[i]).value);
+                    assertEquals(i + 1, checkLegalRead(a.data[i]).value);
             }
         });
         
@@ -822,7 +822,7 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 a.data[2]++;
                 region(3);
                 
-                guardReadOnly(a);
+                checkLegalRead(a);
                 for(int i = 0; i < a.data.length; i++)
                     assertEquals(i + 1, a.data[i]);
             }
@@ -849,7 +849,7 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 CheckedSlice<int[]> slice = a.slice(0, 1, 1); // Slicing never blocks
                 region(1);
                 
-                assertEquals(1, guardReadOnly(slice).data[0]);
+                assertEquals(1, checkLegalRead(slice).data[0]);
                 region(2);
             }
         });
@@ -907,7 +907,7 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 s.start(task1);
                 
                 CheckedSlice<int[]> slice = a.slice(0, 1, 1);
-                guardReadWrite(slice).data[0]++;
+                checkLegalWrite(slice).data[0]++;
             }
         });
     }
@@ -937,7 +937,7 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 s.start(task1);
                 
                 CheckedSlice<int[]> slice2 = a.slice(0, 1, 1);
-                guardReadWrite(slice2).data[0]++;
+                checkLegalWrite(slice2).data[0]++;
             }
         });
     }
@@ -968,7 +968,7 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 s.start(task1);
                 
                 CheckedSlice<int[]> slice = a.slice(0, 2, 1); // Slicing in parallel
-                assertEquals(2, guardReadOnly(slice).data[1]);
+                assertEquals(2, checkLegalRead(slice).data[1]);
             }
         });
     }

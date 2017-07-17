@@ -7,6 +7,48 @@ import java.util.Collection;
 
 public class SomeCheckedClasses {
 
+	public static class Int extends Checked {
+		    
+		public int value;
+		
+		public Int() {}
+		
+		public Int(final int value) {
+		    this.value = value;
+		}
+		
+		@Override
+		protected Iterable<? extends Guarded> guardedRefs() {
+		    return emptyList();
+		}
+		
+		@Override
+		protected Collection<? extends Guarded> views() {
+		    return emptyList();
+		}
+	}
+	 
+	public static class Ref<T extends Guarded> extends Guarded {
+	        
+		public T o;
+		
+		public Ref() {}
+		
+		public Ref(final T o) {
+		    this.o = o;
+		}
+		
+		@Override
+		protected Iterable<? extends Guarded> guardedRefs() {
+		    return asList(o);
+		}
+		
+		@Override
+		protected Collection<? extends Guarded> views() {
+		    return emptyList();
+		}
+	}
+	
 	public static class A extends Checked {
 		
 		public int value;

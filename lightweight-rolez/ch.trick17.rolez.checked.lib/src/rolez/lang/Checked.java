@@ -24,7 +24,6 @@ public class Checked extends Guarded {
 	
 	public static <G extends Checked> G checkLegalRead(G checked) {
 		Role declaredRole = checked.getDeclaredRole();
-		System.out.println(declaredRole.toString());
 		if (declaredRole == Role.PURE) {
 			throw new RuntimeException("Cannot perform read operation on " + checked.toString() + " declared role is "
 									 + declaredRole.toString() + ".");

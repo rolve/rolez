@@ -10,17 +10,17 @@ import java.util.RandomAccess;
 import java.util.Set;
 import java.util.WeakHashMap;
 
-public class GuardedSlice<A> extends Guarded {
+public class CheckedSlice<A> extends Checked {
     
     public final A data;
     public final SliceRange range;
     
     /* References to all slices that can at least one index in common. When a slice changes it role,
      * all overlapping slices change their role too. */
-    final Set<GuardedSlice<A>> overlappingSlices = newSetFromMap(
-            new WeakHashMap<GuardedSlice<A>, java.lang.Boolean>());
+    final Set<CheckedSlice<A>> overlappingSlices = newSetFromMap(
+            new WeakHashMap<CheckedSlice<A>, java.lang.Boolean>());
     
-    GuardedSlice(A array, SliceRange range) {
+    CheckedSlice(A array, SliceRange range) {
         /* Slices can have views and therefore are initialized eagerly */
         super(true);
         this.data = array;
@@ -120,17 +120,17 @@ public class GuardedSlice<A> extends Guarded {
             throw new SliceIndexOutOfBoundsException(index);
     }
     
-    public GuardedSlice<A> slice(SliceRange sliceRange) {
+    public CheckedSlice<A> slice(SliceRange sliceRange) {
         if(!range.covers(sliceRange))
             throw new IllegalArgumentException("Given range: " + sliceRange
                     + " is not covered by this slice's range: " + range);
         
-        GuardedSlice<A> slice = new GuardedSlice<>(data, sliceRange);
+        CheckedSlice<A> slice = new CheckedSlice<>(data, sliceRange);
         if(!slice.range.isEmpty()) {
             /* Make sure the new slice is not added while existing slices are being processed */
             synchronized(viewLock()) {
                 /* New slice can only overlap with overlapping slices of this slice */
-                for(GuardedSlice<A> other : overlappingSlices)
+                for(CheckedSlice<A> other : overlappingSlices)
                     if(!slice.range.intersectWith(other.range).isEmpty()) {
                         slice.overlappingSlices.add(other);
                         other.overlappingSlices.add(slice);
@@ -142,22 +142,22 @@ public class GuardedSlice<A> extends Guarded {
         return slice;
     }
     
-    public final GuardedSlice<A> slice(int begin, int end, int step) {
+    public final CheckedSlice<A> slice(int begin, int end, int step) {
         return slice(new SliceRange(begin, end, step));
     }
     
-    public final GuardedSlice<A> slice(int begin, int end) {
+    public final CheckedSlice<A> slice(int begin, int end) {
         return slice(begin, end, 1);
     }
     
     // TODO: Replace return type with some final or even immutable array class
     @SuppressWarnings("unchecked")
-    public final GuardedArray<GuardedSlice<A>[]> partition(Partitioner p, int n) {
+    public final CheckedArray<CheckedSlice<A>[]> partition(Partitioner p, int n) {
         SliceRange[] ranges = p.partition(range, n);
-        GuardedSlice<A>[] slices = new GuardedSlice[n];
+        CheckedSlice<A>[] slices = new CheckedSlice[n];
         for(int i = 0; i < ranges.length; i++)
             slices[i] = slice(ranges[i]);
-        return new GuardedArray<>(slices);
+        return new CheckedArray<>(slices);
     }
     
     @Override

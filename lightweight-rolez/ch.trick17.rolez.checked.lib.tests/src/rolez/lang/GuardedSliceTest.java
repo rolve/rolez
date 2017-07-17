@@ -67,12 +67,12 @@ public class GuardedSliceTest {
     
     @Test
     public void testSlice() {
-        final GuardedArray<?> array = new GuardedArray<>(new Guarded[length]);
+        final CheckedArray<?> array = new CheckedArray<>(new Guarded[length]);
         
-        final List<GuardedSlice<?>> slices = new ArrayList<>();
+        final List<CheckedSlice<?>> slices = new ArrayList<>();
         slices.add(array);
         for(final SliceRange range : ranges) {
-            final GuardedSlice<?> slice = array.slice(range);
+            final CheckedSlice<?> slice = array.slice(range);
             assertEquals(range, slice.range);
             slices.add(slice);
         }
@@ -80,12 +80,12 @@ public class GuardedSliceTest {
         assertSoundSlicesCondition(array, slices);
     }
     
-    private static void assertSoundSlicesCondition(GuardedArray<?> array,
-            List<GuardedSlice<?>> slices) {
+    private static void assertSoundSlicesCondition(CheckedArray<?> array,
+            List<CheckedSlice<?>> slices) {
         for(int index = array.range.begin; index < array.range.end; index += array.range.step) {
             /* Find all slices that contain the given index */
-            final List<GuardedSlice<?>> containing = new ArrayList<>();
-            for(final GuardedSlice<?> s : slices)
+            final List<CheckedSlice<?>> containing = new ArrayList<>();
+            for(final CheckedSlice<?> s : slices)
                 if(contains(s.range, index))
                     containing.add(s);
                     
