@@ -1,8 +1,7 @@
-package rolez.checked.lang;
+package rolez.lang;
 
 import java.util.Set;
 
-import rolez.lang.Guarded;
 import static rolez.lang.Task.currentTask;
 
 /**

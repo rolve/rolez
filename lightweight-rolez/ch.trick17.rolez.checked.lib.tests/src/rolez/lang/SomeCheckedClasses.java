@@ -2,8 +2,8 @@ package rolez.lang;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
+
 import java.util.Collection;
-import rolez.checked.lang.Checked;
 
 public class SomeCheckedClasses {
 

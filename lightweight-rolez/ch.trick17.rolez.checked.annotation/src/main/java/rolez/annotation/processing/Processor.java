@@ -31,7 +31,7 @@ import rolez.annotation.Pure;
 import rolez.annotation.Readonly;
 import rolez.annotation.Readwrite;
 import rolez.annotation.Roleztask;
-import rolez.checked.lang.Role;
+import rolez.lang.Role;
 
 @SupportedAnnotationTypes({"rolez.annotation.Roleztask",
 						   "rolez.annotation.Pure", 
