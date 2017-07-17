@@ -31,7 +31,7 @@ import rolez.annotation.Pure;
 import rolez.annotation.Readonly;
 import rolez.annotation.Readwrite;
 import rolez.annotation.Roleztask;
-import rolez.lang.Role;
+import rolez.checked.lang.Role;
 
 @SupportedAnnotationTypes({"rolez.annotation.Roleztask",
 						   "rolez.annotation.Pure", 
@@ -224,7 +224,7 @@ public class Processor extends AbstractProcessor {
 			// If the super type is object, then the current type has to be annotated with @Checked.
 			ParameterTypeVisitor typeVisitor = new ParameterTypeVisitor();
 			return type.accept(typeVisitor, types);
-		} else if (supertype.toString().equals(rolez.lang.Checked.class.getCanonicalName())) {
+		} else if (supertype.toString().equals(rolez.checked.lang.Checked.class.getCanonicalName())) {
 			// If the super type is the Checked class, then we are done.
 			return true;
 		}
