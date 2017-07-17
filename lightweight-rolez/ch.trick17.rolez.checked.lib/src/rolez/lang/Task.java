@@ -65,6 +65,7 @@ public abstract class Task<V> implements Runnable {
      */
     private Set<Guarded> passedReachable;
 	private Set<Guarded> sharedReachable;
+	private Set<Guarded> pureReachable;
     
     public Set<Guarded> getPassedReachable() {
         return passedReachable;
@@ -72,6 +73,10 @@ public abstract class Task<V> implements Runnable {
 
     public Set<Guarded> getSharedReachable() {
         return sharedReachable;
+    }
+    
+    public Set<Guarded> getPureReachable() {
+        return pureReachable;
     }
     
     /**
@@ -260,6 +265,15 @@ public abstract class Task<V> implements Runnable {
                 ((Guarded) g).guardReadOnlyReachable(sharedReachable, idBits);
         sharedReachable.removeAll(passedReachable);
         
+        pureReachable = newIdentitySet();
+        pureReachable.addAll(passedReachable);
+        pureReachable.addAll(sharedReachable);
+        for (Object g : pureObjects)
+        	if (g instanceof Guarded)
+        		((Guarded)g).setOwnerForSharePure(pureReachable);
+        pureReachable.removeAll(passedReachable);
+        pureReachable.removeAll(sharedReachable);
+        
         //TODO: What has to be done with pure objects?
         
         /* IMPROVE: Only pass (share) objects that are reachable through chain of readwrite
@@ -269,10 +283,6 @@ public abstract class Task<V> implements Runnable {
             g.pass(this);
         for(Guarded g : sharedReachable)
             g.share(this);
-        for(Object g : pureObjects) {
-        	if (g instanceof Guarded)
-        	((Guarded)g).sharePure(this);
-        }
     }
     
     private void completeTaskStartTransitions() {

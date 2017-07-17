@@ -10,14 +10,11 @@ import static rolez.checked.lang.Checked.checkLegalRead;
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-import rolez.checked.lang.Role;
 import rolez.lang.SomeCheckedClasses.*;
 
 @RunWith(Parameterized.class)
@@ -110,6 +107,27 @@ public class ObjectCheckingTest extends TaskBasedJpfTest {
             }
         });
     }
+    
+    @Test(expected = AssertionError.class)
+    public void testPureRef() {
+        assumeVerifyCorrectness();
+    	verifyTask(new Runnable() {
+            public void run() {
+            	final A a = new A();
+            	final B b = new B(a);
+                
+                Task<?> task = new Task<Void>(new Object[]{}, new Object[]{}, new Object[]{b}) {
+                    @Override
+                    protected Void runRolez() {
+                        int i = checkLegalRead(b.a).value;
+                        return null;
+                    }
+                };
+                
+                s.start(task);
+            }
+        });
+    }   
     
     @Test
     public void testRef() {

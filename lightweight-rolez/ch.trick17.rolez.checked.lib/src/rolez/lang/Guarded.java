@@ -133,12 +133,6 @@ public abstract class Guarded {
      * 		 the getDeclaredRole method in the Checked class
      * 		 works.
      */
-    final void sharePure(Task<?> task) {
-    	if (!guardingDisabled) {
-    		// Just ensure that guarding is initialized -> sets owner of object
-    		ensureGuardingInitialized();
-    	}
-    }
     
     final void completePass() {
         if(!guardingDisabled) {
@@ -226,6 +220,18 @@ public abstract class Guarded {
         
         while(!mayWrite())
             park();
+    }
+    
+    final void setOwnerForSharePure(Set<Guarded> processed) {
+    	if (!guardingDisabled) {
+    		if (processed.add(this)) {
+        		ensureGuardingInitialized();
+	    		for (Object g : guardedRefs()) {
+	    			if(g instanceof Guarded)
+	                    ((Guarded) g).setOwnerForSharePure(processed);
+	    		}
+    		}
+    	}
     }
     
     // IMPROVE: Deduplicate guarding cache code using Java 9 VarHandles?
