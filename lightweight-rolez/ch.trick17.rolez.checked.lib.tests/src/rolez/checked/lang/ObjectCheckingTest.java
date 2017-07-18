@@ -6,10 +6,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static rolez.checked.lang.Checked.checkLegalRead;
 import static rolez.checked.lang.Checked.checkLegalWrite;
+import static rolez.checked.lang.Guarded.guardReadOnly;
+import static rolez.checked.lang.Guarded.guardReadWrite;
 
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -132,7 +135,7 @@ public class ObjectCheckingTest extends TaskBasedJpfTest {
                 s.start(task);
             }
         });
-    }   
+    }  
     
     @Test
     public void testRef() {
@@ -180,6 +183,63 @@ public class ObjectCheckingTest extends TaskBasedJpfTest {
                 };
                 
                 s.start(task);
+            }
+        });
+    }
+    
+    @Test
+    public void testReturn() {
+    	verifyTask(new int[][]{{2, 3}, {0, 3}}, new Runnable() {
+            public void run() {
+            	final A a = new A();
+                
+                Task<B> task = new Task<B>(new Object[]{}, new Object[]{}, new Object[]{}) {
+                    @Override
+                    protected B runRolez() {
+                        region(0);
+                        B b = new B(a);
+                        return b;
+                    }
+                };
+                
+                s.start(task);
+                region(2);
+                B b = task.get();
+                
+                // b has to become readwrite in the parent task
+                checkLegalWrite(b).a = new A();
+                region(3);
+            }
+        });
+    }
+    
+    // TODO: Why does this result in "deadlock encountered" by jpf?
+    @Ignore @Test
+    public void testDeadlock() {
+    	verifyTask(new int[][]{{2, 3}, {0, 3}}, new Runnable() {
+            public void run() {
+            	final A a = new A();
+                
+            	// Does only happen when objects are shared or shared pure
+                Task<B> task = new Task<B>(new Object[]{}, new Object[]{a}, new Object[]{}) {
+                    @Override
+                    protected B runRolez() {
+                        region(0);
+                        B b = new B(a);
+                        int i = guardReadOnly(a).value;
+                        //int i = checkLegalRead(a).value;
+                        return b;
+                    }
+                };
+                
+                s.start(task);
+                region(2);
+                B b = task.get();
+                
+                // b has to become readwrite in the parent task
+                guardReadWrite(b).a = new A();
+                //checkLegalWrite(b).a = new A();
+                region(3);
             }
         });
     }
