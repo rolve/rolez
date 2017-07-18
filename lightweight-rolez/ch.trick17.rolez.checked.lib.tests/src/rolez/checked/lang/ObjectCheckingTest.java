@@ -90,36 +90,29 @@ public class ObjectCheckingTest extends TaskBasedJpfTest {
         });
     }
     
-    @Test(expected = AssertionError.class)
     public void testPure() {
         assumeVerifyCorrectness();
-    	verifyTask(new int[][]{{2, 3}, {0, 3}}, new Runnable() {
+        verifyTaskAssertionError(new Runnable() {
             public void run() {
             	final A a = new A();
                 
                 Task<?> task = new Task<Void>(new Object[]{}, new Object[]{}, new Object[]{a}) {
                     @Override
                     protected Void runRolez() {
-                        region(0);
                         // This line is an illegal operation since it is not allowed to read non-final fields
                         // TODO: Try catch for runtime exception and try to propagate it outside
                         int i = checkLegalRead(a).value;
                         return null;
                     }
                 };
-                
                 s.start(task);
-                region(2);
-                
-                region(3);
             }
         });
     }
     
-    @Test(expected = AssertionError.class)
     public void testPureRef() {
         assumeVerifyCorrectness();
-    	verifyTask(new Runnable() {
+        verifyTaskAssertionError(new Runnable() {
             public void run() {
             	final A a = new A();
             	final B b = new B(a);
@@ -135,7 +128,44 @@ public class ObjectCheckingTest extends TaskBasedJpfTest {
                 s.start(task);
             }
         });
-    }  
+    }
+    
+    @Test
+    public void testPassNested() {
+        verifyTask(new int[][]{{4, 5}, {2, 5}, {0, 5}}, new Runnable() {
+            public void run() {
+                final Int i = new Int();
+                
+                Task<?> task1 = new Task<Void>(new Object[]{i}, new Object[]{}, new Object[]{}) {
+                    @Override
+                    protected Void runRolez() {
+                        i.value++;
+                        
+                        Task<?> task2 = new Task<Void>(new Object[]{i}, new Object[]{}, new Object[]{}) {
+                            @Override
+                            protected Void runRolez() {
+                                i.value++;
+                                region(0);
+                                return null;
+                            }
+                        };
+                        s.start(task2);
+                        region(2);
+                        
+                        assertEquals(2, checkLegalWrite(i).value);
+                        i.value++;
+                        return null;
+                    }
+                };
+                s.start(task1);
+                region(4);
+                
+                assertEquals(3, checkLegalRead(i).value);
+                
+                region(5);
+            }
+        });
+    }
     
     @Test
     public void testRef() {
@@ -162,26 +192,19 @@ public class ObjectCheckingTest extends TaskBasedJpfTest {
         });
     }
     
-    
-    // TODO: Find a way to test for the specific exception that will be thrown. 
-    //		 This is not clean since the assertion error could be thrown by a 
-    //		 real bug in the code...
-    @Test(expected = AssertionError.class)
     public void testRuntimeException() {
         assumeVerifyCorrectness();
-    	verifyTask(new Runnable() {
+        verifyTaskAssertionError(new Runnable() {
     		public void run() {
             	final A a = new A();
             	
             	Task<?> task = new Task<Void>(new Object[]{}, new Object[]{a}, new Object[]{}) {
                     @Override
                     protected Void runRolez() {
-                        region(0);
                         checkLegalWrite(a).value = 1;
                         return null;
                     }
                 };
-                
                 s.start(task);
             }
         });
