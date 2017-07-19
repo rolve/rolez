@@ -23,21 +23,39 @@ public class Checked extends Guarded {
 	}
 	
 	public static <G extends Checked> G checkLegalRead(G checked) {
-		Role declaredRole = checked.getDeclaredRole();
-		if (declaredRole == Role.PURE) {
-			throw new RuntimeException("Cannot perform read operation on " + checked.toString() + " declared role is "
-									 + declaredRole.toString() + ".");
-		}
+		checked.isLegalRead();
 		return guardReadOnly(checked);
 	}
 	
-	public static <G extends Checked> G checkLegalWrite(G checked) {
-		Role declaredRole = checked.getDeclaredRole();
-		if (declaredRole == Role.PURE || declaredRole == Role.READONLY) {
-			throw new RuntimeException("Cannot perform write operation on " + checked.toString() + " declared role is "
+	public static <G extends Checked> G checkLegalRead(G checked, long currentTaskIdBits) {
+		checked.isLegalRead();
+		return guardReadOnly(checked, currentTaskIdBits);
+	}
+	
+	protected <G extends Checked> void isLegalRead() {
+		Role declaredRole = this.getDeclaredRole();
+		if (declaredRole == Role.PURE) {
+			throw new RuntimeException("Cannot perform read operation on " + this.toString() + " declared role is "
 									 + declaredRole.toString() + ".");
 		}
+	}
+	
+	public static <G extends Checked> G checkLegalWrite(G checked) {
+		checked.isLegalWrite();
 		return guardReadWrite(checked);
+	}
+	
+	public static <G extends Checked> G checkLegalWrite(G checked, long currentTaskIdBits) {
+		checked.isLegalWrite();
+		return guardReadOnly(checked, currentTaskIdBits);
+	}
+	
+	protected <G extends Checked> void isLegalWrite() {
+		Role declaredRole = this.getDeclaredRole();
+		if (declaredRole == Role.PURE || declaredRole == Role.READONLY) {
+			throw new RuntimeException("Cannot perform write operation on " + this.toString() + " declared role is "
+									 + declaredRole.toString() + ".");
+		}
 	}
 	
 	protected <G extends Checked> Role getDeclaredRole() {
