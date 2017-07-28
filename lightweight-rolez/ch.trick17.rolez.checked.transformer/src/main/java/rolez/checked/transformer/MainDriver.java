@@ -1,24 +1,17 @@
 package rolez.checked.transformer;
 
-import soot.Pack;
 import soot.PackManager;
 import soot.Transform;
 
 public class MainDriver {
 	public static void main(String[] args) {
-		if (args.length == 0) {
-			System.err.println("Usage: java MainDriver [options] classname");
-			System.exit(0);
-		}
 		
-		Pack jtp = PackManager.v().getPack("jtp");
-		jtp.add(new Transform("jtp.instrumenter", new Transformer()));
-
-		for (String arg : args) {
-			System.out.print(arg + " ");
-		}
-		System.out.println("");
+		// When using a SceneTransformer we have to work on the wjtp (whole-)program pack
+		PackManager.v().getPack("wjtp").add(
+			new Transform("wjtp.transformer", new ClassTransformer())
+		);
 		
+		System.out.println("Starting soot.Main");
 		soot.Main.main(args);
-	}
+	} 
 }

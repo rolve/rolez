@@ -60,25 +60,26 @@ public class Checked extends Guarded {
 	
 	protected <G extends Checked> Role getDeclaredRole() {
 		// Was passed to this task
-		Set<Guarded> passed = currentTask().getPassedReachable();
+		Task<?> currentTask = currentTask();
+		Set<Guarded> passed = currentTask.getPassedReachable();
 		if (passed.contains(this))
 			return Role.READWRITE;
 		
 		// Was shared with this task
-		Set<Guarded> shared = currentTask().getSharedReachable();
+		Set<Guarded> shared = currentTask.getSharedReachable();
 		if (shared.contains(this))
 			return Role.READONLY;
 		
 		// Was declared in an ancestor task but accessible in this task 
 		// -> must therefore be shared pure
-		if (hasAncestorTaskAsOwner())
+		if (hasAncestorTaskAsOwner(currentTask))
 			return Role.PURE;
 		
 		// Was declared in this task and not shared or passed
 		return Role.READWRITE;
 	}
 	
-	protected <G extends Checked> boolean hasAncestorTaskAsOwner() {
-		return currentTask().isDescendantOf(getOwner());
+	protected <G extends Checked> boolean hasAncestorTaskAsOwner(Task<?> currentTask) {
+		return currentTask.isDescendantOf(getOwner());
 	}
 }

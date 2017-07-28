@@ -11,5 +11,6 @@
         <module>ch.trick17.rolez.checked.lib.tests</module>
         <module>ch.trick17.rolez.checked.annotation</module>
         <module>AnnotationTest</module>
+        <module>ch.trick17.rolez.checked.transformer</module>
     </modules>
 </project>
