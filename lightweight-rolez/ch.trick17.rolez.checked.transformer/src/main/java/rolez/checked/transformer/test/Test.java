@@ -2,6 +2,8 @@ package rolez.checked.transformer.test;
 
 import static rolez.checked.lang.Checked.checkLegalRead;
 import rolez.annotation.Checked;
+import rolez.annotation.Readwrite;
+import rolez.annotation.Roleztask;
 import rolez.checked.lang.Task;
 import rolez.checked.lang.ThreadPoolTaskSystem;
 
@@ -32,6 +34,11 @@ public class Test {
 		});
 		
 		s.run(vt);
+	}
+	
+	@Roleztask
+	public static void bar(@Readwrite A a, final boolean $asTask) {
+		a.foo = 2;
 	}
 	
 	private class Foo {
