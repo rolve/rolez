@@ -20,29 +20,31 @@ public class Test {
 		dst.foo = src.foo;
 		return dst.foo;
 	}
-	
+
+	/*
 	// Resulting methods after transformation
-	public Integer test(final A src, final A dst, final boolean $asTask) {
+	public void test(final A src, final A dst, final boolean $asTask) {
 		if ($asTask) {
-			Task<Integer> task = $testTask(src, dst);
+			Task<Void> task = $testTask(src, dst);
 			task.run();
-			return task.get();
 		} else {
-			return $test(src, dst);
+			$test(src, dst);
 		}
 	}
 	
-	public int $test(final A src, final A dst) {
+	// Method for sequential execution -> essentially the same as the method before
+	public void $test(final A src, final A dst) {
 		dst.foo = src.foo;
-		return dst.foo;
 	}
+	*/
 	
-	public Task<Integer> $testTask(final A src, final A dst) {
-        return new Task<Integer>(new Object[]{dst}, new Object[]{src}, new Object[]{}) {
+	// Method which returns the rolez task
+	public Task<Void> $testTask(final A src, final A dst) {
+        return new Task<Void>(new Object[]{dst}, new Object[]{src}, new Object[]{}) {
             @Override
-            protected Integer runRolez() {
+            protected Void runRolez() {
             	dst.foo = src.foo;
-                return dst.foo;
+                return null;
             }
         };
     }

@@ -1,6 +1,5 @@
 package rolez.checked.transformer;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -9,10 +8,22 @@ import org.apache.logging.log4j.Logger;
 
 import rolez.checked.lang.Checked;
 import rolez.checked.transformer.exceptions.IllegalCheckedAnnotation;
+import soot.AttributesUnitPrinter;
+import soot.Local;
 import soot.Scene;
 import soot.SceneTransformer;
 import soot.SootClass;
+import soot.SootFieldRef;
 import soot.SootMethod;
+import soot.SootMethodRef;
+import soot.Type;
+import soot.Unit;
+import soot.UnitBox;
+import soot.UnitPrinter;
+import soot.ValueBox;
+import soot.jimple.AssignStmt;
+import soot.jimple.Constant;
+import soot.jimple.IdentityRef;
 import soot.tagkit.AnnotationTag;
 import soot.tagkit.Tag;
 import soot.tagkit.VisibilityAnnotationTag;
@@ -30,6 +41,7 @@ public class ClassTransformer extends SceneTransformer {
 	final static Logger logger = LogManager.getLogger(ClassTransformer.class);
 	
 	SootClass checkedClass;
+	SootClass objectClass;
 	
 	static final String ROLEZTASK_ANNOTATION = "Lrolez/annotation/Roleztask;";
 	static final String CHECKED_ANNOTATION = "Lrolez/annotation/Checked;";
@@ -39,6 +51,7 @@ public class ClassTransformer extends SceneTransformer {
 		
 		// Load useful classes
 		checkedClass = Scene.v().loadClassAndSupport(Checked.class.getCanonicalName());
+		objectClass = Scene.v().loadClassAndSupport(Object.class.getCanonicalName());
 		
 		// Start transformation
 		processClasses();
@@ -58,7 +71,7 @@ public class ClassTransformer extends SceneTransformer {
 					for (AnnotationTag aTag : vTag.getAnnotations()) {
 						if (aTag.getType().equals(CHECKED_ANNOTATION)) {
 							try {
-								if (c.getSuperclass().getName().equals("java.lang.Object")) 
+								if (c.getSuperclass().getName().equals(objectClass.getName())) 
 									c.setSuperclass(checkedClass);
 								else {
 									// TODO: This should actually never happen since the annotation processor should handle this...
@@ -72,9 +85,18 @@ public class ClassTransformer extends SceneTransformer {
 				}
 			}
 			
+			// The following code is used to display stuff during development
 			SootClass anonymousClass = Scene.v().getSootClass("rolez.checked.transformer.test.Test$1");
 			for (SootMethod m : anonymousClass.getMethods()) {
-				System.out.println(m.retrieveActiveBody());
+				if (m.getName().equals("<init>")) {
+					logger.debug("\n" + m.getDeclaringClass().toString() + "\n" + m.getBytecodeParms() + "\n" + m.retrieveActiveBody());
+					for (Unit u : m.getActiveBody().getUnits()) {
+						logger.debug(u.toString() + " : " + u.getClass().getCanonicalName());
+						if (u instanceof AssignStmt){
+							
+						}
+					}
+				}
 			}
 			
 			processMethods(c);
@@ -83,7 +105,7 @@ public class ClassTransformer extends SceneTransformer {
 	
 	private void processMethods(SootClass c) {
 		for (SootMethod m : c.getMethods()) {
-			System.out.println(m.retrieveActiveBody());
+			logger.debug("\n" + m.retrieveActiveBody());
 			for (Tag t : m.getTags()) {
 				if (t instanceof VisibilityAnnotationTag) {
 					for (AnnotationTag aTag : ((VisibilityAnnotationTag)t).getAnnotations()) {
