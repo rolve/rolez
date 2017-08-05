@@ -22,6 +22,7 @@ import soot.Scene;
 import soot.SootClass;
 import soot.SootField;
 import soot.SootMethod;
+import soot.SootMethodRef;
 import soot.SourceLocator;
 import soot.Type;
 import soot.Unit;
@@ -32,6 +33,7 @@ import soot.jimple.JimpleBody;
 import soot.options.Options;
 import soot.util.Chain;
 import soot.util.JasminOutputStream;
+import soot.util.NumberedString;
 
 
 /**
@@ -47,6 +49,7 @@ public class TaskMethodGenerator {
 	
 	private SootClass targetClass;
 	private SootMethod srcMethod;
+	private SootClass innerClass;
 
 	private SootClass taskClass;
 	private SootClass objectClass;
@@ -65,9 +68,10 @@ public class TaskMethodGenerator {
 	}
 	
 	private void generateInnerClass() {
-		SootClass innerTaskClass = new SootClass(getClassNameFromMethod());
-		innerTaskClass.setSuperclass(taskClass);
-		generateInnerClassConstructor(innerTaskClass);
+		innerClass = new SootClass(getClassNameFromMethod());
+		innerClass.setSuperclass(taskClass);
+		generateInnerClassFields();
+		generateInnerClassConstructor();
 		
 		/*
 		SootMethod runRolezMethod = new SootMethod("runRolez", new ArrayList<>(), srcMethod.getReturnType(), Modifier.PROTECTED);
@@ -78,13 +82,26 @@ public class TaskMethodGenerator {
 		*/
 	}
 	
-	private void generateInnerClassConstructor(SootClass innerClass) {
+	private void generateInnerClassFields() {
+		SootField outerClassReference = new SootField("this$0", targetClass.getType());
+		innerClass.addField(outerClassReference);
+	
+		// Add a field for every source method parameter
+		for (int i=0; i<srcMethod.getParameterCount(); i++) {
+			SootField paramField = new SootField("val$f" + Integer.toString(i), srcMethod.getParameterType(i));
+			innerClass.addField(paramField);
+		}
+	}
+	
+	private void generateInnerClassConstructor() {
 		logger.debug("Generating inner class constructor");
 		
 		// Useful variables
 		ArrayType objectArrayType = ArrayType.v(RefType.v(objectClass),1);
 		RefType targetClassType = targetClass.getType();
 		RefType innerClassType = innerClass.getType();
+		int offset = 5;
+		int numberOffset = 4;
 		
 		// List of constructor parameters
 		List<Type> parameterTypes = new ArrayList<Type>();
@@ -113,27 +130,6 @@ public class TaskMethodGenerator {
 		
 		innerClass.addMethod(constructor);
 		
-		/* TODO: Create body of constructor which should look like the following (preceding x = implemented)
-	    {
-	       x rolez.checked.transformer.test.Test$1 r0;
-	       x rolez.checked.transformer.test.Test r1;
-	       x java.lang.Object[] r2, r3, r4;
-	       x rolez.checked.transformer.test.A r5, r6;
-	
-	       x r0 := @this: rolez.checked.transformer.test.Test$1;
-	       x r1 := @parameter0: rolez.checked.transformer.test.Test;
-	       x r2 := @parameter1: java.lang.Object[];
-	       x r3 := @parameter2: java.lang.Object[];
-	       x r4 := @parameter3: java.lang.Object[];
-	       x r5 := @parameter4: rolez.checked.transformer.test.A;
-	       x r6 := @parameter5: rolez.checked.transformer.test.A;
-	        r0.<rolez.checked.transformer.test.Test$1: rolez.checked.transformer.test.Test this$0> = r1;
-	        r0.<rolez.checked.transformer.test.Test$1: rolez.checked.transformer.test.A val$dst> = r5;
-	        r0.<rolez.checked.transformer.test.Test$1: rolez.checked.transformer.test.A val$src> = r6;
-	        specialinvoke r0.<rolez.checked.lang.Task: void <init>(java.lang.Object[],java.lang.Object[],java.lang.Object[])>(r2, r3, r4);
-	        return;
-	    }
-		*/
 		JimpleBody body = Jimple.v().newBody(constructor);
 		constructor.setActiveBody(body);
 		
@@ -144,7 +140,6 @@ public class TaskMethodGenerator {
 		locals.add(Jimple.v().newLocal("r2", objectArrayType));
 		locals.add(Jimple.v().newLocal("r3", objectArrayType));
 		locals.add(Jimple.v().newLocal("r4", objectArrayType));
-		int offset = 5;
 		for (int i=0; i<srcParameterTypes.size(); i++) {
 			locals.add(Jimple.v().newLocal("r"+Integer.toString(offset + i), srcParameterTypes.get(i)));
 		}
@@ -160,18 +155,29 @@ public class TaskMethodGenerator {
 		units.add(Jimple.v().newIdentityStmt(locals.get(2), Jimple.v().newParameterRef(objectArrayType, 1)));
 		units.add(Jimple.v().newIdentityStmt(locals.get(3), Jimple.v().newParameterRef(objectArrayType, 2)));
 		units.add(Jimple.v().newIdentityStmt(locals.get(4), Jimple.v().newParameterRef(objectArrayType, 3)));
-		int numberOffset = 4;
 		for (int i=0; i<srcParameterTypes.size(); i++) {
 			units.add(Jimple.v().newIdentityStmt(locals.get(i+offset), Jimple.v().newParameterRef(srcParameterTypes.get(i), i+numberOffset)));
 		}
 		
-		// Set fields for parameters and outer class
-		// TODO: How to get the names of the fields?
-		//units.add(Jimple.v().newAssignStmt(Jimple.v().newInstanceFieldRef(Scene.v().getField("<java.lang.System: java.io.PrintStream out>").makeRef(), rvalue))
+		// Set field field for outer class ref
+		units.add(Jimple.v().newAssignStmt(Jimple.v().newInstanceFieldRef(locals.get(0), innerClass.getFieldByName("this$0").makeRef()), locals.get(1)));
+		
+		// Set fields for method parameters
+		for (int i=0; i<srcMethod.getParameterCount(); i++) {
+			units.add(Jimple.v().newAssignStmt(Jimple.v().newInstanceFieldRef(locals.get(0), innerClass.getFieldByName("val$f" + Integer.toString(i)).makeRef()), locals.get(offset + i)));
+		}
 		
 		// Add the call to superclass constructor
-		
-		
+		units.add(Jimple.v().newInvokeStmt(
+				Jimple.v().newSpecialInvokeExpr(
+						locals.get(0), 
+						taskClass.getMethodByName("<init>").makeRef(), 
+						Arrays.asList(new Local[] {
+								locals.get(2), 
+								locals.get(3), 
+								locals.get(4)})
+		)));
+				
 		logger.debug(constructor.getActiveBody().toString());	
 	}
 	
