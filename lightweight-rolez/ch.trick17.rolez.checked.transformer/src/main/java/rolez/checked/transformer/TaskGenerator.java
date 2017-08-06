@@ -1,11 +1,5 @@
 package rolez.checked.transformer;
 
-import java.awt.PageAttributes.OriginType;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -22,18 +16,12 @@ import soot.Scene;
 import soot.SootClass;
 import soot.SootField;
 import soot.SootMethod;
-import soot.SootMethodRef;
-import soot.SourceLocator;
 import soot.Type;
 import soot.Unit;
 import soot.VoidType;
-import soot.jimple.JasminClass;
 import soot.jimple.Jimple;
 import soot.jimple.JimpleBody;
-import soot.options.Options;
 import soot.util.Chain;
-import soot.util.JasminOutputStream;
-import soot.util.NumberedString;
 
 
 /**
@@ -43,9 +31,12 @@ import soot.util.NumberedString;
  * @author Michael Giger
  *
  */
-public class TaskMethodGenerator {
+public class TaskGenerator {
 
-	final static Logger logger = LogManager.getLogger(ClassTransformer.class);
+	// TODO: Write a class that represents the inner class and contains all SootClasses and SootMethods 
+	//       generated here.
+	
+	final static Logger logger = LogManager.getLogger(TaskGenerator.class);
 	
 	private SootClass targetClass;
 	private SootMethod srcMethod;
@@ -54,7 +45,7 @@ public class TaskMethodGenerator {
 	private SootClass taskClass;
 	private SootClass objectClass;
 	
-	public TaskMethodGenerator(SootClass targetClass, SootMethod srcMethod) {
+	public TaskGenerator(SootClass targetClass, SootMethod srcMethod) {
 		this.targetClass = targetClass;
 		this.srcMethod = srcMethod;
 
@@ -72,14 +63,7 @@ public class TaskMethodGenerator {
 		innerClass.setSuperclass(taskClass);
 		generateInnerClassFields();
 		generateInnerClassConstructor();
-		
-		/*
-		SootMethod runRolezMethod = new SootMethod("runRolez", new ArrayList<>(), srcMethod.getReturnType(), Modifier.PROTECTED);
-		runRolezMethod.setActiveBody(srcMethod.retrieveActiveBody());
-		innerTaskClass.addMethod(runRolezMethod);
-		innerTaskClass.setOuterClass(targetClass);
-		Scene.v().addClass(innerTaskClass);
-		*/
+		generateRunRolezMethods();
 	}
 	
 	private void generateInnerClassFields() {
@@ -114,7 +98,7 @@ public class TaskMethodGenerator {
 		parameterTypes.add(objectArrayType);
 		parameterTypes.add(objectArrayType);
 		
-		// TODO: Don't add the boolean $asTask to the list...
+		// TODO: Don't add the boolean $asTask to the list... Or does it even matter?
 		// Add all original method parameters
 		List<Type> srcParameterTypes = srcMethod.getParameterTypes();
 		for (Type t : srcParameterTypes) {
@@ -146,8 +130,7 @@ public class TaskMethodGenerator {
 		
 		// Add the locals to the body
 		Chain<Local> bodyLocals = body.getLocals();
-		for (Local l : locals)
-			bodyLocals.add(l);
+		bodyLocals.addAll(locals);
 		
 		Chain<Unit> units = body.getUnits();
 		units.add(Jimple.v().newIdentityStmt(locals.get(0), Jimple.v().newThisRef(innerClassType)));
@@ -177,8 +160,74 @@ public class TaskMethodGenerator {
 								locals.get(3), 
 								locals.get(4)})
 		)));
-				
-		logger.debug(constructor.getActiveBody().toString());	
+	}
+	
+	private void generateRunRolezMethods() {
+
+		// Generate concrete method
+		SootMethod runRolezConcrete = generateRunRolezConcreteMethod();
+		
+		// Generate "bridge" method
+		generateRunRolezObjectMethod(runRolezConcrete);
+		
+	}
+	
+	private SootMethod generateRunRolezConcreteMethod() {
+
+		RefType innerClassType = innerClass.getType();
+		RefType voidType = RefType.v("java.lang.Void");
+		
+		SootMethod runRolezConcrete;
+		Type returnType = null;
+		
+		// TODO: Handle primitive types!!! --> This switch may grow large... :-/
+		switch (srcMethod.getReturnType().toString()) {
+			case("void"):
+				returnType = voidType;
+				break;
+			default:
+				returnType = srcMethod.getReturnType();
+				break;
+		}
+
+		logger.debug("Generating runRolez() : " + returnType.toString());
+		
+		runRolezConcrete = new SootMethod("runRolez", new ArrayList<Type>(), returnType);
+		innerClass.addMethod(runRolezConcrete);
+		
+		// TODO: Implement body
+
+		//logger.debug("\n" + runRolezConcrete.getActiveBody().toString());
+		return runRolezConcrete;
+	}
+	
+	private SootMethod generateRunRolezObjectMethod(SootMethod runRolezConcrete) {
+		logger.debug("Generating runRolez() : java.lang.Object");
+		
+		RefType innerClassType = innerClass.getType();
+		RefType voidType = RefType.v("java.lang.Void");
+		
+		SootMethod runRolezObject = new SootMethod("runRolez", new ArrayList<Type>(), objectClass.getType());
+		runRolezObject.setModifiers(Modifier.VOLATILE | Modifier.PROTECTED);
+		
+		innerClass.addMethod(runRolezObject);
+		
+		JimpleBody body = Jimple.v().newBody(runRolezObject);
+		runRolezObject.setActiveBody(body);
+		
+		Chain<Local> bodyLocals = body.getLocals();
+		Local thisLocal = Jimple.v().newLocal("r0", innerClassType);
+		bodyLocals.add(thisLocal);
+		Local returnLocal = Jimple.v().newLocal("$r1", voidType);
+		bodyLocals.add(returnLocal);
+
+		Chain<Unit> units = body.getUnits();
+		units.add(Jimple.v().newIdentityStmt(thisLocal, Jimple.v().newThisRef(innerClassType)));
+		units.add(Jimple.v().newAssignStmt(returnLocal, Jimple.v().newVirtualInvokeExpr(thisLocal, runRolezConcrete.makeRef())));
+		units.add(Jimple.v().newReturnStmt(returnLocal));
+		
+		logger.debug("\n" + runRolezObject.getActiveBody().toString());	
+		return runRolezObject;
 	}
 	
 	private String getClassNameFromMethod() {

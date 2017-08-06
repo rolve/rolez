@@ -67,50 +67,32 @@ public class ClassTransformer extends SceneTransformer {
 			List<Tag> classTags = c.getTags();
 			for (Tag t : classTags) {
 				if (t instanceof VisibilityAnnotationTag) {
-					VisibilityAnnotationTag vTag = (VisibilityAnnotationTag) t;
-					for (AnnotationTag aTag : vTag.getAnnotations()) {
-						if (aTag.getType().equals(CHECKED_ANNOTATION)) {
-							try {
-								if (c.getSuperclass().getName().equals(objectClass.getName())) 
-									c.setSuperclass(checkedClass);
-								else {
-									// TODO: This should actually never happen since the annotation processor should handle this...
-									throw new IllegalCheckedAnnotation("Checked annotations can only be placed at classes without a supertype");
-								}
-							} catch (IllegalCheckedAnnotation e) {
-								e.printStackTrace();
-							}
-						}
+					for (AnnotationTag aTag : ((VisibilityAnnotationTag) t).getAnnotations()) {
+						if (aTag.getType().equals(CHECKED_ANNOTATION))
+							c.setSuperclass(checkedClass);							
 	                }
 				}
 			}
+
+			processMethods(c);
 			
 			// The following code is used to display stuff during development
 			SootClass anonymousClass = Scene.v().getSootClass("rolez.checked.transformer.test.Test$1");
 			for (SootMethod m : anonymousClass.getMethods()) {
-				if (m.getName().equals("<init>")) {
+				if (m.getName().equals("runRolez"))
 					logger.debug("\n" + m.getDeclaringClass().toString() + "\n" + m.getBytecodeParms() + "\n" + m.retrieveActiveBody());
-					for (Unit u : m.getActiveBody().getUnits()) {
-						logger.debug(u.toString() + " : " + u.getClass().getCanonicalName());
-						if (u instanceof AssignStmt){
-							
-						}
-					}
-				}
 			}
 			
-			processMethods(c);
 		}
 	}
 	
 	private void processMethods(SootClass c) {
 		for (SootMethod m : c.getMethods()) {
-			logger.debug("\n" + m.retrieveActiveBody());
 			for (Tag t : m.getTags()) {
 				if (t instanceof VisibilityAnnotationTag) {
-					for (AnnotationTag aTag : ((VisibilityAnnotationTag)t).getAnnotations()) {
+					for (AnnotationTag aTag : ((VisibilityAnnotationTag) t).getAnnotations()) {
 						if (aTag.getType().equals(ROLEZTASK_ANNOTATION)) {
-							TaskMethodGenerator taskGenerator = new TaskMethodGenerator(c, m);
+							TaskGenerator taskGenerator = new TaskGenerator(c, m);
 							taskGenerator.generateMethod();
 						}
 	                }

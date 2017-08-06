@@ -16,9 +16,8 @@ public class Test {
 
 	// Original code
 	@Roleztask
-	public int testOriginal(@Readonly A src, @Readwrite A dst, final boolean $asTask) {
+	public void testOriginal(@Readonly A src, @Readwrite A dst, final boolean $asTask) {
 		dst.foo = src.foo;
-		return dst.foo;
 	}
 
 	/*
