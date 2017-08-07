@@ -7,23 +7,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import rolez.checked.lang.Checked;
-import rolez.checked.transformer.exceptions.IllegalCheckedAnnotation;
-import soot.AttributesUnitPrinter;
-import soot.Local;
 import soot.Scene;
 import soot.SceneTransformer;
 import soot.SootClass;
-import soot.SootFieldRef;
 import soot.SootMethod;
-import soot.SootMethodRef;
-import soot.Type;
 import soot.Unit;
-import soot.UnitBox;
-import soot.UnitPrinter;
-import soot.ValueBox;
-import soot.jimple.AssignStmt;
-import soot.jimple.Constant;
-import soot.jimple.IdentityRef;
+import soot.jimple.ReturnStmt;
 import soot.tagkit.AnnotationTag;
 import soot.tagkit.Tag;
 import soot.tagkit.VisibilityAnnotationTag;
@@ -73,16 +62,25 @@ public class ClassTransformer extends SceneTransformer {
 	                }
 				}
 			}
-
-			processMethods(c);
 			
+			processMethods(c);
+
 			// The following code is used to display stuff during development
 			SootClass anonymousClass = Scene.v().getSootClass("rolez.checked.transformer.test.Test$1");
-			for (SootMethod m : anonymousClass.getMethods()) {
-				if (m.getName().equals("runRolez"))
-					logger.debug("\n" + m.getDeclaringClass().toString() + "\n" + m.getBytecodeParms() + "\n" + m.retrieveActiveBody());
+			for (Tag t : anonymousClass.getTags()) {
+				logger.debug(t);
 			}
-			
+			for (SootMethod m : anonymousClass.getMethods()) {
+				if (m.getName().equals("runRolez")) {
+					logger.debug("\n" + m.getDeclaringClass().toString() + "\n" + m.retrieveActiveBody());
+					for (Unit u : m.getActiveBody().getUnits()) {
+						if (u instanceof ReturnStmt) {
+							ReturnStmt rs =(ReturnStmt)u;
+							logger.debug(u.getClass().toString() + rs.getOp().getClass());
+						}
+					}
+				}
+			}
 		}
 	}
 	
