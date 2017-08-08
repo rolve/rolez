@@ -67,6 +67,7 @@ public class ClassTransformer extends SceneTransformer {
 
 			// The following code is used to display stuff during development
 			SootClass anonymousClass = Scene.v().getSootClass("rolez.checked.transformer.test.Test$1");
+			/*
 			for (Tag t : anonymousClass.getTags()) {
 				logger.debug(t);
 			}
@@ -81,11 +82,13 @@ public class ClassTransformer extends SceneTransformer {
 					}
 				}
 			}
+			*/
 		}
 	}
 	
 	private void processMethods(SootClass c) {
 		for (SootMethod m : c.getMethods()) {
+			logger.debug("\n" + m.retrieveActiveBody().toString());
 			for (Tag t : m.getTags()) {
 				if (t instanceof VisibilityAnnotationTag) {
 					for (AnnotationTag aTag : ((VisibilityAnnotationTag) t).getAnnotations()) {
