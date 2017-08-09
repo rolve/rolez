@@ -13,29 +13,11 @@ public class Test {
 		
 	}
 	
-
 	// Original code
 	@Roleztask
 	public void testOriginal(@Readonly A src, @Readwrite A dst, final boolean $asTask) {
 		dst.foo = src.foo;
 	}
-
-	/*
-	// Resulting methods after transformation
-	public void test(final A src, final A dst, final boolean $asTask) {
-		if ($asTask) {
-			Task<Void> task = $testTask(src, dst);
-			task.run();
-		} else {
-			$test(src, dst);
-		}
-	}
-	
-	// Method for sequential execution -> essentially the same as the method before
-	public void $test(final A src, final A dst) {
-		dst.foo = src.foo;
-	}
-	*/
 	
 	// Method which returns the rolez task
 	public Task<Void> $testTask(final A src, final A dst) {
