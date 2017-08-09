@@ -53,52 +53,40 @@ public class ClassTransformer extends SceneTransformer {
 		for (SootClass c : classes) {
 			logger.debug("Processing class: " + c.getName());
 			
-			List<Tag> classTags = c.getTags();
-			for (Tag t : classTags) {
-				if (t instanceof VisibilityAnnotationTag) {
-					for (AnnotationTag aTag : ((VisibilityAnnotationTag) t).getAnnotations()) {
-						if (aTag.getType().equals(CHECKED_ANNOTATION))
-							c.setSuperclass(checkedClass);							
-	                }
-				}
-			}
+			if (hasCheckedAnnotation(c))
+				c.setSuperclass(checkedClass);
 			
 			processMethods(c);
-
-			// The following code is used to display stuff during development
-			SootClass anonymousClass = Scene.v().getSootClass("rolez.checked.transformer.test.Test$1");
-			/*
-			for (Tag t : anonymousClass.getTags()) {
-				logger.debug(t);
-			}
-			for (SootMethod m : anonymousClass.getMethods()) {
-				if (m.getName().equals("runRolez")) {
-					logger.debug("\n" + m.getDeclaringClass().toString() + "\n" + m.retrieveActiveBody());
-					for (Unit u : m.getActiveBody().getUnits()) {
-						if (u instanceof ReturnStmt) {
-							ReturnStmt rs =(ReturnStmt)u;
-							logger.debug(u.getClass().toString() + rs.getOp().getClass());
-						}
-					}
-				}
-			}
-			*/
 		}
+	}
+	
+	private boolean hasCheckedAnnotation(SootClass c) {
+		List<Tag> classTags = c.getTags();
+		for (Tag t : classTags) 
+			if (t instanceof VisibilityAnnotationTag) 
+				for (AnnotationTag aTag : ((VisibilityAnnotationTag) t).getAnnotations()) 
+					if (aTag.getType().equals(CHECKED_ANNOTATION))
+						return true;
+		return false;
 	}
 	
 	private void processMethods(SootClass c) {
 		for (SootMethod m : c.getMethods()) {
-			logger.debug("\n" + m.retrieveActiveBody().toString());
-			for (Tag t : m.getTags()) {
-				if (t instanceof VisibilityAnnotationTag) {
-					for (AnnotationTag aTag : ((VisibilityAnnotationTag) t).getAnnotations()) {
-						if (aTag.getType().equals(ROLEZTASK_ANNOTATION)) {
-							TaskGenerator taskGenerator = new TaskGenerator(c, m);
-							taskGenerator.generateMethod();
-						}
-	                }
-				}
+			logger.debug("Processing method: " + c.getName() + ":" + m.getName());
+			if (hasRoleztaskAnnotation(m)) {
+				TaskGenerator taskGenerator = new TaskGenerator(c, m);
+				taskGenerator.generateMethod();
 			}
+			
 		}
+	}
+	
+	private boolean hasRoleztaskAnnotation(SootMethod m) {
+		for (Tag t : m.getTags()) 
+			if (t instanceof VisibilityAnnotationTag) 
+				for (AnnotationTag aTag : ((VisibilityAnnotationTag) t).getAnnotations()) 
+					if (aTag.getType().equals(ROLEZTASK_ANNOTATION)) 
+						return true;
+		return false;
 	}
 }
