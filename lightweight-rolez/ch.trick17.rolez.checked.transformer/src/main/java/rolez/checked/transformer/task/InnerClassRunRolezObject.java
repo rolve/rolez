@@ -34,9 +34,7 @@ public class InnerClassRunRolezObject extends SootMethod {
 		generateMethodBody();
 	}
 	
-	private void generateMethodBody() {
-		logger.debug("Generating runRolez() : java.lang.Object");
-		
+	private void generateMethodBody() {		
 		RefType innerClassType = containingClass.getType();
 		RefType voidType = RefType.v("java.lang.Void");
 		
