@@ -27,7 +27,7 @@ import soot.util.Chain;
  */
 public class ClassTransformer extends SceneTransformer {
 
-	final static Logger logger = LogManager.getLogger(ClassTransformer.class);
+	static final Logger logger = LogManager.getLogger(ClassTransformer.class);
 	
 	SootClass checkedClass;
 	SootClass objectClass;
