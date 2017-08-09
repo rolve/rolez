@@ -50,27 +50,6 @@ public class TaskMethod extends SootMethod {
 	}
 	
 	private void generateMethodBody() {		
-		/*
-		 public rolez.checked.lang.Task $testTask(rolez.checked.transformer.test.A, rolez.checked.transformer.test.A)
-	    {
-	        rolez.checked.transformer.test.Test r0;
-	        rolez.checked.transformer.test.A r1, r2;
-	        rolez.checked.transformer.test.Test$1 $r3;
-	        java.lang.Object[] $r4, $r5, $r6;
-	
-	        r0 := @this: rolez.checked.transformer.test.Test;
-	        r1 := @parameter0: rolez.checked.transformer.test.A;
-	        r2 := @parameter1: rolez.checked.transformer.test.A;
-	        $r3 = new rolez.checked.transformer.test.Test$1;
-	        $r4 = newarray (java.lang.Object)[1];
-	        $r4[0] = r2;
-	        $r5 = newarray (java.lang.Object)[1];
-	        $r5[0] = r1;
-	        $r6 = newarray (java.lang.Object)[0];
-	        specialinvoke $r3.<rolez.checked.transformer.test.Test$1: void <init>(rolez.checked.transformer.test.Test,java.lang.Object[],java.lang.Object[],java.lang.Object[],rolez.checked.transformer.test.A,rolez.checked.transformer.test.A)>(r0, $r4, $r5, $r6, r2, r1);
-	        return $r3;
-	    }
-		 */
 		
 		// Get parameter roles from the annotations
 		List<Role> parameterRoles = getParameterRoles();
@@ -105,7 +84,6 @@ public class TaskMethod extends SootMethod {
 			Local l = Jimple.v().newLocal("$r" + Integer.toString(localCount), objectArrayType);
 			objectArrayLocals.add(l);
 			locals.add(l);
-			localCount++;
 		}
 		
 		// Add units
@@ -151,10 +129,19 @@ public class TaskMethod extends SootMethod {
 			}
 		}
 		
-		// TODO: How to determine the order of the constructor arguments
-//		List<Local> constructorArgs = new ArrayList<Local>();
-//		constructorArgs.add(thisReferenceLocal);
-//		units.add(Jimple.v().newInvokeStmt(Jimple.v().newSpecialInvokeExpr(innerClassReferenceLocal, innerClass.getMethodByName("<init>"), )))
+		// Set up arguments for constructor of inner class
+		List<Local> constructorArgs = new ArrayList<Local>();
+		constructorArgs.add(thisReferenceLocal);
+		for (Local l : objectArrayLocals)
+			constructorArgs.add(l);
+		for (Local l : paramLocals)
+			constructorArgs.add(l);
+		
+		// Call constructor of inner class
+		units.add(Jimple.v().newInvokeStmt(Jimple.v().newSpecialInvokeExpr(innerClassReferenceLocal, innerClass.getMethodByName("<init>").makeRef(), constructorArgs)));
+		
+		// Return inner class
+		units.add(Jimple.v().newReturnStmt(innerClassReferenceLocal));
 	}
 
 	private List<Role> getParameterRoles() {
