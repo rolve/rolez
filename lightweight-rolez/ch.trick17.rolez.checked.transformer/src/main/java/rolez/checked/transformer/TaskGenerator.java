@@ -64,13 +64,26 @@ public class TaskGenerator {
 		innerClass = new InnerClass(getClassNameFromMethod(), targetClass, sourceMethod);
 		generateInnerClassConstructor();
 		generateRunRolezMethods();
-		
-		
 	}
 	
 	private void generateTaskMethod() {
 		TaskMethod taskMethod = new TaskMethod(getTaskMethodNameFromMethod(), targetClass, innerClass, sourceMethod);
 		targetClass.addMethod(taskMethod);
+	}
+	
+	private void generateInnerClassConstructor() {
+		InnerClassConstructor innerClassConstructor = new InnerClassConstructor(innerClass, targetClass, sourceMethod);
+		innerClass.addMethod(innerClassConstructor);
+	}
+	
+	private void generateRunRolezMethods() {
+		InnerClassRunRolezConcrete concreteMethod = new InnerClassRunRolezConcrete(innerClass, sourceMethod);
+		innerClass.addMethod(concreteMethod);
+		innerClass.addMethod(new InnerClassRunRolezObject(innerClass, concreteMethod));		
+	}
+	
+	private void transformSourceMethod() {
+		// TODO: add an if statement to the source method which calls the task or executes sequential depending on $asTask boolean
 	}
 	
 	private void writeClass() {
@@ -102,17 +115,6 @@ public class TaskGenerator {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
-	
-	private void generateInnerClassConstructor() {
-		InnerClassConstructor innerClassConstructor = new InnerClassConstructor(innerClass, targetClass, sourceMethod);
-		innerClass.addMethod(innerClassConstructor);
-	}
-	
-	private void generateRunRolezMethods() {
-		InnerClassRunRolezConcrete concreteMethod = new InnerClassRunRolezConcrete(innerClass, sourceMethod);
-		innerClass.addMethod(concreteMethod);
-		innerClass.addMethod(new InnerClassRunRolezObject(innerClass, concreteMethod));		
 	}
 	
 	private String getTaskMethodNameFromMethod() {
