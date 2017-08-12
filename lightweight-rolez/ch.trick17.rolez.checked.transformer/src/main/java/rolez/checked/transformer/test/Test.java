@@ -19,6 +19,15 @@ public class Test {
 		dst.foo = src.foo;
 	}
 	
+	// How the original method should look like after transformation
+	public void testIf(@Readonly A src, @Readwrite A dst, final boolean $asTask) {
+		if ($asTask) {
+			$testTask(src, dst);
+		} else {
+			dst.foo = src.foo;
+		}
+	}
+	
 	// Method which returns the rolez task
 	public Task<Void> $testTask(final A src, final A dst) {
         return new Task<Void>(new Object[]{dst}, new Object[]{src}, new Object[]{}) {
