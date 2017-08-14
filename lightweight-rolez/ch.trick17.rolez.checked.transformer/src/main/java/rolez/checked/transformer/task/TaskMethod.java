@@ -10,6 +10,7 @@ import rolez.checked.lang.Role;
 import rolez.checked.lang.Task;
 import soot.ArrayType;
 import soot.Local;
+import soot.Modifier;
 import soot.RefType;
 import soot.Scene;
 import soot.SootClass;
@@ -36,11 +37,13 @@ public class TaskMethod extends SootMethod {
 	static final String READWRITE_ANNOTATION = "Lrolez/annotation/Readwrite;";
 	static final String PURE_ANNOTATION = "Lrolez/annotation/Pure;";
 
+	static final Jimple J = Jimple.v();
+	
 	private SootClass containingClass;
 	private SootClass innerClass;
 	private SootMethod sourceMethod;
 	
-	// List contains the roles of the parameters, null for primitive types
+	// Array contains the roles of the parameters, null for primitive types
 	private Role[] parameterRoles;
 
 	public TaskMethod(String name, SootClass containingClass, SootClass innerClass, SootMethod sourceMethod) {
@@ -50,8 +53,10 @@ public class TaskMethod extends SootMethod {
 		this.sourceMethod = sourceMethod;
 		
 		parameterRoles = new Role[sourceMethod.getParameterCount()];
+		
+		// if there are no reference types, we can add null as role for every parameter
 		if (hasRefTypeParameters())
-			getParameterRoles();
+			findParameterRoles();
 		else
 			for (int i=0; i<parameterRoles.length; i++) parameterRoles[i] = null;
 
@@ -60,34 +65,35 @@ public class TaskMethod extends SootMethod {
 	
 	private void generateMethodBody() {		
 		
-		JimpleBody body = Jimple.v().newBody(this);
+		JimpleBody body = J.newBody(this);
 		this.setActiveBody(body);
 
 		// Set up the locals
 		Chain<Local> locals = body.getLocals();
 		
 		int localCount = 0;
-		Local thisReferenceLocal = Jimple.v().newLocal("r"+Integer.toString(localCount), containingClass.getType());
+		
+		Local thisReferenceLocal = J.newLocal("r"+Integer.toString(localCount), containingClass.getType());
 		locals.add(thisReferenceLocal);
 		localCount++;
 		
-		List<Local> paramLocals = new ArrayList<Local>();
-		List<Type> srcParamTypes = sourceMethod.getParameterTypes();
-		for (Type t : srcParamTypes) {
-			Local l = Jimple.v().newLocal("r"+Integer.toString(localCount),t);
-			paramLocals.add(l);
+		List<Local> parameterLocals = new ArrayList<Local>();
+		List<Type> sourceParameterTypes = sourceMethod.getParameterTypes();
+		for (Type t : sourceParameterTypes) {
+			Local l = J.newLocal("r"+Integer.toString(localCount),t);
+			parameterLocals.add(l);
 			locals.add(l);
 			localCount++;
 		}
 		
-		Local innerClassReferenceLocal = Jimple.v().newLocal("$r"+Integer.toString(localCount), innerClass.getType());
+		Local innerClassReferenceLocal = J.newLocal("$r"+Integer.toString(localCount), innerClass.getType());
 		locals.add(innerClassReferenceLocal);
 		localCount++;
 		
 		List<Local> objectArrayLocals = new ArrayList<Local>();
 		ArrayType objectArrayType = ArrayType.v(RefType.v(OBJECT_CLASS),1);
 		for (int i=0; i<3; i++, localCount++) {
-			Local l = Jimple.v().newLocal("$r" + Integer.toString(localCount), objectArrayType);
+			Local l = J.newLocal("$r" + Integer.toString(localCount), objectArrayType);
 			objectArrayLocals.add(l);
 			locals.add(l);
 		}
@@ -95,37 +101,37 @@ public class TaskMethod extends SootMethod {
 		// Add units
 		Chain<Unit> units = body.getUnits();
 		
-		units.add(Jimple.v().newIdentityStmt(thisReferenceLocal, Jimple.v().newThisRef(containingClass.getType())));
+		units.add(J.newIdentityStmt(thisReferenceLocal, J.newThisRef(containingClass.getType())));
 		
 		int paramNumber = 0;
-		for (Local l : paramLocals) {
-			units.add(Jimple.v().newIdentityStmt(l, Jimple.v().newParameterRef(l.getType(), paramNumber)));
+		for (Local l : parameterLocals) {
+			units.add(J.newIdentityStmt(l, J.newParameterRef(l.getType(), paramNumber)));
 			paramNumber++;
 		}
 		
-		units.add(Jimple.v().newAssignStmt(innerClassReferenceLocal, Jimple.v().newNewExpr(innerClass.getType())));
+		units.add(J.newAssignStmt(innerClassReferenceLocal, J.newNewExpr(innerClass.getType())));
 		
 		int[] objectArraySizes = getObjectArraySizes();
-		units.add(Jimple.v().newAssignStmt(objectArrayLocals.get(0), Jimple.v().newNewArrayExpr(objectArrayType, IntConstant.v(objectArraySizes[0]))));
-		units.add(Jimple.v().newAssignStmt(objectArrayLocals.get(1), Jimple.v().newNewArrayExpr(objectArrayType, IntConstant.v(objectArraySizes[1]))));
-		units.add(Jimple.v().newAssignStmt(objectArrayLocals.get(2), Jimple.v().newNewArrayExpr(objectArrayType, IntConstant.v(objectArraySizes[2]))));
+		units.add(J.newAssignStmt(objectArrayLocals.get(0), J.newNewArrayExpr(objectArrayType, IntConstant.v(objectArraySizes[0]))));
+		units.add(J.newAssignStmt(objectArrayLocals.get(1), J.newNewArrayExpr(objectArrayType, IntConstant.v(objectArraySizes[1]))));
+		units.add(J.newAssignStmt(objectArrayLocals.get(2), J.newNewArrayExpr(objectArrayType, IntConstant.v(objectArraySizes[2]))));
 		
 		// Assign the locals to the object array depending on their role
 		int rwIndex = 0, roIndex = 0, puIndex = 0;
-		for (int i=0; i<paramLocals.size(); i++) {
+		for (int i = 0; i < parameterLocals.size(); i++) {
 			Role r = parameterRoles[i];
 			if (r != null) {
 				switch (r) {
 					case READWRITE:
-						units.add(Jimple.v().newAssignStmt(Jimple.v().newArrayRef(objectArrayLocals.get(0),  IntConstant.v(rwIndex)), paramLocals.get(i)));
+						units.add(J.newAssignStmt(J.newArrayRef(objectArrayLocals.get(0),  IntConstant.v(rwIndex)), parameterLocals.get(i)));
 						rwIndex++;
 						break;
 					case READONLY:
-						units.add(Jimple.v().newAssignStmt(Jimple.v().newArrayRef(objectArrayLocals.get(1),  IntConstant.v(roIndex)), paramLocals.get(i)));
+						units.add(J.newAssignStmt(J.newArrayRef(objectArrayLocals.get(1),  IntConstant.v(roIndex)), parameterLocals.get(i)));
 						roIndex++;
 						break;
 					case PURE:
-						units.add(Jimple.v().newAssignStmt(Jimple.v().newArrayRef(objectArrayLocals.get(2),  IntConstant.v(puIndex)), paramLocals.get(i)));
+						units.add(J.newAssignStmt(J.newArrayRef(objectArrayLocals.get(2),  IntConstant.v(puIndex)), parameterLocals.get(i)));
 						puIndex++;
 						break;
 					default:
@@ -140,17 +146,21 @@ public class TaskMethod extends SootMethod {
 		constructorArgs.add(thisReferenceLocal);
 		for (Local l : objectArrayLocals)
 			constructorArgs.add(l);
-		for (Local l : paramLocals)
+		for (Local l : parameterLocals)
 			constructorArgs.add(l);
 		
 		// Call constructor of inner class
-		units.add(Jimple.v().newInvokeStmt(Jimple.v().newSpecialInvokeExpr(innerClassReferenceLocal, innerClass.getMethodByName("<init>").makeRef(), constructorArgs)));
+		units.add(J.newInvokeStmt(J.newSpecialInvokeExpr(innerClassReferenceLocal, innerClass.getMethodByName("<init>").makeRef(), constructorArgs)));
 		
 		// Return inner class
-		units.add(Jimple.v().newReturnStmt(innerClassReferenceLocal));
+		units.add(J.newReturnStmt(innerClassReferenceLocal));
 	}
 
-	private void getParameterRoles() {
+	/**
+	 * Method does retrieve the roles of the parameters from the given annotations and sets them in the 
+	 * <code>parameterRoles</code> array.
+	 */
+	private void findParameterRoles() {
 		List<Tag> tags = sourceMethod.getTags();
 		for (Tag t : tags) {
 			if (t instanceof VisibilityParameterAnnotationTag) {
@@ -183,26 +193,32 @@ public class TaskMethod extends SootMethod {
 		}
 	}
 
+	/**
+	 * Method returns a 3 element array with [0] containing the readwrite count,
+	 * [1] containing the readonly count and [2] containing the pure count.
+	 * @return
+	 */
 	private int[] getObjectArraySizes() {
-		int[] result = new int[3];
+		int[] arraySizes = new int[3];
 		for (Role r : parameterRoles) {
 			if (r != null) {
 				switch (r) {
 					case READWRITE:
-						result[0]++;
+						arraySizes[0]++;
 						break;
 					case READONLY:
-						result[1]++;
+						arraySizes[1]++;
 						break;
 					case PURE:
-						result[2]++;
+						arraySizes[2]++;
 						break;
 					default:
-						break;					
+						// Should not happen
+						break;		
 				}
 			}
 		}
-		return result;
+		return arraySizes;
 	}
 	
 	/**

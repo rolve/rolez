@@ -11,8 +11,6 @@ import soot.Scene;
 import soot.SceneTransformer;
 import soot.SootClass;
 import soot.SootMethod;
-import soot.Unit;
-import soot.jimple.ReturnStmt;
 import soot.tagkit.AnnotationTag;
 import soot.tagkit.Tag;
 import soot.tagkit.VisibilityAnnotationTag;

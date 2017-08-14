@@ -28,6 +28,8 @@ public class InnerClassRunRolezConcrete extends SootMethod {
 	static final Logger logger = LogManager.getLogger(InnerClassRunRolezConcrete.class);
 	
 	static final Type VOID_TYPE = RefType.v("java.lang.Void");
+
+	static final Jimple J = Jimple.v();
 	
 	private SootClass containingClass;
 	private SootMethod sourceMethod;
@@ -43,7 +45,7 @@ public class InnerClassRunRolezConcrete extends SootMethod {
 		this.setReturnType(findReturnType());
 		generateMethodBody();
 	}
-	
+
 	private void generateMethodBody() {
 
 		RefType innerClassType = containingClass.getType();
@@ -76,12 +78,13 @@ public class InnerClassRunRolezConcrete extends SootMethod {
 						IdentityStmt idStmt = (IdentityStmt) u;
 						if (idStmt.getRightOp() instanceof ThisRef) {
 							Value leftOp = idStmt.getLeftOp();
-							Unit newUnit = Jimple.v().newIdentityStmt(leftOp, Jimple.v().newThisRef(innerClassType));
+							Unit newUnit = J.newIdentityStmt(leftOp, J.newThisRef(innerClassType));
 							units.insertBefore(newUnit, u);
 							units.remove(u);
 						} else {
+							// TODO: This is NOT true for static methods (e.g. main method) !!
 							// Right hand side should always be a this ref
-							throw new Exception();
+							throw new Exception(u.toString() + ": Right hand side should be a `this` ref.");
 						}
 					} else {
 						// Should always be an identity statement
@@ -99,7 +102,7 @@ public class InnerClassRunRolezConcrete extends SootMethod {
 						IdentityStmt idStmt = (IdentityStmt) u;
 						if (idStmt.getRightOp() instanceof ParameterRef) {
 							Value leftOp = idStmt.getLeftOp();
-							Unit newUnit = Jimple.v().newAssignStmt(leftOp, Jimple.v().newInstanceFieldRef(locals.getFirst(), containingClass.getFieldByName("val$f"+Integer.toString(i-1)).makeRef()));
+							Unit newUnit = J.newAssignStmt(leftOp, J.newInstanceFieldRef(locals.getFirst(), containingClass.getFieldByName("val$f"+Integer.toString(i-1)).makeRef()));
 							units.insertBefore(newUnit, u);
 							units.remove(u);
 						} else {
@@ -118,7 +121,7 @@ public class InnerClassRunRolezConcrete extends SootMethod {
 			else {
 				// The other statements except the return statements should work with the initialization from above.
 				if (u instanceof ReturnVoidStmt) {
-					Unit newReturn = Jimple.v().newReturnStmt(NullConstant.v());
+					Unit newReturn = J.newReturnStmt(NullConstant.v());
 					units.insertBefore(newReturn, u);
 					units.remove(u);
 				}

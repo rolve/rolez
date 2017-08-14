@@ -28,6 +28,8 @@ public class InnerClassConstructor extends SootMethod {
 	static final SootClass OBJECT_CLASS = Scene.v().loadClassAndSupport(Object.class.getCanonicalName());
 	static final SootClass TASK_CLASS = Scene.v().loadClassAndSupport(Task.class.getCanonicalName());
 	static final ArrayType OBJECT_ARRAY_TYPE = ArrayType.v(RefType.v(OBJECT_CLASS),1);
+
+	static final Jimple J = Jimple.v();
 	
 	private SootClass containingClass;
 	private SootClass outerClass;
@@ -55,18 +57,18 @@ public class InnerClassConstructor extends SootMethod {
 		int offset = 5;
 		int numberOffset = 4;
 		
-		JimpleBody body = Jimple.v().newBody(this);
+		JimpleBody body = J.newBody(this);
 		this.setActiveBody(body);
 		
 		// All local variables that have to be added to the body
 		List<Local> locals = new ArrayList<Local>();
-		locals.add(Jimple.v().newLocal("r0", containingClass.getType()));
-		locals.add(Jimple.v().newLocal("r1", outerClass.getType()));
-		locals.add(Jimple.v().newLocal("r2", OBJECT_ARRAY_TYPE));
-		locals.add(Jimple.v().newLocal("r3", OBJECT_ARRAY_TYPE));
-		locals.add(Jimple.v().newLocal("r4", OBJECT_ARRAY_TYPE));
+		locals.add(J.newLocal("r0", containingClass.getType()));
+		locals.add(J.newLocal("r1", outerClass.getType()));
+		locals.add(J.newLocal("r2", OBJECT_ARRAY_TYPE));
+		locals.add(J.newLocal("r3", OBJECT_ARRAY_TYPE));
+		locals.add(J.newLocal("r4", OBJECT_ARRAY_TYPE));
 		for (int i=0; i<sourceMethodParameterTypes.size(); i++) {
-			locals.add(Jimple.v().newLocal("r"+Integer.toString(offset + i), sourceMethodParameterTypes.get(i)));
+			locals.add(J.newLocal("r"+Integer.toString(offset + i), sourceMethodParameterTypes.get(i)));
 		}
 		
 		// Add the locals to the body
@@ -74,26 +76,26 @@ public class InnerClassConstructor extends SootMethod {
 		bodyLocals.addAll(locals);
 		
 		Chain<Unit> units = body.getUnits();
-		units.add(Jimple.v().newIdentityStmt(locals.get(0), Jimple.v().newThisRef(containingClass.getType())));
-		units.add(Jimple.v().newIdentityStmt(locals.get(1), Jimple.v().newParameterRef(outerClass.getType(), 0)));
-		units.add(Jimple.v().newIdentityStmt(locals.get(2), Jimple.v().newParameterRef(OBJECT_ARRAY_TYPE, 1)));
-		units.add(Jimple.v().newIdentityStmt(locals.get(3), Jimple.v().newParameterRef(OBJECT_ARRAY_TYPE, 2)));
-		units.add(Jimple.v().newIdentityStmt(locals.get(4), Jimple.v().newParameterRef(OBJECT_ARRAY_TYPE, 3)));
+		units.add(J.newIdentityStmt(locals.get(0), J.newThisRef(containingClass.getType())));
+		units.add(J.newIdentityStmt(locals.get(1), J.newParameterRef(outerClass.getType(), 0)));
+		units.add(J.newIdentityStmt(locals.get(2), J.newParameterRef(OBJECT_ARRAY_TYPE, 1)));
+		units.add(J.newIdentityStmt(locals.get(3), J.newParameterRef(OBJECT_ARRAY_TYPE, 2)));
+		units.add(J.newIdentityStmt(locals.get(4), J.newParameterRef(OBJECT_ARRAY_TYPE, 3)));
 		for (int i=0; i<sourceMethodParameterTypes.size(); i++) {
-			units.add(Jimple.v().newIdentityStmt(locals.get(i+offset), Jimple.v().newParameterRef(sourceMethodParameterTypes.get(i), i+numberOffset)));
+			units.add(J.newIdentityStmt(locals.get(i+offset), J.newParameterRef(sourceMethodParameterTypes.get(i), i+numberOffset)));
 		}
 		
 		// Set field field for outer class ref
-		units.add(Jimple.v().newAssignStmt(Jimple.v().newInstanceFieldRef(locals.get(0), containingClass.getFieldByName("this$0").makeRef()), locals.get(1)));
+		units.add(J.newAssignStmt(J.newInstanceFieldRef(locals.get(0), containingClass.getFieldByName("this$0").makeRef()), locals.get(1)));
 		
 		// Set fields for method parameters
 		for (int i=0; i<sourceMethod.getParameterCount(); i++) {
-			units.add(Jimple.v().newAssignStmt(Jimple.v().newInstanceFieldRef(locals.get(0), containingClass.getFieldByName("val$f" + Integer.toString(i)).makeRef()), locals.get(offset + i)));
+			units.add(J.newAssignStmt(J.newInstanceFieldRef(locals.get(0), containingClass.getFieldByName("val$f" + Integer.toString(i)).makeRef()), locals.get(offset + i)));
 		}
 		
 		// Add the call to superclass constructor
-		units.add(Jimple.v().newInvokeStmt(
-				Jimple.v().newSpecialInvokeExpr(
+		units.add(J.newInvokeStmt(
+				J.newSpecialInvokeExpr(
 						locals.get(0), 
 						TASK_CLASS.getMethodByName("<init>").makeRef(), 
 						Arrays.asList(new Local[] {
@@ -103,7 +105,7 @@ public class InnerClassConstructor extends SootMethod {
 		)));
 		
 		// Add return statement
-		units.add(Jimple.v().newReturnVoidStmt());
+		units.add(J.newReturnVoidStmt());
 	}
 	
 	private List<Type> findParameterTypes() {

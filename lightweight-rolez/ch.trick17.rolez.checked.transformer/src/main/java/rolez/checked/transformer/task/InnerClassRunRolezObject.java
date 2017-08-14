@@ -22,6 +22,8 @@ public class InnerClassRunRolezObject extends SootMethod {
 	static final Logger logger = LogManager.getLogger(InnerClassRunRolezObject.class);
 	
 	static final SootClass OBJECT_CLASS = Scene.v().loadClassAndSupport(Object.class.getCanonicalName());
+
+	static final Jimple J = Jimple.v();
 	
 	private SootClass containingClass;
 	private SootMethod concreteMethod;
@@ -38,18 +40,18 @@ public class InnerClassRunRolezObject extends SootMethod {
 		RefType innerClassType = containingClass.getType();
 		RefType voidType = RefType.v("java.lang.Void");
 		
-		JimpleBody body = Jimple.v().newBody(this);
+		JimpleBody body = J.newBody(this);
 		this.setActiveBody(body);
 		
 		Chain<Local> bodyLocals = body.getLocals();
-		Local thisLocal = Jimple.v().newLocal("r0", innerClassType);
+		Local thisLocal = J.newLocal("r0", innerClassType);
 		bodyLocals.add(thisLocal);
-		Local returnLocal = Jimple.v().newLocal("$r1", voidType);
+		Local returnLocal = J.newLocal("$r1", voidType);
 		bodyLocals.add(returnLocal);
 
 		Chain<Unit> units = body.getUnits();
-		units.add(Jimple.v().newIdentityStmt(thisLocal, Jimple.v().newThisRef(innerClassType)));
-		units.add(Jimple.v().newAssignStmt(returnLocal, Jimple.v().newVirtualInvokeExpr(thisLocal, concreteMethod.makeRef())));
-		units.add(Jimple.v().newReturnStmt(returnLocal));
+		units.add(J.newIdentityStmt(thisLocal, J.newThisRef(innerClassType)));
+		units.add(J.newAssignStmt(returnLocal, J.newVirtualInvokeExpr(thisLocal, concreteMethod.makeRef())));
+		units.add(J.newReturnStmt(returnLocal));
 	}
 }
