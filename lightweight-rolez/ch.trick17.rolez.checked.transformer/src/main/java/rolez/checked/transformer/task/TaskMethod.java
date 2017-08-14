@@ -39,6 +39,9 @@ public class TaskMethod extends SootMethod {
 	private SootClass containingClass;
 	private SootClass innerClass;
 	private SootMethod sourceMethod;
+	
+	// List contains the roles of the parameters, null for primitive types
+	private Role[] parameterRoles;
 
 	public TaskMethod(String name, SootClass containingClass, SootClass innerClass, SootMethod sourceMethod) {
 		super(name, sourceMethod.getParameterTypes(), TASK_CLASS.getType(), sourceMethod.getModifiers());
@@ -46,13 +49,16 @@ public class TaskMethod extends SootMethod {
 		this.innerClass = innerClass;
 		this.sourceMethod = sourceMethod;
 		
+		parameterRoles = new Role[sourceMethod.getParameterCount()];
+		if (hasRefTypeParameters())
+			getParameterRoles();
+		else
+			for (int i=0; i<parameterRoles.length; i++) parameterRoles[i] = null;
+
 		generateMethodBody();
 	}
 	
 	private void generateMethodBody() {		
-		
-		// Get parameter roles from the annotations
-		List<Role> parameterRoles = getParameterRoles();
 		
 		JimpleBody body = Jimple.v().newBody(this);
 		this.setActiveBody(body);
@@ -99,7 +105,7 @@ public class TaskMethod extends SootMethod {
 		
 		units.add(Jimple.v().newAssignStmt(innerClassReferenceLocal, Jimple.v().newNewExpr(innerClass.getType())));
 		
-		int[] objectArraySizes = getObjectArraySizes(parameterRoles);
+		int[] objectArraySizes = getObjectArraySizes();
 		units.add(Jimple.v().newAssignStmt(objectArrayLocals.get(0), Jimple.v().newNewArrayExpr(objectArrayType, IntConstant.v(objectArraySizes[0]))));
 		units.add(Jimple.v().newAssignStmt(objectArrayLocals.get(1), Jimple.v().newNewArrayExpr(objectArrayType, IntConstant.v(objectArraySizes[1]))));
 		units.add(Jimple.v().newAssignStmt(objectArrayLocals.get(2), Jimple.v().newNewArrayExpr(objectArrayType, IntConstant.v(objectArraySizes[2]))));
@@ -107,7 +113,7 @@ public class TaskMethod extends SootMethod {
 		// Assign the locals to the object array depending on their role
 		int rwIndex = 0, roIndex = 0, puIndex = 0;
 		for (int i=0; i<paramLocals.size(); i++) {
-			Role r = parameterRoles.get(i);
+			Role r = parameterRoles[i];
 			if (r != null) {
 				switch (r) {
 					case READWRITE:
@@ -144,41 +150,40 @@ public class TaskMethod extends SootMethod {
 		units.add(Jimple.v().newReturnStmt(innerClassReferenceLocal));
 	}
 
-	private List<Role> getParameterRoles() {
-		List<Role> parameterRoles = new ArrayList<Role>();
+	private void getParameterRoles() {
 		List<Tag> tags = sourceMethod.getTags();
 		for (Tag t : tags) {
 			if (t instanceof VisibilityParameterAnnotationTag) {
-				VisibilityParameterAnnotationTag vTag = (VisibilityParameterAnnotationTag) t;
-				for (VisibilityAnnotationTag vaTag : vTag.getVisibilityAnnotations()) {
+				VisibilityParameterAnnotationTag vpaTag = (VisibilityParameterAnnotationTag) t;
+				for (VisibilityAnnotationTag vaTag : vpaTag.getVisibilityAnnotations()) {
 					ArrayList<AnnotationTag> annotations = vaTag.getAnnotations();
+					int arrayIndex = 0;
+					// TODO: What happens with other annotations in the code? Have to handle this case eventually...
 					if (annotations != null) {
 						for (AnnotationTag aTag : vaTag.getAnnotations()) {
 							switch (aTag.getType()) {
 								case (READONLY_ANNOTATION):
-									parameterRoles.add(Role.READONLY);
+									parameterRoles[arrayIndex] = Role.READONLY;
 									break;
 								case (READWRITE_ANNOTATION):
-									parameterRoles.add(Role.READWRITE);
+									parameterRoles[arrayIndex] = Role.READWRITE;
 									break;
 								case (PURE_ANNOTATION):
-									parameterRoles.add(Role.PURE);
+									parameterRoles[arrayIndex] = Role.PURE;
 									break;
 								default:
 									// Should not happen
 									break;
 							}
+							arrayIndex++;
 						}
-					} else {
-						parameterRoles.add(null);
 					}
 				}
 			}
 		}
-		return parameterRoles;
 	}
 
-	private int[] getObjectArraySizes(List<Role> parameterRoles) {
+	private int[] getObjectArraySizes() {
 		int[] result = new int[3];
 		for (Role r : parameterRoles) {
 			if (r != null) {
@@ -198,5 +203,24 @@ public class TaskMethod extends SootMethod {
 			}
 		}
 		return result;
+	}
+	
+	/**
+	 * Method that checks whether the parameter list of the source method
+	 * contains reference types (which have to be checked) or not.
+	 * @return
+	 */
+	private boolean hasRefTypeParameters() {
+		List<Type> parameterTypes = sourceMethod.getParameterTypes();
+		for (Type t : parameterTypes) {
+			if (t instanceof RefType) return true;
+			
+			// Also return true for array types with ref types as elements
+			if (t instanceof ArrayType) {
+				ArrayType at = (ArrayType) t;
+				if (at.getArrayElementType() instanceof RefType) return true;
+			}
+		}
+		return false;
 	}
 }
