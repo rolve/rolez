@@ -186,14 +186,6 @@ public class GuardedSlice<A> extends Guarded {
         }
         
         @Override
-        public Object set(int index, Object element) {
-            final int i = range.begin + index * range.step;
-            final Object previous = ((Object[]) data)[i];
-            ((Object[]) data)[i] = element;
-            return previous;
-        }
-        
-        @Override
         public int size() {
             return range.size();
         }
