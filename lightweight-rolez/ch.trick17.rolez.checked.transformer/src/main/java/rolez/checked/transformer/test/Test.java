@@ -5,37 +5,26 @@ import rolez.annotation.Readonly;
 import rolez.annotation.Readwrite;
 import rolez.annotation.Roleztask;
 import rolez.checked.lang.Task;
+import rolez.checked.lang.TaskSystem;
 
 @Checked
 public class Test {
+
+	A field1;
+	B field2;
 	
 	public static void main(String[] args) {
 		
 	}
-	
-	// Original code
+
 	@Roleztask
 	public void testOriginal(@Readonly A src, @Readwrite A dst, final boolean $asTask) {
-		dst.foo = src.foo;
+		foo(true);
 	}
 	
-	// How the original method should look like after transformation
-	public void testIf(@Readonly A src, @Readwrite A dst, final boolean $asTask) {
-		if ($asTask) {
-			$testTask(src, dst);
-		} else {
-			dst.foo = src.foo;
-		}
+	@Roleztask
+	public void foo(final boolean $asTask) {
+		int i = 0;
+		i++;
 	}
-	
-	// Method which returns the rolez task
-	public Task<Void> $testTask(final A src, final A dst) {
-        return new Task<Void>(new Object[]{dst}, new Object[]{src}, new Object[]{}) {
-            @Override
-            protected Void runRolez() {
-            	dst.foo = src.foo;
-                return null;
-            }
-        };
-    }
 }

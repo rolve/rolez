@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import rolez.checked.lang.Checked;
+import rolez.checked.transformer.guarding.GuardedRefsMethod;
 import soot.Scene;
 import soot.SceneTransformer;
 import soot.SootClass;
@@ -51,8 +52,11 @@ public class ClassTransformer extends SceneTransformer {
 		for (SootClass c : classes) {
 			logger.debug("Processing class: " + c.getName());
 			
-			if (hasCheckedAnnotation(c))
+			if (hasCheckedAnnotation(c)) {
 				c.setSuperclass(checkedClass);
+				GuardedRefsMethod guardedRefs = new GuardedRefsMethod(c);
+				c.addMethod(guardedRefs);
+			}
 			
 			processMethods(c);
 		}
@@ -86,5 +90,9 @@ public class ClassTransformer extends SceneTransformer {
 					if (aTag.getType().equals(ROLEZTASK_ANNOTATION)) 
 						return true;
 		return false;
+	}
+	
+	private void addGuardedRefsMethod(SootClass c) {
+		
 	}
 }
