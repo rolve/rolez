@@ -30,6 +30,7 @@ public class GuardedRefsMethod extends SootMethod {
 	static final SootClass LIST_CLASS = Scene.v().loadClassAndSupport(List.class.getCanonicalName());
 	static final SootClass ARRAYS_CLASS = Scene.v().loadClassAndSupport(Arrays.class.getCanonicalName());
 	static final SootClass CHECKED_CLASS = Scene.v().loadClassAndSupport(Checked.class.getCanonicalName());
+	static final SootClass OBJECT_CLASS = Scene.v().loadClassAndSupport(Object.class.getCanonicalName());
 
 	static final Jimple J = Jimple.v();
 	
@@ -103,7 +104,11 @@ public class GuardedRefsMethod extends SootMethod {
 	}
 	
 	private boolean isCheckedType(Type t) {
-		// TODO: Implement this method
-		return true;
+		SootClass s = Scene.v().loadClassAndSupport(t.toString());
+		do {
+			s = s.getSuperclass();
+			if (s.getType().equals(CHECKED_CLASS.getType())) return true;
+		} while (!s.getType().equals(OBJECT_CLASS.getType()));
+		return false;
 	}
 }
