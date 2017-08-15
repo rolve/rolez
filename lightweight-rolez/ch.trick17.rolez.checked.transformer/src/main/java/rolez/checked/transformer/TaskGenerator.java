@@ -63,9 +63,6 @@ public class TaskGenerator {
 		// Inner class should contain tags of the following form: Signature: Lrolez/checked/lang/Task<Ljava/lang/Void;>;
 		//                                                        Enclosing Class: rolez/checked/transformer/test/Test Enclosing Method: $testTask Sig: (Lrolez/checked/transformer/test/A;Lrolez/checked/transformer/test/A;)Lrolez/checked/lang/Task;
 		//                                                        [inner=rolez/checked/transformer/test/Test$1, outer=null, name=null,flags=0]
-
-		//writeClass();
-		writeJimple();
 	}
 
 	private void generateInnerClass() {
@@ -138,38 +135,6 @@ public class TaskGenerator {
 		
 		// Add the goto statement to jump right to the return statement of the original method
 		units.insertAfter(Jimple.v().newGotoStmt(units.getLast()), taskInvokeStmt);
-	}
-	
-	// TODO: Add generation of path if not available
-	private void writeClass() {
-		logger.debug("Writing class file for inner class");
-		try {
-			String fileName = SourceLocator.v().getFileNameFor(innerClass, Options.output_format_class);
-			OutputStream streamOut = new JasminOutputStream(new FileOutputStream(fileName));
-			PrintWriter writerOut = new PrintWriter(new OutputStreamWriter(streamOut));
-			JasminClass jasminClass = new soot.jimple.JasminClass(innerClass);
-			jasminClass.print(writerOut);
-			writerOut.flush();
-			streamOut.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	private void writeJimple() {
-		logger.debug("Writing jimple file for inner class");
-		try {
-			String fileName = SourceLocator.v().getFileNameFor(innerClass, Options.output_format_jimple);
-			OutputStream streamOut;
-				streamOut = new FileOutputStream(fileName);
-			
-			PrintWriter writerOut = new PrintWriter(new OutputStreamWriter(streamOut));
-			Printer.v().printTo(innerClass, writerOut);
-			writerOut.flush();
-			streamOut.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 	
 	private String getTaskMethodNameFromMethod() {

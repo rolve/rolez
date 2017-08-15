@@ -103,12 +103,15 @@ public class GuardedRefsMethod extends SootMethod {
 		return checkedFields;
 	}
 	
+	// TODO: Include array types
 	private boolean isCheckedType(Type t) {
-		SootClass s = Scene.v().loadClassAndSupport(t.toString());
-		do {
-			s = s.getSuperclass();
-			if (s.getType().equals(CHECKED_CLASS.getType())) return true;
-		} while (!s.getType().equals(OBJECT_CLASS.getType()));
+		if (t instanceof RefType) {
+			SootClass s = Scene.v().loadClassAndSupport(t.toString());
+			do {
+				s = s.getSuperclass();
+				if (s.getType().equals(CHECKED_CLASS.getType())) return true;
+			} while (!s.getType().equals(OBJECT_CLASS.getType()));
+		}
 		return false;
 	}
 }
