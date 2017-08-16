@@ -16,7 +16,9 @@ public class MainDriver {
 		Scene.v().addBasicClass(rolez.checked.lang.Checked.class.getCanonicalName(), SootClass.SIGNATURES);
 		Scene.v().addBasicClass(rolez.checked.lang.Task.class.getCanonicalName(), SootClass.SIGNATURES);
 		
-		System.out.println("Starting soot.Main");
+		// TODO: Why does this happen?
+		Scene.v().addBasicClass("rolez.checked.lang.Task$1", SootClass.SIGNATURES);
+		
 		soot.Main.main(args);
 	} 
 }
