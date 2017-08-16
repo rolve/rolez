@@ -1,10 +1,5 @@
 package rolez.checked.transformer;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -17,20 +12,16 @@ import rolez.checked.transformer.task.InnerClassConstructor;
 import rolez.checked.transformer.task.InnerClassRunRolezConcrete;
 import rolez.checked.transformer.task.InnerClassRunRolezObject;
 import rolez.checked.transformer.task.TaskMethod;
+import rolez.checked.transformer.util.JimpleWriter;
 import soot.Body;
 import soot.BooleanType;
 import soot.Local;
-import soot.Printer;
 import soot.SootClass;
 import soot.SootMethod;
-import soot.SourceLocator;
 import soot.Unit;
 import soot.jimple.IntConstant;
-import soot.jimple.JasminClass;
 import soot.jimple.Jimple;
-import soot.options.Options;
 import soot.util.Chain;
-import soot.util.JasminOutputStream;
 
 
 /**
@@ -63,6 +54,8 @@ public class TaskGenerator {
 		// Inner class should contain tags of the following form: Signature: Lrolez/checked/lang/Task<Ljava/lang/Void;>;
 		//                                                        Enclosing Class: rolez/checked/transformer/test/Test Enclosing Method: $testTask Sig: (Lrolez/checked/transformer/test/A;Lrolez/checked/transformer/test/A;)Lrolez/checked/lang/Task;
 		//                                                        [inner=rolez/checked/transformer/test/Test$1, outer=null, name=null,flags=0]
+		
+		JimpleWriter.write(innerClass);
 	}
 
 	private void generateInnerClass() {

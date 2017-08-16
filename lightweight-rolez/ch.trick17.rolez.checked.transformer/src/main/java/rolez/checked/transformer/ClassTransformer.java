@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 
 import rolez.checked.lang.Checked;
 import rolez.checked.transformer.guarding.GuardedRefsMethod;
+import rolez.checked.transformer.util.JimpleWriter;
 import soot.Printer;
 import soot.Scene;
 import soot.SceneTransformer;
@@ -116,7 +117,7 @@ public class ClassTransformer extends SceneTransformer {
 		
 		processMethods(c);
 		
-		writeJimple(c);
+		JimpleWriter.write(c);
 	}
 	
 	private boolean hasCheckedAnnotation(SootClass c) {
@@ -153,29 +154,13 @@ public class ClassTransformer extends SceneTransformer {
 	
 	// TODO: Add generation of path if not available
 	private void writeClass(SootClass c) {
-		logger.debug("Writing class file for inner class");
+		logger.debug("Writing class file");
 		try {
 			String fileName = SourceLocator.v().getFileNameFor(c, Options.output_format_class);
 			OutputStream streamOut = new JasminOutputStream(new FileOutputStream(fileName));
 			PrintWriter writerOut = new PrintWriter(new OutputStreamWriter(streamOut));
 			JasminClass jasminClass = new soot.jimple.JasminClass(c);
 			jasminClass.print(writerOut);
-			writerOut.flush();
-			streamOut.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	private void writeJimple(SootClass c) {
-		logger.debug("Writing jimple file for inner class");
-		try {
-			String fileName = SourceLocator.v().getFileNameFor(c, Options.output_format_jimple);
-			OutputStream streamOut;
-				streamOut = new FileOutputStream(fileName);
-			
-			PrintWriter writerOut = new PrintWriter(new OutputStreamWriter(streamOut));
-			Printer.v().printTo(c, writerOut);
 			writerOut.flush();
 			streamOut.close();
 		} catch (IOException e) {
