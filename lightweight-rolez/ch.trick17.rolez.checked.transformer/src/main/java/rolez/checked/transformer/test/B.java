@@ -1,7 +1,8 @@
 package rolez.checked.transformer.test;
 
-import rolez.checked.lang.Checked;
+import rolez.annotation.Checked;
 
-public class B extends Checked {
+@Checked
+public class B {
 
 }
