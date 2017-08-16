@@ -274,8 +274,6 @@ public abstract class Task<V> implements Runnable {
         pureReachable.removeAll(passedReachable);
         pureReachable.removeAll(sharedReachable);
         
-        //TODO: What has to be done with pure objects?
-        
         /* IMPROVE: Only pass (share) objects that are reachable through chain of readwrite
          * (readonly) references? Would enable programmers to express more parallelism (especially
          * with parameterized classes) and could be more efficient (or less...). */

@@ -127,13 +127,7 @@ public abstract class Guarded {
             invalidateGuardingCaches();
         }
     }
-    
-    /* TODO: Is this the correct way to do it? 
-     * 		 We have to explicitly set the owner such that 
-     * 		 the getDeclaredRole method in the Checked class
-     * 		 works.
-     */
-    
+
     final void completePass() {
         if(!guardingDisabled) {
             assert ownerThread == null;
