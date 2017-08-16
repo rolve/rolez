@@ -1,4 +1,4 @@
-package rolez.checked.transformer.guarding;
+package rolez.checked.transformer.checked;
 
 import java.util.ArrayList;
 import java.util.Arrays;

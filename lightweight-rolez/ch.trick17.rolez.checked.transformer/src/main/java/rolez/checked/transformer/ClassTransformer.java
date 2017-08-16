@@ -15,7 +15,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import rolez.checked.lang.Checked;
-import rolez.checked.transformer.guarding.GuardedRefsMethod;
+import rolez.checked.transformer.checked.CheckedConstructor;
+import rolez.checked.transformer.checked.GuardedRefsMethod;
 import rolez.checked.transformer.util.JimpleWriter;
 import soot.Printer;
 import soot.Scene;
