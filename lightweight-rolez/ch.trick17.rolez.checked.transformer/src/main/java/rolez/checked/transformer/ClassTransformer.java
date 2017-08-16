@@ -41,19 +41,14 @@ public class ClassTransformer extends SceneTransformer {
 
 	static final Logger logger = LogManager.getLogger(ClassTransformer.class);
 	
-	SootClass checkedClass;
-	SootClass objectClass;
+	static final SootClass CHECKED_CLASS = Scene.v().loadClassAndSupport(Checked.class.getCanonicalName());
+	static final SootClass OBJECT_CLASS = Scene.v().loadClassAndSupport(Object.class.getCanonicalName());
 	
 	static final String ROLEZTASK_ANNOTATION = "Lrolez/annotation/Roleztask;";
 	static final String CHECKED_ANNOTATION = "Lrolez/annotation/Checked;";
 	
 	@Override
-	protected void internalTransform(String phaseName, Map options) {
-		
-		// Load useful classes
-		checkedClass = Scene.v().loadClassAndSupport(Checked.class.getCanonicalName());
-		objectClass = Scene.v().loadClassAndSupport(Object.class.getCanonicalName());
-		
+	protected void internalTransform(String phaseName, Map options) {		
 		// Start transformation
 		processClasses();
 	}
@@ -113,7 +108,7 @@ public class ClassTransformer extends SceneTransformer {
 		logger.debug("Processing class: " + c.getName());
 		
 		if (hasCheckedAnnotation(c)) {
-			c.setSuperclass(checkedClass);
+			c.setSuperclass(CHECKED_CLASS);
 			//TODO: Also change constructor(s) of this class to call the constructor of Checked
 			GuardedRefsMethod guardedRefs = new GuardedRefsMethod(c);
 			c.addMethod(guardedRefs);
