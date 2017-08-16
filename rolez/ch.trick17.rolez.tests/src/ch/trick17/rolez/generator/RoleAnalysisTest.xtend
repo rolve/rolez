@@ -10,7 +10,6 @@ import ch.trick17.rolez.rolez.ReadOnly
 import ch.trick17.rolez.rolez.ReadWrite
 import ch.trick17.rolez.rolez.VarRef
 import ch.trick17.rolez.tests.RolezInjectorProvider
-import ch.trick17.rolez.validation.cfg.CfgProvider
 import javax.inject.Inject
 import org.eclipse.xtext.junit4.InjectWith
 import org.eclipse.xtext.junit4.XtextRunner
@@ -34,7 +33,6 @@ class RoleAnalysisTest {
     @Inject extension RolezUtils
     @Inject extension TestUtils
     @Inject extension ParseHelper<Program>
-    @Inject extension CfgProvider
     @Inject extension RoleAnalysis.Provider
     
     @Test def testDataflowMerge() {
@@ -49,7 +47,7 @@ class RoleAnalysisTest {
             }
             a2;                  // a2 is known to be readwrite here
         '''.withFrame).task
-        newRoleAnalysis(task, task.body.controlFlowGraph, METHOD)
+        newRoleAnalysis(task, METHOD)
                 .dynamicRole(task.lastExpr).assertThat(instanceOf(ReadWrite))
         
         task = parse('''
@@ -57,7 +55,7 @@ class RoleAnalysisTest {
             for(var i = 0; i < 10; i++) {}
             a1;             // still readwrite
         '''.withFrame).task
-        newRoleAnalysis(task, task.body.controlFlowGraph, METHOD)
+        newRoleAnalysis(task, METHOD)
                 .dynamicRole(task.lastExpr).assertThat(instanceOf(ReadWrite))
         
         task = parse('''
@@ -66,7 +64,7 @@ class RoleAnalysisTest {
                 a1.i += 42;
             a1;                 // still pure, since loop may have been skipped
         '''.withFrame).task
-        newRoleAnalysis(task, task.body.controlFlowGraph, METHOD)
+        newRoleAnalysis(task, METHOD)
                 .dynamicRole(task.lastExpr).assertThat(instanceOf(Pure))
         
         task = parse('''
@@ -75,7 +73,7 @@ class RoleAnalysisTest {
                 a1.i;                            // and should still be readonly here
         '''.withFrame).task
         val fieldAccess = task.all(MemberAccess).filter[isFieldAccess].map[target].head
-        newRoleAnalysis(task, task.body.controlFlowGraph, METHOD)
+        newRoleAnalysis(task, METHOD)
                 .dynamicRole(fieldAccess).assertThat(instanceOf(ReadOnly))
     }
 
@@ -85,7 +83,7 @@ class RoleAnalysisTest {
             obj.a.i = 42;
             obj.a; // since obj.a is final and already accessed above, it is readwrite here
         '''.withFrame).task
-        newRoleAnalysis(task, task.body.controlFlowGraph, METHOD)
+        newRoleAnalysis(task, METHOD)
                 .dynamicRole(task.lastExpr).assertThat(instanceOf(ReadWrite))
 
         task = parse('''
@@ -95,7 +93,7 @@ class RoleAnalysisTest {
             val a1 = obj2.a; // information is also preserved when assigning the field to a var
             a1;
         '''.withFrame).task
-        newRoleAnalysis(task, task.body.controlFlowGraph, METHOD)
+        newRoleAnalysis(task, METHOD)
                 .dynamicRole(task.lastExpr).assertThat(instanceOf(ReadWrite))
         
         task = parse('''
@@ -104,7 +102,7 @@ class RoleAnalysisTest {
             for(var i = 0; i < a1.array.length; i++)
                 sum += a1.array.get(i) * a1.array.get(i);
         '''.withFrame).task
-        val analysis = newRoleAnalysis(task, task.body.controlFlowGraph, METHOD)
+        val analysis = newRoleAnalysis(task, METHOD)
         val targets = task.all(MemberAccess).filter[isArrayGet].map[target].toList
         analysis.dynamicRole(targets.get(0)).assertThat(instanceOf(Pure))
         analysis.dynamicRole(targets.get(1)).assertThat(instanceOf(ReadOnly))
@@ -118,8 +116,7 @@ class RoleAnalysisTest {
             }
         ''').classes.filter(NormalClass).get(1).constrs.head
         
-        newRoleAnalysis(constr, constr.body.controlFlowGraph)
-                .dynamicRole(constr.lastExpr).assertThat(instanceOf(ReadWrite))
+        newRoleAnalysis(constr).dynamicRole(constr.lastExpr).assertThat(instanceOf(ReadWrite))
     }
     
     @Test def testDataflowGuardedMethod() {
@@ -129,7 +126,7 @@ class RoleAnalysisTest {
             a1.hashCode;
             a1;
         '''.withFrame).task
-        var analysis = newRoleAnalysis(task, task.body.controlFlowGraph, METHOD)
+        var analysis = newRoleAnalysis(task, METHOD)
         var varRefs = task.all(VarRef).filter[variable.name == "a1"].toList
         analysis.dynamicRole(varRefs.get(0)).assertThat(instanceOf(Pure))
         analysis.dynamicRole(varRefs.get(1)).assertThat(instanceOf(ReadOnly))
@@ -141,7 +138,7 @@ class RoleAnalysisTest {
             b1.hashCode;
             b1;
         '''.withFrame).task
-        analysis = newRoleAnalysis(task, task.body.controlFlowGraph, METHOD)
+        analysis = newRoleAnalysis(task, METHOD)
         varRefs = task.all(VarRef).filter[variable.name == "b1"].toList
         analysis.dynamicRole(varRefs.get(0)).assertThat(instanceOf(Pure))
         analysis.dynamicRole(varRefs.get(1)).assertThat(instanceOf(Pure))
@@ -153,7 +150,7 @@ class RoleAnalysisTest {
             val a1 = this.getA;
             a1;
         '''.withFrame).task
-        newRoleAnalysis(task, task.body.controlFlowGraph, TASK)
+        newRoleAnalysis(task, TASK)
                 .dynamicRole(task.lastExpr).assertThat(instanceOf(ReadWrite))
         
         // but if there is a task start or a call to an async method, we don't know
@@ -162,7 +159,7 @@ class RoleAnalysisTest {
             val a1 = this.getA; // but not 
             a1;
         '''.withFrame).task
-        newRoleAnalysis(task, task.body.controlFlowGraph, TASK)
+        newRoleAnalysis(task, TASK)
                 .dynamicRole(task.lastExpr).assertThat(instanceOf(Pure))
         
         task = parse('''
@@ -170,7 +167,7 @@ class RoleAnalysisTest {
             val a1 = this.getA; // but not 
             a1;
         '''.withFrame).task
-        newRoleAnalysis(task, task.body.controlFlowGraph, TASK)
+        newRoleAnalysis(task, TASK)
                 .dynamicRole(task.lastExpr).assertThat(instanceOf(Pure))
     }
 }

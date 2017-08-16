@@ -192,7 +192,7 @@ class ClassGenerator {
     '''
     
     private def gen(Constr it) {
-        val roleAnalysis = newRoleAnalysis(it, body.controlFlowGraph)
+        val roleAnalysis = newRoleAnalysis(it)
          '''
             
             public «enclosingClass.safeSimpleName»(«genParamsWithExtra») {
@@ -213,7 +213,7 @@ class ClassGenerator {
     // IMPROVE: Support initializer code that may throw checked exceptions
     private def gen(Field it) '''
         
-        public «kind.generate»«type.generate» «safeName»«IF initializer !== null» = «initializer.expr.generate(newRoleAnalysis(initializer, initializer.expr.controlFlowGraph))»«ENDIF»;
+        public «kind.generate»«type.generate» «safeName»«IF initializer !== null» = «initializer.expr.generate(newRoleAnalysis(initializer))»«ENDIF»;
     '''
     
     private def gen(Method it) '''
@@ -225,7 +225,7 @@ class ClassGenerator {
             «IF needsTasksJoin»
             final «jvmTasksClassName» $tasks = new «jvmTasksClassName»();
             «ENDIF»
-            «body.generateWithTryCatch(newRoleAnalysis(it, body.controlFlowGraph, METHOD), needsTasksJoin)»
+            «body.generateWithTryCatch(newRoleAnalysis(it, METHOD), needsTasksJoin)»
             «IF needsTasksJoin»
             finally {
                 $tasks.joinAll();
@@ -246,7 +246,7 @@ class ClassGenerator {
                 @java.lang.Override
                 protected «type.generateGeneric» runRolez() {
                     final long $task = idBits();
-                    «body.generateWithTryCatch(newRoleAnalysis(it, body.controlFlowGraph, TASK), false)»
+                    «body.generateWithTryCatch(newRoleAnalysis(it, TASK), false)»
                     «IF needsReturnNull»
                     return null;
                     «ENDIF»

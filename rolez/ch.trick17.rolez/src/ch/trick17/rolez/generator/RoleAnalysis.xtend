@@ -27,6 +27,7 @@ import ch.trick17.rolez.rolez.ThisParam
 import ch.trick17.rolez.rolez.Var
 import ch.trick17.rolez.rolez.VarRef
 import ch.trick17.rolez.typesystem.RolezSystem
+import ch.trick17.rolez.validation.cfg.CfgProvider
 import ch.trick17.rolez.validation.cfg.ControlFlowGraph
 import ch.trick17.rolez.validation.dataflow.DataFlowAnalysis
 import com.google.common.collect.ImmutableMap
@@ -48,23 +49,25 @@ class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleInfo>> {
         
         @Inject RolezSystem system
         @Inject RolezUtils utils
+        @Inject extension CfgProvider
     
-        def newRoleAnalysis(FieldInitializer code, ControlFlowGraph cfg) {
-            newRoleAnalysis(code, cfg, FIELD_INITIALIZER)
+        def newRoleAnalysis(FieldInitializer initializer) {
+            newRoleAnalysis(initializer, FIELD_INITIALIZER)
         }
         
-        def newRoleAnalysis(Constr code, ControlFlowGraph cfg) {
-            newRoleAnalysis(code, cfg, CONSTR)
+        def newRoleAnalysis(Constr constr) {
+            newRoleAnalysis(constr, CONSTR)
         }
         
-        def newRoleAnalysis(Method code, ControlFlowGraph cfg, CodeKind codeKind) {
+        def newRoleAnalysis(Method method, CodeKind codeKind) {
             if(!#[METHOD, TASK].contains(codeKind))
                 throw new IllegalArgumentException
-            newRoleAnalysis(code as Executable, cfg, codeKind)
+            newRoleAnalysis(method as Executable, codeKind)
         }
         
-        private def newRoleAnalysis(Executable code, ControlFlowGraph cfg, CodeKind codeKind) {
-            new RoleAnalysis(code, cfg, codeKind, system, utils)
+        private def newRoleAnalysis(Executable executable, CodeKind codeKind) {
+            new RoleAnalysis(executable, executable.code.controlFlowGraph,
+                codeKind, system, utils)
         }
     }
     
