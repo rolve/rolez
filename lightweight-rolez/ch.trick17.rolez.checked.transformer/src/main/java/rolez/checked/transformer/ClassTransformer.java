@@ -110,11 +110,22 @@ public class ClassTransformer extends SceneTransformer {
 		
 		if (hasCheckedAnnotation(c)) {
 			c.setSuperclass(CHECKED_CLASS);
-			//TODO: Also change constructor(s) of this class to call the constructor of Checked
+			
+			// Replace constructors with one that calls the Checked constructor
+			for (SootMethod m : c.getMethods()) {
+				if (m.getName().equals("<init>")) {
+					CheckedConstructor checkedConstructor = new CheckedConstructor(m);
+					c.removeMethod(m);
+					c.addMethod(checkedConstructor);
+				}
+			}
+			
+			// Generate the guardedRefs method
 			GuardedRefsMethod guardedRefs = new GuardedRefsMethod(c);
 			c.addMethod(guardedRefs);
 		}
 		
+		// Search for methods which have the @Roleztask annotation
 		processMethods(c);
 		
 		JimpleWriter.write(c);
