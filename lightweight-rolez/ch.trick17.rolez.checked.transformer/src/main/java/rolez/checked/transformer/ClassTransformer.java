@@ -19,6 +19,7 @@ import rolez.checked.transformer.checked.CheckedConstructor;
 import rolez.checked.transformer.checked.GuardedRefsMethod;
 import rolez.checked.transformer.util.JimpleWriter;
 import soot.Printer;
+import soot.RefType;
 import soot.Scene;
 import soot.SceneTransformer;
 import soot.SootClass;
@@ -101,7 +102,12 @@ public class ClassTransformer extends SceneTransformer {
 	private ArrayList<SootClass> findRefs(SootClass c) {
 		ArrayList<SootClass> ret = new ArrayList<SootClass>();
 		for (SootField f : c.getFields()) {
-			ret.add(Scene.v().loadClassAndSupport(f.getType().toString()));
+			// TODO: Also allow arrays?
+			if (f.getType() instanceof RefType) {
+				SootClass classToAdd = Scene.v().loadClassAndSupport(f.getType().toString());
+				logger.debug("Class to add: " + classToAdd);
+				ret.add(classToAdd);
+			}
 		}
 		return ret;
 	}
