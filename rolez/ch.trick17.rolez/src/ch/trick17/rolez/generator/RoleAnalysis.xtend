@@ -42,7 +42,7 @@ import static com.google.common.collect.ImmutableMap.copyOf
 import static extension ch.trick17.rolez.RolezExtensions.*
 import static extension java.util.Objects.requireNonNull
 
-class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleData>> {
+class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleInfo>> {
     
     static class Provider {
         
@@ -99,37 +99,37 @@ class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleData>> {
     protected override entryFlow() {
         val flow = new HashMap
         for(Param p : code.allParams.filter[type instanceof RoleType]) {
-            val data =
+            val info =
                 if(codeKind == CONSTR && p instanceof ThisParam)
-                    RoleData.readWrite
+                    RoleInfo.readWrite
                 else if(codeKind == TASK)
-                    new RoleData((p.type as RoleType).role.erased)
+                    new RoleInfo((p.type as RoleType).role.erased)
                 else
-                    RoleData.pure
-            flow.put(p, data)
+                    RoleInfo.pure
+            flow.put(p, info)
         }
         copyOf(flow)
     }
     
-    protected def dispatch flowThrough(LocalVarDecl d, ImmutableMap<Var, RoleData> in) {
+    protected def dispatch flowThrough(LocalVarDecl d, ImmutableMap<Var, RoleInfo> in) {
         if(d.initializer !== null) flowThroughAssign(d.variable, d.initializer, in)
         else in
     }
     
-    protected def dispatch flowThrough(Assignment a, ImmutableMap<Var, RoleData> in) {
+    protected def dispatch flowThrough(Assignment a, ImmutableMap<Var, RoleInfo> in) {
         // TODO: support assignments to final fields (in constructors)
         if(a.left instanceof VarRef) flowThroughAssign((a.left as VarRef).variable, a.right, in)
         else in
     }
     
-    private def flowThroughAssign(Var left, Expr right, ImmutableMap<Var, RoleData> in) {
+    private def flowThroughAssign(Var left, Expr right, ImmutableMap<Var, RoleInfo> in) {
         if(system.varType(left).value instanceof RoleType)
-            in.replace(left, roleData(right, in))
+            in.replace(left, roleInfo(right, in))
         else
             in
     }
     
-    protected def dispatch flowThrough(MemberAccess a, ImmutableMap<Var, RoleData> in) {
+    protected def dispatch flowThrough(MemberAccess a, ImmutableMap<Var, RoleInfo> in) {
         if(a.isTaskStart || a.isMethodInvoke && a.method.isAsync)
             // after a task has (possibly) been started, reset all roles to pure
             ImmutableMap.of
@@ -137,16 +137,16 @@ class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleData>> {
             // after a read/write access, we know the object is at least readonly/readwrite
             val role = if(a.isWriteAccess) createReadWrite else createReadOnly
             val accessSeq = a.target.asAccessSeq
-            val prev = in.get(accessSeq.variable) ?: RoleData.pure
+            val prev = in.get(accessSeq.variable) ?: RoleInfo.pure
             in.replace(accessSeq.variable, prev.with(role, accessSeq.fieldSeq))
         }
         else
             in
     }
     
-    protected def dispatch flowThrough(Instr _, ImmutableMap<Var, RoleData> in) { in }
+    protected def dispatch flowThrough(Instr _, ImmutableMap<Var, RoleInfo> in) { in }
     
-    protected override merge(ImmutableMap<Var, RoleData> in1, ImmutableMap<Var, RoleData> in2) {
+    protected override merge(ImmutableMap<Var, RoleInfo> in1, ImmutableMap<Var, RoleInfo> in2) {
         // if one flow has not been computed yet, just return the other
         if(in1 === null)
             in2
@@ -178,55 +178,55 @@ class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleData>> {
     }}
     
     /**
-     * Returns a role data object that is equivalent to the given one, except with the additional
+     * Returns a role info object that is equivalent to the given one, except with the additional
      * information that the object denoted by the given sequence of field accesses (relative to the
-     * object the role data applies to) has at least the given role. That is, if the field sequence
+     * object the role info applies to) has at least the given role. That is, if the field sequence
      * is empty, the role concerns the object's own role.
      */
-    private def RoleData with(RoleData it, BuiltInRole role, Iterable<Field> fieldSeq) {
+    private def RoleInfo with(RoleInfo it, BuiltInRole role, Iterable<Field> fieldSeq) {
         if(fieldSeq.isEmpty)
-            new RoleData(system.greatestCommonSubrole(ownRole, role) as BuiltInRole, fields)
+            new RoleInfo(system.greatestCommonSubrole(ownRole, role) as BuiltInRole, fields)
         else {
             val field = fieldSeq.head
-            val prev = fields.get(field) ?: RoleData.pure
-            new RoleData(ownRole, fields.replace(field, prev.with(role, fieldSeq.tail)))
+            val prev = fields.get(field) ?: RoleInfo.pure
+            new RoleInfo(ownRole, fields.replace(field, prev.with(role, fieldSeq.tail)))
         }
     }
     
-    private def <K> replace(ImmutableMap<K, RoleData> it, K key, RoleData value) {
+    private def <K> replace(ImmutableMap<K, RoleInfo> it, K key, RoleInfo value) {
         copyOf(new HashMap(it) => [put(key, value)])
     }
     
-    private def <K> mergeMaps(ImmutableMap<K, RoleData> it, ImmutableMap<K, RoleData> other) {
+    private def <K> mergeMaps(ImmutableMap<K, RoleInfo> it, ImmutableMap<K, RoleInfo> other) {
         if(equals(other)) return it
         
         val merged = new HashMap
-        for(Entry<K, RoleData> entry : entrySet)
+        for(Entry<K, RoleInfo> entry : entrySet)
             if(other.containsKey(entry.key))
                 merged.put(entry.key, merge(entry.value, other.get(entry.key)))
         copyOf(merged)
     }
     
-    private def RoleData merge(RoleData it, RoleData other) {
+    private def RoleInfo merge(RoleInfo it, RoleInfo other) {
         val role = system.leastCommonSuperrole(ownRole, other.ownRole) as BuiltInRole
-        new RoleData(role, mergeMaps(fields, other.fields))
+        new RoleInfo(role, mergeMaps(fields, other.fields))
     }
     
-    private def RoleData roleData(Expr it, ImmutableMap<Var, RoleData> roles) { switch(it) {
+    private def RoleInfo roleInfo(Expr it, ImmutableMap<Var, RoleInfo> roles) { switch(it) {
         case isTracked: {
             val accessSeq = asAccessSeq
-            var roleData = roles.get(accessSeq.variable) ?: RoleData.pure
+            var roleInfo = roles.get(accessSeq.variable) ?: RoleInfo.pure
             for(Field f : accessSeq.fieldSeq)
-                roleData = roleData.fields.get(f) ?: RoleData.pure
-            roleData
+                roleInfo = roleInfo.fields.get(f) ?: RoleInfo.pure
+            roleInfo
         }
-        Cast, Parenthesized       : roleData(expr, roles)
-        Assignment                : roleData(right, roles)
-        Slicing                   : roleData(target, roles)
-        New                       : RoleData.readWrite
-        The, StringLiteral        : RoleData.readOnly
-        MemberAccess case isGlobal: RoleData.readOnly
-        default                   : RoleData.pure
+        Cast, Parenthesized       : roleInfo(expr, roles)
+        Assignment                : roleInfo(right, roles)
+        Slicing                   : roleInfo(target, roles)
+        New                       : RoleInfo.readWrite
+        The, StringLiteral        : RoleInfo.readOnly
+        MemberAccess case isGlobal: RoleInfo.readOnly
+        default                   : RoleInfo.pure
     }}
     
     private def isReadAccess(MemberAccess it) {
@@ -253,7 +253,7 @@ class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleData>> {
     
     def dynamicRole(Expr it) {
         if(childTasksMayExist)
-            roleData(it, cfg.nodeOf(it).inFlow ?: ImmutableMap.of).ownRole
+            roleInfo(it, cfg.nodeOf(it).inFlow ?: ImmutableMap.of).ownRole
         else {
             // Special case: if we know that no child task may run in parallel to statements
             // in this piece of code, no guarding is required. So just return the static role.
@@ -267,17 +267,17 @@ class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleData>> {
     }
 }
 
-package class RoleData {
+package class RoleInfo {
     
     /* reuse the same "simple" instances */
-    package static val pure      = new RoleData(RolezFactory.eINSTANCE.createPure)
-    package static val readOnly  = new RoleData(RolezFactory.eINSTANCE.createReadOnly)
-    package static val readWrite = new RoleData(RolezFactory.eINSTANCE.createReadWrite)
+    package static val pure      = new RoleInfo(RolezFactory.eINSTANCE.createPure)
+    package static val readOnly  = new RoleInfo(RolezFactory.eINSTANCE.createReadOnly)
+    package static val readWrite = new RoleInfo(RolezFactory.eINSTANCE.createReadWrite)
     
     package val BuiltInRole ownRole
-    package val ImmutableMap<Field, RoleData> fields
+    package val ImmutableMap<Field, RoleInfo> fields
     
-    new(BuiltInRole ownRole, ImmutableMap<Field, RoleData> fields) {
+    new(BuiltInRole ownRole, ImmutableMap<Field, RoleInfo> fields) {
         ownRole.requireNonNull
         fields.requireNonNull
         this.ownRole = ownRole
@@ -295,14 +295,14 @@ package class RoleData {
         if(obj === null)        return false
         if(class !== obj.class) return false
         
-        val other = obj as RoleData;
+        val other = obj as RoleInfo;
         if(fields  != other.fields ) return false
         if(ownRole != other.ownRole) return false
         true
     }
     
     override toString() {
-        "RoleData[" + ownRole + ", {" + fields.entrySet.join(", ", [key.name + "=" + value]) + "}]"
+        "RoleInfo[" + ownRole + ", {" + fields.entrySet.join(", ", [key.name + "=" + value]) + "}]"
     }
 }
 
