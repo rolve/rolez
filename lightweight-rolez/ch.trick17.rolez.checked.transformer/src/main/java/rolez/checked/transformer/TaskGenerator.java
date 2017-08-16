@@ -12,6 +12,7 @@ import rolez.checked.transformer.task.InnerClassConstructor;
 import rolez.checked.transformer.task.InnerClassRunRolezConcrete;
 import rolez.checked.transformer.task.InnerClassRunRolezObject;
 import rolez.checked.transformer.task.TaskMethod;
+import rolez.checked.transformer.util.ClassWriter;
 import rolez.checked.transformer.util.JimpleWriter;
 import soot.Body;
 import soot.BooleanType;
@@ -56,6 +57,7 @@ public class TaskGenerator {
 		//                                                        [inner=rolez/checked/transformer/test/Test$1, outer=null, name=null,flags=0]
 		
 		JimpleWriter.write(innerClass);
+		ClassWriter.write(innerClass);
 	}
 
 	private void generateInnerClass() {

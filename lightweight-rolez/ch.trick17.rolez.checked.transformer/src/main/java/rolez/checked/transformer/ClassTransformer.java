@@ -1,10 +1,5 @@
 package rolez.checked.transformer;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -17,21 +12,17 @@ import org.apache.logging.log4j.Logger;
 import rolez.checked.lang.Checked;
 import rolez.checked.transformer.checked.CheckedConstructor;
 import rolez.checked.transformer.checked.GuardedRefsMethod;
+import rolez.checked.transformer.util.ClassWriter;
 import rolez.checked.transformer.util.JimpleWriter;
-import soot.Printer;
 import soot.RefType;
 import soot.Scene;
 import soot.SceneTransformer;
 import soot.SootClass;
 import soot.SootField;
 import soot.SootMethod;
-import soot.SourceLocator;
-import soot.jimple.JasminClass;
-import soot.options.Options;
 import soot.tagkit.AnnotationTag;
 import soot.tagkit.Tag;
 import soot.tagkit.VisibilityAnnotationTag;
-import soot.util.JasminOutputStream;
 
 /**
  * A transformer that processes the user defined classes and outputs code, which
@@ -136,6 +127,7 @@ public class ClassTransformer extends SceneTransformer {
 		processMethods(c);
 		
 		JimpleWriter.write(c);
+		ClassWriter.write(c);
 	}
 	
 	private boolean hasCheckedAnnotation(SootClass c) {
@@ -156,7 +148,6 @@ public class ClassTransformer extends SceneTransformer {
 				TaskGenerator taskGenerator = new TaskGenerator(c, m);
 				taskGenerator.generateMethod();
 			}
-			
 		}
 	}
 	
@@ -167,22 +158,5 @@ public class ClassTransformer extends SceneTransformer {
 					if (aTag.getType().equals(ROLEZTASK_ANNOTATION)) 
 						return true;
 		return false;
-	}
-	
-	
-	// TODO: Add generation of path if not available
-	private void writeClass(SootClass c) {
-		logger.debug("Writing class file");
-		try {
-			String fileName = SourceLocator.v().getFileNameFor(c, Options.output_format_class);
-			OutputStream streamOut = new JasminOutputStream(new FileOutputStream(fileName));
-			PrintWriter writerOut = new PrintWriter(new OutputStreamWriter(streamOut));
-			JasminClass jasminClass = new soot.jimple.JasminClass(c);
-			jasminClass.print(writerOut);
-			writerOut.flush();
-			streamOut.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 }
