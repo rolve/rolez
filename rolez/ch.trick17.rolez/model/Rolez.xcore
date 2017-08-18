@@ -302,6 +302,8 @@ class BinaryExpr extends Expr {
     contains Expr left
     contains Expr right
     op EEnumerator getOp()
+    
+    op String toString() { left + " " + op + " " + right }
 }
 
 class Assignment extends BinaryExpr {
@@ -375,10 +377,19 @@ enum OpArithmetic {
 
 class Cast extends UnaryExpr {
     contains Type ^type
+    
+    op String toString() { expr + " as " + ^type }
 }
 
 class ArithmeticUnaryExpr extends UnaryExpr {
     OpArithmeticUnary ^op
+    
+    op String toString() {
+        if(^op.name().startsWith("POST_"))
+            expr + ^op.literal.replace("post", "")
+        else
+            ^op.literal + expr
+    }
 }
 
 enum OpArithmeticUnary {
@@ -389,13 +400,24 @@ enum OpArithmeticUnary {
     POST_DECREMENT as "post--"
 }
 
-class LogicalNot extends UnaryExpr {}
+class LogicalNot extends UnaryExpr {
+    op String toString() { "!" + expr }
+}
 
-class BitwiseNot extends UnaryExpr {}
+class BitwiseNot extends UnaryExpr {
+    op String toString() { "^" + expr }
+}
 
 class Slicing extends Expr {
     contains Expr target
     refers Slice slice
+    
+    op String toString() {
+        if(target !== null && slice !== null)
+            target + " slice " + slice.name
+        else
+            super.toString
+    }
 }
 
 class MemberAccess extends Expr, Argumented {
@@ -416,7 +438,7 @@ class MemberAccess extends Expr, Argumented {
             target + (if(isTaskStart) " start " else ".") + member.qualifiedName.lastSegment +
                 args.join("(", ", ", ")", [toString])
         else
-            return super.toString
+            super.toString
     }
 }
 
@@ -440,41 +462,63 @@ class New extends Expr, Argumented {
     contains ClassRef classRef
     
     op Executable getExecutable() { constr }
+    
+    op String toString() {
+        "new " + classRef + if(args.isEmpty) "" else args.join("(", ", ", ")", [toString])
+    }
 }
 
 class The extends Expr {
     contains SimpleClassRef classRef
+    
+    op String toString() { "the " + classRef }
 }
 
-class Parenthesized extends UnaryExpr {}
+class Parenthesized extends UnaryExpr {
+    op String toString() { "(" + expr + ")" }
+}
 
 class Literal extends Expr {}
 
 class StringLiteral extends Literal {
     String value
+    
+    op String toString() { "\"" + value + "\"" }
 }
 
 class DoubleLiteral extends Literal {
     String value
+    
+    op String toString() { value }
 }
 
 class LongLiteral extends Literal {
     long value
+    
+    op String toString() { value.toString }
 }
 
 class IntLiteral extends Literal {
     int value
+    
+    op String toString() { value.toString }
 }
 
 class BooleanLiteral extends Literal {
     boolean value
+    
+    op String toString() { value.toString }
 }
 
 class CharLiteral extends Literal {
     char value
+    
+    op String toString() { "'" + value + "'" }
 }
 
-class NullLiteral extends Literal {}
+class NullLiteral extends Literal {
+    op String toString() { "null" }
+}
 
 // -----------------------------------------
 // Types & Roles
