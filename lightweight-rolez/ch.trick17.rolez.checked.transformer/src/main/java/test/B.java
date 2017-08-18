@@ -1,4 +1,4 @@
-package rolez.checked.transformer.test;
+package test;
 
 import rolez.annotation.Checked;
 

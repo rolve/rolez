@@ -1,4 +1,4 @@
-package rolez.checked.transformer.test;
+package test;
 
 import rolez.annotation.Checked;
 import rolez.annotation.Readonly;
@@ -12,17 +12,20 @@ public class Test {
 	B field2;
 	
 	public static void main(String[] args) {
-		
+		Test test = new Test();
+		test.testOriginal(new A(), new A(), true);
 	}
 
 	@Roleztask
 	public void testOriginal(@Readonly A src, @Readwrite A dst, final boolean $asTask) {
-		foo(true);
+		dst.foo = foo(true);
+		System.out.println(src.foo);
+		System.out.println(dst.foo);
 	}
 	
 	@Roleztask
-	public void foo(final boolean $asTask) {
-		int i = 0;
-		i++;
+	public int foo(final boolean $asTask) {
+		int i = 42;
+		return i;
 	}
 }
