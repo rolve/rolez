@@ -1,10 +1,7 @@
 package rolez.checked.transformer;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,15 +11,14 @@ import rolez.checked.transformer.checked.CheckedConstructor;
 import rolez.checked.transformer.checked.GuardedRefsMethod;
 import rolez.checked.transformer.util.ClassWriter;
 import rolez.checked.transformer.util.JimpleWriter;
-import soot.RefType;
 import soot.Scene;
 import soot.SceneTransformer;
 import soot.SootClass;
-import soot.SootField;
 import soot.SootMethod;
 import soot.tagkit.AnnotationTag;
 import soot.tagkit.Tag;
 import soot.tagkit.VisibilityAnnotationTag;
+import soot.util.Chain;
 
 /**
  * A transformer that processes the user defined classes and outputs code, which
@@ -48,59 +44,11 @@ public class ClassTransformer extends SceneTransformer {
 	}
 
 	private void processClasses() {
-		Set<SootClass> classesToProcess = findClassesToProcess();
+		Chain<SootClass> classesToProcess = Scene.v().getApplicationClasses();
+		logger.debug(classesToProcess);
 		for (SootClass c : classesToProcess) {
 			processClass(c);
 		}
-	}
-	
-	private Set<SootClass> findClassesToProcess() {
-		SootClass mainClass = Scene.v().getMainClass();
-		List<SootClass> foundClasses = new ArrayList<SootClass>();
-		foundClasses.add(mainClass);
-
-		Set<SootClass> classesToProcess = new HashSet<SootClass>();
-		classesToProcess.add(mainClass);
-		
-		boolean change = true;
-		while (change) {
-			change = false;
-			ArrayList<SootClass> refs = null;
-			for (SootClass c : foundClasses) {
-				refs = findRefs(c);
-			}
-			for (SootClass c : refs) {
-				if (!classesToProcess.contains(c)) {
-					foundClasses.add(c);
-					classesToProcess.add(c);
-					change = true;
-				}
-			}
-		}
-		
-		StringBuilder sb = new StringBuilder();
-		sb.append("\nClasses to Process\n\n");
-		for (SootClass c : classesToProcess) {
-			sb.append(c.toString() + "\n");
-		}
-		logger.debug(sb.toString());
-		
-		return classesToProcess;
-	}
-	
-	//TODO: Not only include field references
-	//TODO: Stop at library classes
-	private ArrayList<SootClass> findRefs(SootClass c) {
-		ArrayList<SootClass> ret = new ArrayList<SootClass>();
-		for (SootField f : c.getFields()) {
-			// TODO: Also allow arrays?
-			if (f.getType() instanceof RefType) {
-				SootClass classToAdd = Scene.v().loadClassAndSupport(f.getType().toString());
-				logger.debug("Class to add: " + classToAdd);
-				ret.add(classToAdd);
-			}
-		}
-		return ret;
 	}
 	
 	private void processClass(SootClass c) {
@@ -130,16 +78,6 @@ public class ClassTransformer extends SceneTransformer {
 		ClassWriter.write(c);
 	}
 	
-	private boolean hasCheckedAnnotation(SootClass c) {
-		List<Tag> classTags = c.getTags();
-		for (Tag t : classTags) 
-			if (t instanceof VisibilityAnnotationTag) 
-				for (AnnotationTag aTag : ((VisibilityAnnotationTag) t).getAnnotations()) 
-					if (aTag.getType().equals(CHECKED_ANNOTATION))
-						return true;
-		return false;
-	}
-	
 	private void processMethods(SootClass c) {
 		for (SootMethod m : c.getMethods()) {
 			logger.debug("Processing method: " + c.getName() + ":" + m.getName());
@@ -149,6 +87,16 @@ public class ClassTransformer extends SceneTransformer {
 				taskGenerator.generateMethod();
 			}
 		}
+	}
+
+	private boolean hasCheckedAnnotation(SootClass c) {
+		List<Tag> classTags = c.getTags();
+		for (Tag t : classTags) 
+			if (t instanceof VisibilityAnnotationTag) 
+				for (AnnotationTag aTag : ((VisibilityAnnotationTag) t).getAnnotations()) 
+					if (aTag.getType().equals(CHECKED_ANNOTATION))
+						return true;
+		return false;
 	}
 	
 	private boolean hasRoleztaskAnnotation(SootMethod m) {
