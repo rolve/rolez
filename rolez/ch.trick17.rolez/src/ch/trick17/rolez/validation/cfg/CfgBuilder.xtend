@@ -3,11 +3,11 @@ package ch.trick17.rolez.validation.cfg
 import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.BinaryExpr
 import ch.trick17.rolez.rolez.Block
-import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.ExprStmt
 import ch.trick17.rolez.rolez.ForLoop
 import ch.trick17.rolez.rolez.IfStmt
 import ch.trick17.rolez.rolez.Instr
+import ch.trick17.rolez.rolez.Literal
 import ch.trick17.rolez.rolez.LocalVarDecl
 import ch.trick17.rolez.rolez.LogicalExpr
 import ch.trick17.rolez.rolez.MemberAccess
@@ -15,8 +15,11 @@ import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.OpAssignment
 import ch.trick17.rolez.rolez.ReturnExpr
 import ch.trick17.rolez.rolez.ReturnNothing
+import ch.trick17.rolez.rolez.Slicing
 import ch.trick17.rolez.rolez.SuperConstrCall
+import ch.trick17.rolez.rolez.The
 import ch.trick17.rolez.rolez.UnaryExpr
+import ch.trick17.rolez.rolez.VarRef
 import ch.trick17.rolez.rolez.WhileLoop
 import java.util.HashMap
 import java.util.Map
@@ -173,6 +176,10 @@ class CfgBuilder {
         process(e.expr, prev).linkAndReturn(newInstrNode(e))
     }
     
+    private def dispatch Linker process(Slicing s, Linker prev) {
+        process(s.target, prev).linkAndReturn(newInstrNode(s))
+    }
+    
     private def dispatch Linker process(MemberAccess a, Linker prev) {
         a.allArgs.fold(prev, [p, e | process(e, p)]).linkAndReturn(newInstrNode(a))
     }
@@ -181,8 +188,17 @@ class CfgBuilder {
         n.args.fold(prev, [p, e | process(e, p)]).linkAndReturn(newInstrNode(n))
     }
     
-    // Everything else (This, VarRef, Literals)
-    private def dispatch Linker process(Expr e, Linker prev) {
-        prev.linkAndReturn(newInstrNode(e))
+    /* Simple cases: */
+    
+    private def dispatch Linker process(The t, Linker prev) {
+        prev.linkAndReturn(newInstrNode(t))
+    }
+    
+    private def dispatch Linker process(VarRef v, Linker prev) {
+        prev.linkAndReturn(newInstrNode(v))
+    }
+    
+    private def dispatch Linker process(Literal l, Linker prev) {
+        prev.linkAndReturn(newInstrNode(l))
     }
 }
