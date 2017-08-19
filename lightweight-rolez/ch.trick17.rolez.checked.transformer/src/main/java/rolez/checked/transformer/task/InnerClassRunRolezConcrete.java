@@ -35,7 +35,7 @@ public class InnerClassRunRolezConcrete extends SootMethod {
 	
 	public InnerClassRunRolezConcrete(SootClass containingClass, SootMethod sourceMethod) {
 		// Defer setting of return type
-		super("runRolez", new ArrayList<Type>(), Constants.VOID_TYPE, Modifier.VOLATILE | Modifier.PROTECTED);
+		super("runRolez", new ArrayList<Type>(), Constants.VOID_TYPE, Modifier.PROTECTED);
 		
 		this.containingClass = containingClass;
 		this.sourceMethod = sourceMethod;
