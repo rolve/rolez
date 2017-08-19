@@ -51,7 +51,6 @@ public class InnerClassRunRolezConcrete extends SootMethod {
 		
 		// Body of source method
 		Body srcMethodBody = sourceMethod.retrieveActiveBody();
-		//logger.debug("SOURCE BEFORE\n" + srcMethodBody);
 		
 		// Body of created runRolez method is initialized as a copy of the source method's body
 		this.setActiveBody((Body)srcMethodBody.clone());
@@ -59,7 +58,8 @@ public class InnerClassRunRolezConcrete extends SootMethod {
 		
 		// Change type of first local to inner class type
 		Chain<Local> locals = body.getLocals();
-		locals.getFirst().setType(innerClassType);
+		Local innerClassLocal = J.newLocal("inner", containingClass.getType());
+		locals.addFirst(innerClassLocal);
 
 		// Transform the units of the source method
 		Chain<Unit> units = body.getUnits();
@@ -68,49 +68,20 @@ public class InnerClassRunRolezConcrete extends SootMethod {
 		int n = sourceMethod.getParameterCount() + 1;
 
 		int i = 0;
-		if (sourceMethod.isStatic()) i = 1;
 		
 		Iterator<Unit> unitIter = units.snapshotIterator(); 
 		while (unitIter.hasNext()) {
 			Unit u = unitIter.next();
-			if (i == 0) {
-				// This ref
-				try {
-					if (u instanceof IdentityStmt) {
-						IdentityStmt idStmt = (IdentityStmt) u;
-						if (idStmt.getRightOp() instanceof ThisRef) {
-							Value leftOp = idStmt.getLeftOp();
-							Unit newUnit = J.newIdentityStmt(leftOp, J.newThisRef(innerClassType));
-							units.insertBefore(newUnit, u);
-							units.remove(u);
-						} else {
-							// TODO: This is NOT true for static methods (e.g. main method) !!
-							// Right hand side should always be a this ref
-							throw new Exception(u.toString() + ": Right hand side should be a `this` ref.");
-						}
-					} else {
-						// Should always be an identity statement
-						throw new Exception();
-					}
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			} 
 			
-			else if (i > 0 && i < n) {
-				// Parameter assignments
+			// Transform to field assignments
+			if (i < n) {
 				try {
 					if (u instanceof IdentityStmt) {
 						IdentityStmt idStmt = (IdentityStmt) u;
-						if (idStmt.getRightOp() instanceof ParameterRef) {
-							Value leftOp = idStmt.getLeftOp();
-							Unit newUnit = J.newAssignStmt(leftOp, J.newInstanceFieldRef(locals.getFirst(), containingClass.getFieldByName("val$f"+Integer.toString(i-1)).makeRef()));
-							units.insertBefore(newUnit, u);
-							units.remove(u);
-						} else {
-							// Right hand side should always be a parameter ref
-							throw new Exception();
-						}
+						Value leftOp = idStmt.getLeftOp();
+						Unit newUnit = J.newAssignStmt(leftOp, J.newInstanceFieldRef(locals.getFirst(), containingClass.getFieldByName("val$f"+Integer.toString(i)).makeRef()));
+						units.insertBefore(newUnit, u);
+						units.remove(u);
 					} else {
 						// Should always be an identity statement
 						throw new Exception();
@@ -131,6 +102,8 @@ public class InnerClassRunRolezConcrete extends SootMethod {
 			
 			i++;
 		}
+		
+		units.addFirst(J.newIdentityStmt(innerClassLocal, J.newThisRef(innerClassType)));
 	}
 	
 	private Type findReturnType() {

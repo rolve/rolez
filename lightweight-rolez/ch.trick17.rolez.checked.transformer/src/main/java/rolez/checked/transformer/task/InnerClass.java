@@ -28,12 +28,12 @@ public class InnerClass extends SootClass {
 	}
 	
 	private void generateInnerClassFields() {
-		SootField outerClassReference = new SootField("this$0", outerClass.getType(), Modifier.FINAL);
+		SootField outerClassReference = new SootField("val$f0", outerClass.getType(), Modifier.FINAL);
 		this.addField(outerClassReference);
 	
 		// Add a field for every source method parameter
 		for (int i=0; i<sourceMethod.getParameterCount(); i++) {
-			SootField paramField = new SootField("val$f" + Integer.toString(i), sourceMethod.getParameterType(i), Modifier.PRIVATE | Modifier.FINAL);
+			SootField paramField = new SootField("val$f" + Integer.toString(i+1), sourceMethod.getParameterType(i), Modifier.PRIVATE | Modifier.FINAL);
 			this.addField(paramField);
 		}
 	}

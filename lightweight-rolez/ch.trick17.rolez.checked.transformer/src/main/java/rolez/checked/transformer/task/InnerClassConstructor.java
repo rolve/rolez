@@ -7,12 +7,8 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import rolez.checked.lang.Task;
 import rolez.checked.transformer.Constants;
-import soot.ArrayType;
 import soot.Local;
-import soot.RefType;
-import soot.Scene;
 import soot.SootClass;
 import soot.SootMethod;
 import soot.Type;
@@ -84,11 +80,11 @@ public class InnerClassConstructor extends SootMethod {
 		}
 		
 		// Set field field for outer class ref
-		units.add(J.newAssignStmt(J.newInstanceFieldRef(locals.get(0), containingClass.getFieldByName("this$0").makeRef()), locals.get(1)));
+		units.add(J.newAssignStmt(J.newInstanceFieldRef(locals.get(0), containingClass.getFieldByName("val$f0").makeRef()), locals.get(1)));
 		
 		// Set fields for method parameters
 		for (int i=0; i<sourceMethod.getParameterCount(); i++) {
-			units.add(J.newAssignStmt(J.newInstanceFieldRef(locals.get(0), containingClass.getFieldByName("val$f" + Integer.toString(i)).makeRef()), locals.get(offset + i)));
+			units.add(J.newAssignStmt(J.newInstanceFieldRef(locals.get(0), containingClass.getFieldByName("val$f" + Integer.toString(i+1)).makeRef()), locals.get(offset + i)));
 		}
 		
 		// Add the call to superclass constructor
