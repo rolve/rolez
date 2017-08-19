@@ -36,7 +36,6 @@ public class ClassWriter {
 	private static void makeDirectories(String path) {
 		File f = new File(path);
 		String parentPath = f.getParent();
-		System.out.println(parentPath);
 		(new File(parentPath)).mkdirs();
 	}
 }
