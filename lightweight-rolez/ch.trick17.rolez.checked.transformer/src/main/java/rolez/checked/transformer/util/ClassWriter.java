@@ -6,11 +6,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.nio.file.Files;
 
 import soot.SootClass;
 import soot.SourceLocator;
-import soot.coffi.parameter_annotation;
 import soot.jimple.JasminClass;
 import soot.options.Options;
 import soot.util.JasminOutputStream;
