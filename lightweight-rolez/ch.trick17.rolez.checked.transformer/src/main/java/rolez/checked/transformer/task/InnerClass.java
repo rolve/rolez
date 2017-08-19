@@ -1,12 +1,11 @@
 package rolez.checked.transformer.task;
 
-import java.lang.reflect.Modifier;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import rolez.checked.transformer.Constants;
 import rolez.checked.transformer.TaskGenerator;
+import soot.Modifier;
 import soot.SootClass;
 import soot.SootField;
 import soot.SootMethod;
@@ -34,7 +33,7 @@ public class InnerClass extends SootClass {
 	
 		// Add a field for every source method parameter
 		for (int i=0; i<sourceMethod.getParameterCount(); i++) {
-			SootField paramField = new SootField("val$f" + Integer.toString(i), sourceMethod.getParameterType(i), Modifier.PRIVATE | soot.Modifier.FINAL);
+			SootField paramField = new SootField("val$f" + Integer.toString(i), sourceMethod.getParameterType(i), Modifier.PRIVATE | Modifier.FINAL);
 			this.addField(paramField);
 		}
 	}
