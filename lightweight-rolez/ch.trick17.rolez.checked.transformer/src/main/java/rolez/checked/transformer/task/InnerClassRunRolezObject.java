@@ -43,7 +43,7 @@ public class InnerClassRunRolezObject extends SootMethod {
 		Chain<Local> bodyLocals = body.getLocals();
 		Local thisLocal = J.newLocal("r0", innerClassType);
 		bodyLocals.add(thisLocal);
-		Local returnLocal = J.newLocal("$r1", Constants.VOID_TYPE);
+		Local returnLocal = J.newLocal("$r1", concreteMethod.getReturnType());
 		bodyLocals.add(returnLocal);
 
 		Chain<Unit> units = body.getUnits();
