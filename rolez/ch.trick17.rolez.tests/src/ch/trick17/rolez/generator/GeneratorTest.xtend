@@ -70,6 +70,7 @@ abstract class GeneratorTest {
             }
             class rolez.io.PrintStream mapped to java.io.PrintStream {
                 mapped new(file: readonly String)
+                mapped def readonly println:
                 mapped def readonly println(i: int):
                 mapped def readonly println(s: pure String):
             }

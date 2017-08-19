@@ -136,9 +136,9 @@ public abstract class Task<V> implements Runnable {
         if(e == null)
             return result;
         else if(e instanceof RuntimeException)
-            throw(RuntimeException) e;
+            throw (RuntimeException) e;
         else if(e instanceof Error)
-            throw(Error) e;
+            throw (Error) e;
         else
             throw new AssertionError("Checked exception in task", e);
     }

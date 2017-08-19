@@ -11,6 +11,10 @@ import org.eclipse.xtext.generator.IGeneratorContext
 
 import static extension ch.trick17.rolez.generator.SafeJavaNames.*
 
+/**
+ * Generates Java source code files from Rolez classes. Uses
+ * {@link ClassGenerator} to produce the actual Java code.
+ */
 class RolezGenerator extends AbstractGenerator {
     
     @Inject ClassGenerator classGenerator

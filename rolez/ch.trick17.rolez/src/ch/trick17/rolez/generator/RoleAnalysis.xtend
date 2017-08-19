@@ -8,7 +8,6 @@ import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.Executable
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.Field
-import ch.trick17.rolez.rolez.FieldInitializer
 import ch.trick17.rolez.rolez.Instr
 import ch.trick17.rolez.rolez.LocalVarDecl
 import ch.trick17.rolez.rolez.MemberAccess
@@ -36,13 +35,23 @@ import java.util.Map.Entry
 import javax.inject.Inject
 import org.eclipse.xtend.lib.annotations.Data
 
-import static ch.trick17.rolez.generator.CodeKind.*
 import static ch.trick17.rolez.rolez.VarKind.*
 import static com.google.common.collect.ImmutableMap.copyOf
 
 import static extension ch.trick17.rolez.RolezExtensions.*
 import static extension java.util.Objects.requireNonNull
 
+/**
+ * A dataflow analysis that approximates the dynamic role of local
+ * variables and other expressions. Used together with the
+ * {@link ChildTasksAnalysis} to determine where to insert guards in
+ * the {@link InstrGenerator}.
+ * <p>
+ * Note that the role analysis is unaware of the different kinds of
+ * methods generated from a single Rolez method (guarded, unguarded,
+ * task). Only the results of the child tasks analysis are
+ * method-kind-dependent.
+ */
 class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleInfo>> {
     
     static class Provider {
@@ -51,23 +60,8 @@ class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleInfo>> {
         @Inject RolezUtils utils
         @Inject extension CfgProvider
     
-        def newRoleAnalysis(FieldInitializer initializer) {
-            newRoleAnalysis(initializer, FIELD_INITIALIZER)
-        }
-        
-        def newRoleAnalysis(Constr constr) {
-            newRoleAnalysis(constr, CONSTR)
-        }
-        
-        def newRoleAnalysis(Method method, CodeKind codeKind) {
-            if(!#[METHOD, TASK].contains(codeKind))
-                throw new IllegalArgumentException
-            newRoleAnalysis(method as Executable, codeKind)
-        }
-        
-        private def newRoleAnalysis(Executable executable, CodeKind codeKind) {
-            new RoleAnalysis(executable, executable.code.controlFlowGraph,
-                codeKind, system, utils)
+        def newRoleAnalysis(Executable executable) {
+            new RoleAnalysis(executable, executable.code.controlFlowGraph, system, utils)
         }
     }
     
@@ -76,25 +70,15 @@ class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleInfo>> {
     val RolezSystem system
     
     val Executable code
-    public val CodeKind codeKind
     
-    private new(Executable code, ControlFlowGraph cfg, CodeKind codeKind,
-            RolezSystem system, RolezUtils utils) {
+    private new(Executable code, ControlFlowGraph cfg, RolezSystem system, RolezUtils utils) {
         super(cfg, true)
         this.code = code
-        this.codeKind = codeKind
         
         this.system = system
         this.utils = utils
         
-        if(childTasksMayExist)
-            analyze
-    }
-    
-    private def childTasksMayExist() {
-        codeKind != TASK || code.all(MemberAccess).exists[
-            isTaskStart || isMethodInvoke && method.isAsync
-        ]
+        analyze
     }
     
     protected override newFlow() { null } // represents a not-yet-computed flow
@@ -103,10 +87,8 @@ class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleInfo>> {
         val flow = new HashMap
         for(Param p : code.allParams.filter[type instanceof RoleType]) {
             val info =
-                if(codeKind == CONSTR && p instanceof ThisParam)
+                if(code instanceof Constr && p instanceof ThisParam)
                     RoleInfo.readWrite
-                else if(codeKind == TASK)
-                    new RoleInfo((p.type as RoleType).role.erased)
                 else
                     RoleInfo.pure
             flow.put(p, info)
@@ -255,18 +237,7 @@ class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleInfo>> {
     /* Interface of the analysis */
     
     def dynamicRole(Expr it) {
-        if(childTasksMayExist)
-            roleInfo(it, cfg.nodeOf(it).inFlow ?: ImmutableMap.of).ownRole
-        else {
-            // Special case: if we know that no child task may run in parallel to statements
-            // in this piece of code, no guarding is required. So just return the static role.
-            val type = system.type(it).value
-            if(type instanceof RoleType)
-                type.role
-            else
-                RolezFactory.eINSTANCE.createPure
-            // TODO: Why are non-roletype instances passed to this method?...
-        }
+        roleInfo(it, cfg.nodeOf(it).inFlow ?: ImmutableMap.of).ownRole
     }
 }
 

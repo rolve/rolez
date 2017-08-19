@@ -129,8 +129,15 @@ class TestUtils {
         stmts.filter(ExprStmt).get(i).expr
     }
     
+    def firstExpr(Method it) { body.firstExpr }
+    def firstExpr(Constr it) { body.firstExpr }
+    
     def lastExpr(Method it) { body.lastExpr }
     def lastExpr(Constr it) { body.lastExpr }
+    
+    def firstExpr(Block it) {
+        stmts.filter(ExprStmt).head.expr
+    }
     
     def lastExpr(Block it) {
         stmts.filter(ExprStmt).last.expr

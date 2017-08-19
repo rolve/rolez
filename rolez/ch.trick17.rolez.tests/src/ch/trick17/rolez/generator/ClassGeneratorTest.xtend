@@ -163,6 +163,12 @@ class ClassGeneratorTest extends GeneratorTest {
                     return t;
                 }
                 
+                public A£b foo$Unguarded(final long $task) {
+                    this.$object().j = 0;
+                    A£b t = this;
+                    return t;
+                }
+                
                 @java.lang.Override
                 protected java.util.List<?> guardedRefs() {
                     return java.util.Arrays.asList(a);
@@ -257,6 +263,7 @@ class ClassGeneratorTest extends GeneratorTest {
                 
                 A $object();
                 A£b foo(final long $task);
+                A£b foo$Unguarded(final long $task);
                 
                 final class Impl extends «jvmGuardedClassName» implements A£b {
                     
@@ -269,6 +276,12 @@ class ClassGeneratorTest extends GeneratorTest {
                     
                     public A£b foo(final long $task) {
                         guardReadWriteSlice(this, $task).$object().j = 0;
+                        A£b t = this;
+                        return t;
+                    }
+                    
+                    public A£b foo$Unguarded(final long $task) {
+                        this.$object().j = 0;
                         A£b t = this;
                         return t;
                     }
@@ -476,7 +489,14 @@ class ClassGeneratorTest extends GeneratorTest {
                 public void foo(final long $task) {
                 }
                 
+                public void foo$Unguarded(final long $task) {
+                }
+                
                 public int foo(final int i, final long $task) {
+                    return i;
+                }
+                
+                public int foo$Unguarded(final int i, final long $task) {
                     return i;
                 }
             }
@@ -499,6 +519,9 @@ class ClassGeneratorTest extends GeneratorTest {
                 
                 public void foo(final long $task) {
                 }
+                
+                public void foo$Unguarded(final long $task) {
+                }
             }
         ''')
     }
@@ -518,6 +541,10 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public boolean equals(final java.lang.Object o, final long $task) {
+                    return true;
+                }
+                
+                public boolean equals$Unguarded(final java.lang.Object o, final long $task) {
                     return true;
                 }
                 
@@ -549,6 +576,10 @@ class ClassGeneratorTest extends GeneratorTest {
                     guardReadWrite(this, $task).e = i;
                 }
                 
+                public void set$Unguarded(final java.lang.Integer i, final long $task) {
+                    this.e = i;
+                }
+                
                 @java.lang.Override
                 public void set(final java.lang.Integer i) {
                     this.set(i, rolez.lang.Task.currentTask().idBits());
@@ -556,6 +587,10 @@ class ClassGeneratorTest extends GeneratorTest {
                 
                 public java.lang.Integer get(final long $task) {
                     return guardReadOnly(this, $task).e;
+                }
+                
+                public java.lang.Integer get$Unguarded(final long $task) {
+                    return this.e;
                 }
                 
                 @java.lang.Override
@@ -585,8 +620,18 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 @java.lang.Override
+                public void set$Unguarded(final java.lang.Integer i, final long $task) {
+                    this.e = 2 * i;
+                }
+                
+                @java.lang.Override
                 public java.lang.Integer get(final long $task) {
                     return guardReadOnly(this, $task).e / 2;
+                }
+                
+                @java.lang.Override
+                public java.lang.Integer get$Unguarded(final long $task) {
+                    return this.e / 2;
                 }
             }
         ''', parse(intContainer, someClasses).onlyClass.generate)
@@ -613,7 +658,18 @@ class ClassGeneratorTest extends GeneratorTest {
                 public void foo(final long $task) {
                     final rolez.internal.Tasks $tasks = new rolez.internal.Tasks();
                     try {
-                        $tasks.addInline(rolez.lang.TaskSystem.getDefault().start(this.$barTask()));
+                        $tasks.addInline(rolez.lang.TaskSystem.getDefault().start(this.bar$Task()));
+                        this.bar($task);
+                    }
+                    finally {
+                        $tasks.joinAll();
+                    }
+                }
+                
+                public void foo$Unguarded(final long $task) {
+                    final rolez.internal.Tasks $tasks = new rolez.internal.Tasks();
+                    try {
+                        $tasks.addInline(rolez.lang.TaskSystem.getDefault().start(this.bar$Task()));
                         this.bar($task);
                     }
                     finally {
@@ -624,7 +680,10 @@ class ClassGeneratorTest extends GeneratorTest {
                 public void bar(final long $task) {
                 }
                 
-                public rolez.lang.Task<java.lang.Void> $barTask() {
+                public void bar$Unguarded(final long $task) {
+                }
+                
+                public rolez.lang.Task<java.lang.Void> bar$Task() {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
@@ -668,15 +727,33 @@ class ClassGeneratorTest extends GeneratorTest {
                     }
                 }
                 
+                public void foo$Unguarded(final long $task) {
+                    final rolez.internal.Tasks $tasks = new rolez.internal.Tasks();
+                    try {
+                        this.fooAsync$Unguarded($tasks, $task);
+                    }
+                    finally {
+                        $tasks.joinAll();
+                    }
+                }
+                
                 public void fooAsync(final rolez.internal.Tasks $tasks, final long $task) {
-                    $tasks.addInline(rolez.lang.TaskSystem.getDefault().start(this.$barTask()));
+                    $tasks.addInline(rolez.lang.TaskSystem.getDefault().start(this.bar$Task()));
+                    this.bar($task);
+                }
+                
+                public void fooAsync$Unguarded(final rolez.internal.Tasks $tasks, final long $task) {
+                    $tasks.addInline(rolez.lang.TaskSystem.getDefault().start(this.bar$Task()));
                     this.bar($task);
                 }
                 
                 public void bar(final long $task) {
                 }
                 
-                public rolez.lang.Task<java.lang.Void> $barTask() {
+                public void bar$Unguarded(final long $task) {
+                }
+                
+                public rolez.lang.Task<java.lang.Void> bar$Task() {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
@@ -707,7 +784,11 @@ class ClassGeneratorTest extends GeneratorTest {
                     return new Base($task);
                 }
                 
-                public rolez.lang.Task<Base> $fooTask() {
+                public Base foo$Unguarded(final long $task) {
+                    return new Base($task);
+                }
+                
+                public rolez.lang.Task<Base> foo$Task() {
                     return new rolez.lang.Task<Base>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected Base runRolez() {
@@ -739,7 +820,11 @@ class ClassGeneratorTest extends GeneratorTest {
                     return this.magic;
                 }
                 
-                public rolez.lang.Task<java.lang.Integer> $fooTask() {
+                public int foo$Unguarded(final long $task) {
+                    return this.magic;
+                }
+                
+                public rolez.lang.Task<java.lang.Integer> foo$Task() {
                     return new rolez.lang.Task<java.lang.Integer>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Integer runRolez() {
@@ -768,7 +853,11 @@ class ClassGeneratorTest extends GeneratorTest {
                     new foo.bar.Base(i + j, $task);
                 }
                 
-                public rolez.lang.Task<java.lang.Void> $fooTask(final int i, final int j) {
+                public void foo$Unguarded(final int i, final int j, final long $task) {
+                    new foo.bar.Base(i + j, $task);
+                }
+                
+                public rolez.lang.Task<java.lang.Void> foo$Task(final int i, final int j) {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
@@ -801,7 +890,10 @@ class ClassGeneratorTest extends GeneratorTest {
                 public void foo(final long $task) {
                 }
                 
-                public rolez.lang.Task<java.lang.Void> $fooTask() {
+                public void foo$Unguarded(final long $task) {
+                }
+                
+                public rolez.lang.Task<java.lang.Void> foo$Task() {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
@@ -814,7 +906,10 @@ class ClassGeneratorTest extends GeneratorTest {
                 public void bar(final long $task) {
                 }
                 
-                public rolez.lang.Task<java.lang.Void> $barTask() {
+                public void bar$Unguarded(final long $task) {
+                }
+                
+                public rolez.lang.Task<java.lang.Void> bar$Task() {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{this}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
@@ -827,7 +922,10 @@ class ClassGeneratorTest extends GeneratorTest {
                 public void baz(final long $task) {
                 }
                 
-                public rolez.lang.Task<java.lang.Void> $bazTask() {
+                public void baz$Unguarded(final long $task) {
+                }
+                
+                public rolez.lang.Task<java.lang.Void> baz$Task() {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{this}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
@@ -857,7 +955,10 @@ class ClassGeneratorTest extends GeneratorTest {
                 public void main(final long $task) {
                 }
                 
-                public rolez.lang.Task<java.lang.Void> $mainTask() {
+                public void main$Unguarded(final long $task) {
+                }
+                
+                public rolez.lang.Task<java.lang.Void> main$Task() {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
@@ -868,7 +969,7 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public static void main(final java.lang.String[] args) {
-                    rolez.lang.TaskSystem.getDefault().run(new App(0L).$mainTask());
+                    rolez.lang.TaskSystem.getDefault().run(new App(0L).main$Task());
                 }
             }
         ''')
@@ -890,7 +991,10 @@ class ClassGeneratorTest extends GeneratorTest {
                 public void main(final long $task) {
                 }
                 
-                public rolez.lang.Task<java.lang.Void> $mainTask() {
+                public void main$Unguarded(final long $task) {
+                }
+                
+                public rolez.lang.Task<java.lang.Void> main$Task() {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
@@ -901,7 +1005,7 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public static void main(final java.lang.String[] args) {
-                    rolez.lang.TaskSystem.getDefault().run(INSTANCE.$mainTask());
+                    rolez.lang.TaskSystem.getDefault().run(INSTANCE.main$Task());
                 }
             }
         ''')
@@ -923,7 +1027,11 @@ class ClassGeneratorTest extends GeneratorTest {
                     guardReadOnly(args, $task).data[0].length();
                 }
                 
-                public rolez.lang.Task<java.lang.Void> $mainTask(final rolez.lang.GuardedArray<java.lang.String[]> args) {
+                public void main$Unguarded(final rolez.lang.GuardedArray<java.lang.String[]> args, final long $task) {
+                    args.data[0].length();
+                }
+                
+                public rolez.lang.Task<java.lang.Void> main$Task(final rolez.lang.GuardedArray<java.lang.String[]> args) {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{args}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
@@ -935,7 +1043,7 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public static void main(final java.lang.String[] args) {
-                    rolez.lang.TaskSystem.getDefault().run(new App(0L).$mainTask(rolez.lang.GuardedArray.<java.lang.String[]>wrap(args)));
+                    rolez.lang.TaskSystem.getDefault().run(new App(0L).main$Task(rolez.lang.GuardedArray.<java.lang.String[]>wrap(args)));
                 }
             }
         ''')
@@ -961,7 +1069,11 @@ class ClassGeneratorTest extends GeneratorTest {
                     java.lang.System.out.println("Hello World!");
                 }
                 
-                public rolez.lang.Task<java.lang.Void> $fooTask(final Base o1, final Base o2, final Base o3) {
+                public void foo$Unguarded(final Base o1, final Base o2, final Base o3, final long $task) {
+                    java.lang.System.out.println("Hello World!");
+                }
+                
+                public rolez.lang.Task<java.lang.Void> foo$Task(final Base o1, final Base o2, final Base o3) {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{this, o1}, new Object[]{o2}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
@@ -990,7 +1102,10 @@ class ClassGeneratorTest extends GeneratorTest {
                 public void foo(final java.lang.Object o, final long $task) {
                 }
                 
-                public rolez.lang.Task<java.lang.Void> $fooTask(final java.lang.Object o) {
+                public void foo$Unguarded(final java.lang.Object o, final long $task) {
+                }
+                
+                public rolez.lang.Task<java.lang.Void> foo$Task(final java.lang.Object o) {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{o}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
@@ -1024,7 +1139,11 @@ class ClassGeneratorTest extends GeneratorTest {
                     guardReadWrite(o, $task).foo = 42;
                 }
                 
-                public rolez.lang.Task<java.lang.Void> $fooTask(final Base o) {
+                public void foo$Unguarded(final Base o, final long $task) {
+                    o.foo = 42;
+                }
+                
+                public rolez.lang.Task<java.lang.Void> foo$Task(final Base o) {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{o}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
@@ -1059,7 +1178,10 @@ class ClassGeneratorTest extends GeneratorTest {
                 public void foo(final long $task) {
                 }
                 
-                public rolez.lang.Task<java.lang.Void> $fooTask() {
+                public void foo$Unguarded(final long $task) {
+                }
+                
+                public rolez.lang.Task<java.lang.Void> foo$Task() {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
@@ -1072,7 +1194,10 @@ class ClassGeneratorTest extends GeneratorTest {
                 public void foo(final int i, final long $task) {
                 }
                 
-                public rolez.lang.Task<java.lang.Void> $fooTask(final int i) {
+                public void foo$Unguarded(final int i, final long $task) {
+                }
+                
+                public rolez.lang.Task<java.lang.Void> foo$Task(final int i) {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
@@ -1085,7 +1210,10 @@ class ClassGeneratorTest extends GeneratorTest {
                 public void foo(final double d, final long $task) {
                 }
                 
-                public rolez.lang.Task<java.lang.Void> $fooTask(final double d) {
+                public void foo$Unguarded(final double d, final long $task) {
+                }
+                
+                public rolez.lang.Task<java.lang.Void> foo$Task(final double d) {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
@@ -1098,7 +1226,10 @@ class ClassGeneratorTest extends GeneratorTest {
                 public void foo(final rolez.lang.GuardedArray<int[]> a, final rolez.lang.GuardedArray<double[]> b, final long $task) {
                 }
                 
-                public rolez.lang.Task<java.lang.Void> $fooTask(final rolez.lang.GuardedArray<int[]> a, final rolez.lang.GuardedArray<double[]> b) {
+                public void foo$Unguarded(final rolez.lang.GuardedArray<int[]> a, final rolez.lang.GuardedArray<double[]> b, final long $task) {
+                }
+                
+                public rolez.lang.Task<java.lang.Void> foo$Task(final rolez.lang.GuardedArray<int[]> a, final rolez.lang.GuardedArray<double[]> b) {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
@@ -1111,7 +1242,10 @@ class ClassGeneratorTest extends GeneratorTest {
                 public void foo(final rolez.lang.GuardedArray<rolez.lang.GuardedArray<int[]>[]> a, final long $task) {
                 }
                 
-                public rolez.lang.Task<java.lang.Void> $fooTask(final rolez.lang.GuardedArray<rolez.lang.GuardedArray<int[]>[]> a) {
+                public void foo$Unguarded(final rolez.lang.GuardedArray<rolez.lang.GuardedArray<int[]>[]> a, final long $task) {
+                }
+                
+                public rolez.lang.Task<java.lang.Void> foo$Task(final rolez.lang.GuardedArray<rolez.lang.GuardedArray<int[]>[]> a) {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
@@ -1144,7 +1278,11 @@ class ClassGeneratorTest extends GeneratorTest {
                     return;
                 }
                 
-                public rolez.lang.Task<java.lang.Void> $fooTask(final int i) {
+                public void foo$Unguarded(final int i, final long $task) {
+                    return;
+                }
+                
+                public rolez.lang.Task<java.lang.Void> foo$Task(final int i) {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
@@ -1185,7 +1323,16 @@ class ClassGeneratorTest extends GeneratorTest {
                     }
                 }
                 
-                public rolez.lang.Task<java.lang.Void> $fooTask(final int i) {
+                public void foo$Unguarded(final int i, final long $task) {
+                    if(i == 0)
+                        return;
+                    else {
+                        this.foo$Unguarded(i - 1, $task);
+                        return;
+                    }
+                }
+                
+                public rolez.lang.Task<java.lang.Void> foo$Task(final int i) {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
@@ -1193,7 +1340,7 @@ class ClassGeneratorTest extends GeneratorTest {
                             if(i == 0)
                                 return null;
                             else {
-                                A.this.foo(i - 1, $task);
+                                A.this.foo$Unguarded(i - 1, $task);
                                 return null;
                             }
                         }
@@ -1281,7 +1428,7 @@ class ClassGeneratorTest extends GeneratorTest {
                     super();
                     final rolez.internal.Tasks $tasks = new rolez.internal.Tasks();
                     try {
-                        $tasks.addInline(rolez.lang.TaskSystem.getDefault().start(Tasks.INSTANCE.$barTask(this)));
+                        $tasks.addInline(rolez.lang.TaskSystem.getDefault().start(Tasks.INSTANCE.bar$Task(this)));
                     }
                     finally {
                         $tasks.joinAll();
@@ -1326,9 +1473,20 @@ class ClassGeneratorTest extends GeneratorTest {
                     return £synchronized + _synchronized;
                 }
                 
+                public int £strictfp$Unguarded(final int £volatile, final long $task) {
+                    final int £synchronized = 2 * £volatile;
+                    final int _synchronized = 42;
+                    return £synchronized + _synchronized;
+                }
+                
                 public void £transient(final long $task) {
                     final foo.£static.£native.£final £protected = new foo.£static.£native.£final($task);
                     £protected.£strictfp(5, $task);
+                }
+                
+                public void £transient$Unguarded(final long $task) {
+                    final foo.£static.£native.£final £protected = new foo.£static.£native.£final($task);
+                    £protected.£strictfp$Unguarded(5, $task);
                 }
             }
         ''')
@@ -1355,7 +1513,11 @@ class ClassGeneratorTest extends GeneratorTest {
                     guardReadWrite(£do, $task).data[0] = 42;
                 }
                 
-                public rolez.lang.Task<java.lang.Void> $finalTask(final rolez.lang.GuardedArray<int[]> £do) {
+                public void £final$Unguarded(final rolez.lang.GuardedArray<int[]> £do, final long $task) {
+                    £do.data[0] = 42;
+                }
+                
+                public rolez.lang.Task<java.lang.Void> £final$Task(final rolez.lang.GuardedArray<int[]> £do) {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{£do}, new Object[]{this}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {

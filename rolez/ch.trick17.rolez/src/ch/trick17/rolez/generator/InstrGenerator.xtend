@@ -13,6 +13,7 @@ import ch.trick17.rolez.rolez.CharLiteral
 import ch.trick17.rolez.rolez.DoubleLiteral
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.ExprStmt
+import ch.trick17.rolez.rolez.FieldInitializer
 import ch.trick17.rolez.rolez.ForLoop
 import ch.trick17.rolez.rolez.GenericClassRef
 import ch.trick17.rolez.rolez.IfStmt
@@ -53,7 +54,7 @@ import javax.inject.Inject
 import org.eclipse.xtext.common.types.JvmArrayType
 
 import static ch.trick17.rolez.Constants.*
-import static ch.trick17.rolez.generator.CodeKind.*
+import static ch.trick17.rolez.generator.MethodKind.*
 import static ch.trick17.rolez.rolez.OpArithmeticUnary.*
 import static ch.trick17.rolez.rolez.VarKind.*
 
@@ -61,25 +62,56 @@ import static extension ch.trick17.rolez.RolezExtensions.*
 import static extension ch.trick17.rolez.generator.SafeJavaNames.*
 import static extension org.eclipse.xtext.util.Strings.convertToJavaString
 
+/**
+ * Generates Java code for Rolez instructions (single or code blocks). Relies on
+ * {@link RoleAnalysis} and {@link ChildTasksAnalysis} to decide where to insert
+ * guards.
+ */
 class InstrGenerator {
     
     @Inject extension Injector
     
-    def generate(Instr it, RoleAnalysis roleAnalysis) {
-        newGenerator(roleAnalysis, roleAnalysis.codeKind).generate(it)
-    }
-    
-    def generateWithTryCatch(Block it, RoleAnalysis roleAnalysis, boolean forceTry) {
-        newGenerator(roleAnalysis, roleAnalysis.codeKind).generateWithTryCatch(it, forceTry)
-    }
-    
-    private def newGenerator(RoleAnalysis roleAnalysis, CodeKind codeKind) {
-        new Generator(roleAnalysis, codeKind) => [injectMembers]
+    /**
+     * Generates Java code for the the given Rolez instruction, in the context of a
+     * constructor or field initializer.
+     */
+    def generate(Instr it, RoleAnalysis roleAnalysis, ChildTasksAnalysis childTasksAnalysis) {
+        newGenerator(null, roleAnalysis, childTasksAnalysis).generate(it)
     }
     
     /**
-     * This generator is parameterized with RoleAnalysis. To avoid passing the analysis object
-     * around, we have a second class that keeps it in a field.
+     * Generates Java code for a Rolez code block, in the context of a constructor.
+     * If the resulting code may throw checked exceptions, it is wrapped in a try-catch
+     * block that catches and wraps them in runtime exceptions. If <code>forceTry</code>
+     * is true, then the try-block is also generated if no checked exceptions need to be
+     * caught.
+     */
+    def generateWithTryCatch(Block it, RoleAnalysis roleAnalysis,
+            ChildTasksAnalysis childTasksAnalysis, boolean forceTry) {
+        newGenerator(null, roleAnalysis, childTasksAnalysis).generateWithTryCatch(it, forceTry)
+    }
+    
+    /**
+     * Generates Java code for a Rolez code block, in the context of the given kind of method.
+     * If the resulting code may throw checked exceptions, it is wrapped in a try-catch
+     * block that catches and wraps them in runtime exceptions. If <code>forceTry</code>
+     * is true, then the try-block is also generated if no checked exceptions need to be
+     * caught.
+     */
+    def generateWithTryCatch(Block it, MethodKind methodKind, RoleAnalysis roleAnalysis,
+            ChildTasksAnalysis childTasksAnalysis, boolean forceTry) {
+        newGenerator(methodKind, roleAnalysis, childTasksAnalysis).generateWithTryCatch(it, forceTry)
+    }
+    
+    private def newGenerator(MethodKind mk, RoleAnalysis ra, ChildTasksAnalysis cta) {
+        new Generator(mk, ra, cta) => [injectMembers]
+    }
+    
+    /**
+     * This generator is parameterized with RoleAnalysis, ChildTasksAnalysis and
+     * MethodKind. To avoid passing these around, we have a second class that keeps
+     * them in fields. A method kind of <code>null</code> means that the code is
+     * not in a method (but in a constructor or field initializer).
      */
     private static class Generator {
         
@@ -91,11 +123,14 @@ class InstrGenerator {
         @Inject extension TypeGenerator
         
         val RoleAnalysis roleAnalysis
-        val CodeKind codeKind
+        val ChildTasksAnalysis childTasksAnalysis
+        val MethodKind methodKind
         
-        private new(RoleAnalysis roleAnalysis, CodeKind codeKind) {
+        private new(MethodKind methodKind, RoleAnalysis roleAnalysis,
+                ChildTasksAnalysis childTasksAnalysis) {
+            this.methodKind = methodKind
             this.roleAnalysis = roleAnalysis
-            this.codeKind = codeKind
+            this.childTasksAnalysis = childTasksAnalysis
         }
         
         /* Stmt */
@@ -126,7 +161,7 @@ class InstrGenerator {
             super(«genArgs»);'''
         
         private def dispatch CharSequence generate(ReturnNothing _) {
-            if(codeKind == TASK) '''
+            if(methodKind == TASK) '''
                 return null;
             '''
             else '''
@@ -306,8 +341,12 @@ class InstrGenerator {
                 else
                     genInvoke
             }
-            else
-                '''«target.genNested».«method.safeName»(«genArgs»)'''
+            else {
+                val methodKind =
+                    if(childTasksAnalysis.childTasksMayExist(it)) GUARDED_METHOD
+                    else UNGUARDED_METHOD
+                '''«target.genNested».«method.safeName»«methodKind.suffix»(«genArgs»)'''
+            }
         }
         
         private def genGuardedMapped(Expr it, Role requiredRole, boolean nested) {
@@ -328,13 +367,13 @@ class InstrGenerator {
                     new ArrayList(args.map[generate])
             
             if(it instanceof MemberAccess && (it as MemberAccess).method.isAsync)
-                if(codeKind == TASK)
+                if(methodKind == TASK)
                     allArgs += jvmTasksClassName + ".NO_OP_INSTANCE"
                 else
                     allArgs += "$tasks"
             
             if(!executable.isMapped) {
-                if(codeKind == FIELD_INITIALIZER)
+                if(enclosingExecutable instanceof FieldInitializer)
                     allArgs += taskClassName + ".currentTask().idBits()"
                 else
                     allArgs += "$task"
@@ -359,20 +398,20 @@ class InstrGenerator {
         }
         
         private def generateTaskStart(MemberAccess it) {
-            val start = '''«jvmTaskSystemClassName».getDefault().start(«target.genNested».$«method.name»Task(«args.map[generate].join(", ")»))'''
-            if(codeKind == TASK)
+            val start = '''«jvmTaskSystemClassName».getDefault().start(«target.genNested».«method.name»«TASK.suffix»(«args.map[generate].join(", ")»))'''
+            if(methodKind == TASK)
                 start
             else
                 '''$tasks.addInline(«start»)'''
         }
         
         private def dispatch CharSequence generate(This it)  {
-            if(codeKind == TASK) '''«enclosingClass.safeSimpleName».this'''
+            if(methodKind == TASK) '''«enclosingClass.safeSimpleName».this'''
             else '''this'''
         }
         
         private def dispatch CharSequence generate(Super it)  {
-            if(codeKind == TASK) '''«enclosingClass.safeSimpleName».super'''
+            if(methodKind == TASK) '''«enclosingClass.safeSimpleName».super'''
             else '''super'''
         }
         
@@ -428,8 +467,8 @@ class InstrGenerator {
         
         private def genGuarded(Expr it, Role requiredRole, boolean nested) {
             val type = system.type(it).value
-            val dynamicRole = roleAnalysis.dynamicRole(it)
-            val needsGuard = !system.subroleSucceeded(dynamicRole, requiredRole)
+            val needsGuard = childTasksAnalysis.childTasksMayExist(it)
+                    && !system.subroleSucceeded(roleAnalysis.dynamicRole(it), requiredRole)
             if(utils.isGuarded(type) && needsGuard) {
                 val slice = if((type as RoleType).isSliced) "Slice" else ""
                 switch(requiredRole) {

@@ -67,33 +67,33 @@ class InstrGeneratorTest extends GeneratorTest {
     @Test def testIfStmt() {
         parse('''
             if(b)
-                this.bar;
+                the System.out.println;
             else
-                this.bar;
+                the System.out.println;
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
             if(b)
-                this.bar($task);
+                java.lang.System.out.println();
             else
-                this.bar($task);
+                java.lang.System.out.println();
         '''.withJavaFrame)
         
         parse('''
             if(b) {
-                this.bar;
+                the System.out.println;
             }
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
             if(b) {
-                this.bar($task);
+                java.lang.System.out.println();
             }
         '''.withJavaFrame)
         
         parse('''
             if(b)
-                this.bar;
+                the System.out.println;
             else {}
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
             if(b)
-                this.bar($task);
+                java.lang.System.out.println();
             else {
             }
         '''.withJavaFrame)
@@ -102,29 +102,29 @@ class InstrGeneratorTest extends GeneratorTest {
     @Test def testWhileLoop() {
         parse('''
             while(b)
-                this.bar;
+                the System.out.println;
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
             while(b)
-                this.bar($task);
+                java.lang.System.out.println();
         '''.withJavaFrame)
     }
     
     @Test def testForLoop() {
         parse('''
             for(var n = 0; n < 10; n++)
-                this.bar;
+                the System.out.println;
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
             for(int n = 0; n < 10; n++)
-                this.bar($task);
+                java.lang.System.out.println();
         '''.withJavaFrame)
         
         parse('''
             for(var n = 0; n < 10; n++) {
-                this.bar;
+                the System.out.println;
             }
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
             for(int n = 0; n < 10; n++) {
-                this.bar($task);
+                java.lang.System.out.println();
             }
         '''.withJavaFrame)
     }
@@ -184,7 +184,15 @@ class InstrGeneratorTest extends GeneratorTest {
                     return 0;
                 }
                 
+                public int foo$Unguarded(final long $task) {
+                    return 0;
+                }
+                
                 public void bar(final long $task) {
+                    return;
+                }
+                
+                public void bar$Unguarded(final long $task) {
                     return;
                 }
             }
@@ -215,7 +223,14 @@ class InstrGeneratorTest extends GeneratorTest {
                         this.foo(i - 1, $task);
                 }
                 
-                public rolez.lang.Task<java.lang.Void> $fooTask(final int i) {
+                public void foo$Unguarded(final int i, final long $task) {
+                    if(i == 0)
+                        return;
+                    else
+                        this.foo$Unguarded(i - 1, $task);
+                }
+                
+                public rolez.lang.Task<java.lang.Void> foo$Task(final int i) {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
@@ -223,7 +238,7 @@ class InstrGeneratorTest extends GeneratorTest {
                             if(i == 0)
                                 return null;
                             else
-                                A.this.foo(i - 1, $task);
+                                A.this.foo$Unguarded(i - 1, $task);
                             return null;
                         }
                     };
@@ -391,8 +406,8 @@ class InstrGeneratorTest extends GeneratorTest {
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
             final rolez.internal.Tasks $tasks = new rolez.internal.Tasks();
             try {
-                $tasks.addInline(rolez.lang.TaskSystem.getDefault().start(Tasks.INSTANCE.$fooTask()));
-                final rolez.lang.Task<java.lang.Integer> sum = $tasks.addInline(rolez.lang.TaskSystem.getDefault().start(Tasks.INSTANCE.$sumTask(1, 2)));
+                $tasks.addInline(rolez.lang.TaskSystem.getDefault().start(Tasks.INSTANCE.foo$Task()));
+                final rolez.lang.Task<java.lang.Integer> sum = $tasks.addInline(rolez.lang.TaskSystem.getDefault().start(Tasks.INSTANCE.sum$Task(1, 2)));
                 java.lang.System.out.println("Parallelism!");
                 java.lang.System.out.println("The sum: " + sum.get());
                 java.lang.System.out.println("Twice the sum!: " + (2 * sum.get()));
@@ -425,15 +440,15 @@ class InstrGeneratorTest extends GeneratorTest {
             ("Hello " + "World!").length();
             ((java.lang.Object) new Base($task)).hashCode();
             "Hello".substring(1, 3);
-            this.bar($task);
-            final int sum = Tasks.INSTANCE.sum(1, 2, $task);
+            this.bar///$Unguarded///($task);
+            final int sum = Tasks.INSTANCE.sum///$Unguarded///(1, 2, $task);
             final int answer = Constants.INSTANCE.answer;
             final java.io.PrintStream out = java.lang.System.out;
             java.lang.System.exit(answer);
             S£a a = new S($task).$aSlice();
             a.$object().i = 0;
             final int j = a.$object().i;
-            (new S($task).$bSlice()).foo(j, $task);
+            (new S($task).$bSlice()).foo///$Unguarded///(j, $task);
         '''.withJavaFrame)
     }
     
@@ -473,10 +488,19 @@ class InstrGeneratorTest extends GeneratorTest {
                 public void foo(final long $task) {
                 }
                 
+                public void foo$Unguarded(final long $task) {
+                }
+                
                 public void bar(final long $task) {
                 }
                 
+                public void bar$Unguarded(final long $task) {
+                }
+                
                 public void baz(final long $task) {
+                }
+                
+                public void baz$Unguarded(final long $task) {
                 }
                 
                 public int test(final A a1, final A a2, final A a3, final A a4, final A a5, final A a6, final S£a s, final long $task) {
@@ -487,6 +511,16 @@ class InstrGeneratorTest extends GeneratorTest {
                     guardReadWrite(a4, $task).i = 2;
                     guardReadWriteSlice(s, $task).$object().i = 0;
                     return guardReadOnly(a5, $task).i + a6.j;
+                }
+                
+                public int test$Unguarded(final A a1, final A a2, final A a3, final A a4, final A a5, final A a6, final S£a s, final long $task) {
+                    a1.foo$Unguarded($task);
+                    a2.bar$Unguarded($task);
+                    a3.baz$Unguarded($task);
+                    new A($task).i = 1;
+                    a4.i = 2;
+                    s.$object().i = 0;
+                    return a5.i + a6.j;
                 }
             }
         ''')
@@ -531,6 +565,14 @@ class InstrGeneratorTest extends GeneratorTest {
                     guardReadWrite(c4, $task).value = 2;
                     return guardReadOnly(c5, $task).value + c6.fortyTwo;
                 }
+                
+                public int test$Unguarded(final «IntContainer.canonicalName» c1, final «IntContainer.canonicalName» c2, final «IntContainer.canonicalName» c3, final «IntContainer.canonicalName» c4, final «IntContainer.canonicalName» c5, final «IntContainer.canonicalName» c6, final long $task) {
+                    c1.set(42);
+                    c2.get();
+                    c3.getWithRoleParam();
+                    c4.value = 2;
+                    return c5.value + c6.fortyTwo;
+                }
             }
         ''')
         
@@ -556,6 +598,10 @@ class InstrGeneratorTest extends GeneratorTest {
                 
                 public void doSomething(final «SomethingWithChars.canonicalName» s, final rolez.lang.GuardedArray<char[]> chars, final long $task) {
                     guardReadWrite(s, $task).doSomething(rolez.lang.GuardedArray.unwrap(guardReadOnly(chars, $task), char[].class));
+                }
+                
+                public void doSomething$Unguarded(final «SomethingWithChars.canonicalName» s, final rolez.lang.GuardedArray<char[]> chars, final long $task) {
+                    s.doSomething(rolez.lang.GuardedArray.unwrap(chars, char[].class));
                 }
             }
         ''')
@@ -586,6 +632,11 @@ class InstrGeneratorTest extends GeneratorTest {
                     s.doSomething(rolez.lang.GuardedArray.unwrap(guardReadOnly(chars, $task), char[].class));
                     guardReadWrite(s, $task).doSomethingElse(rolez.lang.GuardedArray.unwrap(chars, char[].class));
                 }
+                
+                public void doSomething$Unguarded(final «SomethingSafeWithChars.canonicalName» s, final rolez.lang.GuardedArray<char[]> chars, final long $task) {
+                    s.doSomething(rolez.lang.GuardedArray.unwrap(chars, char[].class));
+                    s.doSomethingElse(rolez.lang.GuardedArray.unwrap(chars, char[].class));
+                }
             }
         ''')
         
@@ -607,7 +658,7 @@ class InstrGeneratorTest extends GeneratorTest {
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
             final rolez.internal.Tasks $tasks = new rolez.internal.Tasks();
             try {
-                Asyncer.INSTANCE.foo($tasks, $task);
+                Asyncer.INSTANCE.foo///$Unguarded///($tasks, $task);
             }
             finally {
                 $tasks.joinAll();
@@ -642,18 +693,31 @@ class InstrGeneratorTest extends GeneratorTest {
                     }
                 }
                 
-                public rolez.lang.Task<java.lang.Void> $fooTask() {
+                public void foo$Unguarded(final long $task) {
+                    final rolez.internal.Tasks $tasks = new rolez.internal.Tasks();
+                    try {
+                        this.bar$Unguarded($tasks, $task);
+                    }
+                    finally {
+                        $tasks.joinAll();
+                    }
+                }
+                
+                public rolez.lang.Task<java.lang.Void> foo$Task() {
                     return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{}) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
                             final long $task = idBits();
-                            A.this.bar(rolez.internal.Tasks.NO_OP_INSTANCE, $task);
+                            A.this.bar$Unguarded(rolez.internal.Tasks.NO_OP_INSTANCE, $task);
                             return null;
                         }
                     };
                 }
                 
                 public void bar(final rolez.internal.Tasks $tasks, final long $task) {
+                }
+                
+                public void bar$Unguarded(final rolez.internal.Tasks $tasks, final long $task) {
                 }
             }
         ''')
@@ -713,43 +777,87 @@ class InstrGeneratorTest extends GeneratorTest {
                     return a.arrayLength();
                 }
                 
+                public int arrayLength$Unguarded(final rolez.lang.GuardedSlice<int[]> a, final long $task) {
+                    return a.arrayLength();
+                }
+                
                 public java.lang.Object getFirst(final rolez.lang.GuardedSlice<java.lang.Object[]> a, final long $task) {
                     return guardReadOnly(a, $task).<java.lang.Object>get(0);
+                }
+                
+                public java.lang.Object getFirst$Unguarded(final rolez.lang.GuardedSlice<java.lang.Object[]> a, final long $task) {
+                    return a.<java.lang.Object>get(0);
                 }
                 
                 public double getFirstDouble(final rolez.lang.GuardedSlice<double[]> a, final long $task) {
                     return guardReadOnly(a, $task).getDouble(0);
                 }
                 
+                public double getFirstDouble$Unguarded(final rolez.lang.GuardedSlice<double[]> a, final long $task) {
+                    return a.getDouble(0);
+                }
+                
                 public long getFirstLong(final rolez.lang.GuardedSlice<long[]> a, final long $task) {
                     return guardReadOnly(a, $task).getLong(0);
+                }
+                
+                public long getFirstLong$Unguarded(final rolez.lang.GuardedSlice<long[]> a, final long $task) {
+                    return a.getLong(0);
                 }
                 
                 public int getFirstInt(final rolez.lang.GuardedSlice<int[]> a, final long $task) {
                     return guardReadOnly(a, $task).getInt(0);
                 }
                 
+                public int getFirstInt$Unguarded(final rolez.lang.GuardedSlice<int[]> a, final long $task) {
+                    return a.getInt(0);
+                }
+                
                 public short getFirstShort(final rolez.lang.GuardedSlice<short[]> a, final long $task) {
                     return guardReadOnly(a, $task).getShort(0);
+                }
+                
+                public short getFirstShort$Unguarded(final rolez.lang.GuardedSlice<short[]> a, final long $task) {
+                    return a.getShort(0);
                 }
                 
                 public byte getFirstByte(final rolez.lang.GuardedSlice<byte[]> a, final long $task) {
                     return guardReadOnly(a, $task).getByte(0);
                 }
                 
+                public byte getFirstByte$Unguarded(final rolez.lang.GuardedSlice<byte[]> a, final long $task) {
+                    return a.getByte(0);
+                }
+                
                 public char getFirstChar(final rolez.lang.GuardedSlice<char[]> a, final long $task) {
                     return guardReadOnly(a, $task).getChar(0);
+                }
+                
+                public char getFirstChar$Unguarded(final rolez.lang.GuardedSlice<char[]> a, final long $task) {
+                    return a.getChar(0);
                 }
                 
                 public boolean getFirstBoolean(final rolez.lang.GuardedSlice<boolean[]> a, final long $task) {
                     return guardReadOnly(a, $task).getBoolean(0);
                 }
                 
+                public boolean getFirstBoolean$Unguarded(final rolez.lang.GuardedSlice<boolean[]> a, final long $task) {
+                    return a.getBoolean(0);
+                }
+                
                 public void setFirst(final rolez.lang.GuardedSlice<int[]> a, final long $task) {
                     guardReadWrite(a, $task).setInt(0, 42);
                 }
                 
+                public void setFirst$Unguarded(final rolez.lang.GuardedSlice<int[]> a, final long $task) {
+                    a.setInt(0, 42);
+                }
+                
                 public rolez.lang.GuardedSlice<int[]> slice(final rolez.lang.GuardedSlice<int[]> a, final long $task) {
+                    return a.slice(0, 1, 1);
+                }
+                
+                public rolez.lang.GuardedSlice<int[]> slice$Unguarded(final rolez.lang.GuardedSlice<int[]> a, final long $task) {
                     return a.slice(0, 1, 1);
                 }
             }
@@ -783,11 +891,23 @@ class InstrGeneratorTest extends GeneratorTest {
                     return guardReadOnly(a, $task).data[0];
                 }
                 
+                public int getFirst$Unguarded(final rolez.lang.GuardedArray<int[]> a, final long $task) {
+                    return a.data[0];
+                }
+                
                 public void setFirst(final rolez.lang.GuardedArray<int[]> a, final long $task) {
                     guardReadWrite(a, $task).data[0] = 42;
                 }
                 
+                public void setFirst$Unguarded(final rolez.lang.GuardedArray<int[]> a, final long $task) {
+                    a.data[0] = 42;
+                }
+                
                 public int length(final rolez.lang.GuardedArray<int[]> a, final long $task) {
+                    return a.data.length;
+                }
+                
+                public int length$Unguarded(final rolez.lang.GuardedArray<int[]> a, final long $task) {
                     return a.data.length;
                 }
             }
@@ -818,7 +938,15 @@ class InstrGeneratorTest extends GeneratorTest {
                     return v[0];
                 }
                 
+                public int getFirst$Unguarded(final int[] v, final long $task) {
+                    return v[0];
+                }
+                
                 public int length(final int[] v, final long $task) {
+                    return v.length;
+                }
+                
+                public int length$Unguarded(final int[] v, final long $task) {
                     return v.length;
                 }
             }
@@ -852,12 +980,24 @@ class InstrGeneratorTest extends GeneratorTest {
                     return guardReadOnly(b, $task).data[0];
                 }
                 
+                public int getFirst$Unguarded(final rolez.lang.GuardedVectorBuilder<int[]> b, final long $task) {
+                    return b.data[0];
+                }
+                
                 public void setFirst(final rolez.lang.GuardedVectorBuilder<int[]> b, final long $task) {
                     guardReadWrite(b, $task).setInt(0, 42);
                 }
                 
+                public void setFirst$Unguarded(final rolez.lang.GuardedVectorBuilder<int[]> b, final long $task) {
+                    b.setInt(0, 42);
+                }
+                
                 public int[] build(final rolez.lang.GuardedVectorBuilder<int[]> b, final long $task) {
                     return guardReadOnly(b, $task).build();
+                }
+                
+                public int[] build$Unguarded(final rolez.lang.GuardedVectorBuilder<int[]> b, final long $task) {
+                    return b.build();
                 }
             }
         ''')
@@ -957,7 +1097,7 @@ class InstrGeneratorTest extends GeneratorTest {
         parse('''
             super.bar;
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
-            super.bar($task);
+            super.bar///$Unguarded///($task);
         '''.withJavaFrame)
         
         parse('''
@@ -1093,16 +1233,24 @@ class InstrGeneratorTest extends GeneratorTest {
     
     /* Test infrastructure */
     
-    private def withFrame(CharSequence it) {'''
+    /** Wraps the given Rolez code in a foo() method and in a class. */
+    private def withFrame(CharSequence it) '''
         class A extends Base {
             def readwrite foo(i: int, b: boolean): {
                 «it»
             }
             override pure bar: {}
         }
-    '''}
+    '''
     
-    private def withJavaFrame(CharSequence it) {'''
+    /**
+     * Wraps the given Java code in two Java methods (one guarded, one unguarded) and in
+     * a class that corresponds to the class generates by <code>withFrame</code>.
+     * To simplify the handling of differences between the guarded and unguarded versions,
+     * the given code may contain patterns of the form <code>///something///</code>. The
+     * <code>something</code> content will be present in the unguarded version only.
+     */
+    private def withJavaFrame(CharSequence it) '''
         import static «jvmGuardedClassName».*;
         
         public class A extends Base {
@@ -1112,12 +1260,20 @@ class InstrGeneratorTest extends GeneratorTest {
             }
             
             public void foo(final int i, final boolean b, final long $task) {
-                «it»
+                «it.toString.replaceAll("///.*///", "")»
+            }
+            
+            public void foo$Unguarded(final int i, final boolean b, final long $task) {
+                «it.toString.replaceAll("///", "")»
             }
             
             @java.lang.Override
             public void bar(final long $task) {
             }
+            
+            @java.lang.Override
+            public void bar$Unguarded(final long $task) {
+            }
         }
-    '''}
+    '''
 }

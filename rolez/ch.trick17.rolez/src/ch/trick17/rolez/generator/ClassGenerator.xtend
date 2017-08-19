@@ -29,12 +29,16 @@ import javax.inject.Inject
 import org.eclipse.xtext.common.types.JvmArrayType
 
 import static ch.trick17.rolez.Constants.*
-import static ch.trick17.rolez.generator.CodeKind.*
+import static ch.trick17.rolez.generator.MethodKind.*
 
 import static extension ch.trick17.rolez.RolezExtensions.*
 import static extension ch.trick17.rolez.generator.InstrGenerator.generate
 import static extension ch.trick17.rolez.generator.SafeJavaNames.*
 
+/**
+ * Generates Java code for Rolez classes. Uses {@link InstrGenerator} to generate
+ * the method and constructor bodies and the field initializers.
+ */
 class ClassGenerator {
         
     @Inject extension InstrGenerator
@@ -42,6 +46,7 @@ class ClassGenerator {
     @Inject extension JavaMapper
     @Inject extension CfgProvider
     @Inject extension RoleAnalysis.Provider
+    @Inject extension ChildTasksAnalysis.Provider
     @Inject extension RolezUtils
     
     // IMPROVE: Use some kind of import manager (note: the Xtext one is incorrect when using the default pkg)
@@ -111,7 +116,9 @@ class ClassGenerator {
             
             «enclosingClass.safeName» $object();
             «FOR method : members.filter(Method)»
-            «method.genReturnType» «method.safeName»(«method.genParamsWithExtra»);
+            «FOR kind : #[GUARDED_METHOD, UNGUARDED_METHOD]»
+            «method.genReturnType» «method.safeName»«kind.suffix»(«method.genParamsWithExtra»);
+            «ENDFOR»
             «ENDFOR»
             
             final class Impl extends «jvmGuardedClassName» implements «simpleInterfaceName» {
@@ -193,45 +200,50 @@ class ClassGenerator {
     
     private def gen(Constr it) {
         val roleAnalysis = newRoleAnalysis(it)
-         '''
-            
-            public «enclosingClass.safeSimpleName»(«genParamsWithExtra») {
-                «body.stmts.head.generate(roleAnalysis) /* super constr call */»
-                «IF body.startsTasks»
-                final «jvmTasksClassName» $tasks = new «jvmTasksClassName»();
-                «ENDIF»
-                «body.generateWithTryCatch(roleAnalysis, body.startsTasks)»
-                «IF body.startsTasks»
-                finally {
-                    $tasks.joinAll();
-                }
-                «ENDIF»
+        val childTasksAnalysis = newChildTasksAnalysis(it)
+        '''
+        
+        public «enclosingClass.safeSimpleName»(«genParamsWithExtra») {
+            «body.stmts.head.generate(roleAnalysis, childTasksAnalysis) /* super constr call */»
+            «IF body.startsTasks»
+            final «jvmTasksClassName» $tasks = new «jvmTasksClassName»();
+            «ENDIF»
+            «body.generateWithTryCatch(roleAnalysis, childTasksAnalysis, body.startsTasks)»
+            «IF body.startsTasks»
+            finally {
+                $tasks.joinAll();
             }
+            «ENDIF»
+        }
         '''
     }
     
     // IMPROVE: Support initializer code that may throw checked exceptions
     private def gen(Field it) '''
         
-        public «kind.generate»«type.generate» «safeName»«IF initializer !== null» = «initializer.expr.generate(newRoleAnalysis(initializer))»«ENDIF»;
+        public «kind.generate»«type.generate» «safeName»«IF initializer !== null» = «initializer.expr.generate(newRoleAnalysis(initializer), newChildTasksAnalysis(initializer))»«ENDIF»;
     '''
     
-    private def gen(Method it) '''
+    private def gen(Method it) {
+        val roleAnalysis = newRoleAnalysis(it)
+        '''
+        «FOR kind : #[GUARDED_METHOD, UNGUARDED_METHOD]»
         
         «IF isOverriding && !superMethod.isMapped»
         @java.lang.Override
         «ENDIF»
-        public «genReturnType» «safeName»(«genParamsWithExtra») {
+        public «genReturnType» «safeName»«kind.suffix»(«genParamsWithExtra») {
             «IF needsTasksJoin»
             final «jvmTasksClassName» $tasks = new «jvmTasksClassName»();
             «ENDIF»
-            «body.generateWithTryCatch(newRoleAnalysis(it, METHOD), needsTasksJoin)»
+            «body.generateWithTryCatch(kind, roleAnalysis, newChildTasksAnalysis(it, kind), needsTasksJoin)»
             «IF needsTasksJoin»
             finally {
                 $tasks.joinAll();
             }
             «ENDIF»
         }
+        «ENDFOR»
         «IF isOverriding && superMethod.isMapped»
         
         @java.lang.Override
@@ -241,12 +253,12 @@ class ClassGenerator {
         «ENDIF»
         «IF isTask»
         
-        public «taskClassName»<«type.generateGeneric»> $«name»Task(«params.map[gen].join(", ")») {
+        public «taskClassName»<«type.generateGeneric»> «safeName»«TASK.suffix»(«params.map[gen].join(", ")») {
             return new «taskClassName»<«type.generateGeneric»>(new Object[]{«genTransitionArgs(ReadWrite)»}, new Object[]{«genTransitionArgs(ReadOnly)»}) {
                 @java.lang.Override
                 protected «type.generateGeneric» runRolez() {
                     final long $task = idBits();
-                    «body.generateWithTryCatch(newRoleAnalysis(it, TASK), false)»
+                    «body.generateWithTryCatch(TASK, roleAnalysis, newChildTasksAnalysis(it, TASK), false)»
                     «IF needsReturnNull»
                     return null;
                     «ENDIF»
@@ -257,10 +269,11 @@ class ClassGenerator {
         «IF isMain»
         
         public static void main(final java.lang.String[] args) {
-            «jvmTaskSystemClassName».getDefault().run(«genMainInstance».$«name»Task(«IF !params.isEmpty»«jvmGuardedArrayClassName».<java.lang.String[]>wrap(args)«ENDIF»));
+            «jvmTaskSystemClassName».getDefault().run(«genMainInstance».«name»«TASK.suffix»(«IF !params.isEmpty»«jvmGuardedArrayClassName».<java.lang.String[]>wrap(args)«ENDIF»));
         }
         «ENDIF»
-    '''
+        '''
+    }
     
     private def genParamsWithExtra(Executable it) {
         val allParams = new ArrayList(params.map[gen])
