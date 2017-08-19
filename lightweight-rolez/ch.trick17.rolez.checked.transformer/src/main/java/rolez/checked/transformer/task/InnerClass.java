@@ -28,7 +28,7 @@ public class InnerClass extends SootClass {
 	}
 	
 	private void generateInnerClassFields() {
-		SootField outerClassReference = new SootField("this$0", outerClass.getType());
+		SootField outerClassReference = new SootField("this$0", outerClass.getType(), Modifier.FINAL);
 		this.addField(outerClassReference);
 	
 		// Add a field for every source method parameter
