@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import rolez.checked.lang.Checked;
+import rolez.checked.transformer.Constants;
 import soot.Body;
 import soot.Local;
 import soot.Scene;
@@ -21,8 +22,6 @@ import soot.util.Chain;
 public class CheckedConstructor extends SootMethod {
 
 	static final Logger logger = LogManager.getLogger(CheckedConstructor.class);
-
-	static final SootClass CHECKED_CLASS = Scene.v().loadClassAndSupport(Checked.class.getCanonicalName());
 	
 	SootMethod sourceConstructor;
 	
@@ -50,7 +49,7 @@ public class CheckedConstructor extends SootMethod {
 			firstRealStatement = iterator.next();
 		}
 		
-		units.insertBefore(Jimple.v().newInvokeStmt(Jimple.v().newSpecialInvokeExpr(thisLocal, CHECKED_CLASS.getMethod("<init>", new ArrayList<Type>()).makeRef())), firstRealStatement);
+		units.insertBefore(Jimple.v().newInvokeStmt(Jimple.v().newSpecialInvokeExpr(thisLocal, Constants.CHECKED_CLASS.getMethod("<init>", new ArrayList<Type>()).makeRef())), firstRealStatement);
 		units.remove(firstRealStatement);
 	}
 }

@@ -1,8 +1,6 @@
 package rolez.checked.transformer;
 
 import soot.PackManager;
-import soot.Scene;
-import soot.SootClass;
 import soot.Transform;
 
 public class MainDriver {
@@ -12,12 +10,6 @@ public class MainDriver {
 		PackManager.v().getPack("wjtp").add(
 			new Transform("wjtp.transformer", new ClassTransformer())
 		);
-		
-		Scene.v().addBasicClass(rolez.checked.lang.Checked.class.getCanonicalName(), SootClass.SIGNATURES);
-		Scene.v().addBasicClass(rolez.checked.lang.Task.class.getCanonicalName(), SootClass.SIGNATURES);
-		
-		// TODO: Why does this happen?
-		Scene.v().addBasicClass("rolez.checked.lang.Task$1", SootClass.SIGNATURES);
 		
 		soot.Main.main(args);
 	} 

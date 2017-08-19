@@ -7,12 +7,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import rolez.checked.lang.Role;
-import rolez.checked.lang.Task;
+import rolez.checked.transformer.Constants;
 import soot.ArrayType;
 import soot.Local;
 import soot.Modifier;
 import soot.RefType;
-import soot.Scene;
 import soot.SootClass;
 import soot.SootMethod;
 import soot.Type;
@@ -29,13 +28,6 @@ import soot.util.Chain;
 public class TaskMethod extends SootMethod {
 
 	static final Logger logger = LogManager.getLogger(TaskMethod.class);
-	
-	static final SootClass TASK_CLASS = Scene.v().loadClassAndSupport(Task.class.getCanonicalName());
-	static final SootClass OBJECT_CLASS = Scene.v().loadClassAndSupport(Object.class.getCanonicalName());
-
-	static final String READONLY_ANNOTATION = "Lrolez/annotation/Readonly;";
-	static final String READWRITE_ANNOTATION = "Lrolez/annotation/Readwrite;";
-	static final String PURE_ANNOTATION = "Lrolez/annotation/Pure;";
 
 	static final Jimple J = Jimple.v();
 	
@@ -47,7 +39,7 @@ public class TaskMethod extends SootMethod {
 	private Role[] parameterRoles;
 
 	public TaskMethod(String name, SootClass containingClass, SootClass innerClass, SootMethod sourceMethod) {
-		super(name, sourceMethod.getParameterTypes(), TASK_CLASS.getType(), sourceMethod.getModifiers());
+		super(name, sourceMethod.getParameterTypes(), Constants.TASK_CLASS.getType(), Modifier.PUBLIC);
 		this.containingClass = containingClass;
 		this.innerClass = innerClass;
 		this.sourceMethod = sourceMethod;
@@ -91,7 +83,7 @@ public class TaskMethod extends SootMethod {
 		localCount++;
 		
 		List<Local> objectArrayLocals = new ArrayList<Local>();
-		ArrayType objectArrayType = ArrayType.v(RefType.v(OBJECT_CLASS),1);
+		ArrayType objectArrayType = ArrayType.v(RefType.v(Constants.OBJECT_CLASS),1);
 		for (int i=0; i<3; i++, localCount++) {
 			Local l = J.newLocal("$r" + Integer.toString(localCount), objectArrayType);
 			objectArrayLocals.add(l);
@@ -172,13 +164,13 @@ public class TaskMethod extends SootMethod {
 					if (annotations != null) {
 						for (AnnotationTag aTag : vaTag.getAnnotations()) {
 							switch (aTag.getType()) {
-								case (READONLY_ANNOTATION):
+								case (Constants.READONLY_ANNOTATION):
 									parameterRoles[arrayIndex] = Role.READONLY;
 									break;
-								case (READWRITE_ANNOTATION):
+								case (Constants.READWRITE_ANNOTATION):
 									parameterRoles[arrayIndex] = Role.READWRITE;
 									break;
-								case (PURE_ANNOTATION):
+								case (Constants.PURE_ANNOTATION):
 									parameterRoles[arrayIndex] = Role.PURE;
 									break;
 								default:

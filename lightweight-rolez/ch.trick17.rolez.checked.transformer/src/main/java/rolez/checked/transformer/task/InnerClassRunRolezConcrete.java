@@ -6,6 +6,7 @@ import java.util.Iterator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import rolez.checked.transformer.Constants;
 import soot.Body;
 import soot.Local;
 import soot.Modifier;
@@ -26,8 +27,6 @@ import soot.util.Chain;
 public class InnerClassRunRolezConcrete extends SootMethod {
 	
 	static final Logger logger = LogManager.getLogger(InnerClassRunRolezConcrete.class);
-	
-	static final Type VOID_TYPE = RefType.v("java.lang.Void");
 
 	static final Jimple J = Jimple.v();
 	
@@ -36,7 +35,7 @@ public class InnerClassRunRolezConcrete extends SootMethod {
 	
 	public InnerClassRunRolezConcrete(SootClass containingClass, SootMethod sourceMethod) {
 		// Defer setting of return type
-		super("runRolez", new ArrayList<Type>(), VOID_TYPE, Modifier.VOLATILE | Modifier.PROTECTED);
+		super("runRolez", new ArrayList<Type>(), Constants.VOID_TYPE, Modifier.VOLATILE | Modifier.PROTECTED);
 		
 		this.containingClass = containingClass;
 		this.sourceMethod = sourceMethod;
@@ -66,8 +65,11 @@ public class InnerClassRunRolezConcrete extends SootMethod {
 		Chain<Unit> units = body.getUnits();
 		
 		// Refer to fields instead of parameters for the first n identity statements (n = #params + 1)
-		int i = 0;
 		int n = sourceMethod.getParameterCount() + 1;
+
+		int i = 0;
+		if (sourceMethod.isStatic()) i = 1;
+		
 		Iterator<Unit> unitIter = units.snapshotIterator(); 
 		while (unitIter.hasNext()) {
 			Unit u = unitIter.next();
@@ -93,9 +95,9 @@ public class InnerClassRunRolezConcrete extends SootMethod {
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
-			}
+			} 
 			
-			if (i > 0 && i < n) {
+			else if (i > 0 && i < n) {
 				// Parameter assignments
 				try {
 					if (u instanceof IdentityStmt) {
@@ -137,7 +139,7 @@ public class InnerClassRunRolezConcrete extends SootMethod {
 		// TODO: Handle primitive types!!! --> This switch may grow large... :-/
 		switch (sourceMethod.getReturnType().toString()) {
 			case("void"):
-				returnType = RefType.v("java.lang.Void");
+				returnType = Constants.VOID_TYPE;
 				break;
 			default:
 				returnType = sourceMethod.getReturnType();

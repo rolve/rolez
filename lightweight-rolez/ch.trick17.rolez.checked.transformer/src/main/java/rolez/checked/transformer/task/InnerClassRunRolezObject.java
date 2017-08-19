@@ -5,10 +5,10 @@ import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import rolez.checked.transformer.Constants;
 import soot.Local;
 import soot.Modifier;
 import soot.RefType;
-import soot.Scene;
 import soot.SootClass;
 import soot.SootMethod;
 import soot.Type;
@@ -20,8 +20,6 @@ import soot.util.Chain;
 public class InnerClassRunRolezObject extends SootMethod {
 
 	static final Logger logger = LogManager.getLogger(InnerClassRunRolezObject.class);
-	
-	static final SootClass OBJECT_CLASS = Scene.v().loadClassAndSupport(Object.class.getCanonicalName());
 
 	static final Jimple J = Jimple.v();
 	
@@ -29,7 +27,7 @@ public class InnerClassRunRolezObject extends SootMethod {
 	private SootMethod concreteMethod;
 	
 	public InnerClassRunRolezObject(SootClass containingClass, SootMethod concreteMethod) {
-		super("runRolez", new ArrayList<Type>(), OBJECT_CLASS.getType(), Modifier.VOLATILE | Modifier.PROTECTED);
+		super("runRolez", new ArrayList<Type>(), Constants.OBJECT_CLASS.getType(), Modifier.VOLATILE | Modifier.PROTECTED);
 		this.containingClass = containingClass;
 		this.concreteMethod = concreteMethod;
 		
@@ -38,7 +36,6 @@ public class InnerClassRunRolezObject extends SootMethod {
 	
 	private void generateMethodBody() {		
 		RefType innerClassType = containingClass.getType();
-		RefType voidType = RefType.v("java.lang.Void");
 		
 		JimpleBody body = J.newBody(this);
 		this.setActiveBody(body);
@@ -46,7 +43,7 @@ public class InnerClassRunRolezObject extends SootMethod {
 		Chain<Local> bodyLocals = body.getLocals();
 		Local thisLocal = J.newLocal("r0", innerClassType);
 		bodyLocals.add(thisLocal);
-		Local returnLocal = J.newLocal("$r1", voidType);
+		Local returnLocal = J.newLocal("$r1", Constants.VOID_TYPE);
 		bodyLocals.add(returnLocal);
 
 		Chain<Unit> units = body.getUnits();

@@ -8,6 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import rolez.checked.lang.Task;
+import rolez.checked.transformer.Constants;
 import soot.ArrayType;
 import soot.Local;
 import soot.RefType;
@@ -24,10 +25,7 @@ import soot.util.Chain;
 public class InnerClassConstructor extends SootMethod {
 
 	static final Logger logger = LogManager.getLogger(InnerClassConstructor.class);
-	
-	static final SootClass OBJECT_CLASS = Scene.v().loadClassAndSupport(Object.class.getCanonicalName());
-	static final SootClass TASK_CLASS = Scene.v().loadClassAndSupport(Task.class.getCanonicalName());
-	static final ArrayType OBJECT_ARRAY_TYPE = ArrayType.v(RefType.v(OBJECT_CLASS),1);
+
 
 	static final Jimple J = Jimple.v();
 	
@@ -64,9 +62,9 @@ public class InnerClassConstructor extends SootMethod {
 		List<Local> locals = new ArrayList<Local>();
 		locals.add(J.newLocal("r0", containingClass.getType()));
 		locals.add(J.newLocal("r1", outerClass.getType()));
-		locals.add(J.newLocal("r2", OBJECT_ARRAY_TYPE));
-		locals.add(J.newLocal("r3", OBJECT_ARRAY_TYPE));
-		locals.add(J.newLocal("r4", OBJECT_ARRAY_TYPE));
+		locals.add(J.newLocal("r2", Constants.OBJECT_ARRAY_TYPE));
+		locals.add(J.newLocal("r3", Constants.OBJECT_ARRAY_TYPE));
+		locals.add(J.newLocal("r4", Constants.OBJECT_ARRAY_TYPE));
 		for (int i=0; i<sourceMethodParameterTypes.size(); i++) {
 			locals.add(J.newLocal("r"+Integer.toString(offset + i), sourceMethodParameterTypes.get(i)));
 		}
@@ -78,9 +76,9 @@ public class InnerClassConstructor extends SootMethod {
 		Chain<Unit> units = body.getUnits();
 		units.add(J.newIdentityStmt(locals.get(0), J.newThisRef(containingClass.getType())));
 		units.add(J.newIdentityStmt(locals.get(1), J.newParameterRef(outerClass.getType(), 0)));
-		units.add(J.newIdentityStmt(locals.get(2), J.newParameterRef(OBJECT_ARRAY_TYPE, 1)));
-		units.add(J.newIdentityStmt(locals.get(3), J.newParameterRef(OBJECT_ARRAY_TYPE, 2)));
-		units.add(J.newIdentityStmt(locals.get(4), J.newParameterRef(OBJECT_ARRAY_TYPE, 3)));
+		units.add(J.newIdentityStmt(locals.get(2), J.newParameterRef(Constants.OBJECT_ARRAY_TYPE, 1)));
+		units.add(J.newIdentityStmt(locals.get(3), J.newParameterRef(Constants.OBJECT_ARRAY_TYPE, 2)));
+		units.add(J.newIdentityStmt(locals.get(4), J.newParameterRef(Constants.OBJECT_ARRAY_TYPE, 3)));
 		for (int i=0; i<sourceMethodParameterTypes.size(); i++) {
 			units.add(J.newIdentityStmt(locals.get(i+offset), J.newParameterRef(sourceMethodParameterTypes.get(i), i+numberOffset)));
 		}
@@ -97,7 +95,7 @@ public class InnerClassConstructor extends SootMethod {
 		units.add(J.newInvokeStmt(
 				J.newSpecialInvokeExpr(
 						locals.get(0), 
-						TASK_CLASS.getMethodByName("<init>").makeRef(), 
+						Constants.TASK_CLASS.getMethodByName("<init>").makeRef(), 
 						Arrays.asList(new Local[] {
 								locals.get(2), 
 								locals.get(3), 
@@ -116,9 +114,9 @@ public class InnerClassConstructor extends SootMethod {
 		parameterTypes.add(outerClass.getType());
 		
 		// Add three Object array types to pass passed, shared and pure objects
-		parameterTypes.add(OBJECT_ARRAY_TYPE);
-		parameterTypes.add(OBJECT_ARRAY_TYPE);
-		parameterTypes.add(OBJECT_ARRAY_TYPE);
+		parameterTypes.add(Constants.OBJECT_ARRAY_TYPE);
+		parameterTypes.add(Constants.OBJECT_ARRAY_TYPE);
+		parameterTypes.add(Constants.OBJECT_ARRAY_TYPE);
 		
 		// TODO: Don't add the boolean $asTask to the list... Or does it even matter?
 		// Add all original method parameters

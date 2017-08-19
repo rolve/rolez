@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import rolez.checked.lang.Task;
+import rolez.checked.transformer.Constants;
 import rolez.checked.transformer.TaskGenerator;
 import soot.Scene;
 import soot.SootClass;
@@ -13,8 +14,6 @@ import soot.SootMethod;
 public class InnerClass extends SootClass {
 
 	static final Logger logger = LogManager.getLogger(TaskGenerator.class);
-	
-	static final SootClass TASK_CLASS = Scene.v().loadClassAndSupport(Task.class.getCanonicalName());
 
 	private SootClass outerClass;
 	private SootMethod sourceMethod;
@@ -24,7 +23,7 @@ public class InnerClass extends SootClass {
 		this.outerClass = outerClass;
 		this.sourceMethod = sourceMethod;
 		
-		this.setSuperclass(TASK_CLASS);
+		this.setSuperclass(Constants.TASK_CLASS);
 		this.setOuterClass(outerClass);
 		generateInnerClassFields();
 	}

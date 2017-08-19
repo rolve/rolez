@@ -1,13 +1,12 @@
 package rolez.checked.transformer.checked;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import rolez.checked.lang.Checked;
+import rolez.checked.transformer.Constants;
 import soot.ArrayType;
 import soot.Body;
 import soot.Local;
@@ -26,18 +25,13 @@ import soot.util.Chain;
 public class GuardedRefsMethod extends SootMethod {
 
 	static final Logger logger = LogManager.getLogger(GuardedRefsMethod.class);
-	
-	static final SootClass LIST_CLASS = Scene.v().loadClassAndSupport(List.class.getCanonicalName());
-	static final SootClass ARRAYS_CLASS = Scene.v().loadClassAndSupport(Arrays.class.getCanonicalName());
-	static final SootClass CHECKED_CLASS = Scene.v().loadClassAndSupport(Checked.class.getCanonicalName());
-	static final SootClass OBJECT_CLASS = Scene.v().loadClassAndSupport(Object.class.getCanonicalName());
 
 	static final Jimple J = Jimple.v();
 	
 	private SootClass containingClass;
 	
 	public GuardedRefsMethod(SootClass containingClass) {
-		super("guardedRefs", new ArrayList<Type>(), RefType.v(LIST_CLASS), Modifier.PROTECTED);
+		super("guardedRefs", new ArrayList<Type>(), RefType.v(Constants.LIST_CLASS), Modifier.PROTECTED);
 		this.containingClass = containingClass;
 		
 		generateMethodBody();
@@ -58,7 +52,7 @@ public class GuardedRefsMethod extends SootMethod {
 
 		List<SootField> checkedFields = getCheckedFields();
 		
-		Local checkedRefArrayLocal = J.newLocal("$r" + Integer.toString(localsCount), ArrayType.v(RefType.v(CHECKED_CLASS), 1));
+		Local checkedRefArrayLocal = J.newLocal("$r" + Integer.toString(localsCount), ArrayType.v(RefType.v(Constants.CHECKED_CLASS), 1));
 		locals.add(checkedRefArrayLocal);
 		localsCount++;
 		
@@ -70,7 +64,7 @@ public class GuardedRefsMethod extends SootMethod {
 			localsCount++;
 		}
 		
-		Local resultListLocal = J.newLocal("$r" + Integer.toString(localsCount), RefType.v(LIST_CLASS));
+		Local resultListLocal = J.newLocal("$r" + Integer.toString(localsCount), RefType.v(Constants.LIST_CLASS));
 		locals.add(resultListLocal);
 		
 		// Add units
@@ -84,7 +78,7 @@ public class GuardedRefsMethod extends SootMethod {
 			units.add(J.newAssignStmt(J.newArrayRef(checkedRefArrayLocal, IntConstant.v(i)), checkedFieldsLocals.get(i)));
 		}
 		
-		SootMethod asListMethod = ARRAYS_CLASS.getMethodByName("asList");
+		SootMethod asListMethod = Constants.ARRAYS_CLASS.getMethodByName("asList");
 		ArrayList<Local> args = new ArrayList<Local>();
 		args.add(checkedRefArrayLocal);
 		units.add(J.newInvokeStmt(J.newStaticInvokeExpr(asListMethod.makeRef(), args)));
@@ -109,8 +103,8 @@ public class GuardedRefsMethod extends SootMethod {
 			SootClass s = Scene.v().loadClassAndSupport(t.toString());
 			do {
 				s = s.getSuperclass();
-				if (s.getType().equals(CHECKED_CLASS.getType())) return true;
-			} while (!s.getType().equals(OBJECT_CLASS.getType()));
+				if (s.getType().equals(Constants.CHECKED_CLASS.getType())) return true;
+			} while (!s.getType().equals(Constants.OBJECT_CLASS.getType()));
 		}
 		return false;
 	}

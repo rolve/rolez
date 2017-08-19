@@ -6,7 +6,6 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import rolez.checked.lang.Checked;
 import rolez.checked.transformer.checked.CheckedConstructor;
 import rolez.checked.transformer.checked.GuardedRefsMethod;
 import rolez.checked.transformer.util.ClassWriter;
@@ -15,6 +14,7 @@ import soot.Scene;
 import soot.SceneTransformer;
 import soot.SootClass;
 import soot.SootMethod;
+import soot.SootResolver;
 import soot.tagkit.AnnotationTag;
 import soot.tagkit.Tag;
 import soot.tagkit.VisibilityAnnotationTag;
@@ -31,20 +31,19 @@ public class ClassTransformer extends SceneTransformer {
 
 	static final Logger logger = LogManager.getLogger(ClassTransformer.class);
 	
-	static final SootClass CHECKED_CLASS = Scene.v().loadClassAndSupport(Checked.class.getCanonicalName());
-	static final SootClass OBJECT_CLASS = Scene.v().loadClassAndSupport(Object.class.getCanonicalName());
-	
-	static final String ROLEZTASK_ANNOTATION = "Lrolez/annotation/Roleztask;";
-	static final String CHECKED_ANNOTATION = "Lrolez/annotation/Checked;";
+	private SootClass mainClass;
 	
 	@Override
-	protected void internalTransform(String phaseName, Map options) {		
+	protected void internalTransform(String phaseName, Map options) {
+		mainClass = Scene.v().getMainClass();
+		
 		// Start transformation
 		processClasses();
 	}
 
 	private void processClasses() {
 		Chain<SootClass> classesToProcess = Scene.v().getApplicationClasses();
+		
 		logger.debug(classesToProcess);
 		for (SootClass c : classesToProcess) {
 			processClass(c);
@@ -54,8 +53,15 @@ public class ClassTransformer extends SceneTransformer {
 	private void processClass(SootClass c) {
 		logger.debug("Processing class: " + c.getName());
 		
+		SootResolver.v().resolveClass(c.getName(), SootClass.SIGNATURES);
+		
+		if (c.equals(mainClass)) {
+			MainTaskGenerator mainTaskGenerator = new MainTaskGenerator(c, c.getMethodByName("main"));
+			mainTaskGenerator.generateMethod();
+		}
+		
 		if (hasCheckedAnnotation(c)) {
-			c.setSuperclass(CHECKED_CLASS);
+			c.setSuperclass(Constants.CHECKED_CLASS);
 			
 			// Replace constructors with one that calls the Checked constructor
 			for (SootMethod m : c.getMethods()) {
@@ -94,7 +100,7 @@ public class ClassTransformer extends SceneTransformer {
 		for (Tag t : classTags) 
 			if (t instanceof VisibilityAnnotationTag) 
 				for (AnnotationTag aTag : ((VisibilityAnnotationTag) t).getAnnotations()) 
-					if (aTag.getType().equals(CHECKED_ANNOTATION))
+					if (aTag.getType().equals(Constants.CHECKED_ANNOTATION))
 						return true;
 		return false;
 	}
@@ -103,7 +109,7 @@ public class ClassTransformer extends SceneTransformer {
 		for (Tag t : m.getTags()) 
 			if (t instanceof VisibilityAnnotationTag) 
 				for (AnnotationTag aTag : ((VisibilityAnnotationTag) t).getAnnotations()) 
-					if (aTag.getType().equals(ROLEZTASK_ANNOTATION)) 
+					if (aTag.getType().equals(Constants.ROLEZTASK_ANNOTATION)) 
 						return true;
 		return false;
 	}
