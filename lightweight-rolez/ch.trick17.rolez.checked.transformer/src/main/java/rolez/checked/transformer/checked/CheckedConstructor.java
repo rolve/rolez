@@ -6,12 +6,9 @@ import java.util.Iterator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import rolez.checked.lang.Checked;
 import rolez.checked.transformer.Constants;
 import soot.Body;
 import soot.Local;
-import soot.Scene;
-import soot.SootClass;
 import soot.SootMethod;
 import soot.Type;
 import soot.Unit;

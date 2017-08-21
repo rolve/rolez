@@ -19,9 +19,7 @@ import soot.Value;
 import soot.jimple.IdentityStmt;
 import soot.jimple.Jimple;
 import soot.jimple.NullConstant;
-import soot.jimple.ParameterRef;
 import soot.jimple.ReturnVoidStmt;
-import soot.jimple.ThisRef;
 import soot.util.Chain;
 
 public class InnerClassRunRolezConcrete extends SootMethod {

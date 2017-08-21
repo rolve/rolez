@@ -1,7 +1,6 @@
 package rolez.checked.transformer;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -10,9 +9,6 @@ import rolez.checked.transformer.main.MainInnerClass;
 import rolez.checked.transformer.main.MainInnerClassConstructor;
 import rolez.checked.transformer.main.MainInnerClassRunRolezConcrete;
 import rolez.checked.transformer.main.MainTaskMethod;
-import rolez.checked.transformer.task.InnerClass;
-import rolez.checked.transformer.task.InnerClassConstructor;
-import rolez.checked.transformer.task.InnerClassRunRolezConcrete;
 import rolez.checked.transformer.task.InnerClassRunRolezObject;
 import rolez.checked.transformer.util.ClassWriter;
 import rolez.checked.transformer.util.JimpleWriter;
@@ -22,7 +18,6 @@ import soot.Local;
 import soot.RefType;
 import soot.SootClass;
 import soot.SootMethod;
-import soot.Type;
 import soot.Unit;
 import soot.jimple.Jimple;
 import soot.util.Chain;
