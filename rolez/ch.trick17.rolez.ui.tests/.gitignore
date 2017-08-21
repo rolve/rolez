@@ -1,3 +1,4 @@
-/xtend-gen
+/xtend-gen/*
 /src-gen
 /target
+!.gitkeep
