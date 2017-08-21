@@ -8,18 +8,18 @@ import rolez.checked.lang.Task;
 import rolez.checked.lang.TaskSystem;
 import soot.ArrayType;
 import soot.RefType;
+import soot.Scene;
 import soot.SootClass;
-import soot.SootResolver;
 import soot.Type;
 
 public class Constants {	
-	public static final SootClass CHECKED_CLASS = SootResolver.v().resolveClass(Checked.class.getCanonicalName(), SootClass.SIGNATURES);
-	public static final SootClass OBJECT_CLASS = SootResolver.v().resolveClass(Object.class.getCanonicalName(), SootClass.SIGNATURES);
-	public static final SootClass TASK_SYSTEM_CLASS = SootResolver.v().resolveClass(TaskSystem.class.getCanonicalName(), SootClass.SIGNATURES);
-	public static final SootClass STRING_CLASS = SootResolver.v().resolveClass("java.lang.String", SootClass.SIGNATURES);
-	public static final SootClass TASK_CLASS = SootResolver.v().resolveClass(Task.class.getCanonicalName(), SootClass.SIGNATURES);
-	public static final SootClass LIST_CLASS = SootResolver.v().resolveClass(List.class.getCanonicalName(), SootClass.SIGNATURES);
-	public static final SootClass ARRAYS_CLASS = SootResolver.v().resolveClass(Arrays.class.getCanonicalName(), SootClass.SIGNATURES);
+	public static final SootClass CHECKED_CLASS = Scene.v().forceResolve(Checked.class.getCanonicalName(), SootClass.SIGNATURES);
+	public static final SootClass OBJECT_CLASS = Scene.v().forceResolve(Object.class.getCanonicalName(), SootClass.SIGNATURES);
+	public static final SootClass TASK_SYSTEM_CLASS = Scene.v().forceResolve(TaskSystem.class.getCanonicalName(), SootClass.SIGNATURES);
+	public static final SootClass STRING_CLASS = Scene.v().forceResolve("java.lang.String", SootClass.SIGNATURES);
+	public static final SootClass TASK_CLASS = Scene.v().forceResolve(Task.class.getCanonicalName(), SootClass.SIGNATURES);
+	public static final SootClass LIST_CLASS = Scene.v().forceResolve(List.class.getCanonicalName(), SootClass.SIGNATURES);
+	public static final SootClass ARRAYS_CLASS = Scene.v().forceResolve(Arrays.class.getCanonicalName(), SootClass.SIGNATURES);
 	
 	public static final ArrayType OBJECT_ARRAY_TYPE = ArrayType.v(RefType.v(OBJECT_CLASS),1);
 	public static final Type VOID_TYPE = RefType.v("java.lang.Void");
