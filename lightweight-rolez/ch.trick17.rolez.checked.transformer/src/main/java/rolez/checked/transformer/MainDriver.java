@@ -3,9 +3,11 @@ package rolez.checked.transformer;
 import java.io.File;
 import java.util.Collections;
 
+import rolez.checked.transformer.util.JimpleWriter;
 import soot.G;
 import soot.PackManager;
 import soot.Scene;
+import soot.SootClass;
 import soot.Transform;
 import soot.options.Options;
 
@@ -15,13 +17,18 @@ public class MainDriver {
 		
 		setUpSoot();
 		
-		// When using a SceneTransformer we have to work on the wjtp (whole-)program pack
+		// Handles the @Roleztask and @Checked annotated classes and transforms them.
 		PackManager.v().getPack("wjtp").add(
 			new Transform("wjtp.transformer", new ClassTransformer())
 		);
+		
+		// Inserts guardings
+		PackManager.v().getPack("jtp").add(
+			new Transform("jtp.transformer", new CheckingTransformer())
+		);
 
         PackManager.v().runPacks();
-        
+
         System.out.println("Finished transformation");
 	}
 	

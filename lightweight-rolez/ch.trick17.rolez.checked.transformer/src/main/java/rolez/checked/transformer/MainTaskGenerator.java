@@ -38,7 +38,7 @@ public class MainTaskGenerator {
 		this.mainMethod = mainMethod;
 	}
 
-	public void generateMethod() {
+	public void generateMainTask() {
 		generateInnerClass();
 		generateTaskMethod();
 		transformSourceMethod();
@@ -107,5 +107,9 @@ public class MainTaskGenerator {
 
 	private String getClassNameFromMethod() {
 		return targetClass.getName() + "$Main";
+	}
+	
+	public SootClass getInnerClass() {
+		return this.innerClass;
 	}
 }

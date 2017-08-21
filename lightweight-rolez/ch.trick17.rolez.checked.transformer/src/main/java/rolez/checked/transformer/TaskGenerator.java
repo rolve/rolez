@@ -17,6 +17,7 @@ import rolez.checked.transformer.util.JimpleWriter;
 import soot.Body;
 import soot.BooleanType;
 import soot.Local;
+import soot.Scene;
 import soot.SootClass;
 import soot.SootMethod;
 import soot.Unit;
@@ -45,7 +46,7 @@ public class TaskGenerator {
 		this.sourceMethod = sourceMethod;
 	}
 
-	public void generateMethod() {
+	public void generateTask() {
 		generateInnerClass();
 		generateTaskMethod();
 		transformSourceMethod();
@@ -141,5 +142,9 @@ public class TaskGenerator {
 		String srcMethodName = sourceMethod.getName();
 		String className = srcMethodName.substring(0,1).toUpperCase() + srcMethodName.substring(1);
 		return targetClass.getName() + "$" + className;
+	}
+	
+	public SootClass getInnerClass() {
+		return this.innerClass;
 	}
 }

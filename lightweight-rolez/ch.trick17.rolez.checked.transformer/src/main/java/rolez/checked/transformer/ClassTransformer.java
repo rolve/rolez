@@ -1,5 +1,6 @@
 package rolez.checked.transformer;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -15,7 +16,6 @@ import soot.Scene;
 import soot.SceneTransformer;
 import soot.SootClass;
 import soot.SootMethod;
-import soot.SootResolver;
 import soot.tagkit.AnnotationTag;
 import soot.tagkit.Tag;
 import soot.tagkit.VisibilityAnnotationTag;
@@ -34,31 +34,36 @@ public class ClassTransformer extends SceneTransformer {
 	
 	private SootClass mainClass;
 	
+	private List<SootClass> generatedInnerClasses = new ArrayList<SootClass>();
+	
 	@Override
 	protected void internalTransform(String phaseName, Map options) {
 		mainClass = Scene.v().getMainClass();
-		
-		// Start transformation
 		processClasses();
 	}
 
 	private void processClasses() {
 		Chain<SootClass> classesToProcess = Scene.v().getApplicationClasses();
 		
-		logger.debug(classesToProcess);
+		logger.debug("The following classes are transformed: " + classesToProcess);
 		for (SootClass c : classesToProcess) {
 			processClass(c);
 		}
+		
+		// Add all generated inner classes to the application classes
+		// (is necessary because we want the next phase to transform them as well)
+		addInnerClassesToApplicationClasses();
 	}
 	
 	private void processClass(SootClass c) {
 		logger.debug("Processing class: " + c.getName());
-		
-		SootResolver.v().resolveClass(c.getName(), SootClass.SIGNATURES);
-		
+	
 		if (c.equals(mainClass)) {
 			MainTaskGenerator mainTaskGenerator = new MainTaskGenerator(c, c.getMethodByName("main"));
-			mainTaskGenerator.generateMethod();
+			mainTaskGenerator.generateMainTask();
+			
+			// Remember generated inner class
+			this.generatedInnerClasses.add(mainTaskGenerator.getInnerClass());
 		}
 		
 		if (hasCheckedAnnotation(c)) {
@@ -80,7 +85,7 @@ public class ClassTransformer extends SceneTransformer {
 		
 		// Search for methods which have the @Roleztask annotation
 		processMethods(c);
-		
+			
 		JimpleWriter.write(c);
 		ClassWriter.write(c);
 	}
@@ -91,7 +96,10 @@ public class ClassTransformer extends SceneTransformer {
 			m.retrieveActiveBody();
 			if (hasRoleztaskAnnotation(m)) {
 				TaskGenerator taskGenerator = new TaskGenerator(c, m);
-				taskGenerator.generateMethod();
+				taskGenerator.generateTask();
+				
+				// Remember generated inner class
+				this.generatedInnerClasses.add(taskGenerator.getInnerClass());
 			}
 		}
 	}
@@ -113,5 +121,12 @@ public class ClassTransformer extends SceneTransformer {
 					if (aTag.getType().equals(Constants.ROLEZTASK_ANNOTATION)) 
 						return true;
 		return false;
+	}
+
+	private void addInnerClassesToApplicationClasses() {
+		for (SootClass c : generatedInnerClasses) {
+			logger.debug("Adding " + c + " to application classes.");
+			c.setApplicationClass();
+		}
 	}
 }
