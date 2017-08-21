@@ -11,6 +11,7 @@ import rolez.checked.transformer.main.MainInnerClassRunRolezConcrete;
 import rolez.checked.transformer.main.MainTaskMethod;
 import rolez.checked.transformer.task.InnerClassRunRolezObject;
 import rolez.checked.transformer.util.ClassWriter;
+import rolez.checked.transformer.util.Constants;
 import rolez.checked.transformer.util.JimpleWriter;
 import soot.ArrayType;
 import soot.Body;

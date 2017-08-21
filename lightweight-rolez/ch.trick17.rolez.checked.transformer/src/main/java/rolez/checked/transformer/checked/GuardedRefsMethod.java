@@ -6,7 +6,7 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import rolez.checked.transformer.Constants;
+import rolez.checked.transformer.util.Constants;
 import soot.ArrayType;
 import soot.Body;
 import soot.Local;

@@ -3,7 +3,7 @@ package rolez.checked.transformer.main;
 import java.util.ArrayList;
 import java.util.List;
 
-import rolez.checked.transformer.Constants;
+import rolez.checked.transformer.util.Constants;
 import soot.ArrayType;
 import soot.Local;
 import soot.RefType;
