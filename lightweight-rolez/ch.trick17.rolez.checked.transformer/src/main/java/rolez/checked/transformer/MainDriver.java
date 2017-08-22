@@ -3,11 +3,9 @@ package rolez.checked.transformer;
 import java.io.File;
 import java.util.Collections;
 
-import rolez.checked.transformer.util.JimpleWriter;
 import soot.G;
 import soot.PackManager;
 import soot.Scene;
-import soot.SootClass;
 import soot.Transform;
 import soot.options.Options;
 
