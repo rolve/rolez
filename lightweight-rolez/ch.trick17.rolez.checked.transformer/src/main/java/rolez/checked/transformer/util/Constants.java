@@ -3,6 +3,7 @@ package rolez.checked.transformer.util;
 import java.util.Arrays;
 import java.util.List;
 
+import rolez.checked.internal.Tasks;
 import rolez.checked.lang.Checked;
 import rolez.checked.lang.Task;
 import rolez.checked.lang.TaskSystem;
@@ -20,6 +21,8 @@ public class Constants {
 	public static final SootClass TASK_CLASS = Scene.v().forceResolve(Task.class.getCanonicalName(), SootClass.SIGNATURES);
 	public static final SootClass LIST_CLASS = Scene.v().forceResolve(List.class.getCanonicalName(), SootClass.SIGNATURES);
 	public static final SootClass ARRAYS_CLASS = Scene.v().forceResolve(Arrays.class.getCanonicalName(), SootClass.SIGNATURES);
+	public static final SootClass THROWABLE_CLASS = Scene.v().forceResolve(Throwable.class.getCanonicalName(), SootClass.SIGNATURES);
+	public static final SootClass INTERNAL_TASKS_CLASS = Scene.v().forceResolve(Tasks.class.getCanonicalName(), SootClass.SIGNATURES);
 	
 	public static final ArrayType OBJECT_ARRAY_TYPE = ArrayType.v(RefType.v(OBJECT_CLASS),1);
 	public static final Type VOID_TYPE = RefType.v("java.lang.Void");

@@ -1,8 +1,11 @@
 package rolez.checked.transformer;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+
+import javax.sql.rowset.Joinable;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,13 +16,16 @@ import rolez.checked.transformer.task.InnerClassRunRolezConcrete;
 import rolez.checked.transformer.task.InnerClassRunRolezObject;
 import rolez.checked.transformer.task.TaskMethod;
 import rolez.checked.transformer.util.ClassWriter;
+import rolez.checked.transformer.util.Constants;
 import rolez.checked.transformer.util.JimpleWriter;
+import rolez.checked.transformer.util.UnitFactory;
 import soot.Body;
 import soot.BooleanType;
 import soot.Local;
 import soot.Scene;
 import soot.SootClass;
 import soot.SootMethod;
+import soot.Trap;
 import soot.Unit;
 import soot.jimple.IntConstant;
 import soot.jimple.Jimple;
@@ -36,6 +42,8 @@ import soot.util.Chain;
 public class TaskGenerator {
 	
 	static final Logger logger = LogManager.getLogger(TaskGenerator.class);
+	
+	static final Jimple J = Jimple.v();
 	
 	private SootClass targetClass;
 	private SootMethod sourceMethod;
@@ -100,7 +108,7 @@ public class TaskGenerator {
 		List<Local> paramLocals = new ArrayList<Local>();
 		
 		// Jump over "this"
-		localIter.next();
+		Local thisLocal = localIter.next();
 		
 		for (int i = 0; i < parameterCount; i++) {
 			paramLocals.add(localIter.next());
@@ -112,25 +120,78 @@ public class TaskGenerator {
 		assert(paramLocals.size() == parameterCount);
 		assert(asTaskLocal.getType().equals(BooleanType.v()));
 		
+		// Add new locals for the task starting
+		Local tasksLocal1 = J.newLocal("tasks", Constants.INTERNAL_TASKS_CLASS.getType());
+		Local tasksLocal2 = J.newLocal("tasks", Constants.INTERNAL_TASKS_CLASS.getType());
+		Local throwLocal1 = J.newLocal("throwable1", Constants.THROWABLE_CLASS.getType());
+		Local throwLocal2 = J.newLocal("throwable2", Constants.THROWABLE_CLASS.getType());
+		Local taskSystemLocal = J.newLocal("tasksystem", Constants.TASK_SYSTEM_CLASS.getType());
+		Local taskLocal1 = J.newLocal("task1", Constants.TASK_CLASS.getType());
+		Local taskLocal2 = J.newLocal("task2", Constants.TASK_CLASS.getType());
+		locals.add(tasksLocal1);
+		locals.add(tasksLocal2);
+		locals.add(throwLocal1);
+		locals.add(throwLocal2);
+		locals.add(taskSystemLocal);
+		locals.add(taskLocal1);
+		locals.add(taskLocal2);
+		
 		// Iterator is used to find the last parameter assignment statement and the first "real" statement
 		Iterator<Unit> unitIter = units.iterator();
 		Unit lastParamStmt = null;
 		unitIter.next();
 		for (int i=0; i<parameterCount; i++)
 			 lastParamStmt = unitIter.next();
-		Unit firstRealStmt = unitIter.next();
+
+		// This is the first task related stmt, it has to be added after the last stmt of the original body
+		Unit internalTasksAssignment = UnitFactory.newAssignNewExpr(tasksLocal2, Constants.INTERNAL_TASKS_CLASS);
+		units.insertAfter(internalTasksAssignment, units.getLast());
 		
 		// Insert the if statement as the very first statement after the parameter assignments
-		Unit ifStmt = Jimple.v().newIfStmt(Jimple.v().newEqExpr(asTaskLocal, IntConstant.v(0)), firstRealStmt);
+		Unit ifStmt = J.newIfStmt(J.newNeExpr(asTaskLocal, IntConstant.v(0)), internalTasksAssignment);
 		units.insertAfter(ifStmt, lastParamStmt);
+
+		Unit invokeTasksConstructor = UnitFactory.newSpecialInvokeExpr(tasksLocal2, Constants.INTERNAL_TASKS_CLASS, "<init>");
+		units.insertAfter(invokeTasksConstructor, internalTasksAssignment);
 		
-		// add the task invoke method
-		// TODO: add the correct call here! Is it task.run() or TaskSystem.start(task)?
-		Unit taskInvokeStmt = Jimple.v().newInvokeStmt(Jimple.v().newVirtualInvokeExpr(locals.getFirst(), targetClass.getMethodByName(getTaskMethodNameFromMethod()).makeRef(), paramLocals));
-		units.insertAfter(taskInvokeStmt, ifStmt);
+		Unit assignTasksResult = J.newAssignStmt(tasksLocal1, taskLocal2);
+		units.insertAfter(assignTasksResult, invokeTasksConstructor);
 		
-		// Add the goto statement to jump right to the return statement of the original method
-		units.insertAfter(Jimple.v().newGotoStmt(units.getLast()), taskInvokeStmt);
+		Unit taskSystemInvoke = UnitFactory.newAssignStaticInvokeExpr(taskSystemLocal, Constants.TASK_SYSTEM_CLASS, "getDefault");
+		units.insertAfter(taskSystemInvoke, assignTasksResult);
+		
+		Unit getTaskFromTaskMethod = UnitFactory.newAssignVirtualInvokeExpr(taskLocal1, thisLocal, targetClass, getTaskMethodNameFromMethod(), paramLocals);
+		units.insertAfter(getTaskFromTaskMethod, taskSystemInvoke);
+
+		Unit startTask = UnitFactory.newAssignVirtualInvokeExpr(taskLocal2, taskSystemLocal, Constants.TASK_SYSTEM_CLASS, "start", new Local[] { taskLocal1 });
+		units.insertAfter(startTask, getTaskFromTaskMethod);
+		
+		Unit addInline = UnitFactory.newVirtualInvokeExpr(tasksLocal1, Constants.INTERNAL_TASKS_CLASS, "addInline", new Local[] { taskLocal2 });
+		units.insertAfter(addInline, startTask);
+			
+		Unit caughtException = J.newIdentityStmt(throwLocal2, J.newCaughtExceptionRef());
+		units.insertAfter(caughtException, addInline);
+		
+		Unit assignException = J.newAssignStmt(throwLocal1, throwLocal2);
+		units.insertAfter(assignException, caughtException);
+		
+		Unit invokeJoinAll = UnitFactory.newVirtualInvokeExpr(tasksLocal1, Constants.INTERNAL_TASKS_CLASS, "joinAll");
+		units.insertAfter(invokeJoinAll, assignException);
+		
+		Unit throwException = J.newThrowStmt(throwLocal1);
+		units.insertAfter(throwException, invokeJoinAll);
+		
+		// Construct finally statement and goto finally
+		Unit finallyStmt = UnitFactory.newVirtualInvokeExpr(tasksLocal1, Constants.INTERNAL_TASKS_CLASS, "joinAll");
+		units.insertAfter(finallyStmt, throwException);
+		
+		units.insertAfter(J.newReturnVoidStmt(), finallyStmt);
+		
+		Unit gotoFinally = J.newGotoStmt(finallyStmt);
+		units.insertAfter(gotoFinally, addInline);
+		
+		Trap trap = J.newTrap(Constants.THROWABLE_CLASS, taskSystemInvoke, caughtException, caughtException);
+		body.getTraps().add(trap);
 	}
 	
 	private String getTaskMethodNameFromMethod() {
