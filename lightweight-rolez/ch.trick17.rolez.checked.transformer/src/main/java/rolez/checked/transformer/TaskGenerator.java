@@ -1,11 +1,8 @@
 package rolez.checked.transformer;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-
-import javax.sql.rowset.Joinable;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,7 +19,6 @@ import rolez.checked.transformer.util.UnitFactory;
 import soot.Body;
 import soot.BooleanType;
 import soot.Local;
-import soot.Scene;
 import soot.SootClass;
 import soot.SootMethod;
 import soot.Trap;
