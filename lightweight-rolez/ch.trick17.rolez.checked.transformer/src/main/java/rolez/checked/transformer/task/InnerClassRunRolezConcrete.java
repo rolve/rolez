@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import rolez.checked.transformer.util.Constants;
+import rolez.checked.transformer.util.UnitFactory;
 import soot.Body;
 import soot.Local;
 import soot.Modifier;
@@ -77,7 +78,7 @@ public class InnerClassRunRolezConcrete extends SootMethod {
 					if (u instanceof IdentityStmt) {
 						IdentityStmt idStmt = (IdentityStmt) u;
 						Value leftOp = idStmt.getLeftOp();
-						Unit newUnit = J.newAssignStmt(leftOp, J.newInstanceFieldRef(locals.getFirst(), containingClass.getFieldByName("val$f"+Integer.toString(i)).makeRef()));
+						Unit newUnit = UnitFactory.newAssignFieldToLocalExpr((Local)leftOp, locals.getFirst(), containingClass, "val$f"+Integer.toString(i));
 						units.insertBefore(newUnit, u);
 						units.remove(u);
 					} else {

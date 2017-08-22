@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 
 import rolez.checked.lang.Role;
 import rolez.checked.transformer.util.Constants;
+import rolez.checked.transformer.util.UnitFactory;
 import soot.ArrayType;
 import soot.Local;
 import soot.Modifier;
@@ -16,7 +17,6 @@ import soot.SootClass;
 import soot.SootMethod;
 import soot.Type;
 import soot.Unit;
-import soot.jimple.IntConstant;
 import soot.jimple.Jimple;
 import soot.jimple.JimpleBody;
 import soot.tagkit.AnnotationTag;
@@ -93,20 +93,21 @@ public class TaskMethod extends SootMethod {
 		// Add units
 		Chain<Unit> units = body.getUnits();
 		
-		units.add(J.newIdentityStmt(thisReferenceLocal, J.newThisRef(containingClass.getType())));
+		units.add(UnitFactory.newThisRef(thisReferenceLocal, containingClass.getType()));
 		
 		int paramNumber = 0;
 		for (Local l : parameterLocals) {
-			units.add(J.newIdentityStmt(l, J.newParameterRef(l.getType(), paramNumber)));
+			units.add(UnitFactory.newParameterRef(l, l.getType(), paramNumber));
 			paramNumber++;
 		}
-		
-		units.add(J.newAssignStmt(innerClassReferenceLocal, J.newNewExpr(innerClass.getType())));
+				
+		units.add(UnitFactory.newAssignNewExpr(innerClassReferenceLocal, innerClass));
 		
 		int[] objectArraySizes = getObjectArraySizes();
-		units.add(J.newAssignStmt(objectArrayLocals.get(0), J.newNewArrayExpr(objectArrayType, IntConstant.v(objectArraySizes[0]))));
-		units.add(J.newAssignStmt(objectArrayLocals.get(1), J.newNewArrayExpr(objectArrayType, IntConstant.v(objectArraySizes[1]))));
-		units.add(J.newAssignStmt(objectArrayLocals.get(2), J.newNewArrayExpr(objectArrayType, IntConstant.v(objectArraySizes[2]))));
+		
+		units.add(UnitFactory.newAssignNewArrayExpr(objectArrayLocals.get(0), objectArrayType, objectArraySizes[0]));
+		units.add(UnitFactory.newAssignNewArrayExpr(objectArrayLocals.get(1), objectArrayType, objectArraySizes[1]));
+		units.add(UnitFactory.newAssignNewArrayExpr(objectArrayLocals.get(2), objectArrayType, objectArraySizes[2]));
 		
 		// Assign the locals to the object array depending on their role
 		int rwIndex = 0, roIndex = 0, puIndex = 0;
@@ -115,15 +116,15 @@ public class TaskMethod extends SootMethod {
 			if (r != null) {
 				switch (r) {
 					case READWRITE:
-						units.add(J.newAssignStmt(J.newArrayRef(objectArrayLocals.get(0),  IntConstant.v(rwIndex)), parameterLocals.get(i)));
+						units.add(UnitFactory.newAssignToArrayExpr(objectArrayLocals.get(0), rwIndex, parameterLocals.get(i)));
 						rwIndex++;
 						break;
 					case READONLY:
-						units.add(J.newAssignStmt(J.newArrayRef(objectArrayLocals.get(1),  IntConstant.v(roIndex)), parameterLocals.get(i)));
+						units.add(UnitFactory.newAssignToArrayExpr(objectArrayLocals.get(1), roIndex, parameterLocals.get(i)));
 						roIndex++;
 						break;
 					case PURE:
-						units.add(J.newAssignStmt(J.newArrayRef(objectArrayLocals.get(2),  IntConstant.v(puIndex)), parameterLocals.get(i)));
+						units.add(UnitFactory.newAssignToArrayExpr(objectArrayLocals.get(2), puIndex, parameterLocals.get(i)));
 						puIndex++;
 						break;
 					default:
@@ -142,7 +143,7 @@ public class TaskMethod extends SootMethod {
 			constructorArgs.add(l);
 		
 		// Call constructor of inner class
-		units.add(J.newInvokeStmt(J.newSpecialInvokeExpr(innerClassReferenceLocal, innerClass.getMethodByName("<init>").makeRef(), constructorArgs)));
+		units.add(UnitFactory.newSpecialInvokeExpr(innerClassReferenceLocal, innerClass, "<init>", constructorArgs));
 		
 		// Return inner class
 		units.add(J.newReturnStmt(innerClassReferenceLocal));

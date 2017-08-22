@@ -1,13 +1,13 @@
 package rolez.checked.transformer.main;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import rolez.checked.transformer.util.Constants;
+import rolez.checked.transformer.util.UnitFactory;
 import soot.Local;
 import soot.SootClass;
 import soot.SootMethod;
@@ -56,25 +56,17 @@ public class MainInnerClassConstructor extends SootMethod {
 		bodyLocals.addAll(locals);
 		
 		Chain<Unit> units = body.getUnits();
-		units.add(J.newIdentityStmt(locals.get(0), J.newThisRef(containingClass.getType())));
-		units.add(J.newIdentityStmt(locals.get(1), J.newParameterRef(outerClass.getType(), 0)));
-		units.add(J.newIdentityStmt(locals.get(2), J.newParameterRef(Constants.OBJECT_ARRAY_TYPE, 1)));
-		units.add(J.newIdentityStmt(locals.get(3), J.newParameterRef(Constants.OBJECT_ARRAY_TYPE, 2)));
-		units.add(J.newIdentityStmt(locals.get(4), J.newParameterRef(Constants.OBJECT_ARRAY_TYPE, 3)));
+		units.add(UnitFactory.newThisRef(locals.get(0), containingClass.getType()));
+		units.add(UnitFactory.newParameterRef(locals.get(1), outerClass.getType(), 0));
+		units.add(UnitFactory.newParameterRef(locals.get(2), Constants.OBJECT_ARRAY_TYPE, 1));
+		units.add(UnitFactory.newParameterRef(locals.get(3), Constants.OBJECT_ARRAY_TYPE, 2));
+		units.add(UnitFactory.newParameterRef(locals.get(4), Constants.OBJECT_ARRAY_TYPE, 3));
 		
 		// Set field field for outer class ref
-		units.add(J.newAssignStmt(J.newInstanceFieldRef(locals.get(0), containingClass.getFieldByName("this$0").makeRef()), locals.get(1)));
+		units.add(UnitFactory.newAssignLocalToFieldExpr(locals.get(0), containingClass, "this$0", locals.get(1)));
 		
 		// Add the call to superclass constructor
-		units.add(J.newInvokeStmt(
-				J.newSpecialInvokeExpr(
-						locals.get(0), 
-						Constants.TASK_CLASS.getMethodByName("<init>").makeRef(), 
-						Arrays.asList(new Local[] {
-								locals.get(2), 
-								locals.get(3), 
-								locals.get(4)})
-		)));
+		units.add(UnitFactory.newSpecialInvokeExpr(locals.get(0), Constants.TASK_CLASS, "<init>", new Local[] {	locals.get(2), locals.get(3), locals.get(4)}));
 		
 		// Add return statement
 		units.add(J.newReturnVoidStmt());

@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import rolez.checked.transformer.util.Constants;
+import rolez.checked.transformer.util.UnitFactory;
 import soot.Local;
 import soot.Modifier;
 import soot.RefType;
@@ -47,8 +48,8 @@ public class InnerClassRunRolezObject extends SootMethod {
 		bodyLocals.add(returnLocal);
 
 		Chain<Unit> units = body.getUnits();
-		units.add(J.newIdentityStmt(thisLocal, J.newThisRef(innerClassType)));
-		units.add(J.newAssignStmt(returnLocal, J.newVirtualInvokeExpr(thisLocal, concreteMethod.makeRef())));
+		units.add(UnitFactory.newThisRef(thisLocal, innerClassType));
+		units.add(UnitFactory.newAssignVirtualInvokeExpr(returnLocal, thisLocal, concreteMethod));
 		units.add(J.newReturnStmt(returnLocal));
 	}
 }

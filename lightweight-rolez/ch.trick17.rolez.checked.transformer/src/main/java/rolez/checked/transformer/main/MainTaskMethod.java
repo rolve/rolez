@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import rolez.checked.transformer.util.Constants;
+import rolez.checked.transformer.util.UnitFactory;
 import soot.ArrayType;
 import soot.Local;
 import soot.RefType;
@@ -55,14 +56,14 @@ public class MainTaskMethod extends SootMethod {
 		
 		// Add units
 		Chain<Unit> units = body.getUnits();
-		units.add(J.newIdentityStmt(thisReferenceLocal, J.newThisRef(containingClass.getType())));
-		units.add(J.newAssignStmt(innerClassReferenceLocal, J.newNewExpr(innerClass.getType())));
+		units.add(UnitFactory.newThisRef(thisReferenceLocal, containingClass.getType()));
+		units.add(UnitFactory.newAssignNewExpr(innerClassReferenceLocal, innerClass));
+
+		units.add(UnitFactory.newAssignNewArrayExpr(objectArrayLocals.get(0), objectArrayType, 1));
+		units.add(UnitFactory.newAssignNewArrayExpr(objectArrayLocals.get(1), objectArrayType, 0));
+		units.add(UnitFactory.newAssignNewArrayExpr(objectArrayLocals.get(2), objectArrayType, 0));
 		
-		units.add(J.newAssignStmt(objectArrayLocals.get(0), J.newNewArrayExpr(objectArrayType, IntConstant.v(1))));
-		units.add(J.newAssignStmt(objectArrayLocals.get(1), J.newNewArrayExpr(objectArrayType, IntConstant.v(0))));
-		units.add(J.newAssignStmt(objectArrayLocals.get(2), J.newNewArrayExpr(objectArrayType, IntConstant.v(0))));
-		
-		units.add(J.newAssignStmt(J.newArrayRef(objectArrayLocals.get(0), IntConstant.v(0)), thisReferenceLocal));
+		units.add(UnitFactory.newAssignToArrayExpr(objectArrayLocals.get(0), 0, thisReferenceLocal));
 		
 		ArrayList<Local> constructorArgs = new ArrayList<Local>();
 		constructorArgs.add(thisReferenceLocal);
@@ -71,7 +72,7 @@ public class MainTaskMethod extends SootMethod {
 		constructorArgs.add(objectArrayLocals.get(2));
 		
 		// Call constructor of inner class
-		units.add(J.newInvokeStmt(J.newSpecialInvokeExpr(innerClassReferenceLocal, innerClass.getMethodByName("<init>").makeRef(), constructorArgs)));
+		units.add(UnitFactory.newSpecialInvokeExpr(innerClassReferenceLocal, innerClass, "<init>", constructorArgs));
 		
 		// Return inner class
 		units.add(J.newReturnStmt(innerClassReferenceLocal));

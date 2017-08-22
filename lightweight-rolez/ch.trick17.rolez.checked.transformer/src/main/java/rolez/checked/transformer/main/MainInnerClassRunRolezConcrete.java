@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import rolez.checked.transformer.util.Constants;
+import rolez.checked.transformer.util.UnitFactory;
 import soot.Body;
 import soot.Local;
 import soot.Modifier;
@@ -56,7 +57,7 @@ public class MainInnerClassRunRolezConcrete extends SootMethod {
 		// Transform the units of the source method
 		Chain<Unit> units = body.getUnits();
 		units.removeFirst();
-		units.addFirst(J.newIdentityStmt(thisLocal, J.newThisRef(innerClassType)));
+		units.addFirst(UnitFactory.newThisRef(thisLocal, innerClassType));
 		
 		units.removeLast();
 		units.addLast(J.newReturnStmt(NullConstant.v()));
