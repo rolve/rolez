@@ -126,6 +126,7 @@ public class ClassTransformer extends SceneTransformer {
 	private void addInnerClassesToApplicationClasses() {
 		for (SootClass c : generatedInnerClasses) {
 			logger.debug("Adding " + c + " to application classes.");
+			c.setInScene(true);
 			c.setApplicationClass();
 		}
 	}
