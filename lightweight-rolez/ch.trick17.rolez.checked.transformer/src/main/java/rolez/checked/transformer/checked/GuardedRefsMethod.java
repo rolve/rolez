@@ -31,7 +31,7 @@ public class GuardedRefsMethod extends SootMethod {
 	private SootClass containingClass;
 	
 	public GuardedRefsMethod(SootClass containingClass) {
-		super("guardedRefs", new ArrayList<Type>(), RefType.v(Constants.LIST_CLASS), Modifier.PROTECTED);
+		super("guardedRefs", new ArrayList<Type>(), Constants.ITERABLE_CLASS.getType(), Modifier.PROTECTED);
 		this.containingClass = containingClass;
 		
 		generateMethodBody();
@@ -71,7 +71,7 @@ public class GuardedRefsMethod extends SootMethod {
 		Chain<Unit> units = body.getUnits();
 		
 		units.add(J.newIdentityStmt(thisReferenceLocal, J.newThisRef(containingClass.getType())));
-		units.add(J.newAssignStmt(checkedRefArrayLocal, J.newNewArrayExpr(checkedRefArrayLocal.getType(), IntConstant.v(checkedFieldsLocals.size()))));
+		units.add(J.newAssignStmt(checkedRefArrayLocal, J.newNewArrayExpr(Constants.CHECKED_CLASS.getType(), IntConstant.v(checkedFieldsLocals.size()))));
 		
 		for (int i = 0; i < checkedFields.size(); i++) {
 			units.add(J.newAssignStmt(checkedFieldsLocals.get(i), J.newInstanceFieldRef(thisReferenceLocal, checkedFields.get(i).makeRef())));
@@ -81,9 +81,9 @@ public class GuardedRefsMethod extends SootMethod {
 		SootMethod asListMethod = Constants.ARRAYS_CLASS.getMethodByName("asList");
 		ArrayList<Local> args = new ArrayList<Local>();
 		args.add(checkedRefArrayLocal);
-		units.add(J.newInvokeStmt(J.newStaticInvokeExpr(asListMethod.makeRef(), args)));
+		units.add(J.newAssignStmt(resultListLocal, J.newStaticInvokeExpr(asListMethod.makeRef(), args)));
 		
-		units.add(J.newReturnStmt(checkedRefArrayLocal));
+		units.add(J.newReturnStmt(resultListLocal));
 	}
 	
 	private List<SootField> getCheckedFields() {
