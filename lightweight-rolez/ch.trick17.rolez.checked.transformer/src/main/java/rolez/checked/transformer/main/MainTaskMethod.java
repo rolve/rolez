@@ -24,7 +24,7 @@ public class MainTaskMethod extends SootMethod {
 	static final Jimple J = Jimple.v();
 	
 	public MainTaskMethod(SootClass containingClass, SootClass innerClass) {
-		super("$mainTask", new ArrayList<Type>(), Constants.VOID_TYPE);
+		super("$mainTask", new ArrayList<Type>(), Constants.TASK_CLASS.getType());
 		
 		this.containingClass = containingClass;
 		this.innerClass = innerClass;
@@ -58,10 +58,10 @@ public class MainTaskMethod extends SootMethod {
 		units.add(UnitFactory.newThisRef(thisReferenceLocal, containingClass.getType()));
 		units.add(UnitFactory.newAssignNewExpr(innerClassReferenceLocal, innerClass));
 
-		units.add(UnitFactory.newAssignNewArrayExpr(objectArrayLocals.get(0), objectArrayType, 1));
-		units.add(UnitFactory.newAssignNewArrayExpr(objectArrayLocals.get(1), objectArrayType, 0));
-		units.add(UnitFactory.newAssignNewArrayExpr(objectArrayLocals.get(2), objectArrayType, 0));
-		
+		units.add(UnitFactory.newAssignNewArrayExpr(objectArrayLocals.get(0), Constants.OBJECT_CLASS.getType(), 1));
+		units.add(UnitFactory.newAssignNewArrayExpr(objectArrayLocals.get(1), Constants.OBJECT_CLASS.getType(), 0));
+		units.add(UnitFactory.newAssignNewArrayExpr(objectArrayLocals.get(2), Constants.OBJECT_CLASS.getType(), 0));
+
 		units.add(UnitFactory.newAssignToArrayExpr(objectArrayLocals.get(0), 0, thisReferenceLocal));
 		
 		ArrayList<Local> constructorArgs = new ArrayList<Local>();
