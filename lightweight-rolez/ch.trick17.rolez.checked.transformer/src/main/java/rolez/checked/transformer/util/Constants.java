@@ -23,6 +23,8 @@ public class Constants {
 	public static final SootClass ARRAYS_CLASS = Scene.v().forceResolve(Arrays.class.getCanonicalName(), SootClass.SIGNATURES);
 	public static final SootClass THROWABLE_CLASS = Scene.v().forceResolve(Throwable.class.getCanonicalName(), SootClass.SIGNATURES);
 	public static final SootClass INTERNAL_TASKS_CLASS = Scene.v().forceResolve(Tasks.class.getCanonicalName(), SootClass.SIGNATURES);
+	public static final SootClass VOID_CLASS = Scene.v().forceResolve("java.lang.Void", SootClass.SIGNATURES);
+	public static final SootClass ITERABLE_CLASS = Scene.v().forceResolve("java.lang.Iterable", SootClass.SIGNATURES);
 	
 	public static final ArrayType OBJECT_ARRAY_TYPE = ArrayType.v(RefType.v(OBJECT_CLASS),1);
 	public static final Type VOID_TYPE = RefType.v("java.lang.Void");
