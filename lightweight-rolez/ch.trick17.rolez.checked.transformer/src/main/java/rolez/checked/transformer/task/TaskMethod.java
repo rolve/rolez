@@ -105,9 +105,9 @@ public class TaskMethod extends SootMethod {
 		
 		int[] objectArraySizes = getObjectArraySizes();
 		
-		units.add(UnitFactory.newAssignNewArrayExpr(objectArrayLocals.get(0), objectArrayType, objectArraySizes[0]));
-		units.add(UnitFactory.newAssignNewArrayExpr(objectArrayLocals.get(1), objectArrayType, objectArraySizes[1]));
-		units.add(UnitFactory.newAssignNewArrayExpr(objectArrayLocals.get(2), objectArrayType, objectArraySizes[2]));
+		units.add(UnitFactory.newAssignNewArrayExpr(objectArrayLocals.get(0), Constants.OBJECT_CLASS.getType(), objectArraySizes[0]));
+		units.add(UnitFactory.newAssignNewArrayExpr(objectArrayLocals.get(1), Constants.OBJECT_CLASS.getType(), objectArraySizes[1]));
+		units.add(UnitFactory.newAssignNewArrayExpr(objectArrayLocals.get(2), Constants.OBJECT_CLASS.getType(), objectArraySizes[2]));
 		
 		// Assign the locals to the object array depending on their role
 		int rwIndex = 0, roIndex = 0, puIndex = 0;
