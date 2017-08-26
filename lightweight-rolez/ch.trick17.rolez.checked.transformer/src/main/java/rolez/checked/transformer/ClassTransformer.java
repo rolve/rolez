@@ -12,13 +12,11 @@ import rolez.checked.transformer.checked.GuardedRefsMethod;
 import rolez.checked.transformer.util.ClassWriter;
 import rolez.checked.transformer.util.Constants;
 import rolez.checked.transformer.util.JimpleWriter;
+import rolez.checked.transformer.util.Util;
 import soot.Scene;
 import soot.SceneTransformer;
 import soot.SootClass;
 import soot.SootMethod;
-import soot.tagkit.AnnotationTag;
-import soot.tagkit.Tag;
-import soot.tagkit.VisibilityAnnotationTag;
 import soot.util.Chain;
 
 /**
@@ -66,7 +64,7 @@ public class ClassTransformer extends SceneTransformer {
 			this.generatedInnerClasses.add(mainTaskGenerator.getInnerClass());
 		}
 		
-		if (hasCheckedAnnotation(c)) {
+		if (Util.hasCheckedAnnotation(c)) {
 			c.setSuperclass(Constants.CHECKED_CLASS);
 			
 			// Replace constructors with one that calls the Checked constructor
@@ -94,7 +92,7 @@ public class ClassTransformer extends SceneTransformer {
 		for (SootMethod m : c.getMethods()) {
 			logger.debug("Processing method: " + c.getName() + ":" + m.getName());
 			m.retrieveActiveBody();
-			if (hasRoleztaskAnnotation(m)) {
+			if (Util.hasRoleztaskAnnotation(m)) {
 				TaskGenerator taskGenerator = new TaskGenerator(c, m);
 				taskGenerator.generateTask();
 				
@@ -102,25 +100,6 @@ public class ClassTransformer extends SceneTransformer {
 				this.generatedInnerClasses.add(taskGenerator.getInnerClass());
 			}
 		}
-	}
-
-	private boolean hasCheckedAnnotation(SootClass c) {
-		List<Tag> classTags = c.getTags();
-		for (Tag t : classTags) 
-			if (t instanceof VisibilityAnnotationTag) 
-				for (AnnotationTag aTag : ((VisibilityAnnotationTag) t).getAnnotations()) 
-					if (aTag.getType().equals(Constants.CHECKED_ANNOTATION))
-						return true;
-		return false;
-	}
-	
-	private boolean hasRoleztaskAnnotation(SootMethod m) {
-		for (Tag t : m.getTags()) 
-			if (t instanceof VisibilityAnnotationTag) 
-				for (AnnotationTag aTag : ((VisibilityAnnotationTag) t).getAnnotations()) 
-					if (aTag.getType().equals(Constants.ROLEZTASK_ANNOTATION)) 
-						return true;
-		return false;
 	}
 
 	private void addInnerClassesToApplicationClasses() {

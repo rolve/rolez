@@ -17,14 +17,19 @@ public class MainDriver {
 		
 		// Handles the @Roleztask and @Checked annotated classes and transforms them.
 		PackManager.v().getPack("wjtp").add(
-			new Transform("wjtp.transformer", new ClassTransformer())
+			new Transform("wjtp.transformer0", new ClassTransformer())
+		);
+
+		// Transforms calls of tasks
+		PackManager.v().getPack("jtp").add(
+			new Transform("jtp.transformer1", new TaskCallTransformer())
 		);
 		
 		// Inserts guardings
 		PackManager.v().getPack("jtp").add(
-			new Transform("jtp.transformer", new CheckingTransformer())
+			new Transform("jtp.transformer2", new CheckingTransformer())
 		);
-
+		
         PackManager.v().runPacks();
 
         System.out.println("Finished transformation");
