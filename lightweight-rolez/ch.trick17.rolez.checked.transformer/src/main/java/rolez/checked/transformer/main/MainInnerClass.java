@@ -25,7 +25,7 @@ public class MainInnerClass extends SootClass {
 	}
 	
 	private void generateInnerClassFields() {
-		SootField outerClassReference = new SootField("this$0", outerClass.getType(), Modifier.FINAL);
+		SootField outerClassReference = new SootField("val$f0", outerClass.getType(), Modifier.FINAL);
 		this.addField(outerClassReference);
 	}
 }

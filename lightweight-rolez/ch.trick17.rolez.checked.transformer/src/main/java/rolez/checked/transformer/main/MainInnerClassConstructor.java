@@ -63,7 +63,7 @@ public class MainInnerClassConstructor extends SootMethod {
 		units.add(UnitFactory.newParameterRef(locals.get(4), Constants.OBJECT_ARRAY_TYPE, 3));
 		
 		// Set field field for outer class ref
-		units.add(UnitFactory.newAssignLocalToFieldExpr(locals.get(0), containingClass, "this$0", locals.get(1)));
+		units.add(UnitFactory.newAssignLocalToFieldExpr(locals.get(0), containingClass, "val$f0", locals.get(1)));
 		
 		// Add the call to superclass constructor
 		units.add(UnitFactory.newSpecialInvokeExpr(locals.get(0), Constants.TASK_CLASS, "<init>", new Local[] {	locals.get(2), locals.get(3), locals.get(4)}));
