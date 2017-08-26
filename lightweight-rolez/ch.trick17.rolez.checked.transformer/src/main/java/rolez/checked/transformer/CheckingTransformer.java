@@ -42,6 +42,10 @@ public class CheckingTransformer extends BodyTransformer {
 	
 	@Override
 	protected void internalTransform(Body b, String phaseName, Map options) {
+		
+		// Field reads in guarded refs don't have to be guarded
+		if (b.getMethod().getName().equals("guardedRefs")) return;
+		
 		logger.debug("Transforming " + b.getMethod().getDeclaringClass() + ":" + b.getMethod().getSignature());
 		
 		this.locals = b.getLocals();
@@ -58,10 +62,10 @@ public class CheckingTransformer extends BodyTransformer {
 			addCheckLegalWrite(write);
 		}
 		
-		logger.debug("\n" + b);
-		
 		// Reset tempLocalCount for next method
 		tempLocalCount = 0;
+		
+		logger.debug("\n" + b);
 	}
 	
 	private void addCheckLegalRead(AssignStmt read) {
