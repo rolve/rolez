@@ -14,6 +14,7 @@ import soot.Body;
 import soot.BodyTransformer;
 import soot.Local;
 import soot.SootClass;
+import soot.SootField;
 import soot.SootMethod;
 import soot.Unit;
 import soot.Value;
@@ -36,9 +37,14 @@ public class TaskCallTransformer extends BodyTransformer {
 	
 	int numOfTaskCalls = 0;
 	
+	SootMethod method;
+	
 	@Override
 	protected void internalTransform(Body b, String phaseName, Map options) {
-		logger.debug("Transforming " + b.getMethod().getDeclaringClass() + ":" + b.getMethod().getSignature());
+		
+		this.method = b.getMethod();
+		
+		logger.debug("Transforming " + this.method.getDeclaringClass() + ":" + this.method.getSignature());
 		
 		Chain<Local> locals = b.getLocals();
 		Chain<Unit> units = b.getUnits();
@@ -57,6 +63,8 @@ public class TaskCallTransformer extends BodyTransformer {
 		
 		// Reset number of task calls
 		numOfTaskCalls = 0;
+		
+		logger.debug("\n" + b);
 	}
 	
 	private void insertTaskLocalsAndStmts(Chain<Local> locals, Chain<Unit> units) {
@@ -94,8 +102,8 @@ public class TaskCallTransformer extends BodyTransformer {
 	
 	private void transformTaskCall(Chain<Local> locals, Chain<Unit> units, InvokeStmt taskCall) {
 		InvokeExpr invokeExpr = taskCall.getInvokeExpr();
-		SootMethod method = invokeExpr.getMethod();
-		SootClass declaringClass = method.getDeclaringClass();
+		SootMethod invokedMethod = invokeExpr.getMethod();
+		SootClass declaringClass = invokedMethod.getDeclaringClass();
 		List<Value> args = invokeExpr.getArgs();
 		Value booleanValue = args.get(args.size()-1);
 
@@ -109,13 +117,34 @@ public class TaskCallTransformer extends BodyTransformer {
 		Local taskLocal1 = J.newLocal("task" + Integer.toString(numOfTaskCalls), Constants.TASK_CLASS.getType());
 		locals.add(taskLocal0);
 		locals.add(taskLocal1);
-		
-		Unit getTaskFromTaskMethod = J.newAssignStmt(taskLocal0,
-				J.newVirtualInvokeExpr(
-						locals.getFirst(),
-						declaringClass.getMethodByName(Util.getTaskMethodNameFromMethod(method)).makeRef(),
-						invokeExpr.getArgs()));
-		units.insertAfter(getTaskFromTaskMethod, ifStmt);
+
+		// In runRolez methods, the outer class has to be set as base for the task method call
+		// TODO: What happens in inner classes generally?
+		Unit getTaskFromTaskMethod;
+		if (this.method.getName().equals("runRolez")) {
+			
+			// Add a temp local which stores the base class
+			Local base = J.newLocal("temp", method.getDeclaringClass().getFieldByName("val$f0").getType());
+			locals.add(base);
+			
+			// Assign the field val$f0 which holds reference to outer class
+			Unit baseAssignment = J.newAssignStmt(base, J.newInstanceFieldRef(locals.getFirst(), method.getDeclaringClass().getFieldByName("val$f0").makeRef()));
+			units.insertAfter(baseAssignment, ifStmt);
+			
+			getTaskFromTaskMethod = J.newAssignStmt(taskLocal0,
+					J.newVirtualInvokeExpr(
+							base, 
+							declaringClass.getMethodByName(Util.getTaskMethodNameFromMethod(invokedMethod)).makeRef(),
+							invokeExpr.getArgs()));
+			units.insertAfter(getTaskFromTaskMethod, baseAssignment);
+		} else {
+			getTaskFromTaskMethod = J.newAssignStmt(taskLocal0,
+					J.newVirtualInvokeExpr(
+							locals.getFirst(),
+							declaringClass.getMethodByName(Util.getTaskMethodNameFromMethod(invokedMethod)).makeRef(),
+							invokeExpr.getArgs()));
+			units.insertAfter(getTaskFromTaskMethod, ifStmt);
+		}
 		
 		Unit startTask = UnitFactory.newAssignVirtualInvokeExpr(taskLocal1, taskSystemLocal, Constants.TASK_SYSTEM_CLASS, "start", new Local[] { taskLocal0 });
 		units.insertAfter(startTask, getTaskFromTaskMethod);
