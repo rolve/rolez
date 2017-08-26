@@ -13,16 +13,15 @@ public class Test {
 	public static void main(String[] args) {
 		Random r = new Random();
 		Test test = new Test();
-		test.test(true);
-		int i = 0;
-		i++;
+		test.test(r.nextBoolean());
+		
 	}
 	
 	@Roleztask
 	void test(final boolean $asTask) {
 		A a = new A();	// Checked object
 		a.foo = 2;
-		int i = a.foo;
-		System.out.println(i);
+		a.bar(42, $asTask);
+		System.out.println(a.foo);
 	}
 }
