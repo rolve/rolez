@@ -23,6 +23,7 @@ import soot.jimple.IntConstant;
 import soot.jimple.InvokeExpr;
 import soot.jimple.InvokeStmt;
 import soot.jimple.Jimple;
+import soot.jimple.VirtualInvokeExpr;
 import soot.util.Chain;
 
 public class TaskCallTransformer extends BodyTransformer {
@@ -37,14 +38,14 @@ public class TaskCallTransformer extends BodyTransformer {
 	
 	int numOfTaskCalls = 0;
 	
-	SootMethod method;
+	SootMethod currentMethod;
 	
 	@Override
 	protected void internalTransform(Body b, String phaseName, Map options) {
 		
-		this.method = b.getMethod();
+		this.currentMethod = b.getMethod();
 		
-		logger.debug("Transforming " + this.method.getDeclaringClass() + ":" + this.method.getSignature());
+		logger.debug("Transforming " + this.currentMethod.getDeclaringClass() + ":" + this.currentMethod.getSignature());
 		
 		Chain<Local> locals = b.getLocals();
 		Chain<Unit> units = b.getUnits();
@@ -102,6 +103,8 @@ public class TaskCallTransformer extends BodyTransformer {
 	
 	private void transformTaskCall(Chain<Local> locals, Chain<Unit> units, InvokeStmt taskCall) {
 		InvokeExpr invokeExpr = taskCall.getInvokeExpr();
+		VirtualInvokeExpr vInvokeExpr = (VirtualInvokeExpr) invokeExpr;
+		Local base = ((Local) vInvokeExpr.getBase());
 		SootMethod invokedMethod = invokeExpr.getMethod();
 		SootClass declaringClass = invokedMethod.getDeclaringClass();
 		List<Value> args = invokeExpr.getArgs();
@@ -118,33 +121,12 @@ public class TaskCallTransformer extends BodyTransformer {
 		locals.add(taskLocal0);
 		locals.add(taskLocal1);
 
-		// In runRolez methods, the outer class has to be set as base for the task method call
-		// TODO: What happens in inner classes generally?
-		Unit getTaskFromTaskMethod;
-		if (this.method.getName().equals("runRolez")) {
-			
-			// Add a temp local which stores the base class
-			Local base = J.newLocal("temp", method.getDeclaringClass().getFieldByName("val$f0").getType());
-			locals.add(base);
-			
-			// Assign the field val$f0 which holds reference to outer class
-			Unit baseAssignment = J.newAssignStmt(base, J.newInstanceFieldRef(locals.getFirst(), method.getDeclaringClass().getFieldByName("val$f0").makeRef()));
-			units.insertAfter(baseAssignment, ifStmt);
-			
-			getTaskFromTaskMethod = J.newAssignStmt(taskLocal0,
-					J.newVirtualInvokeExpr(
-							base, 
-							declaringClass.getMethodByName(Util.getTaskMethodNameFromMethod(invokedMethod)).makeRef(),
-							invokeExpr.getArgs()));
-			units.insertAfter(getTaskFromTaskMethod, baseAssignment);
-		} else {
-			getTaskFromTaskMethod = J.newAssignStmt(taskLocal0,
-					J.newVirtualInvokeExpr(
-							locals.getFirst(),
-							declaringClass.getMethodByName(Util.getTaskMethodNameFromMethod(invokedMethod)).makeRef(),
-							invokeExpr.getArgs()));
-			units.insertAfter(getTaskFromTaskMethod, ifStmt);
-		}
+		 Unit getTaskFromTaskMethod = J.newAssignStmt(taskLocal0,
+				J.newVirtualInvokeExpr(
+						base, 
+						declaringClass.getMethodByName(Util.getTaskMethodNameFromMethod(invokedMethod)).makeRef(),
+						invokeExpr.getArgs()));
+		units.insertAfter(getTaskFromTaskMethod, ifStmt);
 		
 		Unit startTask = UnitFactory.newAssignVirtualInvokeExpr(taskLocal1, taskSystemLocal, Constants.TASK_SYSTEM_CLASS, "start", new Local[] { taskLocal0 });
 		units.insertAfter(startTask, getTaskFromTaskMethod);
@@ -165,10 +147,15 @@ public class TaskCallTransformer extends BodyTransformer {
 		for (Unit u : units) {
 			if (u instanceof InvokeStmt) {
 				InvokeStmt i = (InvokeStmt)u;
-				SootMethod method = i.getInvokeExpr().getMethod();
-				if (Util.hasRoleztaskAnnotation(method)) {
-					logger.debug(u + " --> THIS METHOD IS A TASK CALL!");
-					result.add(i);
+				InvokeExpr ie = i.getInvokeExpr();
+				if (ie instanceof VirtualInvokeExpr) {
+					SootMethod method = i.getInvokeExpr().getMethod();
+					if (Util.hasRoleztaskAnnotation(method)) {
+						logger.debug(u + " --> THIS METHOD IS A TASK CALL!");
+						VirtualInvokeExpr v = (VirtualInvokeExpr)ie;
+						logger.debug(v.getBase());
+						result.add(i);
+					}
 				}
 			}
 		}
