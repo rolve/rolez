@@ -22,16 +22,16 @@ public class MainDriver {
 
 		// Transforms calls of tasks
 		PackManager.v().getPack("jtp").add(
-			new Transform("jtp.transformer1", new TaskCallTransformer())
+			new Transform("jtp.transformer0", new TaskCallTransformer())
 		);
 		
 		// Inserts guardings
 		PackManager.v().getPack("jtp").add(
-			new Transform("jtp.transformer2", new CheckingTransformer())
+			new Transform("jtp.transformer1", new CheckingTransformer())
 		);
 		
-        PackManager.v().runPacks();
-
+        soot.Main.main(args);
+        
         System.out.println("Finished transformation");
 	}
 	
@@ -50,6 +50,9 @@ public class MainDriver {
 		opts.set_whole_program(true);
 		opts.set_main_class("test.Test");
 		opts.setPhaseOption("cg", "enabled:false");
+		
+//		opts.set_output_format(Options.output_format_J);
+		opts.set_output_format(Options.output_format_class);
 		
 		Scene.v().loadNecessaryClasses();
 	}
