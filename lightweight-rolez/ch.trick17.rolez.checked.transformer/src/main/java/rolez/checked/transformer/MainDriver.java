@@ -40,6 +40,8 @@ public class MainDriver {
 		
 		Options opts = Options.v();
 		
+		opts.set_unfriendly_mode(true);
+		
 		// TODO: The process dir should be an argument to the transformer
 		File f = new File("../ch.trick17.rolez.checked.transformer.test/target/classes");
 		opts.set_process_dir(Collections.singletonList(f.getAbsolutePath()));
