@@ -1,7 +1,6 @@
 package test;
 
 import rolez.annotation.Checked;
-import rolez.annotation.Roleztask;
 
 @Checked
 public class A {
@@ -12,11 +11,6 @@ public class A {
 	}
 	
 	A(int i) {
-		this.foo = i;
-	}
-	
-	@Roleztask
-	public void bar(int i, final boolean $asTask) {
 		this.foo = i;
 	}
 }
