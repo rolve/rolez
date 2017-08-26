@@ -116,7 +116,7 @@ public class CheckingTransformer extends BodyTransformer {
 	}
 
 	private List<AssignStmt> findCheckedFieldReads() {
-		ArrayList<AssignStmt> result = new ArrayList<AssignStmt> ();
+		ArrayList<AssignStmt> result = new ArrayList<AssignStmt>();
 		for (Unit u : units) {
 			// Because jimple uses 3-adress code, field reads are always a separate assign statement
 			if (u instanceof AssignStmt) {
@@ -136,7 +136,7 @@ public class CheckingTransformer extends BodyTransformer {
 	}
 	
 	private List<AssignStmt> findCheckedFieldWrites() {
-		ArrayList<AssignStmt> result = new ArrayList<AssignStmt> ();
+		ArrayList<AssignStmt> result = new ArrayList<AssignStmt>();
 		for (Unit u : units) {
 			// Because jimple uses 3-adress code, field reads are always a separate assign statement
 			if (u instanceof AssignStmt) {
