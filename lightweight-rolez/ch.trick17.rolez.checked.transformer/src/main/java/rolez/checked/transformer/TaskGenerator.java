@@ -8,8 +8,6 @@ import rolez.checked.transformer.task.InnerClassConstructor;
 import rolez.checked.transformer.task.InnerClassRunRolezConcrete;
 import rolez.checked.transformer.task.InnerClassRunRolezObject;
 import rolez.checked.transformer.task.TaskMethod;
-import rolez.checked.transformer.util.ClassWriter;
-import rolez.checked.transformer.util.JimpleWriter;
 import rolez.checked.transformer.util.Util;
 import soot.SootClass;
 import soot.SootMethod;
@@ -48,8 +46,6 @@ public class TaskGenerator {
 		//                                                        Enclosing Class: rolez/checked/transformer/test/Test Enclosing Method: $testTask Sig: (Lrolez/checked/transformer/test/A;Lrolez/checked/transformer/test/A;)Lrolez/checked/lang/Task;
 		//                                                        [inner=rolez/checked/transformer/test/Test$1, outer=null, name=null,flags=0]
 		
-		JimpleWriter.write(innerClass);
-		ClassWriter.write(innerClass);
 	}
 
 	private void generateInnerClass() {

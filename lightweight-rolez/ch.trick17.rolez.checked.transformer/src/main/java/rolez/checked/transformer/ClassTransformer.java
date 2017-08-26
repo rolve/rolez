@@ -9,9 +9,7 @@ import org.apache.logging.log4j.Logger;
 
 import rolez.checked.transformer.checked.CheckedConstructor;
 import rolez.checked.transformer.checked.GuardedRefsMethod;
-import rolez.checked.transformer.util.ClassWriter;
 import rolez.checked.transformer.util.Constants;
-import rolez.checked.transformer.util.JimpleWriter;
 import rolez.checked.transformer.util.Util;
 import soot.Scene;
 import soot.SceneTransformer;
@@ -83,9 +81,6 @@ public class ClassTransformer extends SceneTransformer {
 		
 		// Search for methods which have the @Roleztask annotation
 		processMethods(c);
-			
-		JimpleWriter.write(c);
-		ClassWriter.write(c);
 	}
 	
 	private void processMethods(SootClass c) {

@@ -10,9 +10,7 @@ import rolez.checked.transformer.main.MainInnerClassConstructor;
 import rolez.checked.transformer.main.MainInnerClassRunRolezConcrete;
 import rolez.checked.transformer.main.MainTaskMethod;
 import rolez.checked.transformer.task.InnerClassRunRolezObject;
-import rolez.checked.transformer.util.ClassWriter;
 import rolez.checked.transformer.util.Constants;
-import rolez.checked.transformer.util.JimpleWriter;
 import soot.ArrayType;
 import soot.Body;
 import soot.Local;
@@ -48,9 +46,6 @@ public class MainTaskGenerator {
 		// Inner class should contain tags of the following form: Signature: Lrolez/checked/lang/Task<Ljava/lang/Void;>;
 		//                                                        Enclosing Class: rolez/checked/transformer/test/Test Enclosing Method: $testTask Sig: (Lrolez/checked/transformer/test/A;Lrolez/checked/transformer/test/A;)Lrolez/checked/lang/Task;
 		//                                                        [inner=rolez/checked/transformer/test/Test$1, outer=null, name=null,flags=0]
-		
-		JimpleWriter.write(innerClass);
-		ClassWriter.write(innerClass);
 	}
 
 	private void generateInnerClass() {
