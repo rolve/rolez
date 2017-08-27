@@ -14,8 +14,8 @@ import soot.Body;
 import soot.BodyTransformer;
 import soot.Local;
 import soot.SootClass;
-import soot.SootField;
 import soot.SootMethod;
+import soot.Trap;
 import soot.Unit;
 import soot.Value;
 import soot.jimple.IdentityStmt;
@@ -49,11 +49,12 @@ public class TaskCallTransformer extends BodyTransformer {
 		
 		Chain<Local> locals = b.getLocals();
 		Chain<Unit> units = b.getUnits();
+		Chain<Trap> traps = b.getTraps();
 		
 		List<InvokeStmt> taskCalls = findTaskCalls(units);
 		
 		if (taskCalls.size() > 0) {
-			insertTaskLocalsAndStmts(locals, units);
+			insertTaskLocalsAndStmts(locals, units, traps);
 			
 			for (InvokeStmt i : taskCalls) {
 				transformTaskCall(locals, units, i);
@@ -68,7 +69,7 @@ public class TaskCallTransformer extends BodyTransformer {
 		logger.debug("\n" + b);
 	}
 	
-	private void insertTaskLocalsAndStmts(Chain<Local> locals, Chain<Unit> units) {
+	private void insertTaskLocalsAndStmts(Chain<Local> locals, Chain<Unit> units, Chain<Trap> traps) {
 		tasksLocal0 = J.newLocal("tasks0", Constants.INTERNAL_TASKS_CLASS.getType());
 		tasksLocal1 = J.newLocal("tasks1", Constants.INTERNAL_TASKS_CLASS.getType());
 		taskSystemLocal = J.newLocal("taskSystem", Constants.TASK_SYSTEM_CLASS.getType());
@@ -89,6 +90,30 @@ public class TaskCallTransformer extends BodyTransformer {
 		
 		Unit getTaskSystem = UnitFactory.newAssignStaticInvokeExpr(taskSystemLocal, Constants.TASK_SYSTEM_CLASS, "getDefault");
 		units.insertBefore(getTaskSystem, firstRealStmt);
+		
+		// Surround by try finally
+		Local throwable0 = J.newLocal("throwable0", Constants.THROWABLE_CLASS.getType());
+		locals.add(throwable0);
+		Local throwable1 = J.newLocal("throwable1", Constants.THROWABLE_CLASS.getType());
+		locals.add(throwable1);
+		
+		Unit caughtException = J.newIdentityStmt(throwable0, J.newCaughtExceptionRef());
+		Unit assignThwoable = J.newAssignStmt(throwable1, throwable0);
+		Unit invokeJoinAll0 = J.newInvokeStmt(J.newVirtualInvokeExpr(tasksLocal0, Constants.INTERNAL_TASKS_CLASS.getMethodByName("joinAll").makeRef()));
+		Unit throwStmt = J.newThrowStmt(throwable1);
+		Unit invokeJoinAll1 = J.newInvokeStmt(J.newVirtualInvokeExpr(tasksLocal0, Constants.INTERNAL_TASKS_CLASS.getMethodByName("joinAll").makeRef()));
+		Unit gotoStmt = J.newGotoStmt(invokeJoinAll1);
+		
+		Unit lastStmt = units.getLast();
+		units.insertBefore(gotoStmt, lastStmt);
+		units.insertBefore(caughtException, lastStmt);
+		units.insertBefore(assignThwoable, lastStmt);
+		units.insertBefore(invokeJoinAll0, lastStmt);
+		units.insertBefore(throwStmt, lastStmt);
+		units.insertBefore(invokeJoinAll1, lastStmt);
+		
+		Trap trap = J.newTrap(Constants.THROWABLE_CLASS, firstRealStmt, caughtException, caughtException);
+		traps.add(trap);
 	}
 	
 	private Unit findFirstNonIdentityStmt(Chain<Unit> units) {
@@ -111,7 +136,12 @@ public class TaskCallTransformer extends BodyTransformer {
 		Value booleanValue = args.get(args.size()-1);
 
 		Unit prevStmt = units.getPredOf(taskCall);
-		Unit succStmt = units.getSuccOf(taskCall);
+		
+		/* Insert a nop stmt as successor to get the right point for the goto stmt added last in this method
+		 * Otherwise there is a weird outcome if more than one task is called
+		 */
+		Unit succStmt = J.newNopStmt();
+		units.insertAfter(succStmt, taskCall);
 		
 		Unit ifStmt = J.newIfStmt(J.newEqExpr(booleanValue, IntConstant.v(0)), taskCall);
 		units.insertAfter(ifStmt, prevStmt);
@@ -136,10 +166,6 @@ public class TaskCallTransformer extends BodyTransformer {
 		
 		Unit gotoSucc = J.newGotoStmt(succStmt);
 		units.insertAfter(gotoSucc, addInline);
-	}
-	
-	private void surroundByTryFinally(Chain<Local> locals, Chain<Unit> units) {
-		
 	}
 	
 	private List<InvokeStmt> findTaskCalls(Chain<Unit> units) {
