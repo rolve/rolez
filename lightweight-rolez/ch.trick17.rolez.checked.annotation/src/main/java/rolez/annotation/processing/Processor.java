@@ -19,7 +19,6 @@ import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
@@ -44,9 +43,6 @@ public class Processor extends AbstractProcessor {
 	private Messager messager;
 	private Types types;
 	
-	// Map containing all rolez tasks found by the processor
-	Map<Element, Map<ExecutableElement, Map<String,Role>>> rolezTasks = new HashMap<Element, Map<ExecutableElement, Map<String,Role>>>();
-	
 	// Whitelist that contains java standard classes which are allowed to be used in rolez tasks
 	public static final String[] WHITELIST = new String[] {
 		"java.lang.String",
@@ -60,6 +56,17 @@ public class Processor extends AbstractProcessor {
 		"java.lang.Float"
 	};
 	
+	public static final String[] PRIMITIVE_TYPES = new String[] {
+		"int",
+		"boolean",
+		"byte",
+		"char",
+		"short",
+		"long",
+		"double",
+		"float"
+	};
+	
 	public void init(ProcessingEnvironment env) {
 	    super.init(env);
     	messager = env.getMessager();
@@ -70,36 +77,7 @@ public class Processor extends AbstractProcessor {
 	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment env) {
 		processTaskAnnotations(env);
 		processCheckedAnnotations(env);
-		writeAnnotationProcessorOutput();
 		return true;
-	}
-
-	private void writeAnnotationProcessorOutput() {
-		for (Element clazz : rolezTasks.keySet()) {
-			StringBuilder sb = new StringBuilder();
-			for (ExecutableElement task : rolezTasks.get(clazz).keySet()) {
-				sb.append(task.toString());
-				sb.append("\n");
-				for (String parameter : rolezTasks.get(clazz).get(task).keySet()) {
-					sb.append(parameter);
-					sb.append(" ");
-					sb.append(rolezTasks.get(clazz).get(task).get(parameter).toString());
-					sb.append("\n");
-				}
-				sb.append("\n\n");
-			}
-			try {
-	    		File file = new File(clazz.toString() + ".annotation.out");
-	    		file.delete();
-	    		PrintWriter writer = new PrintWriter(new FileOutputStream(clazz.toString() + ".annotation.out", true));
-				writer.print("");
-				writer.append(sb.toString());
-				writer.close();
-			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
 	}
 	
 	/**
@@ -140,14 +118,24 @@ public class Processor extends AbstractProcessor {
 
 		HashMap<String, Role> taskParameters = new HashMap<String, Role>();
 		
-		boolean hasAsTaskParameter = false;
-		for (VariableElement parameter : task.getParameters()) {
+		List<VariableElement> parameters = (List<VariableElement>) task.getParameters();
+		
+		// Check for $asTask parameter
+		VariableElement lastParameter = parameters.get(parameters.size()-1);
+		if (!lastParameter.toString().equals("$asTask") || !isOfBooleanType(lastParameter)) {
+			Message message = new Message(Kind.ERROR, "A task needs a parameter $asTask and it needs to be a boolean. It has to be the last one in the list.", task);
+			message.print(messager);
+		}
+		
+		for (VariableElement parameter : parameters) {
 			
-			// Check if it is $asTask parameter
-			if(parameter.toString().equals("$asTask") && isOfBooleanType(parameter)) {
-				hasAsTaskParameter = true;
+			// No annotations needed for $asTask
+			if(parameter.toString().equals("$asTask") && isOfBooleanType(parameter))
 				continue;
-			}
+
+			// No annotations needed for primitive types
+			if (isPrimitiveType(parameter.asType()))
+				continue;
 			
 			// Check type
 			if (!isValidParameterType(parameter)) {
@@ -166,59 +154,41 @@ public class Processor extends AbstractProcessor {
 			} else if (rwAnnotation != null) {
 				taskParameters.put(parameter.toString(), Role.READWRITE);
 			} else {
-				Message message = new Message(Kind.ERROR, "Method parameters have to be annotated with either @Pure, @Readonly or @Readwrite", parameter);
+				Message message = new Message(Kind.ERROR, "Type parameters have to be annotated with either @Pure, @Readonly or @Readwrite", parameter);
 				message.print(messager);
 			}
 		}
-		
-		if (!hasAsTaskParameter) {
-			Message message = new Message(Kind.ERROR, "A task needs a parameter $asTask and it needs to be a final boolean.", task);
-			message.print(messager);
-		}
-		
-		// Process the role of "this", which uses the same annotations but on a method declared as roleztask
-		Annotation pureAnnotation = task.getAnnotation(Pure.class);
-		Annotation roAnnotation = task.getAnnotation(Readonly.class);
-		Annotation rwAnnotation = task.getAnnotation(Readwrite.class);
-		if (pureAnnotation != null) {
-			taskParameters.put("this", Role.PURE);
-		} else if (roAnnotation != null) {
-			taskParameters.put("this", Role.READONLY);
-		} else if (rwAnnotation != null) {
-			taskParameters.put("this", Role.READWRITE);
-		} else {
-			// Default is Pure
-			taskParameters.put("this", Role.PURE);
-		}
-		
-		// Add task to the class
-		Element clazz = task.getEnclosingElement();
-		if (rolezTasks.get(clazz) == null) {
-			rolezTasks.put(clazz, new HashMap<ExecutableElement,Map<String,Role>>());
-		}
-		this.rolezTasks.get(clazz).put(task, taskParameters);
 	}
 
 	private boolean isValidParameterType(VariableElement parameter) {
 		TypeMirror parameterType = parameter.asType();
 		if (isWhitelisted(parameterType)) 
 			return true;
-		if (isCheckedType(parameterType)) {
+		if (isCheckedType(parameterType))
 			return true;
-		}
+		return false;
+	}
+	
+	private boolean isPrimitiveType(TypeMirror parameterType) {
+		for (String element : Processor.PRIMITIVE_TYPES)
+			if (element.equals(parameterType.toString()))
+				return true;
 		return false;
 	}
 	
 	private boolean isWhitelisted(TypeMirror parameterType) {
-		for (String element : Processor.WHITELIST) {
-			if (element.equals(parameterType.toString())) {
+		for (String element : Processor.WHITELIST)
+			if (element.equals(parameterType.toString()))
 				return true;
-			}
-		}
 		return false;
 	}
 	
 	private boolean isCheckedType(TypeMirror type) {
+		
+		// Have to return here since Object has no supertype
+		if (type.toString().equals(Object.class.getName()))
+			return false;
+		
 		TypeMirror supertype = getSupertype(type);
 		if(supertype.toString().equals(Object.class.getName())) {
 			// If the super type is object, then the current type has to be annotated with @Checked.
@@ -231,15 +201,6 @@ public class Processor extends AbstractProcessor {
 		// If nothing above is true, then we can further climb the inheritance tree to find an annotation
 		// or the Checked class itself.
 		return isCheckedType(supertype);
-	}
-	
-	//TODO: This method doesn't work since final modifiers on method parameters are erased after compilation
-	//      and therefore element.getModifiers() cannot find the final modifier.
-	@SuppressWarnings(value = {"unused"})
-	private boolean hasFinalModifier(Element element) {
-		Set<Modifier> modifiers = element.getModifiers();
-		if (modifiers.size() > 1) return false;
-		return modifiers.contains(Modifier.FINAL);
 	}
 
 	private boolean isOfBooleanType(Element element) {
