@@ -42,15 +42,15 @@ public class MainDriver {
 		
 		opts.set_unfriendly_mode(true);
 		
-		// TODO: The process dir should be an argument to the transformer
+		// TODO: The process dir and main class should be an argument to the transformer
 		File f = new File("../ch.trick17.rolez.checked.transformer.test/target/classes");
 		opts.set_process_dir(Collections.singletonList(f.getAbsolutePath()));
+		opts.set_main_class("test.Test");
 		
 		opts.set_soot_classpath("../ch.trick17.rolez.checked.lib/target/ch.trick17.rolez.checked.lib-1.0.0-SNAPSHOT.jar");
 		opts.set_prepend_classpath(true);
 		opts.set_allow_phantom_refs(true);
 		opts.set_whole_program(true);
-		opts.set_main_class("test.Test");
 		opts.setPhaseOption("cg", "enabled:false");
 		
 //		opts.set_output_format(Options.output_format_J);
