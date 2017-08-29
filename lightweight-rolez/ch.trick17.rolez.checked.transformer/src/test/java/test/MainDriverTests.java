@@ -74,6 +74,10 @@ public class MainDriverTests {
 		}
 	}
 	
+	/**
+	 * Deletes a folder located at <code>path</code> and all its content.
+	 * @param path
+	 */
 	private void deleteRecursive(String path) {
 		File filePath = new File(path);
 		if (!filePath.exists()) return;
