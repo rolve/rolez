@@ -46,6 +46,11 @@
 	  <artifactId>soot</artifactId>
 	  <version>2013-04-08-9eb4ba9</version>
 	</dependency>
+	<dependency>
+		<groupId>ch.trick17.java-processes</groupId>
+	    <artifactId>java-processes</artifactId>
+	    <version>0.0.1-SNAPSHOT</version>
+	</dependency>
   </dependencies>
   
   <build>
