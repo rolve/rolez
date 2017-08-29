@@ -65,8 +65,6 @@ public class TaskCallTransformer extends BodyTransformer {
 		
 		// Reset number of task calls
 		numOfTaskCalls = 0;
-		
-		logger.debug("\n" + b);
 	}
 	
 	private void insertTaskLocalsAndStmts(Chain<Local> locals, Chain<Unit> units, Chain<Trap> traps) {

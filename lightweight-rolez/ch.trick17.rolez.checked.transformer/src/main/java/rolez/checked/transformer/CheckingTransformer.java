@@ -64,8 +64,6 @@ public class CheckingTransformer extends BodyTransformer {
 		
 		// Reset tempLocalCount for next method
 		tempLocalCount = 0;
-		
-		logger.debug("\n" + b);
 	}
 	
 	private void addCheckLegalRead(AssignStmt read) {
