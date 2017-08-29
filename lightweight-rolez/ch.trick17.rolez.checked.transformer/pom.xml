@@ -15,13 +15,13 @@
 
   <repositories>
     <repository>
-      <id>conjars</id>
-      <url>http://conjars.org/repo/</url>
-    </repository>
-    <repository>
       <id>in-project</id>
       <name>In Project Repo</name>
       <url>file://${project.basedir}/lib</url>
+    </repository>
+    <repository>
+      <id>conjars</id>
+      <url>http://conjars.org/repo/</url>
     </repository>
   </repositories>
 
