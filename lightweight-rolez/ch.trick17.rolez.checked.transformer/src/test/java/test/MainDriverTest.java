@@ -10,7 +10,7 @@ import org.junit.Test;
 import ch.trick17.javaprocesses.JavaProcessBuilder;
 import rolez.checked.transformer.MainDriver;
 
-public class MainDriverTests {
+public class MainDriverTest {
 	
 	@Test
 	public void testMainDriver() {
