@@ -50,6 +50,7 @@
 		<groupId>ch.trick17.java-processes</groupId>
 	    <artifactId>java-processes</artifactId>
 	    <version>0.0.1-SNAPSHOT</version>
+	    <scope>test</scope>
 	</dependency>
   </dependencies>
   
