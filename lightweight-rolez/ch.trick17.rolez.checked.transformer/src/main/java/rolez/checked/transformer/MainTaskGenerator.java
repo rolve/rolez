@@ -1,6 +1,7 @@
 package rolez.checked.transformer;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,6 +19,7 @@ import soot.RefType;
 import soot.SootClass;
 import soot.SootMethod;
 import soot.Unit;
+import soot.VoidType;
 import soot.jimple.Jimple;
 import soot.util.Chain;
 
@@ -92,7 +94,7 @@ public class MainTaskGenerator {
 		units.add(J.newIdentityStmt(stringArrLocal, J.newParameterRef(stringArrLocal.getType(), 0)));
 		units.add(J.newAssignStmt(taskSystemLocal, J.newStaticInvokeExpr(Constants.TASK_SYSTEM_CLASS.getMethodByName("getDefault").makeRef())));
 		units.add(J.newAssignStmt(targetClassLocal, J.newNewExpr(targetClass.getType())));
-		units.add(J.newInvokeStmt(J.newSpecialInvokeExpr(targetClassLocal, targetClass.getMethodByName("<init>").makeRef())));
+		units.add(J.newInvokeStmt(J.newSpecialInvokeExpr(targetClassLocal, targetClass.getMethod("<init>",Collections.emptyList()).makeRef())));
 		units.add(J.newAssignStmt(taskLocal, J.newVirtualInvokeExpr(targetClassLocal, targetClass.getMethodByName("$mainTask").makeRef())));
 		units.add(J.newInvokeStmt(J.newVirtualInvokeExpr(taskSystemLocal, Constants.TASK_SYSTEM_CLASS.getMethodByName("run").makeRef(), runArgs)));
 		units.add(J.newReturnVoidStmt());

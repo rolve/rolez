@@ -173,12 +173,12 @@ public class CheckingTransformer extends BodyTransformer {
 		}
 		
 		SootClass currentClass = classOfType;
-		do {
+		 while(!currentClass.getName().equals("java.lang.Object")) {
 			if (currentClass.equals(Constants.CHECKED_CLASS)) {
 				return true;
 			}
 			currentClass = currentClass.getSuperclass();
-		} while(!currentClass.equals(Constants.OBJECT_CLASS));
+		}
 		return false;
 	}
 }

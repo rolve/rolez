@@ -59,7 +59,7 @@ public class MainDriver {
 			e.printStackTrace();
 		}
 		
-		opts.set_soot_classpath("../ch.trick17.rolez.checked.lib/target/ch.trick17.rolez.checked.lib-1.0.0-SNAPSHOT.jar");
+		opts.set_soot_classpath("../ch.trick17.rolez.checked.annotation/target/ch.trick17.rolez.checked.annotation-1.0.0-SNAPSHOT-jar-with-dependencies.jar");
 		opts.set_prepend_classpath(true);
 		opts.set_allow_phantom_refs(true);
 		opts.set_whole_program(true);
