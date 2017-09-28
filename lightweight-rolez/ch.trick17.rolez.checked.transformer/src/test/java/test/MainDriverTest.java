@@ -2,6 +2,8 @@ package test;
 
 import org.junit.Test;
 
+import test.util.Pipeline;
+
 public class MainDriverTest {
 	
 	@Test

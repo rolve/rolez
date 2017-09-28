@@ -1,4 +1,4 @@
-package test;
+package test.util;
 
 import java.io.File;
 import java.io.IOException;
@@ -50,20 +50,32 @@ public class Util {
 		pb.command(command);
 	}
 	
+	/**
+	 * Method to run a process built by a ProcessBuilder.
+	 * @param pb a ProcessBuilder object which is all set up.
+	 * @param redirect a Redirect to determine output destination.
+	 */
 	static void runProcess(ProcessBuilder pb, Redirect redirect) {
 		try {
 			pb.redirectOutput(redirect);
 			Process p = pb.start();
+			// Block until finished
 			p.waitFor();
 		} catch (IOException | InterruptedException e) {
 			e.printStackTrace();
 		}
 	}
 	
+	/**
+	 * Method to run a process built by a ProcessBuilder.
+	 * @param pb a ProcessBuilder object which is all set up.
+	 * @param redirect a File to determine output destination.
+	 */
 	static void runProcess(ProcessBuilder pb, File redirect) {
 		try {
 			pb.redirectOutput(redirect);
 			Process p = pb.start();
+			// Block until finished
 			p.waitFor();
 		} catch (IOException | InterruptedException e) {
 			e.printStackTrace();

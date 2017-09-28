@@ -1,4 +1,4 @@
-package test;
+package test.util;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -22,8 +22,9 @@ public class Pipeline {
 	File annotationProcessor;
 	File sootOutputFolder; 
 	File filesToExecute;
+	File testLogPath;
 	
-	Pipeline(String methodName, String mainClass) {
+	public Pipeline(String methodName, String mainClass) {
 		this.methodName = methodName;
 		this.mainClass = mainClass;
 		this.srcPath = new File("src/test/resources");
@@ -31,13 +32,13 @@ public class Pipeline {
 		this.annotationProcessor = new File("../ch.trick17.rolez.checked.annotation/target/ch.trick17.rolez.checked.annotation-1.0.0-SNAPSHOT-jar-with-dependencies.jar");
 		this.sootOutputFolder = new File("sootOutput/" + methodName);
 		this.filesToExecute = new File("sootOutput/" + methodName + "/classes");
+		this.testLogPath = new File("testLogs/");
 	}
 	
 	public void run() {
-		
 		// Delete output folder and output file
-		Util.deleteRecursive("sootOutput/" + methodName);
-		Util.deleteRecursive(methodName + ".txt");
+		Util.deleteRecursive(sootOutputFolder.getAbsolutePath());
+		Util.deleteRecursive(testLogPath.getAbsolutePath());
 		
 		// Compile the sources from src/test/resources
 		compileSources();
@@ -50,8 +51,8 @@ public class Pipeline {
 		MainDriver.main(new String[] {compilePath.getAbsolutePath(), mainClass, methodName, "J"});
 		
 		// Run transformed class files
-		
-		JavaProcessBuilder processBuilder = new JavaProcessBuilder("sootOutput/" + methodName + "/classes/TestClass.class", new String[] { });
+		// TODO: Make this more generic
+		JavaProcessBuilder processBuilder = new JavaProcessBuilder(sootOutputFolder.getAbsolutePath() + "/classes/TestClass.class", new String[] { });
 		ProcessBuilder pb = Util.setClassPathAndBuild(processBuilder, sootOutputFolder, annotationProcessor, filesToExecute);
 		
 		// Transformations are necessary to run it on my local PC -> What happens in CI?
@@ -64,9 +65,43 @@ public class Pipeline {
 		
 		// Run process a second time by redirecting output to a text file
 		System.out.println("\nRUNNING TRANSFORMED CLASS FILES (file output)");
-		Util.runProcess(pb, new File(methodName + ".txt"));
+		createLogOutputDirs();
+		Util.runProcess(pb, new File(testLogPath.getAbsolutePath() + "/" + methodName + ".txt"));
 		
 		System.out.println("\n\n");
+	}
+	
+	private void cleanTestCompileDir() {
+
+		Util.deleteRecursive(compilePath.getAbsolutePath());
+		try {
+			Files.createDirectories(compilePath.toPath());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private List<File> findClassesToCompile(File currentDir) {
+		ArrayList<File> classes = new ArrayList<File>();
+		
+		// Find and add files in current directory
+		File[] javafiles = currentDir.listFiles(
+			new FilenameFilter() { 
+	            public boolean accept(File dir, String filename) { 
+	            	return filename.endsWith(".java"); 
+	            }
+			}
+		);
+		classes.addAll(Arrays.asList(javafiles));
+		
+		// Find and add files in sub-directories
+		for (File f : currentDir.listFiles()) {
+			if (f.isDirectory()) {
+				classes.addAll(findClassesToCompile(f));
+			}
+		}
+		
+		return classes;
 	}
 	
 	private void compileSources() {
@@ -92,36 +127,11 @@ public class Pipeline {
 		}
 	}
 	
-	private void cleanTestCompileDir() {
-
-		Util.deleteRecursive(compilePath.getAbsolutePath());
+	private void createLogOutputDirs() {
 		try {
-			Files.createDirectories(compilePath.toPath());
+			Files.createDirectories(testLogPath.toPath());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
-
-	private List<File> findClassesToCompile(File currentDir) {
-		ArrayList<File> classes = new ArrayList<File>();
-		
-		// Find and add files in current directory
-		File[] javafiles = currentDir.listFiles(
-			new FilenameFilter() { 
-	            public boolean accept(File dir, String filename) { 
-	            	return filename.endsWith(".java"); 
-	            }
-			}
-		);
-		classes.addAll(Arrays.asList(javafiles));
-		
-		// Find and add files in subdirectories
-		for (File f : currentDir.listFiles()) {
-			if (f.isDirectory()) {
-				classes.addAll(findClassesToCompile(f));
-			}
-		}
-		
-		return classes;
 	}
 }
