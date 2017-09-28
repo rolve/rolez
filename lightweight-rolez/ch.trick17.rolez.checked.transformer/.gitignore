@@ -1,3 +1,4 @@
 /target/
 /sootOutput/
 /.apt_generated/
+/testLogs/
