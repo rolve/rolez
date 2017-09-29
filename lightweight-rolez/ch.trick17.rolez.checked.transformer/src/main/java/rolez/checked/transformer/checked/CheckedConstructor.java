@@ -23,7 +23,7 @@ public class CheckedConstructor extends SootMethod {
 	SootMethod sourceConstructor;
 	
 	public CheckedConstructor(SootMethod sourceConstructor) {
-		super ("<init>", sourceConstructor.getParameterTypes(), VoidType.v());
+		super ("<init>", sourceConstructor.getParameterTypes(), VoidType.v(), sourceConstructor.getModifiers());
 		this.sourceConstructor = sourceConstructor;
 		
 		generateMethodBody();
