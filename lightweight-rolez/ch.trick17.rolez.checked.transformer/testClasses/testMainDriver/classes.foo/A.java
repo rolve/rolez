@@ -1,8 +1,10 @@
 package classes.foo;
 
+import rolez.annotation.Checked;
 import rolez.annotation.Roleztask;
 import classes.TestClass;
 
+@Checked
 public class A {
 	TestClass creator;
 	
@@ -12,6 +14,6 @@ public class A {
 	
 	@Roleztask
 	public void printCreator(boolean $asTask) {
-		System.out.println(this.creator);
+		System.out.println(this.creator.toString());
 	}
 }

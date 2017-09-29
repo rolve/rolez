@@ -27,7 +27,7 @@ public class Pipeline {
 	public Pipeline(String methodName, String mainClass) {
 		this.methodName = methodName;
 		this.mainClass = mainClass;
-		this.srcPath = new File("src/test/resources");
+		this.srcPath = new File("testClasses/" + methodName);
 		this.compilePath = new File("target/test-compile");
 		this.annotationProcessor = new File("../ch.trick17.rolez.checked.annotation/target/ch.trick17.rolez.checked.annotation-1.0.0-SNAPSHOT-jar-with-dependencies.jar");
 		this.sootOutputFolder = new File("sootOutput/" + methodName);
@@ -51,8 +51,7 @@ public class Pipeline {
 		MainDriver.main(new String[] {compilePath.getAbsolutePath(), mainClass, methodName, "J"});
 		
 		// Run transformed class files
-		// TODO: Make this more generic
-		JavaProcessBuilder processBuilder = new JavaProcessBuilder(sootOutputFolder.getAbsolutePath() + "/classes/TestClass.class", new String[] { });
+		JavaProcessBuilder processBuilder = new JavaProcessBuilder(sootOutputFolder.getAbsolutePath() + mainClassToPath(mainClass), new String[] { });
 		ProcessBuilder pb = Util.setClassPathAndBuild(processBuilder, sootOutputFolder, annotationProcessor, filesToExecute);
 		
 		// Transformations are necessary to run it on my local PC -> What happens in CI?
@@ -133,5 +132,9 @@ public class Pipeline {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	private String mainClassToPath(String mainClass) {
+		return "/" + mainClass.replaceAll(".", "/") + ".class";
 	}
 }
