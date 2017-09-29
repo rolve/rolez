@@ -57,6 +57,7 @@ public class Util {
 	 */
 	static void runProcess(ProcessBuilder pb, Redirect redirect) {
 		try {
+			pb.redirectErrorStream(true);
 			pb.redirectOutput(redirect);
 			Process p = pb.start();
 			// Block until finished
@@ -73,6 +74,7 @@ public class Util {
 	 */
 	static void runProcess(ProcessBuilder pb, File redirect) {
 		try {
+			pb.redirectErrorStream(true);
 			pb.redirectOutput(redirect);
 			Process p = pb.start();
 			// Block until finished
