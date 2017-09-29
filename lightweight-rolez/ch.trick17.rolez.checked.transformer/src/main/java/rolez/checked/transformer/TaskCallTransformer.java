@@ -152,7 +152,7 @@ public class TaskCallTransformer extends BodyTransformer {
 		 Unit getTaskFromTaskMethod = J.newAssignStmt(taskLocal0,
 				J.newVirtualInvokeExpr(
 						base, 
-						declaringClass.getMethodByName(Util.getTaskMethodNameFromMethod(invokedMethod)).makeRef(),
+						declaringClass.getMethod(Util.getTaskMethodNameFromMethod(invokedMethod), invokedMethod.getParameterTypes()).makeRef(),
 						invokeExpr.getArgs()));
 		units.insertAfter(getTaskFromTaskMethod, ifStmt);
 		
