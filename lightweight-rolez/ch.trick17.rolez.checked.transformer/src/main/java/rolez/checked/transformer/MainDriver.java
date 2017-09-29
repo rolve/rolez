@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 
+import rolez.checked.transformer.util.Constants;
 import soot.G;
 import soot.PackManager;
 import soot.Scene;
@@ -37,7 +38,7 @@ public class MainDriver {
 			new Transform("jtp.transformer1", new CheckingTransformer())
 		);
 		
-        soot.Main.main(new String[] {  });
+        soot.Main.main(new String[] {});
         
         System.out.println("Finished transformation");
 	}
@@ -71,5 +72,8 @@ public class MainDriver {
 			opts.set_output_format(Options.output_format_class);
 		
 		Scene.v().loadNecessaryClasses();
+		
+		// Have to resolve classes every time when soot options are set up
+		Constants.resolveClasses();
 	}
 }
