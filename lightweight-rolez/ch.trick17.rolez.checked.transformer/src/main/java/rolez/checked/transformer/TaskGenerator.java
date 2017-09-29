@@ -1,5 +1,7 @@
 package rolez.checked.transformer;
 
+import java.util.List;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -11,6 +13,7 @@ import rolez.checked.transformer.task.TaskMethod;
 import rolez.checked.transformer.util.Util;
 import soot.SootClass;
 import soot.SootMethod;
+import soot.Type;
 import soot.jimple.Jimple;
 
 
@@ -72,8 +75,13 @@ public class TaskGenerator {
 	
 	private String getClassNameFromMethod() {
 		String srcMethodName = sourceMethod.getName();
+		List<Type> srcMethodArgs = sourceMethod.getParameterTypes();
+		String typeString = "";
+		for (Type t : srcMethodArgs) {
+			typeString += t.toString();
+		}
 		String className = srcMethodName.substring(0,1).toUpperCase() + srcMethodName.substring(1);
-		return targetClass.getName() + "$" + className;
+		return targetClass.getName() + "$" + className + "&" + typeString;
 	}
 	
 	public SootClass getInnerClass() {
