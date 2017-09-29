@@ -27,12 +27,13 @@ public class Pipeline {
 	public Pipeline(String methodName, String mainClass) {
 		this.methodName = methodName;
 		this.mainClass = mainClass;
+		
 		this.srcPath = new File("testClasses/" + methodName);
-		this.compilePath = new File("target/test-compile");
+		this.compilePath = new File("testCompile/" + methodName);
 		this.annotationProcessor = new File("../ch.trick17.rolez.checked.annotation/target/ch.trick17.rolez.checked.annotation-1.0.0-SNAPSHOT-jar-with-dependencies.jar");
 		this.sootOutputFolder = new File("sootOutput/" + methodName);
-		this.filesToExecute = new File("sootOutput/" + methodName + "/classes");
-		this.testLogPath = new File("testLogs/");
+		this.filesToExecute = new File("sootOutput/" + methodName);
+		this.testLogPath = new File("testLogs/" + methodName);
 	}
 	
 	public void run() {
@@ -40,11 +41,12 @@ public class Pipeline {
 		Util.deleteRecursive(sootOutputFolder.getAbsolutePath());
 		Util.deleteRecursive(testLogPath.getAbsolutePath());
 		
-		// Compile the sources from src/test/resources
+		// Compile sources
 		compileSources();
 		
 		// Generate Jimple for debug purposes
 		System.out.println("GENERATING TRANSFORMED CLASS FILES");
+		System.out.println(mainClass);
 		MainDriver.main(new String[] {compilePath.getAbsolutePath(), mainClass, methodName, "C"});
 
 		System.out.println("\nGENERATING TRANSFORMED JIMPLE FILES");
@@ -120,8 +122,13 @@ public class Pipeline {
 		
 		ProcessBuilder pb = new ProcessBuilder(command);
 		try {
-			pb.start();
-		} catch (IOException e) {
+			pb.redirectErrorStream(true);
+			pb.redirectOutput(Redirect.INHERIT);
+			Process p = pb.start();
+			if (p.waitFor() != 0) {
+				throw new RuntimeException("Compilation failed");
+			}
+		} catch (IOException | InterruptedException e) {
 			e.printStackTrace();
 		}
 	}
