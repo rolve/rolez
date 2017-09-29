@@ -21,4 +21,20 @@ public class TransformerTest {
 		Pipeline p = new Pipeline(methodName, mainClass);
 		p.run();
 	}
+	
+	@Test
+	public void testTask() {
+		String methodName = "testTask";
+		String mainClass = "classes.TestTask";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.run();
+	}
+	
+	@Test
+	public void testTaskOverride() {
+		String methodName = "testTaskOverride";
+		String mainClass = "classes.TestTaskOverride";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.run();
+	}
 }
