@@ -6,6 +6,14 @@
 #bash_version    :3.1.23(6)-release
 #==============================================================================
 
+#exit if no args are available
+if [ $# -ne 1 ]
+  then
+    echo "No or too many arguments supplied"
+    exit 1
+fi
+
+
 #generate necessary directories
 mkdir testClasses/$1
 mkdir testClasses/$1/classes
