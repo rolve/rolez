@@ -9,6 +9,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.ArrayList;
 
+import static junit.framework.Assert.*;
+
 import ch.trick17.javaprocesses.JavaProcessBuilder;
 import rolez.checked.transformer.MainDriver;
 
@@ -23,6 +25,7 @@ public class Pipeline {
 	File sootOutputFolder; 
 	File filesToExecute;
 	File testLogPath;
+	File expectedOutputFile;
 	
 	public Pipeline(String methodName, String mainClass) {
 		this.methodName = methodName;
@@ -34,9 +37,10 @@ public class Pipeline {
 		this.sootOutputFolder = new File("sootOutput/" + methodName);
 		this.filesToExecute = new File("sootOutput/" + methodName);
 		this.testLogPath = new File("testLogs/" + methodName);
+		this.expectedOutputFile = new File("testClasses/" + methodName + "/expected.out");
 	}
 	
-	public void run() {
+	public void run(boolean doAssertion, boolean generateJimple) {
 		// Delete output folder and output file
 		Util.deleteRecursive(sootOutputFolder.getAbsolutePath());
 		Util.deleteRecursive(testLogPath.getAbsolutePath());
@@ -49,27 +53,29 @@ public class Pipeline {
 		System.out.println(mainClass);
 		MainDriver.main(new String[] {compilePath.getAbsolutePath(), mainClass, methodName, "C"});
 
-		System.out.println("\nGENERATING TRANSFORMED JIMPLE FILES");
-		MainDriver.main(new String[] {compilePath.getAbsolutePath(), mainClass, methodName, "J"});
+		if (generateJimple) {
+			System.out.println("\nGENERATING TRANSFORMED JIMPLE FILES");
+			MainDriver.main(new String[] {compilePath.getAbsolutePath(), mainClass, methodName, "J"});
+		}
 		
 		// Run transformed class files
 		JavaProcessBuilder processBuilder = new JavaProcessBuilder(sootOutputFolder.getAbsolutePath() + mainClassToPath(mainClass), new String[] { });
 		ProcessBuilder pb = Util.setClassPathAndBuild(processBuilder, sootOutputFolder, annotationProcessor, filesToExecute);
 		
-		// Transformations are necessary to run it on my local PC -> What happens in CI?
+		// Transformations are necessary to run process on windows because of whitespace in paths
 		Util.setJavaCommand(pb, mainClass);
 		System.out.println(pb.command());
-
-		// Run process first time for command line output
-		System.out.println("\nRUNNING TRANSFORMED CLASS FILES (console output)");
-		Util.runProcess(pb, Redirect.INHERIT);
 		
 		// Run process a second time by redirecting output to a text file
 		System.out.println("\nRUNNING TRANSFORMED CLASS FILES (file output)");
 		createLogOutputDirs();
-		Util.runProcess(pb, new File(testLogPath.getAbsolutePath() + "/" + methodName + ".txt"));
+		Util.runProcess(pb, new File(testLogPath.getAbsolutePath() + "/result.out"));
 		
 		System.out.println("\n\n");
+		
+		// Compare file output to expected output
+		if (doAssertion)
+			assertEquals(Util.readFile(expectedOutputFile), Util.readFile(new File(testLogPath.getAbsolutePath() + "/result.out")));
 	}
 	
 	private void cleanTestCompileDir() {

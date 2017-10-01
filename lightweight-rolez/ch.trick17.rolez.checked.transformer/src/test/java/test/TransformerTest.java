@@ -11,7 +11,7 @@ public class TransformerTest {
 		String methodName = "testMain";
 		String mainClass = "classes.TestMain";
 		Pipeline p = new Pipeline(methodName, mainClass);
-		p.run();
+		p.run(true, false);
 	}
 	
 	@Test
@@ -19,7 +19,7 @@ public class TransformerTest {
 		String methodName = "testChecked";
 		String mainClass = "classes.TestChecked";
 		Pipeline p = new Pipeline(methodName, mainClass);
-		p.run();
+		p.run(true, false);
 	}
 	
 	@Test
@@ -27,7 +27,7 @@ public class TransformerTest {
 		String methodName = "testTask";
 		String mainClass = "classes.TestTask";
 		Pipeline p = new Pipeline(methodName, mainClass);
-		p.run();
+		p.run(true, false);
 	}
 	
 	@Test
@@ -35,6 +35,7 @@ public class TransformerTest {
 		String methodName = "testTaskOverride";
 		String mainClass = "classes.TestTaskOverride";
 		Pipeline p = new Pipeline(methodName, mainClass);
-		p.run();
+		// Parallel programs don't allow file comparison
+		p.run(false, false);
 	}
 }

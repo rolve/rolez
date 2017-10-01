@@ -1,7 +1,10 @@
 package test.util;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.ProcessBuilder.Redirect;
 import java.util.List;
 
@@ -86,5 +89,25 @@ public class Util {
 		} catch (IOException | InterruptedException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	/**
+	 * Read a file into a String, used to compare the output to the expected output.
+	 */
+	static String readFile(File file) {
+		try {
+			FileInputStream fin = new FileInputStream(file);
+			BufferedReader myInput = new BufferedReader(new InputStreamReader(fin));
+			StringBuilder sb = new StringBuilder();
+			String thisLine;
+			while ((thisLine = myInput.readLine()) != null) {  
+				sb.append(thisLine);
+			}
+			myInput.close();
+			return sb.toString();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 }
