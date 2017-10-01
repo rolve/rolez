@@ -46,4 +46,12 @@ public class TransformerTest {
 		Pipeline p = new Pipeline(methodName, mainClass);
 		p.run(true, false);
 	}
+
+	@Test
+	public void testReadonly() {
+		String methodName = "testReadonly";
+		String mainClass = "classes.TestReadonly";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.run(true, true);
+	}
 }
