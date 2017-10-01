@@ -20,7 +20,20 @@ mkdir testClasses/$1/classes
 
 #generate necessary (empty) files
 javaFileName="$(tr "[:lower:]" "[:upper:]" <<< ${1:0:1})${1:1}"
-touch testClasses/$1/classes/${javaFileName}.java
+
+#generate testfile and stub
+testClass=testClasses/$1/classes/${javaFileName}.java
+touch testClass
+echo -e "package classes;" >> $testClass
+echo -e "" >> $testClass
+echo -e "public class ${javaFileName} {" >> $testClass
+echo -e "" >> $testClass
+echo -e "\tpublic static void main(String[] args) {" >> $testClass
+echo -e "" >> $testClass
+echo -e "\t}" >> $testClass
+echo -e "}" >> $testClass
+
+#generate reference file
 touch testClasses/$1/expected.out
 
 #add method to TransformerTest.java
