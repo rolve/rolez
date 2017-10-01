@@ -1,3 +1,11 @@
+#!/bin/bash
+#title           :generateTest.sh
+#description     :This script generates necessary folders, files and methods for
+#                 the lightweight-rolez project
+#author          :Michael Giger
+#bash_version    :3.1.23(6)-release
+#==============================================================================
+
 #generate necessary directories
 mkdir testClasses/$1
 mkdir testClasses/$1/classes
