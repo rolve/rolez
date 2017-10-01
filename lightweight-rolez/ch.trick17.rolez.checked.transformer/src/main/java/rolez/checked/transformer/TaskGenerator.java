@@ -73,15 +73,25 @@ public class TaskGenerator {
 		innerClass.addMethod(new InnerClassRunRolezObject(innerClass, concreteMethod));		
 	}
 	
+	/**
+	 * For the source method, which is declared as task, this method does generates a unique
+	 * name for the inner class containing the name of the source method and its parameter types.
+	 * The parameter types are necessary in case task methods are overloaded.
+	 * @return String - unique inner class name
+	 */
 	private String getClassNameFromMethod() {
 		String srcMethodName = sourceMethod.getName();
 		List<Type> srcMethodArgs = sourceMethod.getParameterTypes();
 		String typeString = "";
 		for (Type t : srcMethodArgs) {
-			typeString += t.toString();
+			typeString += "$" + sanitizeType(t.toString());
 		}
 		String className = srcMethodName.substring(0,1).toUpperCase() + srcMethodName.substring(1);
-		return targetClass.getName() + "$" + className + "&" + typeString;
+		return targetClass.getName() + "$" + className + typeString;
+	}
+	
+	private String sanitizeType(String type) {
+		return type.replace(".", "&");
 	}
 	
 	public SootClass getInnerClass() {
