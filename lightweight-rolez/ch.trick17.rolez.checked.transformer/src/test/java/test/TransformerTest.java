@@ -38,4 +38,12 @@ public class TransformerTest {
 		// Parallel programs don't allow file comparison
 		p.run(false, false);
 	}
+
+	@Test
+	public void testNestedTask() {
+		String methodName = "testNestedTask";
+		String mainClass = "classes.TestNestedTask";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.run(true, false);
+	}
 }
