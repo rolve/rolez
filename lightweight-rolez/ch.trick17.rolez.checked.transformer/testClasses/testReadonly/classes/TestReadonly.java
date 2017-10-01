@@ -1,7 +1,7 @@
 package classes;
 
 import rolez.annotation.Roleztask;
-import rolez.annotation.Readonly;;
+import rolez.annotation.Readonly;
 
 public class TestReadonly {
 	
