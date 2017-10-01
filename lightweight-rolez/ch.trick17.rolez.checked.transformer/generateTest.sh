@@ -23,7 +23,6 @@ javaFileName="$(tr "[:lower:]" "[:upper:]" <<< ${1:0:1})${1:1}"
 
 #generate testfile and stub
 testClass=testClasses/$1/classes/${javaFileName}.java
-touch testClass
 echo -e "package classes;" >> $testClass
 echo -e "" >> $testClass
 echo -e "public class ${javaFileName} {" >> $testClass
