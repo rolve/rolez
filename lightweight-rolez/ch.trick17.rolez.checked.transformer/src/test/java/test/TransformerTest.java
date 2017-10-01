@@ -54,4 +54,12 @@ public class TransformerTest {
 		Pipeline p = new Pipeline(methodName, mainClass);
 		p.run(true, true);
 	}
+
+	@Test
+	public void testReadwrite() {
+		String methodName = "testReadwrite";
+		String mainClass = "classes.TestReadwrite";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.run(true, false);
+	}
 }
