@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.ArrayList;
 
 import static junit.framework.Assert.*;
-
 import ch.trick17.javaprocesses.JavaProcessBuilder;
 import rolez.checked.transformer.MainDriver;
 
@@ -40,7 +39,24 @@ public class Pipeline {
 		this.expectedOutputFile = new File("testClasses/" + methodName + "/expected.out");
 	}
 	
-	public void run(boolean doAssertion, boolean generateJimple) {
+	public void runDefault(boolean doAssertion, boolean generateJimple) {
+		
+		run(generateJimple);
+		
+		// Compare file output to expected output
+		if (doAssertion)
+			assertEquals(Util.readFile(expectedOutputFile), Util.readFile(new File(testLogPath.getAbsolutePath() + "/result.out")));
+	}
+	
+	public void runExpectNonSufficientRoleError(boolean generateJimple) {
+		run(generateJimple);
+		
+		String output = Util.readFile(new File(testLogPath.getAbsolutePath() + "/result.out"));
+		String[] split = output.split(" ");
+		assertEquals("rolez.checked.lang.NonSufficentRoleException:", split[1]);
+	}
+	
+	private void run(boolean generateJimple) {
 		// Delete output folder and output file
 		Util.deleteRecursive(sootOutputFolder.getAbsolutePath());
 		Util.deleteRecursive(testLogPath.getAbsolutePath());
@@ -66,16 +82,12 @@ public class Pipeline {
 		Util.setJavaCommand(pb, mainClass);
 		System.out.println(pb.command());
 		
-		// Run process a second time by redirecting output to a text file
+		// Run transformed program
 		System.out.println("\nRUNNING TRANSFORMED CLASS FILES (file output)");
 		createLogOutputDirs();
 		Util.runProcess(pb, new File(testLogPath.getAbsolutePath() + "/result.out"));
 		
 		System.out.println("\n\n");
-		
-		// Compare file output to expected output
-		if (doAssertion)
-			assertEquals(Util.readFile(expectedOutputFile), Util.readFile(new File(testLogPath.getAbsolutePath() + "/result.out")));
 	}
 	
 	private void cleanTestCompileDir() {

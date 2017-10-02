@@ -64,9 +64,7 @@ public class Util {
 			pb.redirectOutput(redirect);
 			Process p = pb.start();
 			// Block until finished
-			if (p.waitFor() != 0) {
-				throw new RuntimeException("Execution of process failed");
-			}
+			p.waitFor();
 		} catch (IOException | InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -83,9 +81,7 @@ public class Util {
 			pb.redirectOutput(redirect);
 			Process p = pb.start();
 			// Block until finished
-			if (p.waitFor() != 0) {
-				throw new RuntimeException("Execution of process failed");
-			}
+			p.waitFor();
 		} catch (IOException | InterruptedException e) {
 			e.printStackTrace();
 		}
