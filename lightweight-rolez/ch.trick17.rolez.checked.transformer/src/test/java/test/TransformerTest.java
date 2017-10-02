@@ -86,4 +86,12 @@ public class TransformerTest {
 		Pipeline p = new Pipeline(methodName, mainClass);
 		p.runExpectNonSufficientRoleError(false);
 	}
+
+	@Test
+	public void testMultipleTaskCalls() {
+		String methodName = "testMultipleTaskCalls";
+		String mainClass = "classes.TestMultipleTaskCalls";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.runDefault(true, false);
+	}
 }
