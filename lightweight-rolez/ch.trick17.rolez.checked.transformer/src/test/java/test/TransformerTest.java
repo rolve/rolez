@@ -27,13 +27,13 @@ public class TransformerTest {
 		String methodName = "testTask";
 		String mainClass = "classes.TestTask";
 		Pipeline p = new Pipeline(methodName, mainClass);
-		p.runDefault(true, false);
+		p.runDefault(true, true);
 	}
 	
 	@Test
-	public void testTaskOverride() {
-		String methodName = "testTaskOverride";
-		String mainClass = "classes.TestTaskOverride";
+	public void testTaskOverload() {
+		String methodName = "testTaskOverload";
+		String mainClass = "classes.TestTaskOverload";
 		Pipeline p = new Pipeline(methodName, mainClass);
 		// Parallel programs don't allow file comparison
 		p.runDefault(false, false);
@@ -91,6 +91,22 @@ public class TransformerTest {
 	public void testMultipleTaskCalls() {
 		String methodName = "testMultipleTaskCalls";
 		String mainClass = "classes.TestMultipleTaskCalls";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.runDefault(true, false);
+	}
+
+	@Test
+	public void testSubclassTask() {
+		String methodName = "testSubclassTask";
+		String mainClass = "classes.TestSubclassTask";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.runDefault(true, false);
+	}
+
+	@Test
+	public void testTaskOverride() {
+		String methodName = "testTaskOverride";
+		String mainClass = "classes.TestTaskOverride";
 		Pipeline p = new Pipeline(methodName, mainClass);
 		p.runDefault(true, false);
 	}
