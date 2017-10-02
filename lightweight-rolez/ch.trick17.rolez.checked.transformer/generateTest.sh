@@ -47,7 +47,7 @@ echo -e "\tpublic void $1() {" >> $testFile
 echo -e "\t\tString methodName = \"$1\";" >> $testFile
 echo -e "\t\tString mainClass = \"classes.${javaFileName}\";" >> $testFile
 echo -e "\t\tPipeline p = new Pipeline(methodName, mainClass);" >> $testFile
-echo -e "\t\tp.run(true, false);" >> $testFile
+echo -e "\t\tp.runDefault(true, false);" >> $testFile
 echo -e "\t}" >> $testFile
 
 #add last bracket
