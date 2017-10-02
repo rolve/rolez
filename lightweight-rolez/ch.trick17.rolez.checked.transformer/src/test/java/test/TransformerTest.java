@@ -52,13 +52,37 @@ public class TransformerTest {
 		String methodName = "testReadonly";
 		String mainClass = "classes.TestReadonly";
 		Pipeline p = new Pipeline(methodName, mainClass);
-		p.run(true, true);
+		p.run(true, false);
 	}
 
 	@Test
 	public void testReadwrite() {
 		String methodName = "testReadwrite";
 		String mainClass = "classes.TestReadwrite";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.run(true, false);
+	}
+
+	@Test(expected = RuntimeException.class)
+	public void testReadonlyFail() {
+		String methodName = "testReadonlyFail";
+		String mainClass = "classes.TestReadonlyFail";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.run(false, false);
+	}
+
+	@Test
+	public void testPure() {
+		String methodName = "testPure";
+		String mainClass = "classes.TestPure";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.run(true, false);
+	}
+
+	@Test(expected = RuntimeException.class)
+	public void testPureFail() {
+		String methodName = "testPureFail";
+		String mainClass = "classes.TestPureFail";
 		Pipeline p = new Pipeline(methodName, mainClass);
 		p.run(true, false);
 	}
