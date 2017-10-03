@@ -14,6 +14,7 @@ import soot.BodyTransformer;
 import soot.Local;
 import soot.Scene;
 import soot.SootClass;
+import soot.SootMethod;
 import soot.Type;
 import soot.Unit;
 import soot.Value;
@@ -43,8 +44,10 @@ public class CheckingTransformer extends BodyTransformer {
 	@Override
 	protected void internalTransform(Body b, String phaseName, Map options) {
 		
+		SootMethod currentMethod = b.getMethod();
+		
 		// Field reads in guarded refs don't have to be guarded
-		if (b.getMethod().getName().equals("guardedRefs")) return;
+		if (isGuardedRefsMethod(currentMethod)) return;
 		
 		logger.debug("Transforming " + b.getMethod().getDeclaringClass() + ":" + b.getMethod().getSignature());
 		
@@ -180,5 +183,9 @@ public class CheckingTransformer extends BodyTransformer {
 			currentClass = currentClass.getSuperclass();
 		}
 		return false;
+	}
+	
+	private boolean isGuardedRefsMethod(SootMethod m) {
+		return m.isProtected() && m.getSubSignature().equals("java.lang.Iterable guardedRefs()");
 	}
 }
