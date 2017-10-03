@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 import rolez.checked.lang.Role;
 import rolez.checked.transformer.util.Constants;
 import rolez.checked.transformer.util.UnitFactory;
+import rolez.checked.transformer.util.Util;
 import soot.ArrayType;
 import soot.Local;
 import soot.Modifier;
@@ -37,6 +38,7 @@ public class TaskMethod extends SootMethod {
 	
 	// Array contains the roles of the parameters, null for primitive types
 	private Role[] parameterRoles;
+	private Role thisRole;
 
 	public TaskMethod(String name, SootClass containingClass, SootClass innerClass, SootMethod sourceMethod) {
 		super(name, sourceMethod.getParameterTypes(), Constants.TASK_CLASS.getType(), Modifier.PUBLIC);
@@ -45,6 +47,7 @@ public class TaskMethod extends SootMethod {
 		this.sourceMethod = sourceMethod;
 		
 		parameterRoles = new Role[sourceMethod.getParameterCount()];
+		thisRole = Util.getThisRole(sourceMethod);
 		
 		// if there are no reference types, we can add null as role for every parameter
 		if (hasRefTypeParameters())
@@ -111,6 +114,23 @@ public class TaskMethod extends SootMethod {
 		
 		// Assign the locals to the object array depending on their role
 		int rwIndex = 0, roIndex = 0, puIndex = 0;
+		switch (thisRole) {
+			case READWRITE:
+				units.add(UnitFactory.newAssignToArrayExpr(objectArrayLocals.get(0), rwIndex, thisReferenceLocal));
+				rwIndex++;
+				break;
+			case READONLY:
+				units.add(UnitFactory.newAssignToArrayExpr(objectArrayLocals.get(1), roIndex, thisReferenceLocal));
+				roIndex++;
+				break;
+			case PURE:
+				units.add(UnitFactory.newAssignToArrayExpr(objectArrayLocals.get(2), puIndex, thisReferenceLocal));
+				puIndex++;
+				break;
+			default:
+				// Should not happen
+				break;
+		}
 		for (int i = 0; i < parameterLocals.size(); i++) {
 			Role r = parameterRoles[i];
 			if (r != null) {
@@ -211,6 +231,23 @@ public class TaskMethod extends SootMethod {
 				}
 			}
 		}
+		
+		// Also get space for "this" role
+		switch (thisRole) {
+			case READWRITE:
+				arraySizes[0]++;
+				break;
+			case READONLY:
+				arraySizes[1]++;
+				break;
+			case PURE:
+				arraySizes[2]++;
+				break;
+			default:
+				// Should not happen
+				break;		
+		}
+		
 		return arraySizes;
 	}
 	
