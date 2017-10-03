@@ -110,4 +110,12 @@ public class TransformerTest {
 		Pipeline p = new Pipeline(methodName, mainClass);
 		p.runDefault(true, false);
 	}
+
+	@Test
+	public void testConstructor() {
+		String methodName = "testConstructor";
+		String mainClass = "classes.TestConstructor";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.runDefault(true, true);
+	}
 }

@@ -49,6 +49,12 @@ public class CheckingTransformer extends BodyTransformer {
 		// Field reads in guarded refs don't have to be guarded
 		if (isGuardedRefsMethod(currentMethod)) return;
 		
+		// TODO: is this correct? -> This is needed to avoid guarding when main method is transformed and creates an instance of the surrounding class to call the task.
+		if (isConstructorWithoutArgs(currentMethod)) {
+			logger.debug("CONSTRUCTOR WITHOUT ARGUMENTS! -> NO GUARDING NECESSARY");
+			return;
+		}
+		
 		logger.debug("Transforming " + b.getMethod().getDeclaringClass() + ":" + b.getMethod().getSignature());
 		
 		this.locals = b.getLocals();
@@ -187,5 +193,9 @@ public class CheckingTransformer extends BodyTransformer {
 	
 	private boolean isGuardedRefsMethod(SootMethod m) {
 		return m.isProtected() && m.getSubSignature().equals("java.lang.Iterable guardedRefs()");
+	}
+	
+	private boolean isConstructorWithoutArgs(SootMethod m) {
+		return m.getSubSignature().equals("void <init>()");
 	}
 }
