@@ -87,7 +87,7 @@ public class ClassTransformer extends SceneTransformer {
 		for (SootMethod m : c.getMethods()) {
 			logger.debug("Processing method: " + c.getName() + ":" + m.getName());
 			m.retrieveActiveBody();
-			if (Util.hasRoleztaskAnnotation(m)) {
+			if (Util.isRolezTask(m)) {
 				TaskGenerator taskGenerator = new TaskGenerator(c, m);
 				taskGenerator.generateTask();
 				
