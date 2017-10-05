@@ -1,7 +1,9 @@
 package classes;
 
+import rolez.annotation.Checked;
 import rolez.annotation.Roleztask;
 
+@Checked
 public class TestNestedTask {
 	
 	public static void main(String[] args) {

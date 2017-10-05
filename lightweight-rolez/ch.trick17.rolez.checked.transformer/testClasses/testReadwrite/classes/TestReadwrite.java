@@ -1,8 +1,10 @@
 package classes;
 
+import rolez.annotation.Checked;
 import rolez.annotation.Roleztask;
 import rolez.annotation.Readwrite;
 
+@Checked
 public class TestReadwrite {
 	
 	public static void main(String[] args) {

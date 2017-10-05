@@ -109,6 +109,12 @@ public class Processor extends AbstractProcessor {
 				message.print(messager);
 			}
 			
+			TypeMirror classType = ((TypeElement)annotatedElement.getEnclosingElement()).asType();
+			if (!isCheckedType(classType)) {
+				Message message = new Message(Kind.ERROR, "Tasks can only be defined in Checked classes.", annotatedElement);
+				message.print(messager);
+			}
+			
 			ExecutableElement task = (ExecutableElement) annotatedElement;
 			processTask(task);
 		}

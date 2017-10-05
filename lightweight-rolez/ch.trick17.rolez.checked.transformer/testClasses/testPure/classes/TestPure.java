@@ -1,8 +1,10 @@
 package classes;
 
+import rolez.annotation.Checked;
 import rolez.annotation.Pure;
 import rolez.annotation.Roleztask;
 
+@Checked
 public class TestPure {
 
 	public static void main(String[] args) {
