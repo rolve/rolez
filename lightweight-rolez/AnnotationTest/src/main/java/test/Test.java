@@ -10,6 +10,7 @@ import rolez.checked.util.Random;
  *
  */
 
+@Checked
 public class Test {
 
 	private A a;
