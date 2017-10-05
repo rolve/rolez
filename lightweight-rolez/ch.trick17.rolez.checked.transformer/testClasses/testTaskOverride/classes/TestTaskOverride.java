@@ -5,7 +5,7 @@ public class TestTaskOverride {
 	public static void main(String[] args) {
 		
 		B b0 = new B();
-		b0.task(true);
+		b0.task(b0, true);
 		
 		// Guarantee output order
 		try {
@@ -15,7 +15,7 @@ public class TestTaskOverride {
 		}
 		
 		A b1 = new B();
-		b1.task(true);
+		b1.task(b1, true);
 
 		// Guarantee output order
 		try {
@@ -25,6 +25,6 @@ public class TestTaskOverride {
 		}
 		
 		A a = new A();
-		a.task(true);
+		a.task(a, true);
 	}
 }

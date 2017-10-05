@@ -1,13 +1,8 @@
 package rolez.annotation.processing;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.PrintWriter;
 import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -21,7 +16,9 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic.Kind;
 
@@ -42,6 +39,7 @@ public class Processor extends AbstractProcessor {
 	
 	private Messager messager;
 	private Types types;
+	private Elements elements;
 	
 	// Whitelist that contains java standard classes which are allowed to be used in rolez tasks
 	public static final String[] WHITELIST = new String[] {
@@ -71,12 +69,14 @@ public class Processor extends AbstractProcessor {
 	    super.init(env);
     	messager = env.getMessager();
     	types = env.getTypeUtils();
+    	elements = env.getElementUtils();
 	}
 
 	@Override
 	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment env) {
 		processTaskAnnotations(env);
 		processCheckedAnnotations(env);
+		
 		return true;
 	}
 	
@@ -105,7 +105,7 @@ public class Processor extends AbstractProcessor {
 		for (Element annotatedElement : env.getElementsAnnotatedWith(Roleztask.class)) {
 			
 			if (!(annotatedElement instanceof ExecutableElement)) {
-				Message message = new Message(Kind.ERROR, "Only methods can be annotated as Rolez tasks", annotatedElement);
+				Message message = new Message(Kind.ERROR, "Only methods can be annotated as Roleztask.", annotatedElement);
 				message.print(messager);
 			}
 			
@@ -166,6 +166,33 @@ public class Processor extends AbstractProcessor {
 		}
 	}
 
+	// TODO: Check if this works to assure that every overriding task should have proper annotations
+	private void checkOverridingTasksAreAnnotated(TypeElement clazz) {
+		// Return when direct superclass is object, Object doesn't define tasks
+		if (clazz.getSuperclass().toString().equals(Object.class.getName())) return;
+		
+		for (Element e : clazz.getEnclosedElements()) {
+			if (e instanceof ExecutableElement) {
+				ExecutableElement method = (ExecutableElement) e;
+				if (method.getAnnotation(Roleztask.class) != null) break;
+				
+				TypeElement currentClass = clazz;
+				while(!getSupertype(currentClass.asType()).toString().equals(Object.class.getName())) {
+					DeclaredType declared = (DeclaredType) getSupertype(currentClass.asType());
+					currentClass = (TypeElement) declared.asElement();
+					for (Element el : currentClass.getEnclosedElements()) {
+						if (el instanceof ExecutableElement) {
+							ExecutableElement superMethod = (ExecutableElement) el;
+							if(elements.overrides(method, superMethod, clazz)) {
+								
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	
 	private boolean isValidParameterType(VariableElement parameter) {
 		TypeMirror parameterType = parameter.asType();
 		if (isWhitelisted(parameterType)) 
