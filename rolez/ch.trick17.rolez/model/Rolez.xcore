@@ -421,6 +421,7 @@ class Slicing extends Expr {
 }
 
 class MemberAccess extends Expr, Argumented {
+    boolean forceInvoke
     boolean taskStart
     refers Member member
     contains Expr target

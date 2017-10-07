@@ -674,17 +674,22 @@ class RolezLinkingTest {
             class rolez.lang.Object mapped to java.lang.Object
             class A {
                 var foo: int
+                def readwrite foo: boolean { return false; }
                 def readwrite foo(a: boolean): boolean { return false; }
             }
             class App {
                 task pure main: {
                     new A.foo;
+                    new A.foo();
+                    new A.foo[];
                     new A.foo(true);
                 }
             }
         ''')
         program.task.expr(0).type.assertThat(instanceOf(Int))
         program.task.expr(1).type.assertThat(instanceOf(Boolean))
+        program.task.expr(2).type.assertThat(instanceOf(Boolean))
+        program.task.expr(3).type.assertThat(instanceOf(Boolean))
     }
     
     @Test def testMemberAccessMethodFromSuperclass() {

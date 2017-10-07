@@ -73,7 +73,6 @@ class RolezValidator extends RolezSystemValidator {
     public static val MISSING_TYPE_PARAM = "missing type parameter"
     public static val DUPLICATE_FIELD = "duplicate field"
     public static val DUPLICATE_METHOD = "duplicate method"
-    public static val FIELD_WITH_SAME_NAME = "field with same name"
     public static val DUPLICATE_CONSTR = "duplicate constructor"
     public static val DUPLICATE_VAR = "duplicate var"
     public static val MISSING_OVERRIDE = "missing override"
@@ -270,18 +269,6 @@ class RolezValidator extends RolezSystemValidator {
         default:
             toString
     }}
-    
-    @Check
-    def checkFieldWithSameName(Method it) {
-        if(params.isEmpty && !enclosingClass.allMembers.filter(Field).filter[f | f.name == name].isEmpty) {
-            if(isOverriding)
-                info("Field with same name: method cannot be called on targets with static type " + enclosingClass.name,
-                    NAMED__NAME, FIELD_WITH_SAME_NAME)
-            else
-                error("Field with same name: method cannot be called",
-                    NAMED__NAME, FIELD_WITH_SAME_NAME)
-        }
-    }
     
     @Check
     def checkNoDuplicateConstrs(Constr it) {

@@ -24,7 +24,7 @@ Class:
 
 NormalClass:
     (pure?='pure')? 'class' name=QualifiedName ('[' typeParam=TypeParam ']')? WithMappedClass WithSuperclass ('{'
-        (constrs+=Constr | unslicedMembers+=Member | slices+=Slice)+
+        (constrs+=Constr | unslicedMembers+=Member | slices+=Slice)*
     '}')?;
 
 // TODO: Understand mapped classes better. E.g., transitions do not work for guarded objects
@@ -32,7 +32,7 @@ NormalClass:
 
 SingletonClass:
     'object' name=QualifiedName WithMappedClass WithSuperclass ('{'
-        unslicedMembers+=Member+
+        unslicedMembers+=Member*
     '}')?;
 
 // FIXME: Singleton classes must not extend classes with no no-args constructor!
@@ -41,9 +41,9 @@ SingletonClass:
 TypeParam: name=ID;
 
 Slice:
-    'slice' name=ID '{'
-        members+=Member+
-    '}';
+    'slice' name=ID ('{'
+        members+=Member*
+    '}')?;
 
 Member:
     Field | Method;
@@ -63,7 +63,7 @@ FieldInitializer: code=Expr;
 Method:
     jvmMethod=[jvmTypes::JvmOperation|Mapped]?
     ((declaredAsync?='async'? 'def') | declaredTask?='task' | superMethod=[Method|Override]) thisParam=ThisParam name=MethodName
-    ('[' roleParams+=RoleParam (',' roleParams+=RoleParam)* ']')?
+    ('[' (roleParams+=RoleParam (',' roleParams+=RoleParam)*)? ']')?
     WithParams
     WithType
     WithBody?;
@@ -218,8 +218,8 @@ Start returns Expr:
     MemberAccess (
         {MemberAccess.target=current}
         taskStart?='start' member=[Method|MethodName]
-        ('[' roleArgs+=Role (',' roleArgs+=Role)* ']')?
-        ('('     args+=Expr (','     args+=Expr)* ')')?
+        ('[' roleArgs+=Role (',' roleArgs+=Role)*   ']')?
+        ('('    (args+=Expr (','     args+=Expr)*)? ')')?
     )*;
     // IMPROVE: Allow starting tasks without "this"
 
@@ -227,8 +227,8 @@ MemberAccess returns Expr:
     SimpleExpr (
         {MemberAccess.target=current}
         '.' member=[Member|MethodName]
-        ('[' roleArgs+=Role (',' roleArgs+=Role)* ']')?
-        ('('     args+=Expr (','     args+=Expr)* ')')?
+        ('[' (roleArgs+=Role (',' roleArgs+=Role)*)? forceInvoke?=']')?
+        ('('     (args+=Expr (','     args+=Expr)*)? forceInvoke?=')')?
     )*;
     // IMPROVE: Allow member accesses without "this"
 
@@ -334,11 +334,11 @@ fragment WithSuperclass returns Class: ('extends' superclassRef=ClassRef)?;
 
 fragment WithType returns Typed: ':' type=Type;
 
-fragment WithParams returns Executable: ('(' params+=Param (',' params+=Param)* ')')?;
+fragment WithParams returns Executable: ('(' (params+=Param (',' params+=Param)*)? ')')?;
 
 fragment WithBody returns Executable: code=Block;
 
-fragment WithArgs returns Argumented: ('(' args+=Expr (',' args+=Expr)* ')')?;
+fragment WithArgs returns Argumented: ('(' (args+=Expr (',' args+=Expr)*)? ')')?;
 
 /* Doc */
 

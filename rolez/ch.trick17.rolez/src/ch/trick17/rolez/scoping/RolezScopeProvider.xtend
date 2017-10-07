@@ -85,7 +85,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
             val members = if(targetType.isSliced) targetType.slice.members
                           else targetType.base.clazz.allMembers
             val fields = members.filter(Field).filter[f | f.name == memberName]
-            if(args.isEmpty && roleArgs.isEmpty && !isTaskStart && !fields.isEmpty)
+            if(args.isEmpty && roleArgs.isEmpty && !isTaskStart && !forceInvoke && !fields.isEmpty)
                 scopeFor(fields)
             else {
                 val candidates = members.filter(Method)

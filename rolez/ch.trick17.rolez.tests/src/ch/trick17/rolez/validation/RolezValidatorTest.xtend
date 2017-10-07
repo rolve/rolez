@@ -668,37 +668,6 @@ class RolezValidatorTest {
         ''').assertError(METHOD, DUPLICATE_METHOD)
     }
     
-    @Test def testFieldWithSameName() {
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class A {
-                var foo: int
-                def readwrite foo(i: int): {}
-                def readwrite foo(c: char): {}
-                def readwrite foo(o: readonly Object): {}
-                task readwrite foo(a: readonly A): {}
-                task readwrite foo(a: readwrite A, b: readwrite A): {}
-            }
-        ''').assertNoErrors
-        
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class A {
-                var foo: int
-                def readwrite foo: {}
-            }
-        ''').assertError(METHOD, FIELD_WITH_SAME_NAME)
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            class A {
-                var foo: int
-            }
-            class B extends A {
-                def readwrite foo: {}
-            }
-        ''').assertError(METHOD, FIELD_WITH_SAME_NAME)
-    }
-    
     @Test def testMainTask() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
