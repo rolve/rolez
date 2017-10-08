@@ -109,7 +109,7 @@ class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleInfo>> {
     
     private def flowThroughAssign(Var left, Expr right, ImmutableMap<Var, RoleInfo> in) {
         if(system.varType(left).value instanceof RoleType)
-            in.replace(left, roleInfo(right, in))
+            in.with(left, roleInfo(right, in))
         else
             in
     }
@@ -123,7 +123,7 @@ class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleInfo>> {
             val role = if(a.isWriteAccess) createReadWrite else createReadOnly
             val accessSeq = a.target.asAccessSeq
             val prev = in.get(accessSeq.variable) ?: RoleInfo.pure
-            in.replace(accessSeq.variable, prev.with(role, accessSeq.fieldSeq))
+            in.with(accessSeq.variable, prev.with(role, accessSeq.fieldSeq))
         }
         else
             in
@@ -174,11 +174,11 @@ class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleInfo>> {
         else {
             val field = fieldSeq.head
             val prev = fields.get(field) ?: RoleInfo.pure
-            new RoleInfo(ownRole, fields.replace(field, prev.with(role, fieldSeq.tail)))
+            new RoleInfo(ownRole, fields.with(field, prev.with(role, fieldSeq.tail)))
         }
     }
     
-    private def <K> replace(ImmutableMap<K, RoleInfo> it, K key, RoleInfo value) {
+    private def <K> with(ImmutableMap<K, RoleInfo> it, K key, RoleInfo value) {
         copyOf(new HashMap(it) => [put(key, value)])
     }
     
