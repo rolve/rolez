@@ -8,7 +8,7 @@ import "http://trick17.ch/rolez/Rolez"
 Program:
     ('package' name=QualifiedName)?
     imports+=Import*
-    classes+=Class+;
+    classes+=Class*;
 
 Import:
     'import' importedNamespace=QualifiedNameWithWildCard;
