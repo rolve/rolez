@@ -41,9 +41,9 @@ SingletonClass:
 TypeParam: name=ID;
 
 Slice:
-    'slice' name=ID ('{'
+    'slice' name=ID '{'
         members+=Member*
-    '}')?;
+    '}';
 
 Member:
     Field | Method;
