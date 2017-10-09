@@ -25,7 +25,6 @@ public class Test {
 		
 	}
 
-
 	@Readonly
 	@Roleztask
 	private A thisRead(final boolean $asTask) {
@@ -64,13 +63,6 @@ public class Test {
 		readonlyTask(a, true);
 	}
 	
-	//TODO: Can tasks return something?
-	@Roleztask
-	private int readonlyReturnTask(@Readonly A a, final boolean $asTask) {
-		return a.getValue();
-	}
-	
-	//TODO: Illegal operation, how and moreover WHEN to handle this?
 	@Roleztask
 	private void illegalTask(@Readonly A a, final boolean $asTask) {
 		a.setValue(1);
@@ -80,21 +72,4 @@ public class Test {
 	private void readonlyTask(@Readonly A a, final boolean $asTask) {
 		int i = a.getValue();
 	}
-
-	/*
-	public void readonlyTask(final A a, final long $task) {
-		int i = a.getValue();
-	}
-    
-    public rolez.lang.Task<java.lang.Void> $readonlyTaskTask() {
-        return new rolez.lang.Task<java.lang.Void>(new Object[]{}, new Object[]{a}) {
-            @java.lang.Override
-            protected java.lang.Void runRolez() {
-                final long $task = idBits();
-                int i = a.getValue();
-                return null;
-            }
-        };
-    }
-	*/
 }
