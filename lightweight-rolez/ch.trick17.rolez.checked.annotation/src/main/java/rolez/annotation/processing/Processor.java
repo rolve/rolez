@@ -12,6 +12,7 @@ import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
+import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -87,13 +88,55 @@ public class Processor extends AbstractProcessor {
 	 */
 	private void processCheckedAnnotations(RoundEnvironment env) {
 		for (Element annotatedElement : env.getElementsAnnotatedWith(Checked.class)) {
-			TypeMirror type = annotatedElement.asType();
-			TypeMirror supertype = getSupertype(type);
-			if(!supertype.toString().equals(Object.class.getName())) {
-				Message message = new Message(Kind.ERROR, "The @Checked annotation is only legal on classes which are direct subtypes of java.lang.Object.", annotatedElement);
+			
+			// Should actually never happen since @Checked has only ElementType as target
+			if (!(annotatedElement instanceof TypeElement)) {
+				Message message = new Message(Kind.ERROR, "The @Checked annotation is only legal on classes.", annotatedElement);
 				message.print(messager);
 			}
+			
+			TypeElement typeElement = (TypeElement)annotatedElement;
+			TypeMirror type = typeElement.asType();
+			TypeMirror supertype = getSupertype(type);
+			TypeElement superTypeElement = elements.getTypeElement(supertype.toString());
+			
+			hasObjectOrCheckedSupertype(typeElement, supertype,	superTypeElement);
+			
+			enforceCheckedAnnotation(typeElement);
 		}
+	}
+
+	private void hasObjectOrCheckedSupertype(TypeElement typeElement,
+			TypeMirror supertype, TypeElement superTypeElement) {
+		if(!(typeEqualsObject(supertype) || hasCheckedAnnotation(superTypeElement)) ) {
+			Message message = new Message(Kind.ERROR, "The @Checked annotation is only legal on classes inheriting from @Checked"
+					+ " annotated classes or classes inheriting from java.lang.Object.", typeElement);
+			message.print(messager);
+		}
+	}
+
+	private void enforceCheckedAnnotation(TypeElement typeElement) {
+		List<? extends AnnotationMirror> annotations = typeElement.getAnnotationMirrors();
+		boolean foundChecked = false;
+		for (AnnotationMirror annotation : annotations) {				
+			if (annotation.toString().equals("@" + Checked.class.getName())) {
+				foundChecked = true;
+				break;
+			}
+		}
+		
+		if (!foundChecked) {
+			Message message = new Message(Kind.ERROR, "The @Checked annotation has to be present on this class.", typeElement);
+			message.print(messager);
+		}
+	}
+	
+	private boolean typeEqualsObject(TypeMirror type) {
+		return type.toString().equals(Object.class.getName());
+	}
+	
+	private boolean hasCheckedAnnotation(TypeElement typeElement) {
+		return typeElement.getAnnotation(Checked.class) != null; 
 	}
 	
 	/**
@@ -109,9 +152,8 @@ public class Processor extends AbstractProcessor {
 				message.print(messager);
 			}
 			
-			TypeMirror classType = ((TypeElement)annotatedElement.getEnclosingElement()).asType();
-			if (!isCheckedType(classType)) {
-				Message message = new Message(Kind.ERROR, "Tasks can only be defined in Checked classes.", annotatedElement);
+			if (!hasCheckedAnnotation((TypeElement)annotatedElement.getEnclosingElement())) {
+				Message message = new Message(Kind.ERROR, "Tasks can only be defined in classes annotated with @Checked.", annotatedElement);
 				message.print(messager);
 			}
 			

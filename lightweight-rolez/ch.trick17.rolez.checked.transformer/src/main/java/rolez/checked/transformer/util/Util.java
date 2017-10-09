@@ -62,6 +62,10 @@ public class Util {
 		return false;
 	}
 	
+	public static boolean isFirstCheckedClass(SootClass clazz) {
+		return Util.hasCheckedAnnotation(clazz) && clazz.getSuperclass().equals(Constants.OBJECT_CLASS);
+	}
+	
 	public static Role getThisRole(SootMethod method) {
 		for (Tag t : method.getTags()) 
 			if (t instanceof VisibilityAnnotationTag) 

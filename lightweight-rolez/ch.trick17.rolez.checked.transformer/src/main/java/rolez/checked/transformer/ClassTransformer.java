@@ -55,14 +55,14 @@ public class ClassTransformer extends SceneTransformer {
 		logger.debug("Processing class: " + c.getName());
 	
 		if (c.equals(mainClass)) {
-			MainTaskGenerator mainTaskGenerator = new MainTaskGenerator(c, c.getMethodByName("main"));
+			MainTaskGenerator mainTaskGenerator = new MainTaskGenerator(c, c.getMethod("void main(java.lang.String[])"));
 			mainTaskGenerator.generateMainTask();
 			
 			// Remember generated inner class
 			this.generatedInnerClasses.add(mainTaskGenerator.getInnerClass());
 		}
 		
-		if (Util.hasCheckedAnnotation(c)) {
+		if (Util.isFirstCheckedClass(c)) {
 			c.setSuperclass(Constants.CHECKED_CLASS);
 			
 			// Replace constructors with one that calls the Checked constructor
