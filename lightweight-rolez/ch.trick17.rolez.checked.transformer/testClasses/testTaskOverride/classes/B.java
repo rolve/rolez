@@ -2,13 +2,15 @@ package classes;
 
 import rolez.annotation.Checked;
 import rolez.annotation.Roleztask;
-import rolez.annotation.Readwrite;
+import rolez.annotation.Readonly;
 
 @Checked
 public class B extends A {
 	
-	void task(@Readwrite A a, boolean $asTask) {
-		a.message = "Hello hell!";
-		System.out.println(a.message);
+	@Roleztask
+	void task(@Readonly A a, boolean $asTask) {
+		String message = a.message;
+		String newMessage = message.split(" ")[0] + " hell!";
+		System.out.println(newMessage);
 	}
 }

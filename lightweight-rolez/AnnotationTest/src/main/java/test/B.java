@@ -1,13 +1,14 @@
 package test;
 	
 import rolez.annotation.Checked;
+import rolez.annotation.Readonly;
 import rolez.annotation.Roleztask;
 
 @Checked
 public class B extends A {
 
 	@Roleztask
-	private void task(final boolean $asTask) {
-		int i = 1;
+	public void task(@Readonly A a, final boolean $asTask) {
+		int i = 2;
 	}
 }

@@ -100,14 +100,15 @@ public class Processor extends AbstractProcessor {
 			TypeMirror supertype = getSupertype(type);
 			TypeElement superTypeElement = elements.getTypeElement(supertype.toString());
 			
-			hasObjectOrCheckedSupertype(typeElement, supertype,	superTypeElement);
+			checkForObjectOrCheckedSupertype(typeElement, supertype, superTypeElement);
 			
 			enforceCheckedAnnotation(typeElement);
+			
+			checkOverridingTasksAreAnnotated(typeElement); 
 		}
 	}
 
-	private void hasObjectOrCheckedSupertype(TypeElement typeElement,
-			TypeMirror supertype, TypeElement superTypeElement) {
+	private void checkForObjectOrCheckedSupertype(TypeElement typeElement, TypeMirror supertype, TypeElement superTypeElement) {
 		if(!(typeEqualsObject(supertype) || hasCheckedAnnotation(superTypeElement)) ) {
 			Message message = new Message(Kind.ERROR, "The @Checked annotation is only legal on classes inheriting from @Checked"
 					+ " annotated classes or classes inheriting from java.lang.Object.", typeElement);
@@ -163,8 +164,6 @@ public class Processor extends AbstractProcessor {
 	}
 
 	private void processTask(ExecutableElement task) {
-
-		HashMap<String, Role> taskParameters = new HashMap<String, Role>();
 		
 		List<VariableElement> parameters = (List<VariableElement>) task.getParameters();
 		
@@ -195,45 +194,121 @@ public class Processor extends AbstractProcessor {
 			Annotation pureAnnotation = parameter.getAnnotation(Pure.class);
 			Annotation roAnnotation = parameter.getAnnotation(Readonly.class);
 			Annotation rwAnnotation = parameter.getAnnotation(Readwrite.class);
-			if (pureAnnotation != null) {
-				taskParameters.put(parameter.toString(), Role.PURE);
-			} else if (roAnnotation != null) {
-				taskParameters.put(parameter.toString(), Role.READONLY);
-			} else if (rwAnnotation != null) {
-				taskParameters.put(parameter.toString(), Role.READWRITE);
-			} else {
-				Message message = new Message(Kind.ERROR, "Type parameters have to be annotated with either @Pure, @Readonly or @Readwrite", parameter);
+			int roleAnnotationCount = 0;
+			if (pureAnnotation != null) roleAnnotationCount++;
+			if (roAnnotation != null) roleAnnotationCount++;
+			if (rwAnnotation != null) roleAnnotationCount++;
+			if (roleAnnotationCount == 0) {
+				Message message = new Message(Kind.ERROR, "Type parameters have to be annotated with either @Pure, @Readonly or @Readwrite.", parameter);
+				message.print(messager);
+			}
+			if (roleAnnotationCount > 1) {
+				Message message = new Message(Kind.ERROR, "Only one role annotation is legal per task parameter.", parameter);
 				message.print(messager);
 			}
 		}
 	}
 
-	// TODO: Check if this works to assure that every overriding task should have proper annotations
 	private void checkOverridingTasksAreAnnotated(TypeElement clazz) {
 		// Return when direct superclass is object, Object doesn't define tasks
 		if (clazz.getSuperclass().toString().equals(Object.class.getName())) return;
 		
-		for (Element e : clazz.getEnclosedElements()) {
-			if (e instanceof ExecutableElement) {
-				ExecutableElement method = (ExecutableElement) e;
-				if (method.getAnnotation(Roleztask.class) != null) break;
-				
-				TypeElement currentClass = clazz;
-				while(!getSupertype(currentClass.asType()).toString().equals(Object.class.getName())) {
-					DeclaredType declared = (DeclaredType) getSupertype(currentClass.asType());
-					currentClass = (TypeElement) declared.asElement();
-					for (Element el : currentClass.getEnclosedElements()) {
-						if (el instanceof ExecutableElement) {
-							ExecutableElement superMethod = (ExecutableElement) el;
-							if(elements.overrides(method, superMethod, clazz)) {
-								
-							}
-						}
+		// Check every method in the class
+		for (Element element : clazz.getEnclosedElements()) {
+			if (element instanceof ExecutableElement) {
+				ExecutableElement method = (ExecutableElement) element;
+				ExecutableElement overriddenTask = getOverriddenTask(method);
+				if (overriddenTask != null) {
+					if (method.getAnnotation(Roleztask.class) == null) {
+						Message message = new Message(Kind.ERROR, "Methods overriding tasks must have the @Roleztask annotation.", method);
+						message.print(messager);
 					}
+					
+					// If a method is overriding a task, it should have invariant role annotations
+					checkInvariantRoleAnnotations(method, overriddenTask);
 				}
 			}
 		}
 	}
+	
+	private ExecutableElement getOverriddenTask(ExecutableElement method) {
+		TypeElement methodClass = (TypeElement)method.getEnclosingElement();
+		TypeElement currentClass = methodClass;
+		while(!getSupertype(currentClass.asType()).toString().equals(Object.class.getName())) {
+			DeclaredType declared = (DeclaredType) getSupertype(currentClass.asType());
+			currentClass = (TypeElement) declared.asElement();
+			for (Element superElement : currentClass.getEnclosedElements())
+				if (superElement instanceof ExecutableElement) {
+					ExecutableElement superMethod = (ExecutableElement) superElement;
+					if(elements.overrides(method, superMethod, methodClass))
+						if (superMethod.getAnnotation(Roleztask.class) != null)
+							return superMethod;
+				}
+		}
+		return null;
+	}
+	
+	private void checkInvariantRoleAnnotations(ExecutableElement method, ExecutableElement overriddenMethod) {
+		List<? extends VariableElement> parameters = method.getParameters();
+		List<? extends VariableElement> superParameters = overriddenMethod.getParameters();
+		for (int i=0; i<superParameters.size(); i++) {
+			VariableElement parameter = parameters.get(i);
+			VariableElement superParameter = superParameters.get(i);
+			if (superParameter.getAnnotation(Pure.class) != null)
+				if (parameter.getAnnotation(Pure.class) == null) {
+					Element superElement = overriddenMethod.getEnclosingElement();
+					Message message = new Message(Kind.ERROR, "Put the @Pure role here, since the overriden method in class " + superElement.toString() + " declares the @Pure "
+							+ "role for this task parameter.", parameter);
+					message.print(messager);
+				}
+			
+			if (superParameter.getAnnotation(Readonly.class) != null)
+				if (parameter.getAnnotation(Readonly.class) == null) {
+					Element superElement = overriddenMethod.getEnclosingElement();
+					Message message = new Message(Kind.ERROR, "Put the @Readonly role here, since the overriden method in class " + superElement.toString() + " declares the @Readonly "
+							+ "role for this task parameter.", parameter);
+					message.print(messager);
+				}
+			
+			if (superParameter.getAnnotation(Readwrite.class) != null)
+				if (parameter.getAnnotation(Readwrite.class) == null) {
+					Element superElement = overriddenMethod.getEnclosingElement();
+					Message message = new Message(Kind.ERROR, "Put the @Readwrite role here, since the overriden method in class " + superElement.toString() + " declares the @Readwrite "
+							+ "role for this task parameter.", parameter);
+					message.print(messager);
+				}
+		}
+	}
+	
+	/*
+	// Enforce invariant role annotations
+	List<? extends VariableElement> parameters = method.getParameters();
+	List<? extends VariableElement> superParameters = superMethod.getParameters();
+	for (int i=0; i<superParameters.size(); i++) {
+		VariableElement parameter = parameters.get(i);
+		VariableElement superParameter = superParameters.get(i);
+		if (superParameter.getAnnotation(Pure.class) != null) {
+			if (parameter.getAnnotation(Pure.class) == null) {
+				Message message = new Message(Kind.ERROR, "Put the @Pure role here, since the overriden method in class " + superElement.toString() + " declares the @Pure "
+						+ "role for this task parameter as well.", parameter);
+				message.print(messager);
+			}
+		}
+		if (superParameter.getAnnotation(Readonly.class) != null) {
+			if (parameter.getAnnotation(Readonly.class) == null) {
+				Message message = new Message(Kind.ERROR, "Put the @Readonly role here, since the overriden method in class " + superElement.toString() + " declares the @Readonly "
+						+ "role for this task parameter as well.", parameter);
+				message.print(messager);
+			}
+		}
+		if (superParameter.getAnnotation(Readwrite.class) != null) {
+			if (parameter.getAnnotation(Readwrite.class) == null) {
+				Message message = new Message(Kind.ERROR, "Put the @Readwrite role here, since the overriden method in class " + superElement.toString() + " declares the @Readwrite "
+						+ "role for this task parameter as well.", parameter);
+				message.print(messager);
+			}
+		}
+	}*/
 	
 	private boolean isValidParameterType(VariableElement parameter) {
 		TypeMirror parameterType = parameter.asType();
