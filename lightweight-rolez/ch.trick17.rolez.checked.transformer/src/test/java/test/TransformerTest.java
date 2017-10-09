@@ -27,7 +27,7 @@ public class TransformerTest {
 		String methodName = "testTask";
 		String mainClass = "classes.TestTask";
 		Pipeline p = new Pipeline(methodName, mainClass);
-		p.runDefault(true, true);
+		p.runDefault(true, false);
 	}
 	
 	@Test
@@ -116,6 +116,6 @@ public class TransformerTest {
 		String methodName = "testConstructor";
 		String mainClass = "classes.TestConstructor";
 		Pipeline p = new Pipeline(methodName, mainClass);
-		p.runDefault(true, true);
+		p.runDefault(true, false);
 	}
 }
