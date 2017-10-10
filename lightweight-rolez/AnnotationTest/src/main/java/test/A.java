@@ -1,5 +1,7 @@
 package test;
 
+import java.util.Random;
+
 import rolez.annotation.Checked;
 import rolez.annotation.Readonly;
 import rolez.annotation.Roleztask;
@@ -7,7 +9,17 @@ import rolez.annotation.Roleztask;
 @Checked
 public class A {
 	int value;
-
+	
+	// Reference to whitelisted class
+	String s;
+	
+	// Refernce to checked class
+	B b;
+	
+	// Illegal references to unchecked classes (uncomment to see effect)
+	//D d;
+	//Random r;
+	
 	public int getValue() {
 		return this.value;
 	}

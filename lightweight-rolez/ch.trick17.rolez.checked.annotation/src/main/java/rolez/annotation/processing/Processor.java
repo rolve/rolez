@@ -18,6 +18,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic.Kind;
@@ -88,9 +89,31 @@ public class Processor extends AbstractProcessor {
 		for (Element annotatedElement : env.getElementsAnnotatedWith(Checked.class)) {
 			// Cast is safe because @Checked is only valid on classes
 			TypeElement typeElement = (TypeElement)annotatedElement;
-			checkForObjectOrCheckedSupertype(typeElement);
 			enforceCheckedAnnotation(typeElement);
+			checkForObjectOrCheckedSupertype(typeElement);
 			checkOverridingTasksAreAnnotated(typeElement); 
+			checkRefsAreCheckedTypes(typeElement);
+		}
+	}
+	
+	/**
+	 * This method checks whether the Checked annotation is present on class or not.
+	 * If not, an error message is displayed at the class.
+	 * @param typeElement
+	 */
+	private void enforceCheckedAnnotation(TypeElement typeElement) {
+		List<? extends AnnotationMirror> annotations = typeElement.getAnnotationMirrors();
+		boolean foundChecked = false;
+		for (AnnotationMirror annotation : annotations) {				
+			if (isCheckedAnnotation(annotation)) {
+				foundChecked = true;
+				break;
+			}
+		}
+		
+		if (!foundChecked) {
+			Message message = new Message(Kind.ERROR, "The @Checked annotation has to be present on this class.", typeElement);
+			message.print(messager);
 		}
 	}
 
@@ -109,55 +132,47 @@ public class Processor extends AbstractProcessor {
 			message.print(messager);
 		}
 	}
-
-	/**
-	 * This method checks whether the Checked annotation is present on class or not.
-	 * If not, an error message is displayed at the class.
-	 * @param typeElement
-	 */
-	private void enforceCheckedAnnotation(TypeElement typeElement) {
-		List<? extends AnnotationMirror> annotations = typeElement.getAnnotationMirrors();
-		boolean foundChecked = false;
-		for (AnnotationMirror annotation : annotations) {				
-			if (annotationEqualsChecked(annotation)) {
-				foundChecked = true;
-				break;
-			}
-		}
-		
-		if (!foundChecked) {
-			Message message = new Message(Kind.ERROR, "The @Checked annotation has to be present on this class.", typeElement);
-			message.print(messager);
-		}
-	}
 	
 	/**
 	 * This method checks if methods inside the class are overriding tasks and
 	 * if so, that they are providing the same annotations as the overridden task.
-	 * @param clazz
+	 * @param typeElement
 	 */
-	private void checkOverridingTasksAreAnnotated(TypeElement clazz) {
+	private void checkOverridingTasksAreAnnotated(TypeElement typeElement) {
 		// Return when direct superclass is Object, Object doesn't define tasks
-		if (clazz.getSuperclass().toString().equals(Object.class.getName())) return;
+		if (typeElement.getSuperclass().toString().equals(Object.class.getName())) return;
 		
 		// Check every method in the class
-		for (Element element : clazz.getEnclosedElements()) {
-			if (element instanceof ExecutableElement) {
-				ExecutableElement method = (ExecutableElement) element;
-				ExecutableElement overriddenTask = getOverriddenTask(method);
-				if (overriddenTask != null) {
-					if (method.getAnnotation(Roleztask.class) == null) {
-						Message message = new Message(Kind.ERROR, "Methods overriding tasks must have the @Roleztask annotation.", method);
-						message.print(messager);
-					}
-					
-					// If a method is overriding a task, it should have invariant role annotations
-					checkInvariantRoleAnnotations(method, overriddenTask);
+		List<ExecutableElement> methods = ElementFilter.methodsIn(typeElement.getEnclosedElements());
+		for (ExecutableElement method : methods) {
+			ExecutableElement overriddenTask = getOverriddenTask(method);
+			if (overriddenTask != null) {
+				if (method.getAnnotation(Roleztask.class) == null) {
+					Message message = new Message(Kind.ERROR, "Methods overriding tasks must have the @Roleztask annotation.", method);
+					message.print(messager);
 				}
+				
+				// If a method is overriding a task, it should have invariant role annotations
+				checkInvariantRoleAnnotations(method, overriddenTask);
 			}
 		}
 	}
 	
+	/**
+	 * This method ensures that a @Checked class does not contain references to unchecked classes.
+	 * @param typeElement
+	 */
+	private void checkRefsAreCheckedTypes(TypeElement typeElement) {
+		List<VariableElement> fields = ElementFilter.fieldsIn(typeElement.getEnclosedElements());
+		for (VariableElement f : fields) {
+			if (!isPrimitiveType(f.asType())) {
+				if (!isCheckedType(f.asType()) && !isWhitelisted(f.asType())) {
+					Message message = new Message(Kind.ERROR, "Only references to checked types are allowed.", f);
+					message.print(messager);
+				}
+			}
+		}
+	}
 	
 	/**
 	 * Processes the methods that are annotated with <code>@Roleztask</code> and checks whether all 
@@ -245,13 +260,12 @@ public class Processor extends AbstractProcessor {
 		while(!getSupertype(currentClass.asType()).toString().equals(Object.class.getName())) {
 			DeclaredType declared = (DeclaredType) getSupertype(currentClass.asType());
 			currentClass = (TypeElement) declared.asElement();
-			for (Element superElement : currentClass.getEnclosedElements())
-				if (superElement instanceof ExecutableElement) {
-					ExecutableElement superMethod = (ExecutableElement) superElement;
-					if(elements.overrides(method, superMethod, methodClass))
-						if (superMethod.getAnnotation(Roleztask.class) != null)
-							return superMethod;
-				}
+
+			List<ExecutableElement> superMethods = ElementFilter.methodsIn(currentClass.getEnclosedElements());
+			for (ExecutableElement superMethod : superMethods)
+				if(elements.overrides(method, superMethod, methodClass))
+					if (superMethod.getAnnotation(Roleztask.class) != null)
+						return superMethod;
 		}
 		return null;
 	}
@@ -297,11 +311,11 @@ public class Processor extends AbstractProcessor {
 	/**
 	 * This method checks whether a parameter is a valid task parameter or not.
 	 * I.e. if the parameter is either on the whitelist or is a checked type.
-	 * @param parameter
+	 * @param variableElement
 	 * @return
 	 */
-	private boolean isValidTaskParameter(VariableElement parameter) {
-		TypeMirror parameterType = parameter.asType();
+	private boolean isValidTaskParameter(VariableElement variableElement) {
+		TypeMirror parameterType = variableElement.asType();
 		if (isWhitelisted(parameterType)) 
 			return true;
 		if (isCheckedType(parameterType))
@@ -323,12 +337,12 @@ public class Processor extends AbstractProcessor {
 	
 	/**
 	 * Checks whether a parameter is on the whitelist or not.
-	 * @param parameterType
+	 * @param type
 	 * @return
 	 */
-	private boolean isWhitelisted(TypeMirror parameterType) {
+	private boolean isWhitelisted(TypeMirror type) {
 		for (String element : Processor.WHITELIST)
-			if (element.equals(parameterType.toString()))
+			if (element.equals(type.toString()))
 				return true;
 		return false;
 	}
@@ -375,7 +389,7 @@ public class Processor extends AbstractProcessor {
 		return type.toString().equals(Object.class.getName());
 	}
 	
-	private boolean annotationEqualsChecked(AnnotationMirror annotation) {
+	private boolean isCheckedAnnotation(AnnotationMirror annotation) {
 		return annotation.getAnnotationType().toString().equals(Checked.class.getName());
 	}
 	
