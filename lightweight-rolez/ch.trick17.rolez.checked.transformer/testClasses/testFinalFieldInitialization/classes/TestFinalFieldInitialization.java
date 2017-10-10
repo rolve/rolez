@@ -18,5 +18,8 @@ public class TestFinalFieldInitialization {
 	public static void main(String[] args) {
 		TestFinalFieldInitialization instance = new TestFinalFieldInitialization("Hello world!");
 		System.out.println(instance.s);
+		
+		A a = new A();
+		a.task(true);
 	}
 }

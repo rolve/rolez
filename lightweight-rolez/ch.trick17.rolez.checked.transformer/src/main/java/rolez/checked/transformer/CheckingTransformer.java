@@ -135,6 +135,11 @@ public class CheckingTransformer extends BodyTransformer {
 				Value v = a.getRightOp();
 				if (v instanceof InstanceFieldRef) {
 					InstanceFieldRef f = (InstanceFieldRef)v;
+					
+					//No checks for final fields necessary, since reading them is always allowed
+					if (f.getField().isFinal())
+						continue;
+					
 					Value base = f.getBase();
 					if (isSubtypeOfChecked(base.getType())) {
 						logger.debug(a + " is a checked field read!");
