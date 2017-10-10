@@ -11,8 +11,8 @@ sequential programs.
 
 Rolez is based on the *Parallel Roles* programming model, which is described in
 [this research paper][pr].
-For now, we recommend to read Sections 1&ndash;3 of the paper before playing
-around with *Rolez*.
+Until this mini-tutorial is complete, we recommend to read Sections 1&ndash;3
+of the paper to understand the basics of Rolez.
 For more background about deterministic parallel programming, see
 [this][threads] and [this article][deterministic].
 
@@ -146,6 +146,11 @@ instructions, in the examples directory:
 [examples/helloworld](https://github.com/rolve/rolez/tree/master/examples/helloworld).
 
 
+## Using Rolez in Eclipse
+
+*TODO*
+
+
 ## Declaring and Starting Tasks
 
 To see how we can parallelize a program in Rolez, let's start with this simple
@@ -222,6 +227,17 @@ task's partial results into the final result.
 
 You can find the complete *Pi* Maven project in the examples directory:
 [examples/pi](https://github.com/rolve/rolez/tree/master/examples/pi).
+
+
+## Object Sharing
+
+*TODO*.
+
+
+## Compiling the Rolez Infrastructure
+
+*TODO*, but basically `mvn install -DskipTests` in the root directory.
+
 
 [threads]: http://www.eecs.berkeley.edu/Pubs/TechRpts/2006/EECS-2006-1.pdf
 [deterministic]: https://www.usenix.org/legacy/event/hotpar09/tech/full_papers/bocchino/bocchino_html/
