@@ -124,6 +124,6 @@ public class TransformerTest {
 		String methodName = "testFinalFieldInitialization";
 		String mainClass = "classes.TestFinalFieldInitialization";
 		Pipeline p = new Pipeline(methodName, mainClass);
-		p.runDefault(true, true);
+		p.runDefault(true, false);
 	}
 }
