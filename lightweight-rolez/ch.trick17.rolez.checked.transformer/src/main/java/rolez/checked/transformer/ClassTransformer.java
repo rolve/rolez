@@ -41,19 +41,16 @@ public class ClassTransformer extends SceneTransformer {
 	private void processClasses() {
 		Chain<SootClass> classesToProcess = Scene.v().getApplicationClasses();
 		
-		logger.debug("The following classes are transformed: " + classesToProcess);
-		for (SootClass c : classesToProcess) {
+		for (SootClass c : classesToProcess) 
 			processClass(c);
-		}
 		
-		// Add all generated inner classes to the application classes
-		// (is necessary because we want the next phase to transform them as well)
 		addInnerClassesToApplicationClasses();
 	}
 	
 	private void processClass(SootClass c) {
 		logger.debug("Processing class: " + c.getName());
 	
+		// Generate main task if this is the main class
 		if (c.equals(mainClass)) {
 			MainTaskGenerator mainTaskGenerator = new MainTaskGenerator(c, c.getMethod("void main(java.lang.String[])"));
 			mainTaskGenerator.generateMainTask();
@@ -62,7 +59,7 @@ public class ClassTransformer extends SceneTransformer {
 			this.generatedInnerClasses.add(mainTaskGenerator.getInnerClass());
 		}
 		
-		if (Util.isFirstCheckedClass(c)) {
+		if (Util.isCheckedClassExtendingObject(c)) {
 			c.setSuperclass(Constants.CHECKED_CLASS);
 			
 			// Replace constructors with one that calls the Checked constructor
@@ -79,14 +76,16 @@ public class ClassTransformer extends SceneTransformer {
 			c.addMethod(guardedRefs);
 		}
 		
-		// Search for methods which have the @Roleztask annotation
 		processMethods(c);
 	}
 	
+	/**
+	 * Searches for methods annotated with @Roleztask and transforms them accordingly.
+	 * @param c
+	 */
 	private void processMethods(SootClass c) {
 		for (SootMethod m : c.getMethods()) {
 			logger.debug("Processing method: " + c.getName() + ":" + m.getName());
-			m.retrieveActiveBody();
 			if (Util.isRolezTask(m)) {
 				TaskGenerator taskGenerator = new TaskGenerator(c, m);
 				taskGenerator.generateTask();
@@ -97,6 +96,10 @@ public class ClassTransformer extends SceneTransformer {
 		}
 	}
 
+	/**
+	 * Adds all generated inner classes to the application classes to process
+	 * them as well in the upcoming phases.
+	 */
 	private void addInnerClassesToApplicationClasses() {
 		for (SootClass c : generatedInnerClasses) {
 			logger.debug("Adding " + c + " to application classes.");

@@ -42,13 +42,6 @@ public class TaskGenerator {
 	public void generateTask() {
 		generateInnerClass();
 		generateTaskMethod();
-		
-		// TODO: Add tags to outer class s.t. the outer class knows about the newly created inner class and vice versa!
-		// Outer class should contain tag of the following form: [inner=rolez/checked/transformer/test/Test$1, outer=null, name=null,flags=0]
-		// Inner class should contain tags of the following form: Signature: Lrolez/checked/lang/Task<Ljava/lang/Void;>;
-		//                                                        Enclosing Class: rolez/checked/transformer/test/Test Enclosing Method: $testTask Sig: (Lrolez/checked/transformer/test/A;Lrolez/checked/transformer/test/A;)Lrolez/checked/lang/Task;
-		//                                                        [inner=rolez/checked/transformer/test/Test$1, outer=null, name=null,flags=0]
-		
 	}
 
 	private void generateInnerClass() {
@@ -90,6 +83,12 @@ public class TaskGenerator {
 		return targetClass.getName() + "$" + className + typeString;
 	}
 	
+	/**
+	 * For type strings, this method replaces the dots which separates package names
+	 * with & symbols. Dots in file names are bad ;)
+	 * @param type
+	 * @return
+	 */
 	private String sanitizeType(String type) {
 		return type.replace(".", "&");
 	}

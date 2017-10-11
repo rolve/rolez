@@ -10,22 +10,13 @@ import soot.tagkit.Tag;
 import soot.tagkit.VisibilityAnnotationTag;
 
 public class Util {
-	
+
 	/**
-	 * A method is a rolez task if it has the @Roleztask annotation or
-	 * it overrides a method, which is a rolez task.
+	 * Returns true if the method has the @Roleztask annotation.
 	 * @param method
 	 * @return
 	 */
 	public static boolean isRolezTask(SootMethod method) {
-		if (hasRoleztaskAnnotation(method))
-			return true;
-		if (isOverridingARoleztask(method))
-			return true;
-		return false;
-	}
-	
-	private static boolean hasRoleztaskAnnotation(SootMethod method) {
 		for (Tag t : method.getTags()) 
 			if (t instanceof VisibilityAnnotationTag) 
 				for (AnnotationTag aTag : ((VisibilityAnnotationTag) t).getAnnotations()) 
@@ -34,24 +25,11 @@ public class Util {
 		return false;
 	}
 	
-	private static boolean isOverridingARoleztask(SootMethod method) {
-		
-		// Get declaring class and return if it's Object
-		SootClass currentClass = method.getDeclaringClass();
-		if (currentClass.equals(Constants.OBJECT_CLASS)) return false;
-		
-		// Try to find a method in the superclasses which is overriden by the parameter method
-		String methodSignature = method.getSubSignature();
-		while (!currentClass.getSuperclass().equals(Constants.OBJECT_CLASS)) {
-			currentClass = currentClass.getSuperclass();
-			for (SootMethod m : currentClass.getMethods())
-				if (m.getSubSignature().equals(methodSignature))
-					if (hasRoleztaskAnnotation(m))
-						return true;
-		}
-		return false;
-	}
-	
+	/**
+	 * Returns true if the class has the @Checked annotation, false otherwise.
+	 * @param clazz
+	 * @return
+	 */
 	public static boolean hasCheckedAnnotation(SootClass clazz) {
 		List<Tag> classTags = clazz.getTags();
 		for (Tag t : classTags) 
@@ -62,12 +40,23 @@ public class Util {
 		return false;
 	}
 	
-	public static boolean isFirstCheckedClass(SootClass clazz) {
+	/**
+	 * This method returns true if the parameter clazz has the checked annotation and its supertype
+	 * is equal to Object.
+	 * @param clazz
+	 * @return
+	 */
+	public static boolean isCheckedClassExtendingObject(SootClass clazz) {
 		return Util.hasCheckedAnnotation(clazz) && clazz.getSuperclass().equals(Constants.OBJECT_CLASS);
 	}
 	
-	public static Role getThisRole(SootMethod method) {
-		for (Tag t : method.getTags()) 
+	/**
+	 * Returns the role a task has on "this". Either Role.READWRITE, Role.READONLY or Role.PURE (default).
+	 * @param task
+	 * @return
+	 */
+	public static Role getThisRole(SootMethod task) {
+		for (Tag t : task.getTags()) 
 			if (t instanceof VisibilityAnnotationTag) 
 				for (AnnotationTag aTag : ((VisibilityAnnotationTag) t).getAnnotations()) {
 					if (aTag.getType().equals(Constants.READWRITE_ANNOTATION))
@@ -80,6 +69,11 @@ public class Util {
 		return Role.PURE;
 	}
 	
+	/**
+	 * Returns the name for the generated task method.
+	 * @param method
+	 * @return
+	 */
 	public static String getTaskMethodNameFromMethod(SootMethod method) {
 		String methodName = method.getName();
 		return "$" + methodName + "Task";
