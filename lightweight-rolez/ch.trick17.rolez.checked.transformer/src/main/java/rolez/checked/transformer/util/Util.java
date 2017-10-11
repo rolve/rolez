@@ -30,24 +30,27 @@ public class Util {
 	 * @param clazz
 	 * @return
 	 */
-	public static boolean hasCheckedAnnotation(SootClass clazz) {
+	public static boolean isCheckedClass(SootClass clazz) {
+		
+		if (clazz.equals(Constants.OBJECT_CLASS)) return false;
+		
 		List<Tag> classTags = clazz.getTags();
 		for (Tag t : classTags) 
 			if (t instanceof VisibilityAnnotationTag) 
 				for (AnnotationTag aTag : ((VisibilityAnnotationTag) t).getAnnotations()) 
 					if (aTag.getType().equals(Constants.CHECKED_ANNOTATION))
 						return true;
-		return false;
+		
+		return isCheckedClass(clazz.getSuperclass());
 	}
 	
 	/**
-	 * This method returns true if the parameter clazz has the checked annotation and its supertype
-	 * is equal to Object.
+	 * Returns true if the class is extending from java.lang.Object.
 	 * @param clazz
 	 * @return
 	 */
-	public static boolean isCheckedClassExtendingObject(SootClass clazz) {
-		return Util.hasCheckedAnnotation(clazz) && clazz.getSuperclass().equals(Constants.OBJECT_CLASS);
+	public static boolean isExtendingObject(SootClass clazz) {
+		return clazz.getSuperclass().equals(Constants.OBJECT_CLASS);
 	}
 	
 	/**

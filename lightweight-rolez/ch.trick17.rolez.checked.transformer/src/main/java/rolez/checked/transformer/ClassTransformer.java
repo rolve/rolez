@@ -58,22 +58,15 @@ public class ClassTransformer extends SceneTransformer {
 			// Remember generated inner class
 			this.generatedInnerClasses.add(mainTaskGenerator.getInnerClass());
 		}
+
 		
-		if (Util.isCheckedClassExtendingObject(c)) {
-			c.setSuperclass(Constants.CHECKED_CLASS);
-			
-			// Replace constructors with one that calls the Checked constructor
-			for (SootMethod m : c.getMethods()) {
-				if (m.getName().equals("<init>")) {
-					CheckedConstructor checkedConstructor = new CheckedConstructor(m);
-					c.removeMethod(m);
-					c.addMethod(checkedConstructor);
-				}
-			}
-			
-			// Generate the guardedRefs method
+		if (Util.isCheckedClass(c)) {
 			GuardedRefsMethod guardedRefs = new GuardedRefsMethod(c);
 			c.addMethod(guardedRefs);
+			if (Util.isExtendingObject(c)) {
+				c.setSuperclass(Constants.CHECKED_CLASS);
+				replaceConstructors(c);
+			}
 		}
 		
 		processMethods(c);
@@ -105,6 +98,20 @@ public class ClassTransformer extends SceneTransformer {
 			logger.debug("Adding " + c + " to application classes.");
 			c.setInScene(true);
 			c.setApplicationClass();
+		}
+	}
+	
+	/**
+	 * Replaces the constructors of a class by constructors calling the rolez.checked.lang.Checked constructor
+	 * @param c
+	 */
+	private void replaceConstructors(SootClass c) {
+		for (SootMethod m : c.getMethods()) {
+			if (m.getName().equals("<init>")) {
+				CheckedConstructor checkedConstructor = new CheckedConstructor(m);
+				c.removeMethod(m);
+				c.addMethod(checkedConstructor);
+			}
 		}
 	}
 }
