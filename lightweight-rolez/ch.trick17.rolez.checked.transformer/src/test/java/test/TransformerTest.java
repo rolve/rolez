@@ -127,12 +127,4 @@ public class TransformerTest {
 		Pipeline p = new Pipeline(methodName, mainClass);
 		p.runDefault(true, false);
 	}
-
-	@Test(expected=ConstructorTaskCallException.class)
-	public void testConstructorTaskCall() {
-		String methodName = "testConstructorTaskCall";
-		String mainClass = "classes.TestConstructorTaskCall";
-		Pipeline p = new Pipeline(methodName, mainClass);
-		p.runDefault(true, false);
-	}
 }
