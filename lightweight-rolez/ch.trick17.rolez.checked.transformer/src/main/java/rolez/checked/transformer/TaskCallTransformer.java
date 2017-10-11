@@ -57,6 +57,7 @@ public class TaskCallTransformer extends BodyTransformer {
 		// Task calls in constructors are not allowed
 		if (this.currentMethod.getName().equals("<init>") && taskCalls.size() > 0) {
 			throw new ConstructorTaskCallException("Task calls in constructors are not allowed!");
+			// TODO: catch this exception by allowing to call the task as a method -> insert "true" constant as last parameter
 		}
 		
 		if (taskCalls.size() > 0) {
