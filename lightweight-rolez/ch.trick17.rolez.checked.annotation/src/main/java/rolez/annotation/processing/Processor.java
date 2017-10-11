@@ -97,7 +97,7 @@ public class Processor extends AbstractProcessor {
 	}
 	
 	/**
-	 * This method checks whether the Checked annotation is present on class or not.
+	 * This method checks whether the Checked annotation is present on a class or not.
 	 * If not, an error message is displayed at the class.
 	 * @param typeElement
 	 */

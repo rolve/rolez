@@ -15,9 +15,9 @@ import java.lang.annotation.Target;
  * @author Michael Giger
  *
  */
+@Inherited
 @Target({ElementType.TYPE}) 
 @Retention(RetentionPolicy.RUNTIME)
-@Inherited
 public @interface Checked {
 
 }
