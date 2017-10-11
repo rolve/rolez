@@ -1,4 +1,4 @@
-package rolez.checked.transformer;
+package rolez.checked.transformer.exceptions;
 
 public class PhantomClassException extends RuntimeException {
 

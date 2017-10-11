@@ -7,6 +7,7 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import rolez.checked.transformer.exceptions.ConstructorTaskCallException;
 import rolez.checked.transformer.util.Constants;
 import rolez.checked.transformer.util.UnitFactory;
 import rolez.checked.transformer.util.Util;

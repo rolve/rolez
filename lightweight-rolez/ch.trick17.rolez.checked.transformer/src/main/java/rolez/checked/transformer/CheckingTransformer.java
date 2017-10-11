@@ -8,6 +8,7 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import rolez.checked.transformer.exceptions.PhantomClassException;
 import rolez.checked.transformer.util.Constants;
 import soot.Body;
 import soot.BodyTransformer;

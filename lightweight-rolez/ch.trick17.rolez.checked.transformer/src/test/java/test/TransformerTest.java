@@ -2,7 +2,7 @@ package test;
 
 import org.junit.Test;
 
-import rolez.checked.transformer.ConstructorTaskCallException;
+import rolez.checked.transformer.exceptions.ConstructorTaskCallException;
 import test.util.Pipeline;
 
 public class TransformerTest {
