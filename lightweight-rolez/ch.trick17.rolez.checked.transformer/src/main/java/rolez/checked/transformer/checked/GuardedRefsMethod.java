@@ -103,8 +103,8 @@ public class GuardedRefsMethod extends SootMethod {
 			SootClass s = Scene.v().loadClassAndSupport(t.toString());
 			do {
 				s = s.getSuperclass();
-				if (s.getType().equals(Constants.CHECKED_CLASS.getType())) return true;
-			} while (!s.getType().equals(Constants.OBJECT_CLASS.getType()));
+				if (s.equals(Constants.CHECKED_CLASS)) return true;
+			} while (!s.equals(Constants.OBJECT_CLASS));
 		}
 		return false;
 	}
