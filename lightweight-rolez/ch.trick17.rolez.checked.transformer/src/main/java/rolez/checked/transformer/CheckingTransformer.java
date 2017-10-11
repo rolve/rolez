@@ -46,14 +46,11 @@ public class CheckingTransformer extends BodyTransformer {
 		
 		SootMethod currentMethod = b.getMethod();
 		
-		// Field reads in guarded refs don't have to be guarded
+		// No task calls allowed in constructors -> no guarding necessary here
+		if (isConstructorWithoutArgs(currentMethod)) return;
+
+		// Field reads in guardedRefs don't have to be guarded
 		if (isGuardedRefsMethod(currentMethod)) return;
-		
-		// TODO: is this correct? -> This is needed to avoid guarding when main method is transformed and creates an instance of the surrounding class to call the task.
-		if (isConstructorWithoutArgs(currentMethod)) {
-			logger.debug("CONSTRUCTOR WITHOUT ARGUMENTS! -> NO GUARDING NECESSARY");
-			return;
-		}
 		
 		logger.debug("Transforming " + b.getMethod().getDeclaringClass() + ":" + b.getMethod().getSignature());
 		
@@ -63,13 +60,11 @@ public class CheckingTransformer extends BodyTransformer {
 		List<AssignStmt> fieldReads = findCheckedFieldReads();
 		List<AssignStmt> fieldWrites = findCheckedFieldWrites();
 		
-		for (AssignStmt read : fieldReads) {
+		for (AssignStmt read : fieldReads)
 			addCheckLegalRead(read);
-		}
 		
-		for (AssignStmt write: fieldWrites) {
+		for (AssignStmt write: fieldWrites)
 			addCheckLegalWrite(write);
-		}
 		
 		// Reset tempLocalCount for next method
 		tempLocalCount = 0;
@@ -180,24 +175,20 @@ public class CheckingTransformer extends BodyTransformer {
 	private boolean isSubtypeOfChecked(Type t) {
 		SootClass classOfType = Scene.v().loadClass(t.toString(), SootClass.HIERARCHY);
 		
-		// TODO: Add classes to scene
-		if (classOfType.isPhantom()) {
-			logger.debug("Class corresponding to type " + t + " is phantom class!");
-			throw new RuntimeException("Phantom class in application classes");
-		}
+		if (classOfType.isPhantom())
+			throw new PhantomClassException(classOfType + " is a phantom class in.");
 		
 		SootClass currentClass = classOfType;
-		 while(!currentClass.getName().equals("java.lang.Object")) {
-			if (currentClass.equals(Constants.CHECKED_CLASS)) {
+		 while(!currentClass.equals(Constants.OBJECT_CLASS)) {
+			if (currentClass.equals(Constants.CHECKED_CLASS)) 
 				return true;
-			}
 			currentClass = currentClass.getSuperclass();
 		}
 		return false;
 	}
 	
 	private boolean isGuardedRefsMethod(SootMethod m) {
-		return m.isProtected() && m.getSubSignature().equals("java.lang.Iterable guardedRefs()");
+		return m.getSubSignature().equals("java.lang.Iterable guardedRefs()");
 	}
 	
 	private boolean isConstructorWithoutArgs(SootMethod m) {
