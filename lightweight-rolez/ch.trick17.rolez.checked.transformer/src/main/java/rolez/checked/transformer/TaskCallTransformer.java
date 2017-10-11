@@ -53,6 +53,11 @@ public class TaskCallTransformer extends BodyTransformer {
 		
 		List<InvokeStmt> taskCalls = findTaskCalls(units);
 		
+		// Task calls in constructors are not allowed
+		if (this.currentMethod.getName().equals("<init>") && taskCalls.size() > 0) {
+			throw new ConstructorTaskCallException("Task calls in constructors are not allowed!");
+		}
+		
 		if (taskCalls.size() > 0) {
 			insertTaskLocalsAndStmts(locals, units, traps);
 			

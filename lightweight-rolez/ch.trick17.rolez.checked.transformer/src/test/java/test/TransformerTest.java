@@ -2,6 +2,7 @@ package test;
 
 import org.junit.Test;
 
+import rolez.checked.transformer.ConstructorTaskCallException;
 import test.util.Pipeline;
 
 public class TransformerTest {
@@ -123,6 +124,14 @@ public class TransformerTest {
 	public void testFinalFieldInitialization() {
 		String methodName = "testFinalFieldInitialization";
 		String mainClass = "classes.TestFinalFieldInitialization";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.runDefault(true, false);
+	}
+
+	@Test(expected=ConstructorTaskCallException.class)
+	public void testConstructorTaskCall() {
+		String methodName = "testConstructorTaskCall";
+		String mainClass = "classes.TestConstructorTaskCall";
 		Pipeline p = new Pipeline(methodName, mainClass);
 		p.runDefault(true, false);
 	}
