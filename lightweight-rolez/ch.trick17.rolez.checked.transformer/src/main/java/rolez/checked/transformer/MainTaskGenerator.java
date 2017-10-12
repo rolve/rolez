@@ -42,12 +42,6 @@ public class MainTaskGenerator {
 		generateInnerClass();
 		generateTaskMethod();
 		transformSourceMethod();
-		
-		// TODO: Add tags to outer class s.t. the outer class knows about the newly created inner class and vice versa!
-		// Outer class should contain tag of the following form: [inner=rolez/checked/transformer/test/Test$1, outer=null, name=null,flags=0]
-		// Inner class should contain tags of the following form: Signature: Lrolez/checked/lang/Task<Ljava/lang/Void;>;
-		//                                                        Enclosing Class: rolez/checked/transformer/test/Test Enclosing Method: $testTask Sig: (Lrolez/checked/transformer/test/A;Lrolez/checked/transformer/test/A;)Lrolez/checked/lang/Task;
-		//                                                        [inner=rolez/checked/transformer/test/Test$1, outer=null, name=null,flags=0]
 	}
 
 	private void generateInnerClass() {
