@@ -135,4 +135,12 @@ public class TransformerTest {
 		Pipeline p = new Pipeline(methodName, mainClass);
 		p.runDefault(true, false);
 	}
+
+	@Test
+	public void testGuardReadonly() {
+		String methodName = "testGuardReadonly";
+		String mainClass = "classes.TestGuardReadonly";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.runDefault(true, false);
+	}
 }
