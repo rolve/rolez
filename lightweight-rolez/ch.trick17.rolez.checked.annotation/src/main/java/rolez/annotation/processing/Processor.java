@@ -203,6 +203,12 @@ public class Processor extends AbstractProcessor {
 	 */
 	private void processTask(ExecutableElement task) {
 		
+		// Check for void return type
+		if (!typeEqualsVoid(task.getReturnType())) {
+			Message message = new Message(Kind.ERROR, "Tasks cannot have non-void return types. Replace return type with void.", task);
+			message.print(messager);
+		}
+		
 		List<VariableElement> parameters = (List<VariableElement>) task.getParameters();
 		
 		// Check for $asTask parameter
@@ -383,6 +389,10 @@ public class Processor extends AbstractProcessor {
 		// Get the super type of the current type (first in list is always a class, further are interfaces)
 		List<? extends TypeMirror> supertypes = types.directSupertypes(type);
 		return supertypes.get(0);
+	}
+	
+	private boolean typeEqualsVoid(TypeMirror type) {
+		return type.toString().equals("void");
 	}
 	
 	private boolean typeEqualsObject(TypeMirror type) {

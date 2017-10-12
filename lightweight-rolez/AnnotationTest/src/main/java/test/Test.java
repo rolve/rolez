@@ -24,27 +24,11 @@ public class Test {
 	public void run() {
 		
 	}
-
-	@Readonly
-	@Roleztask
-	private A thisRead(final boolean $asTask) {
-		return this.a;
-	}
 	
 	@Readwrite
 	@Roleztask
 	private void thisWrite(final boolean $asTask) {
 		this.b = new B();
-	}
-
-	@Roleztask
-	private int randomTask(@Readonly Random r, final boolean $asTask) {
-		return r.nextInt();
-	}
-	
-	@Roleztask
-	private String stringTask(@Readonly String s, final boolean $asTask) {
-		return s.concat("foo");
 	}
 	
 	@Roleztask
