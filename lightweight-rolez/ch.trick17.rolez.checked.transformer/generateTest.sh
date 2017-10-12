@@ -25,6 +25,10 @@ javaFileName="$(tr "[:lower:]" "[:upper:]" <<< ${1:0:1})${1:1}"
 testClass=testClasses/$1/classes/${javaFileName}.java
 echo -e "package classes;" >> $testClass
 echo -e "" >> $testClass
+echo -e "import rolez.annotation.Checked;" >> $testClass
+echo -e "import rolez.annotation.Roleztask;" >> $testClass
+echo -e "" >> $testClass
+echo -e "@Checked" >> $testClass
 echo -e "public class ${javaFileName} {" >> $testClass
 echo -e "" >> $testClass
 echo -e "\tpublic static void main(String[] args) {" >> $testClass
