@@ -33,14 +33,11 @@ public class InnerClassRunRolezConcrete extends SootMethod {
 	private SootMethod sourceMethod;
 	
 	public InnerClassRunRolezConcrete(SootClass containingClass, SootMethod sourceMethod) {
-		// Defer setting of return type
 		super("runRolez", new ArrayList<Type>(), Constants.VOID_TYPE, Modifier.PROTECTED);
 		
 		this.containingClass = containingClass;
 		this.sourceMethod = sourceMethod;
 
-		// Find and set return type
-		this.setReturnType(findReturnType());
 		generateMethodBody();
 	}
 
@@ -103,21 +100,5 @@ public class InnerClassRunRolezConcrete extends SootMethod {
 		}
 		
 		units.addFirst(J.newIdentityStmt(innerClassLocal, J.newThisRef(innerClassType)));
-	}
-	
-	private Type findReturnType() {
-		Type returnType = null;
-		
-		// TODO: Handle primitive types!!! --> This switch may grow large... :-/
-		switch (sourceMethod.getReturnType().toString()) {
-			case("void"):
-				returnType = Constants.VOID_TYPE;
-				break;
-			default:
-				returnType = sourceMethod.getReturnType();
-				break;
-		}
-		
-		return returnType;
 	}
 }
