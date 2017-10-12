@@ -68,26 +68,14 @@ public class InnerClassRunRolezConcrete extends SootMethod {
 		Iterator<Unit> unitIter = units.snapshotIterator(); 
 		while (unitIter.hasNext()) {
 			Unit u = unitIter.next();
-			
-			// Transform to field assignments
 			if (i < n) {
-				try {
-					if (u instanceof IdentityStmt) {
-						IdentityStmt idStmt = (IdentityStmt) u;
-						Value leftOp = idStmt.getLeftOp();
-						Unit newUnit = UnitFactory.newAssignFieldToLocalExpr((Local)leftOp, locals.getFirst(), containingClass, "val$f"+Integer.toString(i));
-						units.insertBefore(newUnit, u);
-						units.remove(u);
-					} else {
-						// Should always be an identity statement
-						throw new Exception();
-					}
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-			
-			else {
+				// Transform to field assignments (the first n statements should always be identity statements)
+				IdentityStmt idStmt = (IdentityStmt) u;
+				Value leftOp = idStmt.getLeftOp();
+				Unit newUnit = UnitFactory.newAssignFieldToLocalExpr((Local)leftOp, locals.getFirst(), containingClass, "val$f"+Integer.toString(i));
+				units.insertBefore(newUnit, u);
+				units.remove(u);
+			} else {
 				// The other statements except the return statements should work with the initialization from above.
 				if (u instanceof ReturnVoidStmt) {
 					Unit newReturn = J.newReturnStmt(NullConstant.v());
@@ -95,7 +83,6 @@ public class InnerClassRunRolezConcrete extends SootMethod {
 					units.remove(u);
 				}
 			}
-			
 			i++;
 		}
 		
