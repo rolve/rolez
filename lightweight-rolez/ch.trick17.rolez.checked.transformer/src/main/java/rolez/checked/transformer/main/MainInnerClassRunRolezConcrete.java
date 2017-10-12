@@ -13,6 +13,7 @@ import soot.Modifier;
 import soot.RefType;
 import soot.SootClass;
 import soot.SootMethod;
+import soot.Trap;
 import soot.Type;
 import soot.Unit;
 import soot.jimple.Jimple;
@@ -30,7 +31,6 @@ public class MainInnerClassRunRolezConcrete extends SootMethod {
 	
 	public MainInnerClassRunRolezConcrete(SootClass containingClass, SootMethod sourceMethod) {
 		super("runRolez", new ArrayList<Type>(), Constants.VOID_TYPE, Modifier.PROTECTED);
-		
 		this.containingClass = containingClass;
 		this.sourceMethod = sourceMethod;
 
@@ -58,8 +58,9 @@ public class MainInnerClassRunRolezConcrete extends SootMethod {
 		Chain<Unit> units = body.getUnits();
 		units.removeFirst();
 		units.addFirst(UnitFactory.newThisRef(thisLocal, innerClassType));
-		
+
+		Unit returnStmt = J.newReturnStmt(NullConstant.v());
+		units.insertBefore(returnStmt, units.getLast());
 		units.removeLast();
-		units.addLast(J.newReturnStmt(NullConstant.v()));
 	}
 }

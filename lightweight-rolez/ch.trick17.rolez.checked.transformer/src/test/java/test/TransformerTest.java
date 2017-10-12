@@ -143,4 +143,12 @@ public class TransformerTest {
 		Pipeline p = new Pipeline(methodName, mainClass);
 		p.runDefault(true, false);
 	}
+
+	@Test
+	public void testTryCatch() {
+		String methodName = "testTryCatch";
+		String mainClass = "classes.TestTryCatch";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.runDefault(true, true);
+	}
 }

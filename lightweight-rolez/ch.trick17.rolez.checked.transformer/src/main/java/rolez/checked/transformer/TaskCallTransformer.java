@@ -37,7 +37,7 @@ public class TaskCallTransformer extends BodyTransformer {
 	Local tasksLocal1;
 	Local taskSystemLocal;
 	
-	int numOfTaskCalls = 0;
+	int numTaskCalls = 0;
 	
 	SootMethod currentMethod;
 	
@@ -62,19 +62,19 @@ public class TaskCallTransformer extends BodyTransformer {
 		
 		if (taskCalls.size() > 0) {
 			insertTaskLocalsAndStmts(locals, units, traps);
-			
 			for (InvokeStmt i : taskCalls) {
 				transformTaskCall(locals, units, i);
-				
-				numOfTaskCalls++;
+				numTaskCalls++;
 			}
 		}
 		
 		// Reset number of task calls
-		numOfTaskCalls = 0;
+		numTaskCalls = 0;
 	}
 	
 	private void insertTaskLocalsAndStmts(Chain<Local> locals, Chain<Unit> units, Chain<Trap> traps) {
+		
+		
 		tasksLocal0 = J.newLocal("tasks0", Constants.INTERNAL_TASKS_CLASS.getType());
 		tasksLocal1 = J.newLocal("tasks1", Constants.INTERNAL_TASKS_CLASS.getType());
 		taskSystemLocal = J.newLocal("taskSystem", Constants.TASK_SYSTEM_CLASS.getType());
@@ -95,6 +95,11 @@ public class TaskCallTransformer extends BodyTransformer {
 		
 		Unit getTaskSystem = UnitFactory.newAssignStaticInvokeExpr(taskSystemLocal, Constants.TASK_SYSTEM_CLASS, "getDefault");
 		units.insertBefore(getTaskSystem, firstRealStmt);
+		
+		// Labels slip up with units.insertBefore(), place them at firstRealStmt again
+		for(Trap t : traps)
+			if (t.getBeginUnit().equals(tasks))
+				t.setBeginUnit(firstRealStmt);
 		
 		// Surround by try finally
 		Local throwable0 = J.newLocal("throwable0", Constants.THROWABLE_CLASS.getType());
@@ -122,12 +127,11 @@ public class TaskCallTransformer extends BodyTransformer {
 	}
 	
 	private Unit findFirstNonIdentityStmt(Chain<Unit> units) {
-		for (Unit u : units) {
-			if (!(u instanceof IdentityStmt)) {
+		for (Unit u : units)
+			if (!(u instanceof IdentityStmt))
 				return u;
-			}
-		}
-		// TODO: This point should never be reached because there is at least the task call stmt that was found
+		
+		// This point should never be reached because there is at least the task call stmt that was found
 		throw new RuntimeException("There was no non-identity statement found!");
 	}
 	
@@ -151,16 +155,17 @@ public class TaskCallTransformer extends BodyTransformer {
 		Unit ifStmt = J.newIfStmt(J.newEqExpr(booleanValue, IntConstant.v(0)), taskCall);
 		units.insertAfter(ifStmt, prevStmt);
 		
-		Local taskLocal0 = J.newLocal("$task" + Integer.toString(numOfTaskCalls), Constants.TASK_CLASS.getType());
-		Local taskLocal1 = J.newLocal("task" + Integer.toString(numOfTaskCalls), Constants.TASK_CLASS.getType());
+		Local taskLocal0 = J.newLocal("$task" + Integer.toString(numTaskCalls), Constants.TASK_CLASS.getType());
+		Local taskLocal1 = J.newLocal("task" + Integer.toString(numTaskCalls), Constants.TASK_CLASS.getType());
 		locals.add(taskLocal0);
 		locals.add(taskLocal1);
 
-		 Unit getTaskFromTaskMethod = J.newAssignStmt(taskLocal0,
-				J.newVirtualInvokeExpr(
-						base, 
-						declaringClass.getMethod(Util.getTaskMethodNameFromMethod(invokedMethod), invokedMethod.getParameterTypes()).makeRef(),
-						invokeExpr.getArgs()));
+		 Unit getTaskFromTaskMethod = J.newAssignStmt(
+				 taskLocal0,
+				 J.newVirtualInvokeExpr(
+						 base, 
+						 declaringClass.getMethod(Util.getTaskMethodNameFromMethod(invokedMethod), invokedMethod.getParameterTypes()).makeRef(),
+						 invokeExpr.getArgs()));
 		units.insertAfter(getTaskFromTaskMethod, ifStmt);
 		
 		Unit startTask = UnitFactory.newAssignVirtualInvokeExpr(taskLocal1, taskSystemLocal, Constants.TASK_SYSTEM_CLASS, "start", new Local[] { taskLocal0 });
