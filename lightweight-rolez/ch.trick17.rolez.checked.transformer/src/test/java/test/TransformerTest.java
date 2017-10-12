@@ -127,4 +127,12 @@ public class TransformerTest {
 		Pipeline p = new Pipeline(methodName, mainClass);
 		p.runDefault(true, false);
 	}
+
+	@Test
+	public void testGuardReadwrite() {
+		String methodName = "testGuardReadwrite";
+		String mainClass = "classes.TestGuardReadwrite";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.runDefault(true, false);
+	}
 }
