@@ -174,31 +174,30 @@ public class TaskMethod extends SootMethod {
 	 * <code>parameterRoles</code> array.
 	 */
 	private void findParameterRoles() {
+		int roleArrayIndex = 0;
 		List<Tag> tags = sourceMethod.getTags();
 		for (Tag t : tags) {
 			if (t instanceof VisibilityParameterAnnotationTag) {
 				VisibilityParameterAnnotationTag vpaTag = (VisibilityParameterAnnotationTag) t;
 				for (VisibilityAnnotationTag vaTag : vpaTag.getVisibilityAnnotations()) {
 					ArrayList<AnnotationTag> annotations = vaTag.getAnnotations();
-					int arrayIndex = 0;
-					// TODO: What happens with other annotations in the code? Have to handle this case eventually...
 					if (annotations != null) {
 						for (AnnotationTag aTag : vaTag.getAnnotations()) {
 							switch (aTag.getType()) {
 								case (Constants.READONLY_ANNOTATION):
-									parameterRoles[arrayIndex] = Role.READONLY;
+									parameterRoles[roleArrayIndex] = Role.READONLY;
 									break;
 								case (Constants.READWRITE_ANNOTATION):
-									parameterRoles[arrayIndex] = Role.READWRITE;
+									parameterRoles[roleArrayIndex] = Role.READWRITE;
 									break;
 								case (Constants.PURE_ANNOTATION):
-									parameterRoles[arrayIndex] = Role.PURE;
+									parameterRoles[roleArrayIndex] = Role.PURE;
 									break;
 								default:
 									// Should not happen
 									break;
 							}
-							arrayIndex++;
+							roleArrayIndex++;
 						}
 					}
 				}
