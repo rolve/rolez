@@ -197,9 +197,9 @@ public class TaskMethod extends SootMethod {
 									// Should not happen
 									break;
 							}
-							roleArrayIndex++;
 						}
 					}
+					roleArrayIndex++;
 				}
 			}
 		}

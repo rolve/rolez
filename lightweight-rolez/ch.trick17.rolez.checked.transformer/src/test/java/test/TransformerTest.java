@@ -174,4 +174,12 @@ public class TransformerTest {
 		Pipeline p = new Pipeline(methodName, mainClass);
 		p.runDefault(true, false);
 	}
+
+	@Test
+	public void testTaskWithUncheckedParams() {
+		String methodName = "testTaskWithUncheckedParams";
+		String mainClass = "classes.TestTaskWithUncheckedParams";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.runDefault(true, false);
+	}
 }
