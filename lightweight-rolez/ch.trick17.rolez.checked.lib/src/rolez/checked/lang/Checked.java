@@ -35,7 +35,7 @@ public class Checked extends Guarded {
 	protected <G extends Checked> void isLegalRead() {
 		Role declaredRole = this.getDeclaredRole();
 		if (declaredRole == Role.PURE) {
-			throw new NonSufficentRoleException("Cannot perform  read operation on " + this.toString() + " declared role is "
+			throw new NonSufficentRoleException("Cannot perform read operation on " + this.toString() + " declared role is "
 					 + declaredRole.toString() + ".");
 		}
 	}
@@ -53,7 +53,7 @@ public class Checked extends Guarded {
 	protected <G extends Checked> void isLegalWrite() {
 		Role declaredRole = this.getDeclaredRole();
 		if (declaredRole == Role.PURE || declaredRole == Role.READONLY) {
-			throw new NonSufficentRoleException("Cannot perform  write operation on " + this.toString() + " declared role is "
+			throw new NonSufficentRoleException("Cannot perform write operation on " + this.toString() + " declared role is "
 					 + declaredRole.toString() + ".");
 		}
 	}
