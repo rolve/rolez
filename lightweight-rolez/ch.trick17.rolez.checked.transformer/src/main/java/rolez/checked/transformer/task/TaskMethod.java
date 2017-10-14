@@ -49,11 +49,8 @@ public class TaskMethod extends SootMethod {
 		parameterRoles = new Role[sourceMethod.getParameterCount()];
 		thisRole = Util.getThisRole(sourceMethod);
 		
-		// if there are no reference types, we can add null as role for every parameter
 		if (hasRefTypeParameters())
 			findParameterRoles();
-		else
-			for (int i=0; i<parameterRoles.length; i++) parameterRoles[i] = null;
 
 		generateMethodBody();
 	}
@@ -106,7 +103,7 @@ public class TaskMethod extends SootMethod {
 				
 		units.add(UnitFactory.newAssignNewExpr(innerClassReferenceLocal, innerClass));
 		
-		int[] objectArraySizes = getObjectArraySizes();
+		int[] objectArraySizes = getRoleArraySizes();
 		
 		units.add(UnitFactory.newAssignNewArrayExpr(objectArrayLocals.get(0), Constants.OBJECT_CLASS.getType(), objectArraySizes[0]));
 		units.add(UnitFactory.newAssignNewArrayExpr(objectArrayLocals.get(1), Constants.OBJECT_CLASS.getType(), objectArraySizes[1]));
@@ -210,7 +207,7 @@ public class TaskMethod extends SootMethod {
 	 * [1] containing the readonly count and [2] containing the pure count.
 	 * @return
 	 */
-	private int[] getObjectArraySizes() {
+	private int[] getRoleArraySizes() {
 		int[] arraySizes = new int[3];
 		for (Role r : parameterRoles) {
 			if (r != null) {
