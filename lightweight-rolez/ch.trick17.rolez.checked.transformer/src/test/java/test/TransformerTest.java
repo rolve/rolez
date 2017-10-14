@@ -188,6 +188,6 @@ public class TransformerTest {
 		String methodName = "testTaskWithSameParams";
 		String mainClass = "classes.TestTaskWithSameParams";
 		Pipeline p = new Pipeline(methodName, mainClass);
-		p.runDefault(true, true);
+		p.runDefault(true, false);
 	}
 }
