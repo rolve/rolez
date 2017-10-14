@@ -198,4 +198,12 @@ public class TransformerTest {
 		Pipeline p = new Pipeline(methodName, mainClass);
 		p.runExpectNonSufficientRoleError(false);
 	}
+
+	@Test
+	public void testCast() {
+		String methodName = "testCast";
+		String mainClass = "classes.TestCast";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.runDefault(true, false);
+	}
 }
