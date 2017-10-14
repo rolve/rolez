@@ -42,12 +42,20 @@ public class ClassTransformer extends SceneTransformer {
 		Chain<SootClass> classesToProcess = Scene.v().getApplicationClasses();
 		
 		for (SootClass c : classesToProcess) 
-			processClass(c);
+			transformClass(c);
+		
+		// Add GuardedRefs methods to all the checked classes
+		for (SootClass c : classesToProcess) {
+			if (Util.isCheckedClass(c)) {
+				GuardedRefsMethod guardedRefs = new GuardedRefsMethod(c);
+				c.addMethod(guardedRefs);
+			}
+		}
 		
 		addInnerClassesToApplicationClasses();
 	}
 	
-	private void processClass(SootClass c) {
+	private void transformClass(SootClass c) {
 		logger.debug("Processing class: " + c.getName());
 	
 		// Generate main task if this is the main class
@@ -59,16 +67,14 @@ public class ClassTransformer extends SceneTransformer {
 			this.generatedInnerClasses.add(mainTaskGenerator.getInnerClass());
 		}
 
-		
 		if (Util.isCheckedClass(c)) {
-			GuardedRefsMethod guardedRefs = new GuardedRefsMethod(c);
-			c.addMethod(guardedRefs);
 			if (Util.isExtendingObject(c)) {
 				c.setSuperclass(Constants.CHECKED_CLASS);
 				replaceConstructors(c);
 			}
 		}
 		
+		// Process methods which are tasks
 		processMethods(c);
 	}
 	
