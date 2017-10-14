@@ -206,4 +206,21 @@ public class TransformerTest {
 		Pipeline p = new Pipeline(methodName, mainClass);
 		p.runDefault(true, false);
 	}
+
+	// TODO: Discuss the following two tests with Michael
+//	@Test
+//	public void testMultiShare() {
+//		String methodName = "testMultiShare";
+//		String mainClass = "classes.TestMultiShare";
+//		Pipeline p = new Pipeline(methodName, mainClass);
+//		p.runDefault(true, false);
+//	}
+
+	@Test
+	public void testShareReadonly() {
+		String methodName = "testShareReadonly";
+		String mainClass = "classes.TestShareReadonly";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.runDefault(false, false);
+	}
 }
