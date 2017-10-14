@@ -2,7 +2,6 @@ package test;
 
 import org.junit.Test;
 
-import rolez.checked.transformer.exceptions.ConstructorTaskCallException;
 import test.util.Pipeline;
 
 public class TransformerTest {
@@ -150,5 +149,29 @@ public class TransformerTest {
 		String mainClass = "classes.TestTryCatch";
 		Pipeline p = new Pipeline(methodName, mainClass);
 		p.runDefault(true, true);
+	}
+
+	@Test
+	public void testForLoop() {
+		String methodName = "testForLoop";
+		String mainClass = "classes.TestForLoop";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.runDefault(true, false);
+	}
+
+	@Test
+	public void testWhileLoop() {
+		String methodName = "testWhileLoop";
+		String mainClass = "classes.TestWhileLoop";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.runDefault(true, false);
+	}
+
+	@Test
+	public void testDifferentPackages() {
+		String methodName = "testDifferentPackages";
+		String mainClass = "classes.TestDifferentPackages";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.runDefault(true, false);
 	}
 }
