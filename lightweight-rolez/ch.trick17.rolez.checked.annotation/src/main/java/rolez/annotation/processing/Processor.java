@@ -77,7 +77,35 @@ public class Processor extends AbstractProcessor {
 	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment env) {
 		processCheckedAnnotations(env);
 		processTaskAnnotations(env);
+		processRoleAnnotations(env);
 		return true;
+	}
+	
+	private void processRoleAnnotations(RoundEnvironment env) {
+		for (Element annotatedElement : env.getElementsAnnotatedWith(Pure.class)) {
+			checkRoleAnnotation(annotatedElement, Pure.class);
+		}
+		for (Element annotatedElement : env.getElementsAnnotatedWith(Readonly.class)) {
+			checkRoleAnnotation(annotatedElement, Readonly.class);
+		}
+		for (Element annotatedElement : env.getElementsAnnotatedWith(Readwrite.class)) {
+			checkRoleAnnotation(annotatedElement, Readwrite.class);
+		}
+	}
+	
+	private void checkRoleAnnotation(Element element, Class<?> annotationClass) {
+		if (element instanceof ExecutableElement) {
+			if (element.getAnnotation(Roleztask.class) == null) {
+				Message message = new Message(Kind.ERROR, "The @" + annotationClass.getSimpleName() + " annotation can only be placed on methods annotated with @Roleztask.", element);
+				message.print(messager);
+			}
+		}
+		if (element instanceof VariableElement) {
+			if (element.getEnclosingElement().getAnnotation(Roleztask.class) == null) {
+				Message message = new Message(Kind.ERROR, "The @" + annotationClass.getSimpleName() + " annotation can only be placed on parameter of methods annotated with @Roleztask.", element);
+				message.print(messager);
+			}
+		}
 	}
 	
 	/**
