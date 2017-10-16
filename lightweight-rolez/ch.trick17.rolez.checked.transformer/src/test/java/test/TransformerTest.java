@@ -238,4 +238,12 @@ public class TransformerTest {
 		Pipeline p = new Pipeline(methodName, mainClass);
 		p.runDefault(true, false);
 	}
+
+	@Test
+	public void testOptimizedChecks() {
+		String methodName = "testOptimizedChecks";
+		String mainClass = "classes.TestOptimizedChecks";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.runDefault(true, false);
+	}
 }
