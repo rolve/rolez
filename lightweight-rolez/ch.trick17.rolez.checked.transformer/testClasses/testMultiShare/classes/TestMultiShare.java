@@ -16,6 +16,12 @@ public class TestMultiShare {
 		instance.task1(a, true);
 		System.out.println("Starting task 2");
 		instance.task2(a, true);
+		try {
+			// Sleep long enough that task 2 can start before
+			Thread.sleep(500);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 		System.out.println("Starting task 1");
 		instance.task1(a, true);
 	}
@@ -23,13 +29,13 @@ public class TestMultiShare {
 	@Roleztask
 	void task1(@Readonly A a, boolean $asTask) {
 		try {
-			// Sleep long enough that task 2 can start before
-			Thread.sleep(5000);
-			System.out.println("Task1 starts working");
-			System.out.println(a.s);
+			// Sleep long enough that main task can continue
+			Thread.sleep(500);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+		System.out.println("Task1 starts working");
+		System.out.println(a.s);
 	}
 
 	@Roleztask
