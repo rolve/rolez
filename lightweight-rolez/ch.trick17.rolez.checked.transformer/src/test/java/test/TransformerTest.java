@@ -148,7 +148,7 @@ public class TransformerTest {
 		String methodName = "testTryCatch";
 		String mainClass = "classes.TestTryCatch";
 		Pipeline p = new Pipeline(methodName, mainClass);
-		p.runDefault(true, true);
+		p.runDefault(true, false);
 	}
 
 	@Test
@@ -228,6 +228,14 @@ public class TransformerTest {
 		String methodName = "testInterfaces";
 		String mainClass = "classes.TestInterfaces";
 		Pipeline p = new Pipeline(methodName, mainClass);
-		p.runDefault(true, true);
+		p.runDefault(true, false);
+	}
+
+	@Test
+	public void testCheckThis() {
+		String methodName = "testCheckThis";
+		String mainClass = "classes.TestCheckThis";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.runDefault(true, false);
 	}
 }
