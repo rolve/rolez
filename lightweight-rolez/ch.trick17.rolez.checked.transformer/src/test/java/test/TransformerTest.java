@@ -222,4 +222,12 @@ public class TransformerTest {
 		Pipeline p = new Pipeline(methodName, mainClass);
 		p.runDefault(false, false);
 	}
+
+	@Test
+	public void testInterfaces() {
+		String methodName = "testInterfaces";
+		String mainClass = "classes.TestInterfaces";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.runDefault(true, true);
+	}
 }
