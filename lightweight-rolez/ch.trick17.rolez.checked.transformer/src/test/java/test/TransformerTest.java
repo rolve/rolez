@@ -254,4 +254,12 @@ public class TransformerTest {
 		Pipeline p = new Pipeline(methodName, mainClass);
 		p.runDefault(true, false);
 	}
+
+	@Test
+	public void testMonteCarlo() {
+		String methodName = "testMonteCarlo";
+		String mainClass = "classes.TestMonteCarlo";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.runDefault(false, true);
+	}
 }
