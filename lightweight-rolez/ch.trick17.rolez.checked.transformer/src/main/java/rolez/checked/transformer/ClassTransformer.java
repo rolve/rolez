@@ -72,10 +72,10 @@ public class ClassTransformer extends SceneTransformer {
 				c.setSuperclass(Constants.CHECKED_CLASS);
 				replaceConstructors(c);
 			}
+
+			// Process methods which are tasks
+			processMethods(c);
 		}
-		
-		// Process methods which are tasks
-		processMethods(c);
 	}
 	
 	/**
