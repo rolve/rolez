@@ -246,4 +246,12 @@ public class TransformerTest {
 		Pipeline p = new Pipeline(methodName, mainClass);
 		p.runDefault(true, false);
 	}
+
+	@Test
+	public void testNotAsTask() {
+		String methodName = "testNotAsTask";
+		String mainClass = "classes.TestNotAsTask";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.runDefault(true, false);
+	}
 }
