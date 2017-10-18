@@ -16,7 +16,6 @@ import soot.SootClass;
 import soot.SootMethod;
 import soot.Type;
 import soot.Unit;
-import soot.JastAddJ.ReturnStmt;
 import soot.jimple.Jimple;
 import soot.jimple.NullConstant;
 import soot.jimple.ReturnVoidStmt;
