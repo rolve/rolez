@@ -311,6 +311,27 @@ public class Processor extends AbstractProcessor {
 	 * @param overriddenMethod
 	 */
 	private void checkInvariantRoleAnnotations(ExecutableElement overrider, ExecutableElement overriddenMethod) {
+		if (overriddenMethod.getAnnotation(Pure.class) != null) {
+			if (overrider.getAnnotation(Readwrite.class) != null || overrider.getAnnotation(Readonly.class) != null) {
+				Message message = new Message(Kind.ERROR, "Put the @Pure role here, since the overriden method in class " + overriddenMethod.toString() + " declares the @Pure "
+						+ "role for the method.", overrider);
+				message.print(messager);
+			}
+		}
+		if (overriddenMethod.getAnnotation(Readonly.class) != null) {
+			if (overrider.getAnnotation(Readonly.class) == null) {
+				Message message = new Message(Kind.ERROR, "Put the @Readonly role here, since the overriden method in class " + overriddenMethod.toString() + " declares the @Readonly "
+						+ "role for the method.", overrider);
+				message.print(messager);
+			}
+		}
+		if (overriddenMethod.getAnnotation(Readwrite.class) != null) {
+			if (overrider.getAnnotation(Readwrite.class) == null) {
+				Message message = new Message(Kind.ERROR, "Put the @Readwrite role here, since the overriden method in class " + overriddenMethod.toString() + " declares the @Readonly "
+						+ "role for the method.", overrider);
+				message.print(messager);
+			}
+		}
 		List<? extends VariableElement> parameters = overrider.getParameters();
 		List<? extends VariableElement> superParameters = overriddenMethod.getParameters();
 		for (int i=0; i<superParameters.size(); i++) {
