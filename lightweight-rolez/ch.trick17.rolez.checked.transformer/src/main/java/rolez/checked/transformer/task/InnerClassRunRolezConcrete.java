@@ -52,7 +52,7 @@ public class InnerClassRunRolezConcrete extends SootMethod {
 		this.setActiveBody((Body)srcMethodBody.clone());
 		Body body = this.getActiveBody();
 		
-		// Change type of first local to inner class type
+		// Create new local for the inner calss type
 		Chain<Local> locals = body.getLocals();
 		Local innerClassLocal = J.newLocal("inner", containingClass.getType());
 		locals.addFirst(innerClassLocal);
@@ -60,11 +60,9 @@ public class InnerClassRunRolezConcrete extends SootMethod {
 		// Transform the units of the source method
 		Chain<Unit> units = body.getUnits();
 		
-		// Refer to fields instead of parameters for the first n identity statements (n = #params + 1)
+		// Refer to fields instead of parameters for the first n + 1 identity statements (n = #params + 1)
 		int n = sourceMethod.getParameterCount() + 1;
-
 		int i = 0;
-		
 		Iterator<Unit> unitIter = units.snapshotIterator(); 
 		while (unitIter.hasNext()) {
 			Unit u = unitIter.next();
@@ -75,13 +73,11 @@ public class InnerClassRunRolezConcrete extends SootMethod {
 				Unit newUnit = UnitFactory.newAssignFieldToLocalExpr((Local)leftOp, locals.getFirst(), containingClass, "val$f"+Integer.toString(i));
 				units.insertBefore(newUnit, u);
 				units.remove(u);
-			} else {
+			} else if (u instanceof ReturnVoidStmt) {
 				// The other statements except the return statements should work with the initialization from above.
-				if (u instanceof ReturnVoidStmt) {
-					Unit newReturn = J.newReturnStmt(NullConstant.v());
-					units.insertBefore(newReturn, u);
-					units.remove(u);
-				}
+				Unit newReturn = J.newReturnStmt(NullConstant.v());
+				units.insertBefore(newReturn, u);
+				units.remove(u);
 			}
 			i++;
 		}
