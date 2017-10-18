@@ -1,6 +1,7 @@
 package rolez.checked.transformer;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -24,6 +25,7 @@ import soot.jimple.IntConstant;
 import soot.jimple.InvokeExpr;
 import soot.jimple.InvokeStmt;
 import soot.jimple.Jimple;
+import soot.jimple.NopStmt;
 import soot.jimple.VirtualInvokeExpr;
 import soot.util.Chain;
 
@@ -68,12 +70,14 @@ public class TaskCallTransformer extends BodyTransformer {
 			}
 		}
 		
+		// Remove all inserted nop statements
+		removeNopStmts(units);
+		
 		// Reset number of task calls
 		numTaskCalls = 0;
 	}
 	
 	private void insertTaskLocalsAndStmts(Chain<Local> locals, Chain<Unit> units, Chain<Trap> traps) {
-		
 		
 		tasksLocal0 = J.newLocal("tasks0", Constants.INTERNAL_TASKS_CLASS.getType());
 		tasksLocal1 = J.newLocal("tasks1", Constants.INTERNAL_TASKS_CLASS.getType());
@@ -143,17 +147,15 @@ public class TaskCallTransformer extends BodyTransformer {
 		SootClass declaringClass = invokedMethod.getDeclaringClass();
 		List<Value> args = invokeExpr.getArgs();
 		Value booleanValue = args.get(args.size()-1);
-
-		Unit prevStmt = units.getPredOf(taskCall);
 		
-		/* Insert a nop stmt as successor to get the right point for the goto stmt added last in this method
-		 * Otherwise there is a weird outcome if more than one task is called
-		 */
-		Unit succStmt = J.newNopStmt();
-		units.insertAfter(succStmt, taskCall);
+		// Insert nop stmts before and after the task call to prevent weird behavior with labels
+		Unit nopBefore = J.newNopStmt();
+		Unit nopAfter = J.newNopStmt();
+		units.insertBefore(nopBefore, taskCall);
+		units.insertAfter(nopAfter, taskCall);
 		
 		Unit ifStmt = J.newIfStmt(J.newEqExpr(booleanValue, IntConstant.v(0)), taskCall);
-		units.insertAfter(ifStmt, prevStmt);
+		units.insertAfter(ifStmt, nopBefore);
 		
 		Local taskLocal0 = J.newLocal("$task" + Integer.toString(numTaskCalls), Constants.TASK_CLASS.getType());
 		Local taskLocal1 = J.newLocal("task" + Integer.toString(numTaskCalls), Constants.TASK_CLASS.getType());
@@ -174,8 +176,18 @@ public class TaskCallTransformer extends BodyTransformer {
 		Unit addInline = UnitFactory.newVirtualInvokeExpr(tasksLocal0, Constants.INTERNAL_TASKS_CLASS, "addInline", new Local[] { taskLocal1 });
 		units.insertAfter(addInline, startTask);
 		
-		Unit gotoSucc = J.newGotoStmt(succStmt);
+		Unit gotoSucc = J.newGotoStmt(nopAfter);
 		units.insertAfter(gotoSucc, addInline);
+	}
+	
+	private void removeNopStmts(Chain<Unit> units) {
+		Iterator<Unit> unitIter = units.snapshotIterator(); 
+		while (unitIter.hasNext()) {
+			Unit u = unitIter.next();
+			if (u instanceof NopStmt) {
+				units.remove(u);
+			}
+		}
 	}
 	
 	private List<InvokeStmt> findTaskCalls(Chain<Unit> units) {
