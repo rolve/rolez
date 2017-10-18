@@ -306,7 +306,7 @@ public class Processor extends AbstractProcessor {
 	
 	/**
 	 * For a task overriding another task, this method checks whether the role annotations for 
-	 * the parameters match or not.
+	 * the parameters are invariant or not.
 	 * @param overrider
 	 * @param overriddenMethod
 	 */
