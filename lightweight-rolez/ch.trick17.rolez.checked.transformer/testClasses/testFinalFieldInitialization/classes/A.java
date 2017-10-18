@@ -12,6 +12,10 @@ public class A {
 		this.s = "Hello world!";
 	}
 
+	A(String s) {
+		this.s = s;
+	}
+	
 	@Roleztask
 	void task(boolean $asTask) {
 		System.out.println(this.s);
