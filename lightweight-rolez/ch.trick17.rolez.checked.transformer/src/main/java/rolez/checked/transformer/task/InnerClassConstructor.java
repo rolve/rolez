@@ -47,48 +47,47 @@ public class InnerClassConstructor extends SootMethod {
 	
 	private void generateMethodBody() {
 		
-		// Useful variables
-		int offset = 5;
-		int numberOffset = 4;
-		
 		JimpleBody body = J.newBody(this);
 		this.setActiveBody(body);
 		
-		// All local variables that have to be added to the body
-		List<Local> locals = new ArrayList<Local>();
-		locals.add(J.newLocal("r0", containingClass.getType()));
-		locals.add(J.newLocal("r1", outerClass.getType()));
-		locals.add(J.newLocal("r2", Constants.OBJECT_ARRAY_TYPE));
-		locals.add(J.newLocal("r3", Constants.OBJECT_ARRAY_TYPE));
-		locals.add(J.newLocal("r4", Constants.OBJECT_ARRAY_TYPE));
-		for (int i=0; i<sourceMethodParameterTypes.size(); i++) {
-			locals.add(J.newLocal("r"+Integer.toString(offset + i), sourceMethodParameterTypes.get(i)));
-		}
+		Chain<Local> locals = body.getLocals();
 		
-		// Add the locals to the body
-		Chain<Local> bodyLocals = body.getLocals();
-		bodyLocals.addAll(locals);
+		// All local variables that have to be added to the body
+		Local containingClassLocal = J.newLocal("r0", containingClass.getType());
+		locals.add(containingClassLocal);
+		Local outerClassLocal = J.newLocal("r1", outerClass.getType());
+		locals.add(outerClassLocal);
+		Local readwriteArrayLocal = J.newLocal("r2", Constants.OBJECT_ARRAY_TYPE);
+		locals.add(readwriteArrayLocal);
+		Local readonlyArrayLocal = J.newLocal("r3", Constants.OBJECT_ARRAY_TYPE);
+		locals.add(readonlyArrayLocal);
+		Local pureArrayLocal = J.newLocal("r4", Constants.OBJECT_ARRAY_TYPE);
+		locals.add(pureArrayLocal);
+
+		List<Local> parameterLocals = new ArrayList<Local>();
+		for (int i=0; i<sourceMethodParameterTypes.size(); i++)
+			parameterLocals.add(J.newLocal("arg"+Integer.toString(i), sourceMethodParameterTypes.get(i)));
+		locals.addAll(parameterLocals);
 		
 		Chain<Unit> units = body.getUnits();
-		units.add(UnitFactory.newThisRef(locals.get(0), containingClass.getType()));
-		units.add(UnitFactory.newParameterRef(locals.get(1), outerClass.getType(), 0));
-		units.add(UnitFactory.newParameterRef(locals.get(2), Constants.OBJECT_ARRAY_TYPE, 1));
-		units.add(UnitFactory.newParameterRef(locals.get(3), Constants.OBJECT_ARRAY_TYPE, 2));
-		units.add(UnitFactory.newParameterRef(locals.get(4), Constants.OBJECT_ARRAY_TYPE, 3));
-		for (int i=0; i<sourceMethodParameterTypes.size(); i++) {
-			units.add(UnitFactory.newParameterRef(locals.get(i+offset), sourceMethodParameterTypes.get(i), i+numberOffset));
-		}
+		int paramRefNumber = 0;
+		units.add(UnitFactory.newThisRef(containingClassLocal, containingClass.getType()));
+		units.add(UnitFactory.newParameterRef(outerClassLocal, outerClass.getType(), paramRefNumber++));
+		units.add(UnitFactory.newParameterRef(readwriteArrayLocal, Constants.OBJECT_ARRAY_TYPE, paramRefNumber++));
+		units.add(UnitFactory.newParameterRef(readonlyArrayLocal, Constants.OBJECT_ARRAY_TYPE, paramRefNumber++));
+		units.add(UnitFactory.newParameterRef(pureArrayLocal, Constants.OBJECT_ARRAY_TYPE, paramRefNumber++));
+		for (int i=0; i<sourceMethodParameterTypes.size(); i++)
+			units.add(UnitFactory.newParameterRef(parameterLocals.get(i), sourceMethodParameterTypes.get(i), paramRefNumber++));
 		
-		// Set field field for outer class ref
-		units.add(UnitFactory.newAssignLocalToFieldExpr(locals.get(0), containingClass, "val$f0", locals.get(1)));
+		// Set field for outer class reference
+		units.add(UnitFactory.newAssignLocalToFieldExpr(containingClassLocal, containingClass, "val$f0", outerClassLocal));
 		
 		// Set fields for method parameters
-		for (int i=0; i<sourceMethod.getParameterCount(); i++) {
-			units.add(UnitFactory.newAssignLocalToFieldExpr(locals.get(0), containingClass, "val$f" + Integer.toString(i+1), locals.get(offset + i)));
-		}
+		for (int i=0; i<sourceMethod.getParameterCount(); i++)
+			units.add(UnitFactory.newAssignLocalToFieldExpr(containingClassLocal, containingClass, "val$f" + Integer.toString(i+1), parameterLocals.get(i)));
 		
 		// Add the call to superclass constructor
-		units.add(UnitFactory.newSpecialInvokeExpr(locals.get(0), Constants.TASK_CLASS, "<init>", new Local[] {	locals.get(2), locals.get(3), locals.get(4)}));
+		units.add(UnitFactory.newSpecialInvokeExpr(containingClassLocal, Constants.TASK_CLASS, "<init>", new Local[] {	readwriteArrayLocal, readonlyArrayLocal, pureArrayLocal }));
 		
 		// Add return statement
 		units.add(J.newReturnVoidStmt());
@@ -106,11 +105,9 @@ public class InnerClassConstructor extends SootMethod {
 		parameterTypes.add(Constants.OBJECT_ARRAY_TYPE);
 		parameterTypes.add(Constants.OBJECT_ARRAY_TYPE);
 		
-		// TODO: Don't add the boolean $asTask to the list... Or does it even matter?
 		// Add all original method parameters
-		for (Type t : sourceMethodParameterTypes) {
+		for (Type t : sourceMethodParameterTypes)
 			parameterTypes.add(t);
-		}
 		
 		return parameterTypes;
 	}

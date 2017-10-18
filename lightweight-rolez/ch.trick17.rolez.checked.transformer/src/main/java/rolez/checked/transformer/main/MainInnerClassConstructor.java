@@ -43,30 +43,32 @@ public class MainInnerClassConstructor extends SootMethod {
 		
 		JimpleBody body = J.newBody(this);
 		
-		// All local variables that have to be added to the body
-		List<Local> locals = new ArrayList<Local>();
-		locals.add(J.newLocal("r0", containingClass.getType()));
-		locals.add(J.newLocal("r1", outerClass.getType()));
-		locals.add(J.newLocal("r2", Constants.OBJECT_ARRAY_TYPE));
-		locals.add(J.newLocal("r3", Constants.OBJECT_ARRAY_TYPE));
-		locals.add(J.newLocal("r4", Constants.OBJECT_ARRAY_TYPE));
+		Chain<Local> locals = body.getLocals();
 		
-		// Add the locals to the body
-		Chain<Local> bodyLocals = body.getLocals();
-		bodyLocals.addAll(locals);
+		// All local variables that have to be added to the body
+		Local containingClassLocal = J.newLocal("r0", containingClass.getType());
+		locals.add(containingClassLocal);
+		Local outerClassLocal = J.newLocal("r1", outerClass.getType());
+		locals.add(outerClassLocal);
+		Local readwriteArrayLocal = J.newLocal("r2", Constants.OBJECT_ARRAY_TYPE);
+		locals.add(readwriteArrayLocal);
+		Local readonlyArrayLocal = J.newLocal("r3", Constants.OBJECT_ARRAY_TYPE);
+		locals.add(readonlyArrayLocal);
+		Local pureArrayLocal = J.newLocal("r4", Constants.OBJECT_ARRAY_TYPE);
+		locals.add(pureArrayLocal);
 		
 		Chain<Unit> units = body.getUnits();
-		units.add(UnitFactory.newThisRef(locals.get(0), containingClass.getType()));
-		units.add(UnitFactory.newParameterRef(locals.get(1), outerClass.getType(), 0));
-		units.add(UnitFactory.newParameterRef(locals.get(2), Constants.OBJECT_ARRAY_TYPE, 1));
-		units.add(UnitFactory.newParameterRef(locals.get(3), Constants.OBJECT_ARRAY_TYPE, 2));
-		units.add(UnitFactory.newParameterRef(locals.get(4), Constants.OBJECT_ARRAY_TYPE, 3));
+		units.add(UnitFactory.newThisRef(containingClassLocal, containingClass.getType()));
+		units.add(UnitFactory.newParameterRef(outerClassLocal, outerClass.getType(), 0));
+		units.add(UnitFactory.newParameterRef(readwriteArrayLocal, Constants.OBJECT_ARRAY_TYPE, 1));
+		units.add(UnitFactory.newParameterRef(readonlyArrayLocal, Constants.OBJECT_ARRAY_TYPE, 2));
+		units.add(UnitFactory.newParameterRef(pureArrayLocal, Constants.OBJECT_ARRAY_TYPE, 3));
 		
 		// Set field field for outer class ref
-		units.add(UnitFactory.newAssignLocalToFieldExpr(locals.get(0), containingClass, "val$f0", locals.get(1)));
+		units.add(UnitFactory.newAssignLocalToFieldExpr(containingClassLocal, containingClass, "val$f0", outerClassLocal));
 		
 		// Add the call to superclass constructor
-		units.add(UnitFactory.newSpecialInvokeExpr(locals.get(0), Constants.TASK_CLASS, "<init>", new Local[] {	locals.get(2), locals.get(3), locals.get(4)}));
+		units.add(UnitFactory.newSpecialInvokeExpr(containingClassLocal, Constants.TASK_CLASS, "<init>", new Local[] { readwriteArrayLocal, readonlyArrayLocal, pureArrayLocal}));
 		
 		// Add return statement
 		units.add(J.newReturnVoidStmt());
