@@ -1,7 +1,7 @@
 package classes;
 
 import rolez.annotation.Checked;
-import rolez.annotation.Roleztask;
+import rolez.annotation.Task;
 import rolez.annotation.Readonly;
 
 @Checked
@@ -16,7 +16,7 @@ public class TestRefGuardingFail {
 		instance.task(a, true);
 	}
 	
-	@Roleztask
+	@Task
 	void task(@Readonly A a, boolean $asTask) {
 		a.b.s = "Hello hell!";
 		System.out.println(a.b.s);

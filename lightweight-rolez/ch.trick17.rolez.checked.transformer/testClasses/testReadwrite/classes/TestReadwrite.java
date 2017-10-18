@@ -1,7 +1,7 @@
 package classes;
 
 import rolez.annotation.Checked;
-import rolez.annotation.Roleztask;
+import rolez.annotation.Task;
 import rolez.annotation.Readwrite;
 
 @Checked
@@ -13,7 +13,7 @@ public class TestReadwrite {
 		instance.task(a, true);
 	}
 	
-	@Roleztask
+	@Task
 	void task(@Readwrite A a, boolean $asTask) {
 		a.message = "Hello world!";
 		System.out.println(a.message);

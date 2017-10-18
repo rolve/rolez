@@ -29,7 +29,7 @@ public class Constants {
 	public static final ArrayType OBJECT_ARRAY_TYPE = ArrayType.v(RefType.v(OBJECT_CLASS),1);
 	public static final Type VOID_TYPE = RefType.v("java.lang.Void");
 	
-	public static final String ROLEZTASK_ANNOTATION = "Lrolez/annotation/Roleztask;";
+	public static final String TASK_ANNOTATION = "Lrolez/annotation/Task;";
 	public static final String CHECKED_ANNOTATION = "Lrolez/annotation/Checked;";
 	public static final String READONLY_ANNOTATION = "Lrolez/annotation/Readonly;";
 	public static final String READWRITE_ANNOTATION = "Lrolez/annotation/Readwrite;";

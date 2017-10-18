@@ -1,7 +1,7 @@
 package classes;
 
 import rolez.annotation.Checked;
-import rolez.annotation.Roleztask;
+import rolez.annotation.Task;
 
 @Checked
 public class TestWhileLoop {
@@ -15,7 +15,7 @@ public class TestWhileLoop {
 		}
 	}
 	
-	@Roleztask
+	@Task
 	void task(boolean $asTask) {
 		System.out.println("Hello world!");
 	}

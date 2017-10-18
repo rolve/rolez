@@ -1,7 +1,7 @@
 package classes;
 
 import rolez.annotation.Checked;
-import rolez.annotation.Roleztask;
+import rolez.annotation.Task;
 import rolez.annotation.Readwrite;
 
 @Checked
@@ -19,7 +19,7 @@ public class TestCheckThis {
 	}
 	
 	@Readwrite
-	@Roleztask
+	@Task
 	void task(boolean $asTask) {
 		this.s = "Hello hell!";
 	}

@@ -2,7 +2,7 @@ package classes;
 
 import rolez.annotation.Checked;
 import rolez.annotation.Readonly;
-import rolez.annotation.Roleztask;
+import rolez.annotation.Task;
 
 @Checked
 public class TestShareReadonly {
@@ -14,14 +14,14 @@ public class TestShareReadonly {
 		instance.task2(a, true);
 	}
 	
-	@Roleztask
+	@Task
 	void task1(@Readonly A a, boolean $asTask) {
 		for (int i=0; i<1000; i++) {
 			System.out.println("Task 1: " + a.s);
 		}
 	}
 	
-	@Roleztask
+	@Task
 	void task2(@Readonly A a, boolean $asTask) {
 		for (int i=0; i<1000; i++) {
 			System.out.println("Task 2: " + a.s);

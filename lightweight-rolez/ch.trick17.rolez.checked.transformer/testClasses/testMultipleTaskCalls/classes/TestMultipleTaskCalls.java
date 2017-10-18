@@ -1,7 +1,7 @@
 package classes;
 
 import rolez.annotation.Checked;
-import rolez.annotation.Roleztask;
+import rolez.annotation.Task;
 
 @Checked
 public class TestMultipleTaskCalls {
@@ -18,7 +18,7 @@ public class TestMultipleTaskCalls {
 		instance.task(false);
 	}
 	
-	@Roleztask
+	@Task
 	void task(boolean $asTask) {
 		System.out.println("Hello world!");
 	}

@@ -1,7 +1,7 @@
 package classes;
 
 import rolez.annotation.Checked;
-import rolez.annotation.Roleztask;
+import rolez.annotation.Task;
 import rolez.annotation.Readwrite;
 import rolez.annotation.Readonly;
 
@@ -18,7 +18,7 @@ public class TestDifferentPackages {
 		instance.task(a, b, true);
 	}
 	
-	@Roleztask
+	@Task
 	void task(@Readwrite A a, @Readonly B b, boolean $asTask) {
 		a.s = "Hello hell!";
 		System.out.println(a.s);

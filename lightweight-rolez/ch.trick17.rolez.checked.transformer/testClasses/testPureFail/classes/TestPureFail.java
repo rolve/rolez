@@ -2,7 +2,7 @@ package classes;
 
 import rolez.annotation.Checked;
 import rolez.annotation.Pure;
-import rolez.annotation.Roleztask;
+import rolez.annotation.Task;
 
 @Checked
 public class TestPureFail {
@@ -13,7 +13,7 @@ public class TestPureFail {
 		instance.task(a, true);
 	}
 	
-	@Roleztask
+	@Task
 	void task(@Pure A a, boolean $asTask) {
 		System.out.println(a.message);
 	}

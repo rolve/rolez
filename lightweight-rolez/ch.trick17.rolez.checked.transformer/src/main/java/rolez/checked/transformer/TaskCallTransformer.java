@@ -186,7 +186,7 @@ public class TaskCallTransformer extends BodyTransformer {
 				InvokeExpr ie = i.getInvokeExpr();
 				if (ie instanceof VirtualInvokeExpr) {
 					SootMethod method = i.getInvokeExpr().getMethod();
-					if (Util.isRolezTask(method)) {
+					if (Util.isTask(method)) {
 						result.add(i);
 					}
 				}

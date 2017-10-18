@@ -1,7 +1,7 @@
 package classes;
 
 import rolez.annotation.Checked;
-import rolez.annotation.Roleztask;
+import rolez.annotation.Task;
 import rolez.annotation.Readwrite;
 
 @Checked
@@ -16,7 +16,7 @@ public class TestInterfaces {
 	}
 	
 	// Cannot have the Interface as parameter type since the interface is not checked
-	@Roleztask
+	@Task
 	void task(@Readwrite A a, boolean $asTask) {
 		a.s = "Hello hell!";
 		System.out.println(a.s);

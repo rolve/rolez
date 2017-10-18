@@ -1,7 +1,7 @@
 package classes;
 
 import rolez.annotation.Checked;
-import rolez.annotation.Roleztask;
+import rolez.annotation.Task;
 import rolez.annotation.Readonly;
 import rolez.annotation.Readwrite;
 
@@ -15,7 +15,7 @@ public class TestTaskWithUncheckedParams {
 		instance.task(a, 1, b, true);
 	}
 
-	@Roleztask
+	@Task
 	void task(@Readonly A a, int i, @Readwrite B b, boolean $asTask) {
 		b.s = "Hello hell!";
 		System.out.println(a.s);

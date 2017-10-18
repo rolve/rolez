@@ -1,7 +1,7 @@
 package classes;
 
 import rolez.annotation.Checked;
-import rolez.annotation.Roleztask;
+import rolez.annotation.Task;
 import rolez.annotation.Readonly;
 import rolez.annotation.Readwrite;
 import rolez.annotation.Pure;
@@ -26,7 +26,7 @@ public class TestMultiShare {
 		instance.task1(a, true);
 	}
 	
-	@Roleztask
+	@Task
 	void task1(@Readonly A a, boolean $asTask) {
 		try {
 			// Sleep long enough that main task can continue
@@ -38,7 +38,7 @@ public class TestMultiShare {
 		System.out.println(a.s);
 	}
 
-	@Roleztask
+	@Task
 	void task2(@Readwrite A a, boolean $asTask) {
 		System.out.println("Hello from task 2");
 		a.s = "Hello hell!";

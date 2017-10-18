@@ -4,7 +4,7 @@ import java.util.Random;
 
 import rolez.annotation.Checked;
 import rolez.annotation.Readonly;
-import rolez.annotation.Roleztask;
+import rolez.annotation.Task;
 
 @Checked
 public class A {
@@ -28,7 +28,7 @@ public class A {
 		this.value = value;
 	}
 	
-	@Roleztask
+	@Task
 	public void task(@Readonly A a, final boolean $asTask) {
 		int i = 1;
 	}

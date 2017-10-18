@@ -1,7 +1,7 @@
 package classes;
 
 import rolez.annotation.Checked;
-import rolez.annotation.Roleztask;
+import rolez.annotation.Task;
 
 @Checked
 public class TestNestedTask {
@@ -11,12 +11,12 @@ public class TestNestedTask {
 		instance.task1(true);
 	}
 	
-	@Roleztask
+	@Task
 	void task1(boolean $asTask) {
 		this.task2(true);
 	}
 	
-	@Roleztask
+	@Task
 	void task2(boolean $asTask) {
 		System.out.println("Hello world!");
 	}

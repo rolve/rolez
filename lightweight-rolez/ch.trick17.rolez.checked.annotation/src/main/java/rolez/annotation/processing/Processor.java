@@ -27,9 +27,9 @@ import rolez.annotation.Checked;
 import rolez.annotation.Pure;
 import rolez.annotation.Readonly;
 import rolez.annotation.Readwrite;
-import rolez.annotation.Roleztask;
+import rolez.annotation.Task;
 
-@SupportedAnnotationTypes({"rolez.annotation.Roleztask",
+@SupportedAnnotationTypes({"rolez.annotation.Task",
 						   "rolez.annotation.Pure", 
 						   "rolez.annotation.Readonly",
 						   "rolez.annotation.Readwrite",
@@ -41,7 +41,7 @@ public class Processor extends AbstractProcessor {
 	private Types types;
 	private Elements elements;
 	
-	// Whitelist that contains java standard classes which are allowed to be used as roleztask parameters
+	// Whitelist that contains java standard classes which are allowed to be used as task parameters
 	public static final String[] WHITELIST = new String[] {
 		"java.lang.String",
 		"java.lang.Integer",
@@ -95,14 +95,14 @@ public class Processor extends AbstractProcessor {
 	
 	private void checkRoleAnnotation(Element element, Class<?> annotationClass) {
 		if (element instanceof ExecutableElement) {
-			if (element.getAnnotation(Roleztask.class) == null) {
-				Message message = new Message(Kind.ERROR, "The @" + annotationClass.getSimpleName() + " annotation can only be placed on methods annotated with @Roleztask.", element);
+			if (element.getAnnotation(Task.class) == null) {
+				Message message = new Message(Kind.ERROR, "The @" + annotationClass.getSimpleName() + " annotation can only be placed on methods annotated with @Task.", element);
 				message.print(messager);
 			}
 		}
 		if (element instanceof VariableElement) {
-			if (element.getEnclosingElement().getAnnotation(Roleztask.class) == null) {
-				Message message = new Message(Kind.ERROR, "The @" + annotationClass.getSimpleName() + " annotation can only be placed on parameter of methods annotated with @Roleztask.", element);
+			if (element.getEnclosingElement().getAnnotation(Task.class) == null) {
+				Message message = new Message(Kind.ERROR, "The @" + annotationClass.getSimpleName() + " annotation can only be placed on parameter of methods annotated with @Task.", element);
 				message.print(messager);
 			}
 		}
@@ -175,8 +175,8 @@ public class Processor extends AbstractProcessor {
 		for (ExecutableElement method : methods) {
 			ExecutableElement overriddenTask = getOverriddenTask(method);
 			if (overriddenTask != null) {
-				if (method.getAnnotation(Roleztask.class) == null) {
-					Message message = new Message(Kind.ERROR, "Methods overriding tasks must have the @Roleztask annotation.", method);
+				if (method.getAnnotation(Task.class) == null) {
+					Message message = new Message(Kind.ERROR, "Methods overriding tasks must have the @Task annotation.", method);
 					message.print(messager);
 				}
 				
@@ -203,15 +203,15 @@ public class Processor extends AbstractProcessor {
 	}
 	
 	/**
-	 * Processes the methods that are annotated with <code>@Roleztask</code> and checks whether all 
+	 * Processes the methods that are annotated with <code>@Task</code> and checks whether all 
 	 * method parameters have a role declared and are able to be checked.
 	 * @param env
 	 */
 	private void processTaskAnnotations(RoundEnvironment env) {
-		for (Element annotatedElement : env.getElementsAnnotatedWith(Roleztask.class)) {
+		for (Element annotatedElement : env.getElementsAnnotatedWith(Task.class)) {
 			
 			if (!(annotatedElement instanceof ExecutableElement)) {
-				Message message = new Message(Kind.ERROR, "Only methods can be annotated as Roleztask.", annotatedElement);
+				Message message = new Message(Kind.ERROR, "Only methods can be annotated as task.", annotatedElement);
 				message.print(messager);
 			}
 			
@@ -226,7 +226,7 @@ public class Processor extends AbstractProcessor {
 	}
 
 	/**
-	 * This method processes methods annotated with the @Roleztask annotation.
+	 * This method processes methods annotated with the @Task annotation.
 	 * @param task
 	 */
 	private void processTask(ExecutableElement task) {
@@ -298,7 +298,7 @@ public class Processor extends AbstractProcessor {
 			List<ExecutableElement> superMethods = ElementFilter.methodsIn(currentClass.getEnclosedElements());
 			for (ExecutableElement superMethod : superMethods)
 				if(elements.overrides(method, superMethod, methodClass))
-					if (superMethod.getAnnotation(Roleztask.class) != null)
+					if (superMethod.getAnnotation(Task.class) != null)
 						return superMethod;
 		}
 		return null;

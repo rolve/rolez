@@ -79,13 +79,13 @@ public class ClassTransformer extends SceneTransformer {
 	}
 	
 	/**
-	 * Searches for methods annotated with @Roleztask and transforms them accordingly.
+	 * Searches for methods annotated with @Task and transforms them accordingly.
 	 * @param c
 	 */
 	private void processMethods(SootClass c) {
 		for (SootMethod m : c.getMethods()) {
 			logger.debug("Processing method: " + c.getName() + ":" + m.getName());
-			if (Util.isRolezTask(m)) {
+			if (Util.isTask(m)) {
 				TaskGenerator taskGenerator = new TaskGenerator(c, m);
 				taskGenerator.generateTask();
 				

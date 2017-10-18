@@ -26,33 +26,33 @@ public class Test {
 	}
 	
 	@Readwrite
-	@Roleztask
+	@Task
 	private void thisWrite(final boolean $asTask) {
 		this.b = new B();
 	}
 	
-	@Roleztask
+	@Task
 	private void readwriteTask(@Readwrite A a, final boolean $asTask) {
 		a.setValue(1);
 	}
 
-	@Roleztask
+	@Task
 	private void twoParamsTask(@Readwrite A a, @Readonly B b, final boolean $asTask) {
 		int i = b.getValue();
 		a.setValue(i);
 	}
 	
-	@Roleztask
+	@Task
 	private void nestedTask(@Readwrite A a, final boolean $asTask) {
 		readonlyTask(a, true);
 	}
 	
-	@Roleztask
+	@Task
 	private void illegalTask(@Readonly A a, final boolean $asTask) {
 		a.setValue(1);
 	}
 	
-	@Roleztask
+	@Task
 	private void readonlyTask(@Readonly A a, final boolean $asTask) {
 		int i = a.getValue();
 	}

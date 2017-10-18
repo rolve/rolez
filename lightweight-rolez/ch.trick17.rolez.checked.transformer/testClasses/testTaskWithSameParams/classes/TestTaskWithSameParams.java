@@ -1,7 +1,7 @@
 package classes;
 
 import rolez.annotation.Checked;
-import rolez.annotation.Roleztask;
+import rolez.annotation.Task;
 import rolez.annotation.Readwrite;
 import rolez.annotation.Readonly;
 
@@ -14,7 +14,7 @@ public class TestTaskWithSameParams {
 		instance.task(a, a, true);
 	}
 
-	@Roleztask
+	@Task
 	void task(@Readonly A a0, @Readwrite A a1, boolean $asTask) {
 		// TODO: Is this expected to finish without an exception? What happens in rolez?
 		System.out.println(a0.s);

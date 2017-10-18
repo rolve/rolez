@@ -3,7 +3,7 @@ package classes;
 import java.util.Random;
 
 import rolez.annotation.Checked;
-import rolez.annotation.Roleztask;
+import rolez.annotation.Task;
 import rolez.annotation.Readwrite;
 
 @Checked
@@ -47,7 +47,7 @@ public class TestMonteCarlo {
 	
 	
 	
-	@Roleztask
+	@Task
 	void simulate(@Readwrite Int result, int n, boolean $asTask) {
 		Random r = new Random();
 		int hits = 0;

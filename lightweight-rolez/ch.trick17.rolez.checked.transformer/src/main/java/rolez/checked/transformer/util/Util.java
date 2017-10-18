@@ -12,15 +12,15 @@ import soot.tagkit.VisibilityAnnotationTag;
 public class Util {
 
 	/**
-	 * Returns true if the method has the @Roleztask annotation.
+	 * Returns true if the method has the @Task annotation.
 	 * @param method
 	 * @return
 	 */
-	public static boolean isRolezTask(SootMethod method) {
+	public static boolean isTask(SootMethod method) {
 		for (Tag t : method.getTags()) 
 			if (t instanceof VisibilityAnnotationTag) 
 				for (AnnotationTag aTag : ((VisibilityAnnotationTag) t).getAnnotations()) 
-					if (aTag.getType().equals(Constants.ROLEZTASK_ANNOTATION)) 
+					if (aTag.getType().equals(Constants.TASK_ANNOTATION)) 
 						return true;
 		return false;
 	}

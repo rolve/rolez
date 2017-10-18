@@ -26,7 +26,7 @@ testClass=testClasses/$1/classes/${javaFileName}.java
 echo -e "package classes;" >> $testClass
 echo -e "" >> $testClass
 echo -e "import rolez.annotation.Checked;" >> $testClass
-echo -e "import rolez.annotation.Roleztask;" >> $testClass
+echo -e "import rolez.annotation.Task;" >> $testClass
 echo -e "" >> $testClass
 echo -e "@Checked" >> $testClass
 echo -e "public class ${javaFileName} {" >> $testClass

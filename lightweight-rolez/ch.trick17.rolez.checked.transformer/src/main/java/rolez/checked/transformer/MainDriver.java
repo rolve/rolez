@@ -23,7 +23,7 @@ public class MainDriver {
 		
 		setUpSoot(processDir, mainClass, outputDirName, outputFormat);
 		
-		// Handles the @Roleztask and @Checked annotated classes and transforms them.
+		// Handles the @Task and @Checked annotated classes and transforms them.
 		PackManager.v().getPack("wjtp").add(
 			new Transform("wjtp.transformer0", new ClassTransformer())
 		);

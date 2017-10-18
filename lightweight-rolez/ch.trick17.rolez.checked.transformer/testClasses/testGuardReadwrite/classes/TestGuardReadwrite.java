@@ -1,7 +1,7 @@
 package classes;
 
 import rolez.annotation.Checked;
-import rolez.annotation.Roleztask;
+import rolez.annotation.Task;
 import rolez.annotation.Readwrite;
 
 @Checked
@@ -16,7 +16,7 @@ public class TestGuardReadwrite {
 		System.out.println(a.i);
 	}
 	
-	@Roleztask
+	@Task
 	void task(@Readwrite A a, boolean $asTask) {
 		// Sleep for a while to ensure guarding has to block at a.i = 3; in main
 		try {

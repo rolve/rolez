@@ -1,7 +1,7 @@
 package classes;
 
 import rolez.annotation.Checked;
-import rolez.annotation.Roleztask;
+import rolez.annotation.Task;
 import rolez.annotation.Readonly;
 
 @Checked
@@ -15,7 +15,7 @@ public class TestGuardReadonly {
 		System.out.println(a.i);
 	}
 	
-	@Roleztask
+	@Task
 	void task(@Readonly A a, boolean $asTask) {
 		try {
 			Thread.sleep(500);
