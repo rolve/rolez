@@ -2,7 +2,8 @@ package classes;
 
 import rolez.annotation.Checked;
 import rolez.annotation.Task;
-import rolez.checked.util.Random;
+
+import java.util.Random;
 
 @Checked
 public class TestSeveralReturn {

@@ -23,9 +23,13 @@ public class MainDriver {
 		
 		setUpSoot(processDir, mainClass, outputDirName, outputFormat);
 		
+//		PackManager.v().getPack("wjtp").add(
+//			new Transform("wjtp.transformer0", new TypeTransformer())
+//		);
+		
 		// Handles the @Task and @Checked annotated classes and transforms them.
 		PackManager.v().getPack("wjtp").add(
-			new Transform("wjtp.transformer0", new ClassTransformer())
+			new Transform("wjtp.transformer1", new ClassTransformer())
 		);
 
 		// Transforms calls of tasks

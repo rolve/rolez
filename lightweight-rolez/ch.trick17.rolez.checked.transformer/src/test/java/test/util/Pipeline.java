@@ -63,12 +63,10 @@ public class Pipeline {
 		
 		// Compile sources
 		compileSources();
-		
-		// Generate Jimple for debug purposes
-		System.out.println("GENERATING TRANSFORMED CLASS FILES");
-		System.out.println(mainClass);
-		MainDriver.main(new String[] {compilePath.getAbsolutePath(), mainClass, methodName, "C"});
 
+		System.out.println("GENERATING TRANSFORMED CLASS FILES");
+		MainDriver.main(new String[] {compilePath.getAbsolutePath(), mainClass, methodName, "C"});
+		
 		if (generateJimple) {
 			System.out.println("\nGENERATING TRANSFORMED JIMPLE FILES");
 			MainDriver.main(new String[] {compilePath.getAbsolutePath(), mainClass, methodName, "J"});

@@ -1,7 +1,9 @@
 package classes;
 
+import java.util.Random;
+
 interface Interface {
 	
-	public void task(boolean $asTask);
+	public void task(Random r, boolean $asTask);
 	
 }

@@ -5,6 +5,7 @@ import java.util.List;
 
 import rolez.checked.internal.Tasks;
 import rolez.checked.lang.Checked;
+import rolez.checked.lang.Random;
 import rolez.checked.lang.Task;
 import rolez.checked.lang.TaskSystem;
 import soot.ArrayType;
@@ -13,7 +14,8 @@ import soot.Scene;
 import soot.SootClass;
 import soot.Type;
 
-public class Constants {	
+public class Constants {
+	// Library classes
 	public static SootClass CHECKED_CLASS = Scene.v().forceResolve(Checked.class.getCanonicalName(), SootClass.SIGNATURES);
 	public static SootClass OBJECT_CLASS = Scene.v().forceResolve(Object.class.getCanonicalName(), SootClass.SIGNATURES);
 	public static SootClass TASK_SYSTEM_CLASS = Scene.v().forceResolve(TaskSystem.class.getCanonicalName(), SootClass.SIGNATURES);
@@ -26,9 +28,14 @@ public class Constants {
 	public static SootClass VOID_CLASS = Scene.v().forceResolve("java.lang.Void", SootClass.SIGNATURES);
 	public static SootClass ITERABLE_CLASS = Scene.v().forceResolve("java.lang.Iterable", SootClass.SIGNATURES);
 	
+	// Wrapper classes
+	public static SootClass RANDOM_CLASS = Scene.v().forceResolve(Random.class.getCanonicalName(), SootClass.SIGNATURES);
+	
+	// Types
 	public static final ArrayType OBJECT_ARRAY_TYPE = ArrayType.v(RefType.v(OBJECT_CLASS),1);
 	public static final Type VOID_TYPE = RefType.v("java.lang.Void");
 	
+	// Annotations
 	public static final String TASK_ANNOTATION = "Lrolez/annotation/Task;";
 	public static final String CHECKED_ANNOTATION = "Lrolez/annotation/Checked;";
 	public static final String READONLY_ANNOTATION = "Lrolez/annotation/Readonly;";
@@ -47,5 +54,8 @@ public class Constants {
 		INTERNAL_TASKS_CLASS = Scene.v().forceResolve(Tasks.class.getCanonicalName(), SootClass.SIGNATURES);
 		VOID_CLASS = Scene.v().forceResolve("java.lang.Void", SootClass.SIGNATURES);
 		ITERABLE_CLASS = Scene.v().forceResolve("java.lang.Iterable", SootClass.SIGNATURES);
+		
+		// Wrapper classes
+		RANDOM_CLASS = Scene.v().forceResolve(Random.class.getCanonicalName(), SootClass.SIGNATURES);
 	}
 }

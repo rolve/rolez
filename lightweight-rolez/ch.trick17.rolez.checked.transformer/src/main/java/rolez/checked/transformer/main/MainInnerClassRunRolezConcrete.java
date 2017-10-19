@@ -48,6 +48,7 @@ public class MainInnerClassRunRolezConcrete extends SootMethod {
 		// Body of created runRolez method is initialized as a copy of the source method's body
 		this.setActiveBody((Body)srcMethodBody.clone());
 		Body body = this.getActiveBody();
+		System.out.println(body);
 		
 		// Change type of first local to inner class type
 		Chain<Local> locals = body.getLocals();

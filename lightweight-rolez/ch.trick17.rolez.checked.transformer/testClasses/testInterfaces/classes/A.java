@@ -1,5 +1,7 @@
 package classes;
 
+import java.util.Random;
+
 import rolez.annotation.Checked;
 import rolez.annotation.Task;
 import rolez.annotation.Readonly;
@@ -11,8 +13,11 @@ class A implements Interface {
 	
 	@Readonly
 	@Task
-	public void task(boolean $asTask) {
-		System.out.println(this.s);
+	public void task(@Readonly Random r, boolean $asTask) {
+		boolean b = r.nextBoolean();
+		
+		if (b || !b)
+			System.out.println(this.s);
 	}
 	
 }

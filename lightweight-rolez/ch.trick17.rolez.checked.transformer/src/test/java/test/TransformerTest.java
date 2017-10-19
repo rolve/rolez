@@ -228,7 +228,7 @@ public class TransformerTest {
 		String methodName = "testInterfaces";
 		String mainClass = "classes.TestInterfaces";
 		Pipeline p = new Pipeline(methodName, mainClass);
-		p.runDefault(true, false);
+		p.runDefault(true, true);
 	}
 
 	@Test
@@ -260,7 +260,7 @@ public class TransformerTest {
 		String methodName = "testMonteCarlo";
 		String mainClass = "classes.TestMonteCarlo";
 		Pipeline p = new Pipeline(methodName, mainClass);
-		p.runDefault(false, false);
+		p.runDefault(false, true);
 	}
 
 	@Test
@@ -276,6 +276,14 @@ public class TransformerTest {
 		String methodName = "testSeveralReturn";
 		String mainClass = "classes.TestSeveralReturn";
 		Pipeline p = new Pipeline(methodName, mainClass);
-		p.runDefault(true, false);
+		p.runDefault(true, true);
+	}
+
+	@Test
+	public void testWrapperClassUsage() {
+		String methodName = "testWrapperClassUsage";
+		String mainClass = "classes.TestWrapperClassUsage";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.runDefault(true, true);
 	}
 }

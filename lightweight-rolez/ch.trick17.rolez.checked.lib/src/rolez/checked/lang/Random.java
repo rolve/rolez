@@ -1,6 +1,5 @@
-package rolez.checked.util;
+package rolez.checked.lang;
 
-import rolez.checked.lang.Checked;
 
 public class Random extends Checked {
 	
@@ -15,38 +14,38 @@ public class Random extends Checked {
 	}
 	
 	public boolean nextBoolean() {
-		return random.nextBoolean();
+		return checkLegalRead(this).random.nextBoolean();
 	}
 	
 	public void nextBytes(byte[] bytes) {
-		random.nextBytes(bytes);
+		checkLegalRead(this).random.nextBytes(bytes);
 	}
 	
 	public double nextDouble() {
-		return random.nextDouble();
+		return checkLegalRead(this).random.nextDouble();
 	}
 	
 	public float nextFloat() {
-		return random.nextFloat();
+		return checkLegalRead(this).random.nextFloat();
 	}
 	
 	public double nextGaussian() {
-		return random.nextGaussian();
+		return checkLegalRead(this).random.nextGaussian();
 	}
 	
 	public int nextInt() {
-		return random.nextInt();
+		return checkLegalRead(this).random.nextInt();
 	}
 	
 	public int nextInt(int n) {
-		return random.nextInt(n);
+		return checkLegalRead(this).random.nextInt(n);
 	}
 	
 	public long nextLong() {
-		return random.nextLong();
+		return checkLegalRead(this).random.nextLong();
 	}
 	
 	public void setSeed(long seed) {
-		random.setSeed(seed);
+		checkLegalWrite(this).random.setSeed(seed);
 	}
 }
