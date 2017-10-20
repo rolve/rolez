@@ -138,8 +138,14 @@ public class TypeTransformer extends SceneTransformer {
 							SpecialInvokeExpr sine = (SpecialInvokeExpr)ine;
 							if (sine.getBase().equals(l)) {
 								logger.debug(availableClass.getMethods());
-								SootMethod newmethod = availableClass.getMethod(sine.getMethod().getName(), sine.getMethod().getParameterTypes(), sine.getMethod().getReturnType());
-								sine.setMethodRef(newmethod.makeRef());
+								List<SootMethod> methods = availableClass.getMethods();
+								SootMethod method = null;
+								for(SootMethod sootMethod : methods) {
+                                    if(sootMethod.getSubSignature().equals(sine.getMethod().getSubSignature()))
+                                        method = sootMethod;
+                                }
+								
+								sine.setMethodRef(method.makeRef());
 								logger.debug("TRANSFORMED: " + ins);
 							}
 						}
