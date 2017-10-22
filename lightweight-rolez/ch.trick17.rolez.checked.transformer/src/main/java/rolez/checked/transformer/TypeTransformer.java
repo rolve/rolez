@@ -2,6 +2,7 @@ package rolez.checked.transformer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -22,9 +23,10 @@ import soot.Unit;
 import soot.Value;
 import soot.jimple.AssignStmt;
 import soot.jimple.CastExpr;
-import soot.jimple.IdentityStmt;
+import soot.jimple.InterfaceInvokeExpr;
 import soot.jimple.InvokeExpr;
 import soot.jimple.InvokeStmt;
+import soot.jimple.Jimple;
 import soot.jimple.NewExpr;
 import soot.jimple.SpecialInvokeExpr;
 import soot.jimple.VirtualInvokeExpr;
@@ -39,6 +41,9 @@ public class TypeTransformer extends SceneTransformer {
 	@Override
 	protected void internalTransform(String phaseName, Map options) {
 		Chain<SootClass> classesToProcess = Scene.v().getApplicationClasses();
+		
+		ArrayList<SootMethod> methodsToRemove = new ArrayList<SootMethod>();
+		
 		for (SootClass c : classesToProcess) {
 			
 			logger.debug("Processing class: " + c.getName());
@@ -46,9 +51,8 @@ public class TypeTransformer extends SceneTransformer {
 			// Transform fields
 			for (SootField f : c.getFields())
 				f.setType(getAvailableWrapperType(f.getType()));
-			
+
 			for (SootMethod m : c.getMethods()) {
-				
 				boolean change = false;
 				String signature = m.getSubSignature();
 				
@@ -58,7 +62,6 @@ public class TypeTransformer extends SceneTransformer {
 				Type returnType = m.getReturnType();
 				Type availableReturnType = getAvailableWrapperType(returnType);
 				if (!returnType.equals(availableReturnType)) {
-					m.setReturnType(availableReturnType);
 					change = true;
 				}
 				
@@ -74,12 +77,21 @@ public class TypeTransformer extends SceneTransformer {
 						newParameterTypes.add(t);
 					}
 				}
-				m.setParameterTypes(newParameterTypes);
 			
-				if (change) 
-					changedMethodSignatures.put(signature, m);
+				if (change) {
+					SootMethod newMethod = new SootMethod(m.getName(), newParameterTypes, availableReturnType, m.getModifiers(), m.getExceptions());
+					c.addMethod(newMethod);
+					if (!m.isAbstract())
+						newMethod.setActiveBody(m.retrieveActiveBody());
+					
+					// Old methods has to be removed
+					methodsToRemove.add(m);
+					changedMethodSignatures.put(signature, newMethod);
+				}
 			}
 		}
+		
+		
 		
 		// Transform body after ALL signatures were transformed
 		for (SootClass c : classesToProcess) {
@@ -89,12 +101,20 @@ public class TypeTransformer extends SceneTransformer {
 					Body b = m.retrieveActiveBody();
 					transformMethodBody(b);
 					transformMethodCalls(b);
-					System.out.println(b);
 				}
 			}
 		}
+		
+		for (SootMethod m : methodsToRemove) {
+			logger.debug("REMOVING METHOD " + m + " from class " + m.getDeclaringClass());
+			m.getDeclaringClass().removeMethod(m);
+		}
 	}
 	
+	/**
+	 * Changes all occuring types in a method body for which a wrapper class is available
+	 * @param b
+	 */
 	private void transformMethodBody(Body b) {
 		Chain<Local> locals = b.getLocals();
 		Chain<Unit> units = b.getUnits();
@@ -111,51 +131,89 @@ public class TypeTransformer extends SceneTransformer {
 				l.setType(availableType);
 				
 				// Set new type for all units
-				for (Unit u : units) {
-					if (u instanceof IdentityStmt) {
-						logger.debug("IdentityStmt " + u);
-					} else if (u instanceof AssignStmt) {
-						logger.debug("AssignStmt " + u);
+				Iterator<Unit> unitIter = units.snapshotIterator();
+				while (unitIter.hasNext()) {
+					Unit u = unitIter.next();
+					
+					// Cases when unit is an assign statement
+					if (u instanceof AssignStmt) {
 						AssignStmt as = (AssignStmt)u;
 						Value rightOp = as.getRightOp();
 						Value leftOp = as.getLeftOp();
-						if (leftOp.equals(l) && rightOp instanceof NewExpr) { 
-							NewExpr ne = (NewExpr)rightOp;
-							ne.setBaseType(availableType);
-							logger.debug("TRANSFORMED: " + u);
-						}
-						if (leftOp.equals(l) && rightOp instanceof CastExpr) {
+						
+						// Cases when left op is a local for which a class is available
+						if (leftOp.equals(l) && rightOp instanceof NewExpr) {
+							Unit newUnit = Jimple.v().newAssignStmt(l, 
+									Jimple.v().newNewExpr(availableClass.getType()));
+							units.insertBefore(newUnit, as);
+							units.remove(as);
+						} else if (leftOp.equals(l) && rightOp instanceof CastExpr) {
 							CastExpr ce = (CastExpr)rightOp;
 							if (ce.getCastType().equals(type)) {
-								ce.setCastType(availableType);
+								Unit newUnit = Jimple.v().newAssignStmt(l,
+										Jimple.v().newCastExpr(ce.getOp(), availableClass.getType()));
+								units.insertBefore(newUnit, as);
+								units.remove(as);
 							}
 						}
-					} else if (u instanceof InvokeStmt) {
-						logger.debug("InvokeStmt " + u);
+						
+						// Cases when right ops are invoke expressions
+						if (rightOp instanceof VirtualInvokeExpr) {
+							VirtualInvokeExpr ie = (VirtualInvokeExpr)rightOp;
+							if (ie.getBase().equals(l)) {
+								Unit newUnit = Jimple.v().newAssignStmt(leftOp, 
+										Jimple.v().newVirtualInvokeExpr(l, availableClass.getMethod(ie.getMethod().getSubSignature()).makeRef(), ie.getArgs()));
+								units.insertBefore(newUnit, as);
+								units.remove(as);
+							}
+						} else if (rightOp instanceof SpecialInvokeExpr) {
+							SpecialInvokeExpr ie = (SpecialInvokeExpr)rightOp;
+							if (ie.getBase().equals(l)) {
+								Unit newUnit = Jimple.v().newAssignStmt(leftOp, 
+										Jimple.v().newSpecialInvokeExpr(l, availableClass.getMethod(ie.getMethod().getSubSignature()).makeRef(), ie.getArgs()));
+								units.insertBefore(newUnit, as);
+								units.remove(as);
+							}
+						} else if (rightOp instanceof InterfaceInvokeExpr) {
+							InterfaceInvokeExpr ie = (InterfaceInvokeExpr)rightOp;
+							if (ie.getBase().equals(l)) {
+								Unit newUnit = Jimple.v().newAssignStmt(leftOp, 
+										Jimple.v().newSpecialInvokeExpr(l, availableClass.getMethod(ie.getMethod().getSubSignature()).makeRef(), ie.getArgs()));
+								units.insertBefore(newUnit, as);
+								units.remove(as);
+							}
+						}
+					}
+					
+					// Cases when the unit is a invoke statement
+					if (u instanceof InvokeStmt) {
 						InvokeStmt ins = (InvokeStmt)u;
 						InvokeExpr ine = ins.getInvokeExpr();
 						if (ine instanceof SpecialInvokeExpr) {
-							SpecialInvokeExpr sine = (SpecialInvokeExpr)ine;
-							if (sine.getBase().equals(l)) {
-								logger.debug(availableClass.getMethods());
-								List<SootMethod> methods = availableClass.getMethods();
-								SootMethod method = null;
-								for(SootMethod sootMethod : methods) {
-                                    if(sootMethod.getSubSignature().equals(sine.getMethod().getSubSignature()))
-                                        method = sootMethod;
-                                }
-								
-								sine.setMethodRef(method.makeRef());
-								logger.debug("TRANSFORMED: " + ins);
+							SpecialInvokeExpr ie = (SpecialInvokeExpr)ine;
+							if (ie.getBase().equals(l)) {
+								Unit newUnit = Jimple.v().newInvokeStmt(
+										Jimple.v().newSpecialInvokeExpr(l, availableClass.getMethod(ie.getMethod().getSubSignature()).makeRef(), ie.getArgs()));
+								units.insertBefore(newUnit, ins);
+								units.remove(ins);
 							}
 						}
 						if (ine instanceof VirtualInvokeExpr) {
-							VirtualInvokeExpr vine = (VirtualInvokeExpr)ine;
-							if (vine.getBase().equals(l)) {
-								logger.debug(availableClass.getMethods());
-								SootMethod newmethod = availableClass.getMethod(vine.getMethod().getName(), vine.getMethod().getParameterTypes(), vine.getMethod().getReturnType());
-								vine.setMethodRef(newmethod.makeRef());
-								logger.debug("TRANSFORMED: " + ins);
+							VirtualInvokeExpr ie = (VirtualInvokeExpr)ine;
+							if (ie.getBase().equals(l)) {
+								Unit newUnit = Jimple.v().newInvokeStmt(
+										Jimple.v().newVirtualInvokeExpr(l, availableClass.getMethod(ie.getMethod().getSubSignature()).makeRef(), ie.getArgs()));
+								units.insertBefore(newUnit, ins);
+								units.remove(ins);
+							}
+						}
+						if (ine instanceof InterfaceInvokeExpr) {
+							InterfaceInvokeExpr ie = (InterfaceInvokeExpr)ine;
+							if (ie.getBase().equals(l)) {
+								Unit newUnit = Jimple.v().newInvokeStmt(
+										Jimple.v().newInterfaceInvokeExpr(l, availableClass.getMethod(ie.getMethod().getSubSignature()).makeRef(), ie.getArgs()));
+								units.insertBefore(newUnit, ins);
+								units.remove(ins);
 							}
 						}
 					}
@@ -164,6 +222,10 @@ public class TypeTransformer extends SceneTransformer {
 		}
 	}
 	
+	/**
+	 * Transforms calls to methods where the signature changed due to an available wrapper type
+	 * @param b
+	 */
 	private void transformMethodCalls(Body b) {
 		Chain<Unit> units = b.getUnits();
 		for (Unit u : units) {
@@ -171,14 +233,31 @@ public class TypeTransformer extends SceneTransformer {
 				AssignStmt as = (AssignStmt)u;
 				Value rightOp = as.getRightOp();
 				if (rightOp instanceof VirtualInvokeExpr) { 
-					VirtualInvokeExpr vine = (VirtualInvokeExpr)rightOp;
+					VirtualInvokeExpr ie = (VirtualInvokeExpr)rightOp;
 					for (String methodSignature : changedMethodSignatures.keySet()) {
-						SootMethod method = vine.getMethod();
-						if (method.getSubSignature() == methodSignature) {
-							vine.setMethodRef(changedMethodSignatures.get(methodSignature).makeRef());
+						SootMethod method = ie.getMethod();
+						if (method.getSubSignature().equals(methodSignature)) {
+							ie.setMethodRef(changedMethodSignatures.get(methodSignature).makeRef());
+						}
+					}
+				} else if (rightOp instanceof SpecialInvokeExpr) { 
+					SpecialInvokeExpr ie = (SpecialInvokeExpr)rightOp;
+					for (String methodSignature : changedMethodSignatures.keySet()) {
+						SootMethod method = ie.getMethod();
+						if (method.getSubSignature().equals(methodSignature)) {
+							ie.setMethodRef(changedMethodSignatures.get(methodSignature).makeRef());
+						}
+					}
+				} else if (rightOp instanceof InterfaceInvokeExpr) {
+					InterfaceInvokeExpr ie = (InterfaceInvokeExpr)rightOp;
+					for (String methodSignature : changedMethodSignatures.keySet()) {
+						SootMethod method = ie.getMethod();
+						if (method.getSubSignature().equals(methodSignature)) {
+							ie.setMethodRef(changedMethodSignatures.get(methodSignature).makeRef());
 						}
 					}
 				}
+				
 			} else if (u instanceof InvokeStmt) {
 				InvokeStmt ins = (InvokeStmt)u;
 				InvokeExpr ine = ins.getInvokeExpr();
@@ -186,7 +265,7 @@ public class TypeTransformer extends SceneTransformer {
 					SpecialInvokeExpr sine = (SpecialInvokeExpr)ine;
 					for (String methodSignature : changedMethodSignatures.keySet()) {
 						SootMethod method = sine.getMethod();
-						if (method.getSubSignature() == methodSignature) {
+						if (method.getSubSignature().equals(methodSignature)) {
 							sine.setMethodRef(changedMethodSignatures.get(methodSignature).makeRef());
 						}
 					}
@@ -194,8 +273,16 @@ public class TypeTransformer extends SceneTransformer {
 					VirtualInvokeExpr vine = (VirtualInvokeExpr)ine;
 					for (String methodSignature : changedMethodSignatures.keySet()) {
 						SootMethod method = vine.getMethod();
-						if (method.getSubSignature() == methodSignature) {
+						if (method.getSubSignature().equals(methodSignature)) {
 							vine.setMethodRef(changedMethodSignatures.get(methodSignature).makeRef());
+						}
+					}
+				} else if (ine instanceof InterfaceInvokeExpr) {
+					InterfaceInvokeExpr iine = (InterfaceInvokeExpr)ine;
+					for (String methodSignature : changedMethodSignatures.keySet()) {
+						SootMethod method = iine.getMethod();
+						if (method.getSubSignature().equals(methodSignature)) {
+							iine.setMethodRef(changedMethodSignatures.get(methodSignature).makeRef());
 						}
 					}
 				}

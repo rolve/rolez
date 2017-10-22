@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 
+import rolez.checked.transformer.util.ClassMapping;
 import rolez.checked.transformer.util.Constants;
 import soot.G;
 import soot.PackManager;
@@ -22,10 +23,10 @@ public class MainDriver {
 		String outputFormat = args[3];	// J = jimple, C = class
 		
 		setUpSoot(processDir, mainClass, outputDirName, outputFormat);
-		
-//		PackManager.v().getPack("wjtp").add(
-//			new Transform("wjtp.transformer0", new TypeTransformer())
-//		);
+
+		PackManager.v().getPack("wjtp").add(
+			new Transform("wjtp.transformer0", new TypeTransformer())
+		);
 		
 		// Handles the @Task and @Checked annotated classes and transforms them.
 		PackManager.v().getPack("wjtp").add(
@@ -74,10 +75,12 @@ public class MainDriver {
 			opts.set_output_format(Options.output_format_J);
 		if (outputFormat.equals("C"))
 			opts.set_output_format(Options.output_format_class);
-		
+
 		Scene.v().loadNecessaryClasses();
 		
-		// Have to resolve classes every time when soot options are set up
+		// Class constants and available wrapper classes have to be newly resolved in every run
 		Constants.resolveClasses();
+		ClassMapping.initializeMapping();
+		
 	}
 }
