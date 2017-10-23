@@ -52,7 +52,7 @@ public class InnerClassRunRolezConcrete extends SootMethod {
 		this.setActiveBody((Body)srcMethodBody.clone());
 		Body body = this.getActiveBody();
 		
-		// Create new local for the inner calss type
+		// Create new local for the inner class type
 		Chain<Local> locals = body.getLocals();
 		Local innerClassLocal = J.newLocal("inner", containingClass.getType());
 		locals.addFirst(innerClassLocal);
