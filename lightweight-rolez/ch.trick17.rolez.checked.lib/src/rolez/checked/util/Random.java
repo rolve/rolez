@@ -16,35 +16,35 @@ public class Random extends Checked {
 	}
 	
 	public boolean nextBoolean() {
-		return checkLegalRead(this).random.nextBoolean();
+		return checkLegalWrite(this).random.nextBoolean();
 	}
 	
 	public void nextBytes(byte[] bytes) {
-		checkLegalRead(this).random.nextBytes(bytes);
+		checkLegalWrite(this).random.nextBytes(bytes);
 	}
 	
 	public double nextDouble() {
-		return checkLegalRead(this).random.nextDouble();
+		return checkLegalWrite(this).random.nextDouble();
 	}
 	
 	public float nextFloat() {
-		return checkLegalRead(this).random.nextFloat();
+		return checkLegalWrite(this).random.nextFloat();
 	}
 	
 	public double nextGaussian() {
-		return checkLegalRead(this).random.nextGaussian();
+		return checkLegalWrite(this).random.nextGaussian();
 	}
 	
 	public int nextInt() {
-		return checkLegalRead(this).random.nextInt();
+		return checkLegalWrite(this).random.nextInt();
 	}
 	
 	public int nextInt(int n) {
-		return checkLegalRead(this).random.nextInt(n);
+		return checkLegalWrite(this).random.nextInt(n);
 	}
 	
 	public long nextLong() {
-		return checkLegalRead(this).random.nextLong();
+		return checkLegalWrite(this).random.nextLong();
 	}
 	
 	public void setSeed(long seed) {
