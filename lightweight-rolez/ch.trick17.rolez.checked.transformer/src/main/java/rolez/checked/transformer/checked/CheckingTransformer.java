@@ -1,9 +1,7 @@
 package rolez.checked.transformer.checked;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
