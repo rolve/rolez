@@ -1,4 +1,4 @@
-package rolez.checked.transformer;
+package rolez.checked.transformer.main;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -6,11 +6,8 @@ import java.util.Collections;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import rolez.checked.transformer.main.MainInnerClass;
-import rolez.checked.transformer.main.MainInnerClassConstructor;
-import rolez.checked.transformer.main.MainInnerClassRunRolezConcrete;
-import rolez.checked.transformer.main.MainTaskMethod;
 import rolez.checked.transformer.task.InnerClassRunRolezObject;
+import rolez.checked.transformer.task.TaskGenerator;
 import rolez.checked.transformer.util.Constants;
 import soot.ArrayType;
 import soot.Body;

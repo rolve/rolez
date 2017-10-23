@@ -3,7 +3,6 @@ package rolez.checked.transformer.task;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import rolez.checked.transformer.TaskGenerator;
 import rolez.checked.transformer.util.Constants;
 import soot.Modifier;
 import soot.SootClass;

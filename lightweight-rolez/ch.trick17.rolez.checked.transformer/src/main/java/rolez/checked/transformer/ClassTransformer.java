@@ -9,6 +9,8 @@ import org.apache.logging.log4j.Logger;
 
 import rolez.checked.transformer.checked.CheckedConstructor;
 import rolez.checked.transformer.checked.GuardedRefsMethod;
+import rolez.checked.transformer.main.MainTaskGenerator;
+import rolez.checked.transformer.task.TaskGenerator;
 import rolez.checked.transformer.util.Constants;
 import rolez.checked.transformer.util.Util;
 import soot.Scene;

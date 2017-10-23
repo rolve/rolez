@@ -1,4 +1,4 @@
-package rolez.checked.transformer;
+package rolez.checked.transformer.task;
 
 import java.util.ArrayList;
 import java.util.Iterator;

@@ -1,15 +1,10 @@
-package rolez.checked.transformer;
+package rolez.checked.transformer.task;
 
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import rolez.checked.transformer.task.InnerClass;
-import rolez.checked.transformer.task.InnerClassConstructor;
-import rolez.checked.transformer.task.InnerClassRunRolezConcrete;
-import rolez.checked.transformer.task.InnerClassRunRolezObject;
-import rolez.checked.transformer.task.TaskMethod;
 import rolez.checked.transformer.util.Util;
 import soot.SootClass;
 import soot.SootMethod;

@@ -1,4 +1,4 @@
-package rolez.checked.transformer;
+package rolez.checked.transformer.wrapper;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -9,7 +9,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import rolez.checked.transformer.util.ClassMapping;
-import rolez.checked.transformer.wrapper.UnitTransformerSwitch;
 import soot.Body;
 import soot.Local;
 import soot.RefType;

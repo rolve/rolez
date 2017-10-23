@@ -4,8 +4,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 
+import rolez.checked.transformer.checked.CheckingTransformer;
+import rolez.checked.transformer.task.TaskCallTransformer;
 import rolez.checked.transformer.util.ClassMapping;
 import rolez.checked.transformer.util.Constants;
+import rolez.checked.transformer.wrapper.TypeTransformer;
 import soot.G;
 import soot.PackManager;
 import soot.Scene;
