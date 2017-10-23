@@ -2,7 +2,7 @@ package classes;
 
 import rolez.annotation.Checked;
 import rolez.annotation.Task;
-import rolez.annotation.Readonly;
+import rolez.annotation.Readwrite;
 
 import java.util.Random;
 
@@ -17,7 +17,7 @@ public class TestWrapperClassUsage {
 	}
 	
 	@Task
-	void task(@Readonly Random r, boolean $asTask) {
+	void task(@Readwrite Random r, boolean $asTask) {
 		r.nextInt();
 		System.out.println("Hello world!");
 	}
