@@ -12,11 +12,13 @@ public class TestWrapperClassUsage {
 	public static void main(String[] args) {
 		TestWrapperClassUsage instance = new TestWrapperClassUsage();
 		Random r = new Random();
-		instance.task(r, true);
+		if (r instanceof Random)
+			instance.task(r, true);
 	}
 	
 	@Task
 	void task(@Readonly Random r, boolean $asTask) {
 		r.nextInt();
+		System.out.println("Hello world!");
 	}
 }

@@ -61,7 +61,10 @@ public class ExpressionTransformerSwitch extends AbstractJimpleValueSwitch {
 
     public void caseStaticInvokeExpr(StaticInvokeExpr v)
     {
-    	defaultCase(v);
+    	String methodSignature = v.getMethod().getSubSignature();
+        if (this.changedMethodSignatures.containsKey(methodSignature)) {
+        	v.setMethodRef(this.changedMethodSignatures.get(methodSignature).makeRef());
+        }
     }
 
     public void caseVirtualInvokeExpr(VirtualInvokeExpr v)
@@ -84,7 +87,9 @@ public class ExpressionTransformerSwitch extends AbstractJimpleValueSwitch {
 
     public void caseInstanceOfExpr(InstanceOfExpr v)
     {
-        defaultCase(v);
+        if (v.getCheckType().equals(local.getType())) {
+        	v.setCheckType(availableClass.getType());
+        }
     }
 
     public void caseNewArrayExpr(NewArrayExpr v)
