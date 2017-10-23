@@ -22,6 +22,7 @@ class PrintStream mapped to java.io.PrintStream {
     
     mapped def readonly println:
     mapped def readonly println(i: int):
+    mapped def readonly println(l: long):
     mapped def readonly println(b: boolean):
     mapped def readonly println(c: char):
     mapped def readonly println(d: double):
