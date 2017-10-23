@@ -1,4 +1,6 @@
-package rolez.checked.lang;
+package rolez.checked.util;
+
+import rolez.checked.lang.Checked;
 
 
 public class Random extends Checked {

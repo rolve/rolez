@@ -1,7 +1,7 @@
 package test;
 
 import rolez.annotation.*;
-import rolez.checked.lang.Random;
+import java.util.Random;
 
 /**
  * Class to test annotations for different Rolez tasks. Annotated elements are compiled into tasks from the Rolez runtime library and executed in separate threads.
