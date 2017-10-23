@@ -84,6 +84,7 @@ public class WrapperTypeTransformer extends SceneTransformer {
 	
 		if (change) {
 			SootMethod newMethod = new SootMethod(m.getName(), newParameterTypes, availableReturnType, m.getModifiers(), m.getExceptions());
+			newMethod.addAllTagsOf(m);
 			m.getDeclaringClass().addMethod(newMethod);
 			if (!m.isAbstract())
 				newMethod.setActiveBody(m.retrieveActiveBody());
