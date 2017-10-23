@@ -2,29 +2,26 @@ package rolez.checked.transformer.checked;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import rolez.checked.transformer.exceptions.PhantomClassException;
 import rolez.checked.transformer.util.Constants;
 import soot.Body;
 import soot.BodyTransformer;
 import soot.Local;
-import soot.Scene;
-import soot.SootClass;
 import soot.SootMethod;
 import soot.Type;
 import soot.Unit;
-import soot.Value;
 import soot.jimple.AssignStmt;
 import soot.jimple.InstanceFieldRef;
 import soot.jimple.Jimple;
-import soot.jimple.VirtualInvokeExpr;
+import soot.toolkits.graph.ExceptionalUnitGraph;
+import soot.toolkits.scalar.ArraySparseSet;
+import soot.toolkits.scalar.FlowSet;
 import soot.util.Chain;
 
 /**
@@ -61,17 +58,62 @@ public class CheckingTransformer extends BodyTransformer {
 		this.locals = b.getLocals();
 		this.units = b.getUnits();
 		
-		List<AssignStmt> fieldReads = findCheckedFieldReads();
-		List<AssignStmt> fieldWrites = findCheckedFieldWrites();
+		ReadCheckAnalysis readAnalysis = doReadFlowAnalysis(b);
+		WriteCheckAnalysis writeAnalysis = doWriteFlowAnalysis(b);
 		
-		for (AssignStmt read : fieldReads)
-			addCheckLegalRead(read);
-		
-		for (AssignStmt write: fieldWrites)
-			addCheckLegalWrite(write);
+		// Use flow analysis to insert checks only where necessary
+		Iterator<Unit> unitIter = units.snapshotIterator();
+		while (unitIter.hasNext()) {
+			Unit u = unitIter.next();
+			if (u instanceof AssignStmt) {
+				AssignStmt astmt = (AssignStmt)u;
+				if (increasesWriteSet(astmt, writeAnalysis))
+					addCheckLegalWrite(astmt);
+				else if (increasesReadSet(astmt, readAnalysis))
+					addCheckLegalRead(astmt);
+			}
+		}
 		
 		// Reset tempLocalCount for next method
 		tempLocalCount = 0;
+	}
+	
+	/**
+	 * Method checks if a unit did increase the set of the read-checked variables
+	 * @param u
+	 * @param analysis
+	 * @return
+	 */
+	private boolean increasesReadSet(Unit u, ReadCheckAnalysis analysis) {
+		FlowSet beforeRead = analysis.getFlowBefore(u);
+		FlowSet afterRead = analysis.getFlowAfter(u);
+		FlowSet diff = new ArraySparseSet();
+		afterRead.difference(beforeRead, diff);
+		return diff.size() > 0;
+	}
+	
+	/**
+	 * Method checks if a unit did increase the set of the write-checked variables
+	 * @param u
+	 * @param analysis
+	 * @return
+	 */
+	private boolean increasesWriteSet(Unit u, WriteCheckAnalysis analysis) {
+		FlowSet beforeWrite = analysis.getFlowBefore(u);
+		FlowSet afterWrite = analysis.getFlowAfter(u);
+		FlowSet diff = new ArraySparseSet();
+		afterWrite.difference(beforeWrite, diff);
+		return diff.size() > 0;
+	}
+	
+	private ReadCheckAnalysis doReadFlowAnalysis(Body b) {
+		ExceptionalUnitGraph graph = new ExceptionalUnitGraph(b);
+		return new ReadCheckAnalysis(graph);
+	}
+	
+	private WriteCheckAnalysis doWriteFlowAnalysis(Body b) {
+		ExceptionalUnitGraph graph = new ExceptionalUnitGraph(b);
+		return new WriteCheckAnalysis(graph);
 	}
 	
 	private void addCheckLegalRead(AssignStmt read) {
@@ -123,119 +165,6 @@ public class CheckingTransformer extends BodyTransformer {
 		
 		// Change base of original field read to checked variable
 		write.setLeftOp(J.newInstanceFieldRef(temp, leftOp.getFieldRef()));
-	}
-
-	private List<AssignStmt> findCheckedFieldReads() {
-		
-		// Set containing all values which were checked to a point in the unit chain, task calls remove values from the set
-		Set<Value> checkedValues = new HashSet<Value>();
-		
-		ArrayList<AssignStmt> result = new ArrayList<AssignStmt>();
-		for (Unit u : units) {
-			// Because jimple uses 3-adress code, field reads are always a separate assign statement
-			if (u instanceof AssignStmt) {
-				AssignStmt a = (AssignStmt)u;
-				Value rightOp = a.getRightOp();
-				if (rightOp instanceof InstanceFieldRef) {
-					InstanceFieldRef f = (InstanceFieldRef)rightOp;
-					
-					//No checks for final fields necessary, since reading them is always allowed
-					if (f.getField().isFinal())
-						continue;
-					
-					Value base = f.getBase();
-					if (isSubtypeOfChecked(base.getType()) && !checkedValues.contains(base)) {
-						logger.debug(a + " is a checked field read!");
-						result.add(a);
-						
-						checkedValues.add(base);
-						logger.debug("Added " + base + " to checkedValues.");
-					}
-				} else {
-					// Remove base and all args of task calls from the checked values, after the task call they have to be checked again
-					if (isTaskCall(rightOp)) {
-						VirtualInvokeExpr taskCall = (VirtualInvokeExpr)rightOp;
-						Value base = taskCall.getBase();
-						if (checkedValues.remove(base))
-							logger.debug("Removed " + base + " from checkedValues.");
-						for (Value arg : taskCall.getArgs()) {
-							if (checkedValues.remove(arg))
-								logger.debug("Removed " + arg + " from checkedValues.");
-						}
-					}
-				}
-			}
-		}
-		return result;
-	}
-	
-	private List<AssignStmt> findCheckedFieldWrites() {
-		
-		// Set containing all values which were checked to a point in the unit chain, task calls remove values from the set
-		Set<Value> checkedValues = new HashSet<Value>();
-				
-		ArrayList<AssignStmt> result = new ArrayList<AssignStmt>();
-		for (Unit u : units) {
-			// Because jimple uses 3-adress code, field reads are always a separate assign statement
-			if (u instanceof AssignStmt) {
-				AssignStmt a = (AssignStmt)u;
-				Value leftOp = a.getLeftOp();
-				if (leftOp instanceof InstanceFieldRef) {
-					InstanceFieldRef f = (InstanceFieldRef)leftOp;
-					Value base = f.getBase();
-					if (isSubtypeOfChecked(base.getType()) && !checkedValues.contains(base)) {
-						logger.debug(a + " is a checked field write!");
-						result.add(a);
-						
-						checkedValues.add(base);
-						logger.debug("Added " + base + " to checkedValues.");
-					}
-				} else {
-					// Remove base and all args of task calls from the checked values, after the task call they have to be checked again
-					Value rightOp = a.getRightOp();
-					if (isTaskCall(rightOp)) {
-						VirtualInvokeExpr taskCall = (VirtualInvokeExpr)rightOp;
-						Value base = taskCall.getBase();
-						if (checkedValues.remove(base))
-							logger.debug("Removed " + base + " from checkedValues.");
-						for (Value arg : taskCall.getArgs()) {
-							if (checkedValues.remove(arg))
-								logger.debug("Removed " + arg + " from checkedValues.");
-						}
-					}
-				}
-			}
-		}
-		return result;
-	}
-	
-	private boolean isTaskCall(Value op) {
-		if (op instanceof VirtualInvokeExpr) {
-			VirtualInvokeExpr vi = (VirtualInvokeExpr)op;
-			return vi.getMethod().getReturnType().equals(Constants.TASK_CLASS.getType()) && !vi.getMethod().getName().equals("start");
-		}
-		return false;
-	}
-	
-	/**
-	 * Returns <code>true</code> if <code>t</code> is a subtype of the class {@link rolez.checked.lang.Checked}
-	 * and <code>false</code> otherwise.
-	 * @param t
-	 * @return
-	 */
-	private boolean isSubtypeOfChecked(Type t) {
-		SootClass classOfType = Scene.v().loadClass(t.toString(), SootClass.HIERARCHY);
-		
-		if (classOfType.isPhantom())
-			throw new PhantomClassException(classOfType + " is a phantom class in.");
-		
-		SootClass currentClass = classOfType;
-		 while(!currentClass.equals(Constants.OBJECT_CLASS)) {
-			if (currentClass.equals(Constants.CHECKED_CLASS)) 
-				return true;
-			currentClass = currentClass.getSuperclass();
-		}
-		return false;
 	}
 	
 	private boolean isGuardedRefsMethod(SootMethod m) {
