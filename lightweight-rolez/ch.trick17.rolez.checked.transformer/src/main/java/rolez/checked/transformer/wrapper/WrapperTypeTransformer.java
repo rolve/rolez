@@ -21,9 +21,9 @@ import soot.Type;
 import soot.Unit;
 import soot.util.Chain;
 
-public class TypeTransformer extends SceneTransformer {
+public class WrapperTypeTransformer extends SceneTransformer {
 	
-	static final Logger logger = LogManager.getLogger(TypeTransformer.class);
+	static final Logger logger = LogManager.getLogger(WrapperTypeTransformer.class);
 
 	Map<String, SootMethod> changedMethodSignatures = new HashMap<String, SootMethod>();
 	List<SootMethod> methodsToRemove = new ArrayList<SootMethod>();

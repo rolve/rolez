@@ -8,7 +8,7 @@ import rolez.checked.transformer.checked.CheckingTransformer;
 import rolez.checked.transformer.task.TaskCallTransformer;
 import rolez.checked.transformer.util.ClassMapping;
 import rolez.checked.transformer.util.Constants;
-import rolez.checked.transformer.wrapper.TypeTransformer;
+import rolez.checked.transformer.wrapper.WrapperTypeTransformer;
 import soot.G;
 import soot.PackManager;
 import soot.Scene;
@@ -28,7 +28,7 @@ public class MainDriver {
 		setUpSoot(processDir, mainClass, outputDirName, outputFormat);
 
 		PackManager.v().getPack("wjtp").add(
-			new Transform("wjtp.transformer0", new TypeTransformer())
+			new Transform("wjtp.transformer0", new WrapperTypeTransformer())
 		);
 		
 		// Handles the @Task and @Checked annotated classes and transforms them.
