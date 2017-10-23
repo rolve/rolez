@@ -16,7 +16,6 @@ import soot.RefType;
 import soot.SootClass;
 import soot.SootMethod;
 import soot.Unit;
-import soot.VoidType;
 import soot.jimple.Jimple;
 import soot.util.Chain;
 
