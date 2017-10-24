@@ -22,6 +22,7 @@ import soot.tagkit.Tag;
 import soot.tagkit.VisibilityAnnotationTag;
 import soot.tagkit.VisibilityParameterAnnotationTag;
 import soot.util.Chain;
+import transformer.exceptions.RoleUnknownException;
 import transformer.util.Constants;
 import transformer.util.UnitFactory;
 import transformer.util.Util;
@@ -36,9 +37,8 @@ public class TaskMethod extends SootMethod {
 	private SootClass innerClass;
 	private SootMethod sourceMethod;
 	
-	// Array contains the roles of the parameters, null for primitive types
-	private Role[] parameterRoles;
-	private Role thisRole;
+	// Array contains the role of "this" and the roles of the parameters (null for primitive types)
+	private ArrayList<Role> roles;
 
 	public TaskMethod(String name, SootClass containingClass, SootClass innerClass, SootMethod sourceMethod) {
 		super(name, sourceMethod.getParameterTypes(), Constants.TASK_CLASS.getType(), Modifier.PUBLIC);
@@ -46,11 +46,9 @@ public class TaskMethod extends SootMethod {
 		this.innerClass = innerClass;
 		this.sourceMethod = sourceMethod;
 		
-		parameterRoles = new Role[sourceMethod.getParameterCount()];
-		thisRole = Util.getThisRole(sourceMethod);
-		
-		if (hasRefTypeParameters())
-			findParameterRoles();
+		roles = new ArrayList<Role>();
+		roles.add(Util.getThisRole(sourceMethod));
+		findParameterRoles();
 
 		generateMethodBody();
 	}
@@ -109,45 +107,29 @@ public class TaskMethod extends SootMethod {
 		units.add(UnitFactory.newAssignNewArrayExpr(objectArrayLocals.get(1), Constants.OBJECT_CLASS.getType(), objectArraySizes[1]));
 		units.add(UnitFactory.newAssignNewArrayExpr(objectArrayLocals.get(2), Constants.OBJECT_CLASS.getType(), objectArraySizes[2]));
 		
-		// Assign the locals to the object array depending on their role
+		ArrayList<Local> thisAndParamLocals = new ArrayList<Local>();
+		thisAndParamLocals.add(thisReferenceLocal);
+		thisAndParamLocals.addAll(parameterLocals);
 		int rwIndex = 0, roIndex = 0, puIndex = 0;
-		switch (thisRole) {
-			case READWRITE:
-				units.add(UnitFactory.newAssignToArrayExpr(objectArrayLocals.get(0), rwIndex, thisReferenceLocal));
-				rwIndex++;
-				break;
-			case READONLY:
-				units.add(UnitFactory.newAssignToArrayExpr(objectArrayLocals.get(1), roIndex, thisReferenceLocal));
-				roIndex++;
-				break;
-			case PURE:
-				units.add(UnitFactory.newAssignToArrayExpr(objectArrayLocals.get(2), puIndex, thisReferenceLocal));
-				puIndex++;
-				break;
-			default:
-				// Should not happen
-				break;
-		}
-		for (int i = 0; i < parameterLocals.size(); i++) {
-			Role r = parameterRoles[i];
-			if (r != null) {
-				switch (r) {
-					case READWRITE:
-						units.add(UnitFactory.newAssignToArrayExpr(objectArrayLocals.get(0), rwIndex, parameterLocals.get(i)));
-						rwIndex++;
-						break;
-					case READONLY:
-						units.add(UnitFactory.newAssignToArrayExpr(objectArrayLocals.get(1), roIndex, parameterLocals.get(i)));
-						roIndex++;
-						break;
-					case PURE:
-						units.add(UnitFactory.newAssignToArrayExpr(objectArrayLocals.get(2), puIndex, parameterLocals.get(i)));
-						puIndex++;
-						break;
-					default:
-						// Should not happen
-						break;
-				}
+		for (int i=0; i<roles.size(); i++) {
+			Role r = roles.get(i);
+			if (r == null)
+				continue;
+			switch (r) {
+				case READWRITE:
+					units.add(UnitFactory.newAssignToArrayExpr(objectArrayLocals.get(0), rwIndex, thisAndParamLocals.get(i)));
+					rwIndex++;
+					break;
+				case READONLY:
+					units.add(UnitFactory.newAssignToArrayExpr(objectArrayLocals.get(1), roIndex, thisAndParamLocals.get(i)));
+					roIndex++;
+					break;
+				case PURE:
+					units.add(UnitFactory.newAssignToArrayExpr(objectArrayLocals.get(2), puIndex, thisAndParamLocals.get(i)));
+					puIndex++;
+					break;
+				default:
+					throw new RoleUnknownException("The role found is unknown.");
 			}
 		}
 		
@@ -167,36 +149,39 @@ public class TaskMethod extends SootMethod {
 	}
 
 	/**
-	 * Method does retrieve the roles of the parameters from the given annotations and sets them in the 
-	 * <code>parameterRoles</code> array.
+	 * Method does retrieve the roles of the parameters from the given annotations and adds them to the 
+	 * <code>roles</code> ArrayList.
 	 */
 	private void findParameterRoles() {
-		int roleArrayIndex = 0;
 		List<Tag> tags = sourceMethod.getTags();
 		for (Tag t : tags) {
 			if (t instanceof VisibilityParameterAnnotationTag) {
 				VisibilityParameterAnnotationTag vpaTag = (VisibilityParameterAnnotationTag) t;
 				for (VisibilityAnnotationTag vaTag : vpaTag.getVisibilityAnnotations()) {
 					ArrayList<AnnotationTag> annotations = vaTag.getAnnotations();
+					boolean foundRole = false;
 					if (annotations != null) {
 						for (AnnotationTag aTag : vaTag.getAnnotations()) {
 							switch (aTag.getType()) {
 								case (Constants.READONLY_ANNOTATION):
-									parameterRoles[roleArrayIndex] = Role.READONLY;
+									roles.add(Role.READONLY);
+									foundRole = true;
 									break;
 								case (Constants.READWRITE_ANNOTATION):
-									parameterRoles[roleArrayIndex] = Role.READWRITE;
+									roles.add(Role.READWRITE);
+									foundRole = true;
 									break;
 								case (Constants.PURE_ANNOTATION):
-									parameterRoles[roleArrayIndex] = Role.PURE;
+									roles.add(Role.PURE);
+									foundRole = true;
 									break;
 								default:
-									// Should not happen
 									break;
 							}
 						}
 					}
-					roleArrayIndex++;
+					// Add null for not annotated parameters
+					if (!foundRole) roles.add(null);
 				}
 			}
 		}
@@ -209,27 +194,15 @@ public class TaskMethod extends SootMethod {
 	 */
 	private int[] getRoleArraySizes() {
 		int[] arraySizes = new int[3];
-		for (Role r : parameterRoles) {
-			if (r != null) {
-				switch (r) {
-					case READWRITE:
-						arraySizes[0]++;
-						break;
-					case READONLY:
-						arraySizes[1]++;
-						break;
-					case PURE:
-						arraySizes[2]++;
-						break;
-					default:
-						// Should not happen
-						break;		
-				}
-			}
-		}
+		for (Role r : roles)
+			if (r != null)
+				arraySizes = increaseRoleArraySize(arraySizes, r);
 		
-		// Also get space for "this" role
-		switch (thisRole) {
+		return arraySizes;
+	}
+	
+	private int[] increaseRoleArraySize(int[] arraySizes, Role r) {
+		switch (r) {
 			case READWRITE:
 				arraySizes[0]++;
 				break;
@@ -241,28 +214,8 @@ public class TaskMethod extends SootMethod {
 				break;
 			default:
 				// Should not happen
-				break;		
+				throw new RoleUnknownException("The role found is unknown.");
 		}
-		
 		return arraySizes;
-	}
-	
-	/**
-	 * Method that checks whether the parameter list of the source method
-	 * contains reference types (which have to be checked) or not.
-	 * @return
-	 */
-	private boolean hasRefTypeParameters() {
-		List<Type> parameterTypes = sourceMethod.getParameterTypes();
-		for (Type t : parameterTypes) {
-			if (t instanceof RefType) return true;
-			
-			// Also return true for array types with ref types as elements
-			if (t instanceof ArrayType) {
-				ArrayType at = (ArrayType) t;
-				if (at.getArrayElementType() instanceof RefType) return true;
-			}
-		}
-		return false;
 	}
 }
