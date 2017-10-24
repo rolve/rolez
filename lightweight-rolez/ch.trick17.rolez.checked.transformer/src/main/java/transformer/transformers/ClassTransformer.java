@@ -14,7 +14,7 @@ import soot.SootMethod;
 import soot.util.Chain;
 import transformer.checking.CheckedConstructor;
 import transformer.checking.GuardedRefsMethod;
-import transformer.main.MainTaskGenerator;
+import transformer.task.MainTaskGenerator;
 import transformer.task.TaskGenerator;
 import transformer.util.Constants;
 import transformer.util.Util;

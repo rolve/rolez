@@ -1,4 +1,4 @@
-package transformer.main;
+package transformer.task;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -15,8 +15,6 @@ import soot.SootMethod;
 import soot.Unit;
 import soot.jimple.Jimple;
 import soot.util.Chain;
-import transformer.task.InnerClassRunRolezObject;
-import transformer.task.TaskGenerator;
 import transformer.util.Constants;
 
 public class MainTaskGenerator {

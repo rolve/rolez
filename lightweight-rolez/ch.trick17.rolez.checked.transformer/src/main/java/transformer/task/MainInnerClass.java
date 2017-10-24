@@ -1,4 +1,4 @@
-package transformer.main;
+package transformer.task;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -6,7 +6,6 @@ import org.apache.logging.log4j.Logger;
 import soot.Modifier;
 import soot.SootClass;
 import soot.SootField;
-import transformer.task.TaskGenerator;
 import transformer.util.Constants;
 
 public class MainInnerClass extends SootClass {
