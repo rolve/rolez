@@ -9,14 +9,14 @@ import soot.SootField;
 import soot.SootMethod;
 import transformer.util.Constants;
 
-public class InnerClass extends SootClass {
+public class TaskInnerClass extends SootClass {
 
 	static final Logger logger = LogManager.getLogger(TaskGenerator.class);
 
 	private SootClass outerClass;
 	private SootMethod sourceMethod;
 	
-	public InnerClass(String name, SootClass outerClass, SootMethod sourceMethod) {
+	public TaskInnerClass(String name, SootClass outerClass, SootMethod sourceMethod) {
 		super(name);
 		this.outerClass = outerClass;
 		this.sourceMethod = sourceMethod;

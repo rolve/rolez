@@ -21,16 +21,16 @@ import soot.util.Chain;
 import transformer.util.Constants;
 import transformer.util.UnitFactory;
 
-public class MainInnerClassRunRolezConcrete extends SootMethod {
+public class MainTaskInnerClassRunRolezConcrete extends SootMethod {
 	
-	static final Logger logger = LogManager.getLogger(MainInnerClassRunRolezConcrete.class);
+	static final Logger logger = LogManager.getLogger(MainTaskInnerClassRunRolezConcrete.class);
 
 	static final Jimple J = Jimple.v();
 	
 	private SootClass containingClass;
 	private SootMethod sourceMethod;
 	
-	public MainInnerClassRunRolezConcrete(SootClass containingClass, SootMethod sourceMethod) {
+	public MainTaskInnerClassRunRolezConcrete(SootClass containingClass, SootMethod sourceMethod) {
 		super("runRolez", new ArrayList<Type>(), Constants.VOID_TYPE, Modifier.PROTECTED);
 		
 		this.containingClass = containingClass;

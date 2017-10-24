@@ -18,30 +18,37 @@ import soot.util.Chain;
 import transformer.util.Constants;
 import transformer.util.UnitFactory;
 
-public class MainInnerClassConstructor extends SootMethod {
+public class TaskInnerClassConstructor extends SootMethod {
 
-	static final Logger logger = LogManager.getLogger(MainInnerClassConstructor.class);
+	static final Logger logger = LogManager.getLogger(TaskInnerClassConstructor.class);
+
 
 	static final Jimple J = Jimple.v();
 	
 	private SootClass containingClass;
 	private SootClass outerClass;
+	private SootMethod sourceMethod;
 	
-	public MainInnerClassConstructor(SootClass containingClass, SootClass outerClass) {
+	List<Type> sourceMethodParameterTypes; 
+	
+	public TaskInnerClassConstructor(SootClass containingClass, SootClass outerClass, SootMethod sourceMethod) {
 		// Defer setting of parameter types
 		super("<init>", new ArrayList<Type>(), VoidType.v());
 		
 		this.containingClass = containingClass;
 		this.outerClass = outerClass;
+		this.sourceMethod = sourceMethod;
+		sourceMethodParameterTypes = sourceMethod.getParameterTypes();
 
+		// Find and set parameter types
 		this.setParameterTypes(findParameterTypes());
-		
 		generateMethodBody();
 	}
 	
 	private void generateMethodBody() {
 		
 		JimpleBody body = J.newBody(this);
+		this.setActiveBody(body);
 		
 		Chain<Local> locals = body.getLocals();
 		
@@ -56,24 +63,34 @@ public class MainInnerClassConstructor extends SootMethod {
 		locals.add(readonlyArrayLocal);
 		Local pureArrayLocal = J.newLocal("r4", Constants.OBJECT_ARRAY_TYPE);
 		locals.add(pureArrayLocal);
+
+		List<Local> parameterLocals = new ArrayList<Local>();
+		for (int i=0; i<sourceMethodParameterTypes.size(); i++)
+			parameterLocals.add(J.newLocal("arg"+Integer.toString(i), sourceMethodParameterTypes.get(i)));
+		locals.addAll(parameterLocals);
 		
 		Chain<Unit> units = body.getUnits();
+		int paramRefNumber = 0;
 		units.add(UnitFactory.newThisRef(containingClassLocal, containingClass.getType()));
-		units.add(UnitFactory.newParameterRef(outerClassLocal, outerClass.getType(), 0));
-		units.add(UnitFactory.newParameterRef(readwriteArrayLocal, Constants.OBJECT_ARRAY_TYPE, 1));
-		units.add(UnitFactory.newParameterRef(readonlyArrayLocal, Constants.OBJECT_ARRAY_TYPE, 2));
-		units.add(UnitFactory.newParameterRef(pureArrayLocal, Constants.OBJECT_ARRAY_TYPE, 3));
+		units.add(UnitFactory.newParameterRef(outerClassLocal, outerClass.getType(), paramRefNumber++));
+		units.add(UnitFactory.newParameterRef(readwriteArrayLocal, Constants.OBJECT_ARRAY_TYPE, paramRefNumber++));
+		units.add(UnitFactory.newParameterRef(readonlyArrayLocal, Constants.OBJECT_ARRAY_TYPE, paramRefNumber++));
+		units.add(UnitFactory.newParameterRef(pureArrayLocal, Constants.OBJECT_ARRAY_TYPE, paramRefNumber++));
+		for (int i=0; i<sourceMethodParameterTypes.size(); i++)
+			units.add(UnitFactory.newParameterRef(parameterLocals.get(i), sourceMethodParameterTypes.get(i), paramRefNumber++));
 		
-		// Set field field for outer class ref
+		// Set field for outer class reference
 		units.add(UnitFactory.newAssignLocalToFieldExpr(containingClassLocal, containingClass, "val$f0", outerClassLocal));
 		
+		// Set fields for method parameters
+		for (int i=0; i<sourceMethod.getParameterCount(); i++)
+			units.add(UnitFactory.newAssignLocalToFieldExpr(containingClassLocal, containingClass, "val$f" + Integer.toString(i+1), parameterLocals.get(i)));
+		
 		// Add the call to superclass constructor
-		units.add(UnitFactory.newSpecialInvokeExpr(containingClassLocal, Constants.TASK_CLASS, "<init>", new Local[] { readwriteArrayLocal, readonlyArrayLocal, pureArrayLocal}));
+		units.add(UnitFactory.newSpecialInvokeExpr(containingClassLocal, Constants.TASK_CLASS, "<init>", new Local[] {	readwriteArrayLocal, readonlyArrayLocal, pureArrayLocal }));
 		
 		// Add return statement
 		units.add(J.newReturnVoidStmt());
-		
-		this.setActiveBody(body);
 	}
 	
 	private List<Type> findParameterTypes() {
@@ -87,6 +104,10 @@ public class MainInnerClassConstructor extends SootMethod {
 		parameterTypes.add(Constants.OBJECT_ARRAY_TYPE);
 		parameterTypes.add(Constants.OBJECT_ARRAY_TYPE);
 		parameterTypes.add(Constants.OBJECT_ARRAY_TYPE);
+		
+		// Add all original method parameters
+		for (Type t : sourceMethodParameterTypes)
+			parameterTypes.add(t);
 		
 		return parameterTypes;
 	}

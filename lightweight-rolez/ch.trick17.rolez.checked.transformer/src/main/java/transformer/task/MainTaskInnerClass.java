@@ -8,13 +8,13 @@ import soot.SootClass;
 import soot.SootField;
 import transformer.util.Constants;
 
-public class MainInnerClass extends SootClass {
+public class MainTaskInnerClass extends SootClass {
 
 	static final Logger logger = LogManager.getLogger(TaskGenerator.class);
 
 	private SootClass outerClass;
 	
-	public MainInnerClass(String name, SootClass outerClass) {
+	public MainTaskInnerClass(String name, SootClass outerClass) {
 		super(name);
 		this.outerClass = outerClass;
 		

@@ -40,7 +40,7 @@ public class TaskGenerator {
 	}
 
 	private void generateInnerClass() {
-		innerClass = new InnerClass(getClassNameFromMethod(), targetClass, sourceMethod);
+		innerClass = new TaskInnerClass(getClassNameFromMethod(), targetClass, sourceMethod);
 		generateInnerClassConstructor();
 		generateRunRolezMethods();
 	}
@@ -51,14 +51,14 @@ public class TaskGenerator {
 	}
 	
 	private void generateInnerClassConstructor() {
-		InnerClassConstructor innerClassConstructor = new InnerClassConstructor(innerClass, targetClass, sourceMethod);
+		TaskInnerClassConstructor innerClassConstructor = new TaskInnerClassConstructor(innerClass, targetClass, sourceMethod);
 		innerClass.addMethod(innerClassConstructor);
 	}
 	
 	private void generateRunRolezMethods() {
-		InnerClassRunRolezConcrete concreteMethod = new InnerClassRunRolezConcrete(innerClass, sourceMethod);
+		TaskInnerClassRunRolezConcrete concreteMethod = new TaskInnerClassRunRolezConcrete(innerClass, sourceMethod);
 		innerClass.addMethod(concreteMethod);
-		innerClass.addMethod(new InnerClassRunRolezObject(innerClass, concreteMethod));		
+		innerClass.addMethod(new TaskInnerClassRunRolezObject(innerClass, concreteMethod));		
 	}
 	
 	/**
