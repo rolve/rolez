@@ -21,6 +21,12 @@ public class TestOptimizedChecks {
 		System.out.println(a.s);
 		a.s = "HELLO";
 		System.out.println(a.s);
+		
+		for (int i=0; i<4; i++) {
+			a.s = "HELLO";
+			System.out.println(a.s);
+			instance.task(a, true);
+		}
 	}
 	
 	@Task
