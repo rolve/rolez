@@ -286,4 +286,12 @@ public class TransformerTest {
 		Pipeline p = new Pipeline(methodName, mainClass);
 		p.runDefault(true, false);
 	}
+
+	@Test
+	public void testAccountExample() {
+		String methodName = "testAccountExample";
+		String mainClass = "classes.TestAccountExample";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.runDefault(true, false);
+	}
 }
