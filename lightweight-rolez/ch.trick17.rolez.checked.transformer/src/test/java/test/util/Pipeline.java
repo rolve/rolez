@@ -11,7 +11,7 @@ import java.util.ArrayList;
 
 import static junit.framework.Assert.*;
 import ch.trick17.javaprocesses.JavaProcessBuilder;
-import rolez.checked.transformer.MainDriver;
+import transformer.MainDriver;
 
 public class Pipeline {
 
