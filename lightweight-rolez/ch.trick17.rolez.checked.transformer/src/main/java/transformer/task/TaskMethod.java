@@ -80,6 +80,7 @@ public class TaskMethod extends SootMethod {
 		locals.add(innerClassReferenceLocal);
 		localCount++;
 		
+		// Generate locals for the arrays which are used in the task constructor
 		List<Local> objectArrayLocals = new ArrayList<Local>();
 		ArrayType objectArrayType = ArrayType.v(RefType.v(Constants.OBJECT_CLASS),1);
 		for (int i=0; i<3; i++, localCount++) {
@@ -91,14 +92,14 @@ public class TaskMethod extends SootMethod {
 		// Add units
 		Chain<Unit> units = body.getUnits();
 		
+		// Generate the identity statements
 		units.add(UnitFactory.newThisRef(thisReferenceLocal, containingClass.getType()));
-		
 		int paramNumber = 0;
 		for (Local l : parameterLocals) {
 			units.add(UnitFactory.newParameterRef(l, l.getType(), paramNumber));
 			paramNumber++;
 		}
-				
+		
 		units.add(UnitFactory.newAssignNewExpr(innerClassReferenceLocal, innerClass));
 		
 		int[] objectArraySizes = getRoleArraySizes();
@@ -158,33 +159,39 @@ public class TaskMethod extends SootMethod {
 			if (t instanceof VisibilityParameterAnnotationTag) {
 				VisibilityParameterAnnotationTag vpaTag = (VisibilityParameterAnnotationTag) t;
 				for (VisibilityAnnotationTag vaTag : vpaTag.getVisibilityAnnotations()) {
-					ArrayList<AnnotationTag> annotations = vaTag.getAnnotations();
-					boolean foundRole = false;
-					if (annotations != null) {
-						for (AnnotationTag aTag : vaTag.getAnnotations()) {
-							switch (aTag.getType()) {
-								case (Constants.READONLY_ANNOTATION):
-									roles.add(Role.READONLY);
-									foundRole = true;
-									break;
-								case (Constants.READWRITE_ANNOTATION):
-									roles.add(Role.READWRITE);
-									foundRole = true;
-									break;
-								case (Constants.PURE_ANNOTATION):
-									roles.add(Role.PURE);
-									foundRole = true;
-									break;
-								default:
-									break;
-							}
-						}
-					}
-					// Add null for not annotated parameters
-					if (!foundRole) roles.add(null);
+					ArrayList<AnnotationTag> parameterAnnotations = vaTag.getAnnotations();
+					processParameterAnnotations(parameterAnnotations);
 				}
 			}
 		}
+	}
+
+	private void processParameterAnnotations(ArrayList<AnnotationTag> annotations) {
+		boolean foundRole = false;
+		if (annotations != null) {
+			for (AnnotationTag aTag : annotations) {
+				switch (aTag.getType()) {
+					case (Constants.READONLY_ANNOTATION):
+						roles.add(Role.READONLY);
+						foundRole = true;
+						break;
+					case (Constants.READWRITE_ANNOTATION):
+						roles.add(Role.READWRITE);
+						foundRole = true;
+						break;
+					case (Constants.PURE_ANNOTATION):
+						roles.add(Role.PURE);
+						foundRole = true;
+						break;
+					default:
+						break;
+				}
+			}
+		}
+		
+		// Add null when no role annotation was found (e.g. if it is a primitive type)
+		if (!foundRole) 
+			roles.add(null);
 	}
 
 	/**
