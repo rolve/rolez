@@ -22,15 +22,15 @@ import soot.jimple.Jimple;
 import soot.util.Chain;
 import transformer.util.Constants;
 
-public class GuardedRefsMethod extends SootMethod {
+public class CheckedGuardedRefs extends SootMethod {
 
-	static final Logger logger = LogManager.getLogger(GuardedRefsMethod.class);
+	static final Logger logger = LogManager.getLogger(CheckedGuardedRefs.class);
 
 	static final Jimple J = Jimple.v();
 	
 	private SootClass containingClass;
 	
-	public GuardedRefsMethod(SootClass containingClass) {
+	public CheckedGuardedRefs(SootClass containingClass) {
 		super("guardedRefs", new ArrayList<Type>(), Constants.ITERABLE_CLASS.getType(), Modifier.PROTECTED);
 		this.containingClass = containingClass;
 		

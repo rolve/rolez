@@ -13,7 +13,7 @@ import soot.SootClass;
 import soot.SootMethod;
 import soot.util.Chain;
 import transformer.checking.CheckedConstructor;
-import transformer.checking.GuardedRefsMethod;
+import transformer.checking.CheckedGuardedRefs;
 import transformer.task.MainTaskGenerator;
 import transformer.task.TaskGenerator;
 import transformer.util.Constants;
@@ -49,7 +49,7 @@ public class ClassTransformer extends SceneTransformer {
 		// Add GuardedRefs methods to all the checked classes
 		for (SootClass c : classesToProcess) {
 			if (Util.isCheckedClass(c)) {
-				GuardedRefsMethod guardedRefs = new GuardedRefsMethod(c);
+				CheckedGuardedRefs guardedRefs = new CheckedGuardedRefs(c);
 				c.addMethod(guardedRefs);
 			}
 		}
