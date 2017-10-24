@@ -102,7 +102,7 @@ public class WrapperTypeTransformer extends SceneTransformer {
 		Chain<Local> locals = b.getLocals();
 		Chain<Unit> units = b.getUnits();
 		
-		for (Local local : locals){
+		for (Local local : locals) {
 			Type type = local.getType();
 			SootClass availableClass = ClassMapping.MAP.get(type.toString());
 			if (availableClass != null) {	

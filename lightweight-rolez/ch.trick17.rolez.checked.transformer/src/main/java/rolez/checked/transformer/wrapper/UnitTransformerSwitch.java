@@ -11,22 +11,18 @@ import soot.jimple.InvokeStmt;
 
 public class UnitTransformerSwitch extends AbstractStmtSwitch {
 	
-	SootClass availableClass;
-	Local local;
-	Map<String, SootMethod> changedMethodSignatures;
+	ExpressionTransformerSwitch expressionTransformerSwitch;
 	
 	public UnitTransformerSwitch(SootClass availableClass, Local local, 
 			Map<String, SootMethod> changedMethodSignatures) {
-		this.availableClass = availableClass;
-		this.local = local;
-		this.changedMethodSignatures = changedMethodSignatures;
+		this.expressionTransformerSwitch = new ExpressionTransformerSwitch(availableClass, local, changedMethodSignatures);
 	}
 
 	public void caseInvokeStmt(InvokeStmt stmt) {
-    	stmt.getInvokeExpr().apply(new ExpressionTransformerSwitch(this.availableClass, this.local, this.changedMethodSignatures));
+    	stmt.getInvokeExpr().apply(this.expressionTransformerSwitch);
     }
 
     public void caseAssignStmt(AssignStmt stmt) {
-		stmt.getRightOp().apply(new ExpressionTransformerSwitch(this.availableClass, this.local, this.changedMethodSignatures));
+		stmt.getRightOp().apply(this.expressionTransformerSwitch);
     }
 }
