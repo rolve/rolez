@@ -27,26 +27,8 @@ public class MainDriver {
 		String outputFormat = args[3];	// J = jimple, C = class
 		
 		setUpSoot(processDir, mainClass, outputDirName, outputFormat);
-
-		PackManager.v().getPack("wjtp").add(
-			new Transform("wjtp.transformer0", new WrapperTypeTransformer())
-		);
 		
-		// Handles the @Task and @Checked annotated classes and transforms them.
-		PackManager.v().getPack("wjtp").add(
-			new Transform("wjtp.transformer1", new ClassTransformer())
-		);
-
-		// Transforms calls of tasks
-		PackManager.v().getPack("jtp").add(
-			new Transform("jtp.transformer0", new TaskCallTransformer())
-		);
-		
-		// Inserts guardings
-		PackManager.v().getPack("jtp").add(
-			new Transform("jtp.transformer1", new CheckingTransformer())
-		);
-		
+		// Start transformation
         soot.Main.main(new String[] {});
         
         System.out.println("Finished transformation");
@@ -86,5 +68,21 @@ public class MainDriver {
 		Constants.resolveClasses();
 		ClassMapping.initializeMapping();
 		
+		//Register transformers
+		PackManager.v().getPack("wjtp").add(
+			new Transform("wjtp.transformer0", new WrapperTypeTransformer())
+		);
+		
+		PackManager.v().getPack("wjtp").add(
+			new Transform("wjtp.transformer1", new ClassTransformer())
+		);
+
+		PackManager.v().getPack("jtp").add(
+			new Transform("jtp.transformer0", new TaskCallTransformer())
+		);
+		
+		PackManager.v().getPack("jtp").add(
+			new Transform("jtp.transformer1", new CheckingTransformer())
+		);
 	}
 }
