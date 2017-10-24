@@ -1,4 +1,4 @@
-package rolez.checked.transformer.checked;
+package rolez.checked.transformer.transformers;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -7,6 +7,8 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import rolez.checked.transformer.checked.ReadCheckAnalysis;
+import rolez.checked.transformer.checked.WriteCheckAnalysis;
 import rolez.checked.transformer.util.Constants;
 import soot.Body;
 import soot.BodyTransformer;
