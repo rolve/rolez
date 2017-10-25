@@ -2,6 +2,7 @@ package transformer.transformers;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -26,17 +27,27 @@ public class WrapperTypeTransformer extends SceneTransformer {
 	
 	static final Logger logger = LogManager.getLogger(WrapperTypeTransformer.class);
 
-	Map<String, SootMethod> changedMethodSignatures = new HashMap<String, SootMethod>();
-	List<SootMethod> methodsToRemove = new ArrayList<SootMethod>();
+	Map<SootMethod, SootMethod> changedMethods = new HashMap<SootMethod, SootMethod>();
+	Map<SootField, SootField> changedFields = new HashMap<SootField, SootField>();
 	
 	@Override
 	protected void internalTransform(String phaseName, Map options) {
 		Chain<SootClass> classesToProcess = Scene.v().getApplicationClasses();
-		
+
 		for (SootClass c : classesToProcess) {			
 			// Transform fields
-			for (SootField f : c.getFields())
-				f.setType(getAvailableWrapperType(f.getType()));
+			Chain<SootField> fields = c.getFields();
+			Iterator<SootField> iterator = fields.snapshotIterator();
+			while (iterator.hasNext()) {
+				SootField f = iterator.next();
+				Type fieldType = f.getType();
+				Type newType = getAvailableWrapperType(fieldType);
+				if (!newType.equals(fieldType)) {
+					SootField newField = new SootField(f.getName(), newType, f.getModifiers());
+					c.addField(newField);
+					changedFields.put(f, newField);
+				}
+			}
 
 			// Transform method signatures
 			for (SootMethod m : c.getMethods())
@@ -51,8 +62,11 @@ public class WrapperTypeTransformer extends SceneTransformer {
 		}
 		
 		// Remove methods with old types
-		for (SootMethod m : methodsToRemove)
+		for (SootMethod m : changedMethods.keySet())
 			m.getDeclaringClass().removeMethod(m);
+		
+		for (SootField f : changedFields.keySet())
+			f.getDeclaringClass().removeField(f);
 	}
 	
 	/**
@@ -62,7 +76,6 @@ public class WrapperTypeTransformer extends SceneTransformer {
 	 */
 	private void transformMethodSignature(SootMethod m) {
 		boolean change = false;
-		String signature = m.getSubSignature();
 		
 		// Transform return type
 		Type returnType = m.getReturnType();
@@ -89,8 +102,7 @@ public class WrapperTypeTransformer extends SceneTransformer {
 			m.getDeclaringClass().addMethod(newMethod);
 			if (!m.isAbstract())
 				newMethod.setActiveBody(m.retrieveActiveBody());
-			methodsToRemove.add(m);
-			changedMethodSignatures.put(signature, newMethod);
+			changedMethods.put(m, newMethod);
 		}
 	}
 	
@@ -109,7 +121,7 @@ public class WrapperTypeTransformer extends SceneTransformer {
 			if (availableClass != null) {	
 				// Set new type for all units
 				for (Unit u : units)
-					u.apply(new UnitTransformerSwitch(availableClass, local, changedMethodSignatures));
+					u.apply(new UnitTransformerSwitch(availableClass, local, changedMethods, changedFields));
 				
 				// Set the type of the local AFTER the transformation of the units!
 				RefType availableType = availableClass.getType();

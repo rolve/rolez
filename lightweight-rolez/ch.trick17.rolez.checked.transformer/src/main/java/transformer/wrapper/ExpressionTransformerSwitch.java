@@ -4,10 +4,12 @@ import java.util.Map;
 
 import soot.Local;
 import soot.SootClass;
+import soot.SootField;
 import soot.SootMethod;
 import soot.jimple.AbstractJimpleValueSwitch;
 import soot.jimple.CastExpr;
 import soot.jimple.DynamicInvokeExpr;
+import soot.jimple.InstanceFieldRef;
 import soot.jimple.InstanceInvokeExpr;
 import soot.jimple.InstanceOfExpr;
 import soot.jimple.InterfaceInvokeExpr;
@@ -23,12 +25,17 @@ public class ExpressionTransformerSwitch extends AbstractJimpleValueSwitch {
 
 	SootClass availableClass;
 	Local local;
-	Map<String,SootMethod> changedMethodSignatures;
+	Map<SootMethod,SootMethod> changedMethods;
+	Map<SootField,SootField> changedFields;
 	
-	public ExpressionTransformerSwitch(SootClass availableClass, Local local, Map<String,SootMethod> changedMethodSignatures) {
+	public ExpressionTransformerSwitch(SootClass availableClass, 
+			Local local, 
+			Map<SootMethod,SootMethod> changedMethods,
+			Map<SootField,SootField> changedFields) {
 		this.availableClass = availableClass;
 		this.local = local;
-		this.changedMethodSignatures = changedMethodSignatures;
+		this.changedMethods = changedMethods;
+		this.changedFields = changedFields;
 	}
 
 	@Override
@@ -79,7 +86,15 @@ public class ExpressionTransformerSwitch extends AbstractJimpleValueSwitch {
     		v.setBaseType(availableClass.getType());
     }
 
-    /**
+    @Override
+	public void caseInstanceFieldRef(InstanceFieldRef v) {
+    	SootField field = v.getField();
+		if (this.changedFields.containsKey(field)) {
+			v.setFieldRef(this.changedFields.get(field).makeRef());
+		}
+	}
+
+	/**
      * Sets method reference to the methods of the wrapper class. E.g. the method nextInt()
      * from java.util.Random gets mapped to the method nextInt() from rolez.checked.util.Random.
      * @param v
@@ -112,9 +127,9 @@ public class ExpressionTransformerSwitch extends AbstractJimpleValueSwitch {
 	 * @param v
 	 */
 	private void setRefToChangedMethod(InvokeExpr v) {
-		String methodSignature = v.getMethod().getSubSignature();
-        if (this.changedMethodSignatures.containsKey(methodSignature)) {
-    		v.setMethodRef(this.changedMethodSignatures.get(methodSignature).makeRef());
+		SootMethod method = v.getMethod();
+        if (this.changedMethods.containsKey(method)) {
+    		v.setMethodRef(this.changedMethods.get(method).makeRef());
         }
 	}
 }

@@ -9,8 +9,12 @@ import java.util.Random;
 @Checked
 public class TestWrapperClassUsage {
 
+	Random rf;
+	
 	public static void main(String[] args) {
 		TestWrapperClassUsage instance = new TestWrapperClassUsage();
+		instance.rf = new Random();
+		instance.rf.nextInt();
 		Random r = new Random();
 		if (r instanceof Random)
 			instance.task(r, true);
