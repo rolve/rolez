@@ -65,6 +65,7 @@ public class WrapperTypeTransformer extends SceneTransformer {
 		for (SootMethod m : changedMethods.keySet())
 			m.getDeclaringClass().removeMethod(m);
 		
+		// Remove fields with old types
 		for (SootField f : changedFields.keySet())
 			f.getDeclaringClass().removeField(f);
 	}
