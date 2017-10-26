@@ -41,8 +41,6 @@ public final class CheckedArray<A> extends CheckedSlice<A> {
             return arrayType.cast(wrapped.data);
     }
     
-    // TODO: Test that the stuff above actually works...
-    
     @Override
     @SuppressWarnings("unchecked")
     public CheckedArray<A> clone() {
