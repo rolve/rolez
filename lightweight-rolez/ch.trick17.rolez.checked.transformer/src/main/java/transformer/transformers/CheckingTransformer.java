@@ -20,6 +20,7 @@ import soot.toolkits.graph.ExceptionalUnitGraph;
 import soot.toolkits.scalar.ArraySparseSet;
 import soot.toolkits.scalar.FlowSet;
 import soot.util.Chain;
+import transformer.checking.CheckingAnalysis;
 import transformer.checking.ReadCheckAnalysis;
 import transformer.checking.WriteCheckAnalysis;
 import transformer.util.Constants;
@@ -67,9 +68,9 @@ public class CheckingTransformer extends BodyTransformer {
 			Unit u = unitIter.next();
 			if (u instanceof AssignStmt) {
 				AssignStmt astmt = (AssignStmt)u;
-				if (increasesWriteSet(astmt, writeAnalysis))
+				if (increasesSet(astmt, writeAnalysis))
 					addCheckLegalWrite(astmt);
-				else if (increasesReadSet(astmt, readAnalysis))
+				else if (increasesSet(astmt, readAnalysis))
 					addCheckLegalRead(astmt);
 			}
 		}
@@ -79,30 +80,16 @@ public class CheckingTransformer extends BodyTransformer {
 	}
 	
 	/**
-	 * Method checks if a unit did increase the set of the read-checked variables
+	 * Method checks if a unit did increase the set of the checked variables
 	 * @param u
 	 * @param analysis
 	 * @return
 	 */
-	private boolean increasesReadSet(Unit u, ReadCheckAnalysis analysis) {
+	private boolean increasesSet(Unit u, CheckingAnalysis analysis) {
 		FlowSet beforeRead = analysis.getFlowBefore(u);
 		FlowSet afterRead = analysis.getFlowAfter(u);
 		FlowSet diff = new ArraySparseSet();
 		afterRead.difference(beforeRead, diff);
-		return diff.size() > 0;
-	}
-	
-	/**
-	 * Method checks if a unit did increase the set of the write-checked variables
-	 * @param u
-	 * @param analysis
-	 * @return
-	 */
-	private boolean increasesWriteSet(Unit u, WriteCheckAnalysis analysis) {
-		FlowSet beforeWrite = analysis.getFlowBefore(u);
-		FlowSet afterWrite = analysis.getFlowAfter(u);
-		FlowSet diff = new ArraySparseSet();
-		afterWrite.difference(beforeWrite, diff);
 		return diff.size() > 0;
 	}
 	
