@@ -279,7 +279,8 @@ public class ArrayCheckingTest extends TaskBasedJpfTest {
                     a.data[i] = new Int(i);
                 
                 final CheckedSlice<Int[]> slice = a.slice(0, 5, 1);
-                Task<?> task = new Task<Void>(new Object[]{slice}, new Object[]{}, new Object[]{}) {      @Override
+                Task<?> task = new Task<Void>(new Object[]{slice}, new Object[]{}, new Object[]{}) {      
+                	@Override
                     protected Void runRolez() {
                         checkLegalWrite(slice); // Not necessary, but could happen
                         for(int i = slice.range.begin; i < slice.range.end; i++)
