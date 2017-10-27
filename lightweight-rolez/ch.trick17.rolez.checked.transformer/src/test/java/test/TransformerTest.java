@@ -260,7 +260,7 @@ public class TransformerTest {
 		String methodName = "testMonteCarlo";
 		String mainClass = "classes.TestMonteCarlo";
 		Pipeline p = new Pipeline(methodName, mainClass);
-		p.runDefault(false, false);
+		p.runDefault(false, true);
 	}
 
 	@Test
@@ -291,6 +291,14 @@ public class TransformerTest {
 	public void testAccountExample() {
 		String methodName = "testAccountExample";
 		String mainClass = "classes.TestAccountExample";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.runDefault(true, false);
+	}
+
+	@Test
+	public void testCheckedArray() {
+		String methodName = "testCheckedArray";
+		String mainClass = "classes.TestCheckedArray";
 		Pipeline p = new Pipeline(methodName, mainClass);
 		p.runDefault(true, false);
 	}

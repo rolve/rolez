@@ -7,9 +7,12 @@ import soot.Unit;
 import soot.Value;
 import soot.jimple.AssignStmt;
 import soot.jimple.InstanceFieldRef;
+import soot.tagkit.AnnotationTag;
+import soot.tagkit.Tag;
 import soot.toolkits.graph.DirectedGraph;
 import soot.toolkits.scalar.ArraySparseSet;
 import soot.toolkits.scalar.FlowSet;
+import transformer.util.Constants;
 
 public class WriteCheckAnalysis extends CheckingAnalysis {
 
@@ -35,6 +38,22 @@ public class WriteCheckAnalysis extends CheckingAnalysis {
 				Value base = fieldRef.getBase();
 				if (isSubtypeOfChecked(fieldRef.getBase().getType())) {
 					out.add(base);
+				}
+			}
+			
+			if (rightOp instanceof InstanceFieldRef) {
+				InstanceFieldRef fieldRef = (InstanceFieldRef)rightOp;
+				Value base = fieldRef.getBase();
+				
+				if (base.getType().equals(Constants.CHECKED_ARRAY_CLASS.getType())) {
+					for (Tag t : d.getTags()) {
+						if (t instanceof AnnotationTag) {
+							AnnotationTag aTag = (AnnotationTag)t;
+							if (aTag.getType().equals("Write")) 
+								out.add(base);
+						}
+					}
+					return;
 				}
 			}
 				

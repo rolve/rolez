@@ -1,9 +1,7 @@
-package transformer.wrapper;
+package transformer.type;
 
 import java.util.Map;
 
-import soot.Local;
-import soot.SootClass;
 import soot.SootField;
 import soot.SootMethod;
 import soot.jimple.AbstractJimpleValueSwitch;
@@ -16,26 +14,29 @@ import soot.jimple.InterfaceInvokeExpr;
 import soot.jimple.InvokeExpr;
 import soot.jimple.NewArrayExpr;
 import soot.jimple.NewExpr;
-import soot.jimple.NewMultiArrayExpr;
 import soot.jimple.SpecialInvokeExpr;
 import soot.jimple.StaticInvokeExpr;
 import soot.jimple.VirtualInvokeExpr;
+import transformer.util.ClassMapping;
 
 public class ExpressionTransformerSwitch extends AbstractJimpleValueSwitch {
 
-	SootClass availableClass;
-	Local local;
 	Map<SootMethod,SootMethod> changedMethods;
 	Map<SootField,SootField> changedFields;
 	
-	public ExpressionTransformerSwitch(SootClass availableClass, 
-			Local local, 
+	public ExpressionTransformerSwitch(
 			Map<SootMethod,SootMethod> changedMethods,
 			Map<SootField,SootField> changedFields) {
-		this.availableClass = availableClass;
-		this.local = local;
 		this.changedMethods = changedMethods;
 		this.changedFields = changedFields;
+	}
+	
+	@Override
+	public void caseNewArrayExpr(NewArrayExpr v) {
+		String baseType = v.getBaseType().toString();
+		if (ClassMapping.MAP.containsKey(baseType)){
+    		v.setBaseType(ClassMapping.MAP.get(baseType).getType());
+    	}
 	}
 
 	@Override
@@ -63,35 +64,31 @@ public class ExpressionTransformerSwitch extends AbstractJimpleValueSwitch {
     }
 
     public void caseCastExpr(CastExpr v) {
-    	if (v.getType().equals(local.getType()))
-    		v.setCastType(availableClass.getType());
+    	String castType = v.getCastType().toString();
+    	if (ClassMapping.MAP.containsKey(castType)){
+    		v.setCastType(ClassMapping.MAP.get(castType).getType());
+    	}
     }
 
     public void caseInstanceOfExpr(InstanceOfExpr v) {
-        if (v.getCheckType().equals(local.getType())) {
-        	v.setCheckType(availableClass.getType());
-        }
-    }
-
-    public void caseNewArrayExpr(NewArrayExpr v) {
-        defaultCase(v);
-    }
-
-    public void caseNewMultiArrayExpr(NewMultiArrayExpr v) {
-        defaultCase(v);
+    	String checkType = v.getCheckType().toString();
+    	if (ClassMapping.MAP.containsKey(checkType)){
+    		v.setCheckType(ClassMapping.MAP.get(checkType).getType());
+    	}
     }
 
     public void caseNewExpr(NewExpr v) {
-    	if (v.getType().equals(local.getType()))
-    		v.setBaseType(availableClass.getType());
+    	String baseType = v.getBaseType().toString();
+    	if (ClassMapping.MAP.containsKey(baseType)){
+    		v.setBaseType(ClassMapping.MAP.get(baseType).getType());
+    	}
     }
 
     @Override
 	public void caseInstanceFieldRef(InstanceFieldRef v) {
     	SootField field = v.getField();
-		if (this.changedFields.containsKey(field)) {
+		if (this.changedFields.containsKey(field))
 			v.setFieldRef(this.changedFields.get(field).makeRef());
-		}
 	}
 
 	/**
@@ -100,9 +97,9 @@ public class ExpressionTransformerSwitch extends AbstractJimpleValueSwitch {
      * @param v
      */
 	private void setRefToWrapperMethod(InstanceInvokeExpr v) {
-		if (v.getBase().equals(local)) {
-        	v.setMethodRef(availableClass.getMethod(v.getMethod().getSubSignature()).makeRef());
-        }
+		String baseType = v.getBase().getType().toString();
+		if (ClassMapping.MAP.containsKey(baseType)) 
+        	v.setMethodRef(ClassMapping.MAP.get(baseType).getMethod(v.getMethod().getSubSignature()).makeRef());
 	}
 
 	/**
@@ -128,8 +125,7 @@ public class ExpressionTransformerSwitch extends AbstractJimpleValueSwitch {
 	 */
 	private void setRefToChangedMethod(InvokeExpr v) {
 		SootMethod method = v.getMethod();
-        if (this.changedMethods.containsKey(method)) {
+        if (this.changedMethods.containsKey(method))
     		v.setMethodRef(this.changedMethods.get(method).makeRef());
-        }
 	}
 }

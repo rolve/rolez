@@ -5,6 +5,8 @@ import java.util.List;
 
 import rolez.checked.internal.Tasks;
 import rolez.checked.lang.Checked;
+import rolez.checked.lang.CheckedArray;
+import rolez.checked.lang.CheckedSlice;
 import rolez.checked.lang.Task;
 import rolez.checked.lang.TaskSystem;
 import soot.ArrayType;
@@ -26,6 +28,8 @@ public class Constants {
 	public static SootClass INTERNAL_TASKS_CLASS;
 	public static SootClass VOID_CLASS;
 	public static SootClass ITERABLE_CLASS;
+	public static SootClass CHECKED_SLICE_CLASS;
+	public static SootClass CHECKED_ARRAY_CLASS;
 	
 	// Types
 	public static final ArrayType OBJECT_ARRAY_TYPE = ArrayType.v(RefType.v("java.lang.Object"),1);
@@ -50,5 +54,7 @@ public class Constants {
 		INTERNAL_TASKS_CLASS = Scene.v().forceResolve(Tasks.class.getCanonicalName(), SootClass.SIGNATURES);
 		VOID_CLASS = Scene.v().forceResolve(java.lang.Void.class.getCanonicalName(), SootClass.SIGNATURES);
 		ITERABLE_CLASS = Scene.v().forceResolve(java.lang.Iterable.class.getCanonicalName(), SootClass.SIGNATURES);
+		CHECKED_SLICE_CLASS = Scene.v().forceResolve(CheckedSlice.class.getCanonicalName(), SootClass.SIGNATURES);
+		CHECKED_ARRAY_CLASS = Scene.v().forceResolve(CheckedArray.class.getCanonicalName(), SootClass.SIGNATURES);
 	}
 }

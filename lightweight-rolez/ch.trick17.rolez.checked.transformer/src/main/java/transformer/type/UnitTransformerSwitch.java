@@ -1,9 +1,7 @@
-package transformer.wrapper;
+package transformer.type;
 
 import java.util.Map;
 
-import soot.Local;
-import soot.SootClass;
 import soot.SootField;
 import soot.SootMethod;
 import soot.jimple.AbstractStmtSwitch;
@@ -14,9 +12,10 @@ public class UnitTransformerSwitch extends AbstractStmtSwitch {
 	
 	ExpressionTransformerSwitch expressionTransformerSwitch;
 	
-	public UnitTransformerSwitch(SootClass availableClass, Local local, 
-			Map<SootMethod, SootMethod> changedMethods, Map<SootField,SootField> changedFields) {
-		this.expressionTransformerSwitch = new ExpressionTransformerSwitch(availableClass, local, changedMethods, changedFields);
+	public UnitTransformerSwitch(
+			Map<SootMethod, SootMethod> changedMethods, 
+			Map<SootField,SootField> changedFields) {
+		this.expressionTransformerSwitch = new ExpressionTransformerSwitch(changedMethods, changedFields);
 	}
 
 	public void caseInvokeStmt(InvokeStmt stmt) {

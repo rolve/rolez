@@ -9,6 +9,7 @@ import soot.SootClass;
 import soot.SootMethod;
 import soot.Type;
 import soot.Unit;
+import soot.Value;
 import soot.jimple.IntConstant;
 import soot.jimple.Jimple;
 
@@ -98,11 +99,11 @@ public class UnitFactory {
 		return J.newAssignStmt(left, J.newVirtualInvokeExpr(base, method.makeRef()));
 	}
 	
-	public static Unit newAssignLocalToFieldExpr(Local base, SootClass fieldClass, String fieldName, Local right) {
+	public static Unit newAssignLocalToFieldExpr(Value base, SootClass fieldClass, String fieldName, Local right) {
 		return J.newAssignStmt(J.newInstanceFieldRef(base, fieldClass.getFieldByName(fieldName).makeRef()), right);
 	}
 	
-	public static Unit newAssignFieldToLocalExpr(Local left, Local base, SootClass fieldClass, String fieldName) {
+	public static Unit newAssignFieldToLocalExpr(Local left, Value base, SootClass fieldClass, String fieldName) {
 		return J.newAssignStmt(left, J.newInstanceFieldRef(base, fieldClass.getFieldByName(fieldName).makeRef()));
 	}
 }

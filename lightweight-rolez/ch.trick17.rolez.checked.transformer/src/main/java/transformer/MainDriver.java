@@ -12,7 +12,7 @@ import soot.options.Options;
 import transformer.transformers.CheckingTransformer;
 import transformer.transformers.ClassTransformer;
 import transformer.transformers.TaskCallTransformer;
-import transformer.transformers.WrapperTypeTransformer;
+import transformer.transformers.TypeTransformer;
 import transformer.util.ClassMapping;
 import transformer.util.Constants;
 
@@ -70,7 +70,7 @@ public class MainDriver {
 		
 		//Register transformers
 		PackManager.v().getPack("wjtp").add(
-			new Transform("wjtp.transformer0", new WrapperTypeTransformer())
+			new Transform("wjtp.transformer0", new TypeTransformer())
 		);
 		
 		PackManager.v().getPack("wjtp").add(
