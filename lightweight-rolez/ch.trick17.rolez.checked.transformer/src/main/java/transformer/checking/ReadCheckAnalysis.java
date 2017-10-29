@@ -4,14 +4,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import soot.Unit;
-import soot.UnitBox;
 import soot.Value;
-import soot.ValueBox;
 import soot.jimple.AssignStmt;
 import soot.jimple.InstanceFieldRef;
 import soot.tagkit.AnnotationTag;
 import soot.tagkit.Tag;
-import soot.tagkit.VisibilityAnnotationTag;
 import soot.toolkits.graph.DirectedGraph;
 import soot.toolkits.scalar.ArraySparseSet;
 import soot.toolkits.scalar.FlowSet;
