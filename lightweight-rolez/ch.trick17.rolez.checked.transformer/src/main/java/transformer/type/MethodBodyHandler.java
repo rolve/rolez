@@ -78,7 +78,7 @@ public class MethodBodyHandler {
 
 			// Replace arrays by checked arrays
 			if (type instanceof ArrayType) {
-				l.setType( Constants.CHECKED_ARRAY_CLASS.getType());
+				l.setType(Constants.CHECKED_ARRAY_CLASS.getType());
 				continue;
 			}
 
