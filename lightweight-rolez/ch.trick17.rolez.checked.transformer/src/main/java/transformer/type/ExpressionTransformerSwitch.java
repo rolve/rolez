@@ -2,13 +2,13 @@ package transformer.type;
 
 import java.util.Map;
 
+import soot.Scene;
 import soot.SootField;
 import soot.SootMethod;
 import soot.jimple.AbstractJimpleValueSwitch;
 import soot.jimple.CastExpr;
 import soot.jimple.DynamicInvokeExpr;
 import soot.jimple.InstanceFieldRef;
-import soot.jimple.InstanceInvokeExpr;
 import soot.jimple.InstanceOfExpr;
 import soot.jimple.InterfaceInvokeExpr;
 import soot.jimple.InvokeExpr;
@@ -55,6 +55,7 @@ public class ExpressionTransformerSwitch extends AbstractJimpleValueSwitch {
     }
 
     public void caseStaticInvokeExpr(StaticInvokeExpr v) {
+    	setRefToWrapperMethod(v);
 		setRefToChangedMethod(v);
     }
 
@@ -96,10 +97,10 @@ public class ExpressionTransformerSwitch extends AbstractJimpleValueSwitch {
      * from java.util.Random gets mapped to the method nextInt() from rolez.checked.util.Random.
      * @param v
      */
-	private void setRefToWrapperMethod(InstanceInvokeExpr v) {
-		String baseType = v.getBase().getType().toString();
-		if (ClassMapping.MAP.containsKey(baseType)) 
-        	v.setMethodRef(ClassMapping.MAP.get(baseType).getMethod(v.getMethod().getSubSignature()).makeRef());
+	private void setRefToWrapperMethod(InvokeExpr v) {
+		String declaringClass = v.getMethod().getDeclaringClass().getName();
+		if (ClassMapping.MAP.containsKey(declaringClass))
+			v.setMethodRef(ClassMapping.MAP.get(declaringClass).getMethod(v.getMethod().getSubSignature()).makeRef());
 	}
 
 	/**
