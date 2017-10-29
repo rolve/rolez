@@ -15,7 +15,7 @@ public class TestWrapperClassUsage {
 		TestWrapperClassUsage instance = new TestWrapperClassUsage();
 		instance.rf = new Random();
 		instance.rf.nextInt();
-		Random r = new Random();
+		Random r = instance.rf;
 		if (r instanceof Random)
 			instance.task(r, true);
 	}
