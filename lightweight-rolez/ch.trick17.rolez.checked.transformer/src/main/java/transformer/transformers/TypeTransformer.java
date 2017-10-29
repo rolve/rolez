@@ -11,7 +11,6 @@ import org.apache.logging.log4j.Logger;
 
 import soot.ArrayType;
 import soot.Body;
-import soot.Local;
 import soot.Scene;
 import soot.SceneTransformer;
 import soot.SootClass;
@@ -20,16 +19,11 @@ import soot.SootMethod;
 import soot.Type;
 import soot.Unit;
 import soot.Value;
-import soot.jimple.ArrayRef;
-import soot.jimple.AssignStmt;
 import soot.jimple.IdentityStmt;
-import soot.jimple.InvokeExpr;
 import soot.jimple.Jimple;
-import soot.jimple.NewArrayExpr;
 import soot.jimple.ParameterRef;
 import soot.util.Chain;
 import transformer.type.MethodBodyHandler;
-import transformer.type.UnitTransformerSwitch;
 import transformer.util.ClassMapping;
 import transformer.util.Constants;
 
