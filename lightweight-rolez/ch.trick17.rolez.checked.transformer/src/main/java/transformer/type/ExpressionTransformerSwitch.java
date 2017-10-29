@@ -2,7 +2,6 @@ package transformer.type;
 
 import java.util.Map;
 
-import soot.Scene;
 import soot.SootField;
 import soot.SootMethod;
 import soot.jimple.AbstractJimpleValueSwitch;

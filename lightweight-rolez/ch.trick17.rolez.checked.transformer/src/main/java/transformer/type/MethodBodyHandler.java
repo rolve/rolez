@@ -19,7 +19,6 @@ import soot.jimple.InvokeExpr;
 import soot.jimple.Jimple;
 import soot.jimple.NewArrayExpr;
 import soot.tagkit.AnnotationTag;
-import soot.tagkit.Tag;
 import soot.util.Chain;
 import transformer.util.ClassMapping;
 import transformer.util.Constants;
