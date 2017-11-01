@@ -27,6 +27,7 @@ import java.util.Map
 import static ch.trick17.rolez.rolez.OpLogical.*
 
 import static extension java.util.Objects.requireNonNull
+import ch.trick17.rolez.rolez.ParallelStmt
 
 class CfgBuilder {
     
@@ -74,6 +75,10 @@ class CfgBuilder {
         val node = new InstrNode(i)
         instrMap.put(i, node)
         node
+    }
+    
+    private def dispatch Linker process(ParallelStmt p, Linker prev) {
+    	prev.linkAndReturn(newInstrNode(p))
     }
     
     private def dispatch Linker process(Block block, Linker prev) {

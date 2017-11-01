@@ -61,6 +61,7 @@ import static ch.trick17.rolez.rolez.VarKind.*
 import static extension ch.trick17.rolez.RolezExtensions.*
 import static extension ch.trick17.rolez.generator.SafeJavaNames.*
 import static extension org.eclipse.xtext.util.Strings.convertToJavaString
+import ch.trick17.rolez.rolez.ParallelStmt
 
 /**
  * Generates Java code for Rolez instructions (single or code blocks). Relies on
@@ -134,6 +135,40 @@ class InstrGenerator {
         }
         
         /* Stmt */
+        
+        private def dispatch CharSequence generate(ParallelStmt it) {
+        	if(!(part1 instanceof ExprStmt && part2 instanceof ExprStmt))
+        		throw new RuntimeException("Only task calls are allowed in parallel statements (this isn't an expr stmt)")
+        	
+        	var es1 = part1 as ExprStmt
+        	var es2 = part2 as ExprStmt
+        	
+        	if(!(es1.expr instanceof MemberAccess && es2.expr instanceof MemberAccess))
+        		throw new RuntimeException("Only task calls are allowed in parallel statements (this isn't a member access)")
+        	
+        	var ma1 = es1.expr as MemberAccess
+        	var ma2 = es2.expr as MemberAccess
+        		
+        	if(!ma1.isMethodInvoke || !ma2.isMethodInvoke)
+        		throw new RuntimeException("Only task calls are allowed in parallel statements (this isn't a task/method invocation)")
+        	
+        	if(!ma1.getMethod.declaredTask || !ma2.getMethod.declaredTask)
+        		throw new RuntimeException("Only task calls are allowed in parallel statements (this isn't a task)")
+        		
+        	'''
+        	/* parallel stmt generation */
+        	
+        	final «jvmTasksClassName» $tasks_eager = new «jvmTasksClassName»();
+        	try {
+        		/* part1 */
+        		$tasks_eager.addInline(«jvmTaskSystemClassName».getDefault().start(«ma1.target.genNested».«ma1.method.name»«TASK.suffix»(«ma1.args.map[generate].join(", ")»)));
+        		/* part2 */
+        	    «ma2.target.genNested».«ma2.method.safeName»«UNGUARDED_METHOD.suffix»(«ma2.genArgs»);
+        	} finally {
+        		$tasks_eager.joinAll();
+        	}
+        	'''
+        }
         
         private def dispatch CharSequence generate(Block it) '''
             {

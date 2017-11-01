@@ -88,7 +88,11 @@ Block:
     {Block} '{' (stmts+=Stmt)* '}';
 
 Stmt:
-    Block | LocalVarDecl | IfStmt | WhileLoop | ForLoop | SuperConstrCall | Return | ExprStmt;
+    Block | LocalVarDecl | IfStmt | WhileLoop | ForLoop | SuperConstrCall | Return | ExprStmt | ParallelStmt;
+
+ParallelStmt:
+	'parallel' part1=Stmt 'and' part2=Stmt
+;
 
 LocalVarDecl:
     variable=LocalVar ('=' initializer=Expr)? ';';
