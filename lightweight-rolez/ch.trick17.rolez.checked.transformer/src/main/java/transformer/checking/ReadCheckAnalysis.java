@@ -7,12 +7,9 @@ import soot.Unit;
 import soot.Value;
 import soot.jimple.AssignStmt;
 import soot.jimple.InstanceFieldRef;
-import soot.tagkit.AnnotationTag;
-import soot.tagkit.Tag;
 import soot.toolkits.graph.DirectedGraph;
 import soot.toolkits.scalar.ArraySparseSet;
 import soot.toolkits.scalar.FlowSet;
-import transformer.util.Constants;
 
 public class ReadCheckAnalysis extends CheckingAnalysis {
 
@@ -39,18 +36,6 @@ public class ReadCheckAnalysis extends CheckingAnalysis {
 			if (rightOp instanceof InstanceFieldRef) {
 				InstanceFieldRef fieldRef = (InstanceFieldRef)rightOp;
 				Value base = fieldRef.getBase();
-				
-				// TODO: actually writes also contain a read, have to look ahead two units, to find out if it has to be read or write checked
-				if (base.getType().equals(Constants.CHECKED_ARRAY_CLASS.getType())) {
-					for (Tag t : d.getTags()) {
-						if (t instanceof AnnotationTag) {
-							AnnotationTag aTag = (AnnotationTag)t;
-							if (aTag.getType().equals("Read")) 
-								out.add(base);
-						}
-					}
-					return;
-				}
 				
 				// Final field reads are never checked
 				if (fieldRef.getField().isFinal())

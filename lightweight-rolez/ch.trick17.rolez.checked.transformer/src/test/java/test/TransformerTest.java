@@ -284,21 +284,13 @@ public class TransformerTest {
 		String methodName = "testWrapperClassUsage";
 		String mainClass = "classes.TestWrapperClassUsage";
 		Pipeline p = new Pipeline(methodName, mainClass);
-		p.runDefault(true, false);
+		p.runDefault(true, true);
 	}
 
 	@Test
 	public void testAccountExample() {
 		String methodName = "testAccountExample";
 		String mainClass = "classes.TestAccountExample";
-		Pipeline p = new Pipeline(methodName, mainClass);
-		p.runDefault(true, false);
-	}
-
-	@Test
-	public void testCheckedArray() {
-		String methodName = "testCheckedArray";
-		String mainClass = "classes.TestCheckedArray";
 		Pipeline p = new Pipeline(methodName, mainClass);
 		p.runDefault(true, false);
 	}

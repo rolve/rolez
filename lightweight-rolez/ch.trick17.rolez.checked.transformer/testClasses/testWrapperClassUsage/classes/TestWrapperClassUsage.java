@@ -4,7 +4,7 @@ import rolez.annotation.Checked;
 import rolez.annotation.Task;
 import rolez.annotation.Readwrite;
 
-import java.util.Random;
+import rolez.checked.util.Random;
 
 @Checked
 public class TestWrapperClassUsage {
@@ -22,7 +22,13 @@ public class TestWrapperClassUsage {
 	
 	@Task
 	void task(@Readwrite Random r, boolean $asTask) {
-		r.nextInt();
 		System.out.println("Hello world!");
+		java.util.Random jr = r.getUncheckedWriteInstance();
+		int i = javaUtilRandomMethod(jr);
+	}
+	
+	int javaUtilRandomMethod(java.util.Random r) {
+		System.out.println("Hello world!");
+		return r.nextInt();
 	}
 }

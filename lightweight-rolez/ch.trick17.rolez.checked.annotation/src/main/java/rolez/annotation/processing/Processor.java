@@ -51,10 +51,7 @@ public class Processor extends AbstractProcessor {
 		"java.lang.Short",
 		"java.lang.Long",
 		"java.lang.Double",
-		"java.lang.Float",
-		
-		// Wrapped types
-		"java.util.Random"
+		"java.lang.Float"
 	};
 	
 	// List of java primitive types

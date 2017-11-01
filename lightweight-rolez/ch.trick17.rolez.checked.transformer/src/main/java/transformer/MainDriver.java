@@ -12,7 +12,6 @@ import soot.options.Options;
 import transformer.transformers.CheckingTransformer;
 import transformer.transformers.ClassTransformer;
 import transformer.transformers.TaskCallTransformer;
-import transformer.transformers.TypeTransformer;
 import transformer.util.ClassMapping;
 import transformer.util.Constants;
 
@@ -68,13 +67,9 @@ public class MainDriver {
 		Constants.resolveClasses();
 		ClassMapping.initializeMapping();
 		
-		//Register transformers
+		//Register transformers	
 		PackManager.v().getPack("wjtp").add(
-			new Transform("wjtp.transformer0", new TypeTransformer())
-		);
-		
-		PackManager.v().getPack("wjtp").add(
-			new Transform("wjtp.transformer1", new ClassTransformer())
+			new Transform("wjtp.transformer0", new ClassTransformer())
 		);
 
 		PackManager.v().getPack("jtp").add(
