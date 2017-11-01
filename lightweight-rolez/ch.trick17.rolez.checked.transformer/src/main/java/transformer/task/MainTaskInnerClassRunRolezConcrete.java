@@ -52,7 +52,7 @@ public class MainTaskInnerClassRunRolezConcrete extends SootMethod {
 		// Change type of first local to inner class type
 		Chain<Local> locals = body.getLocals();
 		locals.removeFirst();
-		Local thisLocal = J.newLocal("r0", innerClassType);
+		Local thisLocal = J.newLocal("inner", innerClassType);
 		locals.addFirst(thisLocal);
 
 		Chain<Unit> units = body.getUnits();

@@ -54,7 +54,7 @@ public class TaskInnerClassRunRolezConcrete extends SootMethod {
 		
 		// Create new local for the inner class type
 		Chain<Local> locals = body.getLocals();
-		Local innerClassLocal = J.newLocal("inner", containingClass.getType());
+		Local innerClassLocal = J.newLocal("inner", innerClassType);
 		locals.addFirst(innerClassLocal);
 
 		// Transform the units of the source method
