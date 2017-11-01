@@ -13,19 +13,12 @@ import soot.SootClass;
 import soot.SootMethod;
 import soot.util.Chain;
 import transformer.checking.CheckedConstructor;
-import transformer.checking.CheckedGuardedRefs;
+import transformer.checking.GuardedRefs;
 import transformer.task.MainTaskGenerator;
 import transformer.task.TaskGenerator;
 import transformer.util.Constants;
 import transformer.util.Util;
 
-/**
- * A transformer that processes the user defined classes and outputs code, which
- * conforms Rolez.
- * 
- * @author Michael Giger
- *
- */
 public class ClassTransformer extends SceneTransformer {
 
 	static final Logger logger = LogManager.getLogger(ClassTransformer.class);
@@ -42,21 +35,21 @@ public class ClassTransformer extends SceneTransformer {
 
 	private void processClasses() {
 		Chain<SootClass> classesToProcess = Scene.v().getApplicationClasses();
-		
+				
 		for (SootClass c : classesToProcess) 
 			transformClass(c);
 		
 		// Add GuardedRefs methods to all the checked classes
 		for (SootClass c : classesToProcess) {
 			if (Util.isCheckedClass(c)) {
-				CheckedGuardedRefs guardedRefs = new CheckedGuardedRefs(c);
+				GuardedRefs guardedRefs = new GuardedRefs(c);
 				c.addMethod(guardedRefs);
 			}
 		}
 		
 		addInnerClassesToApplicationClasses();
 	}
-	
+
 	private void transformClass(SootClass c) {
 		logger.debug("Processing class: " + c.getName());
 	
@@ -85,8 +78,10 @@ public class ClassTransformer extends SceneTransformer {
 	 * @param c
 	 */
 	private void processMethods(SootClass c) {
+		
 		for (SootMethod m : c.getMethods()) {
 			logger.debug("Processing method: " + c.getName() + ":" + m.getName());
+			
 			if (Util.isTask(m)) {
 				TaskGenerator taskGenerator = new TaskGenerator(c, m);
 				taskGenerator.generateTask();
