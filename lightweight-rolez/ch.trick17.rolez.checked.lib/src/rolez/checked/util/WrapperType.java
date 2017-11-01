@@ -10,7 +10,7 @@ public abstract class WrapperType<T> extends Checked {
 	T instance;
 	
 	/**
-	 * Method which returns the wrapped instance and checks
+	 * Method to unpack the wrapped instance, which checks
 	 * for <b>legal read</b> before returning it.
 	 * @return
 	 */
@@ -19,7 +19,7 @@ public abstract class WrapperType<T> extends Checked {
 	}
 	
 	/**
-	 * Method which returns the wrapped instance and checks
+	 * Method to unpack the wrapped instance, which checks
 	 * for <b>legal write</b> before returning it.
 	 * @return
 	 */
