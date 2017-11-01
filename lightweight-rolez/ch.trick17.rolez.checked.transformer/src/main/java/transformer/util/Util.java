@@ -3,11 +3,13 @@ package transformer.util;
 import java.util.List;
 
 import rolez.checked.lang.Role;
+import soot.Local;
 import soot.SootClass;
 import soot.SootMethod;
 import soot.tagkit.AnnotationTag;
 import soot.tagkit.Tag;
 import soot.tagkit.VisibilityAnnotationTag;
+import soot.util.Chain;
 
 public class Util {
 
@@ -80,5 +82,16 @@ public class Util {
 	public static String getTaskMethodNameFromMethod(SootMethod method) {
 		String methodName = method.getName();
 		return "$" + methodName + "Task";
+	}
+	
+	public static Local getTaskIdLocal(Chain<Local> locals) {
+		Local taskIdLocal = null;
+		for (Local l : locals) {
+			if (l.getName().equals(Constants.TASK_ID_LOCAL_NAME)) {
+				taskIdLocal = l;
+				break;
+			}
+		}
+		return taskIdLocal;
 	}
 }

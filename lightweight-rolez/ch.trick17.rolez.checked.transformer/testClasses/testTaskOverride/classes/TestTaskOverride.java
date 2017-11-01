@@ -1,5 +1,8 @@
 package classes;
 
+import rolez.annotation.Checked;
+
+@Checked
 public class TestTaskOverride {
 
 	public static void main(String[] args) {

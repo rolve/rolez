@@ -100,7 +100,7 @@ public class TransformerTest {
 		String methodName = "testSubclassTask";
 		String mainClass = "classes.TestSubclassTask";
 		Pipeline p = new Pipeline(methodName, mainClass);
-		p.runDefault(true, false);
+		p.runDefault(true, true);
 	}
 
 	@Test
@@ -140,7 +140,7 @@ public class TransformerTest {
 		String methodName = "testGuardReadonly";
 		String mainClass = "classes.TestGuardReadonly";
 		Pipeline p = new Pipeline(methodName, mainClass);
-		p.runDefault(true, false);
+		p.runDefault(true, true);
 	}
 
 	@Test

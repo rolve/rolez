@@ -42,6 +42,9 @@ public class Constants {
 	public static final String READWRITE_ANNOTATION = "Lrolez/annotation/Readwrite;";
 	public static final String PURE_ANNOTATION = "Lrolez/annotation/Pure;";
 	
+	// Names
+	public static final String TASK_ID_LOCAL_NAME = "$taskId";
+	
 	public static void resolveClasses() {
 		CHECKED_CLASS = Scene.v().forceResolve(Checked.class.getCanonicalName(), SootClass.SIGNATURES);
 		OBJECT_CLASS = Scene.v().forceResolve(Object.class.getCanonicalName(), SootClass.SIGNATURES);

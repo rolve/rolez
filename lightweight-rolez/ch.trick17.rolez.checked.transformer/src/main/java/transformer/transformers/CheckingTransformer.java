@@ -25,6 +25,7 @@ import transformer.checking.CheckingAnalysis;
 import transformer.checking.ReadCheckAnalysis;
 import transformer.checking.WriteCheckAnalysis;
 import transformer.util.Constants;
+import transformer.util.Util;
 
 /**
  * Transformer inserts methods {@link rolez.checked.lang.Checked#checkLegalRead(rolez.checked.lang.Checked) checkLegalRead} to checked
@@ -112,14 +113,15 @@ public class CheckingTransformer extends BodyTransformer {
 		// Add locals
 		Local checkedTemp = J.newLocal("checkedTemp" + Integer.toString(tempLocalCount), Constants.CHECKED_CLASS.getType());
 		Local temp = J.newLocal("temp" + Integer.toString(tempLocalCount), baseType);
+		Local taskIdLocal = Util.getTaskIdLocal(locals);
 		locals.add(checkedTemp);
 		locals.add(temp);
 		tempLocalCount++;
 		
 		// Insert the call to checkLegalRead
 		Unit checkStmt = J.newAssignStmt(checkedTemp, J.newStaticInvokeExpr(
-				Constants.CHECKED_CLASS.getMethod("checkLegalRead", Arrays.asList(new Type[] { Constants.CHECKED_CLASS.getType() })).makeRef(), 
-				Arrays.asList(new Local[] { base })));
+				Constants.CHECKED_CLASS.getMethod("checkLegalRead", Arrays.asList(new Type[] { Constants.CHECKED_CLASS.getType(), taskIdLocal.getType() })).makeRef(), 
+				Arrays.asList(new Local[] { base, taskIdLocal })));
 		units.insertBefore(checkStmt, read);
 		
 		// Insert a cast, to cast the result of checkLegalRead to the right type again
@@ -139,14 +141,15 @@ public class CheckingTransformer extends BodyTransformer {
 			
 			Local checkedTemp = J.newLocal("checkedTemp" + Integer.toString(tempLocalCount), Constants.CHECKED_CLASS.getType());
 			Local temp = J.newLocal("temp" + Integer.toString(tempLocalCount), baseType);
+			Local taskIdLocal = Util.getTaskIdLocal(locals);
 			locals.add(checkedTemp);
 			locals.add(temp);
 			tempLocalCount++;
 			
 			// Insert the call to checkLegalWrite
 			Unit checkStmt = J.newAssignStmt(checkedTemp, J.newStaticInvokeExpr(
-					Constants.CHECKED_CLASS.getMethod("checkLegalWrite", Arrays.asList(new Type[] { Constants.CHECKED_CLASS.getType() })).makeRef(), 
-					Arrays.asList(new Local[] { base })));
+					Constants.CHECKED_CLASS.getMethod("checkLegalWrite", Arrays.asList(new Type[] { Constants.CHECKED_CLASS.getType(), taskIdLocal.getType() })).makeRef(), 
+					Arrays.asList(new Local[] { base, taskIdLocal })));
 			units.insertBefore(checkStmt, write);
 			
 			// Insert a cast, to cast the result of checkLegalRead to the right type again

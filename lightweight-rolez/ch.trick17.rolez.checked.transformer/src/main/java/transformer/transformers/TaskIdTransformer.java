@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 import soot.Body;
 import soot.Local;
 import soot.LongType;
+import soot.Modifier;
 import soot.Scene;
 import soot.SceneTransformer;
 import soot.SootClass;
@@ -19,6 +20,7 @@ import soot.SootMethod;
 import soot.Type;
 import soot.Unit;
 import soot.Value;
+import soot.VoidType;
 import soot.jimple.IdentityStmt;
 import soot.jimple.Jimple;
 import soot.jimple.ParameterRef;
@@ -33,12 +35,11 @@ import transformer.task.TaskInnerClassRunRolezConcrete;
 import transformer.task.TaskInnerClassRunRolezObject;
 import transformer.task.TaskMethod;
 import transformer.util.Constants;
+import transformer.util.Util;
 
 public class TaskIdTransformer extends SceneTransformer {
 
 	static final Logger logger = LogManager.getLogger(TaskIdTransformer.class);
-
-	private static final String TASK_ID_LOCAL_NAME = "$taskId";
 	
 	Map<SootMethod, SootMethod> changedMethods = new HashMap<SootMethod, SootMethod>();
 	SootClass mainClass;
@@ -68,6 +69,7 @@ public class TaskIdTransformer extends SceneTransformer {
 			}
 		}
 		
+		
 		for (SootClass c : classesToProcess) {
 			for (SootMethod m : c.getMethods()) {
 				if (!isMethodToTransform(m)) continue;
@@ -75,7 +77,7 @@ public class TaskIdTransformer extends SceneTransformer {
 				
 				Body b = m.retrieveActiveBody();
 				
-				Local taskIdLocal = getTaskIdLocal(b.getLocals());
+				Local taskIdLocal = Util.getTaskIdLocal(b.getLocals());
 				if (taskIdLocal == null) 
 					throw new RuntimeException("Could not find task local.");
 				
@@ -84,21 +86,38 @@ public class TaskIdTransformer extends SceneTransformer {
 			}
 		}
 		
-		for (SootMethod m : changedMethods.keySet())
+		for (SootMethod m : changedMethods.keySet()) {
 			m.getDeclaringClass().removeMethod(m);
-	}
-	
-	private Local getTaskIdLocal(Chain<Local> locals) {
-		Local taskIdLocal = null;
-		for (Local l : locals) {
-			if (l.getName().equals(TASK_ID_LOCAL_NAME)) {
-				taskIdLocal = l;
-				break;
+		}
+
+		addInstanceConstructorToMainClass();
+		
+		for (SootClass c : classesToProcess) {
+			System.out.println(c.toString().toUpperCase());
+			for (SootMethod m : c.getMethods()) {
+				if (!m.isAbstract()) {
+					System.out.println(m.retrieveActiveBody());
+				}
 			}
 		}
-		return taskIdLocal;
 	}
 	
+	private void addInstanceConstructorToMainClass() {
+		SootMethod constructor = new SootMethod("<init>", new ArrayList<Type>(), VoidType.v(), Modifier.PRIVATE);
+		Body b = Jimple.v().newBody(constructor);
+		constructor.setActiveBody(b);
+		Chain<Local> locals = b.getLocals();
+		Chain<Unit> units = b.getUnits();
+		
+		Local instanceLocal = Jimple.v().newLocal("instance", mainClass.getType());
+		locals.add(instanceLocal);
+		units.add(Jimple.v().newIdentityStmt(instanceLocal, Jimple.v().newThisRef(mainClass.getType())));
+		units.add(Jimple.v().newInvokeStmt(Jimple.v().newSpecialInvokeExpr(instanceLocal,Constants.CHECKED_CLASS.getMethod("void <init>()").makeRef())));
+		units.add(Jimple.v().newReturnVoidStmt());
+		
+		mainClass.addMethod(constructor);
+	}
+
 	private boolean isMethodToTransform(SootMethod m) {
 		return !(
 			m.isMain() ||
@@ -107,15 +126,14 @@ public class TaskIdTransformer extends SceneTransformer {
 			m instanceof TaskMethod ||
 			m instanceof MainTaskMethod ||
 			m instanceof TaskInnerClassConstructor ||
-			m instanceof MainTaskInnerClassConstructor ||
-			m.getName().equals("<init>")
+			m instanceof MainTaskInnerClassConstructor
 		);
 	}
 
 	private Local addTaskIdLocal(SootMethod m) {
 		Body b = m.retrieveActiveBody();
 		Chain<Local> locals = b.getLocals();
-		Local taskIdLocal = Jimple.v().newLocal(TASK_ID_LOCAL_NAME, LongType.v());
+		Local taskIdLocal = Jimple.v().newLocal(Constants.TASK_ID_LOCAL_NAME, LongType.v());
 		locals.add(taskIdLocal);
 		return taskIdLocal;
 	}
@@ -160,7 +178,7 @@ public class TaskIdTransformer extends SceneTransformer {
 	private void addTaskIdParameter(SootMethod m) {
 		List<Type> parameterTypes = new ArrayList<Type>();
 		parameterTypes.addAll(m.getParameterTypes());
-		parameterTypes.add(LongType.v());
+		parameterTypes.add(LongType.v());	
 		SootMethod newMethod = new SootMethod(m.getName(), parameterTypes, m.getReturnType(), m.getModifiers(), m.getExceptions());
 		newMethod.addAllTagsOf(m);
 		m.getDeclaringClass().addMethod(newMethod);
@@ -169,7 +187,6 @@ public class TaskIdTransformer extends SceneTransformer {
 			newMethod.setActiveBody(b);
 		}
 		changedMethods.put(m, newMethod);
-		System.out.println(newMethod);
 	}
 	
 	private Local getThisLocal(Chain<Local> locals) {

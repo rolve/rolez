@@ -47,7 +47,7 @@ public class Checked extends Guarded {
 	
 	public static <G extends Checked> G checkLegalWrite(G checked, long currentTaskIdBits) {
 		checked.isLegalWrite();
-		return guardReadOnly(checked, currentTaskIdBits);
+		return guardReadWrite(checked, currentTaskIdBits);
 	}
 	
 	protected <G extends Checked> void isLegalWrite() {
