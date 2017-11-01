@@ -1,11 +1,6 @@
 package rolez.checked.util;
 
-import rolez.checked.lang.Checked;
-
-
-public class Random extends Checked implements WrapperType<java.util.Random> {
-	
-	private java.util.Random instance;
+public class Random extends WrapperType<java.util.Random> {
 	
 	public Random() {
 		instance = new java.util.Random();
@@ -49,15 +44,5 @@ public class Random extends Checked implements WrapperType<java.util.Random> {
 	
 	public void setSeed(long seed) {
 		checkLegalWrite(this).instance.setSeed(seed);
-	}
-
-	@Override
-	public java.util.Random getUncheckedReadInstance() {
-		return checkLegalRead(this).instance;
-	}
-
-	@Override
-	public java.util.Random getUncheckedWriteInstance() {
-		return checkLegalWrite(this).instance;
 	}
 }
