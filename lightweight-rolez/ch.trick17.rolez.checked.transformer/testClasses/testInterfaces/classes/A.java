@@ -1,6 +1,6 @@
 package classes;
 
-import java.util.Random;
+import rolez.checked.util.Random;
 
 import rolez.annotation.Checked;
 import rolez.annotation.Task;

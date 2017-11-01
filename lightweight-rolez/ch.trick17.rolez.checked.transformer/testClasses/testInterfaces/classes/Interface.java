@@ -1,6 +1,6 @@
 package classes;
 
-import java.util.Random;
+import rolez.checked.util.Random;
 
 interface Interface {
 	

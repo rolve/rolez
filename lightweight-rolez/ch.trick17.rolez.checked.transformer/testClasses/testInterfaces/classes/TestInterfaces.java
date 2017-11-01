@@ -4,7 +4,7 @@ import rolez.annotation.Checked;
 import rolez.annotation.Task;
 import rolez.annotation.Readwrite;
 
-import java.util.Random;
+import rolez.checked.util.Random;
 
 @Checked
 public class TestInterfaces {
