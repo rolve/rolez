@@ -260,7 +260,7 @@ public class TransformerTest {
 		String methodName = "testMonteCarlo";
 		String mainClass = "classes.TestMonteCarlo";
 		Pipeline p = new Pipeline(methodName, mainClass);
-		p.runDefault(false, true);
+		p.runDefault(false, false);
 	}
 
 	@Test
@@ -284,7 +284,7 @@ public class TransformerTest {
 		String methodName = "testWrapperClassUsage";
 		String mainClass = "classes.TestWrapperClassUsage";
 		Pipeline p = new Pipeline(methodName, mainClass);
-		p.runDefault(true, true);
+		p.runDefault(true, false);
 	}
 
 	@Test

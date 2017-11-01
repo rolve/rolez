@@ -14,6 +14,7 @@ import soot.Local;
 import soot.SootClass;
 import soot.SootMethod;
 import soot.Trap;
+import soot.Type;
 import soot.Unit;
 import soot.Value;
 import soot.jimple.IdentityStmt;
@@ -146,7 +147,9 @@ public class TaskCallTransformer extends BodyTransformer {
 		SootMethod invokedMethod = invokeExpr.getMethod();
 		SootClass declaringClass = invokedMethod.getDeclaringClass();
 		List<Value> args = invokeExpr.getArgs();
-		Value booleanValue = args.get(args.size()-1);
+		
+		// Due to the task id parameter, the boolean value is found at the second to last position
+		Value booleanValue = args.get(args.size()-2);
 		
 		// Insert nop stmts before and after the task call to prevent weird behavior with labels
 		Unit nopBefore = J.newNopStmt();
@@ -162,12 +165,24 @@ public class TaskCallTransformer extends BodyTransformer {
 		locals.add(taskLocal0);
 		locals.add(taskLocal1);
 
-		 Unit getTaskFromTaskMethod = J.newAssignStmt(
+		// The arguments of the task method do not match the with the arguments of the 
+		// invoked method due to the task id parameter
+		List<Type> taskCallParameterTypes = new ArrayList<Type>();
+		List<Type> invokedMethodParamTypes = invokedMethod.getParameterTypes();
+		List<Value> taskCallArgs = new ArrayList<Value>();
+		List<Value> invokedArgs = invokeExpr.getArgs();
+		
+		for (int i=0; i<invokedMethodParamTypes.size()-1; i++) {
+			taskCallParameterTypes.add(invokedMethodParamTypes.get(i));
+			taskCallArgs.add(invokedArgs.get(i));
+		}
+		
+		Unit getTaskFromTaskMethod = J.newAssignStmt(
 				 taskLocal0,
 				 J.newVirtualInvokeExpr(
 						 base, 
-						 declaringClass.getMethod(Util.getTaskMethodNameFromMethod(invokedMethod), invokedMethod.getParameterTypes()).makeRef(),
-						 invokeExpr.getArgs()));
+						 declaringClass.getMethod(Util.getTaskMethodNameFromMethod(invokedMethod), taskCallParameterTypes).makeRef(),
+						 taskCallArgs));
 		units.insertAfter(getTaskFromTaskMethod, ifStmt);
 		
 		Unit startTask = UnitFactory.newAssignVirtualInvokeExpr(taskLocal1, taskSystemLocal, Constants.TASK_SYSTEM_CLASS, "start", new Local[] { taskLocal0 });
