@@ -13,7 +13,6 @@ import transformer.transformers.CheckingTransformer;
 import transformer.transformers.ClassTransformer;
 import transformer.transformers.TaskCallTransformer;
 import transformer.transformers.TaskIdTransformer;
-import transformer.util.ClassMapping;
 import transformer.util.Constants;
 
 public class MainDriver {
