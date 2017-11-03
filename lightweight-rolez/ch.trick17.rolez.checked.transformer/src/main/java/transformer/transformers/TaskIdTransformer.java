@@ -91,15 +91,6 @@ public class TaskIdTransformer extends SceneTransformer {
 		}
 
 		addInstanceConstructorToMainClass();
-		
-		for (SootClass c : classesToProcess) {
-			System.out.println(c.toString().toUpperCase());
-			for (SootMethod m : c.getMethods()) {
-				if (!m.isAbstract()) {
-					System.out.println(m.retrieveActiveBody());
-				}
-			}
-		}
 	}
 	
 	private void addInstanceConstructorToMainClass() {
