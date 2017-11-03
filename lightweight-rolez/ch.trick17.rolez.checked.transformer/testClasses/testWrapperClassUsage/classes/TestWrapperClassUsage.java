@@ -11,6 +11,10 @@ public class TestWrapperClassUsage {
 	
 	public static void main(String[] args) {
 		TestWrapperClassUsage instance = new TestWrapperClassUsage();
+		
+		rolez.checked.util.Random rl = new rolez.checked.util.Random();
+		int i = rl.nextInt();
+		
 		instance.rf = new rolez.checked.util.Random();
 		instance.rf.nextInt();
 		rolez.checked.util.Random r = instance.rf;

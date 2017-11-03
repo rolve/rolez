@@ -48,7 +48,7 @@ public class WriteCheckAnalysis extends CheckingAnalysis {
 			if (rightOp instanceof VirtualInvokeExpr) {
 				VirtualInvokeExpr vInvokeExpr = (VirtualInvokeExpr)rightOp;
 				Value base = vInvokeExpr.getBase();
-				if (isCheckedSlice(base.getType())) {
+				if (isSubtypeOfChecked(base.getType())) {
 					if (isWriteMethodInvocation(vInvokeExpr.getMethod())) {
 						out.add(base);
 					}
@@ -62,7 +62,7 @@ public class WriteCheckAnalysis extends CheckingAnalysis {
 			if (invokeExpr instanceof VirtualInvokeExpr) {
 				VirtualInvokeExpr vInvokeExpr = (VirtualInvokeExpr)invokeExpr;
 				Value base = vInvokeExpr.getBase();
-				if (isCheckedSlice(base.getType())) {
+				if (isSubtypeOfChecked(base.getType())) {
 					if (isWriteMethodInvocation(vInvokeExpr.getMethod())) {
 						out.add(base);
 					}
