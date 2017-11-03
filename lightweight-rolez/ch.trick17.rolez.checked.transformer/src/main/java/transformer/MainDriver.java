@@ -65,7 +65,6 @@ public class MainDriver {
 		
 		// Class constants and available wrapper classes have to be newly resolved in every run
 		Constants.resolveClasses();
-		ClassMapping.initializeMapping();
 		
 		//Register transformers		
 		PackManager.v().getPack("wjtp").add(
