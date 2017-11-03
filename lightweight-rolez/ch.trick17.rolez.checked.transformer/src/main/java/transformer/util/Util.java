@@ -15,11 +15,11 @@ public class Util {
 
 	/**
 	 * Returns true if the method has the @Task annotation.
-	 * @param method
+	 * @param m
 	 * @return
 	 */
-	public static boolean isTask(SootMethod method) {
-		for (Tag t : method.getTags()) 
+	public static boolean isTask(SootMethod m) {
+		for (Tag t : m.getTags()) 
 			if (t instanceof VisibilityAnnotationTag) 
 				for (AnnotationTag aTag : ((VisibilityAnnotationTag) t).getAnnotations()) 
 					if (aTag.getType().equals(Constants.TASK_ANNOTATION)) 
@@ -29,30 +29,30 @@ public class Util {
 	
 	/**
 	 * Returns true if the class has the @Checked annotation, false otherwise.
-	 * @param clazz
+	 * @param c
 	 * @return
 	 */
-	public static boolean isCheckedClass(SootClass clazz) {
+	public static boolean isCheckedClass(SootClass c) {
 		
-		if (clazz.equals(Constants.OBJECT_CLASS)) return false;
+		if (c.equals(Constants.OBJECT_CLASS)) return false;
 		
-		List<Tag> classTags = clazz.getTags();
+		List<Tag> classTags = c.getTags();
 		for (Tag t : classTags) 
 			if (t instanceof VisibilityAnnotationTag) 
 				for (AnnotationTag aTag : ((VisibilityAnnotationTag) t).getAnnotations()) 
 					if (aTag.getType().equals(Constants.CHECKED_ANNOTATION))
 						return true;
 		
-		return isCheckedClass(clazz.getSuperclass());
+		return isCheckedClass(c.getSuperclass());
 	}
 	
 	/**
 	 * Returns true if the class is extending from java.lang.Object.
-	 * @param clazz
+	 * @param c
 	 * @return
 	 */
-	public static boolean isExtendingObject(SootClass clazz) {
-		return clazz.getSuperclass().equals(Constants.OBJECT_CLASS);
+	public static boolean isExtendingObject(SootClass c) {
+		return c.getSuperclass().equals(Constants.OBJECT_CLASS);
 	}
 	
 	/**
@@ -76,11 +76,11 @@ public class Util {
 	
 	/**
 	 * Returns the name for the generated task method.
-	 * @param method
+	 * @param m
 	 * @return
 	 */
-	public static String getTaskMethodNameFromMethod(SootMethod method) {
-		String methodName = method.getName();
+	public static String getTaskMethodNameFromMethod(SootMethod m) {
+		String methodName = m.getName();
 		return "$" + methodName + "Task";
 	}
 	
