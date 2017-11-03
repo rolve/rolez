@@ -41,6 +41,8 @@ public class Constants {
 	public static final String READONLY_ANNOTATION = "Lrolez/annotation/Readonly;";
 	public static final String READWRITE_ANNOTATION = "Lrolez/annotation/Readwrite;";
 	public static final String PURE_ANNOTATION = "Lrolez/annotation/Pure;";
+	public static final String READ_ANNOTATION = "Lrolez/checked/lang/annotation/Read;";
+	public static final String WRITE_ANNOTATION = "Lrolez/checked/lang/annotation/Write;";
 	
 	// Names
 	public static final String TASK_ID_LOCAL_NAME = "$taskId";

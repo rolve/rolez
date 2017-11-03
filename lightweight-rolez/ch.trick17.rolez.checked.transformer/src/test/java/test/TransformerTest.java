@@ -294,4 +294,12 @@ public class TransformerTest {
 		Pipeline p = new Pipeline(methodName, mainClass);
 		p.runDefault(true, false);
 	}
+
+	@Test
+	public void testCheckedArrayUsage() {
+		String methodName = "testCheckedArrayUsage";
+		String mainClass = "classes.TestCheckedArrayUsage";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.runDefault(true, false);
+	}
 }

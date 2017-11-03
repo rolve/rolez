@@ -1,6 +1,7 @@
 package rolez.checked.manual;
 
 import rolez.checked.lang.Checked;
+import rolez.checked.lang.CheckedSlice;
 
 public class IdeaEncryption extends Checked {
     
@@ -43,7 +44,7 @@ public class IdeaEncryption extends Checked {
         this.encrypted = new rolez.checked.lang.CheckedArray<byte[]>(new byte[this.size]);
         this.decrypted = new rolez.checked.lang.CheckedArray<byte[]>(new byte[this.size]);
         for(int i = 0; i < this.size; i++)
-            checkLegalWrite(this.plain, $task).data[i] = (byte) i;
+            checkLegalWrite(this.plain, $task).setByte(i, (byte)i);
     }
     
     public int[] calcEncryptKey(final short[] userKey, final long $task) {
@@ -135,9 +136,9 @@ public class IdeaEncryption extends Checked {
             final rolez.checked.lang.CheckedArray<rolez.checked.lang.CheckedSlice<byte[]>[]> encryptedSlices = this.encrypted.partition(partitioner, this.tasks);
             final rolez.checked.lang.CheckedArray<rolez.checked.lang.CheckedSlice<byte[]>[]> decryptedSlices = this.decrypted.partition(partitioner, this.tasks);
             for(int i = 0; i < this.tasks; i++)
-                $tasks.addInline(rolez.checked.lang.TaskSystem.getDefault().start(this.$encryptDecryptTask(checkLegalRead(plainSlices, $task).data[i], checkLegalRead(encryptedSlices, $task).data[i], checkLegalRead(this, $task).encryptKey)));
+                $tasks.addInline(rolez.checked.lang.TaskSystem.getDefault().start(this.$encryptDecryptTask((CheckedSlice<byte[]>)checkLegalRead(plainSlices, $task).get(i), (CheckedSlice<byte[]>)checkLegalRead(encryptedSlices, $task).get(i), checkLegalRead(this, $task).encryptKey)));
             for(int i = 0; i < this.tasks; i++)
-                $tasks.addInline(rolez.checked.lang.TaskSystem.getDefault().start(this.$encryptDecryptTask(checkLegalRead(encryptedSlices, $task).data[i], checkLegalRead(decryptedSlices, $task).data[i], checkLegalRead(this, $task).decryptKey)));
+                $tasks.addInline(rolez.checked.lang.TaskSystem.getDefault().start(this.$encryptDecryptTask((CheckedSlice<byte[]>)checkLegalRead(encryptedSlices, $task).get(i), (CheckedSlice<byte[]>)checkLegalRead(decryptedSlices, $task).get(i), checkLegalRead(this, $task).decryptKey)));
         }
         finally {
             $tasks.joinAll();
@@ -148,9 +149,9 @@ public class IdeaEncryption extends Checked {
         final int xFF = 255;
         final int xFFFF = 65535;
         final long x10001L = 65537L;
-        int iSrc = src.range.begin;
-        int iDst = src.range.begin;
-        for(int i = src.range.begin; i < src.range.end; i += 8) {
+        int iSrc = src.getSliceRange().begin;
+        int iDst = src.getSliceRange().begin;
+        for(int i = src.getSliceRange().begin; i < src.getSliceRange().end; i += 8) {
             int x1 = checkLegalRead(src, $task).getByte(iSrc++) & xFF;
             x1 = x1 | ((src.getByte(iSrc++) & xFF) << 8);
             int x2 = src.getByte(iSrc++) & xFF;
@@ -199,9 +200,9 @@ public class IdeaEncryption extends Checked {
                 final int xFF = 255;
                 final int xFFFF = 65535;
                 final long x10001L = 65537L;
-                int iSrc = checkLegalRead(src, $task).range.begin;
-                int iDst = checkLegalRead(src, $task).range.begin;
-                for(int i = checkLegalRead(src, $task).range.begin; i < checkLegalRead(src, $task).range.end; i += 8) {
+                int iSrc = checkLegalRead(src, $task).getSliceRange().begin;
+                int iDst = checkLegalRead(src, $task).getSliceRange().begin;
+                for(int i = checkLegalRead(src, $task).getSliceRange().begin; i < checkLegalRead(src, $task).getSliceRange().end; i += 8) {
                     int x1 = checkLegalRead(src, $task).getByte(iSrc++) & xFF;
                     x1 = x1 | ((checkLegalRead(src, $task).getByte(iSrc++) & xFF) << 8);
                     int x2 = checkLegalRead(src, $task).getByte(iSrc++) & xFF;

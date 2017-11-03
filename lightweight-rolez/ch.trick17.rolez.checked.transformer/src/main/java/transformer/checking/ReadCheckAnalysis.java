@@ -7,9 +7,13 @@ import soot.Unit;
 import soot.Value;
 import soot.jimple.AssignStmt;
 import soot.jimple.InstanceFieldRef;
+import soot.jimple.InvokeExpr;
+import soot.jimple.InvokeStmt;
+import soot.jimple.VirtualInvokeExpr;
 import soot.toolkits.graph.DirectedGraph;
 import soot.toolkits.scalar.ArraySparseSet;
 import soot.toolkits.scalar.FlowSet;
+import transformer.util.Constants;
 
 public class ReadCheckAnalysis extends CheckingAnalysis {
 
@@ -43,6 +47,30 @@ public class ReadCheckAnalysis extends CheckingAnalysis {
 				
 				if (isSubtypeOfChecked(fieldRef.getBase().getType())) {
 					out.add(base);
+				}
+			}
+			
+			if (rightOp instanceof VirtualInvokeExpr) {
+				VirtualInvokeExpr vInvokeExpr = (VirtualInvokeExpr)rightOp;
+				Value base = vInvokeExpr.getBase();
+				if (isCheckedSlice(base.getType())) {
+					if (isReadMethodInvocation(vInvokeExpr.getMethod())) {
+						out.add(base);
+					}
+				}
+			}
+		}
+		
+		if (d instanceof InvokeStmt) {
+			InvokeStmt invokeStmt = (InvokeStmt)d;
+			InvokeExpr invokeExpr = invokeStmt.getInvokeExpr();
+			if (invokeExpr instanceof VirtualInvokeExpr) {
+				VirtualInvokeExpr vInvokeExpr = (VirtualInvokeExpr)invokeExpr;
+				Value base = vInvokeExpr.getBase();
+				if (isCheckedSlice(base.getType())) {
+					if (isReadMethodInvocation(vInvokeExpr.getMethod())) {
+						out.add(base);
+					}
 				}
 			}
 		}

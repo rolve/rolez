@@ -2,10 +2,14 @@ package transformer.checking;
 
 import soot.Scene;
 import soot.SootClass;
+import soot.SootMethod;
 import soot.Type;
 import soot.Unit;
 import soot.Value;
 import soot.jimple.VirtualInvokeExpr;
+import soot.tagkit.AnnotationTag;
+import soot.tagkit.Tag;
+import soot.tagkit.VisibilityAnnotationTag;
 import soot.toolkits.graph.DirectedGraph;
 import soot.toolkits.scalar.ArraySparseSet;
 import soot.toolkits.scalar.FlowSet;
@@ -65,6 +69,28 @@ public abstract class CheckingAnalysis extends ForwardFlowAnalysis<Unit, FlowSet
 				return true;
 			currentClass = currentClass.getSuperclass();
 		}
+		return false;
+	}
+	
+	protected boolean isCheckedSlice(Type t) {
+		return t.equals(Constants.CHECKED_SLICE_CLASS.getType()) || t.equals(Constants.CHECKED_ARRAY_CLASS.getType());
+	}
+	
+	protected boolean isReadMethodInvocation(SootMethod m) {
+		for (Tag t : m.getTags()) 
+			if (t instanceof VisibilityAnnotationTag) 
+				for (AnnotationTag aTag : ((VisibilityAnnotationTag) t).getAnnotations()) 
+					if (aTag.getType().equals(Constants.READ_ANNOTATION)) 
+						return true;
+		return false;
+	}
+	
+	protected boolean isWriteMethodInvocation(SootMethod m) {
+		for (Tag t : m.getTags()) 
+			if (t instanceof VisibilityAnnotationTag) 
+				for (AnnotationTag aTag : ((VisibilityAnnotationTag) t).getAnnotations()) 
+					if (aTag.getType().equals(Constants.WRITE_ANNOTATION)) 
+						return true;
 		return false;
 	}
 }

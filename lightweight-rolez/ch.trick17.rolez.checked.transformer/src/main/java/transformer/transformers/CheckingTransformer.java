@@ -16,7 +16,10 @@ import soot.Unit;
 import soot.Value;
 import soot.jimple.AssignStmt;
 import soot.jimple.InstanceFieldRef;
+import soot.jimple.InvokeExpr;
+import soot.jimple.InvokeStmt;
 import soot.jimple.Jimple;
+import soot.jimple.VirtualInvokeExpr;
 import soot.toolkits.graph.ExceptionalUnitGraph;
 import soot.toolkits.scalar.ArraySparseSet;
 import soot.toolkits.scalar.FlowSet;
@@ -70,10 +73,31 @@ public class CheckingTransformer extends BodyTransformer {
 			Unit u = unitIter.next();
 			if (u instanceof AssignStmt) {
 				AssignStmt astmt = (AssignStmt)u;
-				if (increasesSet(astmt, writeAnalysis))
-					addCheckLegalWrite(astmt);
-				else if (increasesSet(astmt, readAnalysis))
-					addCheckLegalRead(astmt);
+				if (increasesSet(astmt, writeAnalysis)) {
+					if (astmt.getLeftOp() instanceof InstanceFieldRef)
+						addCheckLegalWrite(astmt);
+					if (astmt.getRightOp() instanceof VirtualInvokeExpr)
+						addCheckLegalWriteAssignStmtMethod(astmt);
+				} else if (increasesSet(astmt, readAnalysis)) {
+					Value rightOp = astmt.getRightOp();
+					if (rightOp instanceof InstanceFieldRef)
+						addCheckLegalRead(astmt);
+					if (rightOp instanceof VirtualInvokeExpr) 
+						addCheckLegalReadAssignStmtMethod(astmt);
+				}
+			}
+			
+			if (u instanceof InvokeStmt) {
+				InvokeStmt invokeStmt = (InvokeStmt)u;
+				InvokeExpr invokeExpr = invokeStmt.getInvokeExpr();
+				if (invokeExpr instanceof VirtualInvokeExpr) {
+					VirtualInvokeExpr vInvokeExpr = (VirtualInvokeExpr)invokeExpr;
+					if (increasesSet(u, writeAnalysis)) {
+						addCheckLegalWriteInvokeStmtMethod(invokeStmt);
+					} else if (increasesSet(u, readAnalysis)) {
+						addCheckLegalReadInvokeStmtMethod(invokeStmt);
+					}
+				}
 			}
 		}
 		
@@ -81,6 +105,114 @@ public class CheckingTransformer extends BodyTransformer {
 		tempLocalCount = 0;
 	}
 	
+	private void addCheckLegalReadInvokeStmtMethod(InvokeStmt read) {
+		VirtualInvokeExpr rightOp = (VirtualInvokeExpr) read.getInvokeExpr();
+		Local base = (Local) rightOp.getBase();
+		Type baseType = base.getType();
+		
+		// Add locals
+		Local checkedTemp = J.newLocal("checkedTemp" + Integer.toString(tempLocalCount), Constants.CHECKED_CLASS.getType());
+		Local temp = J.newLocal("temp" + Integer.toString(tempLocalCount), baseType);
+		Local taskIdLocal = Util.getTaskIdLocal(locals);
+		locals.add(checkedTemp);
+		locals.add(temp);
+		tempLocalCount++;
+		
+		// Insert the call to checkLegalRead
+		Unit checkStmt = J.newAssignStmt(checkedTemp, J.newStaticInvokeExpr(
+				Constants.CHECKED_CLASS.getMethod("checkLegalRead", Arrays.asList(new Type[] { Constants.CHECKED_CLASS.getType(), taskIdLocal.getType() })).makeRef(), 
+				Arrays.asList(new Local[] { base, taskIdLocal })));
+		units.insertBefore(checkStmt, read);
+		
+		// Insert a cast, to cast the result of checkLegalRead to the right type again
+		Unit castStmt = J.newAssignStmt(temp, J.newCastExpr(checkedTemp, baseType));
+		units.insertBefore(castStmt, read);
+		
+		// Change base of original field read to checked variable
+		read.setInvokeExpr(J.newVirtualInvokeExpr(temp, rightOp.getMethodRef(), rightOp.getArgs()));
+	}
+
+	private void addCheckLegalWriteInvokeStmtMethod(InvokeStmt write) {
+		VirtualInvokeExpr rightOp = (VirtualInvokeExpr) write.getInvokeExpr();
+		Local base = (Local) rightOp.getBase();
+		Type baseType = base.getType();
+		
+		// Add locals
+		Local checkedTemp = J.newLocal("checkedTemp" + Integer.toString(tempLocalCount), Constants.CHECKED_CLASS.getType());
+		Local temp = J.newLocal("temp" + Integer.toString(tempLocalCount), baseType);
+		Local taskIdLocal = Util.getTaskIdLocal(locals);
+		locals.add(checkedTemp);
+		locals.add(temp);
+		tempLocalCount++;
+		
+		// Insert the call to checkLegalRead
+		Unit checkStmt = J.newAssignStmt(checkedTemp, J.newStaticInvokeExpr(
+				Constants.CHECKED_CLASS.getMethod("checkLegalWrite", Arrays.asList(new Type[] { Constants.CHECKED_CLASS.getType(), taskIdLocal.getType() })).makeRef(), 
+				Arrays.asList(new Local[] { base, taskIdLocal })));
+		units.insertBefore(checkStmt, write);
+		
+		// Insert a cast, to cast the result of checkLegalRead to the right type again
+		Unit castStmt = J.newAssignStmt(temp, J.newCastExpr(checkedTemp, baseType));
+		units.insertBefore(castStmt, write);
+		
+		// Change base of original field read to checked variable
+		write.setInvokeExpr(J.newVirtualInvokeExpr(temp, rightOp.getMethodRef(), rightOp.getArgs()));
+	}
+
+	private void addCheckLegalReadAssignStmtMethod(AssignStmt read) {
+		VirtualInvokeExpr rightOp = (VirtualInvokeExpr) read.getRightOp();
+		Local base = (Local) rightOp.getBase();
+		Type baseType = base.getType();
+		
+		// Add locals
+		Local checkedTemp = J.newLocal("checkedTemp" + Integer.toString(tempLocalCount), Constants.CHECKED_CLASS.getType());
+		Local temp = J.newLocal("temp" + Integer.toString(tempLocalCount), baseType);
+		Local taskIdLocal = Util.getTaskIdLocal(locals);
+		locals.add(checkedTemp);
+		locals.add(temp);
+		tempLocalCount++;
+		
+		// Insert the call to checkLegalRead
+		Unit checkStmt = J.newAssignStmt(checkedTemp, J.newStaticInvokeExpr(
+				Constants.CHECKED_CLASS.getMethod("checkLegalRead", Arrays.asList(new Type[] { Constants.CHECKED_CLASS.getType(), taskIdLocal.getType() })).makeRef(), 
+				Arrays.asList(new Local[] { base, taskIdLocal })));
+		units.insertBefore(checkStmt, read);
+		
+		// Insert a cast, to cast the result of checkLegalRead to the right type again
+		Unit castStmt = J.newAssignStmt(temp, J.newCastExpr(checkedTemp, baseType));
+		units.insertBefore(castStmt, read);
+		
+		// Change base of original field read to checked variable
+		read.setRightOp(J.newVirtualInvokeExpr(temp, rightOp.getMethodRef(), rightOp.getArgs()));
+	}
+
+	private void addCheckLegalWriteAssignStmtMethod(AssignStmt write) {
+		VirtualInvokeExpr rightOp = (VirtualInvokeExpr) write.getRightOp();
+		Local base = (Local) rightOp.getBase();
+		Type baseType = base.getType();
+		
+		// Add locals
+		Local checkedTemp = J.newLocal("checkedTemp" + Integer.toString(tempLocalCount), Constants.CHECKED_CLASS.getType());
+		Local temp = J.newLocal("temp" + Integer.toString(tempLocalCount), baseType);
+		Local taskIdLocal = Util.getTaskIdLocal(locals);
+		locals.add(checkedTemp);
+		locals.add(temp);
+		tempLocalCount++;
+		
+		// Insert the call to checkLegalRead
+		Unit checkStmt = J.newAssignStmt(checkedTemp, J.newStaticInvokeExpr(
+				Constants.CHECKED_CLASS.getMethod("checkLegalWrite", Arrays.asList(new Type[] { Constants.CHECKED_CLASS.getType(), taskIdLocal.getType() })).makeRef(), 
+				Arrays.asList(new Local[] { base, taskIdLocal })));
+		units.insertBefore(checkStmt, write);
+		
+		// Insert a cast, to cast the result of checkLegalRead to the right type again
+		Unit castStmt = J.newAssignStmt(temp, J.newCastExpr(checkedTemp, baseType));
+		units.insertBefore(castStmt, write);
+		
+		// Change base of original field read to checked variable
+		write.setRightOp(J.newVirtualInvokeExpr(temp, rightOp.getMethodRef(), rightOp.getArgs()));
+	}
+
 	/**
 	 * Method checks if a unit did increase the set of the checked variables
 	 * @param u
@@ -133,57 +265,29 @@ public class CheckingTransformer extends BodyTransformer {
 	}
 	
 	private void addCheckLegalWrite(AssignStmt write) {
-		Value leftOp = write.getLeftOp();	
-		if (leftOp instanceof InstanceFieldRef) {
-			InstanceFieldRef fieldRef = (InstanceFieldRef) leftOp;
-			Local base = (Local) fieldRef.getBase();
-			Type baseType = base.getType();
-			
-			Local checkedTemp = J.newLocal("checkedTemp" + Integer.toString(tempLocalCount), Constants.CHECKED_CLASS.getType());
-			Local temp = J.newLocal("temp" + Integer.toString(tempLocalCount), baseType);
-			Local taskIdLocal = Util.getTaskIdLocal(locals);
-			locals.add(checkedTemp);
-			locals.add(temp);
-			tempLocalCount++;
-			
-			// Insert the call to checkLegalWrite
-			Unit checkStmt = J.newAssignStmt(checkedTemp, J.newStaticInvokeExpr(
-					Constants.CHECKED_CLASS.getMethod("checkLegalWrite", Arrays.asList(new Type[] { Constants.CHECKED_CLASS.getType(), taskIdLocal.getType() })).makeRef(), 
-					Arrays.asList(new Local[] { base, taskIdLocal })));
-			units.insertBefore(checkStmt, write);
-			
-			// Insert a cast, to cast the result of checkLegalRead to the right type again
-			Unit castStmt = J.newAssignStmt(temp, J.newCastExpr(checkedTemp, baseType));
-			units.insertBefore(castStmt, write);
-			
-			// Change base of original field read to checked variable
-			write.setLeftOp(J.newInstanceFieldRef(temp, fieldRef.getFieldRef()));
-		} else {
-			// We have a checked array write
-			InstanceFieldRef rightOp = (InstanceFieldRef) write.getRightOp();
-			Local base = (Local) rightOp.getBase();
-			Type baseType = base.getType();
-			
-			// Add locals
-			Local checkedTemp = J.newLocal("checkedTemp" + Integer.toString(tempLocalCount), Constants.CHECKED_CLASS.getType());
-			Local temp = J.newLocal("temp" + Integer.toString(tempLocalCount), baseType);
-			locals.add(checkedTemp);
-			locals.add(temp);
-			tempLocalCount++;
-			
-			// Insert the call to checkLegalRead
-			Unit checkStmt = J.newAssignStmt(checkedTemp, J.newStaticInvokeExpr(
-					Constants.CHECKED_CLASS.getMethod("checkLegalWrite", Arrays.asList(new Type[] { Constants.CHECKED_CLASS.getType() })).makeRef(), 
-					Arrays.asList(new Local[] { base })));
-			units.insertBefore(checkStmt, write);
-			
-			// Insert a cast, to cast the result of checkLegalRead to the right type again
-			Unit castStmt = J.newAssignStmt(temp, J.newCastExpr(checkedTemp, baseType));
-			units.insertBefore(castStmt, write);
-			
-			// Change base of original field read to checked variable
-			write.setRightOp(J.newInstanceFieldRef(temp, rightOp.getFieldRef()));
-		}
+		InstanceFieldRef fieldRef = (InstanceFieldRef) write.getLeftOp();;
+		Local base = (Local) fieldRef.getBase();
+		Type baseType = base.getType();
+		
+		Local checkedTemp = J.newLocal("checkedTemp" + Integer.toString(tempLocalCount), Constants.CHECKED_CLASS.getType());
+		Local temp = J.newLocal("temp" + Integer.toString(tempLocalCount), baseType);
+		Local taskIdLocal = Util.getTaskIdLocal(locals);
+		locals.add(checkedTemp);
+		locals.add(temp);
+		tempLocalCount++;
+		
+		// Insert the call to checkLegalWrite
+		Unit checkStmt = J.newAssignStmt(checkedTemp, J.newStaticInvokeExpr(
+				Constants.CHECKED_CLASS.getMethod("checkLegalWrite", Arrays.asList(new Type[] { Constants.CHECKED_CLASS.getType(), taskIdLocal.getType() })).makeRef(), 
+				Arrays.asList(new Local[] { base, taskIdLocal })));
+		units.insertBefore(checkStmt, write);
+		
+		// Insert a cast, to cast the result of checkLegalRead to the right type again
+		Unit castStmt = J.newAssignStmt(temp, J.newCastExpr(checkedTemp, baseType));
+		units.insertBefore(castStmt, write);
+		
+		// Change base of original field read to checked variable
+		write.setLeftOp(J.newInstanceFieldRef(temp, fieldRef.getFieldRef()));
 	}
 	
 	private boolean isGuardedRefsMethod(SootMethod m) {
