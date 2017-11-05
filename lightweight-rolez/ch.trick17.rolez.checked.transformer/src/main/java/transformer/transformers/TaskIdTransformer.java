@@ -103,7 +103,7 @@ public class TaskIdTransformer extends SceneTransformer {
 		Local instanceLocal = Jimple.v().newLocal("instance", mainClass.getType());
 		locals.add(instanceLocal);
 		units.add(Jimple.v().newIdentityStmt(instanceLocal, Jimple.v().newThisRef(mainClass.getType())));
-		units.add(Jimple.v().newInvokeStmt(Jimple.v().newSpecialInvokeExpr(instanceLocal,Constants.CHECKED_CLASS.getMethod("void <init>()").makeRef())));
+		units.add(Jimple.v().newInvokeStmt(Jimple.v().newSpecialInvokeExpr(instanceLocal,mainClass.getSuperclass().getMethod("void <init>()").makeRef())));
 		units.add(Jimple.v().newReturnVoidStmt());
 		
 		mainClass.addMethod(constructor);
