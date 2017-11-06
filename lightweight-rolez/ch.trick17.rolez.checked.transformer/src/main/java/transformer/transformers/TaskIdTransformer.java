@@ -24,6 +24,8 @@ import soot.VoidType;
 import soot.jimple.IdentityStmt;
 import soot.jimple.Jimple;
 import soot.jimple.ParameterRef;
+import soot.tagkit.SignatureTag;
+import soot.tagkit.Tag;
 import soot.util.Chain;
 import transformer.checking.GuardedRefs;
 import transformer.id.TaskIdStmtTransformerSwitch;
@@ -171,13 +173,26 @@ public class TaskIdTransformer extends SceneTransformer {
 		parameterTypes.addAll(m.getParameterTypes());
 		parameterTypes.add(LongType.v());	
 		SootMethod newMethod = new SootMethod(m.getName(), parameterTypes, m.getReturnType(), m.getModifiers(), m.getExceptions());
-		newMethod.addAllTagsOf(m);
+
+		Tag visibilityAnnotationTag = m.getTag("VisibilityAnnotationTag");
+		if (visibilityAnnotationTag != null) {
+			newMethod.addTag(visibilityAnnotationTag);
+			System.out.println(visibilityAnnotationTag);
+		}
+		
+		SignatureTag signatureTag = (SignatureTag)m.getTag("SignatureTag");
+		if (signatureTag != null) newMethod.addTag(new SignatureTag(getNewSignatureTag(signatureTag.getSignature())));
 		m.getDeclaringClass().addMethod(newMethod);
 		if (!m.isAbstract()) {
 			Body b = m.retrieveActiveBody();
 			newMethod.setActiveBody(b);
 		}
 		changedMethods.put(m, newMethod);
+	}
+	
+	private String getNewSignatureTag(String oldSignatureTag) {
+		String[] split = oldSignatureTag.split("\\)");
+		return split[0] + "J)" + split[1];
 	}
 	
 	private Local getThisLocal(Chain<Local> locals) {
