@@ -256,14 +256,6 @@ public class TransformerTest {
 	}
 
 	@Test
-	public void testMonteCarlo() {
-		String methodName = "testMonteCarlo";
-		String mainClass = "classes.TestMonteCarlo";
-		Pipeline p = new Pipeline(methodName, mainClass);
-		p.runDefault(false, false);
-	}
-
-	@Test
 	public void testCheckedConstructor() {
 		String methodName = "testCheckedConstructor";
 		String mainClass = "classes.TestCheckedConstructor";
@@ -301,5 +293,13 @@ public class TransformerTest {
 		String mainClass = "classes.TestCheckedArrayUsage";
 		Pipeline p = new Pipeline(methodName, mainClass);
 		p.runDefault(true, false);
+	}
+
+	@Test
+	public void quicksortChecked() {
+		String methodName = "quicksortChecked";
+		String mainClass = "classes.QuicksortChecked";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.runDefault(true, true);
 	}
 }
