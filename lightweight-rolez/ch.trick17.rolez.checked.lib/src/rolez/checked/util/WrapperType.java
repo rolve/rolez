@@ -18,7 +18,7 @@ public abstract class WrapperType<T> extends Checked {
 	 */
 	@Read
 	public T getUncheckedReadInstance() {
-		return checkLegalRead(this).instance;
+		return this.instance;
 	}
 	
 	/**
@@ -28,6 +28,6 @@ public abstract class WrapperType<T> extends Checked {
 	 */
 	@Write
 	public T getUncheckedWriteInstance() {
-		return checkLegalWrite(this).instance;
+		return this.instance;
 	}
 }
