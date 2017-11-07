@@ -30,7 +30,6 @@ public class CheckedSlice<A> extends Checked {
         this.range = range;
     }
     
-    @Read
     public int arrayLength() {
         return Array.getLength(data);
     }
@@ -45,7 +44,6 @@ public class CheckedSlice<A> extends Checked {
     	return this.data;
     }
     
-    @Read
     public SliceRange getSliceRange() {
     	return this.range;
     }
@@ -152,8 +150,7 @@ public class CheckedSlice<A> extends Checked {
         if(!range.contains(index))
             throw new SliceIndexOutOfBoundsException(index);
     }
-
-    @Read
+    
     public CheckedSlice<A> slice(SliceRange sliceRange) {
         if(!range.covers(sliceRange))
             throw new IllegalArgumentException("Given range: " + sliceRange
@@ -176,12 +173,10 @@ public class CheckedSlice<A> extends Checked {
         return slice;
     }
     
-    @Read
     public final CheckedSlice<A> slice(int begin, int end, int step) {
         return slice(new SliceRange(begin, end, step));
     }
     
-    @Read
     public final CheckedSlice<A> slice(int begin, int end) {
         return slice(begin, end, 1);
     }
