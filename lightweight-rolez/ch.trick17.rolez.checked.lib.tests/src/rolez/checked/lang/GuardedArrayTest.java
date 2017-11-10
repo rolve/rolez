@@ -6,15 +6,15 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 
 import rolez.checked.lang.CheckedArray;
 
 public class GuardedArrayTest {
 	
-	@BeforeClass
-    public static void registerRootTask() {
+	@Before
+    public void registerRootTask() {
     	Task.registerNewRootTask();
     }
 	

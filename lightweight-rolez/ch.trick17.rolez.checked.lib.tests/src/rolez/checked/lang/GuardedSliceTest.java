@@ -8,8 +8,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -26,8 +25,8 @@ public class GuardedSliceTest {
     private final int length;
     private final List<SliceRange> ranges;
     
-    @BeforeClass
-    public static void registerRootTask() {
+    @Before
+    public void registerRootTask() {
     	Task.registerNewRootTask();
     }
     
