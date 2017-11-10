@@ -6,14 +6,20 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import rolez.checked.lang.CheckedArray;
 
 public class GuardedArrayTest {
-    
+	
+	@BeforeClass
+    public static void registerRootTask() {
+    	Task.registerNewRootTask();
+    }
+	
     @Test
-    public void testClone() {
+    public void testClone() {    	
         CheckedArray<Object[]> objectArray = new CheckedArray<>(new Object[]{1, 2, 3});
         CheckedArray<Object[]> objectClone = objectArray.clone();
         assertArrayEquals(objectArray.data, objectClone.data);

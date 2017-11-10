@@ -8,6 +8,8 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -23,6 +25,11 @@ public class GuardedSliceTest {
     
     private final int length;
     private final List<SliceRange> ranges;
+    
+    @BeforeClass
+    public static void registerRootTask() {
+    	Task.registerNewRootTask();
+    }
     
     @Parameters(name = "{0}, {1}")
     public static List<Object[]> parameters() {
@@ -72,6 +79,7 @@ public class GuardedSliceTest {
     
     @Test
     public void testSlice() {
+    	Task.registerNewRootTask();
         final CheckedArray<?> array = new CheckedArray<>(new Checked[length]);
         
         final List<CheckedSlice<?>> slices = new ArrayList<>();
@@ -83,6 +91,7 @@ public class GuardedSliceTest {
         }
         
         assertSoundSlicesCondition(array, slices);
+    	Task.unregisterRootTask();
     }
     
     private static void assertSoundSlicesCondition(CheckedArray<?> array,
