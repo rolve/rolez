@@ -14,18 +14,28 @@ public class QuicksortChecked {
 	final int maxLevel;
 	
 	public static void main(String[] args) {
-		QuicksortChecked instance = new QuicksortChecked(0);
-		CheckedArray<int[]> s = instance.shuffledInts(6000000, new java.util.Random());
 		
-		instance.sort(s);
-		
-		for (int i = 1; i < s.arrayLength(); i++) {
-			if (s.getInt(i)<s.getInt(i-1)) {
-				System.out.println("ERROR!");
-				return;
+		for (int j=1; j<=5; j++) {
+			QuicksortChecked instance = new QuicksortChecked(j);
+			CheckedArray<int[]> s1 = instance.shuffledInts(6000000, new java.util.Random());
+			CheckedArray<int[]> s2 = instance.shuffledInts(6000000, new java.util.Random());
+			CheckedArray<int[]> s3 = instance.shuffledInts(6000000, new java.util.Random());
+			
+			StopWatch sw = new StopWatch();
+			sw.go();
+			instance.sort(s1);
+			instance.sort(s2);
+			instance.sort(s3);
+			// Uncomment to see performance, but test will fail
+			//System.out.println(sw.get());
+			
+			for (int i = 0; i < s1.arrayLength(); i++) {
+				if (s1.getInt(i) != i || s2.getInt(i) != i || s3.getInt(i) != i) {
+					System.out.println("ERROR!");
+					break;
+				}
 			}
 		}
-		
 		System.out.println("NO ERROR FOUND!");
 	}
 	
