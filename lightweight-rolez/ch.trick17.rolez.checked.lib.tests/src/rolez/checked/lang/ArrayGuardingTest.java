@@ -4,8 +4,8 @@ import static ch.trick17.simplejpf.test.JpfParallelismTest.VerifyMode.CORRECTNES
 import static ch.trick17.simplejpf.test.JpfParallelismTest.VerifyMode.PARALLELISM;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
-import static rolez.checked.lang.Guarded.guardReadOnly;
-import static rolez.checked.lang.Guarded.guardReadWrite;
+import static rolez.checked.lang.Checked.guardReadOnly;
+import static rolez.checked.lang.Checked.guardReadWrite;
 
 import java.util.List;
 

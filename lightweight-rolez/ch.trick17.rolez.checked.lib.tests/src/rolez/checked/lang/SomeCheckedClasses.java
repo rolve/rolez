@@ -6,7 +6,7 @@ import static java.util.Collections.emptyList;
 import java.util.Collection;
 
 import rolez.checked.lang.Checked;
-import rolez.checked.lang.Guarded;
+import rolez.checked.lang.Checked;
 
 public class SomeCheckedClasses {
 
@@ -21,17 +21,17 @@ public class SomeCheckedClasses {
 		}
 		
 		@Override
-		protected Iterable<? extends Guarded> guardedRefs() {
+		protected Iterable<? extends Checked> guardedRefs() {
 		    return emptyList();
 		}
 		
 		@Override
-		protected Collection<? extends Guarded> views() {
+		protected Collection<? extends Checked> views() {
 		    return emptyList();
 		}
 	}
 	 
-	public static class Ref<T extends Guarded> extends Guarded {
+	public static class Ref<T extends Checked> extends Checked {
 	        
 		public T o;
 		
@@ -42,12 +42,12 @@ public class SomeCheckedClasses {
 		}
 		
 		@Override
-		protected Iterable<? extends Guarded> guardedRefs() {
+		protected Iterable<? extends Checked> guardedRefs() {
 		    return asList(o);
 		}
 		
 		@Override
-		protected Collection<? extends Guarded> views() {
+		protected Collection<? extends Checked> views() {
 		    return emptyList();
 		}
 	}
@@ -77,12 +77,12 @@ public class SomeCheckedClasses {
 		}
 		
         @Override
-        protected Iterable<? extends Guarded> guardedRefs() {
+        protected Iterable<? extends Checked> guardedRefs() {
             return asList(a);
         }
         
         @Override
-        protected Collection<? extends Guarded> views() {
+        protected Collection<? extends Checked> views() {
             return emptyList();
         }
 	}

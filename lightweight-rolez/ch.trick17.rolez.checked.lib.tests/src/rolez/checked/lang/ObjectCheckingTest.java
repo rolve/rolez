@@ -6,8 +6,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static rolez.checked.lang.Checked.checkLegalRead;
 import static rolez.checked.lang.Checked.checkLegalWrite;
-import static rolez.checked.lang.Guarded.guardReadOnly;
-import static rolez.checked.lang.Guarded.guardReadWrite;
+import static rolez.checked.lang.Checked.guardReadOnly;
+import static rolez.checked.lang.Checked.guardReadWrite;
 
 import java.util.Arrays;
 import java.util.List;

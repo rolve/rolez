@@ -3,8 +3,8 @@ package rolez.checked.lang;
 import static ch.trick17.simplejpf.test.JpfParallelismTest.VerifyMode.CORRECTNESS;
 import static ch.trick17.simplejpf.test.JpfParallelismTest.VerifyMode.PARALLELISM;
 import static org.junit.Assert.assertEquals;
-import static rolez.checked.lang.Guarded.guardReadOnly;
-import static rolez.checked.lang.Guarded.guardReadWrite;
+import static rolez.checked.lang.Checked.guardReadOnly;
+import static rolez.checked.lang.Checked.guardReadWrite;
 
 import java.util.Arrays;
 import java.util.List;

@@ -200,7 +200,7 @@ public class CheckedSlice<A> extends Checked {
     }
     
     @Override
-    protected final Collection<? extends Guarded> views() {
+    protected final Collection<? extends Checked> views() {
         return overlappingSlices;
     }
     

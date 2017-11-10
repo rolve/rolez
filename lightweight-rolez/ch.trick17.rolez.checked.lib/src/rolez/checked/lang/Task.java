@@ -3,7 +3,7 @@ package rolez.checked.lang;
 import static java.lang.Thread.currentThread;
 import static java.util.Collections.newSetFromMap;
 import static java.util.concurrent.locks.LockSupport.unpark;
-import static rolez.checked.lang.Guarded.guardReadWrite;
+import static rolez.checked.lang.Checked.guardReadWrite;
 
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -57,26 +57,21 @@ public abstract class Task<V> implements Runnable {
     private volatile V result;
     private volatile Throwable exception;
     
-    private List<Guarded> passed;
+    private List<Checked> passed;
     /**
      * Contains all objects that are reachable from any passed one when the task starts. At the end
      * of the task, the object graphs may have changed, so some objects may not be reachable
      * anymore. To be able to release those, they are stored here.
      */
-    private Set<Guarded> passedReachable;
-	private Set<Guarded> sharedReachable;
-	private Set<Guarded> pureReachable;
+    private Set<Checked> passedReachable;
+	private Set<Checked> sharedReachable;
     
-    public Set<Guarded> getPassedReachable() {
+    public Set<Checked> getPassedReachable() {
         return passedReachable;
     }
 
-    public Set<Guarded> getSharedReachable() {
+    public Set<Checked> getSharedReachable() {
         return sharedReachable;
-    }
-    
-    public Set<Guarded> getPureReachable() {
-        return pureReachable;
     }
     
     /**
@@ -249,72 +244,91 @@ public abstract class Task<V> implements Runnable {
     private void taskStartTransitions(Object[] passedObjects, Object[] sharedObjects, Object[] pureObjects) {
         passed = new ArrayList<>(passedObjects.length);
         for(Object g : passedObjects)
-            if(g instanceof Guarded)
-                passed.add((Guarded) g);
+            if(g instanceof Checked)
+                passed.add((Checked) g);
         
         long idBits = parent == null ? 0L : parent.idBits();
         passedReachable = newIdentitySet();
-        for(Guarded g : passed)
+        for(Checked g : passed)
             g.guardReadWriteReachable(passedReachable, idBits);
+        
+        for (Checked g : passedReachable) {
+            g.setLegalReadInTask(idBits());
+            g.setLegalWriteInTask(idBits());
+        }
         
         // Objects that are reachable both from a passed and a shared object are effectively *passed*
         sharedReachable = newIdentitySet();
         sharedReachable.addAll(passedReachable);
         for(Object g : sharedObjects)
-            if(g instanceof Guarded)
-                ((Guarded) g).guardReadOnlyReachable(sharedReachable, idBits);
+            if(g instanceof Checked) {
+                ((Checked) g).guardReadOnlyReachable(sharedReachable, idBits);
+            }
+        
+        for (Checked g : sharedReachable) {
+            g.setLegalReadInTask(idBits());
+        }
         sharedReachable.removeAll(passedReachable);
         
-        pureReachable = newIdentitySet();
+        Set<Checked> pureReachable = newIdentitySet();
         pureReachable.addAll(passedReachable);
         pureReachable.addAll(sharedReachable);
         for (Object g : pureObjects)
-        	if (g instanceof Guarded)
-        		((Guarded)g).setOwnerForSharePure(pureReachable);
+        	if (g instanceof Checked)
+        		((Checked)g).setOwnerForSharePure(pureReachable);
         pureReachable.removeAll(passedReachable);
         pureReachable.removeAll(sharedReachable);
         
         /* IMPROVE: Only pass (share) objects that are reachable through chain of readwrite
          * (readonly) references? Would enable programmers to express more parallelism (especially
          * with parameterized classes) and could be more efficient (or less...). */
-        for(Guarded g : passedReachable)
+        for(Checked g : passedReachable)
             g.pass(this);
-        for(Guarded g : sharedReachable)
+        for(Checked g : sharedReachable)
             g.share(this);
     }
     
     private void completeTaskStartTransitions() {
-        for(Guarded g : passedReachable)
+        for(Checked g : passedReachable)
             g.completePass();
     }
     
     private void taskFinishTransitions() {
         /* Release all shared objects. No need for guarding, as it's not possible that they have
          * been modified. */
-        for(Guarded g : sharedReachable)
+        for(Checked g : sharedReachable) {
+            g.removeLegalReadInTask(idBits());
             g.releaseShared();
+        }
         
         /* Then, find objects that are now reachable from passed objects (and the result object) and
          * release those */
         // IMPROVE: guarding should not be necessary since child tasks are already joined!
-        Set<Guarded> newPassedReachable = newIdentitySet();
-        for(Guarded g : passed)
+        Set<Checked> newPassedReachable = newIdentitySet();
+        for(Checked g : passed)
             g.guardReadWriteReachable(newPassedReachable, idBits());
-        if(result instanceof Guarded)
-            ((Guarded) result).guardReadWriteReachable(newPassedReachable, idBits());
+        if(result instanceof Checked)
+            ((Checked) result).guardReadWriteReachable(newPassedReachable, idBits());
         
-        for(Guarded g : newPassedReachable)
+        for(Checked g : newPassedReachable) {
+            g.removeLegalReadInTask(idBits());
+            g.removeLegalWriteInTask(idBits());
             g.releasePassed();
+        }
         
         /* Finally, release objects that were previously reachable (but not anymore) and notify
          * parent thread. */
         passedReachable.removeAll(newPassedReachable);
-        for(Guarded g : passedReachable) {
+        for(Checked g : passedReachable) {
             guardReadWrite(g);
+            g.removeLegalReadInTask(idBits());
+            g.removeLegalWriteInTask(idBits());
             g.releasePassed();
         }
-        if(parent != null)
+        if(parent != null) {
             unpark(parent.executingThread);
+            
+        }
         
         /* Clear fields to allow task args to be GC'd */
         passed = null;
@@ -322,7 +336,7 @@ public abstract class Task<V> implements Runnable {
         sharedReachable = null;
     }
     
-    private static Set<Guarded> newIdentitySet() {
-        return newSetFromMap(new IdentityHashMap<Guarded, java.lang.Boolean>());
+    private static Set<Checked> newIdentitySet() {
+        return newSetFromMap(new IdentityHashMap<Checked, java.lang.Boolean>());
     }
 }

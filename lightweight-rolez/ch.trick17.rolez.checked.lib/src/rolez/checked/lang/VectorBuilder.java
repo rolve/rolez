@@ -7,7 +7,7 @@ package rolez.checked.lang;
  * 
  * @author Michael Faes
  */
-public class VectorBuilder<T> extends Guarded {
+public class VectorBuilder<T> extends Checked {
     
     public VectorBuilder(int length) {}
     

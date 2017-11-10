@@ -1,6 +1,6 @@
 package rolez.checked.lang;
 
-public class GuardedVectorBuilder<A> extends Guarded {
+public class GuardedVectorBuilder<A> extends Checked {
     
     public final A data;
     private boolean built = false;
@@ -12,7 +12,7 @@ public class GuardedVectorBuilder<A> extends Guarded {
     public void set(int index, Object component) {
         checkNotBuilt();
         // IMPROVE: Could check vector type arg at compile time, but would lose some flexibility
-        if(component instanceof Guarded)
+        if(component instanceof Checked)
             throw new IllegalArgumentException(
                     "vector components must be pure (primitive or instances of pure classes, including singleton classes)");
         ((Object[]) data)[index] = component;

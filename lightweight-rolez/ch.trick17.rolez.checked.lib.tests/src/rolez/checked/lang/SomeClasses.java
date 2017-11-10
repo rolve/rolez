@@ -5,11 +5,11 @@ import static java.util.Collections.emptyList;
 
 import java.util.Collection;
 
-import rolez.checked.lang.Guarded;
+import rolez.checked.lang.Checked;
 
 public abstract class SomeClasses {
     
-    public static class Int extends Guarded {
+    public static class Int extends Checked {
         
         public int value;
         
@@ -20,17 +20,17 @@ public abstract class SomeClasses {
         }
         
         @Override
-        protected Iterable<? extends Guarded> guardedRefs() {
+        protected Iterable<? extends Checked> guardedRefs() {
             return emptyList();
         }
         
         @Override
-        protected Collection<? extends Guarded> views() {
+        protected Collection<? extends Checked> views() {
             return emptyList();
         }
     }
     
-    public static class Ref<T extends Guarded> extends Guarded {
+    public static class Ref<T extends Checked> extends Checked {
         
         public T o;
         
@@ -41,17 +41,17 @@ public abstract class SomeClasses {
         }
         
         @Override
-        protected Iterable<? extends Guarded> guardedRefs() {
+        protected Iterable<? extends Checked> guardedRefs() {
             return asList(o);
         }
         
         @Override
-        protected Collection<? extends Guarded> views() {
+        protected Collection<? extends Checked> views() {
             return emptyList();
         }
     }
     
-    public static class Node extends Guarded {
+    public static class Node extends Checked {
         
         public Node next;
         public int data;
@@ -67,12 +67,12 @@ public abstract class SomeClasses {
         }
         
         @Override
-        protected Iterable<? extends Guarded> guardedRefs() {
+        protected Iterable<? extends Checked> guardedRefs() {
             return asList(next);
         }
         
         @Override
-        protected Collection<? extends Guarded> views() {
+        protected Collection<? extends Checked> views() {
             return emptyList();
         }
     }

@@ -5,12 +5,12 @@ import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-import rolez.checked.lang.Guarded;
+import rolez.checked.lang.Checked;
 
 /**
  * Basically a stripped-down version of {@link java.util.ArrayList}, but guarded.
  */
-public class ArrayList<E> extends Guarded implements Iterable<E> {
+public class ArrayList<E> extends Checked implements Iterable<E> {
     
     private static final int DEFAULT_CAPACITY = 10;
     private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;

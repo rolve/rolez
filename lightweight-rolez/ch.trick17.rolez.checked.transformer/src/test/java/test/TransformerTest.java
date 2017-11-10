@@ -140,7 +140,7 @@ public class TransformerTest {
 		String methodName = "testGuardReadonly";
 		String mainClass = "classes.TestGuardReadonly";
 		Pipeline p = new Pipeline(methodName, mainClass);
-		p.runDefault(true, false);
+		p.runDefault(true, true);
 	}
 
 	@Test
@@ -293,13 +293,5 @@ public class TransformerTest {
 		String mainClass = "classes.TestCheckedArrayUsage";
 		Pipeline p = new Pipeline(methodName, mainClass);
 		p.runDefault(true, false);
-	}
-
-	@Test
-	public void quicksortChecked() {
-		String methodName = "quicksortChecked";
-		String mainClass = "classes.QuicksortChecked";
-		Pipeline p = new Pipeline(methodName, mainClass);
-		p.runDefault(true, true);
 	}
 }

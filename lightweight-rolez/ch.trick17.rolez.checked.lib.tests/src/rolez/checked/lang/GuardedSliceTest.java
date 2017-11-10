@@ -15,7 +15,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 import rolez.checked.lang.CheckedArray;
 import rolez.checked.lang.CheckedSlice;
-import rolez.checked.lang.Guarded;
+import rolez.checked.lang.Checked;
 import rolez.checked.lang.SliceRange;
 
 @RunWith(Parameterized.class)
@@ -72,7 +72,7 @@ public class GuardedSliceTest {
     
     @Test
     public void testSlice() {
-        final CheckedArray<?> array = new CheckedArray<>(new Guarded[length]);
+        final CheckedArray<?> array = new CheckedArray<>(new Checked[length]);
         
         final List<CheckedSlice<?>> slices = new ArrayList<>();
         slices.add(array);
