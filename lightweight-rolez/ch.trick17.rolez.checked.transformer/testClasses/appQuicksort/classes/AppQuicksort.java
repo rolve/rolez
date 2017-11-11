@@ -9,14 +9,14 @@ import rolez.checked.lang.CheckedArray;
 import rolez.checked.util.StopWatch;
 
 @Checked
-public class QuicksortChecked {
+public class AppQuicksort {
 	
 	final int maxLevel;
 	
 	public static void main(String[] args) {
 		
 		for (int j=1; j<=5; j++) {
-			QuicksortChecked instance = new QuicksortChecked(j);
+			AppQuicksort instance = new AppQuicksort(j);
 			CheckedArray<int[]> s1 = instance.shuffledInts(6000000, new java.util.Random());
 			CheckedArray<int[]> s2 = instance.shuffledInts(6000000, new java.util.Random());
 			CheckedArray<int[]> s3 = instance.shuffledInts(6000000, new java.util.Random());
@@ -39,11 +39,11 @@ public class QuicksortChecked {
 		System.out.println("NO ERROR FOUND!");
 	}
 	
-	public QuicksortChecked() {
+	public AppQuicksort() {
 		this.maxLevel = 3;
 	}
 	
-    public QuicksortChecked(final int maxLevel) {
+    public AppQuicksort(final int maxLevel) {
         this.maxLevel = maxLevel;
     }
     

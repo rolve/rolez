@@ -7,17 +7,25 @@ import test.util.Pipeline;
 public class TestApps {
 
 	@Test
-	public void quicksortChecked() {
-		String methodName = "quicksortChecked";
-		String mainClass = "classes.QuicksortChecked";
+	public void appQuicksort() {
+		String methodName = "appQuicksort";
+		String mainClass = "classes.AppQuicksort";
 		Pipeline p = new Pipeline(methodName, mainClass);
 		p.runDefault(true, false);
 	}
 
 	@Test
-	public void ideaChecked() {
-		String methodName = "ideaChecked";
-		String mainClass = "classes.IdeaChecked";
+	public void appIdea() {
+		String methodName = "appIdea";
+		String mainClass = "classes.AppIdea";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.runDefault(true, false);
+	}
+
+	@Test
+	public void appMergesort() {
+		String methodName = "appMergesort";
+		String mainClass = "classes.AppMergesort";
 		Pipeline p = new Pipeline(methodName, mainClass);
 		p.runDefault(true, false);
 	}

@@ -21,7 +21,7 @@ import rolez.checked.lang.Vector;
 import rolez.checked.lang.SliceRange;
 
 @Checked
-public class IdeaChecked {
+public class AppIdea {
 
 	public final int size;
     public final int tasks;
@@ -34,12 +34,12 @@ public class IdeaChecked {
     public Vector<int[]> encryptKey;
     public Vector<int[]> decryptKey;
 	
-	public IdeaChecked() {
+	public AppIdea() {
         this.size = 50000000;
         this.tasks = 2;
     }
     
-    public IdeaChecked(final int size, final int tasks) {
+    public AppIdea(final int size, final int tasks) {
         this.size = size;
         this.tasks = tasks;
     }
@@ -62,7 +62,7 @@ public class IdeaChecked {
     }
     
     public static void main(String[] args) {
-    	IdeaChecked instance = new IdeaChecked();
+    	AppIdea instance = new AppIdea();
     	instance.buildTestData(new Random(42L));
         System.out.println("Finished building test data!");
         final StopWatch watch = new StopWatch();
