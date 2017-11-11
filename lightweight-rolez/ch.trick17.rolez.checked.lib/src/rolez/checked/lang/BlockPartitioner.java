@@ -28,7 +28,7 @@ public class BlockPartitioner extends rolez.checked.lang.Partitioner {
             ranges.set(i, new rolez.checked.lang.SliceRange(begin, end, orig.step));
             begin = end;
         }
-        return ranges.build();
+        return ranges.build().getData();
     }
     
     @java.lang.Override

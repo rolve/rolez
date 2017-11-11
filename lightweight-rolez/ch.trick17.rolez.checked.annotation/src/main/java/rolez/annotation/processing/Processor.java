@@ -51,7 +51,11 @@ public class Processor extends AbstractProcessor {
 		"java.lang.Short",
 		"java.lang.Long",
 		"java.lang.Double",
-		"java.lang.Float"
+		"java.lang.Float",
+		
+		// TODO: This is ugly, should not list every single generic version of class
+		"rolez.checked.lang.Vector<int[]>",
+		"rolez.checked.lang.Vector<short[]>"
 	};
 	
 	// List of java primitive types
@@ -119,8 +123,7 @@ public class Processor extends AbstractProcessor {
 			TypeElement typeElement = (TypeElement)annotatedElement;
 			enforceCheckedAnnotation(typeElement);
 			checkForObjectOrCheckedSupertype(typeElement);
-			checkOverridingTasksAreAnnotated(typeElement); 
-			checkRefsAreCheckedTypes(typeElement);
+			checkOverridingTasksAreAnnotated(typeElement);
 		}
 	}
 	
@@ -182,22 +185,6 @@ public class Processor extends AbstractProcessor {
 				
 				// If a method is overriding a task, it should have invariant role annotations
 				checkInvariantRoleAnnotations(method, overriddenTask);
-			}
-		}
-	}
-	
-	/**
-	 * This method ensures that a @Checked class does not contain references to unchecked classes.
-	 * @param typeElement
-	 */
-	private void checkRefsAreCheckedTypes(TypeElement typeElement) {
-		List<VariableElement> fields = ElementFilter.fieldsIn(typeElement.getEnclosedElements());
-		for (VariableElement f : fields) {
-			if (!isPrimitiveType(f.asType())) {
-				if (!isCheckedType(f.asType()) && !isWhitelisted(f.asType())) {
-					Message message = new Message(Kind.ERROR, "Only references to checked types are allowed.", f);
-					message.print(messager);
-				}
 			}
 		}
 	}

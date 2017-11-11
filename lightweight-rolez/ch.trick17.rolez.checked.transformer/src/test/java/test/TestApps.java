@@ -13,4 +13,12 @@ public class TestApps {
 		Pipeline p = new Pipeline(methodName, mainClass);
 		p.runDefault(true, false);
 	}
+
+	@Test
+	public void ideaChecked() {
+		String methodName = "ideaChecked";
+		String mainClass = "classes.IdeaChecked";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.runDefault(true, false);
+	}
 }

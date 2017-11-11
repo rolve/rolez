@@ -1,5 +1,7 @@
 package rolez.checked.lang;
 
+import java.lang.reflect.Array;
+
 /**
  * This class represents the interface of the <code>Vector</code> class in the Rolez compiler, but
  * is not actually used in Rolez programs. Instead, Java arrays are used directly.
@@ -8,7 +10,24 @@ package rolez.checked.lang;
  */
 public class Vector<T> {
     
-    public final int length = 0;
+	private T data;
+	
+    public final int length;
     
-    public native T get(int i);
+    public Vector(T data) {
+    	this.length = Array.getLength(data);
+		this.data = data;
+	}
+
+    public T getData() {
+    	return this.data;
+    }
+    
+	public int getInt(int i) {
+		return ((int[])data)[i];
+	}
+	
+	public short getShort(int i) {
+		return ((short[])data)[i];
+	}
 }

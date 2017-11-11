@@ -58,8 +58,8 @@ public class GuardedVectorBuilder<A> extends Checked {
             throw new IllegalStateException("vector has already been built");
     }
     
-    public A build() {
+    public Vector<A> build() {
         built = true;
-        return data;
+        return new Vector<A>(data);
     }
 }
