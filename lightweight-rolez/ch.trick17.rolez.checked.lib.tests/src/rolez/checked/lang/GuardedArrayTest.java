@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -44,5 +45,10 @@ public class GuardedArrayTest {
         CheckedArray<char[]> charClone = charArray.clone();
         assertArrayEquals(charArray.data, charClone.data);
         assertNotSame(charArray.data, charClone.data);
+    }
+    
+    @After
+    public void unregisterRootTask() {
+    	Task.unregisterRootTask();
     }
 }
