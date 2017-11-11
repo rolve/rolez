@@ -4,7 +4,7 @@ import org.junit.Test;
 
 import test.util.Pipeline;
 
-public class TestApps {
+public class AppsTest {
 
 	@Test
 	public void appQuicksort() {
