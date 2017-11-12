@@ -236,29 +236,29 @@ public class ObjectCheckingTest extends TaskBasedJpfTest {
         });
     }
     
-    
-    // TODO: Such a case should never occur in Rolez, since it should be a compile error to
-    //		 pass a readonly A as a readwrite A to another task. However it should also be handled
-    //		 somehow in the transformer!
-    @Ignore @Test
+    @Test
     public void testShareThenPass() {
-    	verifyTask(new int[][]{{2, 3}, {0, 3}}, new Runnable() {
+    	verifyTaskAssertionError(new Runnable() {
             public void run() {
             	final A a = new A();
-                
+            	
                 Task<Void> task = new Task<Void>(new Object[]{}, new Object[]{a}, new Object[]{}) {
                     @Override
                     protected Void runRolez() {
-                        int i = checkLegalRead(a).value;
-                        Task<Void> anotherTask = new Task<Void>(new Object[]{a}, new Object[]{}, new Object[]{}) {
-                        	@Override
-                            protected Void runRolez() {
-                        		checkLegalWrite(a).value = 2;
-                        		return null;
-                        	}
-                        };
-                        s.start(anotherTask);
-                        return null;
+                    	try {
+	                        int i = checkLegalRead(a).value;
+	                        Task<Void> anotherTask = new Task<Void>(new Object[]{a}, new Object[]{}, new Object[]{}) {
+	                        	@Override
+	                            protected Void runRolez() {
+	                        		checkLegalWrite(a).value = 2;
+	                        		return null;
+	                        	}
+	                        };
+	                        s.start(anotherTask);
+	                        return null;
+                    	} catch(NonSufficentRoleException e) {
+                    		throw new AssertionError(e);
+                    	}
                     }
                 };
                 s.start(task);

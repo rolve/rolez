@@ -13,6 +13,8 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
+import javax.management.RuntimeErrorException;
+
 public abstract class Task<V> implements Runnable {
     
     private static final transient ThreadLocal<Task<?>> currentTask = new ThreadLocal<Task<?>>();
@@ -65,6 +67,7 @@ public abstract class Task<V> implements Runnable {
      */
     private Set<Checked> passedReachable;
 	private Set<Checked> sharedReachable;
+	private Set<Checked> pureReachable;
     
     public Set<Checked> getPassedReachable() {
         return passedReachable;
@@ -72,6 +75,10 @@ public abstract class Task<V> implements Runnable {
 
     public Set<Checked> getSharedReachable() {
         return sharedReachable;
+    }
+    
+    public Set<Checked> getPureReachable() {
+        return pureReachable;
     }
     
     /**
@@ -242,6 +249,17 @@ public abstract class Task<V> implements Runnable {
     /* Transitions */
     
     private void taskStartTransitions(Object[] passedObjects, Object[] sharedObjects, Object[] pureObjects) {
+    	
+    	// Cannot pass objects, which were only shared or shared pure with parent task
+    	if (parent != null) 
+          	for (Object o : passedObjects) 
+          		if (parent.getSharedReachable().contains(o) || parent.getPureReachable().contains(o)) 
+          			throw new NonSufficentRoleException("Cannot pass object as Readwrite, which is not Readwrite in the current task.");
+    		for (Object o : sharedObjects)
+    			if (parent.getPureReachable().contains(o))
+    				throw new NonSufficentRoleException("Cannot pass object as Readonly, which is not Readonly in the current task.");
+
+         
         passed = new ArrayList<>(passedObjects.length);
         for(Object g : passedObjects)
             if(g instanceof Checked)
@@ -270,7 +288,7 @@ public abstract class Task<V> implements Runnable {
         }
         sharedReachable.removeAll(passedReachable);
         
-        Set<Checked> pureReachable = newIdentitySet();
+        pureReachable = newIdentitySet();
         pureReachable.addAll(passedReachable);
         pureReachable.addAll(sharedReachable);
         for (Object g : pureObjects)

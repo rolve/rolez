@@ -294,4 +294,12 @@ public class TransformerTest {
 		Pipeline p = new Pipeline(methodName, mainClass);
 		p.runDefault(true, false);
 	}
+
+	@Test
+	public void testReadonlyReadwriteFail() {
+		String methodName = "testReadonlyReadwriteFail";
+		String mainClass = "classes.TestReadonlyReadwriteFail";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.runExpectNonSufficientRoleError(false);
+	}
 }
