@@ -236,33 +236,32 @@ public class ObjectCheckingTest extends TaskBasedJpfTest {
         });
     }
     
-    // TODO: Why does this result in "deadlock encountered" by jpf?
+    
+    // TODO: Such a case should never occur in Rolez, since it should be a compile error to
+    //		 pass a readonly A as a readwrite A to another task. However it should also be handled
+    //		 somehow in the transformer!
     @Ignore @Test
-    public void testDeadlock() {
+    public void testShareThenPass() {
     	verifyTask(new int[][]{{2, 3}, {0, 3}}, new Runnable() {
             public void run() {
             	final A a = new A();
                 
-            	// Does only happen when objects are shared or shared pure
-                Task<B> task = new Task<B>(new Object[]{}, new Object[]{a}, new Object[]{}) {
+                Task<Void> task = new Task<Void>(new Object[]{}, new Object[]{a}, new Object[]{}) {
                     @Override
-                    protected B runRolez() {
-                        region(0);
-                        B b = new B(a);
-                        int i = guardReadOnly(a).value;
-                        //int i = checkLegalRead(a).value;
-                        return b;
+                    protected Void runRolez() {
+                        int i = checkLegalRead(a).value;
+                        Task<Void> anotherTask = new Task<Void>(new Object[]{a}, new Object[]{}, new Object[]{}) {
+                        	@Override
+                            protected Void runRolez() {
+                        		checkLegalWrite(a).value = 2;
+                        		return null;
+                        	}
+                        };
+                        s.start(anotherTask);
+                        return null;
                     }
                 };
-                
                 s.start(task);
-                region(2);
-                B b = task.get();
-                
-                // b has to become readwrite in the parent task
-                guardReadWrite(b).a = new A();
-                //checkLegalWrite(b).a = new A();
-                region(3);
             }
         });
     }
