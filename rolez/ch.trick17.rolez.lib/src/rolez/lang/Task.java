@@ -87,12 +87,12 @@ public abstract class Task<V> implements Runnable {
      */
     private final List<Task<?>> children = new ArrayList<>();
     
-    public Task(Object[] passedObjects, Object[] sharedObjects, Object[] pureObjects) {
+    public Task(Object[] passedObjects, Object[] sharedObjects) {
         this.parent = currentTask();
         if(parent != null)
             parent.children.add(this);
         
-        taskStartTransitions(passedObjects, sharedObjects, pureObjects);
+        taskStartTransitions(passedObjects, sharedObjects);
     }
     
     /**
@@ -178,7 +178,7 @@ public abstract class Task<V> implements Runnable {
      */
     public static void registerNewRootTask() {
         assert currentTask.get() == null;
-        Task<Void> task = new Task<Void>(new Object[]{}, new Object[]{}, new Object[]{}) {
+        Task<Void> task = new Task<Void>(new Object[]{}, new Object[]{}) {
             @Override
             protected Void runRolez() {
                 return null;
@@ -241,7 +241,7 @@ public abstract class Task<V> implements Runnable {
     
     /* Transitions */
     
-    private void taskStartTransitions(Object[] passedObjects, Object[] sharedObjects, Object[] pureObjects) {
+    private void taskStartTransitions(Object[] passedObjects, Object[] sharedObjects) {
         passed = new ArrayList<>(passedObjects.length);
         for(Object g : passedObjects)
             if(g instanceof Guarded)
@@ -269,10 +269,6 @@ public abstract class Task<V> implements Runnable {
             g.pass(this);
         for(Guarded g : sharedReachable)
             g.share(this);
-        for(Object g : pureObjects) {
-        	if (g instanceof Guarded)
-        	((Guarded)g).sharePure(this);
-        }
     }
     
     private void completeTaskStartTransitions() {

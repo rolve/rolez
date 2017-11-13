@@ -4,7 +4,7 @@ class VoidTask extends Task<Void> {
     private final Runnable runnable;
     
     public VoidTask(Runnable runnable) {
-        super(new Object[]{}, new Object[]{}, new Object[]{});
+        super(new Object[]{}, new Object[]{});
         this.runnable = runnable;
     }
     
