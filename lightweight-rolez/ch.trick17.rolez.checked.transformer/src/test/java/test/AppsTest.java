@@ -7,7 +7,7 @@ import test.util.Pipeline;
 public class AppsTest {
 
 	@Test
-	public void appQuicksort() {
+	public void testAppQuicksort() {
 		String methodName = "appQuicksort";
 		String mainClass = "classes.AppQuicksort";
 		Pipeline p = new Pipeline(methodName, mainClass);
@@ -15,7 +15,7 @@ public class AppsTest {
 	}
 
 	@Test
-	public void appIdea() {
+	public void testAppIdea() {
 		String methodName = "appIdea";
 		String mainClass = "classes.AppIdea";
 		Pipeline p = new Pipeline(methodName, mainClass);
@@ -23,7 +23,7 @@ public class AppsTest {
 	}
 
 	@Test
-	public void appMergesort() {
+	public void testAppMergesort() {
 		String methodName = "appMergesort";
 		String mainClass = "classes.AppMergesort";
 		Pipeline p = new Pipeline(methodName, mainClass);
