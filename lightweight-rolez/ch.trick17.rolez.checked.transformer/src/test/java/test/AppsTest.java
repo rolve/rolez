@@ -29,4 +29,12 @@ public class AppsTest {
 		Pipeline p = new Pipeline(methodName, mainClass);
 		p.runDefault(true, false);
 	}
+
+	@Test
+	public void testAppMonteCarlo() {
+		String methodName = "appMonteCarlo";
+		String mainClass = "classes.AppMonteCarlo";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.runDefault(true, false);
+	}
 }
