@@ -1,7 +1,5 @@
 package rolez.checked.lang;
 
-import static rolez.checked.lang.Checked.*;
-
 public class BlockPartitioner extends rolez.checked.lang.Partitioner {
     
     public final int blockSize;
