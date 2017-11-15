@@ -137,35 +137,84 @@ class InstrGenerator {
         /* Stmt */
         
         private def dispatch CharSequence generate(ParallelStmt it) {
-        	if(!(part1 instanceof ExprStmt && part2 instanceof ExprStmt))
-        		throw new RuntimeException("Only task calls are allowed in parallel statements (this isn't an expr stmt)")
         	
-        	var es1 = part1 as ExprStmt
-        	var es2 = part2 as ExprStmt
+        	val argPrefix1 = "$t1_par_const_arg"
+        	val argPrefix2 = "$t2_par_const_arg"
         	
-        	if(!(es1.expr instanceof MemberAccess && es2.expr instanceof MemberAccess))
-        		throw new RuntimeException("Only task calls are allowed in parallel statements (this isn't a member access)")
+        	var ma1 = (part1 as ExprStmt).expr as MemberAccess	
+        	var ma2 = (part2 as ExprStmt).expr as MemberAccess	
         	
-        	var ma1 = es1.expr as MemberAccess
-        	var ma2 = es2.expr as MemberAccess
-        		
-        	if(!ma1.isMethodInvoke || !ma2.isMethodInvoke)
-        		throw new RuntimeException("Only task calls are allowed in parallel statements (this isn't a task/method invocation)")
+        	val params1 = ma1.method.allParams.toList
+        	val params2 = ma2.method.allParams.toList
         	
-        	if(!ma1.getMethod.declaredTask || !ma2.getMethod.declaredTask)
-        		throw new RuntimeException("Only task calls are allowed in parallel statements (this isn't a task)")
-        		
+        	val passed1 = new ArrayList
+        	val passed2 = new ArrayList
+        	
+        	val shared1 = new ArrayList
+        	val shared2 = new ArrayList
+        	
+        	// start counting at 1 because we don't care about the this parameter
+        	for(var i = 1; i < params1.size; i++){
+        		if(params1.get(i).type instanceof RoleType) {
+        			val role = (params1.get(i).type as RoleType).role
+	        		if(role instanceof ReadWrite) 
+	        			passed1.add(i)
+	        		else if(role instanceof ReadOnly)
+	        			shared1.add(i)
+	        	}
+	       	}
+        	
+        	for(var i = 1; i < params2.size; i++){
+        		if(params2.get(i).type instanceof RoleType) {
+        			val role = (params2.get(i).type as RoleType).role
+	        		if(role instanceof ReadWrite) 
+	        			passed2.add(i)
+	        		else if(role instanceof ReadOnly)
+	        			shared2.add(i)
+	        	}
+        	}
+        	
+        	// propably a usecase for fold
+        	var argList1 = ""
+        	for(var i = 1; i <= ma1.args.size; i++)
+        		argList1 += argPrefix1 + i + ", "
+        	argList1 = argList1.substring(0, argList1.length - 2)
+        	var argList2 = ""
+        	for(var i = 1; i <= ma2.args.size; i++)
+        		argList2 += argPrefix2 + i + ", "
+        	argList2 = argList2.substring(0, argList2.length - 2)
+        	
+        	var ac1 = 1;
+        	var ac2 = 1;
+        	// IMPROVE: Maybe use thread pools?
+        	// TODO: Use child task analysis to determine when tasks are needed and when threads are good enough
+        	//		 will probably require to implement a lightweight task class
         	'''
         	/* parallel stmt generation */
-        	
-        	final «jvmTasksClassName» $tasks_eager = new «jvmTasksClassName»();
+        	// args for ma1
+        	«FOR arg : ma1.args»
+        	«params1.get(ac1).type.generate» «argPrefix1 + ac1++» = «arg.generate»;
+        	«ENDFOR»
+        	// args for ma2
+        	«FOR arg : ma2.args»
+        	«params2.get(ac2).type.generate» «argPrefix2 + ac2++» = «arg.generate»;
+        	«ENDFOR»
+        	rolez.lang.Eager.checkInterference(
+        		new Object[]{ «FOR ind : passed1»«argPrefix1 + ind», «ENDFOR»},
+        		new Object[]{ «FOR ind : shared1»«argPrefix1 + ind», «ENDFOR»},
+        		new Object[]{ «FOR ind : passed2»«argPrefix2 + ind», «ENDFOR»},
+        		new Object[]{ «FOR ind : shared2»«argPrefix2 + ind», «ENDFOR»}
+        	);
+        	rolez.lang.Task $t1 = null;
+        	rolez.lang.Task $t2 = null;
         	try {
         		/* part1 */
-        		$tasks_eager.addInline(«jvmTaskSystemClassName».getDefault().start(«ma1.target.genNested».«ma1.method.name»«TASK.suffix»(«ma1.args.map[generate].join(", ")»)));
+        		$t1 = «jvmTaskSystemClassName».getDefault().start(«ma1.target.genNested».«ma1.method.name»«TASK.suffix»(«argList1»));
         		/* part2 */
-        	    «ma2.target.genNested».«ma2.method.safeName»«UNGUARDED_METHOD.suffix»(«ma2.genArgs»);
+        	    $t2 = «ma2.target.genNested».«ma2.method.name»«TASK.suffix»(«argList2»);
+        	    «jvmTaskSystemClassName».getDefault().run($t2);
         	} finally {
-        		$tasks_eager.joinAll();
+        		$t1.get();
         	}
         	'''
         }

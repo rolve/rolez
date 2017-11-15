@@ -19,6 +19,7 @@ import ch.trick17.rolez.rolez.Method
 import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.Null
+import ch.trick17.rolez.rolez.ParallelStmt
 import ch.trick17.rolez.rolez.Program
 import ch.trick17.rolez.rolez.ReadOnly
 import ch.trick17.rolez.rolez.ReadWrite
@@ -128,6 +129,8 @@ class RolezValidator extends RolezSystemValidator {
     public static val INCORRECT_MAPPED_METHOD = "incorrect mapped method"
     public static val INCORRECT_MAPPED_TASK = "incorrect mapped task"
     public static val INCORRECT_MAPPED_CONSTR = "incorrect mapped constructor"
+    
+    public static val INCORRECT_PAR_STMT_CONTENT = "incorrect parallel statement content"
     
     @Inject extension RolezFactory
     @Inject extension CfgProvider
@@ -724,6 +727,33 @@ class RolezValidator extends RolezSystemValidator {
         checkClassKind(false)
         checkPurity(false)
         checkMapped
+    }
+    
+    @Check
+    def checkParallelStatementContent(ParallelStmt it){
+    	if (!(part1 instanceof ExprStmt && part2 instanceof ExprStmt)) {
+    		error("Only task calls are allowed in parallel statements (this isn't an expr stmt)", null, INCORRECT_PAR_STMT_CONTENT)
+    		return;
+    	}
+		val es1 = part1 as ExprStmt
+		val es2 = part2 as ExprStmt
+		if (!(es1.expr instanceof MemberAccess && es2.expr instanceof MemberAccess)) {
+			error("Only task calls are allowed in parallel statements (this isn't a member access)", null, INCORRECT_PAR_STMT_CONTENT)
+			return;
+		}
+
+		val ma1 = es1.expr as MemberAccess
+		val ma2 = es2.expr as MemberAccess
+
+		if (!ma1.isMethodInvoke || !ma2.isMethodInvoke) {
+			error("Only task calls are allowed in parallel statements (this isn't a task/method invocation)", null, INCORRECT_PAR_STMT_CONTENT)
+			return;
+		}
+
+		if (!ma1.getMethod.declaredTask || !ma2.getMethod.declaredTask) {
+			error("Only task calls are allowed in parallel statements (this isn't a task)", null, INCORRECT_PAR_STMT_CONTENT)
+			return;
+		}
     }
         
     // TODO: Introduce final classes and make array, slice, etc. final, so that they cannot be 
