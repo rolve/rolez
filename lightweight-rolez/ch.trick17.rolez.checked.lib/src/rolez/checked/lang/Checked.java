@@ -423,7 +423,7 @@ public abstract class Checked {
 	}
 	
 	protected <G extends Checked> void isLegalRead(long currentTaskIdBits) {
-		if (!guardingInitialized()) {
+		if (!guardingDisabled && !guardingInitialized()) {
 			ensureGuardingInitialized();
 			setLegalReadInTask(currentTaskIdBits);
 			setLegalWriteInTask(currentTaskIdBits);
@@ -455,7 +455,7 @@ public abstract class Checked {
 	}
 	
 	protected <G extends Checked> void isLegalWrite(long currentTaskIdBits) {
-		if (!guardingInitialized()) {
+		if (!guardingDisabled && !guardingInitialized()) {
 			ensureGuardingInitialized();
 			setLegalReadInTask(currentTaskIdBits);
 			setLegalWriteInTask(currentTaskIdBits);
