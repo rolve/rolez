@@ -80,10 +80,16 @@ public class CheckingTransformer extends BodyTransformer {
 						addCheckLegalWriteAssignStmtMethod(astmt);
 				} else if (increasesSet(astmt, readAnalysis)) {
 					Value rightOp = astmt.getRightOp();
-					if (rightOp instanceof InstanceFieldRef)
-						addCheckLegalRead(astmt);
-					if (rightOp instanceof VirtualInvokeExpr) 
-						addCheckLegalReadAssignStmtMethod(astmt);
+					if (rightOp instanceof InstanceFieldRef) {
+						Value base = ((InstanceFieldRef)rightOp).getBase();
+						if (!writeAnalysis.getFlowBefore(astmt).contains(base))
+							addCheckLegalRead(astmt);					
+					}
+					if (rightOp instanceof VirtualInvokeExpr) {
+						Value base = ((VirtualInvokeExpr)rightOp).getBase();
+						if (!writeAnalysis.getFlowBefore(astmt).contains(base))
+							addCheckLegalReadAssignStmtMethod(astmt);
+					}
 				}
 			}
 			
@@ -95,7 +101,8 @@ public class CheckingTransformer extends BodyTransformer {
 					if (increasesSet(u, writeAnalysis)) {
 						addCheckLegalWriteInvokeStmtMethod(invokeStmt);
 					} else if (increasesSet(u, readAnalysis)) {
-						addCheckLegalReadInvokeStmtMethod(invokeStmt);
+						if (!writeAnalysis.getFlowBefore(u).contains(vInvokeExpr.getBase()))
+								addCheckLegalReadInvokeStmtMethod(invokeStmt);
 					}
 				}
 			}

@@ -10,6 +10,7 @@ public class TestOptimizedChecks {
 	public static void main(String[] args) {
 		TestOptimizedChecks instance = new TestOptimizedChecks();
 		A a = new A();
+		a.s = "HELLO";
 		System.out.println(a.s);
 		a.s = "HELLO";
 		System.out.println(a.s);
