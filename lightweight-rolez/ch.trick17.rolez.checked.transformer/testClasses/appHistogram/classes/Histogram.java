@@ -14,7 +14,7 @@ import rolez.checked.lang.ContiguousPartitioner;
 @Checked
 public class Histogram {
 
-	final CheckedArray<CheckedArray<int[]>[]> image;
+	CheckedArray<CheckedArray<int[]>[]> image;
 	
 	CheckedArray<int[]> rHist;
 	CheckedArray<int[]> gHist;
@@ -25,10 +25,10 @@ public class Histogram {
 	}
 	
 	public void compute(int numTasks) {
-		SliceRange[] ranges = ContiguousPartitioner.INSTANCE.partition(this.image.getSliceRange(), numTasks);
+		CheckedArray<CheckedSlice<CheckedArray<int[]>[]>[]> imageParts = image.partition(ContiguousPartitioner.INSTANCE, numTasks);
 		CheckedArray<HistPart[]> results = new CheckedArray<HistPart[]>(new HistPart[numTasks]);
 		for (int i = 0; i < numTasks; i++)
-			this.computePart(results.slice(i,i+1), ranges[i], true);
+			this.computePart(results.slice(i,i+1), (CheckedSlice)imageParts.get(i), true);
 		
 		HistPart task0Result = (HistPart)results.get(0);
 		this.rHist = task0Result.r;
@@ -42,13 +42,14 @@ public class Histogram {
 	
 	@Task
 	@Readonly // TODO: This actually does not have to be RO, because method is called on final instance!
-	public void computePart(@Readwrite CheckedSlice<HistPart[]> result, @Pure SliceRange range, boolean $asTask) {
+	public void computePart(@Readwrite CheckedSlice<HistPart[]> result, @Readonly CheckedSlice<CheckedArray<int[]>[]> imageSlice, boolean $asTask) {
 		CheckedArray<int[]> r = new CheckedArray<int[]>(new int[256]);
 		CheckedArray<int[]> g = new CheckedArray<int[]>(new int[256]);
 		CheckedArray<int[]> b = new CheckedArray<int[]>(new int[256]);
 
-		for (int y = range.begin; y < range.end; y+= range.step) {
-			CheckedArray<int[]> row = (CheckedArray<int[]>)this.image.get(y);
+		SliceRange sr = imageSlice.getSliceRange();
+		for (int y = sr.begin; y < sr.end; y+= sr.step) {
+			CheckedArray<int[]> row = (CheckedArray<int[]>)imageSlice.get(y);
 			for (int x = 0; x < row.arrayLength(); x++) {
 				Color color = new Color(row.getInt(x));
 				r.setInt(color.r, r.getInt(color.r) + 1);
