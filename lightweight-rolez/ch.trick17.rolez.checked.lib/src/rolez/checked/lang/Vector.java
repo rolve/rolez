@@ -23,11 +23,19 @@ public class Vector<T> {
     	return this.data;
     }
     
+    public Object get(int i) {
+    	return ((Object[])data)[i];
+    }
+    
 	public int getInt(int i) {
 		return ((int[])data)[i];
 	}
 	
 	public short getShort(int i) {
 		return ((short[])data)[i];
+	}
+	
+	public double getDouble(int i) {
+		return ((double[])data)[i];
 	}
 }

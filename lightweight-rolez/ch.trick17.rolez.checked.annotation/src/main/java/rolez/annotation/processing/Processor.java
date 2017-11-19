@@ -55,7 +55,8 @@ public class Processor extends AbstractProcessor {
 		
 		// TODO: This is ugly, should not list every single generic version of class
 		"rolez.checked.lang.Vector<int[]>",
-		"rolez.checked.lang.Vector<short[]>"
+		"rolez.checked.lang.Vector<short[]>",
+		"rolez.checked.lang.SliceRange"
 	};
 	
 	// List of java primitive types
