@@ -10,7 +10,7 @@ public final class ContiguousPartitioner extends Partitioner {
     public SliceRange[] partition(final SliceRange orig, final int n, final long $task) {
         final int baseSize = orig.size() / n;
         final int largeRanges = orig.size() % n;
-        final GuardedVectorBuilder<SliceRange[]> ranges = new GuardedVectorBuilder<SliceRange[]>(new SliceRange[n]);
+        final CheckedVectorBuilder<SliceRange[]> ranges = new CheckedVectorBuilder<SliceRange[]>(new SliceRange[n]);
         int begin = orig.begin;
         for(int i = 0; i < n; i++) {
             int size = orig.step * baseSize;

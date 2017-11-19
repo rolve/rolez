@@ -15,7 +15,7 @@ public class BlockPartitioner extends rolez.checked.lang.Partitioner {
         final int blocks = orig.size() / this.blockSize;
         final int baseSize = (blocks / n) * this.blockSize;
         final int largeRanges = blocks % n;
-        final rolez.checked.lang.GuardedVectorBuilder<rolez.checked.lang.SliceRange[]> ranges = new rolez.checked.lang.GuardedVectorBuilder<rolez.checked.lang.SliceRange[]>(new rolez.checked.lang.SliceRange[n]);
+        final rolez.checked.lang.CheckedVectorBuilder<rolez.checked.lang.SliceRange[]> ranges = new rolez.checked.lang.CheckedVectorBuilder<rolez.checked.lang.SliceRange[]>(new rolez.checked.lang.SliceRange[n]);
         int begin = orig.begin;
         for(int i = 0; i < n; i++) {
             int size = orig.step * baseSize;

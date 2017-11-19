@@ -1,11 +1,11 @@
 package rolez.checked.lang;
 
-public class GuardedVectorBuilder<A> extends Checked {
+public class CheckedVectorBuilder<A> extends Checked {
     
     public final A data;
     private boolean built = false;
     
-    public GuardedVectorBuilder(A array) {
+    public CheckedVectorBuilder(A array) {
         this.data = array;
     }
     
