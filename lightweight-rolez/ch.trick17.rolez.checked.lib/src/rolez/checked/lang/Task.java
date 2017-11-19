@@ -331,6 +331,10 @@ public abstract class Task<V> implements Runnable {
         for(Checked g : newPassedReachable) {
             g.removeLegalReadInTask(idBits());
             g.removeLegalWriteInTask(idBits());
+            if (parent != null) {
+	            g.setLegalReadInTask(parent.idBits());
+	            g.setLegalWriteInTask(parent.idBits());
+            }
             g.releasePassed();
         }
         
