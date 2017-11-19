@@ -41,12 +41,12 @@ public class Histogram {
 	}
 	
 	@Task
-	@Readonly	// TODO: This actually does not have to be RO, because method is called on final instance!
+	@Readonly // TODO: This actually does not have to be RO, because method is called on final instance!
 	public void computePart(@Readwrite CheckedSlice<HistPart[]> result, @Pure SliceRange range, boolean $asTask) {
 		CheckedArray<int[]> r = new CheckedArray<int[]>(new int[256]);
 		CheckedArray<int[]> g = new CheckedArray<int[]>(new int[256]);
 		CheckedArray<int[]> b = new CheckedArray<int[]>(new int[256]);
-		
+
 		for (int y = range.begin; y < range.end; y+= range.step) {
 			CheckedArray<int[]> row = (CheckedArray<int[]>)this.image.get(y);
 			for (int x = 0; x < row.arrayLength(); x++) {
