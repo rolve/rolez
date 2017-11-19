@@ -13,12 +13,10 @@ import soot.jimple.VirtualInvokeExpr;
 import soot.toolkits.graph.DirectedGraph;
 import soot.toolkits.scalar.ArraySparseSet;
 import soot.toolkits.scalar.FlowSet;
-import transformer.util.Constants;
 
 public class ReadCheckAnalysis extends CheckingAnalysis {
 
 	static final Logger logger = LogManager.getLogger(ReadCheckAnalysis.class);
-	
 	FlowSet emptySet = new ArraySparseSet();
 	
 	public ReadCheckAnalysis(DirectedGraph<Unit> graph) {
@@ -50,11 +48,13 @@ public class ReadCheckAnalysis extends CheckingAnalysis {
 				}
 			}
 			
+			// TODO: Fix method calls on final fields!! They don't have to be guarded!
 			if (rightOp instanceof VirtualInvokeExpr) {
 				VirtualInvokeExpr vInvokeExpr = (VirtualInvokeExpr)rightOp;
 				Value base = vInvokeExpr.getBase();
 				if (isSubtypeOfChecked(base.getType())) {
 					if (isReadMethodInvocation(vInvokeExpr.getMethod())) {
+						// Don't have to check method invocations on final field values
 						out.add(base);
 					}
 				}

@@ -236,12 +236,16 @@ public class CheckingTransformer extends BodyTransformer {
 	
 	private ReadCheckAnalysis doReadFlowAnalysis(Body b) {
 		ExceptionalUnitGraph graph = new ExceptionalUnitGraph(b);
-		return new ReadCheckAnalysis(graph);
+		ReadCheckAnalysis rca = new ReadCheckAnalysis(graph);
+		rca.run();
+		return rca;
 	}
 	
 	private WriteCheckAnalysis doWriteFlowAnalysis(Body b) {
 		ExceptionalUnitGraph graph = new ExceptionalUnitGraph(b);
-		return new WriteCheckAnalysis(graph);
+		WriteCheckAnalysis wca = new WriteCheckAnalysis(graph);
+		wca.run();
+		return wca;
 	}
 	
 	private void addCheckLegalRead(AssignStmt read) {

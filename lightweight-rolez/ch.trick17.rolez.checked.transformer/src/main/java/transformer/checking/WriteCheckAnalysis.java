@@ -23,7 +23,7 @@ public class WriteCheckAnalysis extends CheckingAnalysis {
 	public WriteCheckAnalysis(DirectedGraph<Unit> graph) {
 		super(graph);
 	}
-
+	
 	@Override
 	protected void flowThrough(FlowSet in, Unit d, FlowSet out) {
 		in.copy(out);

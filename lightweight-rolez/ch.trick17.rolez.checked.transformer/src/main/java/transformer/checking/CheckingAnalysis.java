@@ -23,9 +23,12 @@ public abstract class CheckingAnalysis extends ForwardFlowAnalysis<Unit, FlowSet
 	
 	public CheckingAnalysis(DirectedGraph<Unit> graph) {
 		super(graph);
-		doAnalysis();
 	}
 
+	public void run() {
+		doAnalysis();
+	}
+	
 	@Override
 	protected abstract void flowThrough(FlowSet in, Unit d, FlowSet out);
 	
