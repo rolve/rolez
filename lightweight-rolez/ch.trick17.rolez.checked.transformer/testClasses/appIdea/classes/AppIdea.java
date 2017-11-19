@@ -14,7 +14,7 @@ import rolez.annotation.Readwrite;
 import rolez.checked.lang.BlockPartitioner;
 import rolez.checked.lang.CheckedArray;
 import rolez.checked.lang.CheckedSlice;
-import rolez.checked.lang.GuardedVectorBuilder;
+import rolez.checked.lang.CheckedVectorBuilder;
 import rolez.checked.lang.VectorBuilder;
 import rolez.checked.util.StopWatch;
 import rolez.checked.lang.Vector;
@@ -46,7 +46,7 @@ public class AppIdea {
     
     public void buildTestData(Random random) {
 
-    	GuardedVectorBuilder<short[]> vectorBuilder = new GuardedVectorBuilder<short[]>(new short[8]);
+    	CheckedVectorBuilder<short[]> vectorBuilder = new CheckedVectorBuilder<short[]>(new short[8]);
         for(int i = 0; i < 8; i++)
         	vectorBuilder.setShort(i, (short)random.nextInt());
         userKey = vectorBuilder.build();
@@ -77,7 +77,7 @@ public class AppIdea {
     }
     
     public Vector<int[]> calcEncryptKey(Vector<short[]> userKey) {
-    	GuardedVectorBuilder<int[]> key = new GuardedVectorBuilder<int[]>(new int[52]);
+    	CheckedVectorBuilder<int[]> key = new CheckedVectorBuilder<int[]>(new int[52]);
         for(int i = 0; i < 52; i++)
         	key.setInt(i, 0);
         
@@ -102,7 +102,7 @@ public class AppIdea {
     }
     
     public Vector<int[]> calcDecryptKey(Vector<int[]> encryptKey) {
-    	GuardedVectorBuilder<int[]> vectorBuilder = new GuardedVectorBuilder<int[]>(new int[52]);
+    	CheckedVectorBuilder<int[]> vectorBuilder = new CheckedVectorBuilder<int[]>(new int[52]);
         
     	vectorBuilder.setInt(51, inv(encryptKey.getInt(3)));
     	vectorBuilder.setInt(50, -encryptKey.getInt(2) & 0xffff);
