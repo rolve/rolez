@@ -302,4 +302,12 @@ public class TransformerTest {
 		Pipeline p = new Pipeline(methodName, mainClass);
 		p.runExpectNonSufficientRoleError(false);
 	}
+
+	@Test
+	public void testTaskCreatedObjectRoleFail() {
+		String methodName = "testTaskCreatedObjectRoleFail";
+		String mainClass = "classes.TestTaskCreatedObjectRoleFail";
+		Pipeline p = new Pipeline(methodName, mainClass);
+		p.runExpectNonSufficientRoleError(false);
+	}
 }
