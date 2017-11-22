@@ -67,8 +67,8 @@ public class AppMonteCarlo {
     	app.run();
     	
     	// Uncomment this to see result -> test will fail
-    	System.out.println(sw.get());
-    	System.out.println(app.avgExpectedReturnRate());
+//    	System.out.println(sw.get());
+//    	System.out.println(app.avgExpectedReturnRate());
     }
     
     public void run() {
