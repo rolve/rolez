@@ -10,7 +10,6 @@ import rolez.checked.lang.CheckedSlice;
 import rolez.checked.lang.SliceRange;
 import rolez.checked.lang.ContiguousPartitioner;
 import rolez.checked.util.ArrayList;
-import rolez.checked.util.StopWatch;
 import rolez.annotation.Checked;
 import rolez.annotation.Task;
 import rolez.annotation.Readonly;
@@ -28,7 +27,7 @@ public class AppMonteCarlo {
     public final int numTasks;
     final Returns returns;
     final CheckedArray<long[]> seeds;
-    ArrayList<Double> results;
+    CheckedArray<double[]> results;
     
     public AppMonteCarlo() {
     	this.steps = 1000;
@@ -41,7 +40,7 @@ public class AppMonteCarlo {
         for(int i = 0; i < runs; i++)
             seeds.setLong(i, i * 11);
         
-        this.results = new ArrayList<Double>();
+        this.results = new CheckedArray<double[]>(new double[this.runs]);
     }
     
     public AppMonteCarlo(final int steps, final int runs, final int numTasks, String ratesFile) {
@@ -55,62 +54,57 @@ public class AppMonteCarlo {
         for(int i = 0; i < runs; i++)
             seeds.setLong(i, i * 11);
 
-        this.results = new ArrayList<Double>();
+        this.results = new CheckedArray<double[]>(new double[this.runs]);
     }
     
     public static void main(String[] args) {
     	String file = "Data/hitData";
     	int steps = 1000;
-    	AppMonteCarlo app = new AppMonteCarlo(steps, 10000, 8, file);
-    	StopWatch sw = new StopWatch();
-    	sw.go();
+    	AppMonteCarlo app = new AppMonteCarlo(steps, 2000, 8, file);
     	app.run();
     	
     	// Uncomment this to see result -> test will fail
-//    	System.out.println(sw.get());
-//    	System.out.println(app.avgExpectedReturnRate());
+    	//System.out.println(app.avgExpectedReturnRate());
     }
     
     public void run() {
     	CheckedArray<CheckedSlice<long[]>[]> partitions = this.seeds.partition(ContiguousPartitioner.INSTANCE, this.numTasks);
+    	CheckedArray<CheckedArray<double[]>[]> taskResults = new CheckedArray<CheckedArray<double[]>[]>(new CheckedArray[this.numTasks]);
+    	
     	int partitionSize = ((CheckedSlice<long[]>)partitions.get(0)).getSliceRange().size();
     	
-    	// Initialize an array list for each task to store the results
-    	CheckedArray<ArrayList<Double>[]> taskResults = new CheckedArray(new ArrayList[this.numTasks]);
-    	for (int i = 0; i < taskResults.arrayLength(); i++)
-    		taskResults.set(i, new ArrayList<Double>());
-    	
-    	CheckedArray<CheckedSlice<ArrayList<Double>[]>[]> taskResultPartitions = taskResults.partition(ContiguousPartitioner.INSTANCE, this.numTasks);
-    	
-    	for(int i = 1; i < this.numTasks; i++) {
-    		simulate((CheckedSlice<ArrayList<Double>[]>)taskResultPartitions.get(i), (CheckedSlice<long[]>)partitions.get(i), true);
+    	for (int i = 0; i < this.numTasks; i++) {
+    		taskResults.set(i, new CheckedArray<double[]>(new double[partitionSize]));
     	}
     	
-    	simulate((CheckedSlice<ArrayList<Double>[]>)taskResultPartitions.get(0), (CheckedSlice<long[]>)partitions.get(0), false);
+    	for(int i = 1; i < this.numTasks; i++) {
+    		simulate((CheckedArray<double[]>)taskResults.slice(i,i+1).get(i), (CheckedSlice<long[]>)partitions.get(i), true);
+    	}
+    	
+    	simulate((CheckedArray<double[]>)taskResults.slice(0,1).get(0), (CheckedSlice<long[]>)partitions.get(0), false);
     	
     	for (int i = 0; i < this.numTasks; i++) {
-    		ArrayList<Double> taskResult = (ArrayList<Double>)taskResults.get(i);
-    		for (int j = 0; j < taskResult.size(); j++) {
-    			results.add(taskResult.get(j));
+    		CheckedArray<double[]> taskResult = (CheckedArray<double[]>)taskResults.get(i);
+    		for (int j = 0; j < taskResult.arrayLength(); j++) {
+    			results.setDouble(i*partitionSize + j, taskResult.getDouble(j));
     		}
     	}
     }
     
     @Task
-    public void simulate(@Readwrite CheckedSlice<ArrayList<Double>[]> results, @Readonly CheckedSlice<long[]> seeds, boolean $asTask) {
-    	ArrayList<Double> resultArrList = results.get(results.getSliceRange().begin);
+    public void simulate(@Readwrite CheckedArray<double[]> results, @Readonly CheckedSlice<long[]> seeds, boolean $asTask) {
     	for (int i = seeds.getSliceRange().begin; i < seeds.getSliceRange().end; i += seeds.getSliceRange().step) {
     		MonteCarloPath mcPath = new MonteCarloPath(this.returns, this.steps);
     		mcPath.computeFluctuations(seeds.getLong(i));
     		mcPath.computePathValues(this.pathStartValue);
-    		resultArrList.add(new Returns(mcPath).expectedReturnRate);
+    		results.setDouble(i-seeds.getSliceRange().begin, new Returns(mcPath).expectedReturnRate);
     	}
     }
     
     public double avgExpectedReturnRate() {
         double result = 0.0;
         for (int i = 0; i < this.runs; i++)
-        	result += this.results.get(i);
+        	result += this.results.getDouble(i);
         result /= this.runs;
         return result;
     }
