@@ -6,6 +6,8 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import rolez.checked.lang.Checked;
+import rolez.checked.lang.annotation.Read;
+import rolez.checked.lang.annotation.Write;
 
 /**
  * Basically a stripped-down version of {@link java.util.ArrayList}, but guarded.
@@ -24,19 +26,23 @@ public class ArrayList<E> extends Checked implements Iterable<E> {
         elementData = EMPTY_ELEMENTDATA;
     }
     
+    @Read
     public int size() {
         return size;
     }
     
+    @Read
     public boolean isEmpty() {
         return size == 0;
     }
     
+    @Read
     public E get(int index) {
         rangeCheck(index);
         return elementData(index);
     }
     
+    @Write
     public E set(int index, E element) {
         rangeCheck(index);
         
@@ -44,13 +50,15 @@ public class ArrayList<E> extends Checked implements Iterable<E> {
         elementData[index] = element;
         return oldValue;
     }
-    
+
+    @Write
     public boolean add(E e) {
         ensureCapacityInternal(size + 1); // Increments modCount!!
         elementData[size++] = e;
         return true;
     }
-    
+
+    @Write
     public void add(int index, E element) {
         rangeCheckForAdd(index);
         
@@ -60,7 +68,8 @@ public class ArrayList<E> extends Checked implements Iterable<E> {
         elementData[index] = element;
         size++;
     }
-    
+
+    @Write
     public boolean remove(Object o) {
         if(o == null) {
             for(int index = 0; index < size; index++)
@@ -78,7 +87,8 @@ public class ArrayList<E> extends Checked implements Iterable<E> {
         }
         return false;
     }
-    
+
+    @Write
     public E remove(int index) {
         rangeCheck(index);
         
@@ -92,7 +102,8 @@ public class ArrayList<E> extends Checked implements Iterable<E> {
         
         return oldValue;
     }
-    
+
+    @Write
     public void clear() {
         modCount++;
         // clear to let GC do its work
@@ -100,7 +111,8 @@ public class ArrayList<E> extends Checked implements Iterable<E> {
             elementData[i] = null;
         size = 0;
     }
-    
+
+    @Write
     public boolean addAll(ArrayList<E> list) {
         Object[] a = list.toArray();
         int numNew = a.length;
@@ -114,6 +126,7 @@ public class ArrayList<E> extends Checked implements Iterable<E> {
         return Arrays.copyOf(elementData, size);
     }
     
+    @Read
     public Iterator<E> iterator() {
         return new Itr();
     }
