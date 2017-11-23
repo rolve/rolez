@@ -31,9 +31,11 @@ class MonteCarloPath extends RatePath {
 	}
 	
 	public void computePathValues(double startValue) {
-		this.pathValues.setDouble(0, startValue);
+		CheckedArray<double[]> pathValues = new CheckedArray<double[]>(new double[this.pathValues.arrayLength()]);
+		pathValues.setDouble(0, startValue);
 		for (int i = 1; i < this.pathValues.arrayLength(); i++) {
-			this.pathValues.setDouble(i, this.pathValues.getDouble(i-1) * Math.exp(this.fluctuations.getDouble(i)));
+			pathValues.setDouble(i, pathValues.getDouble(i-1) * Math.exp(this.fluctuations.getDouble(i)));
 		}
+		this.pathValues = pathValues;
 	}
 }
