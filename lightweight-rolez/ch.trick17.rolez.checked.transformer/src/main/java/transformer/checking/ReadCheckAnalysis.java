@@ -31,8 +31,10 @@ public class ReadCheckAnalysis extends CheckingAnalysis {
 			Value rightOp = a.getRightOp();
 			
 			// Is the assignment a task call?
-			if (isTaskCall(rightOp))
+			if (isTaskCall(rightOp)) {
 				out.clear();
+				return;
+			}
 			
 			// Is it a read from a checked field?
 			if (rightOp instanceof InstanceFieldRef) {
@@ -43,36 +45,34 @@ public class ReadCheckAnalysis extends CheckingAnalysis {
 				if (fieldRef.getField().isFinal())
 					return;
 				
-				if (isSubtypeOfChecked(fieldRef.getBase().getType())) {
+				if (isSubtypeOfChecked(fieldRef.getBase().getType()))
 					out.add(base);
-				}
+				return;
 			}
 			
-			// TODO: Fix method calls on final fields!! They don't have to be guarded!
+			// Is it a checked method invocation?
 			if (rightOp instanceof VirtualInvokeExpr) {
 				VirtualInvokeExpr vInvokeExpr = (VirtualInvokeExpr)rightOp;
 				Value base = vInvokeExpr.getBase();
-				if (isSubtypeOfChecked(base.getType())) {
-					if (isReadMethodInvocation(vInvokeExpr.getMethod())) {
-						// Don't have to check method invocations on final field values
+				if (isSubtypeOfChecked(base.getType())) 
+					if (isReadMethodInvocation(vInvokeExpr.getMethod())) 
 						out.add(base);
-					}
-				}
+				return;
 			}
 		}
 		
+		// Is it a checked method invocation without an assignment?
 		if (d instanceof InvokeStmt) {
 			InvokeStmt invokeStmt = (InvokeStmt)d;
 			InvokeExpr invokeExpr = invokeStmt.getInvokeExpr();
 			if (invokeExpr instanceof VirtualInvokeExpr) {
 				VirtualInvokeExpr vInvokeExpr = (VirtualInvokeExpr)invokeExpr;
 				Value base = vInvokeExpr.getBase();
-				if (isSubtypeOfChecked(base.getType())) {
-					if (isReadMethodInvocation(vInvokeExpr.getMethod())) {
+				if (isSubtypeOfChecked(base.getType()))
+					if (isReadMethodInvocation(vInvokeExpr.getMethod())) 
 						out.add(base);
-					}
-				}
 			}
+			return;
 		}
 	}
 }

@@ -30,44 +30,49 @@ public class WriteCheckAnalysis extends CheckingAnalysis {
 		if (d instanceof AssignStmt) {
 			AssignStmt a = (AssignStmt)d;
 			Value rightOp = a.getRightOp();
+
+			// Is the assignment a task call?
+			if (isTaskCall(rightOp)) {
+				out.clear();
+				return;
+			}
+			
 			Value leftOp = a.getLeftOp();
 			
 			// Is it a write to a checked field?
 			if (leftOp instanceof InstanceFieldRef) {
 				InstanceFieldRef fieldRef = (InstanceFieldRef)leftOp;
 				Value base = fieldRef.getBase();
-				if (isSubtypeOfChecked(fieldRef.getBase().getType())) {
+				if (isSubtypeOfChecked(fieldRef.getBase().getType()))
 					out.add(base);
-				}
+				return;
 			}
 				
-			// Is the assignment a task call?
-			if (isTaskCall(rightOp))
-				out.clear();
-			
+			// Is it a checked method invocation?
 			if (rightOp instanceof VirtualInvokeExpr) {
 				VirtualInvokeExpr vInvokeExpr = (VirtualInvokeExpr)rightOp;
 				Value base = vInvokeExpr.getBase();
-				if (isSubtypeOfChecked(base.getType())) {
-					if (isWriteMethodInvocation(vInvokeExpr.getMethod())) {
+				if (isSubtypeOfChecked(base.getType()))
+					if (isWriteMethodInvocation(vInvokeExpr.getMethod()))
 						out.add(base);
-					}
-				}
+				return;
 			}
+			
+			return;
 		}
-		
+
+		// Is it a checked method invocation without an assignment?
 		if (d instanceof InvokeStmt) {
 			InvokeStmt invokeStmt = (InvokeStmt)d;
 			InvokeExpr invokeExpr = invokeStmt.getInvokeExpr();
 			if (invokeExpr instanceof VirtualInvokeExpr) {
 				VirtualInvokeExpr vInvokeExpr = (VirtualInvokeExpr)invokeExpr;
 				Value base = vInvokeExpr.getBase();
-				if (isSubtypeOfChecked(base.getType())) {
-					if (isWriteMethodInvocation(vInvokeExpr.getMethod())) {
+				if (isSubtypeOfChecked(base.getType()))
+					if (isWriteMethodInvocation(vInvokeExpr.getMethod()))
 						out.add(base);
-					}
-				}
 			}
+			return;
 		}
 	}
 }
