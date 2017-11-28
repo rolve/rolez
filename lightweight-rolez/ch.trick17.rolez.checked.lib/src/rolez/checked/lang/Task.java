@@ -252,12 +252,12 @@ public abstract class Task<V> implements Runnable {
     	
     	// Cannot pass objects, which were only shared or shared pure with parent task
     	if (parent != null) 
-          	for (Object o : passedObjects) 
+    		for (Object o : passedObjects) 
           		if (parent.getSharedReachable().contains(o) || parent.getPureReachable().contains(o)) 
-          			throw new NonSufficentRoleException("Cannot pass object as Readwrite, which is not Readwrite in the current task.");
+          			throw new NonSufficentRoleException("Cannot pass " + o + " as Readwrite, since it's not Readwrite in the current task.");
     		for (Object o : sharedObjects)
     			if (parent.getPureReachable().contains(o))
-    				throw new NonSufficentRoleException("Cannot pass object as Readonly, which is not Readonly in the current task.");
+    				throw new NonSufficentRoleException("Cannot pass " + o + " as Readonly, since it's not Readonly in the current task.");
 
          
         passed = new ArrayList<>(passedObjects.length);

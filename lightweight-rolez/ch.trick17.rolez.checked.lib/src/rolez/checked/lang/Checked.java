@@ -469,11 +469,15 @@ public abstract class Checked {
 	}
 	
 	boolean isLegalReadInTask(long currentTaskIdBits) {
-		return (this.legalReadTasks & currentTaskIdBits) != 0;
+		synchronized(legalTaskLock) {
+			return (this.legalReadTasks & currentTaskIdBits) != 0;
+		}
 	}
 	
 	boolean isLegalWriteInTask(long currentTaskIdBits) {
-		return (this.legalWriteTasks & currentTaskIdBits) != 0;
+		synchronized(legalTaskLock) {
+			return (this.legalWriteTasks & currentTaskIdBits) != 0;
+		}
 	}
 	
 	void setLegalReadInTask(long currentTaskIdBits) {
@@ -489,11 +493,15 @@ public abstract class Checked {
 	}
 	
 	void removeLegalReadInTask(long currentTaskIdBits) {
-		this.legalReadTasks ^= currentTaskIdBits;
+		synchronized(legalTaskLock) {
+			this.legalReadTasks ^= currentTaskIdBits;
+		}
 	}
 	
 	void removeLegalWriteInTask(long currentTaskIdBits) {
-		this.legalWriteTasks ^= currentTaskIdBits;
+		synchronized(legalTaskLock) {
+			this.legalWriteTasks ^= currentTaskIdBits;
+		}
 	}
 	
 	protected <G extends Checked> Role getDeclaredRole() {
