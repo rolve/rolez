@@ -39,14 +39,6 @@ public class AppsTest {
 	}
 
 	@Test
-	public void testAppKmeans() {
-		String methodName = "appKmeans";
-		String mainClass = "classes.AppKmeans";
-		Pipeline p = new Pipeline(methodName, mainClass);
-		p.runDefault(true, false);
-	}
-
-	@Test
 	public void testAppHistogram() {
 		String methodName = "appHistogram";
 		String mainClass = "classes.AppHistogram";
