@@ -23,9 +23,9 @@ public class AppMergesort {
 	public static void main(String[] args) {
 		for (int j=1; j<=5; j++) {
 			AppMergesort instance = new AppMergesort(j);
-			CheckedArray<int[]> s1 = instance.shuffledInts(6000000, new java.util.Random());
-			CheckedArray<int[]> s2 = instance.shuffledInts(6000000, new java.util.Random());
-			CheckedArray<int[]> s3 = instance.shuffledInts(6000000, new java.util.Random());
+			CheckedArray<int[]> s1 = instance.shuffledInts(300000, new java.util.Random());
+			CheckedArray<int[]> s2 = instance.shuffledInts(300000, new java.util.Random());
+			CheckedArray<int[]> s3 = instance.shuffledInts(300000, new java.util.Random());
 			
 			StopWatch sw = new StopWatch();
 			sw.go();
