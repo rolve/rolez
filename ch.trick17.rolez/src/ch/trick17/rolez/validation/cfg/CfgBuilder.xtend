@@ -13,6 +13,7 @@ import ch.trick17.rolez.rolez.LogicalExpr
 import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.OpAssignment
+import ch.trick17.rolez.rolez.ParallelStmt
 import ch.trick17.rolez.rolez.ReturnExpr
 import ch.trick17.rolez.rolez.ReturnNothing
 import ch.trick17.rolez.rolez.Slicing
@@ -27,7 +28,7 @@ import java.util.Map
 import static ch.trick17.rolez.rolez.OpLogical.*
 
 import static extension java.util.Objects.requireNonNull
-import ch.trick17.rolez.rolez.ParallelStmt
+import ch.trick17.rolez.rolez.Parfor
 
 class CfgBuilder {
     
@@ -78,6 +79,10 @@ class CfgBuilder {
     }
     
     private def dispatch Linker process(ParallelStmt p, Linker prev) {
+    	prev.linkAndReturn(newInstrNode(p))
+    }
+    
+    private def dispatch Linker process(Parfor p, Linker prev) {
     	prev.linkAndReturn(newInstrNode(p))
     }
     

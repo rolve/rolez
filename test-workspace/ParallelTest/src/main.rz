@@ -5,16 +5,27 @@ import rolez.util.Scanner
 class App {
 	
 	new {
-		
+		    
 	}
 	
-	task pure main(args: readonly Array[readonly String]): {
+	task pure main(args: readonly Array[readonly String]): { 
+		//the System.out.println("footest");
 		var dummy = new App; 
-		parallel dummy.foo(1); and dummy.foo(2); 
+		parallel this.foo(1, new Object); and this.foo(2, new Object); 
+		
+		for(var i = 0; i < 3; i++){
+			
+		}
+		
+		var k = 0;
+		parfor(var j = 0; k < 3; k++) 
+			this.foo(k, new Object);
+		
+		
 		the System.out.println("args:");
 		for(var i = 0; i < args.length; i += 1)
 			the System.out.println("  " + args.get(i));	
-		
+		 
 		the System.out.println("\nNow type your name:");
 		val scanner = new Scanner(the System.in);
 		
@@ -22,13 +33,13 @@ class App {
 		while(continue) {
 			val line = scanner.nextLine;
 			if(line.equals("stop"))
-				continue = false;
+				continue = false; 
 			else
 				the System.out.println("Hello " + line + "!");
 		}
 	}
 	
-	task pure foo(n: int): {
+	task pure foo(n: int, a: readwrite Object): {
 		the System.out.println("foo" + n);	
 	}
 	

@@ -23,9 +23,12 @@ import ch.trick17.rolez.rolez.LocalVarDecl
 import ch.trick17.rolez.rolez.LogicalNot
 import ch.trick17.rolez.rolez.LongLiteral
 import ch.trick17.rolez.rolez.MemberAccess
+import ch.trick17.rolez.rolez.Method
 import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.NullLiteral
+import ch.trick17.rolez.rolez.ParallelStmt
 import ch.trick17.rolez.rolez.Parenthesized
+import ch.trick17.rolez.rolez.Parfor
 import ch.trick17.rolez.rolez.PrimitiveType
 import ch.trick17.rolez.rolez.ReadOnly
 import ch.trick17.rolez.rolez.ReadWrite
@@ -44,9 +47,12 @@ import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.UnaryExpr
 import ch.trick17.rolez.rolez.VarKind
 import ch.trick17.rolez.rolez.VarRef
+import ch.trick17.rolez.rolez.Void
 import ch.trick17.rolez.rolez.WhileLoop
 import ch.trick17.rolez.typesystem.RolezSystem
 import ch.trick17.rolez.validation.JavaMapper
+import ch.trick17.rolez.validation.cfg.CfgProvider
+import ch.trick17.rolez.validation.cfg.InstrNode
 import com.google.inject.Injector
 import java.util.ArrayList
 import java.util.regex.Pattern
@@ -61,7 +67,7 @@ import static ch.trick17.rolez.rolez.VarKind.*
 import static extension ch.trick17.rolez.RolezExtensions.*
 import static extension ch.trick17.rolez.generator.SafeJavaNames.*
 import static extension org.eclipse.xtext.util.Strings.convertToJavaString
-import ch.trick17.rolez.rolez.ParallelStmt
+import ch.trick17.rolez.rolez.NumericType
 
 /**
  * Generates Java code for Rolez instructions (single or code blocks). Relies on
@@ -118,6 +124,7 @@ class InstrGenerator {
         
         @Inject extension RolezFactory
         @Inject extension JavaMapper
+    	@Inject extension CfgProvider
         @Inject RolezUtils utils
         @Inject RolezSystem system
         
@@ -125,7 +132,7 @@ class InstrGenerator {
         
         val RoleAnalysis roleAnalysis
         val ChildTasksAnalysis childTasksAnalysis
-        val MethodKind methodKind
+        var MethodKind methodKind
         
         private new(MethodKind methodKind, RoleAnalysis roleAnalysis,
                 ChildTasksAnalysis childTasksAnalysis) {
@@ -135,6 +142,23 @@ class InstrGenerator {
         }
         
         /* Stmt */
+        private def dispatch CharSequence generate(Parfor it){
+        	
+        	var initType = system.varType(initializer.variable).value
+        	
+        	
+        	'''
+        	{
+        		final «jvmTasksClassName» $parforTasks = new «jvmTasksClassName»();
+        		try {
+        			// dummy generation
+        		} finally {
+        			$parforTasks.joinAll();
+        		}
+        	}
+        	'''
+        }
+        
         
         private def dispatch CharSequence generate(ParallelStmt it) {
         	
@@ -153,6 +177,7 @@ class InstrGenerator {
         	val shared1 = new ArrayList
         	val shared2 = new ArrayList
         	
+        	// separate arguments for the tasks  into shared and passed objects
         	// start counting at 1 because we don't care about the this parameter
         	for(var i = 1; i < params1.size; i++){
         		if(params1.get(i).type instanceof RoleType) {
@@ -174,50 +199,94 @@ class InstrGenerator {
 	        	}
         	}
         	
-        	// propably a usecase for fold
+        	// IMPROVE: probably a use-case for fold
         	var argList1 = ""
         	for(var i = 1; i <= ma1.args.size; i++)
         		argList1 += argPrefix1 + i + ", "
-        	argList1 = argList1.substring(0, argList1.length - 2)
+        	if(argList1.length >= 2)
+        		argList1 = argList1.substring(0, argList1.length - 2)
         	var argList2 = ""
         	for(var i = 1; i <= ma2.args.size; i++)
         		argList2 += argPrefix2 + i + ", "
-        	argList2 = argList2.substring(0, argList2.length - 2)
+        	if(argList2.length >= 2)
+        		argList2 = argList2.substring(0, argList2.length - 2)
         	
         	var ac1 = 1;
         	var ac2 = 1;
-        	// IMPROVE: Maybe use thread pools?
-        	// TODO: Use child task analysis to determine when tasks are needed and when threads are good enough
-        	//		 will probably require to implement a lightweight task class
+        	// IMPROVE: also make guarding task inline so that methods could be used in the construct as well as tasks
         	'''
-        	/* parallel stmt generation */
+        	{ /* parallel stmt generation */
         	// args for ma1
         	«FOR arg : ma1.args»
-        	«params1.get(ac1).type.generate» «argPrefix1 + ac1++» = «arg.generate»;
+        	final «params1.get(ac1).type.generate» «argPrefix1 + ac1++» = «arg.generate»;
         	«ENDFOR»
         	// args for ma2
         	«FOR arg : ma2.args»
-        	«params2.get(ac2).type.generate» «argPrefix2 + ac2++» = «arg.generate»;
+        	final «params2.get(ac2).type.generate» «argPrefix2 + ac2++» = «arg.generate»;
         	«ENDFOR»
-        	rolez.lang.Eager.checkInterference(
-        		new Object[]{ «FOR ind : passed1»«argPrefix1 + ind», «ENDFOR»},
-        		new Object[]{ «FOR ind : shared1»«argPrefix1 + ind», «ENDFOR»},
-        		new Object[]{ «FOR ind : passed2»«argPrefix2 + ind», «ENDFOR»},
-        		new Object[]{ «FOR ind : shared2»«argPrefix2 + ind», «ENDFOR»}
+        	java.util.Set<Guarded>[] $collectedReachables = rolez.lang.Eager.collectAndCheck(
+        		new Object[]{«FOR ind : passed1»«argPrefix1 + ind», «ENDFOR»},
+        		new Object[]{«FOR ind : shared1»«argPrefix1 + ind», «ENDFOR»},
+        		new Object[]{«FOR ind : passed2»«argPrefix2 + ind», «ENDFOR»},
+        		new Object[]{«FOR ind : shared2»«argPrefix2 + ind», «ENDFOR»}
         	);
         	rolez.lang.Task $t1 = null;
         	rolez.lang.Task $t2 = null;
         	try {
         		/* part1 */
+        		«IF childTasksAnalysis.childTasksMayExist(it)»
         		$t1 = «jvmTaskSystemClassName».getDefault().start(«ma1.target.genNested».«ma1.method.name»«TASK.suffix»(«argList1»));
+        		«ELSE»
+        		$t1 = new «taskClassName»<«ma1.method.type.generateGeneric»>($collectedReachables[0], $collectedReachables[1], $collectedReachables[2]) {
+        			@java.lang.Override«taskGenerationMode = true»
+        			protected «ma1.method.type.generateGeneric» runRolez() {
+        			    final long $task = idBits();
+        			    «IF !ma1.method.needsReturnNull»return «ENDIF»«ma1.target.genNested».«ma1.method.name»«UNGUARDED_METHOD.suffix»(«argList1», $task);
+        		        «IF ma1.method.needsReturnNull»
+        		        return null;
+        	            «ENDIF»
+        		    }
+        		};«taskGenerationMode = false»
+        		«jvmTaskSystemClassName».getDefault().start($t1);
+        		«ENDIF»
         		/* part2 */
-        	    $t2 = «ma2.target.genNested».«ma2.method.name»«TASK.suffix»(«argList2»);
+        		«IF childTasksAnalysis.childTasksMayExist(it)»
+        		$t2 = «ma2.target.genNested».«ma2.method.name»«TASK.suffix»(«argList2»);
+        		«ELSE»
+        		$t2 = new «taskClassName»<«ma2.method.type.generateGeneric»>($collectedReachables[3], $collectedReachables[4], $collectedReachables[5]) {
+        			@java.lang.Override«taskGenerationMode = true»
+        			protected «ma2.method.type.generateGeneric» runRolez() {
+        		    	final long $task = idBits();
+        		        «IF !ma2.method.needsReturnNull»return «ENDIF»«ma2.target.genNested».«ma2.method.name»«UNGUARDED_METHOD.suffix»(«argList2», $task);
+        		        «IF ma2.method.needsReturnNull»
+        		        return null;
+        		        «ENDIF»
+        		    }
+        		};«taskGenerationMode = false»
+        		«ENDIF»
         	    «jvmTaskSystemClassName».getDefault().run($t2);
         	} finally {
         		$t1.get();
-        	}
+        	}}
         	'''
         }
+        
+        // to make methodKind task. this is needed to allow generation of anonymous inner classes in normal methods
+        private var MethodKind methodKindTemp;
+        private def String setTaskGenerationMode(boolean on){
+        	if(on && methodKind != TASK){
+        		methodKindTemp = methodKind
+        		methodKind = TASK
+        	}
+        	if(!on && methodKindTemp != null){
+        		methodKind = methodKindTemp
+        	}
+        	""
+        }
+        
+        private def needsReturnNull(Method it) {
+        	type instanceof Void && body.controlFlowGraph.exit.predecessors.filter(InstrNode).exists[!(instr instanceof ReturnNothing)]
+    	}
         
         private def dispatch CharSequence generate(Block it) '''
             {

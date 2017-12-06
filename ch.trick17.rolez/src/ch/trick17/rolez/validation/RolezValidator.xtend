@@ -20,6 +20,7 @@ import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.Null
 import ch.trick17.rolez.rolez.ParallelStmt
+import ch.trick17.rolez.rolez.Parfor
 import ch.trick17.rolez.rolez.Program
 import ch.trick17.rolez.rolez.ReadOnly
 import ch.trick17.rolez.rolez.ReadWrite
@@ -62,6 +63,7 @@ import static ch.trick17.rolez.rolez.VarKind.*
 
 import static extension ch.trick17.rolez.RolezExtensions.*
 import static extension ch.trick17.rolez.RolezUtils.*
+import ch.trick17.rolez.rolez.NumericType
 
 class RolezValidator extends RolezSystemValidator {
 
@@ -752,6 +754,37 @@ class RolezValidator extends RolezSystemValidator {
 
 		if (!ma1.getMethod.declaredTask || !ma2.getMethod.declaredTask) {
 			error("Only task calls are allowed in parallel statements (this isn't a task)", null, INCORRECT_PAR_STMT_CONTENT)
+			return;
+		}
+    }
+    
+    //TODO: think about it, for now just cheap copy of parallel statement check
+    @Check
+    def checkParforContent(Parfor it){
+    	if (!(body instanceof ExprStmt)) {
+    		error("Only task calls are allowed in parfor statements (this isn't an expr stmt)", null, INCORRECT_PAR_STMT_CONTENT)
+    		return;
+    	}
+		val es = body as ExprStmt
+		if (!(es.expr instanceof MemberAccess)) {
+			error("Only task calls are allowed in parfor statements (this isn't a member access)", null, INCORRECT_PAR_STMT_CONTENT)
+			return;
+		}
+
+		val ma = es.expr as MemberAccess
+
+		if (!ma.isMethodInvoke) {
+			error("Only task calls are allowed in parfor statements (this isn't a task/method invocation)", null, INCORRECT_PAR_STMT_CONTENT)
+			return;
+		}
+
+		if (!ma.getMethod.declaredTask) {
+			error("Only task calls are allowed in parfor statements (this isn't a task)", null, INCORRECT_PAR_STMT_CONTENT)
+			return;
+		}
+		
+		if(!(system.varType(initializer.variable).value instanceof NumericType)){
+			error("the variable in a parfor construct can only be of numeral type", null, INCORRECT_PAR_STMT_CONTENT)
 			return;
 		}
     }

@@ -270,6 +270,13 @@ class ForLoop extends Stmt {
     contains Stmt body
 }
 
+class Parfor extends Stmt {
+    contains LocalVarDecl initializer
+    contains Expr condition
+    contains Expr step
+    contains Stmt body
+}
+
 class Argumented extends InExecutable {
     contains Expr[] args
     op Executable getExecutable()

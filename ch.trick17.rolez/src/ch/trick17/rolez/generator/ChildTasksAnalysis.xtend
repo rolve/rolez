@@ -62,4 +62,6 @@ class ChildTasksAnalysis extends DataFlowAnalysis<Boolean> {
     override protected merge(Boolean in1, Boolean in2) { in1 || in2 }
     
     def childTasksMayExist(Expr it) { cfg.nodeOf(it).inFlow }
+    
+    def childTasksMayExist(Instr it) { cfg.nodeOf(it).inFlow }
 }

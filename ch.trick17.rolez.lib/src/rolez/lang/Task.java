@@ -80,14 +80,32 @@ public abstract class Task<V> implements Runnable {
     private final List<Task<?>> children = new ArrayList<>();
     
     public Task(Object[] passedObjects, Object[] sharedObjects) {
-        this.parent = currentTask();
+    	this.parent = currentTask();
         if(parent != null)
             parent.children.add(this);
         
         taskStartTransitions(passedObjects, sharedObjects);
     }
     
-    /**
+    public Task(Set<Guarded> passedObjects, Set<Guarded> passedReachable, Set<Guarded> sharedReachable) {
+    	this.parent = currentTask();
+        if(parent != null)
+            parent.children.add(this);
+        
+        this.passedReachable = passedReachable;
+        this.sharedReachable = sharedReachable;
+        
+        passed = new ArrayList<>(passedObjects.size());
+        for(Guarded g : passedObjects)
+            passed.add(g);
+        
+        for(Guarded g : passedReachable)
+            g.pass(this);
+        for(Guarded g : sharedReachable)
+            g.share(this);
+	}
+
+	/**
      * Executes this task in the current thread. This method first performs some initialization,
      * then performs the {@linkplain #runRolez() computation}, waits for child tasks to finish, and
      * finally wakes up the thread that is executing the parent task.
@@ -260,6 +278,7 @@ public abstract class Task<V> implements Runnable {
         for(Guarded g : sharedReachable)
             g.share(this);
     }
+    
     
     private void completeTaskStartTransitions() {
         for(Guarded g : passedReachable)
