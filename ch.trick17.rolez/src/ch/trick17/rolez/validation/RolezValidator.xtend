@@ -782,11 +782,7 @@ class RolezValidator extends RolezSystemValidator {
 			error("Only task calls are allowed in parfor statements (this isn't a task)", null, INCORRECT_PAR_STMT_CONTENT)
 			return;
 		}
-		
-		if(!(system.varType(initializer.variable).value instanceof NumericType)){
-			error("the variable in a parfor construct can only be of numeral type", null, INCORRECT_PAR_STMT_CONTENT)
-			return;
-		}
+
     }
         
     // TODO: Introduce final classes and make array, slice, etc. final, so that they cannot be 

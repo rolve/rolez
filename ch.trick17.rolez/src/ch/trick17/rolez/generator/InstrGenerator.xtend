@@ -144,16 +144,60 @@ class InstrGenerator {
         /* Stmt */
         private def dispatch CharSequence generate(Parfor it){
         	
-        	var initType = system.varType(initializer.variable).value
+        	val canHazChildTask = childTasksAnalysis.childTasksMayExist(it)
         	
+        	val ma = (body as ExprStmt).expr as MemberAccess
+        	val params = ma.method.allParams.toList
+        	val passed = new ArrayList
+        	val shared = new ArrayList
         	
+        	// separate arguments for the tasks  into shared and passed objects
+        	// start counting at 1 because we don't care about the this parameter
+        	for(var i = 1; i < params.size; i++){
+        		if(params.get(i).type instanceof RoleType) {
+        			val role = (params.get(i).type as RoleType).role
+	        		if(role instanceof ReadWrite) 
+	        			passed.add(i-1)
+	        		else if(role instanceof ReadOnly)
+	        			shared.add(i-1)
+	        	}
+	       	}
+	       	// only used to make a FOR loop work below
+        	val argIndexList = new ArrayList(ma.args.length)
+        	for(var i = 0; i < ma.args.length; i++)
+        		argIndexList.add(i);
+        		
         	'''
-        	{
-        		final «jvmTasksClassName» $parforTasks = new «jvmTasksClassName»();
+        	{ /* parfor generation */
+        		final java.util.List<java.lang.Object[]> $argList = new java.util.ArrayList<>();
+        		for(«initializer.generate» «condition.generate»; «step.generate») {
+        			$argList.add(new java.lang.Object[] {«FOR arg : ma.args»«arg.generate», «ENDFOR»});
+        		}
+        		java.lang.Object[][] $roleArray = new java.lang.Object[$argList.size()*2][];
+        		for(int $i = 0; $i < $roleArray.length; $i += 2){
+        			java.lang.Object[] $argArray = $argList.get($i/2);
+        			$roleArray[$i] = new java.lang.Object[] {«FOR ind : passed»$argArray[«ind»], «ENDFOR»}; // passed Objects
+        			$roleArray[$i+1] = new java.lang.Object[] {«FOR ind : shared»$argArray[«ind»], «ENDFOR»}; // shared Objects
+        		}
+        		java.util.Set<«jvmGuardedClassName»>[] $collectedReachables = rolez.lang.Eager.collectAndCheck«IF canHazChildTask»Guarded«ENDIF»($roleArray, $task);
+        		final «taskClassName»[] $parforTasks = new «taskClassName»[$argList.size()];
         		try {
-        			// dummy generation
+        			for(int $i = 0; $i < $parforTasks.length; $i++){
+        				final java.lang.Object[] $argArray = $argList.get($i);
+        				$parforTasks[$i] = new «taskClassName»<«ma.method.type.generateGeneric»>($collectedReachables[3*$i], $collectedReachables[3*$i+1], $collectedReachables[3*$i+2]) {
+        					@java.lang.Override«taskGenerationMode = true»
+        			    	protected «ma.method.type.generateGeneric» runRolez() {
+        			    		final long $task = idBits();
+        			        	«IF !ma.method.needsReturnNull»return «ENDIF»«ma.target.genNested».«ma.method.name»«UNGUARDED_METHOD.suffix»(«
+        			        	FOR ind : argIndexList»(«params.get(ind+1).type.generate»)$argArray[«ind»], «ENDFOR»$task);
+        			        	«IF ma.method.needsReturnNull»return null;«ENDIF»
+        			    	}
+        				};«taskGenerationMode = false»
+        				«jvmTaskSystemClassName».getDefault().start($parforTasks[$i]);
+        			}
         		} finally {
-        			$parforTasks.joinAll();
+        			for(«taskClassName»<?> $parforTask : $parforTasks)
+        				$parforTask.get();
         		}
         	}
         	'''
@@ -161,6 +205,8 @@ class InstrGenerator {
         
         
         private def dispatch CharSequence generate(ParallelStmt it) {
+        	
+        	val canHazChildTask = childTasksAnalysis.childTasksMayExist(it)
         	
         	val argPrefix1 = "$t1_par_const_arg"
         	val argPrefix2 = "$t2_par_const_arg"
@@ -224,17 +270,18 @@ class InstrGenerator {
         	«FOR arg : ma2.args»
         	final «params2.get(ac2).type.generate» «argPrefix2 + ac2++» = «arg.generate»;
         	«ENDFOR»
-        	java.util.Set<Guarded>[] $collectedReachables = rolez.lang.Eager.collectAndCheck(
-        		new Object[]{«FOR ind : passed1»«argPrefix1 + ind», «ENDFOR»},
-        		new Object[]{«FOR ind : shared1»«argPrefix1 + ind», «ENDFOR»},
-        		new Object[]{«FOR ind : passed2»«argPrefix2 + ind», «ENDFOR»},
-        		new Object[]{«FOR ind : shared2»«argPrefix2 + ind», «ENDFOR»}
+        	java.util.Set<«jvmGuardedClassName»>[] $collectedReachables = rolez.lang.Eager.collectAndCheck«IF canHazChildTask»Guarded«ENDIF»(new Object[][]{
+        			new Object[]{«FOR ind : passed1»«argPrefix1 + ind», «ENDFOR»},
+        			new Object[]{«FOR ind : shared1»«argPrefix1 + ind», «ENDFOR»},
+        			new Object[]{«FOR ind : passed2»«argPrefix2 + ind», «ENDFOR»},
+        			new Object[]{«FOR ind : shared2»«argPrefix2 + ind», «ENDFOR»}
+        		}, $task
         	);
         	rolez.lang.Task $t1 = null;
         	rolez.lang.Task $t2 = null;
         	try {
         		/* part1 */
-        		«IF childTasksAnalysis.childTasksMayExist(it)»
+        		«IF canHazChildTask»
         		$t1 = «jvmTaskSystemClassName».getDefault().start(«ma1.target.genNested».«ma1.method.name»«TASK.suffix»(«argList1»));
         		«ELSE»
         		$t1 = new «taskClassName»<«ma1.method.type.generateGeneric»>($collectedReachables[0], $collectedReachables[1], $collectedReachables[2]) {
@@ -250,7 +297,7 @@ class InstrGenerator {
         		«jvmTaskSystemClassName».getDefault().start($t1);
         		«ENDIF»
         		/* part2 */
-        		«IF childTasksAnalysis.childTasksMayExist(it)»
+        		«IF canHazChildTask»
         		$t2 = «ma2.target.genNested».«ma2.method.name»«TASK.suffix»(«argList2»);
         		«ELSE»
         		$t2 = new «taskClassName»<«ma2.method.type.generateGeneric»>($collectedReachables[3], $collectedReachables[4], $collectedReachables[5]) {

@@ -4,22 +4,24 @@ import rolez.util.Scanner
 
 class App {
 	
+	val co: int
+	
 	new {
-		    
+		this.co = 42;
 	}
 	
 	task pure main(args: readonly Array[readonly String]): { 
 		//the System.out.println("footest");
 		var dummy = new App; 
-		parallel this.foo(1, new Object); and this.foo(2, new Object); 
+		val vh = new ValueHolder;
 		
-		for(var i = 0; i < 3; i++){
-			
-		}
+		parallel 
+			this.foo(this.co, new Object, vh); 
+		and 
+			this.foo(this.co, new Object, vh); 
 		
-		var k = 0;
-		parfor(var j = 0; k < 3; k++) 
-			this.foo(k, new Object);
+		parfor(var j = 0; j < 16; j++) 
+			this.foo(j, this.makeObj(j), vh);
 		
 		
 		the System.out.println("args:");
@@ -39,8 +41,21 @@ class App {
 		}
 	}
 	
-	task pure foo(n: int, a: readwrite Object): {
+	task pure foo(n: int, a: readwrite Object, vh: readonly Object): {
 		the System.out.println("foo" + n);	
 	}
 	
+	def pure makeObj(n: int): readwrite Object {
+		the System.out.println("making an object "+n);	
+		return new Object();
+	}
+	
+}
+
+class ValueHolder {
+	val value: int
+	
+	new {
+		this.value = 50;
+	}
 }

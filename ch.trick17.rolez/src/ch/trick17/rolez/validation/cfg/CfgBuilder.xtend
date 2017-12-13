@@ -78,12 +78,22 @@ class CfgBuilder {
         node
     }
     
+    // not quite sure what the consequences are here for putting the calls sequentially. might be fine
     private def dispatch Linker process(ParallelStmt p, Linker prev) {
-    	prev.linkAndReturn(newInstrNode(p))
+    	val part1Linker = process(p.part1, prev)
+    	val part2Linker = process(p.part2, part1Linker)
+    	part2Linker.linkAndReturn(newInstrNode(p))
     }
     
-    private def dispatch Linker process(Parfor p, Linker prev) {
-    	prev.linkAndReturn(newInstrNode(p))
+    // so far just same as for loop. it's' probably all right
+    private def dispatch Linker process(Parfor l, Linker prev) {
+    	val headNode = new LoopHeadNode
+        if(!process(l.initializer, prev).link(headNode)) return [false]
+        
+        val conditionLinker = process(l.condition, headNode.linker)
+        val bodyLinker = process(l.body, conditionLinker)
+        process(l.step, bodyLinker).link(headNode)
+        conditionLinker.linkAndReturn(newInstrNode(l))
     }
     
     private def dispatch Linker process(Block block, Linker prev) {
