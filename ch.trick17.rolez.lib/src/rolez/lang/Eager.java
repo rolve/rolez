@@ -26,87 +26,14 @@ public class Eager {
 			println(o.toString());
 	}
 	
-	private static void error(){
-		//throw new RuntimeException("This parallel construct can't be executed concurrently due to interference");
+	private static void error(String err){
+		throw new RuntimeException("This parallel construct can't be executed concurrently due to interference. (" + err + ")");
 	}
 	
-	/**
-	 * collects all objects reachable from the passed arrays and checks if they interfere. returns the collected sets as follows:
-	 * 0: passedT1
-	 * 1: passedReachable T1
-	 * 2: sharedReachable T1
-	 * 3: passedT2
-	 * 4: passedReachable T2
-	 * 5: sharedReachable T2
-	 * 
-	 * @param passedT1 all objects passed to T1
-	 * @param sharedT1 all objects shared with T1
-	 * @param passedT2 all objects passed to T2
-	 * @param sharedT2 all objects shared with T2
-	 * @return the collected reachable objects
-	 * 	
-	 */
-	/*
-	@SuppressWarnings("unchecked")
-	public static Set<Guarded>[] collectAndCheck(Object[] passedArrayT1, Object[] sharedArrayT1, Object[] passedArrayT2, Object[] sharedArrayT2){
-//		println(passedArrayT1, "passedT1");
-//		println(sharedArrayT1, "sharedT1");
-//		println(passedArrayT2, "passedT2");
-//		println(sharedArrayT2, "sharedT2");
-
-        Set<Guarded> passedReachableT1 = newIdentitySet();
-        Set<Guarded> passedReachableT2 = newIdentitySet();
-        Set<Guarded> sharedReachableT1 = newIdentitySet();
-        Set<Guarded> sharedReachableT2 = newIdentitySet();
-        
-        Set<Guarded> passedT1 = newIdentitySet();
-        Set<Guarded> passedT2 = newIdentitySet();
-        
-        Set<Guarded> combinedT1 = newIdentitySet();
-        
-        // collect all object passed to T1
-        for(Object g : passedArrayT1)
-        	if(g instanceof Guarded){
-        		passedT1.add((Guarded)g);
-        		collectReachables((Guarded)g, combinedT1, passedReachableT1);
-        	}
-        // collect all objects shared with T1
-        for(Object g : sharedArrayT1)
-        	if(g instanceof Guarded)
-        		collectReachables((Guarded)g, combinedT1, sharedReachableT1);
-        		// objects that are shared and passed are effectively passed, so what's already in combined will not be put in shared
-        
-        
-//        println(passedReachableT1, "passedReachableT1");
-//        println(sharedReachableT1, "sharedReahableT1");
-        
-        // do any objects passed to T2 interfere with those passed to T1 or shared with T1?
-        for(Object g : passedArrayT2){
-            if(g instanceof Guarded){
-            	passedT2.add((Guarded)g);
-            	if(interferesWith((Guarded)g, combinedT1, passedReachableT2))
-            		error();
-            }
-        }
-        
-        // do any objects shared with T2 interfere with those passed to T1?
-        for(Object g : sharedArrayT2)
-        	if(g instanceof Guarded)
-        		if(interferesWith((Guarded)g, passedReachableT1, sharedReachableT2))
-            		error();
-
-        // now all sets have been collected
-        		
-        // objects that are shared and passed are effectively passed
-        for(Guarded g : passedReachableT2)
-        	sharedReachableT2.remove(g);
-       
-        return new Set[] {passedT1, passedReachableT1, sharedReachableT1, passedT2, passedReachableT2, sharedReachableT2};
-	}
-	*/
 	
 	/**
-	 * 
+	 * @param receivers the receivers of each call. will be checked but it's object graph will not be in the returned sets
+	 * @param receiverRole True: passed, False: shared, Null: pure
 	 * @param args in form passedT1, sharedT1, passedT2, sharedT2, ... 
 	 * returns the collected sets as follows:
 	 * 0: passedT1
@@ -119,8 +46,8 @@ public class Eager {
 	 * @return sets collected for potentially 
 	 */
 	public static Set<Guarded>[] collectAndCheckGuarded(Object[][] args, long idBits){
-		// IMPROVE: collect all slices that could interfere
-		// IMPROVE: combine collecting and guarding with checking
+		// IMPROVE: collect all slices that could interfere, store them seperately
+		// IMPROVE: combine collecting and guarding with checking (probably minor impact though)
 		@SuppressWarnings("unchecked")
 		Set<Guarded>[] out = new Set[args.length/2*3];
 		
@@ -172,14 +99,14 @@ public class Eager {
 
 			Set<Guarded> passedReachable = newIdentitySet();
 			for(Guarded g : passed)
-				collectReachables(g, passedReachable, null);
+				collectReachables(g, passedReachable);
 
 			// Objects that are reachable both from a passed and a shared object are effectively *passed*
 			Set<Guarded> sharedReachable = newIdentitySet();
 			sharedReachable.addAll(passedReachable);
 			for(Object g : sharedObjects)
 				if(g instanceof Guarded)
-					collectReachables((Guarded)g, sharedReachable, null);
+					collectReachables((Guarded)g, sharedReachable);
 			sharedReachable.removeAll(passedReachable);
 
 			int taskInd = (i/2)*3;
@@ -193,35 +120,36 @@ public class Eager {
 		return out;
 	}
 	
+	
 	private static void check(Set<Guarded>[] sets){
 		
-		List<Set<Guarded>> accShared = new ArrayList<>(sets.length / 3);
-		List<Set<Guarded>> accPassed = new ArrayList<>(sets.length / 3);
+		List<Set<Guarded>> accumulatedPassed = new ArrayList<>(sets.length / 2);
+		List<Set<Guarded>> accumulatedShared = new ArrayList<>(sets.length / 2);
 		for(int i = 0; i < sets.length; i += 3){
 			Set<Guarded> passed = sets[i+1];
 			Set<Guarded> shared = sets[i+2];
 			
-			if(interferesWith(passed, accPassed))
-				error();
-			if(interferesWith(passed, accShared))
-				error();
-			if(interferesWith(shared, accPassed))
-				error();
+			// check interference
+			if(interferesWith(passed, accumulatedShared))
+				error(passed.toString() + " (passed objects) interferes with " + accumulatedShared.toString() + " (other shared objects)");
+			if(interferesWith(passed, accumulatedPassed))
+				error(passed.toString() + " (passed objects) interferes with " + accumulatedPassed.toString() + " (other passed objects)");
+			if(interferesWith(shared, accumulatedPassed))
+				error(shared.toString() + " (shared objects) interferes with " + accumulatedPassed.toString() + " (other passed objects)");
 			
-			accShared.add(shared);
-			accPassed.add(passed);
+			// add these sets to the list to be checked against
+			accumulatedPassed.add(passed);
+			accumulatedShared.add(shared);
 		}
 		
 	}
 	
-	// add all guarded objects to the set that are reachable from 'from' to processed, and alsoAdd if it is not null
-	private static void collectReachables(Guarded from, Set<Guarded> processed, Set<Guarded> alsoAdd){
+	// add all guarded objects to the set that are reachable from 'from' to processed
+	private static void collectReachables(Guarded from, Set<Guarded> processed){
 		if(processed.add(from)) {
-			if(alsoAdd != null)
-    			alsoAdd.add(from);
             for(Object g : from.guardedRefs())
                 if(g instanceof Guarded)
-                    collectReachables((Guarded)g, processed, alsoAdd);
+                    collectReachables((Guarded)g, processed);
         }
 	}
 	
@@ -236,23 +164,6 @@ public class Eager {
 		return false;
 	}
 	
-	// returns true iff 'g' or an object reachable from 'g' is contained in 'with' or can interfere with it (slices)
-	// accumulates in processed all guarded objects reachable from g
-	private static boolean interferesWith(Guarded g, Set<Guarded> with, Set<Guarded> processed){
-		// g already contained in processed and thus already checked
-		if(!processed.add(g))
-			return false;
-		
-		if(checkInterference(g, with))
-			return true;
-		
-		for(Object gu : g.guardedRefs())
-			if(gu instanceof Guarded)
-				if(interferesWith((Guarded)gu, with, processed))
-					return true;
-		
-		return false;
-	}
 	
 	// returns true iff g is contained in with or is a slice overlapping with a slice in with
 	private static boolean checkInterference(Guarded g, Set<Guarded> with){
@@ -261,7 +172,7 @@ public class Eager {
 		if(g instanceof GuardedSlice<?>){
 			GuardedSlice<?> gs = ((GuardedSlice<?>)g);
 			// is it faster to loop over the overlapping slices or the other guarded objects?
-			if(gs.overlappingSlices.size() < with.size()){
+			if(gs.overlappingSlices.size() <= with.size()){
 				for(GuardedSlice<?> s : gs.overlappingSlices)
 					if(with.contains(s))
 						return true;

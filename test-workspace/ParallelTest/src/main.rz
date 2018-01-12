@@ -10,13 +10,13 @@ class App {
 		this.co = 42;
 	}
 	
-	task pure main(args: readonly Array[readonly String]): { 
-		//the System.out.println("footest");
+	task readwrite main(args: readonly Array[readonly String]): { 
 		var dummy = new App; 
 		val vh = new ValueHolder;
 		
+		
 		parallel 
-			this.foo(this.co, new Object, vh); 
+			dummy.foo(this.co, new Object, vh); 
 		and 
 			this.foo(this.co, new Object, vh); 
 		
@@ -27,21 +27,11 @@ class App {
 		the System.out.println("args:");
 		for(var i = 0; i < args.length; i += 1)
 			the System.out.println("  " + args.get(i));	
+			
 		 
-		the System.out.println("\nNow type your name:");
-		val scanner = new Scanner(the System.in);
-		
-		var continue = true;
-		while(continue) {
-			val line = scanner.nextLine;
-			if(line.equals("stop"))
-				continue = false; 
-			else
-				the System.out.println("Hello " + line + "!");
-		}
 	}
 	
-	task pure foo(n: int, a: readwrite Object, vh: readonly Object): {
+	task readonly foo(n: int, a: readwrite Object, vh: readonly Object): { 
 		the System.out.println("foo" + n);	
 	}
 	

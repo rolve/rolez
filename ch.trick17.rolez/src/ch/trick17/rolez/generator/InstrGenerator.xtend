@@ -151,45 +151,47 @@ class InstrGenerator {
         	val passed = new ArrayList
         	val shared = new ArrayList
         	
+        		
         	// separate arguments for the tasks  into shared and passed objects
-        	// start counting at 1 because we don't care about the this parameter
-        	for(var i = 1; i < params.size; i++){
+        	for(var i = 0; i < params.size; i++){
         		if(params.get(i).type instanceof RoleType) {
         			val role = (params.get(i).type as RoleType).role
 	        		if(role instanceof ReadWrite) 
-	        			passed.add(i-1)
+	        			passed.add(i)
 	        		else if(role instanceof ReadOnly)
-	        			shared.add(i-1)
+	        			shared.add(i)
 	        	}
 	       	}
 	       	// only used to make a FOR loop work below
+	       	// start at 1 because we do not want the receiver here
         	val argIndexList = new ArrayList(ma.args.length)
-        	for(var i = 0; i < ma.args.length; i++)
+        	for(var i = 1; i < ma.allArgs.length; i++)
         		argIndexList.add(i);
         		
         	'''
         	{ /* parfor generation */
-        		final java.util.List<java.lang.Object[]> $argList = new java.util.ArrayList<>();
+        		final java.util.List<java.lang.Object[]> $argsList = new java.util.ArrayList<>();
         		for(«initializer.generate» «condition.generate»; «step.generate») {
-        			$argList.add(new java.lang.Object[] {«FOR arg : ma.args»«arg.generate», «ENDFOR»});
+        			$argsList.add(new java.lang.Object[] {«FOR arg : ma.allArgs»«arg.generate», «ENDFOR»});
         		}
-        		java.lang.Object[][] $roleArray = new java.lang.Object[$argList.size()*2][];
-        		for(int $i = 0; $i < $roleArray.length; $i += 2){
-        			java.lang.Object[] $argArray = $argList.get($i/2);
-        			$roleArray[$i] = new java.lang.Object[] {«FOR ind : passed»$argArray[«ind»], «ENDFOR»}; // passed Objects
-        			$roleArray[$i+1] = new java.lang.Object[] {«FOR ind : shared»$argArray[«ind»], «ENDFOR»}; // shared Objects
+        		final java.lang.Object[][] $roleArray = new java.lang.Object[$argsList.size()*2][];
+        		for(int $i = 0; $i < $argsList.size(); $i++){
+        			java.lang.Object[] $argArray = $argsList.get($i);
+        			int $j = $i * 2;
+        			$roleArray[$j] = new java.lang.Object[] {«FOR ind : passed»$argArray[«ind»], «ENDFOR»}; // passed Objects
+        			$roleArray[$j+1] = new java.lang.Object[] {«FOR ind : shared»$argArray[«ind»], «ENDFOR»}; // shared Objects
         		}
         		java.util.Set<«jvmGuardedClassName»>[] $collectedReachables = rolez.lang.Eager.collectAndCheck«IF canHazChildTask»Guarded«ENDIF»($roleArray, $task);
-        		final «taskClassName»[] $parforTasks = new «taskClassName»[$argList.size()];
+        		final «taskClassName»<«ma.method.type.generateGeneric»>[] $parforTasks = new «taskClassName»[$argsList.size()];
         		try {
         			for(int $i = 0; $i < $parforTasks.length; $i++){
-        				final java.lang.Object[] $argArray = $argList.get($i);
+        				final java.lang.Object[] $argArray = $argsList.get($i);
         				$parforTasks[$i] = new «taskClassName»<«ma.method.type.generateGeneric»>($collectedReachables[3*$i], $collectedReachables[3*$i+1], $collectedReachables[3*$i+2]) {
         					@java.lang.Override«taskGenerationMode = true»
         			    	protected «ma.method.type.generateGeneric» runRolez() {
         			    		final long $task = idBits();
-        			        	«IF !ma.method.needsReturnNull»return «ENDIF»«ma.target.genNested».«ma.method.name»«UNGUARDED_METHOD.suffix»(«
-        			        	FOR ind : argIndexList»(«params.get(ind+1).type.generate»)$argArray[«ind»], «ENDFOR»$task);
+        			        	«IF !ma.method.needsReturnNull»return «ENDIF»((«ma.method.thisParam.type.generate»)$argArray[0]).«ma.method.name»«UNGUARDED_METHOD.suffix»(«
+        			        		FOR ind : argIndexList»(«params.get(ind).type.generate»)$argArray[«ind»], «ENDFOR»$task);
         			        	«IF ma.method.needsReturnNull»return null;«ENDIF»
         			    	}
         				};«taskGenerationMode = false»
@@ -208,8 +210,8 @@ class InstrGenerator {
         	
         	val canHazChildTask = childTasksAnalysis.childTasksMayExist(it)
         	
-        	val argPrefix1 = "$t1_par_const_arg"
-        	val argPrefix2 = "$t2_par_const_arg"
+        	val argPrefix1 = "$t1ParConstrArg"
+        	val argPrefix2 = "$t2ParConstrArg"
         	
         	var ma1 = (part1 as ExprStmt).expr as MemberAccess	
         	var ma2 = (part2 as ExprStmt).expr as MemberAccess	
@@ -224,8 +226,7 @@ class InstrGenerator {
         	val shared2 = new ArrayList
         	
         	// separate arguments for the tasks  into shared and passed objects
-        	// start counting at 1 because we don't care about the this parameter
-        	for(var i = 1; i < params1.size; i++){
+        	for(var i = 0; i < params1.size; i++){
         		if(params1.get(i).type instanceof RoleType) {
         			val role = (params1.get(i).type as RoleType).role
 	        		if(role instanceof ReadWrite) 
@@ -235,7 +236,7 @@ class InstrGenerator {
 	        	}
 	       	}
         	
-        	for(var i = 1; i < params2.size; i++){
+        	for(var i = 0; i < params2.size; i++){
         		if(params2.get(i).type instanceof RoleType) {
         			val role = (params2.get(i).type as RoleType).role
 	        		if(role instanceof ReadWrite) 
@@ -246,6 +247,7 @@ class InstrGenerator {
         	}
         	
         	// IMPROVE: probably a use-case for fold
+        	// start at 1 because we don't include the receiver here
         	var argList1 = ""
         	for(var i = 1; i <= ma1.args.size; i++)
         		argList1 += argPrefix1 + i + ", "
@@ -257,68 +259,61 @@ class InstrGenerator {
         	if(argList2.length >= 2)
         		argList2 = argList2.substring(0, argList2.length - 2)
         	
-        	var ac1 = 1;
-        	var ac2 = 1;
-        	// IMPROVE: also make guarding task inline so that methods could be used in the construct as well as tasks
+        	var ac1 = 0;
+        	var ac2 = 0;
         	'''
         	{ /* parallel stmt generation */
-        	// args for ma1
-        	«FOR arg : ma1.args»
-        	final «params1.get(ac1).type.generate» «argPrefix1 + ac1++» = «arg.generate»;
-        	«ENDFOR»
-        	// args for ma2
-        	«FOR arg : ma2.args»
-        	final «params2.get(ac2).type.generate» «argPrefix2 + ac2++» = «arg.generate»;
-        	«ENDFOR»
-        	java.util.Set<«jvmGuardedClassName»>[] $collectedReachables = rolez.lang.Eager.collectAndCheck«IF canHazChildTask»Guarded«ENDIF»(new Object[][]{
-        			new Object[]{«FOR ind : passed1»«argPrefix1 + ind», «ENDFOR»},
-        			new Object[]{«FOR ind : shared1»«argPrefix1 + ind», «ENDFOR»},
-        			new Object[]{«FOR ind : passed2»«argPrefix2 + ind», «ENDFOR»},
-        			new Object[]{«FOR ind : shared2»«argPrefix2 + ind», «ENDFOR»}
-        		}, $task
-        	);
-        	rolez.lang.Task $t1 = null;
-        	rolez.lang.Task $t2 = null;
-        	try {
-        		/* part1 */
-        		«IF canHazChildTask»
-        		$t1 = «jvmTaskSystemClassName».getDefault().start(«ma1.target.genNested».«ma1.method.name»«TASK.suffix»(«argList1»));
-        		«ELSE»
-        		$t1 = new «taskClassName»<«ma1.method.type.generateGeneric»>($collectedReachables[0], $collectedReachables[1], $collectedReachables[2]) {
-        			@java.lang.Override«taskGenerationMode = true»
-        			protected «ma1.method.type.generateGeneric» runRolez() {
-        			    final long $task = idBits();
-        			    «IF !ma1.method.needsReturnNull»return «ENDIF»«ma1.target.genNested».«ma1.method.name»«UNGUARDED_METHOD.suffix»(«argList1», $task);
-        		        «IF ma1.method.needsReturnNull»
-        		        return null;
-        	            «ENDIF»
-        		    }
-        		};«taskGenerationMode = false»
-        		«jvmTaskSystemClassName».getDefault().start($t1);
-        		«ENDIF»
-        		/* part2 */
-        		«IF canHazChildTask»
-        		$t2 = «ma2.target.genNested».«ma2.method.name»«TASK.suffix»(«argList2»);
-        		«ELSE»
-        		$t2 = new «taskClassName»<«ma2.method.type.generateGeneric»>($collectedReachables[3], $collectedReachables[4], $collectedReachables[5]) {
-        			@java.lang.Override«taskGenerationMode = true»
-        			protected «ma2.method.type.generateGeneric» runRolez() {
-        		    	final long $task = idBits();
-        		        «IF !ma2.method.needsReturnNull»return «ENDIF»«ma2.target.genNested».«ma2.method.name»«UNGUARDED_METHOD.suffix»(«argList2», $task);
-        		        «IF ma2.method.needsReturnNull»
-        		        return null;
-        		        «ENDIF»
-        		    }
-        		};«taskGenerationMode = false»
-        		«ENDIF»
-        	    «jvmTaskSystemClassName».getDefault().run($t2);
-        	} finally {
-        		$t1.get();
-        	}}
+        		«FOR arg : ma1.allArgs»
+        		final «params1.get(ac1).type.generate» «argPrefix1 + ac1++» = «arg.generate»;
+        		«ENDFOR»
+        		«FOR arg : ma2.allArgs»
+        		final «params2.get(ac2).type.generate» «argPrefix2 + ac2++» = «arg.generate»;
+        		«ENDFOR»
+        		java.util.Set<«jvmGuardedClassName»>[] $collectedReachables = rolez.lang.Eager.collectAndCheck«IF canHazChildTask»Guarded«ENDIF»(
+        			new java.lang.Object[][]{
+        				new java.lang.Object[]{«FOR ind : passed1»«argPrefix1 + ind», «ENDFOR»},
+        				new java.lang.Object[]{«FOR ind : shared1»«argPrefix1 + ind», «ENDFOR»},
+        				new java.lang.Object[]{«FOR ind : passed2»«argPrefix2 + ind», «ENDFOR»},
+        				new java.lang.Object[]{«FOR ind : shared2»«argPrefix2 + ind», «ENDFOR»}
+        			}, $task);
+        		«taskClassName»<«ma1.method.type.generateGeneric»> $t1 = null;
+        		«taskClassName»<«ma2.method.type.generateGeneric»> $t2 = null;
+        		try {
+        			/* part1 */
+        			$t1 = new «taskClassName»<«ma1.method.type.generateGeneric»>($collectedReachables[0], $collectedReachables[1], $collectedReachables[2]) {
+        				@java.lang.Override«taskGenerationMode = true»
+        				protected «ma1.method.type.generateGeneric» runRolez() {
+        				    final long $task = idBits();
+        				    «IF !ma1.method.needsReturnNull»return «ENDIF»((«ma1.method.thisParam.type.generate»)«argPrefix1 + 0»).«ma1.method.name»«UNGUARDED_METHOD.suffix»(«argList1», $task);
+        			        «IF ma1.method.needsReturnNull»
+        			        return null;
+        	    	        «ENDIF»
+        			    }
+        			};«taskGenerationMode = false»
+        			«jvmTaskSystemClassName».getDefault().start($t1);
+        			/* part2 */
+        			$t2 = new «taskClassName»<«ma2.method.type.generateGeneric»>($collectedReachables[3], $collectedReachables[4], $collectedReachables[5]) {
+        				@java.lang.Override«taskGenerationMode = true»
+        				protected «ma2.method.type.generateGeneric» runRolez() {
+        			    	final long $task = idBits();
+        			        «IF !ma2.method.needsReturnNull»return «ENDIF»((«ma2.method.thisParam.type.generate»)«argPrefix2 + 0»).«ma2.method.name»«UNGUARDED_METHOD.suffix»(«argList2», $task);
+        			        «IF ma2.method.needsReturnNull»
+        			        return null;
+        			        «ENDIF»
+        			    }
+        			};«taskGenerationMode = false»
+        		    «jvmTaskSystemClassName».getDefault().run($t2);
+        		} finally {
+        			$t1.get();
+        		}
+        	}
         	'''
         }
         
-        // to make methodKind task. this is needed to allow generation of anonymous inner classes in normal methods
+
+        
+        // to generate task code, method kind needs to be task. this is needed to allow generation of anonymous inner classes in normal methods
+        // returns a string ("") so it can be used in the ''' ... '''
         private var MethodKind methodKindTemp;
         private def String setTaskGenerationMode(boolean on){
         	if(on && methodKind != TASK){
@@ -331,6 +326,7 @@ class InstrGenerator {
         	""
         }
         
+        // copied form class generator
         private def needsReturnNull(Method it) {
         	type instanceof Void && body.controlFlowGraph.exit.predecessors.filter(InstrNode).exists[!(instr instanceof ReturnNothing)]
     	}
