@@ -7,7 +7,7 @@ class App {
 	val co: int
 	
 	new {
-		this.co = 42;
+		this.co = 42; 
 	}
 	
 	task readwrite main(args: readonly Array[readonly String]): { 

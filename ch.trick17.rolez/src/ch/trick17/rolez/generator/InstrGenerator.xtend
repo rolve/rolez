@@ -195,8 +195,9 @@ class InstrGenerator {
         			        	«IF ma.method.needsReturnNull»return null;«ENDIF»
         			    	}
         				};«taskGenerationMode = false»
-        				«jvmTaskSystemClassName».getDefault().start($parforTasks[$i]);
+        				if($i < $parforTasks.length - 1) «jvmTaskSystemClassName».getDefault().start($parforTasks[$i]);
         			}
+        			«jvmTaskSystemClassName».getDefault().run($parforTasks[$parforTasks.length - 1]);
         		} finally {
         			for(«taskClassName»<?> $parforTask : $parforTasks)
         				$parforTask.get();
@@ -204,7 +205,6 @@ class InstrGenerator {
         	}
         	'''
         }
-        
         
         private def dispatch CharSequence generate(ParallelStmt it) {
         	
