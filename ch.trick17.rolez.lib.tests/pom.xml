@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>ch.trick17.rolez</groupId>
-        <artifactId>rolez-parent</artifactId>
+        <artifactId>rolez</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
     <artifactId>ch.trick17.rolez.lib.tests</artifactId>
