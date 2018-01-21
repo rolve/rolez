@@ -27,13 +27,11 @@ public class Eager {
 	}
 	
 	private static void error(String err){
-		throw new RuntimeException("This parallel construct can't be executed concurrently due to interference. (" + err + ")");
+		throw new ConcurrentInterferenceException("This parallel construct can't be executed concurrently due to interference. \n(" + err + ")");
 	}
 	
 	
 	/**
-	 * @param receivers the receivers of each call. will be checked but it's object graph will not be in the returned sets
-	 * @param receiverRole True: passed, False: shared, Null: pure
 	 * @param args in form passedT1, sharedT1, passedT2, sharedT2, ... 
 	 * returns the collected sets as follows:
 	 * 0: passedT1
@@ -78,11 +76,25 @@ public class Eager {
 			out[taskInd+2] = sharedReachable;
 		}
 		
+		
 		check(out);
 		
 		return out;
 	}
 	
+	
+	/**
+	 * @param args in form passedT1, sharedT1, passedT2, sharedT2, ... 
+	 * returns the collected sets as follows:
+	 * 0: passedT1
+	 * 1: passedReachable T1
+	 * 2: sharedReachable T1
+	 * 3: passedT2
+	 * 4: passedReachable T2
+	 * 5: sharedReachable T2
+	 * ...
+	 * @return sets collected for potentially 
+	 */
 	public static Set<Guarded>[] collectAndCheck(Object[][] args, long idBits){
 		// IMPROVE: collect all slices that could interfere
 		@SuppressWarnings("unchecked")
@@ -131,11 +143,11 @@ public class Eager {
 			
 			// check interference
 			if(interferesWith(passed, accumulatedShared))
-				error(passed.toString() + " (passed objects) interferes with " + accumulatedShared.toString() + " (other shared objects)");
+				error(passed.toString() + " (passed objects)  \n interferes with \n" + accumulatedShared.toString() + " (other shared objects)");
 			if(interferesWith(passed, accumulatedPassed))
-				error(passed.toString() + " (passed objects) interferes with " + accumulatedPassed.toString() + " (other passed objects)");
+				error(passed.toString() + " (passed objects)  \n interferes with \n" + accumulatedPassed.toString() + " (other passed objects)");
 			if(interferesWith(shared, accumulatedPassed))
-				error(shared.toString() + " (shared objects) interferes with " + accumulatedPassed.toString() + " (other passed objects)");
+				error(shared.toString() + " (shared objects)  \n interferes with \n" + accumulatedPassed.toString() + " (other passed objects)");
 			
 			// add these sets to the list to be checked against
 			accumulatedPassed.add(passed);
@@ -189,5 +201,13 @@ public class Eager {
 	private static Set<Guarded> newIdentitySet() {
         return newSetFromMap(new IdentityHashMap<Guarded, java.lang.Boolean>());
     }
+	
+	public static class ConcurrentInterferenceException extends RuntimeException {
+
+		public ConcurrentInterferenceException(String string) {
+			super(string);
+		}
+		
+	}
 	
 }
