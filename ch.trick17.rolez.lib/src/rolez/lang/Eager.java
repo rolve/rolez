@@ -135,8 +135,8 @@ public class Eager {
 	
 	private static void check(Set<Guarded>[] sets){
 		
-		List<Set<Guarded>> accumulatedPassed = new ArrayList<>(sets.length / 2);
-		List<Set<Guarded>> accumulatedShared = new ArrayList<>(sets.length / 2);
+		Set<Guarded> accumulatedPassed = newIdentitySet(sets[1].size() * ((sets.length / 3) + 1));
+		Set<Guarded> accumulatedShared = newIdentitySet(sets[2].size() * ((sets.length / 3) + 1));
 		for(int i = 0; i < sets.length; i += 3){
 			Set<Guarded> passed = sets[i+1];
 			Set<Guarded> shared = sets[i+2];
@@ -150,8 +150,8 @@ public class Eager {
 				error(shared.toString() + " (shared objects)  \n interferes with \n" + accumulatedPassed.toString() + " (other passed objects)");
 			
 			// add these sets to the list to be checked against
-			accumulatedPassed.add(passed);
-			accumulatedShared.add(shared);
+			accumulatedPassed.addAll(passed);
+			accumulatedShared.addAll(shared);
 		}
 		
 	}
@@ -166,12 +166,10 @@ public class Eager {
 	}
 	
 	// check if any object in 'set' interferes with an object in one of the 'with' sets
-	private static boolean interferesWith(Set<Guarded> set, List<Set<Guarded>> with){
-		for(Set<Guarded> w : with){
-			for(Guarded g : set){
-				if(checkInterference(g, w))
-					return true;
-			}
+	private static boolean interferesWith(Set<Guarded> set, Set<Guarded> with){
+		for(Guarded g : set){
+			if(checkInterference(g, with))
+				return true;
 		}
 		return false;
 	}
@@ -200,6 +198,10 @@ public class Eager {
 	
 	private static Set<Guarded> newIdentitySet() {
         return newSetFromMap(new IdentityHashMap<Guarded, java.lang.Boolean>());
+    }
+	
+	private static Set<Guarded> newIdentitySet(int capacity) {
+        return newSetFromMap(new IdentityHashMap<Guarded, java.lang.Boolean>(capacity));
     }
 	
 	public static class ConcurrentInterferenceException extends RuntimeException {
