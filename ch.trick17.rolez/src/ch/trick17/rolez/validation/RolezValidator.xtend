@@ -758,7 +758,6 @@ class RolezValidator extends RolezSystemValidator {
 		}
     }
     
-    //TODO: think about it, for now just cheap copy of parallel statement check
     @Check
     def checkParforContent(Parfor it){
     	if (!(body instanceof ExprStmt)) {

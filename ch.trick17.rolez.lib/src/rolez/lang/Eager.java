@@ -149,7 +149,7 @@ public class Eager {
 			if(interferesWith(shared, accumulatedPassed))
 				error(shared.toString() + " (shared objects)  \n interferes with \n" + accumulatedPassed.toString() + " (other passed objects)");
 			
-			// add these sets to the list to be checked against
+			// add these sets to the set to be checked against
 			accumulatedPassed.addAll(passed);
 			accumulatedShared.addAll(shared);
 		}
