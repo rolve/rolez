@@ -1,0 +1,55 @@
+import rolez.io.FileInputStream
+import rolez.io.PrintStream
+import rolez.util.Scanner
+import rolez.util.StopWatch
+import rolez.util.Random
+
+object Caesar {
+    task pure main: {
+        val cores = 4;
+        
+        val scanner = new Scanner(new FileInputStream("text.txt"));
+        var text = "";
+        while(scanner.hasNextLine)
+            text += scanner.nextLine + "\n";
+        
+        val key: pure String = "abcdefghijklmnopqrstuvwxyz";
+        val plain = this.toCharArray(text); // TODO: Replace with String.toCharArray
+        val encrypted = new Array[char](plain.length);
+        
+        val watch = new StopWatch.go;
+        val slices = encrypted.partition(the ContiguousPartitioner, cores);
+        for(var i = 0; i < cores; i++)
+            this start encrypt(plain, slices.get(i), key);
+        
+        encrypted.set(0, encrypted.get(0));
+        val time = watch.get;
+        
+        the System.out.println(new String(encrypted));
+        the System.out.println(time);
+    }
+    
+    task pure encrypt(plain: readonly Array[char], encrypted: readwrite Slice[char],
+            key: pure String): {
+        for(var i = encrypted.range.begin; i < encrypted.range.end; i++) {
+            val c = plain.get(i);
+            
+            var e: char;
+            if(c >= 65 && c <= 90)
+                e = (key.charAt(c - 65) - 32) as char;
+            else if(c >= 97 && c <= 122)
+                e = key.charAt(c - 97);
+            else
+                e = c;
+            
+            encrypted.set(i, e);
+        }
+    }
+    
+    def pure toCharArray(string: pure String): readwrite Array[char] {
+        val array = new Array[char](string.length);
+        for(var i = 0; i < string.length; i++)
+            array.set(i, string.charAt(i));
+        return array;
+    }
+}
