@@ -1,0 +1,5 @@
+object App {
+    task pure main: void {
+        the System.out.println("Hello World!");
+    }
+}
