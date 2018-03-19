@@ -1330,7 +1330,53 @@ class InstrGeneratorTest extends GeneratorTest {
                 }
             }
         '''.withJavaFrame)
-        
+    }
+    
+    @Test def testParallelAndNoArgs() {
+        parse('''
+            parallel
+                the Tasks.foo();
+            and
+                the Tasks.foo();
+        '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
+            { /* parallel stmt generation */
+                final Tasks $t1ParConstrArg0 = Tasks.INSTANCE;
+                final Tasks $t2ParConstrArg0 = Tasks.INSTANCE;
+                java.util.Set<rolez.lang.Guarded>[] $collectedReachables = rolez.lang.Eager.collectAndCheck%%%Guarded%%%(
+                    new java.lang.Object[][]{
+                        new java.lang.Object[]{},
+                        new java.lang.Object[]{},
+                        new java.lang.Object[]{},
+                        new java.lang.Object[]{}
+                    }, $task);
+                rolez.lang.Task<java.lang.Void> $t1 = null;
+                rolez.lang.Task<java.lang.Void> $t2 = null;
+                try {
+                    /* part1 */
+                    $t1 = new rolez.lang.Task<java.lang.Void>($collectedReachables[0], $collectedReachables[1], $collectedReachables[2]) {
+                        @java.lang.Override
+                        protected java.lang.Void runRolez() {
+                            final long $task = idBits();
+                            ((Tasks)$t1ParConstrArg0).foo$Unguarded($task);
+                            return null;
+                        }
+                    };
+                    rolez.lang.TaskSystem.getDefault().start($t1);
+                    /* part2 */
+                    $t2 = new rolez.lang.Task<java.lang.Void>($collectedReachables[3], $collectedReachables[4], $collectedReachables[5]) {
+                        @java.lang.Override
+                        protected java.lang.Void runRolez() {
+                            final long $task = idBits();
+                            ((Tasks)$t2ParConstrArg0).foo$Unguarded($task);
+                            return null;
+                        }
+                    };
+                    rolez.lang.TaskSystem.getDefault().run($t2);
+                } finally {
+                    $t1.get();
+                }
+            }
+        '''.withJavaFrame)
     }
     
     /* Test infrastructure */

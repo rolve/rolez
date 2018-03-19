@@ -148,7 +148,7 @@ class InstrGenerator {
             val params = ma.method.allParams.toList
             val passed = new ArrayList
             val shared = new ArrayList
-                
+            
             // separate arguments for the tasks  into shared and passed objects
             for(var i = 0; i < params.size; i++){
                 if(params.get(i).type instanceof RoleType) {
@@ -164,7 +164,7 @@ class InstrGenerator {
             val argIndexList = new ArrayList(ma.args.length)
             for(var i = 1; i < ma.allArgs.length; i++)
                 argIndexList.add(i);
-                
+            
             '''
             { /* parfor generation */
                 final java.util.List<java.lang.Object[]> $argsList = new java.util.ArrayList<>();
@@ -204,7 +204,6 @@ class InstrGenerator {
         }
         
         private def dispatch CharSequence generate(ParallelStmt it) {
-            
             val canHazChildTask = childTasksAnalysis.childTasksMayExist(it)
             
             val argPrefix1 = "$t1ParConstrArg"
@@ -243,18 +242,8 @@ class InstrGenerator {
                 }
             }
             
-            // IMPROVE: probably a use-case for fold
-            // start at 1 because we don't include the receiver here
-            var argList1 = ""
-            for(var i = 1; i <= ma1.args.size; i++)
-                argList1 += argPrefix1 + i + ", "
-            if(argList1.length >= 2)
-                argList1 = argList1.substring(0, argList1.length - 2)
-            var argList2 = ""
-            for(var i = 1; i <= ma2.args.size; i++)
-                argList2 += argPrefix2 + i + ", "
-            if(argList2.length >= 2)
-                argList2 = argList2.substring(0, argList2.length - 2)
+            val argList1 = (1..<ma1.args.size+1).map[argPrefix1 + it + ", "].join
+            val argList2 = (1..<ma2.args.size+1).map[argPrefix2 + it + ", "].join
             
             var ac1 = 0;
             var ac2 = 0;
@@ -281,7 +270,7 @@ class InstrGenerator {
                         @java.lang.Override«taskGenerationMode = true»
                         protected «ma1.method.type.generateGeneric» runRolez() {
                             final long $task = idBits();
-                            «IF !ma1.method.needsReturnNull»return «ENDIF»((«ma1.method.thisParam.type.generate»)«argPrefix1 + 0»).«ma1.method.name»«UNGUARDED_METHOD.suffix»(«argList1», $task);
+                            «IF !ma1.method.needsReturnNull»return «ENDIF»((«ma1.method.thisParam.type.generate»)«argPrefix1 + 0»).«ma1.method.name»«UNGUARDED_METHOD.suffix»(«argList1»$task);
                             «IF ma1.method.needsReturnNull»
                             return null;
                             «ENDIF»
@@ -293,7 +282,7 @@ class InstrGenerator {
                         @java.lang.Override«taskGenerationMode = true»
                         protected «ma2.method.type.generateGeneric» runRolez() {
                             final long $task = idBits();
-                            «IF !ma2.method.needsReturnNull»return «ENDIF»((«ma2.method.thisParam.type.generate»)«argPrefix2 + 0»).«ma2.method.name»«UNGUARDED_METHOD.suffix»(«argList2», $task);
+                            «IF !ma2.method.needsReturnNull»return «ENDIF»((«ma2.method.thisParam.type.generate»)«argPrefix2 + 0»).«ma2.method.name»«UNGUARDED_METHOD.suffix»(«argList2»$task);
                             «IF ma2.method.needsReturnNull»
                             return null;
                             «ENDIF»
