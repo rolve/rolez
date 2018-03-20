@@ -231,6 +231,11 @@ class Instr extends InExecutable {}
 
 class Stmt extends Instr {}
 
+class ParallelStmt extends Stmt {
+	contains Stmt part1
+	contains Stmt part2
+}
+
 class Block extends Stmt {
     contains Stmt[] stmts
 }
@@ -259,6 +264,13 @@ class WhileLoop extends Stmt {
 }
 
 class ForLoop extends Stmt {
+    contains LocalVarDecl initializer
+    contains Expr condition
+    contains Expr step
+    contains Stmt body
+}
+
+class Parfor extends Stmt {
     contains LocalVarDecl initializer
     contains Expr condition
     contains Expr step

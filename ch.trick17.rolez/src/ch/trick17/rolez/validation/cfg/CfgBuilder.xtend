@@ -13,6 +13,7 @@ import ch.trick17.rolez.rolez.LogicalExpr
 import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.OpAssignment
+import ch.trick17.rolez.rolez.ParallelStmt
 import ch.trick17.rolez.rolez.ReturnExpr
 import ch.trick17.rolez.rolez.ReturnNothing
 import ch.trick17.rolez.rolez.Slicing
@@ -27,6 +28,7 @@ import java.util.Map
 import static ch.trick17.rolez.rolez.OpLogical.*
 
 import static extension java.util.Objects.requireNonNull
+import ch.trick17.rolez.rolez.Parfor
 
 class CfgBuilder {
     
@@ -74,6 +76,24 @@ class CfgBuilder {
         val node = new InstrNode(i)
         instrMap.put(i, node)
         node
+    }
+    
+    // not quite sure what the consequences are here for putting the calls sequentially. might be fine
+    private def dispatch Linker process(ParallelStmt p, Linker prev) {
+        val part1Linker = process(p.part1, prev)
+        val part2Linker = process(p.part2, part1Linker)
+        part2Linker.linkAndReturn(newInstrNode(p))
+    }
+    
+    // so far just same as for loop. it's' probably all right
+    private def dispatch Linker process(Parfor l, Linker prev) {
+        val headNode = new LoopHeadNode
+        if(!process(l.initializer, prev).link(headNode)) return [false]
+        
+        val conditionLinker = process(l.condition, headNode.linker)
+        val bodyLinker = process(l.body, conditionLinker)
+        process(l.step, bodyLinker).link(headNode)
+        conditionLinker.linkAndReturn(newInstrNode(l))
     }
     
     private def dispatch Linker process(Block block, Linker prev) {

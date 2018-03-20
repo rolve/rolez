@@ -88,7 +88,10 @@ Block:
     {Block} '{' (stmts+=Stmt)* '}';
 
 Stmt:
-    Block | LocalVarDecl | IfStmt | WhileLoop | ForLoop | SuperConstrCall | Return | ExprStmt;
+    Block | LocalVarDecl | IfStmt | WhileLoop | ForLoop | SuperConstrCall | Return | ExprStmt | ParallelStmt | Parfor;
+
+ParallelStmt:
+    'parallel' part1=Stmt 'and' part2=Stmt;
 
 LocalVarDecl:
     variable=LocalVar ('=' initializer=Expr)? ';';
@@ -106,7 +109,10 @@ WhileLoop:
 ForLoop:
     'for' '(' initializer=LocalVarDecl condition=Expr ';' step=Expr ')' body=Stmt;
 
-// IMPROVE: for-each and maybe parallel for-each
+Parfor:
+    'parfor' '(' initializer=LocalVarDecl condition=Expr ';' step=Expr ')' body=Stmt;
+
+// IMPROVE: for-each
 
 SuperConstrCall:
     {SuperConstrCall} constr=[Constr|SuperKeyword] '(' args+=Expr (',' args+=Expr)* ')' ';';
