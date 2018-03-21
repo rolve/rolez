@@ -1,7 +1,7 @@
 package rolez.lang;
 
 import static java.util.Collections.newSetFromMap;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 import static rolez.lang.Eager.collectAndCheck;
 import static rolez.lang.Eager.collectAndCheckGuarded;
 
@@ -9,6 +9,8 @@ import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.Set;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -33,6 +35,16 @@ public class EagerTest {
     
     @Rule
     public final ExpectedException exception = ExpectedException.none();
+    
+    @BeforeClass
+    public static void setup() {
+        Task.registerNewRootTask();
+    }
+    
+    @AfterClass
+    public static void tearDown() {
+        Task.unregisterRootTask();
+    }
     
     @Test
     public void testInterferenceException() {

@@ -1,10 +1,10 @@
 package rolez.lang;
 
-import static java.lang.Thread.currentThread;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.newSetFromMap;
 import static java.util.concurrent.locks.LockSupport.park;
 import static rolez.lang.Task.currentTask;
+import static rolez.lang.Task.idBitsFor;
 
 import java.util.Collection;
 import java.util.Set;
@@ -22,9 +22,7 @@ public abstract class Guarded {
     
     private boolean guardingDisabled = false;
     
-    private volatile Task<?> owner; // volatile, so tasks stuck in a guarding op don't read stale info
-    private volatile Thread ownerThread; // same
-    // IMPROVE: Replace ownerThread-based check with ID bits check
+    private volatile int ownerId = -1;
     
     private AtomicInteger sharedCount; // atomic because tasks can share concurrently
     private Set<Task<?>> readers;
@@ -47,22 +45,21 @@ public abstract class Guarded {
      */
     protected Guarded(boolean initializeGuarding) {
         if(initializeGuarding)
-            ensureGuardingInitialized();
+            ensureGuardingInitialized(currentTask().id);
     }
     
     private boolean guardingInitialized() {
-        return owner != null;
+        return ownerId >= 0;
     }
     
     /**
      * Initializes the guarding "infrastructure", if guarding is not
      * {@linkplain #disableGuarding(Guarded) disabled}.
      */
-    protected final void ensureGuardingInitialized() {
+    protected final void ensureGuardingInitialized(int ownerTaskId) {
         assert !guardingDisabled;
         if(!guardingInitialized()) {
-            owner = currentTask();
-            ownerThread = currentThread();
+            ownerId = ownerTaskId;
             sharedCount = new AtomicInteger(0);
             // IMPROVE: Initialize only when first used?
             readers = newSetFromMap(new ConcurrentHashMap<Task<?>, java.lang.Boolean>());
@@ -86,8 +83,7 @@ public abstract class Guarded {
         if(guardingInitialized()) {
             /* In case guarding has been initialized eagerly (for objects with views), this will
              * "uninitialize" it again */
-            owner = null;
-            ownerThread = null;
+            ownerId = -1;
             sharedCount = null;
             readers = null;
         }
@@ -101,30 +97,19 @@ public abstract class Guarded {
     
     final void pass(Task<?> task) {
         if(!guardingDisabled) {
-            ensureGuardingInitialized();
-            /* First step of passing */
-            owner = task;
-            ownerThread = null;
+            ensureGuardingInitialized(task.id);
+            ownerId = task.id;
             invalidateGuardingCaches();
         }
     }
     
     final void share(Task<?> task) {
         if(!guardingDisabled) {
-            ensureGuardingInitialized();
-            // IMPROVE: Use Unsafe CAS or, once Java 9 is out (:D), standard API to CAS an int field directly
+            ensureGuardingInitialized(task.parent.id);
             sharedCount.incrementAndGet();
             if(viewLock() != null)
                 readers.add(task);
             invalidateGuardingCaches();
-        }
-    }
-    
-    final void completePass() {
-        if(!guardingDisabled) {
-            assert ownerThread == null;
-            /* Second step of passing */
-            ownerThread = currentThread();
         }
     }
     
@@ -139,11 +124,10 @@ public abstract class Guarded {
         // TODO: notify tasks that wait for other views?
     }
     
-    final void releasePassed() {
+    final void releasePassed(Task<?> newOwner) {
         if(!guardingDisabled) {
-            ensureGuardingInitialized();
-            owner = owner.parent;
-            ownerThread = owner == null ? null : owner.getExecutingThread();
+            ensureGuardingInitialized(newOwner.id);
+            ownerId = newOwner.id;
         }
         // TODO: notify tasks that wait for other views?
     }
@@ -176,7 +160,7 @@ public abstract class Guarded {
         if(!guardingInitialized() || alreadyReadOnlyGuardedIn(currentTaskIdBits))
             return;
         
-        while(!mayRead())
+        while(!mayRead(currentTaskIdBits))
             park();
     }
     
@@ -204,7 +188,7 @@ public abstract class Guarded {
         if(!guardingInitialized() || alreadyReadWriteGuardedIn(currentTaskIdBits))
             return;
         
-        while(!mayWrite())
+        while(!mayWrite(currentTaskIdBits))
             park();
     }
     
@@ -285,9 +269,9 @@ public abstract class Guarded {
     
     /* Implementation methods */
     
-    private boolean mayRead() {
+    private boolean mayRead(long currentTaskIdBits) {
         return sharedCount.get() > 0
-                || (ownerThread == currentThread() && !descWithReadWriteViewExists());
+                || (idBitsFor(ownerId) == currentTaskIdBits && !descWithReadWriteViewExists());
     }
     
     /**
@@ -297,21 +281,25 @@ public abstract class Guarded {
     private boolean descWithReadWriteViewExists() {
         if(viewLock() == null)
             return false;
-        // IMPROVE: Slow path in separate method?
+        else
+            return descWithReadWriteViewExistsSlow();
+    }
+    
+    private boolean descWithReadWriteViewExistsSlow() {
         Task<?> currentTask = currentTask();
         synchronized(viewLock()) {
             for(Guarded v : views())
                 if(v.sharedCount.get() == 0) {
-                    Task<?> currentOwner = v.owner;
+                    Task<?> currentOwner = Task.withId(v.ownerId); // is this corrent?...
                     if(currentOwner.isActive() && currentOwner.isDescendantOf(currentTask))
                         return true;
                 }
         }
         return false;
     }
-
-    private boolean mayWrite() {
-        return ownerThread == currentThread() && sharedCount.get() == 0
+    
+    private boolean mayWrite(long currenTaskIdBits) {
+        return idBitsFor(ownerId) == currenTaskIdBits && sharedCount.get() == 0
                 && !descWithReadViewExists() && !descWithReadWriteViewExists();
         // IMPROVE: Combine above two methods for efficiency
     }
@@ -323,6 +311,11 @@ public abstract class Guarded {
     private boolean descWithReadViewExists() {
         if(viewLock() == null)
             return false;
+        else
+            return descWithReadViewExistsSlow();
+    }
+    
+    private boolean descWithReadViewExistsSlow() {
         Task<?> currentTask = currentTask();
         synchronized(viewLock()) {
             for(Guarded view : views())

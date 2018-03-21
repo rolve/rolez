@@ -17,40 +17,41 @@ public abstract class Task<V> implements Runnable {
 
 	private static final transient ThreadLocal<Task<?>> currentTask = new ThreadLocal<Task<?>>();
 
-	// IMPROVE: Could replace thread-local variable with "current" task variable that is passed to
-	// all generated methods. Callbacks from mapped methods could go to a "bridge" method that gets
-	// the current task from the thread local. Bridge methods only necessary for methods that
-	// override a mapped method (including equals(), hashCode(), toString()).
-
-	// IMPROVE: To speed this up, could cache current task in a field of a custom thread class or so
 	public static Task<?> currentTask() {
 		return currentTask.get();
 	}
 
 	private static final BitSet usedTaskIds = new BitSet();
+	private static final Task<?>[] registeredTasks = new Task<?>[64];
 
 	/**
 	 * Returns the next unused task ID and checks that the max number of task IDs is not exceeded.
 	 * At the moment, there can be at most 64 tasks running at the same time, because a bit set
 	 * consisting of a single "long" field is used for efficient guarding.
 	 */
-	private static int getUnusedTaskId() {
+	private static int registerTask(Task<?> task) {
 		synchronized(usedTaskIds) {
 			int id = usedTaskIds.nextClearBit(0);
 			if(id >= 64)
 				throw new AssertionError("too many tasks, maximum is 64");
 			usedTaskIds.set(id);
+			registeredTasks[id] = task;
 			return id;
 		}
 	}
 
-	private static void releaseTaskId(int id) {
+	private static void unregisterTask(int id) {
 		synchronized(usedTaskIds) {
 			usedTaskIds.clear(id);
+			// no need to clear registeredTasks[id] (I think), will be overwritten anyway
 		}
 	}
 
-	private final int id = getUnusedTaskId();
+	static Task<?> withId(int id) {
+	    return registeredTasks[id];
+	}
+
+	public final int id = registerTask(this);
 	private final Sync sync = new Sync();
 
 	private Thread executingThread;
@@ -114,7 +115,6 @@ public abstract class Task<V> implements Runnable {
 		executingThread = currentThread();
 		Task<?> prevTask = currentTask.get();
 		currentTask.set(this);
-		completeTaskStartTransitions();
 		try {
 			result = runRolez();
 			/* Wait for child tasks to finish so that exceptions get propagated up the task stack */
@@ -130,7 +130,7 @@ public abstract class Task<V> implements Runnable {
 			exception = e;
 		}
 		taskFinishTransitions();
-		releaseTaskId(id);
+		unregisterTask(id);
 		currentTask.set(prevTask);
 
 		/* Unblock threads waiting to get the result. Note that not only the parent task, but also
@@ -177,7 +177,11 @@ public abstract class Task<V> implements Runnable {
 	}
 
 	public long idBits() {
-		return 1L << id;
+		return idBitsFor(id);
+	}
+
+	public static long idBitsFor(int id) {
+	    return 1L << id;
 	}
 
 	/**
@@ -205,7 +209,7 @@ public abstract class Task<V> implements Runnable {
 	 */
 	public static void unregisterRootTask() {
 		assert currentTask.get().parent == null;
-		releaseTaskId(currentTask.get().id);
+		unregisterTask(currentTask.get().id);
 		currentTask.set(null);
 	}
 
@@ -279,12 +283,6 @@ public abstract class Task<V> implements Runnable {
 			g.share(this);
 	}
 
-
-	private void completeTaskStartTransitions() {
-		for(Guarded g : passedReachable)
-			g.completePass();
-	}
-
 	private void taskFinishTransitions() {
 		/* Release all shared objects. No need for guarding, as it's not possible that they have
 		 * been modified. */
@@ -301,14 +299,14 @@ public abstract class Task<V> implements Runnable {
 			((Guarded) result).guardReadWriteReachable(newPassedReachable, idBits());
 
 		for(Guarded g : newPassedReachable)
-			g.releasePassed();
+			g.releasePassed(this.parent);
 
 		/* Finally, release objects that were previously reachable (but not anymore) and notify
 		 * parent thread. */
 		passedReachable.removeAll(newPassedReachable);
 		for(Guarded g : passedReachable) {
 			guardReadWrite(g);
-			g.releasePassed();
+			g.releasePassed(this.parent);
 		}
 		if(parent != null)
 			unpark(parent.executingThread);

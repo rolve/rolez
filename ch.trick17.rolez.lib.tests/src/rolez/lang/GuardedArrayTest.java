@@ -6,9 +6,21 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class GuardedArrayTest {
+    
+    @BeforeClass
+    public static void setup() {
+        Task.registerNewRootTask();
+    }
+    
+    @AfterClass
+    public static void tearDown() {
+        Task.unregisterRootTask();
+    }
     
     @Test
     public void testClone() {

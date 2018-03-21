@@ -8,6 +8,8 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -63,6 +65,16 @@ public class GuardedSliceTest {
     public GuardedSliceTest(final int length, final List<SliceRange> ranges) {
         this.length = length;
         this.ranges = ranges;
+    }
+    
+    @BeforeClass
+    public static void setup() {
+        Task.registerNewRootTask();
+    }
+    
+    @AfterClass
+    public static void tearDown() {
+        Task.unregisterRootTask();
     }
     
     @Test
