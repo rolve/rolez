@@ -1,15 +1,13 @@
 package rolez.lang;
 
 import static java.util.Collections.emptyList;
-import static java.util.Collections.newSetFromMap;
 import static java.util.concurrent.locks.LockSupport.park;
 import static rolez.lang.Task.currentTask;
 import static rolez.lang.Task.idBitsFor;
 
 import java.util.Collection;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Superclass of all guarded objects
@@ -18,14 +16,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public abstract class Guarded {
     
-    // IMPROVE: Create separate, optimized class for objects without views?
-    
     private boolean guardingDisabled = false;
     
     private volatile int ownerId = -1;
-    
-    private AtomicInteger sharedCount; // atomic because tasks can share concurrently
-    private Set<Task<?>> readers;
+    private AtomicLong readerBits;
     
     private Object guardingCachesLock; // IMPROVE: replace with CAS using Java 9's VarHandles?
     private volatile long readGuardingCache;
@@ -60,9 +54,7 @@ public abstract class Guarded {
         assert !guardingDisabled;
         if(!guardingInitialized()) {
             ownerId = ownerTaskId;
-            sharedCount = new AtomicInteger(0);
-            // IMPROVE: Initialize only when first used?
-            readers = newSetFromMap(new ConcurrentHashMap<Task<?>, java.lang.Boolean>());
+            readerBits = new AtomicLong();
             guardingCachesLock = new Object();
         }
     }
@@ -84,8 +76,6 @@ public abstract class Guarded {
             /* In case guarding has been initialized eagerly (for objects with views), this will
              * "uninitialize" it again */
             ownerId = -1;
-            sharedCount = null;
-            readers = null;
         }
         
         for(Object g : guardedRefs())
@@ -106,20 +96,16 @@ public abstract class Guarded {
     final void share(Task<?> task) {
         if(!guardingDisabled) {
             ensureGuardingInitialized(task.parent.id);
-            sharedCount.incrementAndGet();
-            if(viewLock() != null)
-                readers.add(task);
+            assert (readerBits.get() & task.idBits()) == 0;
+            readerBits.addAndGet(task.idBits()); // addition is the same as bitwise OR if bits don't overlap!
             invalidateGuardingCaches();
         }
     }
     
-    final void releaseShared() {
+    final void releaseShared(Task<?> task) {
         if(!guardingDisabled) {
-            sharedCount.decrementAndGet();
-            if(viewLock() != null) {
-                boolean removed = readers.remove(currentTask());
-                assert removed;
-            }
+            assert (readerBits.get() & task.idBits()) != 0;
+            readerBits.addAndGet(-task.idBits()); // see above
         }
         // TODO: notify tasks that wait for other views?
     }
@@ -270,7 +256,7 @@ public abstract class Guarded {
     /* Implementation methods */
     
     private boolean mayRead(long currentTaskIdBits) {
-        return sharedCount.get() > 0
+        return readerBits.get() != 0
                 || (idBitsFor(ownerId) == currentTaskIdBits && !descWithReadWriteViewExists());
     }
     
@@ -289,8 +275,9 @@ public abstract class Guarded {
         Task<?> currentTask = currentTask();
         synchronized(viewLock()) {
             for(Guarded v : views())
-                if(v.sharedCount.get() == 0) {
-                    Task<?> currentOwner = Task.withId(v.ownerId); // is this corrent?...
+                if(v.readerBits.get() == 0) {
+                    Task<?> currentOwner = Task.withId(v.ownerId);
+                    // TODO: could registeredTask[id] have been overridden?..
                     if(currentOwner.isActive() && currentOwner.isDescendantOf(currentTask))
                         return true;
                 }
@@ -299,7 +286,7 @@ public abstract class Guarded {
     }
     
     private boolean mayWrite(long currenTaskIdBits) {
-        return idBitsFor(ownerId) == currenTaskIdBits && sharedCount.get() == 0
+        return idBitsFor(ownerId) == currenTaskIdBits && readerBits.get() == 0
                 && !descWithReadViewExists() && !descWithReadWriteViewExists();
         // IMPROVE: Combine above two methods for efficiency
     }
@@ -318,12 +305,16 @@ public abstract class Guarded {
     private boolean descWithReadViewExistsSlow() {
         Task<?> currentTask = currentTask();
         synchronized(viewLock()) {
-            for(Guarded view : views())
-                for(Task<?> reader : view.readers)
-                    if(reader.isDescendantOf(currentTask))
-                        return true;
+            for(Guarded view : views()) {
+                long viewReaderBits = view.readerBits.get();
+                if(viewReaderBits != 0) {
+                    for(int id = 0; id < 64; id++)
+                        if((viewReaderBits & (1L << id)) != 0 && Task.withId(id).isDescendantOf(currentTask))
+                            return true;
+                }
+            }
+            return false;
         }
-        return false;
     }
     
     private boolean isInReadGuardingCache(long taskIdBits) {

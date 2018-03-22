@@ -287,7 +287,7 @@ public abstract class Task<V> implements Runnable {
 		/* Release all shared objects. No need for guarding, as it's not possible that they have
 		 * been modified. */
 		for(Guarded g : sharedReachable)
-			g.releaseShared();
+			g.releaseShared(this);
 
 		/* Then, find objects that are now reachable from passed objects (and the result object) and
 		 * release those */
