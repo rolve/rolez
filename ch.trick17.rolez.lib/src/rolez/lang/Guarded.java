@@ -39,7 +39,7 @@ public abstract class Guarded {
      */
     protected Guarded(boolean initializeGuarding) {
         if(initializeGuarding)
-            ensureGuardingInitialized(currentTask().id);
+            ensureGuardingInitialized(currentTask());
     }
     
     private boolean guardingInitialized() {
@@ -50,10 +50,10 @@ public abstract class Guarded {
      * Initializes the guarding "infrastructure", if guarding is not
      * {@linkplain #disableGuarding(Guarded) disabled}.
      */
-    protected final void ensureGuardingInitialized(int ownerTaskId) {
+    protected final void ensureGuardingInitialized(Task<?> task) {
         assert !guardingDisabled;
         if(!guardingInitialized()) {
-            ownerId = ownerTaskId;
+            ownerId = task.id;
             readerBits = new AtomicLong();
             guardingCachesLock = new Object();
         }
@@ -87,7 +87,7 @@ public abstract class Guarded {
     
     final void pass(Task<?> task) {
         if(!guardingDisabled) {
-            ensureGuardingInitialized(task.id);
+            ensureGuardingInitialized(task);
             ownerId = task.id;
             invalidateGuardingCaches();
         }
@@ -95,7 +95,7 @@ public abstract class Guarded {
     
     final void share(Task<?> task) {
         if(!guardingDisabled) {
-            ensureGuardingInitialized(task.parent.id);
+            ensureGuardingInitialized(task.parent);
             assert (readerBits.get() & task.idBits()) == 0;
             readerBits.addAndGet(task.idBits()); // addition is the same as bitwise OR if bits don't overlap!
             invalidateGuardingCaches();
@@ -112,7 +112,7 @@ public abstract class Guarded {
     
     final void releasePassed(Task<?> newOwner) {
         if(!guardingDisabled) {
-            ensureGuardingInitialized(newOwner.id);
+            ensureGuardingInitialized(newOwner);
             ownerId = newOwner.id;
         }
         // TODO: notify tasks that wait for other views?

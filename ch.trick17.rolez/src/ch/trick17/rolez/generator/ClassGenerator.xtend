@@ -90,7 +90,7 @@ class ClassGenerator {
             «FOR slice : slices»
             
             public final «slice.interfaceName» $«slice.safeName»Slice() {
-                ensureGuardingInitialized();
+                ensureGuardingInitialized(rolez.lang.Task.currentTask());
                 synchronized(this) {
                     «slice.implName» slice = («slice.implName») $slices.get("«slice.name»");
                     if(slice == null) {
