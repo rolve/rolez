@@ -102,6 +102,14 @@ public abstract class Guarded {
         }
     }
     
+    final boolean ownedBy(Task<?> task) {
+        return ownerId == task.id; // implies guardingInitialized(), assuming task.id >= 0
+    }
+    
+    final boolean ownedByOrSharedWith(Task<?> task) {
+        return ownerId == task.id || guardingInitialized() && (readerBits.get() & task.idBits()) != 0;
+    }
+    
     final void releaseShared(Task<?> task) {
         if(!guardingDisabled) {
             assert (readerBits.get() & task.idBits()) != 0;
@@ -133,7 +141,8 @@ public abstract class Guarded {
         return guarded;
     }
     
-    public final void guardReadOnlyReachable(Set<Guarded> processed, long currentTaskIdBits) {
+    // TODO: Remove this method as soon as Eager code doesn't use it anymore
+    final void guardReadOnlyReachable(Set<Guarded> processed, long currentTaskIdBits) {
         if(processed.add(this)) {
             guardReadOnly(currentTaskIdBits);
             for(Object g : guardedRefs())
@@ -142,7 +151,7 @@ public abstract class Guarded {
         }
     }
     
-    private final void guardReadOnly(long currentTaskIdBits) {
+    final void guardReadOnly(long currentTaskIdBits) {
         if(!guardingInitialized() || alreadyReadOnlyGuardedIn(currentTaskIdBits))
             return;
         
@@ -161,7 +170,8 @@ public abstract class Guarded {
         return guarded;
     }
     
-    public final void guardReadWriteReachable(Set<Guarded> processed, long currentTaskIdBits) {
+    // TODO: Remove this method as soon as Eager code doesn't use it anymore
+    final void guardReadWriteReachable(Set<Guarded> processed, long currentTaskIdBits) {
         if(processed.add(this)) {
             guardReadWrite(currentTaskIdBits);
             for(Object g : guardedRefs())
@@ -170,7 +180,7 @@ public abstract class Guarded {
         }
     }
     
-    private void guardReadWrite(long currentTaskIdBits) {
+    final void guardReadWrite(long currentTaskIdBits) {
         if(!guardingInitialized() || alreadyReadWriteGuardedIn(currentTaskIdBits))
             return;
         
