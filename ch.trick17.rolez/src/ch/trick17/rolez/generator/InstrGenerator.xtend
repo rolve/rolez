@@ -184,14 +184,14 @@ class InstrGenerator {
                     for(int $i = 0; $i < $parforTasks.length; $i++){
                         final java.lang.Object[] $argArray = $argsList.get($i);
                         $parforTasks[$i] = new «taskClassName»<«ma.method.type.generateGeneric»>($collectedReachables[3*$i], $collectedReachables[3*$i+1], $collectedReachables[3*$i+2]) {
-                            @java.lang.Override«taskGenerationMode = true»
+                            @java.lang.Override
                             protected «ma.method.type.generateGeneric» runRolez() {
                                 final long $task = idBits();
                                 «IF !ma.method.needsReturnNull»return «ENDIF»((«ma.method.thisParam.type.generate»)$argArray[0]).«ma.method.name»«UNGUARDED_METHOD.suffix»(«
                                     FOR ind : argIndexList»(«params.get(ind).type.generate»)$argArray[«ind»], «ENDFOR»$task);
                                 «IF ma.method.needsReturnNull»return null;«ENDIF»
                             }
-                        };«taskGenerationMode = false»
+                        };
                         if($i < $parforTasks.length - 1) «jvmTaskSystemClassName».getDefault().start($parforTasks[$i]);
                     }
                     «jvmTaskSystemClassName».getDefault().run($parforTasks[$parforTasks.length - 1]);
@@ -267,7 +267,7 @@ class InstrGenerator {
                 try {
                     /* part1 */
                     $t1 = new «taskClassName»<«ma1.method.type.generateGeneric»>($collectedReachables[0], $collectedReachables[1], $collectedReachables[2]) {
-                        @java.lang.Override«taskGenerationMode = true»
+                        @java.lang.Override
                         protected «ma1.method.type.generateGeneric» runRolez() {
                             final long $task = idBits();
                             «IF !ma1.method.needsReturnNull»return «ENDIF»((«ma1.method.thisParam.type.generate»)«argPrefix1 + 0»).«ma1.method.name»«UNGUARDED_METHOD.suffix»(«argList1»$task);
@@ -275,11 +275,11 @@ class InstrGenerator {
                             return null;
                             «ENDIF»
                         }
-                    };«taskGenerationMode = false»
+                    };
                     «jvmTaskSystemClassName».getDefault().start($t1);
                     /* part2 */
                     $t2 = new «taskClassName»<«ma2.method.type.generateGeneric»>($collectedReachables[3], $collectedReachables[4], $collectedReachables[5]) {
-                        @java.lang.Override«taskGenerationMode = true»
+                        @java.lang.Override
                         protected «ma2.method.type.generateGeneric» runRolez() {
                             final long $task = idBits();
                             «IF !ma2.method.needsReturnNull»return «ENDIF»((«ma2.method.thisParam.type.generate»)«argPrefix2 + 0»).«ma2.method.name»«UNGUARDED_METHOD.suffix»(«argList2»$task);
@@ -287,27 +287,13 @@ class InstrGenerator {
                             return null;
                             «ENDIF»
                         }
-                    };«taskGenerationMode = false»
+                    };
                     «jvmTaskSystemClassName».getDefault().run($t2);
                 } finally {
                     $t1.get();
                 }
             }
             '''
-        }
-        
-        // to generate task code, method kind needs to be task. this is needed to allow generation of anonymous inner classes in normal methods
-        // returns a string ("") so it can be used in the ''' ... '''
-        private var MethodKind methodKindTemp;
-        private def String setTaskGenerationMode(boolean on){
-            if(on && methodKind != TASK){
-                methodKindTemp = methodKind
-                methodKind = TASK
-            }
-            if(!on && methodKindTemp != null){
-                methodKind = methodKindTemp
-            }
-            ""
         }
         
         // copied form class generator
