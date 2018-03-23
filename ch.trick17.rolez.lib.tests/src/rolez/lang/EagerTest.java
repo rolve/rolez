@@ -49,7 +49,7 @@ public class EagerTest {
         GuardedArray<?> arr0 = GuardedArray.wrap(new Object[] {});
         GuardedArray<?> arr1 = GuardedArray.wrap(new Object[] {arr0});
         
-        exception.expect(ConcurrentInterferenceException.class);
+        exception.expect(InterferenceException.class);
         collectAndCheck(new Object[][]{
                 new Object[] {arr0},
                 new Object[] {},
@@ -63,7 +63,7 @@ public class EagerTest {
         GuardedArray<?> arr0 = GuardedArray.wrap(new Object[] {});
         GuardedArray<?> arr1 = GuardedArray.wrap(new Object[] {arr0});
         
-        exception.expect(ConcurrentInterferenceException.class);
+        exception.expect(InterferenceException.class);
         collectAndCheckGuarded(new Object[][]{
                 new Object[] {arr0},
                 new Object[] {},
@@ -77,7 +77,7 @@ public class EagerTest {
         GuardedArray<?> arr0 = GuardedArray.wrap(new Object[] {});
         GuardedArray<?> arr1 = GuardedArray.wrap(new Object[] {arr0});
         
-        exception.expect(ConcurrentInterferenceException.class);
+        exception.expect(InterferenceException.class);
         collectAndCheck(new Object[][]{
                 new Object[] {arr0},
                 new Object[] {arr1},
@@ -96,7 +96,7 @@ public class EagerTest {
         GuardedSlice<Object> part2 = slice.slice(4, 10);
         
         
-        exception.expect(ConcurrentInterferenceException.class);
+        exception.expect(InterferenceException.class);
         collectAndCheck(new Object[][]{
                 new Object[] {part1},
                 new Object[] {},
