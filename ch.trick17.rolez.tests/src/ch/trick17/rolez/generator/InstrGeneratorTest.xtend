@@ -1290,18 +1290,18 @@ class InstrGeneratorTest extends GeneratorTest {
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
             Base o1 = new Base($task);
             Base o2 = new Base($task);
-            { /* parallel stmt generation */
-                final Tasks $t1ParConstrArg0 = Tasks.INSTANCE;
-                final java.lang.Object $t1ParConstrArg1 = o1;
-                final Tasks $t2ParConstrArg0 = Tasks.INSTANCE;
-                final java.lang.Object $t2ParConstrArg1 = o2;
-                java.util.Set<rolez.lang.Guarded>[] $collectedReachables = rolez.lang.Eager.collectAndCheck%%%Guarded%%%(
-                    new java.lang.Object[][]{
-                        new java.lang.Object[]{$t1ParConstrArg1, },
-                        new java.lang.Object[]{},
-                        new java.lang.Object[]{$t2ParConstrArg1, },
-                        new java.lang.Object[]{}
-                    }, $task);
+            { /* parallel-and */
+                final Tasks $t1Arg0 = Tasks.INSTANCE;
+                final java.lang.Object $t1Arg1 = o1;
+                final Tasks $t2Arg0 = Tasks.INSTANCE;
+                final java.lang.Object $t2Arg1 = o2;
+                final java.lang.Object[][] $allArgs = {
+                        {$t1Arg1},
+                        {},
+                        {$t2Arg1},
+                        {}};
+                final java.util.Set<rolez.lang.Guarded>[] $collectedReachables =
+                        rolez.lang.Eager.collectAndCheck%%%Guarded%%%($allArgs, $task);
                 rolez.lang.Task<java.lang.Void> $t1 = null;
                 rolez.lang.Task<java.lang.Void> $t2 = null;
                 try {
@@ -1310,7 +1310,7 @@ class InstrGeneratorTest extends GeneratorTest {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
                             final long $task = idBits();
-                            ((Tasks)$t1ParConstrArg0).bar$Unguarded($t1ParConstrArg1, $task);
+                            ((Tasks)$t1Arg0).bar$Unguarded($t1Arg1, $task);
                             return null;
                         }
                     };
@@ -1320,7 +1320,7 @@ class InstrGeneratorTest extends GeneratorTest {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
                             final long $task = idBits();
-                            ((Tasks)$t2ParConstrArg0).bar$Unguarded($t2ParConstrArg1, $task);
+                            ((Tasks)$t2Arg0).bar$Unguarded($t2Arg1, $task);
                             return null;
                         }
                     };
@@ -1339,16 +1339,16 @@ class InstrGeneratorTest extends GeneratorTest {
             and
                 the Tasks.foo();
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
-            { /* parallel stmt generation */
-                final Tasks $t1ParConstrArg0 = Tasks.INSTANCE;
-                final Tasks $t2ParConstrArg0 = Tasks.INSTANCE;
-                java.util.Set<rolez.lang.Guarded>[] $collectedReachables = rolez.lang.Eager.collectAndCheck%%%Guarded%%%(
-                    new java.lang.Object[][]{
-                        new java.lang.Object[]{},
-                        new java.lang.Object[]{},
-                        new java.lang.Object[]{},
-                        new java.lang.Object[]{}
-                    }, $task);
+            { /* parallel-and */
+                final Tasks $t1Arg0 = Tasks.INSTANCE;
+                final Tasks $t2Arg0 = Tasks.INSTANCE;
+                final java.lang.Object[][] $allArgs = {
+                        {},
+                        {},
+                        {},
+                        {}};
+                final java.util.Set<rolez.lang.Guarded>[] $collectedReachables =
+                        rolez.lang.Eager.collectAndCheck%%%Guarded%%%($allArgs, $task);
                 rolez.lang.Task<java.lang.Void> $t1 = null;
                 rolez.lang.Task<java.lang.Void> $t2 = null;
                 try {
@@ -1357,7 +1357,7 @@ class InstrGeneratorTest extends GeneratorTest {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
                             final long $task = idBits();
-                            ((Tasks)$t1ParConstrArg0).foo$Unguarded($task);
+                            ((Tasks)$t1Arg0).foo$Unguarded($task);
                             return null;
                         }
                     };
@@ -1367,7 +1367,7 @@ class InstrGeneratorTest extends GeneratorTest {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
                             final long $task = idBits();
-                            ((Tasks)$t2ParConstrArg0).foo$Unguarded($task);
+                            ((Tasks)$t2Arg0).foo$Unguarded($task);
                             return null;
                         }
                     };

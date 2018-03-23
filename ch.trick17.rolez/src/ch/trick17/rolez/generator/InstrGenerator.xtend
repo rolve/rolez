@@ -206,12 +206,14 @@ class InstrGenerator {
         private def dispatch CharSequence generate(ParallelStmt it) {
             val canHazChildTask = childTasksAnalysis.childTasksMayExist(it)
             
-            val argPrefix1 = "$t1ParConstrArg"
-            val argPrefix2 = "$t2ParConstrArg"
+            val argPrefix1 = "$t1Arg"
+            val argPrefix2 = "$t2Arg"
             
             var ma1 = (part1 as ExprStmt).expr as MemberAccess	
             var ma2 = (part2 as ExprStmt).expr as MemberAccess	
             
+            val args1 = ma1.allArgs.toList
+            val args2 = ma2.allArgs.toList
             val params1 = ma1.method.allParams.toList
             val params2 = ma2.method.allParams.toList
             
@@ -221,7 +223,7 @@ class InstrGenerator {
             val shared1 = new ArrayList
             val shared2 = new ArrayList
             
-            // separate arguments for the tasks  into shared and passed objects
+            // separate arguments for the tasks into shared and passed objects
             for(var i = 0; i < params1.size; i++){
                 if(params1.get(i).type instanceof RoleType) {
                     val role = (params1.get(i).type as RoleType).role
@@ -242,26 +244,24 @@ class InstrGenerator {
                 }
             }
             
-            val argList1 = (1..<ma1.args.size+1).map[argPrefix1 + it + ", "].join
-            val argList2 = (1..<ma2.args.size+1).map[argPrefix2 + it + ", "].join
+            val argList1 = (1..<args1.size).map[argPrefix1 + it + ", "].join
+            val argList2 = (1..<args2.size).map[argPrefix2 + it + ", "].join
             
-            var ac1 = 0;
-            var ac2 = 0;
             '''
-            { /* parallel stmt generation */
-                «FOR arg : ma1.allArgs»
-                final «params1.get(ac1).type.generate» «argPrefix1 + ac1++» = «arg.generate»;
+            { /* parallel-and */
+                «FOR i : 0..<args1.size»
+                final «params1.get(i).type.generate» «argPrefix1»«i» = «args1.get(i).generate»;
                 «ENDFOR»
-                «FOR arg : ma2.allArgs»
-                final «params2.get(ac2).type.generate» «argPrefix2 + ac2++» = «arg.generate»;
+                «FOR i : 0..<args2.size»
+                final «params2.get(i).type.generate» «argPrefix2»«i» = «args2.get(i).generate»;
                 «ENDFOR»
-                java.util.Set<«jvmGuardedClassName»>[] $collectedReachables = rolez.lang.Eager.collectAndCheck«IF canHazChildTask»Guarded«ENDIF»(
-                    new java.lang.Object[][]{
-                        new java.lang.Object[]{«FOR ind : passed1»«argPrefix1 + ind», «ENDFOR»},
-                        new java.lang.Object[]{«FOR ind : shared1»«argPrefix1 + ind», «ENDFOR»},
-                        new java.lang.Object[]{«FOR ind : passed2»«argPrefix2 + ind», «ENDFOR»},
-                        new java.lang.Object[]{«FOR ind : shared2»«argPrefix2 + ind», «ENDFOR»}
-                    }, $task);
+                final java.lang.Object[][] $allArgs = {
+                        {«passed1.map[argPrefix1 + it].join(", ")»},
+                        {«shared1.map[argPrefix1 + it].join(", ")»},
+                        {«passed2.map[argPrefix2 + it].join(", ")»},
+                        {«shared2.map[argPrefix2 + it].join(", ")»}};
+                final java.util.Set<«jvmGuardedClassName»>[] $collectedReachables =
+                        rolez.lang.Eager.collectAndCheck«IF canHazChildTask»Guarded«ENDIF»($allArgs, $task);
                 «taskClassName»<«ma1.method.type.generateGeneric»> $t1 = null;
                 «taskClassName»<«ma2.method.type.generateGeneric»> $t2 = null;
                 try {
