@@ -1310,7 +1310,7 @@ class InstrGeneratorTest extends GeneratorTest {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
                             final long $task = idBits();
-                            ((Tasks)$t1Arg0).bar$Unguarded($t1Arg1, $task);
+                            $t1Arg0.bar$Unguarded($t1Arg1, $task);
                             return null;
                         }
                     };
@@ -1320,7 +1320,7 @@ class InstrGeneratorTest extends GeneratorTest {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
                             final long $task = idBits();
-                            ((Tasks)$t2Arg0).bar$Unguarded($t2Arg1, $task);
+                            $t2Arg0.bar$Unguarded($t2Arg1, $task);
                             return null;
                         }
                     };
@@ -1357,7 +1357,7 @@ class InstrGeneratorTest extends GeneratorTest {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
                             final long $task = idBits();
-                            ((Tasks)$t1Arg0).foo$Unguarded($task);
+                            $t1Arg0.foo$Unguarded($task);
                             return null;
                         }
                     };
@@ -1367,7 +1367,7 @@ class InstrGeneratorTest extends GeneratorTest {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
                             final long $task = idBits();
-                            ((Tasks)$t2Arg0).foo$Unguarded($task);
+                            $t2Arg0.foo$Unguarded($task);
                             return null;
                         }
                     };
