@@ -111,7 +111,6 @@ public abstract class Task<V> implements Runnable {
      */
     public final void run() {
         executingThread = currentThread();
-        Task<?> prevTask = currentTask.get();
         currentTask.set(this);
         try {
             result = runRolez();
@@ -129,7 +128,7 @@ public abstract class Task<V> implements Runnable {
         }
         taskFinishTransitions();
         unregisterTask(id);
-        currentTask.set(prevTask);
+        currentTask.set(parent);
 
         /* Unblock threads waiting to get the result. Note that not only the parent task, but also
          * tasks started by the parent tasks may have a reference to this task. */
