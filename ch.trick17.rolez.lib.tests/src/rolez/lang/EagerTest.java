@@ -15,8 +15,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import rolez.lang.Eager.ConcurrentInterferenceException;
-
 public class EagerTest {
     
     /** public static Set<Guarded>[] collectAndCheck(Object[][] args, long idBits){

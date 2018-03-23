@@ -9,7 +9,7 @@ import java.util.Set;
 public class Eager {
     
     private static void error(String err) {
-        throw new ConcurrentInterferenceException(
+        throw new InterferenceException(
                 "This parallel construct can't be executed concurrently due to interference. \n(" + err + ")");
     }
     
@@ -177,11 +177,5 @@ public class Eager {
     
     private static Set<Guarded> newIdentitySet(int capacity) {
         return newSetFromMap(new IdentityHashMap<Guarded, java.lang.Boolean>(capacity));
-    }
-    
-    public static class ConcurrentInterferenceException extends RuntimeException {
-        public ConcurrentInterferenceException(String message) {
-            super(message);
-        }
     }
 }
