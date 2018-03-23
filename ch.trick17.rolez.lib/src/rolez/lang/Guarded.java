@@ -1,9 +1,9 @@
 package rolez.lang;
 
+import static java.lang.Long.numberOfLeadingZeros;
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.locks.LockSupport.park;
 import static rolez.lang.Task.currentTask;
-import static rolez.lang.Task.idBitsFor;
 
 import java.util.Collection;
 import java.util.Set;
@@ -18,7 +18,7 @@ public abstract class Guarded {
     
     private boolean guardingDisabled = false;
     
-    private volatile int ownerId = -1;
+    private volatile long ownerBits = 0;
     private AtomicLong readerBits;
     
     private Object guardingCachesLock; // IMPROVE: replace with CAS using Java 9's VarHandles?
@@ -43,7 +43,7 @@ public abstract class Guarded {
     }
     
     private boolean guardingInitialized() {
-        return ownerId >= 0;
+        return ownerBits != 0;
     }
     
     /**
@@ -53,7 +53,7 @@ public abstract class Guarded {
     protected final void ensureGuardingInitialized(Task<?> task) {
         assert !guardingDisabled;
         if(!guardingInitialized()) {
-            ownerId = task.id;
+            ownerBits = task.idBits();
             readerBits = new AtomicLong();
             guardingCachesLock = new Object();
         }
@@ -75,7 +75,7 @@ public abstract class Guarded {
         if(guardingInitialized()) {
             /* In case guarding has been initialized eagerly (for objects with views), this will
              * "uninitialize" it again */
-            ownerId = -1;
+            ownerBits = 0;
         }
         
         for(Object g : guardedRefs())
@@ -88,7 +88,7 @@ public abstract class Guarded {
     final void pass(Task<?> task) {
         if(!guardingDisabled) {
             ensureGuardingInitialized(task);
-            ownerId = task.id;
+            ownerBits = task.idBits();
             invalidateGuardingCaches();
         }
     }
@@ -103,11 +103,11 @@ public abstract class Guarded {
     }
     
     final boolean ownedBy(Task<?> task) {
-        return ownerId == task.id; // implies guardingInitialized(), assuming task.id >= 0
+        return ownerBits == task.idBits(); // implies guardingInitialized(), assuming task.idBits() != 0
     }
     
     final boolean ownedByOrSharedWith(Task<?> task) {
-        return ownerId == task.id || guardingInitialized() && (readerBits.get() & task.idBits()) != 0;
+        return ownerBits == task.idBits() || guardingInitialized() && (readerBits.get() & task.idBits()) != 0;
     }
     
     final void releaseShared(Task<?> task) {
@@ -121,7 +121,7 @@ public abstract class Guarded {
     final void releasePassed(Task<?> newOwner) {
         if(!guardingDisabled) {
             ensureGuardingInitialized(newOwner);
-            ownerId = newOwner.id;
+            ownerBits = newOwner.idBits();
         }
         // TODO: notify tasks that wait for other views?
     }
@@ -267,7 +267,7 @@ public abstract class Guarded {
     
     private boolean mayRead(long currentTaskIdBits) {
         return readerBits.get() != 0
-                || (idBitsFor(ownerId) == currentTaskIdBits && !descWithReadWriteViewExists());
+                || (ownerBits == currentTaskIdBits && !descWithReadWriteViewExists());
     }
     
     /**
@@ -286,9 +286,10 @@ public abstract class Guarded {
         synchronized(viewLock()) {
             for(Guarded v : views())
                 if(v.readerBits.get() == 0) {
-                    Task<?> currentOwner = Task.withId(v.ownerId);
+                    int ownerId = 63 - numberOfLeadingZeros(v.ownerBits);
+                    Task<?> owner = Task.withId(ownerId);
                     // TODO: could registeredTask[id] have been overridden?..
-                    if(currentOwner.isActive() && currentOwner.isDescendantOf(currentTask))
+                    if(owner.isActive() && owner.isDescendantOf(currentTask))
                         return true;
                 }
         }
@@ -296,7 +297,7 @@ public abstract class Guarded {
     }
     
     private boolean mayWrite(long currenTaskIdBits) {
-        return idBitsFor(ownerId) == currenTaskIdBits && readerBits.get() == 0
+        return ownerBits == currenTaskIdBits && readerBits.get() == 0
                 && !descWithReadViewExists() && !descWithReadWriteViewExists();
         // IMPROVE: Combine above two methods for efficiency
     }
