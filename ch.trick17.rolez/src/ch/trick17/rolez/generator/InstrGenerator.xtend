@@ -270,7 +270,7 @@ class InstrGenerator {
                         @java.lang.Override
                         protected «ma1.method.type.generateGeneric» runRolez() {
                             final long $task = idBits();
-                            «IF !ma1.method.needsReturnNull»return «ENDIF»((«ma1.method.thisParam.type.generate»)«argPrefix1 + 0»).«ma1.method.name»«UNGUARDED_METHOD.suffix»(«argList1»$task);
+                            «IF !ma1.method.needsReturnNull»return «ENDIF»«argPrefix1 + 0».«ma1.method.name»«UNGUARDED_METHOD.suffix»(«argList1»$task);
                             «IF ma1.method.needsReturnNull»
                             return null;
                             «ENDIF»
@@ -282,7 +282,7 @@ class InstrGenerator {
                         @java.lang.Override
                         protected «ma2.method.type.generateGeneric» runRolez() {
                             final long $task = idBits();
-                            «IF !ma2.method.needsReturnNull»return «ENDIF»((«ma2.method.thisParam.type.generate»)«argPrefix2 + 0»).«ma2.method.name»«UNGUARDED_METHOD.suffix»(«argList2»$task);
+                            «IF !ma2.method.needsReturnNull»return «ENDIF»«argPrefix2 + 0».«ma2.method.name»«UNGUARDED_METHOD.suffix»(«argList2»$task);
                             «IF ma2.method.needsReturnNull»
                             return null;
                             «ENDIF»
