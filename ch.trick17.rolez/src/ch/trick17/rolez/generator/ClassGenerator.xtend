@@ -275,6 +275,8 @@ class ClassGenerator {
         '''
     }
     
+    // FIXME: Programs with a main method with args throw NPE!
+    
     private def genParamsWithExtra(Executable it) {
         val allParams = new ArrayList(params.map[gen])
         if(it instanceof Method && (it as Method).isAsync)
