@@ -5,7 +5,7 @@ import static java.lang.System.identityHashCode;
 import static rolez.lang.Task.idBitsFor;
 import static rolez.lang.Task.idForBits;
 
-public class InterferenceException extends RuntimeException {
+public class InterferenceError extends Error {
 
     private static String formatObject(Guarded object) {
         String toString = object.toString();
@@ -35,12 +35,12 @@ public class InterferenceException extends RuntimeException {
                 idForBits(newTaskBits) + ", " + viewPart + "already " + interferingRole + "-shared with " + tasks;
     }
 
-    public InterferenceException(Guarded object, Guarded view, String newRole, String interferingRole,
+    public InterferenceError(Guarded object, Guarded view, String newRole, String interferingRole,
             long newTaskBits, long interferingTasks) {
         this(formatMessage(object, view, newRole, interferingRole, newTaskBits, interferingTasks));
     }
 
-    public InterferenceException(String message) {
+    public InterferenceError(String message) {
         super(message);
     }
 }

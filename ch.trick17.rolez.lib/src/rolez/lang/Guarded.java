@@ -184,7 +184,7 @@ public abstract class Guarded {
     
     private void checkInterferesRoView(long newTaskBits, long otherTaskBits, Guarded original) {
         if((ownerBits & otherTaskBits) != 0)
-            throw new InterferenceException(original, this, "readonly", "readwrite", newTaskBits, ownerBits);
+            throw new InterferenceError(original, this, "readonly", "readwrite", newTaskBits, ownerBits);
     }
     
     final void checkInterferesRw(long newTaskBits, long otherTaskBits) {
@@ -199,10 +199,10 @@ public abstract class Guarded {
     
     private void checkInterferesRwView(long newTaskBits, long otherTaskBits, Guarded original) {
         if((ownerBits & otherTaskBits) != 0)
-            throw new InterferenceException(original, this, "readwrite", "readwrite", newTaskBits, ownerBits);
+            throw new InterferenceError(original, this, "readwrite", "readwrite", newTaskBits, ownerBits);
         long otherReaders = readerBits.get() & otherTaskBits;
         if(otherReaders != 0)
-            throw new InterferenceException(original, this, "readwrite", "readonly", newTaskBits, otherReaders);
+            throw new InterferenceError(original, this, "readwrite", "readonly", newTaskBits, otherReaders);
     }
     
     
