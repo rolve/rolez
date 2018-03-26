@@ -1,12 +1,11 @@
 package rolez.lang;
 
-import static java.lang.Long.numberOfLeadingZeros;
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.locks.LockSupport.park;
 import static rolez.lang.Task.currentTask;
+import static rolez.lang.Task.idForBits;
 
 import java.util.Collection;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -39,184 +38,7 @@ public abstract class Guarded {
      */
     protected Guarded(boolean initializeGuarding) {
         if(initializeGuarding)
-            ensureGuardingInitialized(currentTask());
-    }
-    
-    private boolean guardingInitialized() {
-        return ownerBits != 0;
-    }
-    
-    /**
-     * Initializes the guarding "infrastructure", if guarding is not
-     * {@linkplain #disableGuarding(Guarded) disabled}.
-     */
-    protected final void ensureGuardingInitialized(Task<?> task) {
-        assert !guardingDisabled;
-        if(!guardingInitialized()) {
-            ownerBits = task.idBits();
-            readerBits = new AtomicLong();
-            guardingCachesLock = new Object();
-        }
-    }
-    
-    // TODO: Test disabling guarding
-    
-    /**
-     * Disables guarded object and all objects it (transitively) references. This is used for
-     * objects that are reachable from global object (singleton classes).
-     */
-    public static <G extends Guarded> G disableGuarding(G g) {
-        ((Guarded) g).disableGuarding();
-        return g;
-    }
-    
-    private void disableGuarding() {
-        guardingDisabled = true;
-        if(guardingInitialized()) {
-            /* In case guarding has been initialized eagerly (for objects with views), this will
-             * "uninitialize" it again */
-            ownerBits = 0;
-        }
-        
-        for(Object g : guardedRefs())
-            if(g instanceof Guarded)
-                ((Guarded) g).disableGuarding();
-    }
-    
-    /* Role transitions */
-    
-    final void pass(Task<?> task) {
-        if(!guardingDisabled) {
-            ensureGuardingInitialized(task);
-            ownerBits = task.idBits();
-            invalidateGuardingCaches();
-        }
-    }
-    
-    final void share(Task<?> task) {
-        if(!guardingDisabled) {
-            ensureGuardingInitialized(task.parent);
-            assert (readerBits.get() & task.idBits()) == 0;
-            readerBits.addAndGet(task.idBits()); // addition is the same as bitwise OR if bits don't overlap!
-            invalidateGuardingCaches();
-        }
-    }
-    
-    final boolean ownedBy(Task<?> task) {
-        return ownerBits == task.idBits(); // implies guardingInitialized(), assuming task.idBits() != 0
-    }
-    
-    final boolean ownedByOrSharedWith(Task<?> task) {
-        return ownerBits == task.idBits() || guardingInitialized() && (readerBits.get() & task.idBits()) != 0;
-    }
-    
-    final void releaseShared(Task<?> task) {
-        if(!guardingDisabled) {
-            assert (readerBits.get() & task.idBits()) != 0;
-            readerBits.addAndGet(-task.idBits()); // see above
-        }
-        // TODO: notify tasks that wait for other views?
-    }
-    
-    final void releasePassed(Task<?> newOwner) {
-        if(!guardingDisabled) {
-            ensureGuardingInitialized(newOwner);
-            ownerBits = newOwner.idBits();
-        }
-        // TODO: notify tasks that wait for other views?
-    }
-    
-    /* Guarding methods. The static versions can return the guarded object with the precise type
-     * (which is not possible with instance methods, due to the lack of self types). This simplifies
-     * code generation a lot, since guarding can be done within an expression. */
-    
-    // TODO: Remove this version at some point
-    public static <G extends Guarded> G guardReadOnly(G guarded) {
-        ((Guarded) guarded).guardReadOnly(currentTask().idBits());
-        return guarded;
-    }
-    
-    public static <G extends Guarded> G guardReadOnly(G guarded, long currentTaskIdBits) {
-        ((Guarded) guarded).guardReadOnly(currentTaskIdBits);
-        return guarded;
-    }
-    
-    // TODO: Remove this method as soon as Eager code doesn't use it anymore
-    final void guardReadOnlyReachable(Set<Guarded> processed, long currentTaskIdBits) {
-        if(processed.add(this)) {
-            guardReadOnly(currentTaskIdBits);
-            for(Object g : guardedRefs())
-                if(g instanceof Guarded)
-                    ((Guarded) g).guardReadOnlyReachable(processed, currentTaskIdBits);
-        }
-    }
-    
-    final void guardReadOnly(long currentTaskIdBits) {
-        if(!guardingInitialized() || alreadyReadOnlyGuardedIn(currentTaskIdBits))
-            return;
-        
-        while(!mayRead(currentTaskIdBits))
-            park();
-    }
-    
-    // TODO: Remove this version at some point
-    public static <G extends Guarded> G guardReadWrite(G guarded) {
-        ((Guarded) guarded).guardReadWrite(currentTask().idBits());
-        return guarded;
-    }
-    
-    public static <G extends Guarded> G guardReadWrite(G guarded, long currentTaskIdBits) {
-        ((Guarded) guarded).guardReadWrite(currentTaskIdBits);
-        return guarded;
-    }
-    
-    // TODO: Remove this method as soon as Eager code doesn't use it anymore
-    final void guardReadWriteReachable(Set<Guarded> processed, long currentTaskIdBits) {
-        if(processed.add(this)) {
-            guardReadWrite(currentTaskIdBits);
-            for(Object g : guardedRefs())
-                if(g instanceof Guarded)
-                    ((Guarded) g).guardReadWriteReachable(processed, currentTaskIdBits);
-        }
-    }
-    
-    final void guardReadWrite(long currentTaskIdBits) {
-        if(!guardingInitialized() || alreadyReadWriteGuardedIn(currentTaskIdBits))
-            return;
-        
-        while(!mayWrite(currentTaskIdBits))
-            park();
-    }
-    
-    // IMPROVE: Deduplicate guarding cache code using Java 9 VarHandles?
-    
-    private boolean alreadyReadOnlyGuardedIn(long taskIdBits) {
-        boolean alreadyGuarded = isInReadGuardingCache(taskIdBits);
-        if(!alreadyGuarded)
-            addToReadGuardingCache(taskIdBits);
-        return alreadyGuarded;
-    }
-    
-    private boolean alreadyReadWriteGuardedIn(long taskIdBits) {
-        boolean alreadyGuarded = isInWriteGuardingCache(taskIdBits);
-        if(!alreadyGuarded) {
-            addToWriteGuardingCache(taskIdBits);
-            addToReadGuardingCache(taskIdBits);
-        }
-        return alreadyGuarded;
-    }
-
-    /* The following two are required for expressions of sliced types, which are mapped to interface
-     * types in Java (which don't extend Guarded...) */
-    
-    public static <S> S guardReadOnlySlice(S slice, long $task) {
-        guardReadOnly((Guarded) slice, $task);
-        return slice;
-    }
-    
-    public static <S> S guardReadWriteSlice(S slice, long $task) {
-        guardReadWrite((Guarded) slice, $task);
-        return slice;
+            ensureGuardingInitialized(currentTask().idBits());
     }
     
     /* Methods that can be overridden by concrete Guarded classes */
@@ -263,31 +85,230 @@ public abstract class Guarded {
         return null;
     }
     
-    /* Implementation methods */
+    /* Initialization and enabling/disabling guarding */
     
-    private boolean mayRead(long currentTaskIdBits) {
-        return readerBits.get() != 0
-                || (ownerBits == currentTaskIdBits && !descWithReadWriteViewExists());
+    private boolean guardingInitialized() {
+        return ownerBits != 0;
     }
     
     /**
-     * Determines if there is a descendant task of the current task that has a (overlapping)
-     * readwrite view of the given object.
+     * Initializes the guarding "infrastructure", if guarding is not
+     * {@linkplain #disableGuarding(Guarded) disabled}.
      */
-    private boolean descWithReadWriteViewExists() {
-        if(viewLock() == null)
-            return false;
-        else
-            return descWithReadWriteViewExistsSlow();
+    protected final void ensureGuardingInitialized(long taskBits) {
+        assert !guardingDisabled;
+        if(!guardingInitialized()) {
+            ownerBits = taskBits;
+            readerBits = new AtomicLong();
+            guardingCachesLock = new Object();
+        }
     }
     
-    private boolean descWithReadWriteViewExistsSlow() {
+    // TODO: Test disabling guarding
+    
+    /**
+     * Disables guarded object and all objects it (transitively) references. This is used for
+     * objects that are reachable from global object (singleton classes).
+     */
+    public static <G extends Guarded> G disableGuarding(G g) {
+        ((Guarded) g).disableGuarding();
+        return g;
+    }
+    
+    private void disableGuarding() {
+        guardingDisabled = true;
+        if(guardingInitialized()) {
+            /* In case guarding has been initialized eagerly (for objects with views), this will
+             * "uninitialize" it again */
+            ownerBits = 0;
+        }
+        
+        for(Object g : guardedRefs())
+            if(g instanceof Guarded)
+                ((Guarded) g).disableGuarding();
+    }
+    
+    /* Role transitions */
+    
+    final void pass(long newTaskBits) {
+        if(!guardingDisabled) {
+            ensureGuardingInitialized(newTaskBits);
+            ownerBits = newTaskBits;
+            invalidateGuardingCaches();
+        }
+    }
+    
+    final void share(long newTaskBits, long parentBits) {
+        if(!guardingDisabled) {
+            ensureGuardingInitialized(parentBits);
+            assert (readerBits.get() & newTaskBits) == 0;
+            readerBits.addAndGet(newTaskBits); // addition is the same as bitwise OR if bits don't overlap!
+            invalidateGuardingCaches();
+        }
+    }
+    
+    final boolean ownedBy(long taskBits) {
+        return ownerBits == taskBits; // implies guardingInitialized(), assuming taskBits != 0
+    }
+    
+    final boolean ownedByOrSharedWith(long taskBits) {
+        return ownerBits == taskBits || guardingInitialized() && (readerBits.get() & taskBits) != 0;
+    }
+    
+    final void releaseShared(long taskBits) {
+        if(!guardingDisabled) {
+            assert (readerBits.get() & taskBits) != 0;
+            readerBits.addAndGet(-taskBits); // see above
+        }
+        // TODO: notify tasks that wait for other views?
+    }
+    
+    final void releasePassed(long newOwnerBits) {
+        if(!guardingDisabled) {
+            ensureGuardingInitialized(newOwnerBits);
+            ownerBits = newOwnerBits;
+        }
+        // TODO: notify tasks that wait for other views?
+    }
+    
+    /* Eager interference checking */
+    
+    final void checkInterferesRo(long newTaskBits, long otherTaskBits) {
+        checkInterferesRoView(newTaskBits, otherTaskBits, this);
+        if(viewLock() != null)
+            synchronized(viewLock()) {
+                for(Guarded v : views())
+                    v.checkInterferesRoView(newTaskBits, otherTaskBits, this);
+            }
+    }
+    
+    private void checkInterferesRoView(long newTaskBits, long otherTaskBits, Guarded original) {
+        if((ownerBits & otherTaskBits) != 0)
+            throw new InterferenceException(original, this, "readonly", "readwrite", newTaskBits, ownerBits);
+    }
+    
+    final void checkInterferesRw(long newTaskBits, long otherTaskBits) {
+        checkInterferesRwView(newTaskBits, otherTaskBits, this);
+        
+        if(viewLock() != null)
+            synchronized(viewLock()) {
+                for(Guarded v : views())
+                    v.checkInterferesRwView(newTaskBits, otherTaskBits, this);
+            }
+    }
+    
+    private void checkInterferesRwView(long newTaskBits, long otherTaskBits, Guarded original) {
+        if((ownerBits & otherTaskBits) != 0)
+            throw new InterferenceException(original, this, "readwrite", "readwrite", newTaskBits, ownerBits);
+        long otherReaders = readerBits.get() & otherTaskBits;
+        if(otherReaders != 0)
+            throw new InterferenceException(original, this, "readwrite", "readonly", newTaskBits, otherReaders);
+    }
+    
+    
+    /* Guarding methods. The static versions can return the guarded object with the precise type
+     * (which is not possible with instance methods, due to the lack of self types). This simplifies
+     * code generation a lot, since guarding can be done within an expression. */
+
+    public static <G extends Guarded> G guardReadOnly(G guarded, long taskBits) {
+        ((Guarded) guarded).guardReadOnly(taskBits);
+        return guarded;
+    }
+    
+    public static <G extends Guarded> G guardReadWrite(G guarded, long taskBits) {
+        ((Guarded) guarded).guardReadWrite(taskBits);
+        return guarded;
+    }
+    
+    // TODO: Remove this version at some point
+    public static <G extends Guarded> G guardReadOnly(G guarded) {
+        ((Guarded) guarded).guardReadOnly(currentTask().idBits());
+        return guarded;
+    }
+    
+    // TODO: Remove this version at some point
+    public static <G extends Guarded> G guardReadWrite(G guarded) {
+        ((Guarded) guarded).guardReadWrite(currentTask().idBits());
+        return guarded;
+    }
+    
+    final void guardReadOnly(long taskBits) {
+        if(!guardingInitialized() || alreadyReadOnlyGuardedIn(taskBits))
+            return;
+        
+        while(!mayRead(taskBits))
+            park();
+    }
+    
+    final void guardReadWrite(long taskBits) {
+        if(!guardingInitialized() || alreadyReadWriteGuardedIn(taskBits))
+            return;
+        
+        while(!mayWrite(taskBits))
+            park();
+    }
+    
+    final void guardShare(long taskBits, long newTaskBits) {
+        if(!guardingInitialized() || alreadyReadOnlyGuardedIn(taskBits))
+            return;
+        
+        while(!mayShare(taskBits, newTaskBits))
+            park();
+    }
+    
+    final void guardPass(long taskBits, long newTaskBits) {
+        if(!guardingInitialized() || alreadyReadWriteGuardedIn(taskBits))
+            return;
+
+        while(!mayPass(taskBits, newTaskBits))
+            park();
+    }
+    
+    /* The following two are required for expressions of sliced types, which are mapped to interface
+     * types in Java (which don't extend Guarded...) */
+    
+    public static <S> S guardReadOnlySlice(S slice, long taskBits) {
+        guardReadOnly((Guarded) slice, taskBits);
+        return slice;
+    }
+    
+    public static <S> S guardReadWriteSlice(S slice, long taskBits) {
+        guardReadWrite((Guarded) slice, taskBits);
+        return slice;
+    }
+    
+    private boolean mayRead(long taskBits) {
+        return readerBits.get() != 0 ||
+                ownerBits == taskBits &&
+                (viewLock() == null || !descWithReadWriteViewExists());
+    }
+    
+    private boolean mayWrite(long taskBits) {
+        return ownerBits == taskBits && readerBits.get() == 0 &&
+                (viewLock() == null || !descWithReadViewExists()) &&
+                (viewLock() == null || !descWithReadWriteViewExists());
+        // IMPROVE: Combine above two methods for efficiency
+    }
+    
+    private boolean mayShare(long taskBits, long newTaskBits) {
+        return readerBits.get() != 0 ||
+                ownerBits == taskBits &&
+                (viewLock() == null || !descWithReadWriteViewExists(newTaskBits));
+    }
+    
+    private boolean mayPass(long taskBits, long newTaskBits) {
+        return ownerBits == taskBits && readerBits.get() == 0 &&
+                (viewLock() == null || !descWithReadViewExists()) && // no need to ignore new task here, passing happens before sharing
+                (viewLock() == null || !descWithReadWriteViewExists(newTaskBits));
+        // IMPROVE: Combine above two methods for efficiency
+    }
+    
+    private boolean descWithReadWriteViewExists() {
         Task<?> currentTask = currentTask();
         synchronized(viewLock()) {
             for(Guarded v : views())
                 if(v.readerBits.get() == 0) {
-                    int ownerId = 63 - numberOfLeadingZeros(v.ownerBits);
-                    Task<?> owner = Task.withId(ownerId);
+                    Task<?> owner = Task.withId(idForBits(v.ownerBits));
                     // TODO: could registeredTask[id] have been overridden?..
                     if(owner.isActive() && owner.isDescendantOf(currentTask))
                         return true;
@@ -296,24 +317,21 @@ public abstract class Guarded {
         return false;
     }
     
-    private boolean mayWrite(long currenTaskIdBits) {
-        return ownerBits == currenTaskIdBits && readerBits.get() == 0
-                && !descWithReadViewExists() && !descWithReadWriteViewExists();
-        // IMPROVE: Combine above two methods for efficiency
+    private boolean descWithReadWriteViewExists(long ignoreTaskBits) {
+        Task<?> currentTask = currentTask();
+        synchronized(viewLock()) {
+            for(Guarded v : views())
+                if(v.readerBits.get() == 0 && v.ownerBits != ignoreTaskBits) {
+                    Task<?> owner = Task.withId(idForBits(v.ownerBits));
+                    // TODO: could registeredTask[id] have been overridden?..
+                    if(owner.isActive() && owner.isDescendantOf(currentTask))
+                        return true;
+                }
+        }
+        return false;
     }
     
-    /**
-     * Determines if there is a descendant task of the current task that has a (overlapping) read
-     * view of the given object.
-     */
     private boolean descWithReadViewExists() {
-        if(viewLock() == null)
-            return false;
-        else
-            return descWithReadViewExistsSlow();
-    }
-    
-    private boolean descWithReadViewExistsSlow() {
         Task<?> currentTask = currentTask();
         synchronized(viewLock()) {
             for(Guarded view : views()) {
@@ -328,27 +346,45 @@ public abstract class Guarded {
         }
     }
     
-    private boolean isInReadGuardingCache(long taskIdBits) {
-        assert taskIdBits != 0;
-        return (readGuardingCache & taskIdBits) != 0;
+    // IMPROVE: Deduplicate guarding cache code using Java 9 VarHandles?
+    
+    private boolean alreadyReadOnlyGuardedIn(long taskBits) {
+        boolean alreadyGuarded = isInReadGuardingCache(taskBits);
+        if(!alreadyGuarded)
+            addToReadGuardingCache(taskBits);
+        return alreadyGuarded;
     }
     
-    private boolean isInWriteGuardingCache(long taskIdBits) {
-        assert taskIdBits != 0;
-        return (writeGuardingCache & taskIdBits) != 0;
+    private boolean alreadyReadWriteGuardedIn(long taskBits) {
+        boolean alreadyGuarded = isInWriteGuardingCache(taskBits);
+        if(!alreadyGuarded) {
+            addToWriteGuardingCache(taskBits);
+            addToReadGuardingCache(taskBits);
+        }
+        return alreadyGuarded;
     }
     
-    private void addToReadGuardingCache(long taskIdBits) {
-        assert taskIdBits != 0;
+    private boolean isInReadGuardingCache(long taskBits) {
+        assert taskBits != 0;
+        return (readGuardingCache & taskBits) != 0;
+    }
+    
+    private boolean isInWriteGuardingCache(long taskBits) {
+        assert taskBits != 0;
+        return (writeGuardingCache & taskBits) != 0;
+    }
+    
+    private void addToReadGuardingCache(long taskBits) {
+        assert taskBits != 0;
         synchronized(guardingCachesLock) {
-            readGuardingCache |= taskIdBits;
+            readGuardingCache |= taskBits;
         }
     }
     
-    private void addToWriteGuardingCache(long taskIdBits) {
-        assert taskIdBits != 0;
+    private void addToWriteGuardingCache(long taskBits) {
+        assert taskBits != 0;
         synchronized(guardingCachesLock) {
-            writeGuardingCache |= taskIdBits;
+            writeGuardingCache |= taskBits;
         }
     }
     

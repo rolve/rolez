@@ -1,12 +1,12 @@
 package rolez.lang;
 
+import static java.lang.Long.numberOfLeadingZeros;
 import static java.lang.Thread.currentThread;
 import static java.util.concurrent.locks.LockSupport.unpark;
 
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
@@ -75,33 +75,197 @@ public abstract class Task<V> implements Runnable {
     /**
      * The list of child tasks. Before a task finishes, it waits for all its children to finish.
      */
-    private final List<Task<?>> children = new ArrayList<>();
+    private final List<Task<?>> children;
 
-    public Task(Object[] passedObjects, Object[] sharedObjects) {
+    /**
+     * @param dummy only used for overloading 
+     */
+    private Task(Object[] passedObjects, Object[] sharedObjects, int dummy) {
         this.parent = currentTask();
+        this.children = new ArrayList<>();
         if(parent != null)
             parent.children.add(this);
 
-        taskStartTransitions(passedObjects, sharedObjects);
+        passed = new ArrayList<>(passedObjects.length);
+        for(Object g : passedObjects)
+            if(g instanceof Guarded)
+                passed.add((Guarded) g);
+
+        passedReachable = new ArrayList<>(passed.size() * 16);
+        sharedReachable = new ArrayList<>(sharedObjects.length * 16);
     }
 
-    // TODO: Improve eager interference code and adapt this constructor
-    public Task(Set<Guarded> passedObjects, Set<Guarded> passedReachable, Set<Guarded> sharedReachable) {
-        this.parent = currentTask();
-        if(parent != null)
-            parent.children.add(this);
+    /**
+     * Constructor WITHOUT guarding and WITHOUT interference check. Used for
+     * normal task starts where there are no child tasks. Note that the
+     * guarding does not take place, no matter the value of <code>unguarded</code>.
+     * 
+     * @param unguarded just there for overloading
+     */
+    public Task(Object[] passedObjects, Object[] sharedObjects, boolean unguarded) {
+        this(passedObjects, sharedObjects, 0);
 
-        this.passedReachable = new ArrayList<>(passedReachable);
-        this.sharedReachable = new ArrayList<>(sharedReachable);
+        long myBits = idBits();
+        long parentBits = parent == null ? 0 : parent.idBits();
+        for(Guarded g : passed)
+            passReachable(g, myBits);
+        for(Object g : sharedObjects)
+            if(g instanceof Guarded)
+                shareReachable((Guarded) g, myBits, parentBits);
+    }
 
-        passed = new ArrayList<>(passedObjects.size());
-        for(Guarded g : passedObjects)
-            passed.add(g);
+    /**
+     * Constructor WITH guarding and WITHOUT interference check. Used for
+     * normal task starts where there could be child tasks.
+     */
+    public Task(Object[] passedObjects, Object[] sharedObjects) {
+        this(passedObjects, sharedObjects, 0);
 
-        for(Guarded g : passedReachable)
-            g.pass(this);
-        for(Guarded g : sharedReachable)
-            g.share(this);
+        long myBits = idBits();
+        long parentBits = parent == null ? 0 : parent.idBits();
+        for(Guarded g : passed)
+            passReachableGuarded(g, myBits, parentBits);
+        for(Object g : sharedObjects)
+            if(g instanceof Guarded)
+                shareReachableGuarded((Guarded) g, myBits, parentBits);
+    }
+
+    /**
+     * Constructor WITHOUT guarding and WITH interference check. Used for
+     * parallel-and blocks and parfor loops. Note that the guarding does
+     * not take place, no matter the value of <code>unguarded</code>.
+     * 
+     * @param unguarded just there for overloading
+     */
+    public Task(Object[] passedObjects, Object[] sharedObjects,
+            long otherTaskBits, boolean unguarded) {
+        this(passedObjects, sharedObjects, 0);
+
+        long myBits = idBits();
+        long parentBits = parent == null ? 0 : parent.idBits();
+        for(Guarded g : passed)
+            passReachableChecked(g, myBits, parentBits, otherTaskBits);
+        for(Object g : sharedObjects)
+            if(g instanceof Guarded)
+                shareReachableChecked((Guarded) g, myBits,
+                        parentBits, otherTaskBits);
+    }
+
+    /**
+     * Constructor WITH guarding and WITH interference check. Used for
+     * parallel-and blocks and parfor loops.
+     */
+    public Task(Object[] passedObjects, Object[] sharedObjects, long otherTaskBits) {
+        this(passedObjects, sharedObjects, 0);
+
+        long myBits = idBits();
+        long parentBits = parent == null ? 0 : parent.idBits();
+        for(Guarded g : passed)
+            passReachableGuardedChecked(g, myBits, parentBits, otherTaskBits);
+        for(Object g : sharedObjects)
+            if(g instanceof Guarded)
+                shareReachableGuardedChecked((Guarded) g, myBits,
+                        parentBits, otherTaskBits);
+    }
+
+    private void passReachable(Guarded guarded, long myBits) {
+        if(!guarded.ownedBy(myBits)) {
+            guarded.pass(myBits);
+            passedReachable.add(guarded);
+            for(Object g : guarded.guardedRefs())
+                if(g instanceof Guarded)
+                    passReachable((Guarded) g, myBits);
+        }
+    }
+
+    private void shareReachable(Guarded guarded, long myBits, long parentBits) {
+        // Objects that are reachable both from a passed and a shared object
+        // are effectively *passed*, so skip these here
+        if(!guarded.ownedByOrSharedWith(myBits)) {
+            guarded.share(myBits, parentBits);
+            sharedReachable.add(guarded);
+            for(Object g : guarded.guardedRefs())
+                if(g instanceof Guarded)
+                    shareReachable((Guarded) g, myBits, parentBits);
+        }
+    }
+
+    private void passReachableGuarded(Guarded guarded, long myBits, long parentBits) {
+        if(!guarded.ownedBy(myBits)) {
+            guarded.guardPass(parentBits, myBits);
+            guarded.pass(myBits);
+            passedReachable.add(guarded);
+            for(Object g : guarded.guardedRefs())
+                if(g instanceof Guarded)
+                    passReachableGuarded((Guarded) g, myBits, parentBits);
+        }
+    }
+
+    private void shareReachableGuarded(Guarded guarded, long myBits, long parentBits) {
+        // Objects that are reachable both from a passed and a shared object
+        // are effectively *passed*, so skip these here
+        if(!guarded.ownedByOrSharedWith(myBits)) {
+            guarded.guardShare(parentBits, myBits);
+            guarded.share(myBits, parentBits);
+            sharedReachable.add(guarded);
+            for(Object g : guarded.guardedRefs())
+                if(g instanceof Guarded)
+                    shareReachableGuarded((Guarded) g, myBits, parentBits);
+        }
+    }
+
+    private void passReachableChecked(Guarded guarded, long myBits,
+            long parentBits, long otherTaskBits) {
+        if(!guarded.ownedBy(myBits)) {
+            guarded.checkInterferesRw(myBits, otherTaskBits);
+            guarded.pass(myBits);
+            passedReachable.add(guarded);
+            for(Object g : guarded.guardedRefs())
+                if(g instanceof Guarded)
+                    passReachableGuarded((Guarded) g, myBits, parentBits);
+        }
+    }
+
+    private void shareReachableChecked(Guarded guarded, long myBits,
+            long parentBits, long otherTaskBits) {
+        // Objects that are reachable both from a passed and a shared object
+        // are effectively *passed*, so skip these here
+        if(!guarded.ownedByOrSharedWith(myBits)) {
+            guarded.checkInterferesRo(myBits, otherTaskBits);
+            guarded.share(myBits, parentBits);
+            sharedReachable.add(guarded);
+            for(Object g : guarded.guardedRefs())
+                if(g instanceof Guarded)
+                    shareReachableGuarded((Guarded) g, myBits, parentBits);
+        }
+    }
+
+    private void passReachableGuardedChecked(Guarded guarded, long myBits,
+            long parentBits, long otherTaskBits) {
+        if(!guarded.ownedBy(myBits)) {
+            guarded.checkInterferesRw(myBits, otherTaskBits);
+            guarded.guardPass(parentBits, myBits);
+            guarded.pass(myBits);
+            passedReachable.add(guarded);
+            for(Object g : guarded.guardedRefs())
+                if(g instanceof Guarded)
+                    passReachableGuarded((Guarded) g, myBits, parentBits);
+        }
+    }
+
+    private void shareReachableGuardedChecked(Guarded guarded, long myBits,
+            long parentBits, long otherTaskBits) {
+        // Objects that are reachable both from a passed and a shared object
+        // are effectively *passed*, so skip these here
+        if(!guarded.ownedByOrSharedWith(myBits)) {
+            guarded.checkInterferesRo(myBits, otherTaskBits);
+            guarded.guardShare(parentBits, myBits);
+            guarded.share(myBits, parentBits);
+            sharedReachable.add(guarded);
+            for(Object g : guarded.guardedRefs())
+                if(g instanceof Guarded)
+                    shareReachableGuarded((Guarded) g, myBits, parentBits);
+        }
     }
 
     /**
@@ -177,8 +341,12 @@ public abstract class Task<V> implements Runnable {
         return idBitsFor(id);
     }
 
-    public static long idBitsFor(int id) {
+    static long idBitsFor(int id) {
         return 1L << id;
+    }
+
+    static int idForBits(long bits) {
+        return 63 - numberOfLeadingZeros(bits);
     }
 
     /**
@@ -250,73 +418,30 @@ public abstract class Task<V> implements Runnable {
         private static final int IGNORED = 0;
     }
 
-    /* Transitions */
-
-    // TODO: taskStartTransitions version without guarding for when there are no child tasks
-
-    private void taskStartTransitions(Object[] passedObjects, Object[] sharedObjects) {
-        passed = new ArrayList<>(passedObjects.length);
-        for(Object g : passedObjects)
-            if(g instanceof Guarded)
-                passed.add((Guarded) g);
-
-        long idBits = parent == null ? 0L : parent.idBits();
-        passedReachable = new ArrayList<>(passed.size() * 16);
-        for(Guarded g : passed)
-            guardAndPassReachable(g, passedReachable, idBits);
-
-        sharedReachable = new ArrayList<>(sharedObjects.length * 16);
-        for(Object g : sharedObjects)
-            if(g instanceof Guarded)
-                guardAndShareReachable((Guarded) g, sharedReachable, idBits);
-    }
-
-    private void guardAndPassReachable(Guarded guarded, List<Guarded> collect,
-            long currentTaskIdBits) {
-        if(!guarded.ownedBy(this)) {
-            guarded.guardReadWrite(currentTaskIdBits);
-            guarded.pass(this);
-            collect.add(guarded);
-            for(Object g : guarded.guardedRefs())
-                if(g instanceof Guarded)
-                    guardAndPassReachable(((Guarded) g), collect, currentTaskIdBits);
-        }
-    }
-
-    private void guardAndShareReachable(Guarded guarded, List<Guarded> collect,
-            long currentTaskIdBits) {
-        // Objects that are reachable both from a passed and a shared object
-        // are effectively *passed*, so skip these here
-        if(!guarded.ownedByOrSharedWith(this)) {
-            guarded.guardReadOnly(currentTaskIdBits);
-            guarded.share(this);
-            collect.add(guarded);
-            for(Object g : guarded.guardedRefs())
-                if(g instanceof Guarded)
-                    guardAndShareReachable(((Guarded) g), collect, currentTaskIdBits);
-        }
-    }
-
     private void taskFinishTransitions() {
         // No guarding is necessary anywhere here, because child tasks
         // have already finished
+        long myBits = idBits();
+        long parentBits = parent == null ? 0 : parent.idBits();
 
         // Release all shared objects
         for(Guarded g : sharedReachable)
-            g.releaseShared(this);
+            g.releaseShared(myBits);
 
         // Then, find objects that are now reachable from passed objects
         // (and the result object) and release those
         for(Guarded g : passed)
-            releasePassedReachable(g);
+            releasePassedReachable(g, myBits, parentBits);
         if(result instanceof Guarded)
-            releasePassedReachable((Guarded) result);
+            releasePassedReachable((Guarded) result, myBits, parentBits);
 
         // Finally, release objects that were previously reachable
         // and notify parent thread
-        for(Guarded g : passedReachable)
-            if(g.ownedBy(this))
-                g.releasePassed(parent);
+        for(Guarded g : passedReachable) {
+            if(g.ownedBy(myBits)) {
+                g.releasePassed(parentBits);
+            }
+        }
 
         if(parent != null)
             unpark(parent.executingThread);
@@ -327,12 +452,13 @@ public abstract class Task<V> implements Runnable {
         sharedReachable = null;
     }
 
-    private void releasePassedReachable(Guarded guarded) {
-        if(guarded.ownedBy(this)) {
-            guarded.releasePassed(parent);
+    private static void releasePassedReachable(Guarded guarded,
+            long myBits, long parentBits) {
+        if(guarded.ownedBy(myBits)) {
+            guarded.releasePassed(parentBits);
             for(Object g : guarded.guardedRefs())
                 if(g instanceof Guarded)
-                    releasePassedReachable(((Guarded) g));
+                    releasePassedReachable((Guarded) g, myBits, parentBits);
         }
     }
 }

@@ -1236,43 +1236,47 @@ class InstrGeneratorTest extends GeneratorTest {
             var array = new Array[readwrite Base](10);
             for(var j = 0; j < 10; j++)
                 array.set(j, new Base());
+            
             parfor(var j = 0; j < 3; j++)
                 the Tasks.bar(array.get(j));
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
             rolez.lang.GuardedArray<Base[]> array = new rolez.lang.GuardedArray<Base[]>(new Base[10]);
             for(int j = 0; j < 10; j++)
                 array.data[j] = new Base($task);
-            { /* parfor generation */
+            { /* parfor */
                 final java.util.List<java.lang.Object[]> $argsList = new java.util.ArrayList<>();
-                for(int j = 0; j < 3; j++) {
-                    $argsList.add(new java.lang.Object[] {Tasks.INSTANCE, array.data[j], });
+                for(int j = 0; j < 3; j++)
+                    $argsList.add(new java.lang.Object[] {Tasks.INSTANCE, array.data[j]});
+                
+                final java.lang.Object[][] $passed = new java.lang.Object[$argsList.size()][];
+                final java.lang.Object[][] $shared = new java.lang.Object[$argsList.size()][];
+                for(int $i = 0; $i < $argsList.size(); $i++) {
+                    final java.lang.Object[] $args = $argsList.get($i);
+                    $passed[$i] = new java.lang.Object[] {$args[1]};
+                    $shared[$i] = new java.lang.Object[] {};
                 }
-                final java.lang.Object[][] $roleArray = new java.lang.Object[$argsList.size()*2][];
-                for(int $i = 0; $i < $argsList.size(); $i++){
-                    java.lang.Object[] $argArray = $argsList.get($i);
-                    int $j = $i * 2;
-                    $roleArray[$j] = new java.lang.Object[] {$argArray[1], }; // passed Objects
-                    $roleArray[$j+1] = new java.lang.Object[] {}; // shared Objects
+                
+                final rolez.lang.Task<?>[] $tasks = new rolez.lang.Task<?>[$argsList.size()];
+                long $tasksBits = 0;
+                for(int $i = 0; $i < $tasks.length; $i++) {
+                    final java.lang.Object[] $args = $argsList.get($i);
+                    $tasks[$i] = new rolez.lang.Task<java.lang.Void>($passed[$i], $shared[$i], $tasksBits) {
+                        @java.lang.Override
+                        protected java.lang.Void runRolez() {
+                            ((Tasks) $args[0]).bar$Unguarded((java.lang.Object) $args[1], idBits());
+                            return null;
+                        }
+                    };
+                    $tasksBits |= $tasks[$i].idBits();
                 }
-                java.util.Set<rolez.lang.Guarded>[] $collectedReachables = rolez.lang.Eager.collectAndCheck%%%Guarded%%%($roleArray, $task);
-                final rolez.lang.Task<java.lang.Void>[] $parforTasks = new rolez.lang.Task[$argsList.size()];
+                
                 try {
-                    for(int $i = 0; $i < $parforTasks.length; $i++){
-                        final java.lang.Object[] $argArray = $argsList.get($i);
-                        $parforTasks[$i] = new rolez.lang.Task<java.lang.Void>($collectedReachables[3*$i], $collectedReachables[3*$i+1], $collectedReachables[3*$i+2]) {
-                            @java.lang.Override
-                            protected java.lang.Void runRolez() {
-                                final long $task = idBits();
-                                ((Tasks)$argArray[0]).bar$Unguarded((java.lang.Object)$argArray[1], $task);
-                                return null;
-                            }
-                        };
-                        if($i < $parforTasks.length - 1) rolez.lang.TaskSystem.getDefault().start($parforTasks[$i]);
-                    }
-                    rolez.lang.TaskSystem.getDefault().run($parforTasks[$parforTasks.length - 1]);
+                    for(int $i = 0; $i < $tasks.length-1; $i++)
+                        rolez.lang.TaskSystem.getDefault().start($tasks[$i]);
+                    rolez.lang.TaskSystem.getDefault().run($tasks[$tasks.length - 1]);
                 } finally {
-                    for(rolez.lang.Task<?> $parforTask : $parforTasks)
-                        $parforTask.get();
+                    for(rolez.lang.Task<?> $t : $tasks)
+                        $t.get();
                 }
             }
         '''.withJavaFrame)
@@ -1295,35 +1299,29 @@ class InstrGeneratorTest extends GeneratorTest {
                 final java.lang.Object $t1Arg1 = o1;
                 final Tasks $t2Arg0 = Tasks.INSTANCE;
                 final java.lang.Object $t2Arg1 = o2;
-                final java.lang.Object[][] $allArgs = {
-                        {$t1Arg1},
-                        {},
-                        {$t2Arg1},
-                        {}};
-                final java.util.Set<rolez.lang.Guarded>[] $collectedReachables =
-                        rolez.lang.Eager.collectAndCheck%%%Guarded%%%($allArgs, $task);
-                rolez.lang.Task<java.lang.Void> $t1 = null;
-                rolez.lang.Task<java.lang.Void> $t2 = null;
+                
+                final java.lang.Object[] $t1Passed = {$t1Arg1};
+                final java.lang.Object[] $t1Shared = {};
+                final java.lang.Object[] $t2Passed = {$t2Arg1};
+                final java.lang.Object[] $t2Shared = {};
+                
+                final rolez.lang.Task<?> $t1 = new rolez.lang.Task<java.lang.Void>($t1Passed, $t1Shared) {
+                    @java.lang.Override
+                    protected java.lang.Void runRolez() {
+                        $t1Arg0.bar$Unguarded($t1Arg1, idBits());
+                        return null;
+                    }
+                };
+                final rolez.lang.Task<?> $t2 = new rolez.lang.Task<java.lang.Void>($t2Passed, $t2Shared, $t1.idBits()) {
+                    @java.lang.Override
+                    protected java.lang.Void runRolez() {
+                        $t2Arg0.bar$Unguarded($t2Arg1, idBits());
+                        return null;
+                    }
+                };
+                
                 try {
-                    /* part1 */
-                    $t1 = new rolez.lang.Task<java.lang.Void>($collectedReachables[0], $collectedReachables[1], $collectedReachables[2]) {
-                        @java.lang.Override
-                        protected java.lang.Void runRolez() {
-                            final long $task = idBits();
-                            $t1Arg0.bar$Unguarded($t1Arg1, $task);
-                            return null;
-                        }
-                    };
                     rolez.lang.TaskSystem.getDefault().start($t1);
-                    /* part2 */
-                    $t2 = new rolez.lang.Task<java.lang.Void>($collectedReachables[3], $collectedReachables[4], $collectedReachables[5]) {
-                        @java.lang.Override
-                        protected java.lang.Void runRolez() {
-                            final long $task = idBits();
-                            $t2Arg0.bar$Unguarded($t2Arg1, $task);
-                            return null;
-                        }
-                    };
                     rolez.lang.TaskSystem.getDefault().run($t2);
                 } finally {
                     $t1.get();
@@ -1342,35 +1340,29 @@ class InstrGeneratorTest extends GeneratorTest {
             { /* parallel-and */
                 final Tasks $t1Arg0 = Tasks.INSTANCE;
                 final Tasks $t2Arg0 = Tasks.INSTANCE;
-                final java.lang.Object[][] $allArgs = {
-                        {},
-                        {},
-                        {},
-                        {}};
-                final java.util.Set<rolez.lang.Guarded>[] $collectedReachables =
-                        rolez.lang.Eager.collectAndCheck%%%Guarded%%%($allArgs, $task);
-                rolez.lang.Task<java.lang.Void> $t1 = null;
-                rolez.lang.Task<java.lang.Void> $t2 = null;
+                
+                final java.lang.Object[] $t1Passed = {};
+                final java.lang.Object[] $t1Shared = {};
+                final java.lang.Object[] $t2Passed = {};
+                final java.lang.Object[] $t2Shared = {};
+                
+                final rolez.lang.Task<?> $t1 = new rolez.lang.Task<java.lang.Void>($t1Passed, $t1Shared) {
+                    @java.lang.Override
+                    protected java.lang.Void runRolez() {
+                        $t1Arg0.foo$Unguarded(idBits());
+                        return null;
+                    }
+                };
+                final rolez.lang.Task<?> $t2 = new rolez.lang.Task<java.lang.Void>($t2Passed, $t2Shared, $t1.idBits()) {
+                    @java.lang.Override
+                    protected java.lang.Void runRolez() {
+                        $t2Arg0.foo$Unguarded(idBits());
+                        return null;
+                    }
+                };
+                
                 try {
-                    /* part1 */
-                    $t1 = new rolez.lang.Task<java.lang.Void>($collectedReachables[0], $collectedReachables[1], $collectedReachables[2]) {
-                        @java.lang.Override
-                        protected java.lang.Void runRolez() {
-                            final long $task = idBits();
-                            $t1Arg0.foo$Unguarded($task);
-                            return null;
-                        }
-                    };
                     rolez.lang.TaskSystem.getDefault().start($t1);
-                    /* part2 */
-                    $t2 = new rolez.lang.Task<java.lang.Void>($collectedReachables[3], $collectedReachables[4], $collectedReachables[5]) {
-                        @java.lang.Override
-                        protected java.lang.Void runRolez() {
-                            final long $task = idBits();
-                            $t2Arg0.foo$Unguarded($task);
-                            return null;
-                        }
-                    };
                     rolez.lang.TaskSystem.getDefault().run($t2);
                 } finally {
                     $t1.get();
