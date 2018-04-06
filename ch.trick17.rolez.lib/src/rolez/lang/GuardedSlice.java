@@ -115,9 +115,7 @@ public class GuardedSlice<A> extends Guarded {
     }
     
     private void checkIndex(int index) {
-        // IMPROVE: Suppress check for arrays? (only applies if array is statically a slice)
-        if(!range.contains(index))
-            throw new SliceIndexOutOfBoundsException(index);
+        assert range.contains(index) : new SliceIndexOutOfBoundsException(index);
     }
     
     public GuardedSlice<A> slice(SliceRange sliceRange) {
