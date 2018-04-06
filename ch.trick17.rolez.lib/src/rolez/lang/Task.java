@@ -431,9 +431,9 @@ public abstract class Task<V> implements Runnable {
         // Then, find objects that are now reachable from passed objects
         // (and the result object) and release those
         for(Guarded g : passed)
-            releasePassedReachable(g, myBits, parentBits);
+            releasePassedReachable(g, parentBits);
         if(result instanceof Guarded)
-            releasePassedReachable((Guarded) result, myBits, parentBits);
+            releasePassedReachable((Guarded) result, parentBits);
 
         // Finally, release objects that were previously reachable
         // and notify parent thread
@@ -452,13 +452,12 @@ public abstract class Task<V> implements Runnable {
         sharedReachable = null;
     }
 
-    private static void releasePassedReachable(Guarded guarded,
-            long myBits, long parentBits) {
-        if(guarded.ownedBy(myBits)) {
+    private static void releasePassedReachable(Guarded guarded, long parentBits) {
+        if(!guarded.ownedBy(parentBits)) {
             guarded.releasePassed(parentBits);
             for(Object g : guarded.guardedRefs())
                 if(g instanceof Guarded)
-                    releasePassedReachable((Guarded) g, myBits, parentBits);
+                    releasePassedReachable((Guarded) g, parentBits);
         }
     }
 }

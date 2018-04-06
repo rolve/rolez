@@ -783,4 +783,53 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
             }
         });
     }
+    
+    @Test
+    public void testReturnUninitialized() {
+        assumeVerifyCorrectness();
+        verifyTask(new Runnable() {
+            public void run() {
+                Task<Int> task = new Task<Int>(new Object[]{}, new Object[]{}) {
+                    @Override
+                    protected Int runRolez() {
+                        return new Int(3);
+                    }
+                };
+                s.start(task);
+                Int i = task.get();
+                
+                assertEquals(3, guardReadOnly(i).value);
+            }
+        });
+    }
+    
+    @Test
+    public void testReturnUninitializedContainer() {
+        assumeVerifyCorrectness();
+        verifyTask(new Runnable() {
+            public void run() {
+                Task<Ref<Int>> task1 = new Task<Ref<Int>>(new Object[]{}, new Object[]{}) {
+                    @Override
+                    protected Ref<Int> runRolez() {
+                        final Int i = new Int();
+
+                        Task<?> task2 = new Task<Void>(new Object[]{i}, new Object[]{}) {
+                            @Override
+                            protected Void runRolez() {
+                                guardReadWrite(i).value = 3;
+                                return null;
+                            }
+                        };
+                        s.start(task2);
+                        
+                        return new Ref<>(i);
+                    }
+                };
+                s.start(task1);
+                Ref<Int> ref = task1.get();
+                
+                assertEquals(3, guardReadOnly(guardReadOnly(ref).o).value);
+            }
+        });
+    }
 }
