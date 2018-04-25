@@ -297,6 +297,13 @@ class RolezValidator extends RolezSystemValidator {
                 error("Duplicate parameter " + p.name, p, NAMED__NAME, DUPLICATE_VAR)
     }
     
+    @Check
+    def checkNoDuplicatePlParams(Parfor it) {
+        for(p : params)
+            if(params.exists[p !== it && p.variable.name == variable.name])
+                error("Duplicate parameter " + p.variable.name, p, NAMED__NAME, DUPLICATE_VAR)
+    }
+    
     /**
      * For overriding methods, checks that the return type is co- and the parameter types and the
      * "this" role are contravariant. Note that the parameter types are already guaranteed to be
@@ -732,7 +739,7 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkParallelStatementContent(ParallelStmt it){
-        if (!(part1 instanceof ExprStmt && part2 instanceof ExprStmt)) {
+        /*if (!(part1 instanceof ExprStmt && part2 instanceof ExprStmt)) {
             error("Only task calls are allowed in parallel statements (this isn't an expr stmt)", null, INCORRECT_PAR_STMT_CONTENT)
             return;
         }
@@ -754,12 +761,12 @@ class RolezValidator extends RolezSystemValidator {
         if (!ma1.getMethod.declaredTask || !ma2.getMethod.declaredTask) {
             error("Only task calls are allowed in parallel statements (this isn't a task)", null, INCORRECT_PAR_STMT_CONTENT)
             return;
-        }
+        }*/
     }
     
     @Check
     def checkParforContent(Parfor it){
-        if (!(body instanceof ExprStmt)) {
+        /*if (!(body instanceof ExprStmt)) {
             error("Only task calls are allowed in parfor statements (this isn't an expr stmt)", null, INCORRECT_PAR_STMT_CONTENT)
             return;
         }
@@ -779,7 +786,7 @@ class RolezValidator extends RolezSystemValidator {
         if (!ma.getMethod.declaredTask) {
             error("Only task calls are allowed in parfor statements (this isn't a task)", null, INCORRECT_PAR_STMT_CONTENT)
             return;
-        }
+        }*/
     }
     
     // TODO: Introduce final classes and make array, slice, etc. final, so that they cannot be 

@@ -110,7 +110,7 @@ ForLoop:
     'for' '(' initializer=LocalVarDecl condition=Expr ';' step=Expr ')' body=Stmt;
 
 Parfor:
-    'parfor' '(' initializer=LocalVarDecl condition=Expr ';' step=Expr ')' body=Stmt;
+    'parfor' '(' initializer=LocalVarDecl condition=Expr ';' step=Expr ')' ('[' (params+=LocalVarDecl)+ ']')? body=Stmt;
 
 // IMPROVE: for-each
 

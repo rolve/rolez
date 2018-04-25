@@ -274,6 +274,7 @@ class Parfor extends Stmt {
     contains LocalVarDecl initializer
     contains Expr condition
     contains Expr step
+    contains LocalVarDecl[] params
     contains Stmt body
 }
 

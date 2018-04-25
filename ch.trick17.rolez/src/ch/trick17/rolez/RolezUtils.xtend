@@ -158,7 +158,10 @@ class RolezUtils {
     }
     
     static def dispatch Iterable<? extends Var> varsAbove(Parfor container, Instr i) {
-        (if(i === container.initializer) emptyList else #[container.initializer.variable as Var])
+        (if(i === container.initializer) emptyList
+        	else if (container.params.contains(i)) #[container.initializer.variable as Var]
+        	else #[container.initializer.variable as Var] + container.params.map[variable as Var]
+        	)
             + varsAbove(container.eContainer, container)
     }
     

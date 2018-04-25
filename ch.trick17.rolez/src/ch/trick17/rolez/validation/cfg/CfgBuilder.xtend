@@ -91,7 +91,10 @@ class CfgBuilder {
         if(!process(l.initializer, prev).link(headNode)) return [false]
         
         val conditionLinker = process(l.condition, headNode.linker)
-        val bodyLinker = process(l.body, conditionLinker)
+        var paramLinker = conditionLinker;
+        for (var i = 0; i < l.params.length; i++)
+        	paramLinker = process(l.params.get(i), paramLinker);
+        val bodyLinker = process(l.body, paramLinker)
         process(l.step, bodyLinker).link(headNode)
         conditionLinker.linkAndReturn(newInstrNode(l))
     }

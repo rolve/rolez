@@ -140,15 +140,21 @@ class InstrGenerator {
             val canHazChildTask = childTasksAnalysis.childTasksMayExist(it)
             // TODO: generate unguarded version
             
-            val ma = (body as ExprStmt).expr as MemberAccess
-            val params = ma.method.allParams.toList
+            val params = it.params;
+            val paramTypes = params.map[
+            	if (variable.type != null) variable.type
+            	else system.type(initializer).value
+            ]
+            val genParamTypes = paramTypes.map[generate];
+            val args = params.map[initializer]
             val passed = new ArrayList
             val shared = new ArrayList
             
             // separate arguments for the tasks into shared and passed objects
-            for(var i = 0; i < params.size; i++){
-                if(params.get(i).type instanceof RoleType) {
-                    val role = (params.get(i).type as RoleType).role
+            for(var i = 0; i < params.size; i++) {
+            	val pitype = paramTypes.get(i);
+                if(pitype instanceof RoleType) {
+                    val role = (pitype as RoleType).role
                     if(role instanceof ReadWrite) 
                         passed.add(i)
                     else if(role instanceof ReadOnly)
@@ -156,14 +162,11 @@ class InstrGenerator {
                 }
             }
             
-            val argList = (1..<ma.allArgs.length)
-                .map['''(«params.get(it).type.generate») $args[«it»], '''].join
-            
             '''
             { /* parfor */
                 final java.util.List<java.lang.Object[]> $argsList = new java.util.ArrayList<>();
                 for(«initializer.generate» «condition.generate»; «step.generate»)
-                    $argsList.add(new java.lang.Object[] {«ma.allArgs.map[generate].join(", ")»});
+                    $argsList.add(new java.lang.Object[] {«args.map[generate].join(", ")»});
                 
                 final java.lang.Object[][] $passed = new java.lang.Object[$argsList.size()][];
                 final java.lang.Object[][] $shared = new java.lang.Object[$argsList.size()][];
@@ -180,7 +183,11 @@ class InstrGenerator {
                     $tasks[$i] = new «taskClassName»<java.lang.Void>($passed[$i], $shared[$i], $tasksBits) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            ((«ma.method.thisParam.type.generate») $args[0]).«ma.method.name»«UNGUARDED_METHOD.suffix»(«argList»idBits());
+                            «(0..<params.size).map[
+                            	genParamTypes.get(it) + " " + params.get(it).variable.name +
+                            	" = (" + genParamTypes.get(it) + ") $args[" + it + "];"
+                            ].join("\n")»
+                            «body.generate»
                             return null;
                         }
                     };
@@ -282,6 +289,21 @@ class InstrGenerator {
             }
             '''
         }
+        
+        /*private static def boolean isTaskCall(Stmt body) {
+        	if (!(body instanceof ExprStmt))
+        		return false;
+	        val es = body as ExprStmt
+	        if (!(es.expr instanceof MemberAccess))
+	        	return false;
+	        
+	        val ma = es.expr as MemberAccess
+	        
+	        if (!ma.isMethodInvoke)
+	        	return false;
+	        
+	        return ma.getMethod.declaredTask;
+        }*/
         
         private def dispatch CharSequence generate(Block it) '''
             {
