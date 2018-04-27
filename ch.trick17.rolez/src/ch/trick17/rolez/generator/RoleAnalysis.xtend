@@ -52,18 +52,22 @@ import static extension java.util.Objects.requireNonNull
  * task). Only the results of the child tasks analysis are
  * method-kind-dependent.
  */
-class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleInfo>> {
-    
-    static class Provider {
-        
-        @Inject RolezSystem system
-        @Inject RolezUtils utils
-        @Inject extension CfgProvider
-    
-        def newRoleAnalysis(Executable executable) {
-            new RoleAnalysis(executable, executable.code.controlFlowGraph, system, utils)
-        }
+interface RoleAnalysis {
+    def BuiltInRole dynamicRole(Expr it)
+}
+
+class RoleAnalysisProvider {
+
+    @Inject RolezSystem system
+    @Inject RolezUtils utils
+    @Inject extension CfgProvider
+
+    def newRoleAnalysis(Executable executable) {
+        new DefaultRoleAnalysis(executable, executable.code.controlFlowGraph, system, utils)
     }
+}
+
+class DefaultRoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleInfo>> implements RoleAnalysis {
     
     val extension RolezFactory factory = RolezFactory.eINSTANCE
     val extension RolezUtils utils
@@ -71,7 +75,7 @@ class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleInfo>> {
     
     val Executable code
     
-    private new(Executable code, ControlFlowGraph cfg, RolezSystem system, RolezUtils utils) {
+    package new(Executable code, ControlFlowGraph cfg, RolezSystem system, RolezUtils utils) {
         super(cfg, true)
         this.code = code
         
@@ -236,7 +240,7 @@ class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleInfo>> {
     
     /* Interface of the analysis */
     
-    def dynamicRole(Expr it) {
+    override dynamicRole(Expr it) {
         roleInfo(it, cfg.nodeOf(it).inFlow ?: ImmutableMap.of).ownRole
     }
 }

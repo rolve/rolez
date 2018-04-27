@@ -23,7 +23,7 @@ class ChildTasksAnalysisTest {
     
     @Inject extension TestUtils
     @Inject extension ParseHelper<Program>
-    @Inject extension ChildTasksAnalysis.Provider
+    @Inject extension ChildTasksAnalysisProvider
     
     @Test def testGuardedMethod() {
         var task = parse('''

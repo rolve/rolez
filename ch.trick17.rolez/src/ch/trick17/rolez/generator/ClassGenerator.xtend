@@ -45,8 +45,8 @@ class ClassGenerator {
     @Inject extension TypeGenerator
     @Inject extension JavaMapper
     @Inject extension CfgProvider
-    @Inject extension RoleAnalysis.Provider
-    @Inject extension ChildTasksAnalysis.Provider
+    @Inject extension RoleAnalysisProvider
+    @Inject extension ChildTasksAnalysisProvider
     @Inject extension RolezUtils
     
     // IMPROVE: Use some kind of import manager (note: the Xtext one is incorrect when using the default pkg)
