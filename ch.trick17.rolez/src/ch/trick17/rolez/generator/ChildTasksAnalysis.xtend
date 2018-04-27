@@ -10,6 +10,7 @@ import ch.trick17.rolez.validation.cfg.ControlFlowGraph
 import ch.trick17.rolez.validation.dataflow.DataFlowAnalysis
 import javax.inject.Inject
 
+import static ch.trick17.rolez.Constants.noChildTasksAnalysis
 import static ch.trick17.rolez.generator.MethodKind.*
 
 /**
@@ -26,16 +27,28 @@ interface ChildTasksAnalysis {
 }
 
 class ChildTasksAnalysisProvider {
+    
     @Inject extension CfgProvider
     
     def newChildTasksAnalysis(FieldInitializer initializer) {
-        new DefaultChildTasksAnalysis(initializer.expr.controlFlowGraph, null)
+        if(System.getProperty(noChildTasksAnalysis) != null)
+            new NullChildTasksAnalysis
+        else
+            new DefaultChildTasksAnalysis(initializer.expr.controlFlowGraph, null)
     }
+    
     def newChildTasksAnalysis(Constr constr) {
-        new DefaultChildTasksAnalysis(constr.body.controlFlowGraph, null)
+        if(System.getProperty(noChildTasksAnalysis) != null)
+            new NullChildTasksAnalysis
+        else
+            new DefaultChildTasksAnalysis(constr.body.controlFlowGraph, null)
     }
+    
     def newChildTasksAnalysis(Method method, MethodKind methodKind) {
-        new DefaultChildTasksAnalysis(method.code.controlFlowGraph, methodKind)
+        if(System.getProperty(noChildTasksAnalysis) != null)
+            new NullChildTasksAnalysis
+        else
+            new DefaultChildTasksAnalysis(method.code.controlFlowGraph, methodKind)
     }
 }
 
@@ -65,4 +78,8 @@ class DefaultChildTasksAnalysis extends DataFlowAnalysis<Boolean> implements Chi
     override protected merge(Boolean in1, Boolean in2) { in1 || in2 }
     
     override childTasksMayExist(Instr it) { cfg.nodeOf(it).inFlow }
+}
+
+class NullChildTasksAnalysis implements ChildTasksAnalysis {
+    override childTasksMayExist(Instr it) { true }
 }

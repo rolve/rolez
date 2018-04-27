@@ -19,4 +19,7 @@ class Constants {
     public static val                jvmTasksClassName = "rolez.internal.Tasks"
     
     public static val safeAnnotationName = "rolez.lang.Safe"
+    
+    public static val noRoleAnalysis       = "noRoleAnalysis"
+    public static val noChildTasksAnalysis = "noChildTasksAnalysis"
 }

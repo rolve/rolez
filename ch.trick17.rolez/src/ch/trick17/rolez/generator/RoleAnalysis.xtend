@@ -35,6 +35,7 @@ import java.util.Map.Entry
 import javax.inject.Inject
 import org.eclipse.xtend.lib.annotations.Data
 
+import static ch.trick17.rolez.Constants.noRoleAnalysis
 import static ch.trick17.rolez.rolez.VarKind.*
 import static com.google.common.collect.ImmutableMap.copyOf
 
@@ -63,7 +64,10 @@ class RoleAnalysisProvider {
     @Inject extension CfgProvider
 
     def newRoleAnalysis(Executable executable) {
-        new DefaultRoleAnalysis(executable, executable.code.controlFlowGraph, system, utils)
+        if(System.getProperty(noRoleAnalysis) != null)
+            new NullRoleAnalysis
+        else
+            new DefaultRoleAnalysis(executable, executable.code.controlFlowGraph, system, utils)
     }
 }
 
@@ -289,4 +293,8 @@ package class RoleInfo {
     val Iterable<Field> fieldSeq
     
     def concat(Field it) { new AccessSeq(variable, fieldSeq + #[it]) }
+}
+
+class NullRoleAnalysis implements RoleAnalysis {
+    override dynamicRole(Expr it) { RolezFactory.eINSTANCE.createPure }
 }
