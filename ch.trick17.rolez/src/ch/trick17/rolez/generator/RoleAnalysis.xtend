@@ -33,6 +33,7 @@ import com.google.common.collect.ImmutableMap
 import java.util.HashMap
 import java.util.Map.Entry
 import javax.inject.Inject
+import org.apache.log4j.Logger
 import org.eclipse.xtend.lib.annotations.Data
 
 import static ch.trick17.rolez.Constants.noRoleAnalysis
@@ -62,9 +63,16 @@ class RoleAnalysisProvider {
     @Inject RolezSystem system
     @Inject RolezUtils utils
     @Inject extension CfgProvider
-
+    
+    val noAnalysis = System.getProperty(noRoleAnalysis) != null
+    
+    new() {
+        if(noAnalysis)
+            Logger.getLogger(RoleAnalysisProvider).warn("Role analysis disabled")
+    }
+    
     def newRoleAnalysis(Executable executable) {
-        if(System.getProperty(noRoleAnalysis) != null)
+        if(noAnalysis)
             new NullRoleAnalysis
         else
             new DefaultRoleAnalysis(executable, executable.code.controlFlowGraph, system, utils)

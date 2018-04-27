@@ -9,6 +9,7 @@ import ch.trick17.rolez.validation.cfg.CfgProvider
 import ch.trick17.rolez.validation.cfg.ControlFlowGraph
 import ch.trick17.rolez.validation.dataflow.DataFlowAnalysis
 import javax.inject.Inject
+import org.apache.log4j.Logger
 
 import static ch.trick17.rolez.Constants.noChildTasksAnalysis
 import static ch.trick17.rolez.generator.MethodKind.*
@@ -30,22 +31,29 @@ class ChildTasksAnalysisProvider {
     
     @Inject extension CfgProvider
     
+    val noAnalysis = System.getProperty(noChildTasksAnalysis) != null
+    
+    new() {
+        if(noAnalysis)
+            Logger.getLogger(ChildTasksAnalysisProvider).warn("Child tasks analysis disabled")
+    }
+    
     def newChildTasksAnalysis(FieldInitializer initializer) {
-        if(System.getProperty(noChildTasksAnalysis) != null)
+        if(noAnalysis)
             new NullChildTasksAnalysis
         else
             new DefaultChildTasksAnalysis(initializer.expr.controlFlowGraph, null)
     }
     
     def newChildTasksAnalysis(Constr constr) {
-        if(System.getProperty(noChildTasksAnalysis) != null)
+        if(noAnalysis)
             new NullChildTasksAnalysis
         else
             new DefaultChildTasksAnalysis(constr.body.controlFlowGraph, null)
     }
     
     def newChildTasksAnalysis(Method method, MethodKind methodKind) {
-        if(System.getProperty(noChildTasksAnalysis) != null)
+        if(noAnalysis)
             new NullChildTasksAnalysis
         else
             new DefaultChildTasksAnalysis(method.code.controlFlowGraph, methodKind)
