@@ -23,6 +23,7 @@ import ch.trick17.rolez.rolez.RolezFactory
 import ch.trick17.rolez.rolez.Slicing
 import ch.trick17.rolez.rolez.StringLiteral
 import ch.trick17.rolez.rolez.The
+import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.ThisParam
 import ch.trick17.rolez.rolez.Var
 import ch.trick17.rolez.rolez.VarRef
@@ -68,7 +69,7 @@ class RoleAnalysisProvider {
         if(roleAnalysisEnabled)
             new DefaultRoleAnalysis(executable, executable.code.controlFlowGraph, system, utils)
         else
-            new NullRoleAnalysis
+            new NullRoleAnalysis(executable, executable.code.controlFlowGraph, system, utils)
     }
 }
 
@@ -296,6 +297,23 @@ package class RoleInfo {
     def concat(Field it) { new AccessSeq(variable, fieldSeq + #[it]) }
 }
 
-class NullRoleAnalysis implements RoleAnalysis {
-    override dynamicRole(Expr it) { RolezFactory.eINSTANCE.createPure }
+/**
+ * Implementation that always returns PURE, i.e., makes code generation behave
+ * as if role analysis is not performed. EXCEPT for constructors, where guarding
+ * the "this" creates problems with code generation.
+ * 
+ * TODO: Find a way to disentangle correct code generation from role analysis
+ */
+class NullRoleAnalysis extends DefaultRoleAnalysis {
+    
+    new(Executable code, ControlFlowGraph cfg, RolezSystem system, RolezUtils utils) {
+        super(code, cfg, system, utils)
+    }
+    
+    override dynamicRole(Expr it) {
+        if(enclosingExecutable instanceof Constr && it instanceof This)
+            super.dynamicRole(it)
+        else
+            RolezFactory.eINSTANCE.createPure
+    }
 }
