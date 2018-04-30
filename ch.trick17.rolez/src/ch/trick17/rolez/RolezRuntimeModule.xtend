@@ -14,6 +14,8 @@ import org.eclipse.xtext.resource.XtextResource
 import org.eclipse.xtext.scoping.IScopeProvider
 import org.eclipse.xtext.scoping.impl.AbstractDeclarativeScopeProvider
 
+import static com.google.inject.Scopes.SINGLETON
+
 /**
  * Use this class to register components to be used at runtime / without the Equinox extension registry.
  */
@@ -22,6 +24,7 @@ class RolezRuntimeModule extends AbstractRolezRuntimeModule {
     override configure(Binder binder) {
         super.configure(binder);
         binder.bind(IDesugarer).to(RolezDesugarer);
+        binder.bind(Config).in(SINGLETON)
     }
     
     override configureIScopeProviderDelegate(Binder binder) {

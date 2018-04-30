@@ -1,5 +1,6 @@
 package ch.trick17.rolez.generator
 
+import ch.trick17.rolez.Config
 import ch.trick17.rolez.RolezUtils
 import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.BuiltInRole
@@ -33,10 +34,8 @@ import com.google.common.collect.ImmutableMap
 import java.util.HashMap
 import java.util.Map.Entry
 import javax.inject.Inject
-import org.apache.log4j.Logger
 import org.eclipse.xtend.lib.annotations.Data
 
-import static ch.trick17.rolez.Constants.noRoleAnalysis
 import static ch.trick17.rolez.rolez.VarKind.*
 import static com.google.common.collect.ImmutableMap.copyOf
 
@@ -60,22 +59,16 @@ interface RoleAnalysis {
 
 class RoleAnalysisProvider {
 
+    @Inject extension Config
     @Inject RolezSystem system
     @Inject RolezUtils utils
     @Inject extension CfgProvider
     
-    val noAnalysis = System.getProperty(noRoleAnalysis) != null
-    
-    new() {
-        if(noAnalysis)
-            Logger.getLogger(RoleAnalysisProvider).warn("Role analysis disabled")
-    }
-    
     def newRoleAnalysis(Executable executable) {
-        if(noAnalysis)
-            new NullRoleAnalysis
-        else
+        if(roleAnalysisEnabled)
             new DefaultRoleAnalysis(executable, executable.code.controlFlowGraph, system, utils)
+        else
+            new NullRoleAnalysis
     }
 }
 

@@ -1,5 +1,6 @@
 package ch.trick17.rolez.generator
 
+import ch.trick17.rolez.Config
 import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.FieldInitializer
 import ch.trick17.rolez.rolez.Instr
@@ -9,9 +10,7 @@ import ch.trick17.rolez.validation.cfg.CfgProvider
 import ch.trick17.rolez.validation.cfg.ControlFlowGraph
 import ch.trick17.rolez.validation.dataflow.DataFlowAnalysis
 import javax.inject.Inject
-import org.apache.log4j.Logger
 
-import static ch.trick17.rolez.Constants.noChildTasksAnalysis
 import static ch.trick17.rolez.generator.MethodKind.*
 
 /**
@@ -29,34 +28,28 @@ interface ChildTasksAnalysis {
 
 class ChildTasksAnalysisProvider {
     
+    @Inject extension Config
     @Inject extension CfgProvider
     
-    val noAnalysis = System.getProperty(noChildTasksAnalysis) != null
-    
-    new() {
-        if(noAnalysis)
-            Logger.getLogger(ChildTasksAnalysisProvider).warn("Child tasks analysis disabled")
-    }
-    
     def newChildTasksAnalysis(FieldInitializer initializer) {
-        if(noAnalysis)
-            new NullChildTasksAnalysis
-        else
+        if(childTasksAnalysisEnabled)
             new DefaultChildTasksAnalysis(initializer.expr.controlFlowGraph, null)
+        else
+            new NullChildTasksAnalysis
     }
     
     def newChildTasksAnalysis(Constr constr) {
-        if(noAnalysis)
-            new NullChildTasksAnalysis
-        else
+        if(childTasksAnalysisEnabled)
             new DefaultChildTasksAnalysis(constr.body.controlFlowGraph, null)
+        else
+            new NullChildTasksAnalysis
     }
     
     def newChildTasksAnalysis(Method method, MethodKind methodKind) {
-        if(noAnalysis)
-            new NullChildTasksAnalysis
-        else
+        if(childTasksAnalysisEnabled)
             new DefaultChildTasksAnalysis(method.code.controlFlowGraph, methodKind)
+        else
+            new NullChildTasksAnalysis
     }
 }
 
