@@ -1,5 +1,6 @@
 package ch.trick17.rolez.generator
 
+import ch.trick17.rolez.Config
 import ch.trick17.rolez.RolezUtils
 import ch.trick17.rolez.generic.ParameterizedMethod
 import ch.trick17.rolez.rolez.Constr
@@ -40,7 +41,8 @@ import static extension ch.trick17.rolez.generator.SafeJavaNames.*
  * the method and constructor bodies and the field initializers.
  */
 class ClassGenerator {
-        
+    
+    @Inject extension Config
     @Inject extension InstrGenerator
     @Inject extension TypeGenerator
     @Inject extension JavaMapper
@@ -226,8 +228,11 @@ class ClassGenerator {
     
     private def gen(Method it) {
         val roleAnalysis = newRoleAnalysis(it)
+        val kinds =
+            if(childTasksAnalysisEnabled) #[GUARDED_METHOD, UNGUARDED_METHOD]
+            else                          #[GUARDED_METHOD]
         '''
-        «FOR kind : #[GUARDED_METHOD, UNGUARDED_METHOD]»
+        «FOR kind : kinds»
         
         «IF isOverriding && !superMethod.isMapped»
         @java.lang.Override
@@ -244,7 +249,7 @@ class ClassGenerator {
             «ENDIF»
         }
         «ENDFOR»
-        «IF isOverriding && superMethod.isMapped»
+        «IF childTasksAnalysisEnabled && isOverriding && superMethod.isMapped»
         
         @java.lang.Override
         public «genReturnType» «safeName»(«params.map[gen].join(", ")») {

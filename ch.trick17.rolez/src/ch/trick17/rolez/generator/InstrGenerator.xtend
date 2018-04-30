@@ -1,5 +1,6 @@
 package ch.trick17.rolez.generator
 
+import ch.trick17.rolez.Config
 import ch.trick17.rolez.RolezUtils
 import ch.trick17.rolez.rolez.Argumented
 import ch.trick17.rolez.rolez.ArithmeticUnaryExpr
@@ -117,6 +118,7 @@ class InstrGenerator {
      */
     private static class Generator {
         
+        @Inject extension Config
         @Inject extension RolezFactory
         @Inject extension JavaMapper
         @Inject RolezUtils utils
@@ -159,6 +161,8 @@ class InstrGenerator {
             val argList = (1..<ma.allArgs.length)
                 .map['''(«params.get(it).type.generate») $args[«it»], '''].join
             
+            val methodSuffix = if(childTasksAnalysisEnabled) UNGUARDED_METHOD.suffix else ""
+            
             '''
             { /* parfor */
                 final java.util.List<java.lang.Object[]> $argsList = new java.util.ArrayList<>();
@@ -180,7 +184,7 @@ class InstrGenerator {
                     $tasks[$i] = new «taskClassName»<java.lang.Void>($passed[$i], $shared[$i], $tasksBits) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            ((«ma.method.thisParam.type.generate») $args[0]).«ma.method.name»«UNGUARDED_METHOD.suffix»(«argList»idBits());
+                            ((«ma.method.thisParam.type.generate») $args[0]).«ma.method.name»«methodSuffix»(«argList»idBits());
                             return null;
                         }
                     };
@@ -244,6 +248,8 @@ class InstrGenerator {
             val argList1 = (1..<args1.size).map[argPrefix1 + it + ", "].join
             val argList2 = (1..<args2.size).map[argPrefix2 + it + ", "].join
             
+            val methodSuffix = if(childTasksAnalysisEnabled) UNGUARDED_METHOD.suffix else ""
+            
             '''
             { /* parallel-and */
                 «FOR i : 0..<args1.size»
@@ -261,14 +267,14 @@ class InstrGenerator {
                 final «taskClassName»<?> $t1 = new «taskClassName»<java.lang.Void>($t1Passed, $t1Shared) {
                     @java.lang.Override
                     protected java.lang.Void runRolez() {
-                        «argPrefix1»0.«ma1.method.name»«UNGUARDED_METHOD.suffix»(«argList1»idBits());
+                        «argPrefix1»0.«ma1.method.name»«methodSuffix»(«argList1»idBits());
                         return null;
                     }
                 };
                 final «taskClassName»<?> $t2 = new «taskClassName»<java.lang.Void>($t2Passed, $t2Shared, $t1.idBits()) {
                     @java.lang.Override
                     protected java.lang.Void runRolez() {
-                        «argPrefix2»0.«ma2.method.name»«UNGUARDED_METHOD.suffix»(«argList2»idBits());
+                        «argPrefix2»0.«ma2.method.name»«methodSuffix»(«argList2»idBits());
                         return null;
                     }
                 };
