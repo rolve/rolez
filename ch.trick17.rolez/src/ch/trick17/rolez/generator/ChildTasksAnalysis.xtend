@@ -1,5 +1,6 @@
 package ch.trick17.rolez.generator
 
+import ch.trick17.rolez.Config
 import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.FieldInitializer
 import ch.trick17.rolez.rolez.Instr
@@ -11,7 +12,6 @@ import ch.trick17.rolez.validation.dataflow.DataFlowAnalysis
 import javax.inject.Inject
 
 import static ch.trick17.rolez.generator.MethodKind.*
-import ch.trick17.rolez.rolez.Expr
 
 /**
  * A simple analysis that determines whether there may currently exist any child
@@ -22,25 +22,42 @@ import ch.trick17.rolez.rolez.Expr
  * is generated. In particular, it depends on the generated method kind, i.e.,
  * task, guarded method, or unguarded method.
  */
-class ChildTasksAnalysis extends DataFlowAnalysis<Boolean> {
+interface ChildTasksAnalysis {
+    def boolean childTasksMayExist(Instr it)
+}
+
+class ChildTasksAnalysisProvider {
     
-    static class Provider {
-        @Inject extension CfgProvider
-        
-        def newChildTasksAnalysis(FieldInitializer initializer) {
-            new ChildTasksAnalysis(initializer.expr.controlFlowGraph, null)
-        }
-        def newChildTasksAnalysis(Constr constr) {
-            new ChildTasksAnalysis(constr.body.controlFlowGraph, null)
-        }
-        def newChildTasksAnalysis(Method method, MethodKind methodKind) {
-            new ChildTasksAnalysis(method.code.controlFlowGraph, methodKind)
-        }
+    @Inject extension Config
+    @Inject extension CfgProvider
+    
+    def newChildTasksAnalysis(FieldInitializer initializer) {
+        if(childTasksAnalysisEnabled)
+            new DefaultChildTasksAnalysis(initializer.expr.controlFlowGraph, null)
+        else
+            new NullChildTasksAnalysis
     }
+    
+    def newChildTasksAnalysis(Constr constr) {
+        if(childTasksAnalysisEnabled)
+            new DefaultChildTasksAnalysis(constr.body.controlFlowGraph, null)
+        else
+            new NullChildTasksAnalysis
+    }
+    
+    def newChildTasksAnalysis(Method method, MethodKind methodKind) {
+        if(childTasksAnalysisEnabled)
+            new DefaultChildTasksAnalysis(method.code.controlFlowGraph, methodKind)
+        else
+            new NullChildTasksAnalysis
+    }
+}
+
+class DefaultChildTasksAnalysis extends DataFlowAnalysis<Boolean> implements ChildTasksAnalysis {
     
     val MethodKind methodKind
     
-    private new(ControlFlowGraph cfg, MethodKind methodKind) {
+    package new(ControlFlowGraph cfg, MethodKind methodKind) {
         super(cfg, true)
         this.methodKind = methodKind;
         
@@ -61,7 +78,9 @@ class ChildTasksAnalysis extends DataFlowAnalysis<Boolean> {
     
     override protected merge(Boolean in1, Boolean in2) { in1 || in2 }
     
-    def childTasksMayExist(Expr it) { cfg.nodeOf(it).inFlow }
-    
-    def childTasksMayExist(Instr it) { cfg.nodeOf(it).inFlow }
+    override childTasksMayExist(Instr it) { cfg.nodeOf(it).inFlow }
+}
+
+class NullChildTasksAnalysis implements ChildTasksAnalysis {
+    override childTasksMayExist(Instr it) { true }
 }

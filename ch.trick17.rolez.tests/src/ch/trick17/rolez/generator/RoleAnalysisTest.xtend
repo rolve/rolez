@@ -32,7 +32,7 @@ class RoleAnalysisTest {
     @Inject extension RolezUtils
     @Inject extension TestUtils
     @Inject extension ParseHelper<Program>
-    @Inject extension RoleAnalysis.Provider
+    @Inject extension RoleAnalysisProvider
     
     @Test def testDataflowMerge() {
         var task = parse('''

@@ -1,5 +1,6 @@
 package ch.trick17.rolez.generator
 
+import ch.trick17.rolez.Config
 import ch.trick17.rolez.RolezUtils
 import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.BuiltInRole
@@ -22,6 +23,7 @@ import ch.trick17.rolez.rolez.RolezFactory
 import ch.trick17.rolez.rolez.Slicing
 import ch.trick17.rolez.rolez.StringLiteral
 import ch.trick17.rolez.rolez.The
+import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.ThisParam
 import ch.trick17.rolez.rolez.Var
 import ch.trick17.rolez.rolez.VarRef
@@ -52,18 +54,26 @@ import static extension java.util.Objects.requireNonNull
  * task). Only the results of the child tasks analysis are
  * method-kind-dependent.
  */
-class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleInfo>> {
+interface RoleAnalysis {
+    def BuiltInRole dynamicRole(Expr it)
+}
+
+class RoleAnalysisProvider {
+
+    @Inject extension Config
+    @Inject RolezSystem system
+    @Inject RolezUtils utils
+    @Inject extension CfgProvider
     
-    static class Provider {
-        
-        @Inject RolezSystem system
-        @Inject RolezUtils utils
-        @Inject extension CfgProvider
-    
-        def newRoleAnalysis(Executable executable) {
-            new RoleAnalysis(executable, executable.code.controlFlowGraph, system, utils)
-        }
+    def newRoleAnalysis(Executable executable) {
+        if(roleAnalysisEnabled)
+            new DefaultRoleAnalysis(executable, executable.code.controlFlowGraph, system, utils)
+        else
+            new NullRoleAnalysis(executable, executable.code.controlFlowGraph, system, utils)
     }
+}
+
+class DefaultRoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleInfo>> implements RoleAnalysis {
     
     val extension RolezFactory factory = RolezFactory.eINSTANCE
     val extension RolezUtils utils
@@ -71,7 +81,7 @@ class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleInfo>> {
     
     val Executable code
     
-    private new(Executable code, ControlFlowGraph cfg, RolezSystem system, RolezUtils utils) {
+    package new(Executable code, ControlFlowGraph cfg, RolezSystem system, RolezUtils utils) {
         super(cfg, true)
         this.code = code
         
@@ -236,7 +246,7 @@ class RoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleInfo>> {
     
     /* Interface of the analysis */
     
-    def dynamicRole(Expr it) {
+    override dynamicRole(Expr it) {
         roleInfo(it, cfg.nodeOf(it).inFlow ?: ImmutableMap.of).ownRole
     }
 }
@@ -285,4 +295,25 @@ package class RoleInfo {
     val Iterable<Field> fieldSeq
     
     def concat(Field it) { new AccessSeq(variable, fieldSeq + #[it]) }
+}
+
+/**
+ * Implementation that always returns PURE, i.e., makes code generation behave
+ * as if role analysis is not performed. EXCEPT for constructors, where guarding
+ * the "this" creates problems with code generation.
+ * 
+ * TODO: Find a way to disentangle correct code generation from role analysis
+ */
+class NullRoleAnalysis extends DefaultRoleAnalysis {
+    
+    new(Executable code, ControlFlowGraph cfg, RolezSystem system, RolezUtils utils) {
+        super(code, cfg, system, utils)
+    }
+    
+    override dynamicRole(Expr it) {
+        if(enclosingExecutable instanceof Constr && it instanceof This)
+            super.dynamicRole(it)
+        else
+            RolezFactory.eINSTANCE.createPure
+    }
 }
