@@ -1,5 +1,6 @@
 package ch.trick17.rolez.generator
 
+import ch.trick17.rolez.Config
 import ch.trick17.rolez.RolezUtils
 import ch.trick17.rolez.rolez.Argumented
 import ch.trick17.rolez.rolez.ArithmeticUnaryExpr
@@ -117,6 +118,7 @@ class InstrGenerator {
      */
     private static class Generator {
         
+        @Inject extension Config
         @Inject extension RolezFactory
         @Inject extension JavaMapper
         @Inject RolezUtils utils
@@ -619,9 +621,10 @@ class InstrGenerator {
                     && !system.subroleSucceeded(roleAnalysis.dynamicRole(it), requiredRole)
             if(utils.isGuarded(type) && needsGuard) {
                 val slice = if((type as RoleType).isSliced) "Slice" else ""
+                val task = if(taskParamEnabled) ", $task" else ""
                 switch(requiredRole) {
-                    ReadWrite: "guardReadWrite" + slice + "(" + generate + ", $task)"
-                    ReadOnly : "guardReadOnly"  + slice + "(" + generate + ", $task)"
+                    ReadWrite: "guardReadWrite" + slice + "(" + generate + task + ")"
+                    ReadOnly : "guardReadOnly"  + slice + "(" + generate + task + ")"
                     default  : throw new AssertionError("unexpected role: " + requiredRole)
                 }
             }
