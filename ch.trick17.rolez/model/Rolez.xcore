@@ -234,6 +234,9 @@ class Stmt extends Instr {}
 class ParallelStmt extends Stmt {
 	contains Stmt part1
 	contains Stmt part2
+	
+    contains LocalVarDecl[] params1
+    contains LocalVarDecl[] params2
 }
 
 class Block extends Stmt {
@@ -332,6 +335,7 @@ enum OpAssignment {
     TIMES_ASSIGN as "*="
     DIVIDED_BY_ASSIGN as "/="
     MODULO_ASSIGN as "%="
+    PARALLEL_ASSIGN as "@="
 }
 
 class LogicalExpr extends BinaryExpr {

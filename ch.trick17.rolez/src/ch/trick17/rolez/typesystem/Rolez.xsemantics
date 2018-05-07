@@ -157,7 +157,7 @@ from {
     G |- a.left : var Type leftType
     G |= a.left
     
-    if(a.op == OpAssignment.ASSIGN) {
+    if(a.op == OpAssignment.ASSIGN || a.op == OpAssignment.PARALLEL_ASSIGN) {
         G |- a.right <| leftType
     }
     else {

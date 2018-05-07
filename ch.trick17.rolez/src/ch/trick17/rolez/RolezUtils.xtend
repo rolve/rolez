@@ -45,6 +45,12 @@ import static extension ch.trick17.rolez.RolezExtensions.*
 import static extension ch.trick17.rolez.generic.Parameterized.parameterizedWith
 import static extension org.eclipse.emf.ecore.util.EcoreUtil.resolve
 import ch.trick17.rolez.rolez.Parfor
+import ch.trick17.rolez.rolez.ParallelStmt
+import ch.trick17.rolez.rolez.OpAssignment
+import ch.trick17.rolez.rolez.VarRef
+import ch.trick17.rolez.rolez.ExprStmt
+import ch.trick17.rolez.rolez.WhileLoop
+import ch.trick17.rolez.rolez.IfStmt
 
 /** 
  * Utility functions for Rolez language constructs
@@ -147,9 +153,21 @@ class RolezUtils {
     
     static def assignedField(Expr it) { (assignmentLhs as MemberAccess).field }
     
+    static def assignedVariable(Expr it) { (assignmentLhs as VarRef).variable }
+    
     static def dispatch Iterable<? extends Var> varsAbove(Block container, Stmt s) {
         container.stmts.takeWhile[it != s].filter(LocalVarDecl).map[variable]
-            + varsAbove(container.eContainer, s)
+            + varsAbove(container.eContainer, container)
+    }
+    
+    static def dispatch Iterable<? extends Var> varsAbove(ParallelStmt container, Instr i) {
+        val vars = (
+        	if(i === container.part1) container.params1.map[variable as Var]
+        	else if (i === container.part2) container.params2.map[variable as Var]
+        	else emptyList
+        	)
+            + varsAbove(container.eContainer, container)
+      	vars
     }
     
     static def dispatch Iterable<? extends Var> varsAbove(ForLoop container, Instr i) {
@@ -171,6 +189,57 @@ class RolezUtils {
     
     static def dispatch Iterable<? extends Var> varsAbove(Instr container, Instr i) {
         varsAbove(container.eContainer, container)
+    }
+    
+    static def dispatch Set<String> parallelAssignmentVars(Block b) {
+    	val result = new HashSet<String>
+    	b.stmts.forEach[s | result.addAll(parallelAssignmentVars(s))]
+    	result
+    }
+    
+    static def dispatch Set<String> parallelAssignmentVars(IfStmt i) {
+    	val result = parallelAssignmentVars(i.thenPart)
+        result.addAll(parallelAssignmentVars(i.elsePart))
+        result
+    }
+    
+    static def dispatch Set<String> parallelAssignmentVars(WhileLoop l) {
+    	parallelAssignmentVars(l.body)
+    }
+    
+    static def dispatch Set<String> parallelAssignmentVars(ForLoop l) {
+    	parallelAssignmentVars(l.body)
+    }
+    
+    static def dispatch Set<String> parallelAssignmentVars(Parfor l) {
+    	parallelAssignmentVars(l.body)
+    }
+    
+    static def dispatch Set<String> parallelAssignmentVars(ParallelStmt p) {
+    	val result = parallelAssignmentVars(p.part1)
+        result.addAll(parallelAssignmentVars(p.part2))
+        result
+    }
+    
+    static def dispatch Set<String> parallelAssignmentVars(ExprStmt es) {
+    	parallelAssignmentVars(es.expr)
+    }
+    
+    static def dispatch Set<String> parallelAssignmentVars(Assignment a) {
+    	if (a.op == OpAssignment.PARALLEL_ASSIGN) {
+    		val result = new HashSet<String>()
+    		result.add(a.assignedVariable.name)
+    		result
+    	}
+    	else emptySet
+    }
+    
+    static def dispatch Set<String> parallelAssignmentVars(Expr e) {
+    	emptySet
+    }
+    
+    static def dispatch Set<String> parallelAssignmentVars(Stmt s) {
+    	emptySet
     }
     
     /*

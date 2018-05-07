@@ -91,7 +91,7 @@ Stmt:
     Block | LocalVarDecl | IfStmt | WhileLoop | ForLoop | SuperConstrCall | Return | ExprStmt | ParallelStmt | Parfor;
 
 ParallelStmt:
-    'parallel' part1=Stmt 'and' part2=Stmt;
+    'parallel' ('[' (params1+=LocalVarDecl)+ ']')? part1=Stmt 'and' ('[' (params2+=LocalVarDecl)+ ']')? part2=Stmt;
 
 LocalVarDecl:
     variable=LocalVar ('=' initializer=Expr)? ';';
@@ -141,7 +141,8 @@ Assignment returns Expr:
 enum OpAssignment:
     ASSIGN='=' | OR_ASSIGN='|=' | AND_ASSIGN='&='
     | PLUS_ASSIGN='+=' | MINUS_ASSIGN='-='
-    | TIMES_ASSIGN='*=' | DIVIDED_BY_ASSIGN='/=' | MODULO_ASSIGN='%=';
+    | TIMES_ASSIGN='*=' | DIVIDED_BY_ASSIGN='/=' | MODULO_ASSIGN='%='
+    | PARALLEL_ASSIGN='@=';
 
 // TODO: Add bitwise assignment operators
 

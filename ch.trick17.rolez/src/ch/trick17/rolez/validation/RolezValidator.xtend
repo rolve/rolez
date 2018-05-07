@@ -301,7 +301,17 @@ class RolezValidator extends RolezSystemValidator {
     def checkNoDuplicatePlParams(Parfor it) {
         for(p : params)
             if(params.exists[p !== it && p.variable.name == variable.name])
-                error("Duplicate parameter " + p.variable.name, p, NAMED__NAME, DUPLICATE_VAR)
+                error("Duplicate parfor parameter " + p.variable.name, p, NAMED__NAME, DUPLICATE_VAR)
+    }
+    
+    @Check
+    def checkNoDuplicatePlParams(ParallelStmt it) {
+        for(p : params1)
+            if(params1.exists[p !== it && p.variable.name == variable.name])
+                error("Duplicate 'parallel and' parameter " + p.variable.name, p, NAMED__NAME, DUPLICATE_VAR)
+        for(p : params2)
+            if(params2.exists[p !== it && p.variable.name == variable.name])
+                error("Duplicate 'parallel and' parameter " + p.variable.name, p, NAMED__NAME, DUPLICATE_VAR)
     }
     
     /**

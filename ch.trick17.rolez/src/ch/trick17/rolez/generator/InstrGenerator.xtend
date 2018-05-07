@@ -63,6 +63,8 @@ import static ch.trick17.rolez.rolez.VarKind.*
 import static extension ch.trick17.rolez.RolezExtensions.*
 import static extension ch.trick17.rolez.generator.SafeJavaNames.*
 import static extension org.eclipse.xtext.util.Strings.convertToJavaString
+import java.util.Map
+import ch.trick17.rolez.rolez.OpAssignment
 
 /**
  * Generates Java code for Rolez instructions (single or code blocks). Relies on
@@ -127,6 +129,9 @@ class InstrGenerator {
         val RoleAnalysis roleAnalysis
         val ChildTasksAnalysis childTasksAnalysis
         var MethodKind methodKind
+        var Map<String, Integer> currentPam = emptyMap
+        var int currentPidx = 0
+        var int currentPlvl = 0
         
         private new(MethodKind methodKind, RoleAnalysis roleAnalysis,
                 ChildTasksAnalysis childTasksAnalysis) {
@@ -145,19 +150,20 @@ class InstrGenerator {
             	if (variable.type != null) variable.type
             	else system.type(initializer).value
             ]
-            val genParamTypes = paramTypes.map[generate];
+            val genParamTypes = paramTypes.map[generate]
             val args = params.map[initializer]
+            
             val passed = new ArrayList
             val shared = new ArrayList
             
             // separate arguments for the tasks into shared and passed objects
-            for(var i = 0; i < params.size; i++) {
+            for (var i = 0; i < params.size; i++) {
             	val pitype = paramTypes.get(i);
-                if(pitype instanceof RoleType) {
+                if (pitype instanceof RoleType) {
                     val role = (pitype as RoleType).role
-                    if(role instanceof ReadWrite) 
+                    if (role instanceof ReadWrite) 
                         passed.add(i)
-                    else if(role instanceof ReadOnly)
+                    else if (role instanceof ReadOnly)
                         shared.add(i)
                 }
             }
@@ -183,10 +189,9 @@ class InstrGenerator {
                     $tasks[$i] = new «taskClassName»<java.lang.Void>($passed[$i], $shared[$i], $tasksBits) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            «(0..<params.size).map[
-                            	genParamTypes.get(it) + " " + params.get(it).variable.name +
-                            	" = (" + genParamTypes.get(it) + ") $args[" + it + "];"
-                            ].join("\n")»
+                        	«FOR i : 0..<params.size»
+                            «genParamTypes.get(i)» «params.get(i).variable.name» = («genParamTypes.get(i)») $args[«i»];
+                            «ENDFOR»
                             «body.generate»
                             return null;
                         }
@@ -213,13 +218,22 @@ class InstrGenerator {
             val argPrefix1 = "$t1Arg"
             val argPrefix2 = "$t2Arg"
             
-            var ma1 = (part1 as ExprStmt).expr as MemberAccess	
-            var ma2 = (part2 as ExprStmt).expr as MemberAccess	
+            val params1 = it.params1
+            val params2 = it.params2
             
-            val args1 = ma1.allArgs.toList
-            val args2 = ma2.allArgs.toList
-            val params1 = ma1.method.allParams.toList
-            val params2 = ma2.method.allParams.toList
+            val paramTypes1 = params1.map[
+            	if (variable.type != null) variable.type
+            	else system.type(initializer).value
+            ]
+            val genParamTypes1 = paramTypes1.map[generate]
+            val args1 = params1.map[initializer]
+            
+            val paramTypes2 = params2.map[
+            	if (variable.type != null) variable.type
+            	else system.type(initializer).value
+            ]
+            val genParamTypes2 = paramTypes2.map[generate]
+            val args2 = params2.map[initializer]
             
             val passed1 = new ArrayList
             val passed2 = new ArrayList
@@ -228,54 +242,90 @@ class InstrGenerator {
             val shared2 = new ArrayList
             
             // separate arguments for the tasks into shared and passed objects
-            for(var i = 0; i < params1.size; i++){
-                if(params1.get(i).type instanceof RoleType) {
-                    val role = (params1.get(i).type as RoleType).role
-                    if(role instanceof ReadWrite) 
+            for (var i = 0; i < params1.size; i++) {
+            	val pitype = paramTypes1.get(i);
+                if (pitype instanceof RoleType) {
+                    val role = (pitype as RoleType).role
+                    if (role instanceof ReadWrite) 
                         passed1.add(i)
                     else if(role instanceof ReadOnly)
                         shared1.add(i)
                 }
             }
             
-            for(var i = 0; i < params2.size; i++){
-                if(params2.get(i).type instanceof RoleType) {
-                    val role = (params2.get(i).type as RoleType).role
-                    if(role instanceof ReadWrite) 
+            for (var i = 0; i < params2.size; i++) {
+            	val pitype = paramTypes2.get(i);
+                if (pitype instanceof RoleType) {
+                    val role = (pitype as RoleType).role
+                    if (role instanceof ReadWrite) 
                         passed2.add(i)
                     else if(role instanceof ReadOnly)
                         shared2.add(i)
                 }
             }
             
-            val argList1 = (1..<args1.size).map[argPrefix1 + it + ", "].join
-            val argList2 = (1..<args2.size).map[argPrefix2 + it + ", "].join
+            val aboveVars = RolezUtils.varsAbove(eContainer, it)
+            val aboveMap = aboveVars.toMap[name]
+            val aboveNames = aboveMap.keySet
+            val paVars1 = RolezUtils.parallelAssignmentVars(part1).toSet
+            val paVars2 = RolezUtils.parallelAssignmentVars(part2).toSet
+            
+            paVars1.retainAll(aboveNames)
+            paVars2.retainAll(aboveNames)
+            
+            val pal1 = paVars1.toList
+            val pal2 = paVars2.toList
+            
+            val pam1 = pal1.toInvertedMap[pal1.indexOf(it)]
+            val pam2 = pal2.toInvertedMap[pal2.indexOf(it)]
+            
+            val oldPam = currentPam
+            val oldPidx = currentPidx
+            currentPlvl++
+            val plvl = currentPlvl
+            currentPam = pam1
+            currentPidx = 1
+            val part1Gen = part1.generate
+            currentPam = pam2
+            currentPidx = 2
+         	val part2Gen = part2.generate
+            currentPlvl--
+         	currentPam = oldPam
+         	currentPidx = oldPidx
             
             '''
             { /* parallel-and */
-                «FOR i : 0..<args1.size»
-                final «params1.get(i).type.generate» «argPrefix1»«i» = «args1.get(i).generate»;
+                «FOR i : 0..<params1.size»
+                final «genParamTypes1.get(i)» «argPrefix1»«i» = «args1.get(i).generate»;
                 «ENDFOR»
-                «FOR i : 0..<args2.size»
-                final «params2.get(i).type.generate» «argPrefix2»«i» = «args2.get(i).generate»;
+                «FOR i : 0..<params2.size»
+                final «genParamTypes2.get(i)» «argPrefix2»«i» = «args2.get(i).generate»;
                 «ENDFOR»
                 
                 final java.lang.Object[] $t1Passed = {«passed1.map[argPrefix1 + it].join(", ")»};
                 final java.lang.Object[] $t1Shared = {«shared1.map[argPrefix1 + it].join(", ")»};
+                final java.lang.Object[] $t1«plvl»Assign = new java.lang.Object[«paVars1.size»];
                 final java.lang.Object[] $t2Passed = {«passed2.map[argPrefix2 + it].join(", ")»};
                 final java.lang.Object[] $t2Shared = {«shared2.map[argPrefix2 + it].join(", ")»};
+                final java.lang.Object[] $t2«plvl»Assign = new java.lang.Object[«paVars2.size»];
                 
                 final «taskClassName»<?> $t1 = new «taskClassName»<java.lang.Void>($t1Passed, $t1Shared) {
                     @java.lang.Override
                     protected java.lang.Void runRolez() {
-                        «argPrefix1»0.«ma1.method.name»«UNGUARDED_METHOD.suffix»(«argList1»idBits());
+                    	«FOR i : 0..<params1.size»
+                        «genParamTypes1.get(i)» «params1.get(i).variable.name» = «argPrefix1»«i»;
+                        «ENDFOR»
+                        «part1Gen»
                         return null;
                     }
                 };
                 final «taskClassName»<?> $t2 = new «taskClassName»<java.lang.Void>($t2Passed, $t2Shared, $t1.idBits()) {
                     @java.lang.Override
                     protected java.lang.Void runRolez() {
-                        «argPrefix2»0.«ma2.method.name»«UNGUARDED_METHOD.suffix»(«argList2»idBits());
+                    	«FOR i : 0..<params2.size»
+                        «genParamTypes2.get(i)» «params2.get(i).variable.name» = «argPrefix2»«i»;
+                        «ENDFOR»
+                        «part2Gen»
                         return null;
                     }
                 };
@@ -286,8 +336,26 @@ class InstrGenerator {
                 } finally {
                     $t1.get();
                 }
+                
+                «FOR i : 0..<pal1.size»
+                if ($t1«plvl»Assign[«i»] != null)
+                    «parallelAssignRcvr(pal1.get(i))» = («aboveMap.get(pal1.get(i)).type.generate»)$t1«plvl»Assign[«i»];
+                «ENDFOR»
+                
+                «FOR i : 0..<pal2.size»
+                if ($t2«plvl»Assign[«i»] != null)
+                    «parallelAssignRcvr(pal2.get(i))» = («aboveMap.get(pal2.get(i)).type.generate»)$t2«plvl»Assign[«i»];
+                «ENDFOR»
             }
             '''
+        }
+        
+        private def String parallelAssignRcvr(String name) {
+    		val idx = currentPam.get(name)
+    		if (idx == null)
+    			name
+    		else
+    			"$t" + currentPidx + currentPlvl + "Assign[" + idx + "]"
         }
         
         /*private static def boolean isTaskCall(Stmt body) {
@@ -404,8 +472,15 @@ class InstrGenerator {
         
         /* Expr */
         
-        private def dispatch CharSequence generate(Assignment it)
-            '''«left.generate» «op» «right.generate»'''
+        private def dispatch CharSequence generate(Assignment it) {
+            if (op == OpAssignment.PARALLEL_ASSIGN) '''$t«currentPidx»«currentPlvl»Assign[«paIdx»] = «right.generate»'''
+            else '''«left.generate» «op» «right.generate»'''
+        }
+        
+        private def paIdx(Assignment it) {
+        	val name = RolezUtils.assignedVariable(it).name
+        	currentPam.get(name)
+        }
         
         private def dispatch CharSequence generate(BinaryExpr it)
             '''«left.genNested» «op» «right.genNested»'''

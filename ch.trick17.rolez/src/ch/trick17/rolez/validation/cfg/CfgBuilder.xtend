@@ -80,8 +80,16 @@ class CfgBuilder {
     
     // not quite sure what the consequences are here for putting the calls sequentially. might be fine
     private def dispatch Linker process(ParallelStmt p, Linker prev) {
-        val part1Linker = process(p.part1, prev)
-        val part2Linker = process(p.part2, part1Linker)
+        var param1Linker = prev;
+        for (var i = 0; i < p.params1.length; i++)
+        	param1Linker = process(p.params1.get(i), param1Linker);
+        val part1Linker = process(p.part1, param1Linker)
+        
+        var param2Linker = part1Linker;
+        for (var i = 0; i < p.params2.length; i++)
+        	param2Linker = process(p.params2.get(i), param2Linker);
+        val part2Linker = process(p.part2, param2Linker)
+        
         part2Linker.linkAndReturn(newInstrNode(p))
     }
     
