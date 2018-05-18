@@ -27,8 +27,8 @@ class ParameterizedMethod extends ParameterizedEObject<Method> implements Method
     override getRoleParams()   { eObject.roleParams }
     override getThisParam()    { eObject.thisParam.parameterized }
     override getName()         { eObject.name }
+    override getRawType()      { eObject.rawType }
     override getParams()       { eObject.parameterizedParams }
-    override getType()         { eObject.type.parameterized }
     override getCode()         { eObject.code }
     
     override isMapped()         { eObject.isMapped }
@@ -37,13 +37,14 @@ class ParameterizedMethod extends ParameterizedEObject<Method> implements Method
     override isMain()           { eObject.isMain }
     override isOverriding()     { eObject.isOverriding }
     override getQualifiedName() { eObject.qualifiedName }
+    override getType()          { eObject.type.parameterized }
     override getBody()          { eObject.body }
     override getAllParams()     { eObject.allParams }
     
     override eGet(EStructuralFeature feature) {
         if(feature === METHOD__THIS_PARAM) thisParam
         else if(feature === EXECUTABLE__PARAMS) params
-        else if(feature === TYPED__TYPE) type
+        else if(feature === TYPED__RAW_TYPE) rawType
         else eObject.eGet(feature)
     }
     
@@ -53,6 +54,6 @@ class ParameterizedMethod extends ParameterizedEObject<Method> implements Method
     override setSuperMethod(    Method value) { throw new AssertionError }
     override setThisParam(   ThisParam value) { throw new AssertionError }
     override setName(           String value) { throw new AssertionError }
-    override setType(             Type value) { throw new AssertionError }
+    override setRawType(          Type value) { throw new AssertionError }
     override setCode(            Instr value) { throw new AssertionError }
 }

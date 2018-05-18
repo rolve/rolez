@@ -68,7 +68,7 @@ Method:
     WithType
     WithBody?;
 
-ThisParam: type=ThisType;
+ThisParam: rawType=ThisType;
 
 ThisType returns RoleType: role=Role;
 
@@ -82,7 +82,7 @@ RoleParam:
     name=ID ('includes' upperBound=BuiltInRole)?; // IMPROVE: Allow role parameter refs as upper bounds
 
 Param:
-    name=ID ':' type=Type;
+    name=ID WithType;
 
 Block:
     {Block} '{' (stmts+=Stmt)* '}';
@@ -196,7 +196,7 @@ MultiplicativeExpr returns Expr:
 enum OpMultiplicative returns OpArithmetic: TIMES='*' | DIVIDED_BY='/' | MODULO='%';
 
 Cast returns Expr:
-    ArithmeticUnaryPreExpr ({Cast.expr=current} 'as' type=Type)*;
+    ArithmeticUnaryPreExpr ({Cast.expr=current} 'as' rawType=Type)*;
 
 ArithmeticUnaryPreExpr returns Expr:
     LogicalNot | {ArithmeticUnaryExpr} op=OpArithmeticUnaryPre expr=LogicalNot;
@@ -288,22 +288,29 @@ terminal CHAR returns EChar: "'" ( '\\' ('b'|'t'|'n'|'f'|'r'|'u'|'"'|"'"|'\\') |
 
 
 Type:
-    ReferenceType | PrimitiveType | TypeParamRef;
-
-ReferenceType:
-    RoleType | {Null} NULL_TYPE;
+    PrimitiveType | ReferenceTypeOrTypeParamRef;
 
 PrimitiveType:
     {Double} 'double' | {Long} 'long' | {Int} 'int' | {Short} 'short' | {Byte} 'byte'
     | {Char} 'char' | {Boolean} 'boolean' | {Void} 'void'?;
 
-TypeParamRef:
-    param=[TypeParam] ('with' restrictingRole=Role)?;
-
-RoleType:
-    role=Role base=ClassRef ('\\' slice=[Slice])?;
+ReferenceTypeOrTypeParamRef returns Type:
+    {Null} NULL_TYPE | ExplicitRoleType | GenericRoleType
+    | RestrictedTypeParamRef | RoleTypeOrTypeParamRef;
 
 terminal NULL_TYPE: 'Null';
+
+ExplicitRoleType returns RoleType:
+    role=Role base=ClassRef ('\\' slice=[Slice])?;
+
+GenericRoleType returns RoleType:
+    base=GenericClassRef;
+
+RestrictedTypeParamRef returns TypeParamRef:
+    param=[TypeParam] 'with' restrictingRole=Role;
+
+RoleTypeOrTypeParamRef:
+    ref=[ClassOrTypeParam];
 
 Role:
     RoleParamRef | BuiltInRole;
@@ -322,11 +329,11 @@ SimpleClassRef:
     clazz=[Class|QualifiedName];
 
 GenericClassRef:
-    clazz=[NormalClass|QualifiedName] '[' typeArg=Type ']';
+    clazz=[NormalClass|QualifiedName] '[' rawTypeArg=Type ']';
 
 NewClassRef returns ClassRef:
     {SimpleClassRef} (clazz=[NormalClass] | '(' clazz=[NormalClass|QualifiedName] ')')
-    | {GenericClassRef} (clazz=[NormalClass] | '(' clazz=[NormalClass|QualifiedName] ')') '[' typeArg=Type ']';
+    | {GenericClassRef} (clazz=[NormalClass] | '(' clazz=[NormalClass|QualifiedName] ')') '[' rawTypeArg=Type ']';
 
 TheClassRef returns SimpleClassRef:
     clazz=[SingletonClass] | '(' clazz=[SingletonClass|QualifiedName] ')';
@@ -338,7 +345,7 @@ fragment WithMappedClass returns Class:
 
 fragment WithSuperclass returns Class: ('extends' superclassRef=ClassRef)?;
 
-fragment WithType returns Typed: ':' type=Type;
+fragment WithType returns Typed: ':' rawType=Type;
 
 fragment WithParams returns Executable: ('(' (params+=Param (',' params+=Param)*)? ')')?;
 

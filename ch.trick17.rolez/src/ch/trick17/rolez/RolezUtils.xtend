@@ -82,7 +82,7 @@ class RolezUtils {
     static def newClassRef(NormalClass clazz, Type typeArg) {
         val result = createGenericClassRef
         result.clazz = clazz.parameterizedWith(#{clazz.typeParam -> typeArg})
-        result.typeArg = typeArg.copyIfNecessary
+        result.rawTypeArg = typeArg.copyIfNecessary
         result
     }
     

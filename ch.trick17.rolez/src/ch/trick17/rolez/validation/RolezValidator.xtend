@@ -309,7 +309,7 @@ class RolezValidator extends RolezSystemValidator {
         
         if(system.subtype(type, superMethod.type).failed)
             error("The return type " + type + " is incompatible with overridden method "
-                + superMethod, TYPED__TYPE, INCOMPATIBLE_RETURN_TYPE)
+                + superMethod, TYPED__RAW_TYPE, INCOMPATIBLE_RETURN_TYPE)
         if(system.subrole(superMethod.thisParam.type.role, thisParam.type.role).failed)
             error("The role of \"this\" is incompatible with overridden method " + superMethod,
                 METHOD__THIS_PARAM, RolezValidator.INCOMPATIBLE_THIS_ROLE)
@@ -318,7 +318,7 @@ class RolezValidator extends RolezSystemValidator {
             val superParamType = superMethod.params.get(p.paramIndex).type
             if(system.subtype(superParamType, p.type).failed)
                 error("This parameter type is incompatible with overridden method "
-                    + superMethod, p, TYPED__TYPE, RolezValidator.INCOMPATIBLE_PARAM_TYPE)
+                    + superMethod, p, TYPED__RAW_TYPE, RolezValidator.INCOMPATIBLE_PARAM_TYPE)
         }
     }
     
@@ -393,7 +393,7 @@ class RolezValidator extends RolezSystemValidator {
     def checkGenericClassRef(GenericClassRef it) {
         if(clazz.typeParam === null)
             error("Class " + clazz.name + " does not take a type argument",
-                GENERIC_CLASS_REF__TYPE_ARG, INCORRECT_TYPE_ARG)
+                GENERIC_CLASS_REF__RAW_TYPE_ARG, INCORRECT_TYPE_ARG)
     }
     
     @Check
@@ -484,7 +484,7 @@ class RolezValidator extends RolezSystemValidator {
         if(kind == VarKind.VAR)
             error("Var-field in pure class", FIELD__KIND, VAR_FIELD_IN_PURE_CLASS)
         if(type instanceof RoleType && !((type as RoleType).base.clazz.isPure))
-            error("Non-pure field in pure class", TYPED__TYPE, NON_PURE_FIELD_IN_PURE_CLASS)
+            error("Non-pure field in pure class", TYPED__RAW_TYPE, NON_PURE_FIELD_IN_PURE_CLASS)
     }
     
     @Check

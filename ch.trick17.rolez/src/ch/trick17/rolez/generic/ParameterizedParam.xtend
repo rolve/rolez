@@ -10,7 +10,7 @@ import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.EStructuralFeature
 
 import static ch.trick17.rolez.RolezExtensions.*
-import static ch.trick17.rolez.rolez.RolezPackage.Literals.TYPED__TYPE
+import static ch.trick17.rolez.rolez.RolezPackage.Literals.TYPED__RAW_TYPE
 
 class ParameterizedParam extends ParameterizedEObject<Param> implements Param {
     
@@ -18,18 +18,19 @@ class ParameterizedParam extends ParameterizedEObject<Param> implements Param {
         super(eObject, eContainer, typeArgs, roleArgs)
     }
     
-    override getName() { eObject.name }
-    override getType() { eObject.type.parameterized }
+    override getName()    { eObject.name }
+    override getRawType() { eObject.rawType }
     
+    override getType()             { eObject.type.parameterized }
     override getKind()             { eObject.kind }
     override enclosingExecutable() { enclosingExecutable(this) }
     override enclosingMethod()     { enclosingMethod(this) }
     
     override eGet(EStructuralFeature feature) {
-        if(feature === TYPED__TYPE) type
+        if(feature === TYPED__RAW_TYPE) rawType
         else eObject.eGet(feature)
     }
     
-    override setName(String value) { throw new AssertionError }
-    override setType(Type   value) { throw new AssertionError }
+    override setName(String  value) { throw new AssertionError }
+    override setRawType(Type value) { throw new AssertionError }
 }

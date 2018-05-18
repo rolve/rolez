@@ -37,7 +37,9 @@ class Named {
 
 type QualifiedName wraps QualifiedName
 
-class Class extends Named {
+class ClassOrTypeParam extends Named {}
+
+class Class extends ClassOrTypeParam {
     refers JvmGenericType jvmClass
     contains ClassRef superclassRef
     contains Member[] unslicedMembers
@@ -90,7 +92,7 @@ class NormalClass extends Class {
     }
 }
 
-class TypeParam extends Named {
+class TypeParam extends ClassOrTypeParam {
     op String toString() { name }
 }
 
@@ -130,7 +132,16 @@ class Executable {
 }
 
 class Typed extends Named {
-    contains Type ^type
+    contains Type rawType
+    
+    op Type getType() {
+        val raw = rawType
+        switch(raw) {
+            RoleTypeOrTypeParamRef case raw.isRoleType: raw.toRoleType
+            RoleTypeOrTypeParamRef: raw.toTypeParamRef
+            default: raw
+        }
+    }
 }
 
 class Constr extends Executable {
@@ -388,7 +399,16 @@ enum OpArithmetic {
 }
 
 class Cast extends UnaryExpr {
-    contains Type ^type
+    contains Type rawType
+    
+    op Type getType() {
+        val raw = rawType
+        switch(raw) {
+            RoleTypeOrTypeParamRef case raw.isRoleType: raw.toRoleType
+            RoleTypeOrTypeParamRef: raw.toTypeParamRef
+            default: raw
+        }
+    }
     
     op String toString() { expr + " as " + ^type }
 }
@@ -539,21 +559,16 @@ class NullLiteral extends Literal {
 
 class Type {}
 
-class ReferenceType extends Type {}
-
-class TypeParamRef extends Type {
-    refers TypeParam param
-    contains Role restrictingRole
-    
-    op String toString() {
-        param.name + if(restrictingRole !== null) " with " + restrictingRole else ""
-    }
-}
-
 class PrimitiveType extends Type {
     op String getName() { eClass.name.toLowerCase }
     
     op String toString() { name }
+}
+
+class ReferenceType extends Type {}
+
+class Null extends ReferenceType {
+    op String toString() { "Null" }
 }
 
 class RoleType extends ReferenceType {
@@ -564,6 +579,40 @@ class RoleType extends ReferenceType {
     op boolean isSliced() { slice !== null }
     
     op String toString() { role + " " + if(isSliced) slice else base }
+}
+
+class TypeParamRef extends Type {
+    refers TypeParam param
+    contains Role restrictingRole
+    
+    op String toString() {
+        param.name + if(restrictingRole !== null) " with " + restrictingRole else ""
+    }
+}
+
+class RoleTypeOrTypeParamRef extends Type {
+    refers ClassOrTypeParam ref
+    
+    op boolean isRoleType() {
+        ref instanceof Class
+    }
+    
+    op RoleType toRoleType() {
+        val factory = ch.trick17.rolez.rolez.RolezFactory.eINSTANCE
+        factory.createRoleType => [
+            role = factory.createPure
+            base = factory.createSimpleClassRef => [
+                clazz = ref as Class
+            ]
+        ]
+    }
+    
+    op TypeParamRef toTypeParamRef() {
+        val factory = ch.trick17.rolez.rolez.RolezFactory.eINSTANCE
+        factory.createTypeParamRef => [
+            param = ref as TypeParam
+        ]
+    }
 }
 
 class Role {
@@ -617,13 +666,18 @@ class SimpleClassRef extends ClassRef {
 
 class GenericClassRef extends ClassRef {
     refers NormalClass clazz
-    contains Type typeArg
+    contains Type rawTypeArg
+    
+    op Type getTypeArg() {
+        val raw = rawTypeArg
+        switch(raw) {
+            RoleTypeOrTypeParamRef case raw.isRoleType: raw.toRoleType
+            RoleTypeOrTypeParamRef: raw.toTypeParamRef
+            default: raw
+        }
+    }
     
     op String toString() { clazz.qualifiedName + "[" + typeArg + "]" }
-}
-
-class Null extends ReferenceType {
-    op String toString() { "Null" }
 }
 
 class NumericType extends PrimitiveType {}
