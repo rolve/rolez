@@ -122,9 +122,19 @@ class RolezTypeSystemTest {
         ''').assertError(MEMBER_ACCESS, AMEMBERACCESS, "assign")
         
         parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            object A
+            class App {
+                task pure main: {
+                    A = null;
+                }
+            }
+        ''').assertError(REF, AREF, "assign", "class")
+        
+        parse('''
             val x: int = 5;
             x = 5;
-        '''.withFrame).assertError(VAR_REF, AVARREF, "assign", "value")
+        '''.withFrame).assertError(REF, AREF, "assign", "value")
         
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -146,7 +156,7 @@ class RolezTypeSystemTest {
             var i: int = 0;
             var s: short;
             s = i;
-        '''.withFrame).assertError(VAR_REF, SUBTYPEEXPR, "short", "int")
+        '''.withFrame).assertError(REF, SUBTYPEEXPR, "short", "int")
         parse('''
             var i: int;
             i /= true;
@@ -423,7 +433,7 @@ class RolezTypeSystemTest {
     
     @Test def testTArithmeticUnaryExprNotAssignable() {
         parse("1++;".withFrame).assertError(INT_LITERAL, AEXPR, "assign")
-        parse("val i = 1; i--;".withFrame).assertError(VAR_REF, AVARREF, "assign")
+        parse("val i = 1; i--;".withFrame).assertError(REF, AREF, "assign")
         parse("var i = 1; --(++i);".withFrame).assertError(PARENTHESIZED, AEXPR, "assign")
     }
     
@@ -683,8 +693,7 @@ class RolezTypeSystemTest {
                     a.x;
                 }
             }
-        ''').assertError(VAR_REF, null,
-                "Role", "mismatch", "field", "pure")
+        ''').assertError(REF, null, "Role", "mismatch", "field", "pure")
     }
     
     /* More member access tests in RolezLinkingTest */

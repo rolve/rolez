@@ -32,6 +32,7 @@ import ch.trick17.rolez.rolez.Parfor
 import ch.trick17.rolez.rolez.PrimitiveType
 import ch.trick17.rolez.rolez.ReadOnly
 import ch.trick17.rolez.rolez.ReadWrite
+import ch.trick17.rolez.rolez.Ref
 import ch.trick17.rolez.rolez.ReturnExpr
 import ch.trick17.rolez.rolez.ReturnNothing
 import ch.trick17.rolez.rolez.Role
@@ -46,7 +47,6 @@ import ch.trick17.rolez.rolez.The
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.UnaryExpr
 import ch.trick17.rolez.rolez.VarKind
-import ch.trick17.rolez.rolez.VarRef
 import ch.trick17.rolez.rolez.WhileLoop
 import ch.trick17.rolez.typesystem.RolezSystem
 import ch.trick17.rolez.validation.JavaMapper
@@ -565,7 +565,15 @@ class InstrGenerator {
             else '''super'''
         }
         
-        private def dispatch CharSequence generate(VarRef it) { variable.safeName }
+        private def dispatch CharSequence generate(Ref it) {
+            if(isVarRef)
+                variable.safeName
+            else if(eContainer instanceof MemberAccess &&
+                    it == (eContainer as MemberAccess).target && clazz.isMapped)
+                clazz.jvmClass.qualifiedName // more efficient access to static members
+            else
+                '''«toClassRef.generate».INSTANCE'''
+        }
         
         private def dispatch CharSequence generate(New it) {
             val generatedArgs = 
@@ -582,14 +590,6 @@ class InstrGenerator {
         }
         
         private static val bracketPattern = Pattern.compile("\\](\\[\\])*$")
-        
-        private def dispatch CharSequence generate(The it) {
-            if(eContainer instanceof MemberAccess && it == (eContainer as MemberAccess).target
-                    && classRef.clazz.isMapped)
-                classRef.clazz.jvmClass.qualifiedName // more efficient access to static members
-            else
-                '''«classRef.generate».INSTANCE'''
-        }
         
         private def dispatch CharSequence generate(Parenthesized it) { expr.generate }
         

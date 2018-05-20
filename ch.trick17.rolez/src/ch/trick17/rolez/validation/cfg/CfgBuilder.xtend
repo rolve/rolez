@@ -14,13 +14,14 @@ import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.OpAssignment
 import ch.trick17.rolez.rolez.ParallelStmt
+import ch.trick17.rolez.rolez.Parfor
+import ch.trick17.rolez.rolez.Ref
 import ch.trick17.rolez.rolez.ReturnExpr
 import ch.trick17.rolez.rolez.ReturnNothing
 import ch.trick17.rolez.rolez.Slicing
 import ch.trick17.rolez.rolez.SuperConstrCall
 import ch.trick17.rolez.rolez.The
 import ch.trick17.rolez.rolez.UnaryExpr
-import ch.trick17.rolez.rolez.VarRef
 import ch.trick17.rolez.rolez.WhileLoop
 import java.util.HashMap
 import java.util.Map
@@ -28,7 +29,6 @@ import java.util.Map
 import static ch.trick17.rolez.rolez.OpLogical.*
 
 import static extension java.util.Objects.requireNonNull
-import ch.trick17.rolez.rolez.Parfor
 
 class CfgBuilder {
     
@@ -214,8 +214,8 @@ class CfgBuilder {
         prev.linkAndReturn(newInstrNode(t))
     }
     
-    private def dispatch Linker process(VarRef v, Linker prev) {
-        prev.linkAndReturn(newInstrNode(v))
+    private def dispatch Linker process(Ref r, Linker prev) {
+        prev.linkAndReturn(newInstrNode(r))
     }
     
     private def dispatch Linker process(Literal l, Linker prev) {

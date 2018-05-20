@@ -18,15 +18,14 @@ import ch.trick17.rolez.rolez.Param
 import ch.trick17.rolez.rolez.Parenthesized
 import ch.trick17.rolez.rolez.ReadOnly
 import ch.trick17.rolez.rolez.ReadWrite
+import ch.trick17.rolez.rolez.Ref
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
 import ch.trick17.rolez.rolez.Slicing
 import ch.trick17.rolez.rolez.StringLiteral
-import ch.trick17.rolez.rolez.The
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.ThisParam
 import ch.trick17.rolez.rolez.Var
-import ch.trick17.rolez.rolez.VarRef
 import ch.trick17.rolez.typesystem.RolezSystem
 import ch.trick17.rolez.validation.cfg.CfgProvider
 import ch.trick17.rolez.validation.cfg.ControlFlowGraph
@@ -113,8 +112,10 @@ class DefaultRoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleInfo>> 
     
     protected def dispatch flowThrough(Assignment a, ImmutableMap<Var, RoleInfo> in) {
         // TODO: support assignments to final fields (in constructors)
-        if(a.left instanceof VarRef) flowThroughAssign((a.left as VarRef).variable, a.right, in)
-        else in
+        if(a.left instanceof Ref && (a.left as Ref).isVarRef)
+            flowThroughAssign((a.left as Ref).variable, a.right, in)
+        else
+            in
     }
     
     private def flowThroughAssign(Var left, Expr right, ImmutableMap<Var, RoleInfo> in) {
@@ -157,7 +158,7 @@ class DefaultRoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleInfo>> 
      * expression as the target
      */
     private def boolean isTracked(Expr it) { switch(it) {
-        VarRef      : system.varType(variable).value instanceof RoleType
+        Ref         : isVarRef && system.varType(variable).value instanceof RoleType
         MemberAccess: isFieldAccess && field.kind == VAL && field.type instanceof RoleType
                             && target.isTracked
         default     : false
@@ -167,9 +168,9 @@ class DefaultRoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleInfo>> 
      * returns the access sequence that corresponds to the given tracked (!) expression
      */
     private def AccessSeq asAccessSeq(Expr it) { switch(it) {
-        VarRef      : new AccessSeq(variable, emptyList)
-        MemberAccess: target.asAccessSeq.concat(field)
-        default     : throw new AssertionError
+        Ref case isVarRef : new AccessSeq(variable, emptyList)
+        MemberAccess      : target.asAccessSeq.concat(field)
+        default           : throw new AssertionError
     }}
     
     /**
@@ -215,12 +216,12 @@ class DefaultRoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleInfo>> 
                 roleInfo = roleInfo.fields.get(f) ?: RoleInfo.pure
             roleInfo
         }
+        case isGlobal             : RoleInfo.readOnly
         Cast, Parenthesized       : roleInfo(expr, roles)
         Assignment                : roleInfo(right, roles)
         Slicing                   : roleInfo(target, roles)
         New                       : RoleInfo.readWrite
-        The, StringLiteral        : RoleInfo.readOnly
-        MemberAccess case isGlobal: RoleInfo.readOnly
+        StringLiteral             : RoleInfo.readOnly
         default                   : RoleInfo.pure
     }}
     
@@ -239,7 +240,7 @@ class DefaultRoleAnalysis extends DataFlowAnalysis<ImmutableMap<Var, RoleInfo>> 
     }
     
     private def boolean isGlobal(Expr it) { switch(it) {
-        The: true
+        Ref case isSingletonRef: true
         MemberAccess case isFieldAccess && target.isGlobal: true
         default: false
     }}

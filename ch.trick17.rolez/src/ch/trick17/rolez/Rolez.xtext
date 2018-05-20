@@ -239,24 +239,21 @@ MemberAccess returns Expr:
     // IMPROVE: Allow member accesses without "this"
 
 SimpleExpr returns Expr:
-    This | Super | VarRef | New | The | Parenthesized | Literal;
+    This | Super | Ref | New | Parenthesized | Literal;
 
-This: variable=[ThisParam|ThisKeyword];
+This: referee=[ThisParam|ThisKeyword];
 
 ThisKeyword: 'this';
 
-Super: variable=[ThisParam|SuperKeyword];
+Super: referee=[ThisParam|SuperKeyword];
 
-VarRef:
-    variable=[Var];
+Ref:
+    referee=[VarLike] | '(' referee=[SingletonClass|QualifiedName] ')';
 
 New:
     constr=[Constr|NewKeyword] classRef=NewClassRef WithArgs;
 
 NewKeyword: 'new';
-
-The:
-    'the' classRef=TheClassRef;
 
 Parenthesized: '(' expr=Expr ')';
 
@@ -334,9 +331,6 @@ GenericClassRef:
 NewClassRef returns ClassRef:
     {SimpleClassRef} (clazz=[NormalClass] | '(' clazz=[NormalClass|QualifiedName] ')')
     | {GenericClassRef} (clazz=[NormalClass] | '(' clazz=[NormalClass|QualifiedName] ')') '[' rawTypeArg=Type ']';
-
-TheClassRef returns SimpleClassRef:
-    clazz=[SingletonClass] | '(' clazz=[SingletonClass|QualifiedName] ')';
 
 /* Fragments */
 

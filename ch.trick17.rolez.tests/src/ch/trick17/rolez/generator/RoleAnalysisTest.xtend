@@ -8,7 +8,7 @@ import ch.trick17.rolez.rolez.Program
 import ch.trick17.rolez.rolez.Pure
 import ch.trick17.rolez.rolez.ReadOnly
 import ch.trick17.rolez.rolez.ReadWrite
-import ch.trick17.rolez.rolez.VarRef
+import ch.trick17.rolez.rolez.Ref
 import ch.trick17.rolez.tests.RolezInjectorProvider
 import javax.inject.Inject
 import org.eclipse.xtext.junit4.InjectWith
@@ -120,7 +120,7 @@ class RoleAnalysisTest {
             a1;
         '''.withFrame).task
         var analysis = newRoleAnalysis(task)
-        var varRefs = task.all(VarRef).filter[variable.name == "a1"].toList
+        var varRefs = task.all(Ref).filter[variable.name == "a1"].toList
         analysis.dynamicRole(varRefs.get(0)).assertThat(instanceOf(Pure))
         analysis.dynamicRole(varRefs.get(1)).assertThat(instanceOf(ReadOnly))
         
@@ -132,7 +132,7 @@ class RoleAnalysisTest {
             b1;
         '''.withFrame).task
         analysis = newRoleAnalysis(task)
-        varRefs = task.all(VarRef).filter[variable.name == "b1"].toList
+        varRefs = task.all(Ref).filter[variable.name == "b1"].toList
         analysis.dynamicRole(varRefs.get(0)).assertThat(instanceOf(Pure))
         analysis.dynamicRole(varRefs.get(1)).assertThat(instanceOf(Pure))
     }

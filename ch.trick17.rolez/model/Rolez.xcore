@@ -105,7 +105,9 @@ class Slice extends Named {
     }
 }
 
-class SingletonClass extends Class {
+class VarLike extends Named {}
+
+class SingletonClass extends Class, VarLike {
     op boolean isSingleton()         { true }
     op boolean isPure()              { true }
     op Iterable<Member> getMembers() { unslicedMembers }
@@ -220,7 +222,7 @@ class RoleParam extends InExecutable {
     op String toString() { name + " includes " + upperBound }
 }
 
-class Var extends InExecutable, Typed {
+class Var extends InExecutable, Typed, VarLike {
     op VarKind getKind()
 }
 
@@ -475,20 +477,31 @@ class MemberAccess extends Expr, Argumented {
     }
 }
 
-class VarRef extends Expr {
-    refers Var variable
+class Ref extends Expr {
+    refers VarLike referee
+    
+    op boolean isVarRef()        { referee instanceof Var }
+    op boolean isSingletonRef()  { referee instanceof SingletonClass }
+    op Var getVariable()         { referee as Var }
+    op SingletonClass getClazz() { referee as SingletonClass }
+    
+    op ClassRef toClassRef() {
+        RolezFactory.eINSTANCE.createSimpleClassRef => [
+            clazz = referee as SingletonClass
+        ]
+    }
     
     op String toString() {
-        if(variable !== null && variable.name !== null)
-            variable.name
+        if(referee !== null && referee.name !== null)
+            referee.name
         else
             super.toString
     }
 }
 
-class This extends VarRef {}
+class This extends Ref {}
 
-class Super extends VarRef {}
+class Super extends Ref {}
 
 class New extends Expr, Argumented {
     refers Constr constr
@@ -598,18 +611,16 @@ class RoleTypeOrTypeParamRef extends Type {
     }
     
     op RoleType toRoleType() {
-        val factory = ch.trick17.rolez.rolez.RolezFactory.eINSTANCE
-        factory.createRoleType => [
-            role = factory.createPure
-            base = factory.createSimpleClassRef => [
+        RolezFactory.eINSTANCE.createRoleType => [
+            role = RolezFactory.eINSTANCE.createPure
+            base = RolezFactory.eINSTANCE.createSimpleClassRef => [
                 clazz = ref as Class
             ]
         ]
     }
     
     op TypeParamRef toTypeParamRef() {
-        val factory = ch.trick17.rolez.rolez.RolezFactory.eINSTANCE
-        factory.createTypeParamRef => [
+        RolezFactory.eINSTANCE.createTypeParamRef => [
             param = ref as TypeParam
         ]
     }

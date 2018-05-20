@@ -9,6 +9,7 @@ import ch.trick17.rolez.rolez.Program
 import ch.trick17.rolez.rolez.Pure
 import ch.trick17.rolez.rolez.ReadOnly
 import ch.trick17.rolez.rolez.ReadWrite
+import ch.trick17.rolez.rolez.Ref
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.SuperConstrCall
 import ch.trick17.rolez.rolez.TypeParamRef
@@ -28,6 +29,7 @@ import static ch.trick17.rolez.rolez.RolezPackage.Literals.*
 import static ch.trick17.rolez.scoping.RolezScopeProvider.AMBIGUOUS_CALL
 import static org.eclipse.xtext.diagnostics.Diagnostic.*
 import static org.hamcrest.Matchers.*
+import static org.junit.Assert.assertTrue
 
 import static extension ch.trick17.rolez.RolezExtensions.*
 import static extension org.hamcrest.MatcherAssert.assertThat
@@ -1019,9 +1021,10 @@ class RolezLinkingTest {
         ''').assertError(NEW, LINKING_DIAGNOSTIC)
     }
     
-    @Test def testVarRef() {
+    @Test def testRef() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
+            object i;
             class A {
                 def pure foo(i: int): {
                     i;
@@ -1042,23 +1045,60 @@ class RolezLinkingTest {
         ''').assertNoErrors
         
         parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            object i;
+            class A {
+                def pure foo: {
+                    var i = 0;
+                    i;
+                }
+            }
+        ''').classes.filter[name == "A"].head.methods.head.firstExpr as Ref => [
+            assertTrue(isVarRef)
+        ]
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            object i;
+            class A {
+                def pure foo(i: int): {
+                    i;
+                }
+            }
+        ''').classes.filter[name == "A"].head.methods.head.firstExpr as Ref => [
+            assertTrue(isVarRef)
+        ]
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            object i;
+            class A {
+                def pure foo: {
+                    i;
+                }
+            }
+        ''').classes.filter[name == "A"].head.methods.head.firstExpr as Ref => [
+            assertTrue(isSingletonRef)
+        ]
+        
+        parse('''
             i;
             val i = 0;
-        '''.withFrame).assertError(VAR_REF, LINKING_DIAGNOSTIC, "var", "i")
+        '''.withFrame).assertError(REF, LINKING_DIAGNOSTIC, "var", "i")
         parse('''
             {
                 val i = 0;
             }
             i;
-        '''.withFrame).assertError(VAR_REF, LINKING_DIAGNOSTIC, "var", "i")
+        '''.withFrame).assertError(REF, LINKING_DIAGNOSTIC, "var", "i")
         
         parse('''
             for(var i = i; true; true) {}
-        '''.withFrame).assertError(VAR_REF, LINKING_DIAGNOSTIC, "var", "i")
+        '''.withFrame).assertError(REF, LINKING_DIAGNOSTIC, "var", "i")
         parse('''
             for(var i = 0; true; true) {}
             i;
-        '''.withFrame).assertError(VAR_REF, LINKING_DIAGNOSTIC, "var", "i")
+        '''.withFrame).assertError(REF, LINKING_DIAGNOSTIC, "var", "i")
     }
     
     @Test def testSuperMethod() {

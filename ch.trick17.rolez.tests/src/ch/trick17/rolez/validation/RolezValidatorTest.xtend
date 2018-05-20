@@ -1281,7 +1281,7 @@ class RolezValidatorTest {
                     return i;
                 }
             }
-        ''').assertError(VAR_REF, VAR_NOT_INITIALIZED, "variable i")
+        ''').assertError(REF, VAR_NOT_INITIALIZED, "variable i")
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
@@ -1292,7 +1292,7 @@ class RolezValidatorTest {
                     return i;
                 }
             }
-        ''').assertError(VAR_REF, VAR_NOT_INITIALIZED, "variable i")
+        ''').assertError(REF, VAR_NOT_INITIALIZED, "variable i")
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
@@ -1303,7 +1303,7 @@ class RolezValidatorTest {
                     return i;
                 }
             }
-        ''').assertError(VAR_REF, VAR_NOT_INITIALIZED, "variable i")
+        ''').assertError(REF, VAR_NOT_INITIALIZED, "variable i")
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class A {
@@ -1312,7 +1312,7 @@ class RolezValidatorTest {
                     i++;
                 }
             }
-        ''').assertError(VAR_REF, VAR_NOT_INITIALIZED, "variable i")
+        ''').assertError(REF, VAR_NOT_INITIALIZED, "variable i")
     }
     
     @Test def testSuperConstrCall() {
@@ -1541,7 +1541,16 @@ class RolezValidatorTest {
         parse('''
             val i = 5;
             i;
-        '''.withFrame).assertWarning(VAR_REF, OUTER_EXPR_NO_SIDE_FX)
+        '''.withFrame).assertWarning(REF, OUTER_EXPR_NO_SIDE_FX)
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A
+            class App {
+                task pure main: {
+                    A;
+                }
+            }
+        '''.withFrame).assertWarning(REF, OUTER_EXPR_NO_SIDE_FX)
         parse('''
             new Array[int](1);
         '''.withFrame).assertWarning(NEW, OUTER_EXPR_NO_SIDE_FX)

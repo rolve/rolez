@@ -36,7 +36,6 @@ import ch.trick17.rolez.rolez.SuperConstrCall
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.VarKind
-import ch.trick17.rolez.rolez.VarRef
 import ch.trick17.rolez.rolez.Void
 import ch.trick17.rolez.scoping.RolezScopeProvider
 import ch.trick17.rolez.typesystem.RolezSystem
@@ -63,6 +62,7 @@ import static ch.trick17.rolez.rolez.VarKind.*
 
 import static extension ch.trick17.rolez.RolezExtensions.*
 import static extension ch.trick17.rolez.RolezUtils.*
+import ch.trick17.rolez.rolez.Ref
 
 class RolezValidator extends RolezSystemValidator {
 
@@ -511,7 +511,7 @@ class RolezValidator extends RolezSystemValidator {
         
         val cfg = code.controlFlowGraph
         val extension analysis = new LocalVarsInitializedAnalysis(cfg)
-        for(v : all(VarRef))
+        for(v : all(Ref).filter[isVarRef])
             if(v.variable instanceof LocalVar && v.isVarOrFieldRead
                     && !v.variable.isInitializedBefore(cfg.nodeOf(v)))
                 error("Variable " + v.variable.name + " may not have been initialized",

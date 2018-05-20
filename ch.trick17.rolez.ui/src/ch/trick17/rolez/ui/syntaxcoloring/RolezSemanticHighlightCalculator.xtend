@@ -2,9 +2,12 @@ package ch.trick17.rolez.ui.syntaxcoloring
 
 import ch.trick17.rolez.rolez.Field
 import ch.trick17.rolez.rolez.MemberAccess
+import ch.trick17.rolez.rolez.Method
+import ch.trick17.rolez.rolez.Ref
 import ch.trick17.rolez.rolez.RolezPackage
+import ch.trick17.rolez.rolez.Super
+import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.Var
-import ch.trick17.rolez.rolez.VarRef
 import org.eclipse.emf.ecore.util.EcoreUtil
 import org.eclipse.xtext.ide.editor.syntaxcoloring.IHighlightedPositionAcceptor
 import org.eclipse.xtext.ide.editor.syntaxcoloring.ISemanticHighlightingCalculator
@@ -13,9 +16,7 @@ import org.eclipse.xtext.util.CancelIndicator
 
 import static ch.trick17.rolez.ui.syntaxcoloring.RolezHighlightingConfiguration.*
 import static org.eclipse.xtext.nodemodel.util.NodeModelUtils.*
-import ch.trick17.rolez.rolez.Super
-import ch.trick17.rolez.rolez.This
-import ch.trick17.rolez.rolez.Method
+import static org.eclipse.xtext.ui.editor.syntaxcoloring.DefaultHighlightingConfiguration.*
 
 class RolezSemanticHighlightCalculator implements ISemanticHighlightingCalculator {
     
@@ -35,7 +36,7 @@ class RolezSemanticHighlightCalculator implements ISemanticHighlightingCalculato
                         acceptor.addPosition(node.offset, node.length, VARIABLE_ID)
                 }
                 This, Super: {} // skip this and super (they're VarRefs too)
-                VarRef: {
+                Ref case object.isVarRef: {
                     val node = findActualNodeFor(object)
                     acceptor.addPosition(node.offset, node.length, VARIABLE_ID)
                 }

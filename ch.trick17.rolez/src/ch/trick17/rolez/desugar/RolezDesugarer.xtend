@@ -101,6 +101,6 @@ class RolezDesugarer extends AbstractDeclarativeDesugarer {
     
     @Rule
     def modifySuperRef(Super it) {
-        createReference(VAR_REF__VARIABLE, "this")
+        createReference(REF__REFEREE, "this")
     }
 }
