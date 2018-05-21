@@ -1053,7 +1053,7 @@ class ClassGeneratorTest extends GeneratorTest {
         parse('''
             class App {
                 task readwrite foo(o1: readwrite Base, o2: readonly Base, o3: pure Base): {
-                    the System.out.println("Hello World!");
+                    System.out.println("Hello World!");
                 }
             }
         ''', someClasses).onlyClass.generate.assertEqualsJava('''
@@ -1416,7 +1416,7 @@ class ClassGeneratorTest extends GeneratorTest {
         parse('''
             class A {
                 new {
-                    the Tasks start bar(this);
+                    Tasks start bar(this);
                 }
             }
         ''', someClasses).onlyClass.generate.assertEqualsJava('''

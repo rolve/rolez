@@ -1024,7 +1024,7 @@ class RolezLinkingTest {
     @Test def testRef() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            object i;
+            object i
             class A {
                 def pure foo(i: int): {
                     i;
@@ -1044,40 +1044,46 @@ class RolezLinkingTest {
             }
         ''').assertNoErrors
         
-        parse('''
+        var program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            object i;
+            object i
             class A {
                 def pure foo: {
                     var i = 0;
                     i;
                 }
             }
-        ''').classes.filter[name == "A"].head.methods.head.firstExpr as Ref => [
+        ''')
+        program.assertNoErrors
+        program.classes.filter[name == "A"].head.methods.head.firstExpr as Ref => [
             assertTrue(isVarRef)
         ]
         
-        parse('''
+        program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            object i;
+            object i
             class A {
                 def pure foo(i: int): {
                     i;
                 }
             }
-        ''').classes.filter[name == "A"].head.methods.head.firstExpr as Ref => [
+        ''')
+        program.assertNoErrors
+        program.classes.filter[name == "A"].head.methods.head.firstExpr as Ref => [
             assertTrue(isVarRef)
         ]
         
-        parse('''
+        program = parse('''
             class rolez.lang.Object mapped to java.lang.Object
-            object i;
+            object i
             class A {
                 def pure foo: {
                     i;
                 }
             }
-        ''').classes.filter[name == "A"].head.methods.head.firstExpr as Ref => [
+        ''')
+        program.assertNoErrors
+        program.classes.filter[name == "A"].head.methods.head.firstExpr as Ref => [
             assertTrue(isSingletonRef)
         ]
         

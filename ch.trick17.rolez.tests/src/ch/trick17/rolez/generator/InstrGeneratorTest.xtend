@@ -67,9 +67,9 @@ class InstrGeneratorTest extends GeneratorTest {
     @Test def testIfStmt() {
         parse('''
             if(b)
-                the System.out.println;
+                System.out.println;
             else
-                the System.out.println;
+                System.out.println;
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
             if(b)
                 java.lang.System.out.println();
@@ -79,7 +79,7 @@ class InstrGeneratorTest extends GeneratorTest {
         
         parse('''
             if(b) {
-                the System.out.println;
+                System.out.println;
             }
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
             if(b) {
@@ -89,7 +89,7 @@ class InstrGeneratorTest extends GeneratorTest {
         
         parse('''
             if(b)
-                the System.out.println;
+                System.out.println;
             else {}
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
             if(b)
@@ -102,7 +102,7 @@ class InstrGeneratorTest extends GeneratorTest {
     @Test def testWhileLoop() {
         parse('''
             while(b)
-                the System.out.println;
+                System.out.println;
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
             while(b)
                 java.lang.System.out.println();
@@ -112,7 +112,7 @@ class InstrGeneratorTest extends GeneratorTest {
     @Test def testForLoop() {
         parse('''
             for(var n = 0; n < 10; n++)
-                the System.out.println;
+                System.out.println;
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
             for(int n = 0; n < 10; n++)
                 java.lang.System.out.println();
@@ -120,7 +120,7 @@ class InstrGeneratorTest extends GeneratorTest {
         
         parse('''
             for(var n = 0; n < 10; n++) {
-                the System.out.println;
+                System.out.println;
             }
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
             for(int n = 0; n < 10; n++) {
@@ -397,12 +397,12 @@ class InstrGeneratorTest extends GeneratorTest {
     
     @Test def testMemberAccessStartTask() {
         parse('''
-            the Tasks start foo;
+            Tasks start foo;
             
-            val sum = the Tasks start sum(1, 2);
-            the System.out.println("Parallelism!");
-            the System.out.println("The sum: " + sum.get);
-            the System.out.println("Twice the sum!: " + (2 * sum.get));
+            val sum = Tasks start sum(1, 2);
+            System.out.println("Parallelism!");
+            System.out.println("The sum: " + sum.get);
+            System.out.println("Twice the sum!: " + (2 * sum.get));
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
             final rolez.internal.Tasks $tasks = new rolez.internal.Tasks();
             try {
@@ -426,10 +426,10 @@ class InstrGeneratorTest extends GeneratorTest {
             (new Base as readonly Object).hashCode;
             "Hello".substring(1, 3);
             this.bar;
-            val sum = the Tasks.sum(1, 2);
-            val answer = the Constants.answer;
-            val out = the System.out;
-            the System.exit(answer);
+            val sum = Tasks.sum(1, 2);
+            val answer = Constants.answer;
+            val out = System.out;
+            System.exit(answer);
             var a = new S slice a;
             a.i = 0;
             val j = a.i;
@@ -654,7 +654,7 @@ class InstrGeneratorTest extends GeneratorTest {
     
     @Test def testMemberAccessAsyncMethod() {
         parse('''
-            the Asyncer.foo;
+            Asyncer.foo;
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
             final rolez.internal.Tasks $tasks = new rolez.internal.Tasks();
             try {
@@ -1136,12 +1136,12 @@ class InstrGeneratorTest extends GeneratorTest {
         '''.withJavaFrame)
     }
     
-    @Test def void testThe() {
+    @Test def void testRefSingleton() {
         parse('''
-            the System.out.println("Hello World!");
-            val system = the System;
+            System.out.println("Hello World!");
+            val system = System;
             system.out.println("Hello again!");
-            the System.exit(0);
+            System.exit(0);
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
             java.lang.System.out.println("Hello World!");
             final rolez.lang.System system = rolez.lang.System.INSTANCE;
@@ -1238,7 +1238,7 @@ class InstrGeneratorTest extends GeneratorTest {
                 array.set(j, new Base());
             
             parfor(var j = 0; j < 3; j++)
-                the Tasks.bar(array.get(j));
+                Tasks.bar(array.get(j));
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
             rolez.lang.GuardedArray<Base[]> array = new rolez.lang.GuardedArray<Base[]>(new Base[10]);
             for(int j = 0; j < 10; j++)
@@ -1288,9 +1288,9 @@ class InstrGeneratorTest extends GeneratorTest {
             var o1 = new Base();
             var o2 = new Base();
             parallel
-                the Tasks.bar(o1);
+                Tasks.bar(o1);
             and
-                the Tasks.bar(o2);
+                Tasks.bar(o2);
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
             Base o1 = new Base($task);
             Base o2 = new Base($task);
@@ -1333,9 +1333,9 @@ class InstrGeneratorTest extends GeneratorTest {
     @Test def testParallelAndNoArgs() {
         parse('''
             parallel
-                the Tasks.foo();
+                Tasks.foo();
             and
-                the Tasks.foo();
+                Tasks.foo();
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
             { /* parallel-and */
                 final Tasks $t1Arg0 = Tasks.INSTANCE;

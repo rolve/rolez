@@ -944,7 +944,7 @@ class RolezValidatorTest {
             }
             class B {
                 new {
-                    the A.a;
+                    A.a;
                 }
             }
         ''').assertNoErrors
@@ -1086,7 +1086,7 @@ class RolezValidatorTest {
             class A {
                 val foo: int = 5
                 var bar: int = "Hello".length
-                val baz: pure String = the System.toString
+                val baz: pure String = System.toString
             }
         ''').assertNoErrors
         
@@ -1125,7 +1125,7 @@ class RolezValidatorTest {
                 async def pure foo: int { return 0; }
             }
             class A {
-                val i: int = the Asyncer.foo
+                val i: int = Asyncer.foo
             }
         ''').assertError(MEMBER_ACCESS, ASYNC_IN_FIELD_INIT)
         parse('''
@@ -1137,7 +1137,7 @@ class RolezValidatorTest {
                 override pure foo: int { return 1; }
             }
             class A {
-                val i: int = the Asyncer.foo
+                val i: int = Asyncer.foo
             }
         ''').assertError(MEMBER_ACCESS, ASYNC_IN_FIELD_INIT)
     }
@@ -1182,7 +1182,7 @@ class RolezValidatorTest {
             pure class A {
                 val i: int = 42
                 val b: pure B = new B
-                val c: pure C = the C
+                val c: pure C = C
             }
             pure class B
             object C
@@ -1460,7 +1460,7 @@ class RolezValidatorTest {
             }
             class B extends A {
                 new {
-                    super(the C start foo);
+                    super(C start foo);
                 }
             }
             object C {
@@ -1477,7 +1477,7 @@ class RolezValidatorTest {
             }
             class B extends A {
                 new {
-                    super(the C.foo);
+                    super(C.foo);
                 }
             }
             object C {
