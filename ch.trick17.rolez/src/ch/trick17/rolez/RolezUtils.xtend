@@ -162,7 +162,7 @@ class RolezUtils {
             + varsAbove(container.eContainer, container)
     }
     
-    static def dispatch Iterable<? extends Var> varsAbove(Executable container, Stmt s) {
+    static def dispatch Iterable<? extends Var> varsAbove(Executable container, Instr i) {
         container.allParams
     }
     

@@ -214,7 +214,7 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
     }
     
     def IScope scope_Ref_referee(Ref it, EReference eRef) {
-        scopeFor(varsAbove(eContainer, it), delegateGetScope(it, eRef))
+        scopeFor(varsAbove(eContainer, it), delegateGetScope(enclosingClass, eRef))
     }
     
     /**
