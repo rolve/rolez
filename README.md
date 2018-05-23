@@ -32,15 +32,14 @@ For example, *Hello World!* in Rolez looks like this:
 <pre>
 <strong>object</strong> App {
     <b>task pure</b> main: <b>void</b> {
-        <b>the</b> System.out.println("Hello World!");
+        System.out.println("Hello World!");
     }
 }
 </pre>
 
 Like Scala, Rolez has no static fields or methods; instead, you can define
 globally accessible singleton objects, like the `App` object above.
-Rolez uses a slightly different syntax to refer these objects:
-Instead of just `System`, you have to write `the System` in Rolez.
+The `System` class is a singleton object too.
 The meaning of the `pure` keyword is explained later.
 
 
@@ -169,7 +168,7 @@ program that estimates π using the Monte Carlo method:
             <b>if</b>(x*x + y*y <= 1)
                 hits++;
         }
-        <b>the</b> System.out.println("π = " + hits / (0.25 * n));
+        System.out.println("π = " + hits / (0.25 * n));
     }
 }
 </pre>
@@ -185,7 +184,7 @@ perform only a part of the computation:
         <b>val</b> n = 1000000000;
         <b>val</b> cores = 4;
         
-        <b>val</b> tasks = <b>new</b> Array[<b>pure</b> Task[<b>int</b>]](cores);
+        <b>val</b> tasks = <b>new</b> Array[Task[<b>int</b>]](cores);
         <b>for</b>(<b>var</b> i = 0; i < cores; i++)
             tasks.set(i, <b>this start</b> simulate(n/cores));
         
@@ -193,7 +192,7 @@ perform only a part of the computation:
         <b>for</b>(<b>var</b> i = 0; i < cores; i++)
             totalHits += tasks.get(i).get;
         
-        <b>the</b> System.out.println("π = " + totalHits / (0.25 * n));
+        System.out.println("π = " + totalHits / (0.25 * n));
     }
     <b>task pure</b> simulate(n: <b>int</b>): <b>int</b> {
         <b>val</b> random = <b>new</b> Random;
