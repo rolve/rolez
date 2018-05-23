@@ -13,7 +13,7 @@ object Primes {
         for(var i = 0; i < n; i++)
             numbers.set(i, scanner.nextInt);
         
-        val tasks = new Array[pure Task[int]](cores);
+        val tasks = new Array[Task[int]](cores);
         for(var i = 0; i < cores; i++)
             tasks.set(i, this start countPrimes(numbers, i*(n/cores), (i+1)*(n/cores)));
         
@@ -21,7 +21,7 @@ object Primes {
         for(var i = 0; i < cores; i++)
             count += tasks.get(i).get;
         
-        the System.out.println(count);
+        System.out.println(count);
     }
     
     task pure countPrimes(numbers: readonly Array[int], begin: int, end: int): int {
@@ -29,12 +29,12 @@ object Primes {
         for(var i = begin; i < end; i++)
             if(this.isPrime(numbers.get(i)))
                 count++;
-        the System.out.println("Task " + begin + "-" + end + ": " + count);
+        System.out.println("Task " + begin + "-" + end + ": " + count);
         return count;
     }
     
     def pure isPrime(i: int): boolean {
-        for(var j = 2; j < the Math.sqrt(i as double); j++)
+        for(var j = 2; j < Math.sqrt(i as double); j++)
             if(i % j == 0)
                 return false;
         return true;

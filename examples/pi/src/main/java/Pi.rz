@@ -13,7 +13,7 @@ object Pi {
         for(var i = 0; i < cores; i++)
             totalHits += tasks.get(i).get;
         
-        the System.out.println("π = " + totalHits / (0.25 * n));
+        System.out.println("π = " + totalHits / (0.25 * n));
     }
     
     task pure simulate(n: int): int {
