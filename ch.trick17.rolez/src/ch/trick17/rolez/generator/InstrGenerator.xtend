@@ -478,12 +478,7 @@ class InstrGenerator {
         
         private def generateMethodInvoke(MemberAccess it) {
             if(method.isMapped) {
-                val target = target
-                val genTarget = switch(target) {
-                    // Shorter and more efficient code for access to mapped singletons, like System, Math
-                    Ref case target.isSingletonRef: target.clazz.jvmClass.getQualifiedName('.')
-                    default: target.genGuardedMapped(method.original.thisParam.type.role.erased, true)
-                }
+                val genTarget = target.genGuardedMapped(method.original.thisParam.type.role.erased, true)
                 val genInvoke = '''«genTarget».«method.safeName»(«genArgs»)'''
                 if(method.type.isArrayType && method.jvmMethod.returnType.type instanceof JvmArrayType) {
                     val componentType = ((method.type as RoleType).base as GenericClassRef).typeArg
