@@ -514,12 +514,6 @@ class New extends Expr, Argumented {
     }
 }
 
-class The extends Expr {
-    contains SimpleClassRef classRef
-    
-    op String toString() { "the " + classRef }
-}
-
 class Parenthesized extends UnaryExpr {
     op String toString() { "(" + expr + ")" }
 }

@@ -20,7 +20,6 @@ import ch.trick17.rolez.rolez.ReturnExpr
 import ch.trick17.rolez.rolez.ReturnNothing
 import ch.trick17.rolez.rolez.Slicing
 import ch.trick17.rolez.rolez.SuperConstrCall
-import ch.trick17.rolez.rolez.The
 import ch.trick17.rolez.rolez.UnaryExpr
 import ch.trick17.rolez.rolez.WhileLoop
 import java.util.HashMap
@@ -209,10 +208,6 @@ class CfgBuilder {
     }
     
     /* Simple cases: */
-    
-    private def dispatch Linker process(The t, Linker prev) {
-        prev.linkAndReturn(newInstrNode(t))
-    }
     
     private def dispatch Linker process(Ref r, Linker prev) {
         prev.linkAndReturn(newInstrNode(r))
