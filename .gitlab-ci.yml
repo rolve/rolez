@@ -21,3 +21,12 @@ test-examples:
   script:
     - cd examples
     - for e in *; do pushd $e; mvn install -B -Dmaven.repo.local=$MAVEN_REPO; popd; done
+
+pages:
+  stage: deploy
+  script: mvn deploy -DskipTests -Dmaven.repo.local=$MAVEN_REPO -DaltDeploymentRepository=snapshot-repo::default::file:./public
+  artifacts:
+    paths:
+      - public
+  only:
+    - master
