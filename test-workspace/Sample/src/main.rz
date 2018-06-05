@@ -3,13 +3,13 @@ package foo
 import rolez.util.Scanner
 
 class App {
-	task pure main(args: readonly Array[readonly String]): {
-		the System.out.println("args:");
+	task pure main(args: readonly Array[String]): {
+		System.out.println("args:");
 		for(var i = 0; i < args.length; i += 1)
-			the System.out.println("  " + args.get(i));	
+			System.out.println("  " + args.get(i));	
 		
-		the System.out.println("\nNow type your name:");
-		val scanner = new Scanner(the System.in);
+		System.out.println("\nNow type your name:");
+		val scanner = new Scanner(System.in);
 		
 		var continue = true;
 		while(continue) {
@@ -17,7 +17,7 @@ class App {
 			if(line.equals("stop"))
 				continue = false;
 			else
-				the System.out.println("Hello " + line + "!");
+				System.out.println("Hello " + line + "!");
 		}
 	}
 }
