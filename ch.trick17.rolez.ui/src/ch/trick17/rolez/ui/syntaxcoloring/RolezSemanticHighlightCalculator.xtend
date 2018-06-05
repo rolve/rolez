@@ -17,9 +17,11 @@ import org.eclipse.xtext.util.CancelIndicator
 import static ch.trick17.rolez.ui.syntaxcoloring.RolezHighlightingConfiguration.*
 import static org.eclipse.xtext.nodemodel.util.NodeModelUtils.*
 import static org.eclipse.xtext.ui.editor.syntaxcoloring.DefaultHighlightingConfiguration.*
+import org.apache.log4j.Logger
 
 class RolezSemanticHighlightCalculator implements ISemanticHighlightingCalculator {
     
+    static val logger = Logger.getLogger(RolezSemanticHighlightCalculator)
     static val rolez = RolezPackage.eINSTANCE
     
     override provideHighlightingFor(XtextResource res, IHighlightedPositionAcceptor acceptor, CancelIndicator canceler) {
@@ -28,36 +30,41 @@ class RolezSemanticHighlightCalculator implements ISemanticHighlightingCalculato
         val iter = EcoreUtil.getAllContents(res, true)
         while(iter.hasNext) {
             val object = iter.next
-            switch(object) {
-                // local variables
-                Var: {
-                    val node = findNodesForFeature(object, rolez.named_Name).head
-                    if(node !== null) // skip synthetic vars like the "this" parameter
+            try {
+                switch(object) {
+                    // local variables
+                    Var: {
+                        val node = findNodesForFeature(object, rolez.named_Name).head
+                        if(node !== null) // skip synthetic vars like the "this" parameter
+                            acceptor.addPosition(node.offset, node.length, VARIABLE_ID)
+                    }
+                    This, Super: {} // skip this and super (they're VarRefs too)
+                    Ref case object.isVarRef: {
+                        val node = findActualNodeFor(object)
                         acceptor.addPosition(node.offset, node.length, VARIABLE_ID)
+                    }
+                    // fields
+                    Field: {
+                        val node = findNodesForFeature(object, rolez.named_Name).head
+                        acceptor.addPosition(node.offset, node.length, FIELD_ID)
+                    }
+                    MemberAccess case object.isFieldAccess: {
+                        val node = findNodesForFeature(object, rolez.memberAccess_Member).head
+                        acceptor.addPosition(node.offset, node.length, FIELD_ID)
+                    }
+                    // methods (which may have the same name as a keyword)
+                    Method: {
+                        val node = findNodesForFeature(object, rolez.named_Name).head
+                        acceptor.addPosition(node.offset, node.length, DEFAULT_ID)
+                    }
+                    MemberAccess case object.isMethodInvoke || object.isTaskStart: {
+                        val node = findNodesForFeature(object, rolez.memberAccess_Member).head
+                        acceptor.addPosition(node.offset, node.length, DEFAULT_ID)
+                    }
                 }
-                This, Super: {} // skip this and super (they're VarRefs too)
-                Ref case object.isVarRef: {
-                    val node = findActualNodeFor(object)
-                    acceptor.addPosition(node.offset, node.length, VARIABLE_ID)
-                }
-                // fields
-                Field: {
-                    val node = findNodesForFeature(object, rolez.named_Name).head
-                    acceptor.addPosition(node.offset, node.length, FIELD_ID)
-                }
-                MemberAccess case object.isFieldAccess: {
-                    val node = findNodesForFeature(object, rolez.memberAccess_Member).head
-                    acceptor.addPosition(node.offset, node.length, FIELD_ID)
-                }
-                // methods (which may have the same name as a keyword)
-                Method: {
-                    val node = findNodesForFeature(object, rolez.named_Name).head
-                    acceptor.addPosition(node.offset, node.length, DEFAULT_ID)
-                }
-                MemberAccess case object.isMethodInvoke || object.isTaskStart: {
-                    val node = findNodesForFeature(object, rolez.memberAccess_Member).head
-                    acceptor.addPosition(node.offset, node.length, DEFAULT_ID)
-                }
+            } catch(Exception e) {
+                // some thing above may not work if there are errors in the resource
+                logger.warn("Could not provide highlighting for " + object, e)
             }
         }
     }
