@@ -8,5 +8,16 @@ cache:
   paths:
     - $MAVEN_REPO/
 
+build:
+  stage: build
+  script: xvfb-run mvn install -B -DskipTests -Dmaven.repo.local=$MAVEN_REPO
+
 test:
-  script: xvfb-run mvn install -B -Dmaven.repo.local=$MAVEN_REPO
+  stage: test
+  script: xvfb-run mvn test -B -Dmaven.repo.local=$MAVEN_REPO
+
+test-examples:
+  stage: test
+  script:
+    - cd examples
+    - for e in *; do pushd $e; mvn install -B -Dmaven.repo.local=$MAVEN_REPO; popd; done
