@@ -138,7 +138,9 @@ Add it as a dependency to your project:
 
 Now, create an `App.rz` file in your project's `src/main/java` folder and paste
 the *Hello World!* code from above. Run `mvn compile` in the project root to
-compile the program and `mvn -q exec:java -Dexec.mainClass=App` to execute it.
+compile the program and `mvn exec:java -q` to execute it. Note that the first
+time you run these commands, Maven automatically downloads the Rolez compiler
+and the Rolez runtime library, which can take some time.
 
 You can find a complete *Hello World!* Maven project, including more detailed build
 instructions, in the examples directory:

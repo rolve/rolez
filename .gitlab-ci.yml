@@ -25,7 +25,7 @@ test-examples:
   stage: test
   script:
     - cd examples
-    - for e in *; do pushd $e; mvn install -B -Dmaven.repo.local=$MAVEN_REPO; popd; done
+    - "for e in *; do pushd $e; mvn compile exec:java -B -Dmaven.repo.local=$MAVEN_REPO; popd; done"
 
 pages:
   stage: deploy

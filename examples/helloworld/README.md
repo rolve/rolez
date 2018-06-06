@@ -15,7 +15,7 @@ the first step.
    sudo apt-get install maven
    ```
 
-2. Clone the Rolez repository and enter the `examples/helloworld` directory:
+2. Clone the Rolez repository and change to the `examples/helloworld` directory:
    
    ```
    git clone https://github.com/rolve/rolez.git
@@ -37,7 +37,7 @@ the first step.
    library on the classpath, the simplest way to do this is using Maven:
    
    ```
-   mvn exec:java -Dexec.mainClass=App
+   mvn exec:java
    ```
    
    After Maven has downloaded some more libraries, you should see the
@@ -45,5 +45,5 @@ the first step.
    To suppress the Maven output, add the `-q` flag:
    
    ```
-   mvn -q exec:java -Dexec.mainClass=App
+   mvn exec:java -q
    ```
