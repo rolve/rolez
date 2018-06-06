@@ -14,7 +14,7 @@ build:
   artifacts:
     paths:
       - $MAVEN_REPO/ch/trick17/rolez
-      - */target
+      - "*/target"
     expire_in: 1 day
 
 test:
