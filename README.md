@@ -108,8 +108,8 @@ Create a new Maven project and add the following configuration to your
 
 <pluginRepositories>
     <pluginRepository>
-        <id>rolez-mvn-repo</id>
-        <url>https://raw.github.com/rolve/rolez/mvn-repo/</url>
+        <id>rolez-maven-repo</id>
+        <url>https://rolve.gitlab.io/rolez/maven/</url>
         <snapshots><enabled>true</enabled></snapshots>
     </pluginRepository>
 </pluginRepositories>
@@ -129,8 +129,8 @@ Add it as a dependency to your project:
 
 <repositories>
     <repository>
-        <id>rolez-mvn-repo</id>
-        <url>https://raw.github.com/rolve/rolez/mvn-repo/</url>
+        <id>rolez-maven-repo</id>
+        <url>https://rolve.gitlab.io/rolez/maven/</url>
         <snapshots><enabled>true</enabled></snapshots>
     </repository>
 </repositories>
