@@ -29,7 +29,7 @@ test-examples:
 
 pages:
   stage: deploy
-  script: mvn deploy:deploy -B -Dmaven.repo.local=$MAVEN_REPO -DaltDeploymentRepository=snapshot-repo::default::file:public/maven
+  script: mvn deploy -B -Dexec.skip -Dxtext.generator.skip -DskipXtend -DskipTests -Dmaven.repo.local=$MAVEN_REPO -DaltDeploymentRepository=snapshot-repo::default::file:public/maven
   artifacts:
     paths:
       - public
