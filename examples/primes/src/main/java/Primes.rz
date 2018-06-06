@@ -4,11 +4,16 @@ import rolez.util.Scanner
 import rolez.util.Random
 
 object Primes {
-    task pure main: {
+    task pure main(args: readonly Array[String]): {
         val n = 500000;
         val cores = 4;
         
-        val scanner = new Scanner(new FileInputStream("numbers.txt"));
+        var file: String;
+        if(args.length == 0)
+            file = "numbers.txt";
+        else
+            file = args.get(0);
+        val scanner = new Scanner(new FileInputStream(file));
         val numbers = new Array[int](n);
         for(var i = 0; i < n; i++)
             numbers.set(i, scanner.nextInt);
