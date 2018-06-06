@@ -19,7 +19,7 @@ build:
 
 test:
   stage: test
-  script: xvfb-run mvn test -B -Dmaven.repo.local=$MAVEN_REPO
+  script: xvfb-run mvn surefire:test -B -Dmaven.repo.local=$MAVEN_REPO
 
 test-examples:
   stage: test
@@ -29,7 +29,7 @@ test-examples:
 
 pages:
   stage: deploy
-  script: mvn deploy -DskipTests -Dmaven.repo.local=$MAVEN_REPO -DaltDeploymentRepository=snapshot-repo::default::file:public/maven
+  script: mvn deploy:deploy -B -Dmaven.repo.local=$MAVEN_REPO -DaltDeploymentRepository=snapshot-repo::default::file:public/maven
   artifacts:
     paths:
       - public
