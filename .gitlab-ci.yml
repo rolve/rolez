@@ -24,7 +24,7 @@ test-examples:
 
 pages:
   stage: deploy
-  script: mvn deploy -DskipTests -Dmaven.repo.local=$MAVEN_REPO -DaltDeploymentRepository=snapshot-repo::default::file:./public
+  script: mvn deploy -DskipTests -Dmaven.repo.local=$MAVEN_REPO -DaltDeploymentRepository=snapshot-repo::default::file:public/maven
   artifacts:
     paths:
       - public
