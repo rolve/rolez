@@ -11,6 +11,11 @@ cache:
 build:
   stage: build
   script: xvfb-run mvn install -B -DskipTests -Dmaven.repo.local=$MAVEN_REPO
+  artifacts:
+    paths:
+      - $MAVEN_REPO/ch/trick17/rolez
+      - */target
+    expire_in: 1 day
 
 test:
   stage: test
