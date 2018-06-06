@@ -969,7 +969,10 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public static void main(final java.lang.String[] args) {
-                    rolez.lang.TaskSystem.getDefault().run(new App(0L).main$Task());
+                    rolez.lang.Task.registerNewRootTask();
+                    final long $task = rolez.lang.Task.currentTask().idBits();
+                    new App($task).main$Unguarded($task);
+                    rolez.lang.Task.unregisterRootTask();
                 }
             }
         ''')
@@ -1005,7 +1008,10 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public static void main(final java.lang.String[] args) {
-                    rolez.lang.TaskSystem.getDefault().run(INSTANCE.main$Task());
+                    rolez.lang.Task.registerNewRootTask();
+                    final long $task = rolez.lang.Task.currentTask().idBits();
+                    INSTANCE.main$Unguarded($task);
+                    rolez.lang.Task.unregisterRootTask();
                 }
             }
         ''')
@@ -1043,7 +1049,10 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public static void main(final java.lang.String[] args) {
-                    rolez.lang.TaskSystem.getDefault().run(new App(0L).main$Task(rolez.lang.GuardedArray.<java.lang.String[]>wrap(args)));
+                    rolez.lang.Task.registerNewRootTask();
+                    final long $task = rolez.lang.Task.currentTask().idBits();
+                    new App($task).main$Unguarded(rolez.lang.GuardedArray.<java.lang.String[]>wrap(args), $task);
+                    rolez.lang.Task.unregisterRootTask();
                 }
             }
         ''')

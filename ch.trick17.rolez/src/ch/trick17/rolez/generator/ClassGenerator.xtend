@@ -40,7 +40,7 @@ import static extension ch.trick17.rolez.generator.SafeJavaNames.*
  * the method and constructor bodies and the field initializers.
  */
 class ClassGenerator {
-        
+    
     @Inject extension InstrGenerator
     @Inject extension TypeGenerator
     @Inject extension JavaMapper
@@ -269,13 +269,14 @@ class ClassGenerator {
         «IF isMain»
         
         public static void main(final java.lang.String[] args) {
-            «jvmTaskSystemClassName».getDefault().run(«genMainInstance».«name»«TASK.suffix»(«IF !params.isEmpty»«jvmGuardedArrayClassName».<java.lang.String[]>wrap(args)«ENDIF»));
+            «taskClassName».registerNewRootTask();
+            final long $task = «taskClassName».currentTask().idBits();
+            «genMainInstance».«name»«UNGUARDED_METHOD.suffix»(«IF !params.isEmpty»«jvmGuardedArrayClassName».<java.lang.String[]>wrap(args), «ENDIF»$task);
+            «taskClassName».unregisterRootTask();
         }
         «ENDIF»
         '''
     }
-    
-    // FIXME: Programs with a main method with args throw NPE!
     
     private def genParamsWithExtra(Executable it) {
         val allParams = new ArrayList(params.map[gen])
@@ -323,10 +324,7 @@ class ClassGenerator {
         if(enclosingClass.isSingleton)
             '''INSTANCE'''
         else
-            // Since no current task exists yet, pass 0L to the constr for now. Nothing that
-            // requires guarding can be called in there. Same problem for field initializers.
-            // TODO: Check this in the validator!
-            '''new «enclosingClass.safeSimpleName»(0L)'''
+            '''new «enclosingClass.safeSimpleName»($task)'''
     }
     
     // TODO: Disable guarding
