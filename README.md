@@ -242,6 +242,6 @@ You can find the complete *Pi* Maven project in the examples directory:
 
 [threads]: http://www.eecs.berkeley.edu/Pubs/TechRpts/2006/EECS-2006-1.pdf
 [deterministic]: https://www.usenix.org/legacy/event/hotpar09/tech/full_papers/bocchino/bocchino_html/
-[pr]: http://people.inf.ethz.ch/mfaes/publications/parallel-roles.pdf
+[pr]: http://people.inf.ethz.ch/mfaes/publications/parallel-roles-corrected.pdf
 [xtext]: http://www.eclipse.org/Xtext/
 [mvn]: https://maven.apache.org/
