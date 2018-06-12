@@ -1,8 +1,7 @@
-image: rolve/maven-with-xvfb:3-jdk-7
+image: rolve/maven-with-xvfb:3-jdk-8
 
 variables:
   MAVEN_REPO: $CI_PROJECT_DIR/maven-repo
-  MAVEN_OPTS: "-Xmx1g -XX:MaxPermSize=512m"
 
 cache:
   paths:
