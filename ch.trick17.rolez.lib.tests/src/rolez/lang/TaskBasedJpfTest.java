@@ -20,7 +20,6 @@ public class TaskBasedJpfTest extends JpfParallelismTest {
     @Override
     protected Map<String, Object> additionalJpfProperties() {
         final Map<String, Object> props = new HashMap<>();
-        props.put("vm.por", "false");
         // props.put("report.console.property_violation", "error,snapshot,trace");
         // props.put("sourcepath", "src" + pathSeparator + "../ch.trick17.rolez.lib/src");
         return props;

@@ -4,7 +4,7 @@
     <parent>
         <groupId>ch.trick17.simple-jpf</groupId>
         <artifactId>simple-jpf</artifactId>
-        <version>1139.0.0-SNAPSHOT</version>
+        <version>2018-05-17-18a0c42.0.0-SNAPSHOT</version>
     </parent>
     <artifactId>simple-jpf-core</artifactId>
     <name>Simple JPF Core</name>
@@ -12,14 +12,14 @@
     <dependencies>
         <dependency>
             <!-- Installed main artifact using command: mvn install:install-file 
-                -Dfile=jpf.jar -DgroupId=gov.nasa.jpf -DartifactId=jpf-core -Dversion=1139 -Dpackaging=jar 
+                -Dfile=jpf.jar -DgroupId=gov.nasa.jpf -DartifactId=jpf-core -Dversion=[version] -Dpackaging=jar 
                 -DlocalRepositoryPath=lib -DcreateChecksum=true -->
             <!-- Installed sources using command: mvn install:install-file -Dfile=jpf.jar 
-                -DgroupId=gov.nasa.jpf -DartifactId=jpf-core -Dversion=1139 -Dpackaging=jar -Dclassifier=sources 
+                -DgroupId=gov.nasa.jpf -DartifactId=jpf-core -Dversion=[version] -Dpackaging=jar -Dclassifier=sources 
                 -DlocalRepositoryPath=lib -DcreateChecksum=true -->
             <groupId>gov.nasa.jpf</groupId>
             <artifactId>jpf-core</artifactId>
-            <version>1139</version>
+            <version>2018-05-17-18a0c42</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
