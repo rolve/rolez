@@ -36,7 +36,7 @@ public class ObjectGuardingTest extends RolezJpfTest {
     
     @Test
     public void testShare() {
-        verifyTask(new int[][]{{1, 2}, {0, 2}}, new Runnable() {
+        verifyTask(new Runnable() {
             public void run() {
                 final Int i = new Int();
                 
@@ -52,7 +52,6 @@ public class ObjectGuardingTest extends RolezJpfTest {
                 region(1);
                 
                 guardReadWrite(i).value = 1;
-                region(2);
             }
         });
     }
@@ -103,7 +102,7 @@ public class ObjectGuardingTest extends RolezJpfTest {
     
 //    @Test
 //    public void testShareMultiple() {
-//        verifyTask(new int[][]{{2, 3}, {0, 3}, {1, 3}}, new Runnable() {
+//        verifyTask(new Runnable() {
 //            public void run() {
 //                final Int i = new Int();
 //                
@@ -129,14 +128,13 @@ public class ObjectGuardingTest extends RolezJpfTest {
 //                region(2);
 //                
 //                guardReadWrite(i).value = 1;
-//                region(3);
 //            }
 //        });
 //    }
     
     @Test
     public void testPass() {
-        verifyTask(new int[][]{{0, 2}, {1, 2}}, new Runnable() {
+        verifyTask(new Runnable() {
             public void run() {
                 final Int i = new Int();
                 
@@ -152,7 +150,6 @@ public class ObjectGuardingTest extends RolezJpfTest {
                 region(1);
                 
                 assertEquals(1, guardReadOnly(i).value);
-                region(2);
             }
         });
     }
@@ -183,7 +180,7 @@ public class ObjectGuardingTest extends RolezJpfTest {
     public void testPassMultiple() {
         /* IMPROVE: Allow {0, 2} in parallel by passing not-yet-available data to tasks (so far,
          * pass() is blocking) */
-        verifyTask(new int[][]{{0, 1, 3}, {2, 3}, {0, 2}}, new Runnable() {
+        verifyTask(new int[][]{{0, 1}, {0, 2}}, new Runnable() {
             public void run() {
                 final Int i = new Int();
                 
@@ -209,15 +206,13 @@ public class ObjectGuardingTest extends RolezJpfTest {
                 region(2);
                 
                 assertEquals(2, guardReadOnly(i).value);
-                
-                region(3);
             }
         });
     }
     
 //    @Test
 //    public void testPassNested() {
-//        verifyTask(new int[][]{{2, 3}, {1, 3}, {0, 3}}, new Runnable() {
+//        verifyTask(new Runnable() {
 //            public void run() {
 //                final Int i = new Int();
 //                
@@ -246,8 +241,6 @@ public class ObjectGuardingTest extends RolezJpfTest {
 //                region(2);
 //                
 //                assertEquals(3, guardReadOnly(i).value);
-//                
-//                region(3);
 //            }
 //        });
 //    }
@@ -333,7 +326,7 @@ public class ObjectGuardingTest extends RolezJpfTest {
     
     @Test
     public void testShareGroup() {
-        verifyTask(new int[][]{{1, 2}, {0, 2}}, new Runnable() {
+        verifyTask(new Runnable() {
             public void run() {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
@@ -350,7 +343,6 @@ public class ObjectGuardingTest extends RolezJpfTest {
                 region(1);
                 
                 guardReadWrite(i).value = 1;
-                region(2);
             }
         });
     }
@@ -381,7 +373,7 @@ public class ObjectGuardingTest extends RolezJpfTest {
     
     @Test
     public void testPassGroup() {
-        verifyTask(new int[][]{{1, 2}, {0, 2}}, new Runnable() {
+        verifyTask(new Runnable() {
             public void run() {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
@@ -398,7 +390,6 @@ public class ObjectGuardingTest extends RolezJpfTest {
                 region(1);
                 
                 assertEquals(1, guardReadOnly(i).value);
-                region(2);
             }
         });
     }
@@ -496,7 +487,7 @@ public class ObjectGuardingTest extends RolezJpfTest {
     
 //    @Test
 //    public void testShareSubgroupMultiple() {
-//        verifyTask(new int[][]{{0, 4}, {1, 4}, {2, 4}, {3, 4}}, new Runnable() {
+//        verifyTask(new Runnable() {
 //            public void run() {
 //                final Int i = new Int();
 //                final Ref<Int> r = new Ref<>(i);
@@ -533,7 +524,6 @@ public class ObjectGuardingTest extends RolezJpfTest {
 //                region(3);
 //                
 //                guardReadWrite(i).value = 1;
-//                region(4);
 //            }
 //        });
 //    }
