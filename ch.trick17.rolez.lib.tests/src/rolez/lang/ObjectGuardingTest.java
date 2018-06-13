@@ -101,38 +101,38 @@ public class ObjectGuardingTest extends RolezJpfTest {
         });
     }
     
-    @Test
-    public void testShareMultiple() {
-        verifyTask(new int[][]{{2, 3}, {0, 3}, {1, 3}}, new Runnable() {
-            public void run() {
-                final Int i = new Int();
-                
-                Task<?> task1 = new Task<Void>(new Object[]{}, new Object[]{i}) {
-                    @Override
-                    protected Void runRolez() {
-                        region(0);
-                        assertEquals(0, i.value);
-                        return null;
-                    }
-                };
-                s.start(task1);
-                
-                Task<?> task2 = new Task<Void>(new Object[]{}, new Object[]{i}) {
-                    @Override
-                    protected Void runRolez() {
-                        region(1);
-                        assertEquals(0, i.value);
-                        return null;
-                    }
-                };
-                s.start(task2);
-                region(2);
-                
-                guardReadWrite(i).value = 1;
-                region(3);
-            }
-        });
-    }
+//    @Test
+//    public void testShareMultiple() {
+//        verifyTask(new int[][]{{2, 3}, {0, 3}, {1, 3}}, new Runnable() {
+//            public void run() {
+//                final Int i = new Int();
+//                
+//                Task<?> task1 = new Task<Void>(new Object[]{}, new Object[]{i}) {
+//                    @Override
+//                    protected Void runRolez() {
+//                        region(0);
+//                        assertEquals(0, i.value);
+//                        return null;
+//                    }
+//                };
+//                s.start(task1);
+//                
+//                Task<?> task2 = new Task<Void>(new Object[]{}, new Object[]{i}) {
+//                    @Override
+//                    protected Void runRolez() {
+//                        region(1);
+//                        assertEquals(0, i.value);
+//                        return null;
+//                    }
+//                };
+//                s.start(task2);
+//                region(2);
+//                
+//                guardReadWrite(i).value = 1;
+//                region(3);
+//            }
+//        });
+//    }
     
     @Test
     public void testPass() {
@@ -215,42 +215,42 @@ public class ObjectGuardingTest extends RolezJpfTest {
         });
     }
     
-    @Test
-    public void testPassNested() {
-        verifyTask(new int[][]{{2, 3}, {1, 3}, {0, 3}}, new Runnable() {
-            public void run() {
-                final Int i = new Int();
-                
-                Task<?> task1 = new Task<Void>(new Object[]{i}, new Object[]{}) {
-                    @Override
-                    protected Void runRolez() {
-                        i.value++;
-                        
-                        Task<?> task2 = new Task<Void>(new Object[]{i}, new Object[]{}) {
-                            @Override
-                            protected Void runRolez() {
-                                i.value++;
-                                region(0);
-                                return null;
-                            }
-                        };
-                        s.start(task2);
-                        region(1);
-                        
-                        assertEquals(2, guardReadWrite(i).value);
-                        i.value++;
-                        return null;
-                    }
-                };
-                s.start(task1);
-                region(2);
-                
-                assertEquals(3, guardReadOnly(i).value);
-                
-                region(3);
-            }
-        });
-    }
+//    @Test
+//    public void testPassNested() {
+//        verifyTask(new int[][]{{2, 3}, {1, 3}, {0, 3}}, new Runnable() {
+//            public void run() {
+//                final Int i = new Int();
+//                
+//                Task<?> task1 = new Task<Void>(new Object[]{i}, new Object[]{}) {
+//                    @Override
+//                    protected Void runRolez() {
+//                        i.value++;
+//                        
+//                        Task<?> task2 = new Task<Void>(new Object[]{i}, new Object[]{}) {
+//                            @Override
+//                            protected Void runRolez() {
+//                                i.value++;
+//                                region(0);
+//                                return null;
+//                            }
+//                        };
+//                        s.start(task2);
+//                        region(1);
+//                        
+//                        assertEquals(2, guardReadWrite(i).value);
+//                        i.value++;
+//                        return null;
+//                    }
+//                };
+//                s.start(task1);
+//                region(2);
+//                
+//                assertEquals(3, guardReadOnly(i).value);
+//                
+//                region(3);
+//            }
+//        });
+//    }
     
     @Test
     public void testPassNestedWithoutGuarding() {
@@ -494,128 +494,128 @@ public class ObjectGuardingTest extends RolezJpfTest {
         });
     }
     
-    @Test
-    public void testShareSubgroupMultiple() {
-        verifyTask(new int[][]{{0, 4}, {1, 4}, {2, 4}, {3, 4}}, new Runnable() {
-            public void run() {
-                final Int i = new Int();
-                final Ref<Int> r = new Ref<>(i);
-                
-                Task<?> task1 = new Task<Void>(new Object[]{}, new Object[]{i}) {
-                    @Override
-                    protected Void runRolez() {
-                        assertEquals(0, i.value);
-                        region(0);
-                        return null;
-                    }
-                };
-                s.start(task1);
-                
-                Task<?> task2 = new Task<Void>(new Object[]{}, new Object[]{r}) {
-                    @Override
-                    protected Void runRolez() {
-                        assertEquals(0, r.o.value);
-                        region(1);
-                        return null;
-                    }
-                };
-                s.start(task2);
-                
-                Task<?> task3 = new Task<Void>(new Object[]{}, new Object[]{i}) {
-                    @Override
-                    protected Void runRolez() {
-                        assertEquals(0, i.value);
-                        region(2);
-                        return null;
-                    }
-                };
-                s.start(task3);
-                region(3);
-                
-                guardReadWrite(i).value = 1;
-                region(4);
-            }
-        });
-    }
+//    @Test
+//    public void testShareSubgroupMultiple() {
+//        verifyTask(new int[][]{{0, 4}, {1, 4}, {2, 4}, {3, 4}}, new Runnable() {
+//            public void run() {
+//                final Int i = new Int();
+//                final Ref<Int> r = new Ref<>(i);
+//                
+//                Task<?> task1 = new Task<Void>(new Object[]{}, new Object[]{i}) {
+//                    @Override
+//                    protected Void runRolez() {
+//                        assertEquals(0, i.value);
+//                        region(0);
+//                        return null;
+//                    }
+//                };
+//                s.start(task1);
+//                
+//                Task<?> task2 = new Task<Void>(new Object[]{}, new Object[]{r}) {
+//                    @Override
+//                    protected Void runRolez() {
+//                        assertEquals(0, r.o.value);
+//                        region(1);
+//                        return null;
+//                    }
+//                };
+//                s.start(task2);
+//                
+//                Task<?> task3 = new Task<Void>(new Object[]{}, new Object[]{i}) {
+//                    @Override
+//                    protected Void runRolez() {
+//                        assertEquals(0, i.value);
+//                        region(2);
+//                        return null;
+//                    }
+//                };
+//                s.start(task3);
+//                region(3);
+//                
+//                guardReadWrite(i).value = 1;
+//                region(4);
+//            }
+//        });
+//    }
     
-    @Test
-    public void testPassSubgroup() {
-        /* IMPROVE: Allow all regions by passing not-yet-available data */
-        verifyTask(new int[][]{{0, 1, 2}, {0, 3}, {1, 3}}, new Runnable() {
-            public void run() {
-                final Int i = new Int();
-                final Ref<Int> r = new Ref<>(i);
-                
-                Task<?> task1 = new Task<Void>(new Object[]{i}, new Object[]{}) {
-                    @Override
-                    protected Void runRolez() {
-                        region(0);
-                        i.value++;
-                        return null;
-                    }
-                };
-                s.start(task1);
-                
-                Task<?> task2 = new Task<Void>(new Object[]{r}, new Object[]{}) {
-                    @Override
-                    protected Void runRolez() {
-                        region(1);
-                        r.o.value++;
-                        return null;
-                    }
-                };
-                s.start(task2);
-                
-                Task<?> task3 = new Task<Void>(new Object[]{i}, new Object[]{}) {
-                    @Override
-                    protected Void runRolez() {
-                        region(2);
-                        i.value++;
-                        return null;
-                    }
-                };
-                s.start(task3);
-                region(3);
-                
-                assertEquals(3, guardReadOnly(i).value);
-            }
-        });
-    }
+//    @Test
+//    public void testPassSubgroup() {
+//        /* IMPROVE: Allow all regions by passing not-yet-available data */
+//        verifyTask(new int[][]{{0, 1, 2}, {0, 3}, {1, 3}}, new Runnable() {
+//            public void run() {
+//                final Int i = new Int();
+//                final Ref<Int> r = new Ref<>(i);
+//                
+//                Task<?> task1 = new Task<Void>(new Object[]{i}, new Object[]{}) {
+//                    @Override
+//                    protected Void runRolez() {
+//                        region(0);
+//                        i.value++;
+//                        return null;
+//                    }
+//                };
+//                s.start(task1);
+//                
+//                Task<?> task2 = new Task<Void>(new Object[]{r}, new Object[]{}) {
+//                    @Override
+//                    protected Void runRolez() {
+//                        region(1);
+//                        r.o.value++;
+//                        return null;
+//                    }
+//                };
+//                s.start(task2);
+//                
+//                Task<?> task3 = new Task<Void>(new Object[]{i}, new Object[]{}) {
+//                    @Override
+//                    protected Void runRolez() {
+//                        region(2);
+//                        i.value++;
+//                        return null;
+//                    }
+//                };
+//                s.start(task3);
+//                region(3);
+//                
+//                assertEquals(3, guardReadOnly(i).value);
+//            }
+//        });
+//    }
     
-    @Test
-    public void testPassSubgroupNested() {
-        verifyTask(new Runnable() {
-            public void run() {
-                final Int i = new Int();
-                final Ref<Int> r = new Ref<>(i);
-                
-                Task<?> task1 = new Task<Void>(new Object[]{r}, new Object[]{}) {
-                    @Override
-                    protected Void runRolez() {
-                        final Int i2 = r.o;
-                        i2.value++;
-                        
-                        Task<?> task2 = new Task<Void>(new Object[]{i2}, new Object[]{}) {
-                            @Override
-                            protected Void runRolez() {
-                                region(0);
-                                i2.value++;
-                                return null;
-                            }
-                        };
-                        s.start(task2);
-                        region(1);
-                        
-                        return null;
-                    }
-                };
-                s.start(task1);
-                region(2);
-                
-                assertEquals(2, guardReadOnly(i).value);
-            }
-        });
-    }
+//    @Test
+//    public void testPassSubgroupNested() {
+//        verifyTask(new Runnable() {
+//            public void run() {
+//                final Int i = new Int();
+//                final Ref<Int> r = new Ref<>(i);
+//                
+//                Task<?> task1 = new Task<Void>(new Object[]{r}, new Object[]{}) {
+//                    @Override
+//                    protected Void runRolez() {
+//                        final Int i2 = r.o;
+//                        i2.value++;
+//                        
+//                        Task<?> task2 = new Task<Void>(new Object[]{i2}, new Object[]{}) {
+//                            @Override
+//                            protected Void runRolez() {
+//                                region(0);
+//                                i2.value++;
+//                                return null;
+//                            }
+//                        };
+//                        s.start(task2);
+//                        region(1);
+//                        
+//                        return null;
+//                    }
+//                };
+//                s.start(task1);
+//                region(2);
+//                
+//                assertEquals(2, guardReadOnly(i).value);
+//            }
+//        });
+//    }
     
     @Test
     public void testPassShareSubgroup() {
@@ -697,38 +697,38 @@ public class ObjectGuardingTest extends RolezJpfTest {
         });
     }
     
-    @Test
-    public void testPassSubgroupNestedModify() {
-        assumeVerifyCorrectness();
-        verifyTask(new Runnable() {
-            public void run() {
-                final Int i = new Int();
-                final Ref<Int> r = new Ref<>(i);
-                
-                Task<?> task1 = new Task<Void>(new Object[]{r}, new Object[]{}) {
-                    @Override
-                    protected Void runRolez() {
-                        r.o = new Int();
-                        
-                        final Int i2 = r.o;
-                        i2.value++;
-                        Task<?> task2 = new Task<Void>(new Object[]{i2}, new Object[]{}) {
-                            @Override
-                            protected Void runRolez() {
-                                i2.value++;
-                                return null;
-                            }
-                        };
-                        s.start(task2);
-                        return null;
-                    }
-                };
-                s.start(task1);
-                
-                assertEquals(2, guardReadOnly(guardReadOnly(r).o).value);
-            }
-        });
-    }
+//    @Test
+//    public void testPassSubgroupNestedModify() {
+//        assumeVerifyCorrectness();
+//        verifyTask(new Runnable() {
+//            public void run() {
+//                final Int i = new Int();
+//                final Ref<Int> r = new Ref<>(i);
+//                
+//                Task<?> task1 = new Task<Void>(new Object[]{r}, new Object[]{}) {
+//                    @Override
+//                    protected Void runRolez() {
+//                        r.o = new Int();
+//                        
+//                        final Int i2 = r.o;
+//                        i2.value++;
+//                        Task<?> task2 = new Task<Void>(new Object[]{i2}, new Object[]{}) {
+//                            @Override
+//                            protected Void runRolez() {
+//                                i2.value++;
+//                                return null;
+//                            }
+//                        };
+//                        s.start(task2);
+//                        return null;
+//                    }
+//                };
+//                s.start(task1);
+//                
+//                assertEquals(2, guardReadOnly(guardReadOnly(r).o).value);
+//            }
+//        });
+//    }
     
     @Test
     public void testShareCycleModify() {

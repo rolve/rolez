@@ -123,83 +123,83 @@ public class ArrayGuardingTest extends RolezJpfTest {
         });
     }
     
-    @Test
-    public void testShareArrayElement() {
-        verifyTask(new Runnable() {
-            public void run() {
-                final Int i = new Int();
-                final GuardedArray<Int[]> a = new GuardedArray<>(new Int[]{i});
-                
-                Task<?> task1 = new Task<Void>(new Object[]{}, new Object[]{i}) {
-                    @Override
-                    protected Void runRolez() {
-                        assertEquals(0, i.value);
-                        return null;
-                    }
-                };
-                s.start(task1);
-                
-                Task<?> task2 = new Task<Void>(new Object[]{}, new Object[]{a}) {
-                    @Override
-                    protected Void runRolez() {
-                        assertEquals(0, a.data[0].value);
-                        return null;
-                    }
-                };
-                s.start(task2);
-                
-                Task<?> task3 = new Task<Void>(new Object[]{}, new Object[]{i}) {
-                    @Override
-                    protected Void runRolez() {
-                        assertEquals(0, i.value);
-                        return null;
-                    }
-                };
-                s.start(task3);
-                
-                guardReadWrite(i).value = 1;
-            }
-        });
-    }
+//    @Test
+//    public void testShareArrayElement() {
+//        verifyTask(new Runnable() {
+//            public void run() {
+//                final Int i = new Int();
+//                final GuardedArray<Int[]> a = new GuardedArray<>(new Int[]{i});
+//                
+//                Task<?> task1 = new Task<Void>(new Object[]{}, new Object[]{i}) {
+//                    @Override
+//                    protected Void runRolez() {
+//                        assertEquals(0, i.value);
+//                        return null;
+//                    }
+//                };
+//                s.start(task1);
+//                
+//                Task<?> task2 = new Task<Void>(new Object[]{}, new Object[]{a}) {
+//                    @Override
+//                    protected Void runRolez() {
+//                        assertEquals(0, a.data[0].value);
+//                        return null;
+//                    }
+//                };
+//                s.start(task2);
+//                
+//                Task<?> task3 = new Task<Void>(new Object[]{}, new Object[]{i}) {
+//                    @Override
+//                    protected Void runRolez() {
+//                        assertEquals(0, i.value);
+//                        return null;
+//                    }
+//                };
+//                s.start(task3);
+//                
+//                guardReadWrite(i).value = 1;
+//            }
+//        });
+//    }
     
-    @Test
-    public void testPassArrayElement() {
-        verifyTask(new Runnable() {
-            public void run() {
-                final Int i = new Int();
-                final GuardedArray<Int[]> a = new GuardedArray<>(new Int[]{i});
-                
-                Task<?> task1 = new Task<Void>(new Object[]{i}, new Object[]{}) {
-                    @Override
-                    protected Void runRolez() {
-                        i.value++;
-                        return null;
-                    }
-                };
-                s.start(task1);
-                
-                Task<?> task2 = new Task<Void>(new Object[]{a}, new Object[]{}) {
-                    @Override
-                    protected Void runRolez() {
-                        a.data[0].value++;
-                        return null;
-                    }
-                };
-                s.start(task2);
-                
-                Task<?> task3 = new Task<Void>(new Object[]{i}, new Object[]{}) {
-                    @Override
-                    protected Void runRolez() {
-                        i.value++;
-                        return null;
-                    }
-                };
-                s.start(task3);
-                
-                assertEquals(3, guardReadOnly(i).value);
-            }
-        });
-    }
+//    @Test
+//    public void testPassArrayElement() {
+//        verifyTask(new Runnable() {
+//            public void run() {
+//                final Int i = new Int();
+//                final GuardedArray<Int[]> a = new GuardedArray<>(new Int[]{i});
+//                
+//                Task<?> task1 = new Task<Void>(new Object[]{i}, new Object[]{}) {
+//                    @Override
+//                    protected Void runRolez() {
+//                        i.value++;
+//                        return null;
+//                    }
+//                };
+//                s.start(task1);
+//                
+//                Task<?> task2 = new Task<Void>(new Object[]{a}, new Object[]{}) {
+//                    @Override
+//                    protected Void runRolez() {
+//                        a.data[0].value++;
+//                        return null;
+//                    }
+//                };
+//                s.start(task2);
+//                
+//                Task<?> task3 = new Task<Void>(new Object[]{i}, new Object[]{}) {
+//                    @Override
+//                    protected Void runRolez() {
+//                        i.value++;
+//                        return null;
+//                    }
+//                };
+//                s.start(task3);
+//                
+//                assertEquals(3, guardReadOnly(i).value);
+//            }
+//        });
+//    }
     
     @Test
     public void testPassArrayElementNestedModify() {
@@ -618,126 +618,126 @@ public class ArrayGuardingTest extends RolezJpfTest {
         });
     }
     
-    @Test
-    public void testShareSliceMultiple() {
-        verifyTask(new Runnable() {
-            public void run() {
-                final Int i = new Int();
-                final GuardedArray<Int[]> a = new GuardedArray<>(new Int[]{i});
-                final GuardedSlice<Int[]> slice = a.slice(0, 1, 1);
-                
-                Task<?> task1 = new Task<Void>(new Object[]{}, new Object[]{slice}) {
-                    @Override
-                    protected Void runRolez() {
-                        assertEquals(0, slice.data[0].value);
-                        return null;
-                    }
-                };
-                s.start(task1);
-                
-                Task<?> task2 = new Task<Void>(new Object[]{}, new Object[]{a}) {
-                    @Override
-                    protected Void runRolez() {
-                        assertEquals(0, a.data[0].value);
-                        return null;
-                    }
-                };
-                s.start(task2);
-                
-                Task<?> task3 = new Task<Void>(new Object[]{}, new Object[]{slice}) {
-                    @Override
-                    protected Void runRolez() {
-                        assertEquals(0, slice.data[0].value);
-                        return null;
-                    }
-                };
-                s.start(task3);
-                
-                guardReadWrite(i).value = 1;
-            }
-        });
-    }
+//    @Test
+//    public void testShareSliceMultiple() {
+//        verifyTask(new Runnable() {
+//            public void run() {
+//                final Int i = new Int();
+//                final GuardedArray<Int[]> a = new GuardedArray<>(new Int[]{i});
+//                final GuardedSlice<Int[]> slice = a.slice(0, 1, 1);
+//                
+//                Task<?> task1 = new Task<Void>(new Object[]{}, new Object[]{slice}) {
+//                    @Override
+//                    protected Void runRolez() {
+//                        assertEquals(0, slice.data[0].value);
+//                        return null;
+//                    }
+//                };
+//                s.start(task1);
+//                
+//                Task<?> task2 = new Task<Void>(new Object[]{}, new Object[]{a}) {
+//                    @Override
+//                    protected Void runRolez() {
+//                        assertEquals(0, a.data[0].value);
+//                        return null;
+//                    }
+//                };
+//                s.start(task2);
+//                
+//                Task<?> task3 = new Task<Void>(new Object[]{}, new Object[]{slice}) {
+//                    @Override
+//                    protected Void runRolez() {
+//                        assertEquals(0, slice.data[0].value);
+//                        return null;
+//                    }
+//                };
+//                s.start(task3);
+//                
+//                guardReadWrite(i).value = 1;
+//            }
+//        });
+//    }
     
-    @Test
-    public void testPassSliceMultiple() {
-        verifyTask(new Runnable() {
-            public void run() {
-                final Int i = new Int();
-                final GuardedArray<Int[]> a = new GuardedArray<>(new Int[]{i});
-                final GuardedSlice<Int[]> slice = a.slice(0, 1, 1);
-                
-                Task<?> task1 = new Task<Void>(new Object[]{slice}, new Object[]{}) {
-                    @Override
-                    protected Void runRolez() {
-                        slice.data[0].value++;
-                        return null;
-                    }
-                };
-                s.start(task1);
-                
-                Task<?> task2 = new Task<Void>(new Object[]{a}, new Object[]{}) {
-                    @Override
-                    protected Void runRolez() {
-                        a.data[0].value++;
-                        return null;
-                    }
-                };
-                s.start(task2);
-                
-                Task<?> task3 = new Task<Void>(new Object[]{slice}, new Object[]{}) {
-                    @Override
-                    protected Void runRolez() {
-                        slice.data[0].value++;
-                        return null;
-                    }
-                };
-                s.start(task3);
-                
-                assertEquals(3, guardReadOnly(i).value);
-            }
-        });
-    }
+//    @Test
+//    public void testPassSliceMultiple() {
+//        verifyTask(new Runnable() {
+//            public void run() {
+//                final Int i = new Int();
+//                final GuardedArray<Int[]> a = new GuardedArray<>(new Int[]{i});
+//                final GuardedSlice<Int[]> slice = a.slice(0, 1, 1);
+//                
+//                Task<?> task1 = new Task<Void>(new Object[]{slice}, new Object[]{}) {
+//                    @Override
+//                    protected Void runRolez() {
+//                        slice.data[0].value++;
+//                        return null;
+//                    }
+//                };
+//                s.start(task1);
+//                
+//                Task<?> task2 = new Task<Void>(new Object[]{a}, new Object[]{}) {
+//                    @Override
+//                    protected Void runRolez() {
+//                        a.data[0].value++;
+//                        return null;
+//                    }
+//                };
+//                s.start(task2);
+//                
+//                Task<?> task3 = new Task<Void>(new Object[]{slice}, new Object[]{}) {
+//                    @Override
+//                    protected Void runRolez() {
+//                        slice.data[0].value++;
+//                        return null;
+//                    }
+//                };
+//                s.start(task3);
+//                
+//                assertEquals(3, guardReadOnly(i).value);
+//            }
+//        });
+//    }
     
-    @Test
-    public void testPassDifferentSlices() {
-        verifyTask(new Runnable() {
-            public void run() {
-                final GuardedArray<Int[]> a = new GuardedArray<>(new Int[10]);
-                for(int i = 0; i < a.data.length; i++)
-                    a.data[i] = new Int(i);
-                
-                final GuardedSlice<Int[]> slice1 = a.slice(0, 5, 1);
-                final GuardedSlice<Int[]> slice2 = a.slice(slice1.range.end, a.data.length, 1);
-                
-                Task<?> task1 = new Task<Void>(new Object[]{slice1}, new Object[]{}) {
-                    @Override
-                    protected Void runRolez() {
-                        for(int i = slice1.range.begin; i < slice1.range.end; i++)
-                            slice1.data[i].value++;
-                        region(0);
-                        return null;
-                    }
-                };
-                s.start(task1);
-                
-                Task<?> task2 = new Task<Void>(new Object[]{slice2}, new Object[]{}) {
-                    @Override
-                    protected Void runRolez() {
-                        for(int i = slice2.range.begin; i < slice2.range.end; i++)
-                            slice2.data[i].value++;
-                        region(1);
-                        return null;
-                    }
-                };
-                s.start(task2);
-                region(2);
-                
-                guardReadOnly(a);
-                for(int i = 0; i < a.data.length; i++)
-                    assertEquals(i + 1, guardReadOnly(a.data[i]).value);
-            }
-        });
-    }
+//    @Test
+//    public void testPassDifferentSlices() {
+//        verifyTask(new Runnable() {
+//            public void run() {
+//                final GuardedArray<Int[]> a = new GuardedArray<>(new Int[10]);
+//                for(int i = 0; i < a.data.length; i++)
+//                    a.data[i] = new Int(i);
+//                
+//                final GuardedSlice<Int[]> slice1 = a.slice(0, 5, 1);
+//                final GuardedSlice<Int[]> slice2 = a.slice(slice1.range.end, a.data.length, 1);
+//                
+//                Task<?> task1 = new Task<Void>(new Object[]{slice1}, new Object[]{}) {
+//                    @Override
+//                    protected Void runRolez() {
+//                        for(int i = slice1.range.begin; i < slice1.range.end; i++)
+//                            slice1.data[i].value++;
+//                        region(0);
+//                        return null;
+//                    }
+//                };
+//                s.start(task1);
+//                
+//                Task<?> task2 = new Task<Void>(new Object[]{slice2}, new Object[]{}) {
+//                    @Override
+//                    protected Void runRolez() {
+//                        for(int i = slice2.range.begin; i < slice2.range.end; i++)
+//                            slice2.data[i].value++;
+//                        region(1);
+//                        return null;
+//                    }
+//                };
+//                s.start(task2);
+//                region(2);
+//                
+//                guardReadOnly(a);
+//                for(int i = 0; i < a.data.length; i++)
+//                    assertEquals(i + 1, guardReadOnly(a.data[i]).value);
+//            }
+//        });
+//    }
     
     @Test
     public void testPassSubsliceNested() {
