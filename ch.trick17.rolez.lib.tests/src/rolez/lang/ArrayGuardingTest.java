@@ -18,7 +18,7 @@ import rolez.lang.SomeClasses.Int;
 import rolez.lang.SomeClasses.Ref;
 
 @RunWith(Parameterized.class)
-public class ArrayGuardingTest extends TaskBasedJpfTest {
+public class ArrayGuardingTest extends RolezJpfTest {
     
     @Parameters(name = "{0}, {1}")
     public static List<?> taskSystems() {
@@ -741,9 +741,9 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
     
     @Test
     public void testPassSubsliceNested() {
-        /* IMPROVE: Allow {0, 2} by releasing slices independent of subslices that are still owned
+        /* IMPROVE: Allow {0, 1} by releasing slices independent of subslices that are still owned
          * by other threads. */
-        verifyTask(new int[][]{{1, 2}, {0, 2}}, new Runnable() {
+        verifyTask(new int[][]{{0, 1}}, new Runnable() {
             public void run() {
                 final GuardedArray<Int[]> a = new GuardedArray<>(new Int[3]);
                 for(int i = 0; i < a.data.length; i++)
@@ -768,28 +768,26 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                         slice1.data[1].value++;
                         region(1);
                         
-                        region(2);
                         return null;
                     }
                 };
                 s.start(task1);
                 
                 a.data[2].value++;
-                region(3);
+                region(2);
                 
                 guardReadOnly(a);
                 for(int i = 0; i < a.data.length; i++)
                     assertEquals(i + 1, guardReadOnly(a.data[i]).value);
             }
         });
-        
     }
     
     @Test
     public void testPassPrimitiveSubsliceNested() {
-        /* IMPROVE: Allow {0, 2} by releasing slices independent of subslices that are still owned
+        /* IMPROVE: Allow {0, 1} by releasing slices independent of subslices that are still owned
          * by other threads. */
-        verifyTask(new int[][]{{1, 2}, {0, 2}}, new Runnable() {
+        verifyTask(new int[][]{{0, 2}}, new Runnable() {
             public void run() {
                 final GuardedArray<int[]> a = new GuardedArray<>(new int[]{0, 1, 2});
                 
@@ -812,21 +810,19 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                         slice1.data[1]++;
                         region(1);
                         
-                        region(2);
                         return null;
                     }
                 };
                 s.start(task1);
                 
                 a.data[2]++;
-                region(3);
+                region(2);
                 
                 guardReadOnly(a);
                 for(int i = 0; i < a.data.length; i++)
                     assertEquals(i + 1, a.data[i]);
             }
         });
-        
     }
     
     @Test

@@ -19,7 +19,7 @@ import rolez.lang.SomeClasses.Node;
 import rolez.lang.SomeClasses.Ref;
 
 @RunWith(Parameterized.class)
-public class ObjectGuardingTest extends TaskBasedJpfTest {
+public class ObjectGuardingTest extends RolezJpfTest {
     
     @Parameters(name = "{0}, {1}")
     public static List<?> taskSystems() {
@@ -36,7 +36,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     
     @Test
     public void testShare() {
-        verifyTask(new int[][]{{2, 3}, {0, 3}}, new Runnable() {
+        verifyTask(new int[][]{{1, 2}, {0, 2}}, new Runnable() {
             public void run() {
                 final Int i = new Int();
                 
@@ -49,10 +49,10 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     }
                 };
                 s.start(task);
-                region(2);
+                region(1);
                 
                 guardReadWrite(i).value = 1;
-                region(3);
+                region(2);
             }
         });
     }
@@ -103,7 +103,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     
     @Test
     public void testShareMultiple() {
-        verifyTask(new int[][]{{4, 5}, {0, 5}, {2, 5}}, new Runnable() {
+        verifyTask(new int[][]{{2, 3}, {0, 3}, {1, 3}}, new Runnable() {
             public void run() {
                 final Int i = new Int();
                 
@@ -120,23 +120,23 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 Task<?> task2 = new Task<Void>(new Object[]{}, new Object[]{i}) {
                     @Override
                     protected Void runRolez() {
-                        region(2);
+                        region(1);
                         assertEquals(0, i.value);
                         return null;
                     }
                 };
                 s.start(task2);
-                region(4);
+                region(2);
                 
                 guardReadWrite(i).value = 1;
-                region(5);
+                region(3);
             }
         });
     }
     
     @Test
     public void testPass() {
-        verifyTask(new int[][]{{0, 3}, {2, 3}}, new Runnable() {
+        verifyTask(new int[][]{{0, 2}, {1, 2}}, new Runnable() {
             public void run() {
                 final Int i = new Int();
                 
@@ -149,10 +149,10 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     }
                 };
                 s.start(task);
-                region(2);
+                region(1);
                 
                 assertEquals(1, guardReadOnly(i).value);
-                region(3);
+                region(2);
             }
         });
     }
@@ -181,9 +181,9 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     
     @Test
     public void testPassMultiple() {
-        /* IMPROVE: Allow {0, 4} in parallel by passing not-yet-available data to tasks (so far,
+        /* IMPROVE: Allow {0, 2} in parallel by passing not-yet-available data to tasks (so far,
          * pass() is blocking) */
-        verifyTask(new int[][]{{0, 2, 5}, {4, 5}, {0, 4}}, new Runnable() {
+        verifyTask(new int[][]{{0, 1, 3}, {2, 3}, {0, 2}}, new Runnable() {
             public void run() {
                 final Int i = new Int();
                 
@@ -200,24 +200,24 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 Task<?> task2 = new Task<Void>(new Object[]{i}, new Object[]{}) {
                     @Override
                     protected Void runRolez() {
-                        region(2);
+                        region(1);
                         i.value++;
                         return null;
                     }
                 };
                 s.start(task2);
-                region(4);
+                region(2);
                 
                 assertEquals(2, guardReadOnly(i).value);
                 
-                region(5);
+                region(3);
             }
         });
     }
     
     @Test
     public void testPassNested() {
-        verifyTask(new int[][]{{4, 5}, {2, 5}, {0, 5}}, new Runnable() {
+        verifyTask(new int[][]{{2, 3}, {1, 3}, {0, 3}}, new Runnable() {
             public void run() {
                 final Int i = new Int();
                 
@@ -235,7 +235,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                             }
                         };
                         s.start(task2);
-                        region(2);
+                        region(1);
                         
                         assertEquals(2, guardReadWrite(i).value);
                         i.value++;
@@ -243,11 +243,11 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     }
                 };
                 s.start(task1);
-                region(4);
+                region(2);
                 
                 assertEquals(3, guardReadOnly(i).value);
                 
-                region(5);
+                region(3);
             }
         });
     }
@@ -319,12 +319,12 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         assertEquals(1, i.value);
-                        region(1);
+                        region(0);
                         return null;
                     }
                 };
                 s.start(task2);
-                region(2);
+                region(1);
                 
                 guardReadWrite(i).value++;
             }
@@ -333,7 +333,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     
     @Test
     public void testShareGroup() {
-        verifyTask(new int[][]{{2, 3}, {0, 3}}, new Runnable() {
+        verifyTask(new int[][]{{1, 2}, {0, 2}}, new Runnable() {
             public void run() {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
@@ -347,10 +347,10 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     }
                 };
                 s.start(task);
-                region(2);
+                region(1);
                 
                 guardReadWrite(i).value = 1;
-                region(3);
+                region(2);
             }
         });
     }
@@ -381,7 +381,7 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     
     @Test
     public void testPassGroup() {
-        verifyTask(new int[][]{{2, 3}, {0, 3}}, new Runnable() {
+        verifyTask(new int[][]{{1, 2}, {0, 2}}, new Runnable() {
             public void run() {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
@@ -395,10 +395,10 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     }
                 };
                 s.start(task);
-                region(2);
+                region(1);
                 
                 assertEquals(1, guardReadOnly(i).value);
-                region(3);
+                region(2);
             }
         });
     }
@@ -482,12 +482,12 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                     @Override
                     protected Void runRolez() {
                         assertEquals(1, r.o.value);
-                        region(1);
+                        region(0);
                         return null;
                     }
                 };
                 s.start(task2);
-                region(2);
+                region(1);
                 
                 guardReadWrite(i).value++;
             }
@@ -604,13 +604,13 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                             }
                         };
                         s.start(task2);
-                        region(2);
+                        region(1);
                         
                         return null;
                     }
                 };
                 s.start(task1);
-                region(4);
+                region(2);
                 
                 assertEquals(2, guardReadOnly(i).value);
             }
@@ -619,8 +619,8 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     
     @Test
     public void testPassShareSubgroup() {
-        /* IMPROVE: Allow {0, 2, 3} by sharing not-yet-available data? */
-        verifyTask(new int[][]{{0, 2}, {0, 3}}, new Runnable() {
+        /* IMPROVE: Allow {0, 1, 2} by sharing not-yet-available data? */
+        verifyTask(new int[][]{{0, 1}, {0, 2}}, new Runnable() {
             public void run() {
                 final Int i = new Int();
                 final Ref<Int> r = new Ref<>(i);
@@ -638,13 +638,13 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
                 Task<?> task2 = new Task<Void>(new Object[]{}, new Object[]{i}) {
                     @Override
                     protected Void runRolez() {
-                        region(2);
+                        region(1);
                         assertEquals(1, i.value);
                         return null;
                     }
                 };
                 s.start(task2);
-                region(3);
+                region(2);
                 
                 guardReadWrite(i).value++;
             }
