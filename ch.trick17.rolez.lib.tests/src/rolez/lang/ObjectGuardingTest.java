@@ -25,9 +25,8 @@ public class ObjectGuardingTest extends TaskBasedJpfTest {
     public static List<?> taskSystems() {
         return Arrays.asList(new Object[][]{
                 {new NewThreadTaskSystem(), CORRECTNESS},
-                {new ThreadPoolTaskSystem(), CORRECTNESS},
                 {new SingleThreadTaskSystem(), CORRECTNESS},
-                {new ThreadPoolTaskSystem(3), PARALLELISM}
+                {new NewThreadTaskSystem(), PARALLELISM}
         });
     }
     
