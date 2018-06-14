@@ -13,7 +13,8 @@ import org.eclipse.xtext.util.Tuples
 
 abstract class AbstractDeclarativeDesugarer implements IDesugarer {
     
-    val List<Method> ruleMethods
+    val List<Method> ruleMethods = class.methods
+        .filter[!isBridge && isAnnotationPresent(Rule)].toList
     
     val methodsForType = new SimpleCache<Class<?>, List<Method>>([type |
         ruleMethods.filter[parameterTypes.get(0).isAssignableFrom(type)].toList
@@ -22,7 +23,6 @@ abstract class AbstractDeclarativeDesugarer implements IDesugarer {
     var List<Triple<EObject, EReference, String>> desugarRefs
     
     new() {
-        ruleMethods = class.methods.filter[!isBridge && isAnnotationPresent(Rule)].toList
         ruleMethods.forEach[
             if(parameterTypes.size != 1)
                 throw new AssertionError("Invalid @Rule method " + it + ": must have exactly one parameter")
