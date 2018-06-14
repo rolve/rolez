@@ -208,7 +208,7 @@ public class ArrayGuardingTest extends RolezJpfTest {
                 };
                 s.start(task2);
                 
-                assertEquals(3, guardReadOnly(i).value);
+                assertEquals(2, guardReadOnly(i).value);
             }
         });
     }
@@ -238,7 +238,7 @@ public class ArrayGuardingTest extends RolezJpfTest {
                 };
                 s.start(task2);
                 
-                assertEquals(3, guardReadOnly(i).value);
+                assertEquals(2, guardReadOnly(i).value);
             }
         });
     }
