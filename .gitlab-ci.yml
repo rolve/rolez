@@ -16,9 +16,17 @@ build:
       - "*/target"
     expire_in: 1 day
 
-test:
+test-compiler:
   stage: test
-  script: xvfb-run mvn surefire:test -B -Dmaven.repo.local=$MAVEN_REPO
+  script:
+    - cd ch.trick17.rolez.tests
+    - "xvfb-run mvn surefire:test -B -Dmaven.repo.local=$MAVEN_REPO"
+
+test-lib:
+  stage: test
+  script:
+    - cd ch.trick17.rolez.lib.tests
+    - "xvfb-run mvn surefire:test -B -Dmaven.repo.local=$MAVEN_REPO"
 
 test-examples:
   stage: test
