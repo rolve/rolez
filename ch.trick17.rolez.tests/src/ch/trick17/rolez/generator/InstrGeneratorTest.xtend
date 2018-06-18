@@ -652,6 +652,40 @@ class InstrGeneratorTest extends GeneratorTest {
         public def void doSomethingElse(@Safe char[] chars) {}
     }
     
+    @Test def testMemberAccessGuardedObject() {
+        parse('''
+            val o: readonly Object = this;
+            o.toString();
+        '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
+            import static rolez.lang.Guarded.*;
+            
+            public class A extends Base {
+                
+                public A(final long $task) {
+                    super($task);
+                }
+                
+                public void foo(final int i, final boolean b, final long $task) {
+                    final java.lang.Object o = this;
+                    guardReadOnlyIfNeeded(o, $task).toString();
+                }
+                
+                public void foo$Unguarded(final int i, final boolean b, final long $task) {
+                    final java.lang.Object o = this;
+                    o.toString();
+                }
+                
+                @java.lang.Override
+                public void bar(final long $task) {
+                }
+                
+                @java.lang.Override
+                public void bar$Unguarded(final long $task) {
+                }
+            }
+        ''')
+    }
+    
     @Test def testMemberAccessAsyncMethod() {
         parse('''
             Asyncer.foo;

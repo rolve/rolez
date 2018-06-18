@@ -616,11 +616,14 @@ class InstrGenerator {
             val needsGuard = childTasksAnalysis.childTasksMayExist(it)
                     && !system.subroleSucceeded(roleAnalysis.dynamicRole(it), requiredRole)
             if(utils.isGuarded(type) && needsGuard) {
-                val slice = if((type as RoleType).isSliced) "Slice" else ""
+                val suffix =
+                    if((type as RoleType).isSliced) "Slice"
+                    else if((type as RoleType).base.clazz.isObjectClass) "IfNeeded"
+                    else ""
                 val task = if(taskParamEnabled) ", $task" else ""
                 switch(requiredRole) {
-                    ReadWrite: "guardReadWrite" + slice + "(" + generate + task + ")"
-                    ReadOnly : "guardReadOnly"  + slice + "(" + generate + task + ")"
+                    ReadWrite: "guardReadWrite" + suffix + "(" + generate + task + ")"
+                    ReadOnly : "guardReadOnly"  + suffix + "(" + generate + task + ")"
                     default  : throw new AssertionError("unexpected role: " + requiredRole)
                 }
             }
