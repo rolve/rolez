@@ -659,6 +659,10 @@ class ReadWrite extends BuiltInRole {
     op String getName() { "readwrite" }
 }
 
+class Atomic extends BuiltInRole {
+    op String getName() { "atomic" }
+}
+
 class ClassRef {
     op Class getClazz()
 }

@@ -316,7 +316,7 @@ RoleParamRef:
     param=[RoleParam];
 
 BuiltInRole:
-    {Pure} 'pure' | {ReadOnly} 'readonly' | {ReadWrite} 'readwrite';
+    {Pure} 'pure' | {ReadOnly} 'readonly' | {ReadWrite} 'readwrite' | {Atomic} 'atomic';
     // TODO: Use shorter names like pure, read, and write?
 
 ClassRef:

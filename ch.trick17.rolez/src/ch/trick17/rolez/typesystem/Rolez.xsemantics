@@ -4,6 +4,7 @@ import ch.trick17.rolez.rolez.Argumented
 import ch.trick17.rolez.rolez.ArithmeticBinaryExpr
 import ch.trick17.rolez.rolez.ArithmeticUnaryExpr
 import ch.trick17.rolez.rolez.Assignment
+import ch.trick17.rolez.rolez.Atomic
 import ch.trick17.rolez.rolez.BitwiseExpr
 import ch.trick17.rolez.rolez.BitwiseNot
 import ch.trick17.rolez.rolez.Block
@@ -581,6 +582,7 @@ rule SubroleBuiltInRole
 from {
     left instanceof ReadWrite || right instanceof Pure
         || left instanceof ReadOnly && right instanceof ReadOnly
+        || left instanceof Atomic && right instanceof Atomic
 }
 
 rule SubroleRoleParamRef

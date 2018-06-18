@@ -3,8 +3,11 @@ package foo
 class SomeImportantClass {
 	var foo: readwrite Account
 	var i: int
+	val j: int
 	
-	new {}
+	new {
+		this.j = 0;
+	}
 	
 	def pure bar: readonly Account {
 		if(true)
@@ -14,5 +17,13 @@ class SomeImportantClass {
 	
 	def readonly bar(a: int): {
 		this.bar;
+	}
+	
+	def atomic baz(foo: atomic Object): {
+		val t = this;
+		t.bar;
+		t.baz(new SomeImportantClass);
+		
+		val i = this.j;
 	}
 }
