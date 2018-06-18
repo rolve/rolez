@@ -5,6 +5,7 @@ import ch.trick17.rolez.rolez.ArithmeticBinaryExpr
 import ch.trick17.rolez.rolez.ArithmeticUnaryExpr
 import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.Atomic
+import ch.trick17.rolez.rolez.AtomicBlock
 import ch.trick17.rolez.rolez.BitwiseExpr
 import ch.trick17.rolez.rolez.BitwiseNot
 import ch.trick17.rolez.rolez.Block
@@ -458,10 +459,7 @@ axiom VSingletonClass
 rule WBlock
     G |- Block b
 from {
-    // No need to check blocks, as all stmts are checked individually anyway
-    // for(s : b.stmts) {
-    //     G |- s
-    // }
+    // stmts are checked individually
 }
 
 rule WLocalVarDecl
@@ -477,24 +475,33 @@ rule WIfStmt
     G |- IfStmt ifStmt
 from {
     G |- ifStmt.^condition <| createBoolean
-    G |- ifStmt.thenPart
-    ifStmt.elsePart == null or G |- ifStmt.elsePart
 }
 
 rule WWhileLoop
     G |- WhileLoop l
 from {
     G |- l.^condition <| createBoolean
-    G |- l.body
 }
 
 rule WForLoop
     G |- ForLoop l
 from {
-    G |- l.initializer
     G |- l.^condition <| createBoolean
     G |- l.step : var Type _
-    G |- l.body
+}
+
+rule WAtomicBlock
+    G |- AtomicBlock b
+from {
+    for(decl : b.decls) {
+        G |- decl.initializer : var Type t
+        {t instanceof RoleType} or fail
+            error "Cannot use an argument of a primitive type for an atomic block"
+            source decl
+        G |- (t as RoleType).role <! createAtomic or fail
+            error "Cannot use an argument with role " + (t as RoleType).role + " for an atomic block"
+            source decl.initializer
+    }
 }
 
 rule WSuperConstrCall

@@ -2,6 +2,7 @@ package ch.trick17.rolez
 
 import ch.trick17.rolez.rolez.ArithmeticUnaryExpr
 import ch.trick17.rolez.rolez.Assignment
+import ch.trick17.rolez.rolez.AtomicBlock
 import ch.trick17.rolez.rolez.Block
 import ch.trick17.rolez.rolez.Class
 import ch.trick17.rolez.rolez.ClassRef
@@ -16,6 +17,7 @@ import ch.trick17.rolez.rolez.Method
 import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.OpArithmeticUnary
+import ch.trick17.rolez.rolez.Parfor
 import ch.trick17.rolez.rolez.Role
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
@@ -44,7 +46,6 @@ import static ch.trick17.rolez.rolez.VarKind.VAL
 import static extension ch.trick17.rolez.RolezExtensions.*
 import static extension ch.trick17.rolez.generic.Parameterized.parameterizedWith
 import static extension org.eclipse.emf.ecore.util.EcoreUtil.resolve
-import ch.trick17.rolez.rolez.Parfor
 
 /** 
  * Utility functions for Rolez language constructs
@@ -160,6 +161,11 @@ class RolezUtils {
     static def dispatch Iterable<? extends Var> varsAbove(Parfor container, Instr i) {
         (if(i === container.initializer) emptyList else #[container.initializer.variable as Var])
             + varsAbove(container.eContainer, container)
+    }
+    
+    static def dispatch Iterable<? extends Var> varsAbove(AtomicBlock container, Stmt s) {
+        // variables declared outside of atomic block are not visible
+        container.decls.map[variable]
     }
     
     static def dispatch Iterable<? extends Var> varsAbove(Executable container, Instr i) {

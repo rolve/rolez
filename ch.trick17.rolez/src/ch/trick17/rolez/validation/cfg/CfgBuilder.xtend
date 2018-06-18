@@ -1,6 +1,7 @@
 package ch.trick17.rolez.validation.cfg
 
 import ch.trick17.rolez.rolez.Assignment
+import ch.trick17.rolez.rolez.AtomicBlock
 import ch.trick17.rolez.rolez.BinaryExpr
 import ch.trick17.rolez.rolez.Block
 import ch.trick17.rolez.rolez.ExprStmt
@@ -134,6 +135,12 @@ class CfgBuilder {
         val bodyLinker = process(l.body, conditionLinker)
         process(l.step, bodyLinker).link(headNode)
         conditionLinker.linkAndReturn(newInstrNode(l))
+    }
+    
+    private def dispatch Linker process(AtomicBlock block, Linker prev) {
+        val declLinker = block.decls.fold(prev, [p, decl | process(decl, p)])
+        val bodyLinker = process(block.body, declLinker)
+        bodyLinker.linkAndReturn(new InstrNode(block))
     }
     
     private def dispatch Linker process(ReturnNothing r, Linker prev) {

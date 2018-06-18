@@ -5,6 +5,7 @@ import ch.trick17.rolez.RolezUtils
 import ch.trick17.rolez.rolez.Argumented
 import ch.trick17.rolez.rolez.ArithmeticUnaryExpr
 import ch.trick17.rolez.rolez.Assignment
+import ch.trick17.rolez.rolez.AtomicBlock
 import ch.trick17.rolez.rolez.BinaryExpr
 import ch.trick17.rolez.rolez.BitwiseNot
 import ch.trick17.rolez.rolez.Block
@@ -305,6 +306,13 @@ class InstrGenerator {
         
         private def dispatch CharSequence generate(ForLoop it) '''
             for(«initializer.generate» «condition.generate»; «step.generate»)«body.genIndent»'''
+        
+        private def dispatch CharSequence generate(AtomicBlock it) '''
+            «FOR decl : decls»
+            «decl.generate»
+            «ENDFOR»
+            «body.generate»
+        '''
         
         private def dispatch CharSequence generate(SuperConstrCall it) '''
             super(«genArgs»);'''

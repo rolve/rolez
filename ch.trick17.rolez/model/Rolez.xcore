@@ -290,6 +290,11 @@ class Parfor extends Stmt {
     contains Stmt body
 }
 
+class AtomicBlock extends Stmt {
+    contains LocalVarDecl[] decls
+    contains Stmt body
+}
+
 class Argumented extends InExecutable {
     contains Expr[] args
     op Executable getExecutable()

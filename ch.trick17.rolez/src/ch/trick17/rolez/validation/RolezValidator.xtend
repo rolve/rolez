@@ -24,6 +24,7 @@ import ch.trick17.rolez.rolez.Parfor
 import ch.trick17.rolez.rolez.Program
 import ch.trick17.rolez.rolez.ReadOnly
 import ch.trick17.rolez.rolez.ReadWrite
+import ch.trick17.rolez.rolez.Ref
 import ch.trick17.rolez.rolez.ReturnExpr
 import ch.trick17.rolez.rolez.RoleParamRef
 import ch.trick17.rolez.rolez.RoleType
@@ -62,7 +63,6 @@ import static ch.trick17.rolez.rolez.VarKind.*
 
 import static extension ch.trick17.rolez.RolezExtensions.*
 import static extension ch.trick17.rolez.RolezUtils.*
-import ch.trick17.rolez.rolez.Ref
 
 class RolezValidator extends RolezSystemValidator {
 
@@ -566,6 +566,58 @@ class RolezValidator extends RolezSystemValidator {
     }
     
     @Check
+    def checkParallelStatementContent(ParallelStmt it){
+        if (!(part1 instanceof ExprStmt && part2 instanceof ExprStmt)) {
+            error("Only task calls are allowed in parallel statements (this isn't an expr stmt)", null, INCORRECT_PAR_STMT_CONTENT)
+            return;
+        }
+        val es1 = part1 as ExprStmt
+        val es2 = part2 as ExprStmt
+        if (!(es1.expr instanceof MemberAccess && es2.expr instanceof MemberAccess)) {
+            error("Only task calls are allowed in parallel statements (this isn't a member access)", null, INCORRECT_PAR_STMT_CONTENT)
+            return;
+        }
+        
+        val ma1 = es1.expr as MemberAccess
+        val ma2 = es2.expr as MemberAccess
+        
+        if (!ma1.isMethodInvoke || !ma2.isMethodInvoke) {
+            error("Only task calls are allowed in parallel statements (this isn't a task/method invocation)", null, INCORRECT_PAR_STMT_CONTENT)
+            return;
+        }
+        
+        if (!ma1.getMethod.declaredTask || !ma2.getMethod.declaredTask) {
+            error("Only task calls are allowed in parallel statements (this isn't a task)", null, INCORRECT_PAR_STMT_CONTENT)
+            return;
+        }
+    }
+    
+    @Check
+    def checkParforContent(Parfor it){
+        if (!(body instanceof ExprStmt)) {
+            error("Only task calls are allowed in parfor statements (this isn't an expr stmt)", null, INCORRECT_PAR_STMT_CONTENT)
+            return;
+        }
+        val es = body as ExprStmt
+        if (!(es.expr instanceof MemberAccess)) {
+            error("Only task calls are allowed in parfor statements (this isn't a member access)", null, INCORRECT_PAR_STMT_CONTENT)
+            return;
+        }
+        
+        val ma = es.expr as MemberAccess
+        
+        if (!ma.isMethodInvoke) {
+            error("Only task calls are allowed in parfor statements (this isn't a task/method invocation)", null, INCORRECT_PAR_STMT_CONTENT)
+            return;
+        }
+        
+        if (!ma.getMethod.declaredTask) {
+            error("Only task calls are allowed in parfor statements (this isn't a task)", null, INCORRECT_PAR_STMT_CONTENT)
+            return;
+        }
+    }
+    
+    @Check
     def checkNull(Null it) {
         error("The null type cannot be used explicitly", null, NULL_TYPE_USED)
     }
@@ -728,58 +780,6 @@ class RolezValidator extends RolezSystemValidator {
         checkClassKind(false)
         checkPurity(false)
         checkMapped
-    }
-    
-    @Check
-    def checkParallelStatementContent(ParallelStmt it){
-        if (!(part1 instanceof ExprStmt && part2 instanceof ExprStmt)) {
-            error("Only task calls are allowed in parallel statements (this isn't an expr stmt)", null, INCORRECT_PAR_STMT_CONTENT)
-            return;
-        }
-        val es1 = part1 as ExprStmt
-        val es2 = part2 as ExprStmt
-        if (!(es1.expr instanceof MemberAccess && es2.expr instanceof MemberAccess)) {
-            error("Only task calls are allowed in parallel statements (this isn't a member access)", null, INCORRECT_PAR_STMT_CONTENT)
-            return;
-        }
-        
-        val ma1 = es1.expr as MemberAccess
-        val ma2 = es2.expr as MemberAccess
-        
-        if (!ma1.isMethodInvoke || !ma2.isMethodInvoke) {
-            error("Only task calls are allowed in parallel statements (this isn't a task/method invocation)", null, INCORRECT_PAR_STMT_CONTENT)
-            return;
-        }
-        
-        if (!ma1.getMethod.declaredTask || !ma2.getMethod.declaredTask) {
-            error("Only task calls are allowed in parallel statements (this isn't a task)", null, INCORRECT_PAR_STMT_CONTENT)
-            return;
-        }
-    }
-    
-    @Check
-    def checkParforContent(Parfor it){
-        if (!(body instanceof ExprStmt)) {
-            error("Only task calls are allowed in parfor statements (this isn't an expr stmt)", null, INCORRECT_PAR_STMT_CONTENT)
-            return;
-        }
-        val es = body as ExprStmt
-        if (!(es.expr instanceof MemberAccess)) {
-            error("Only task calls are allowed in parfor statements (this isn't a member access)", null, INCORRECT_PAR_STMT_CONTENT)
-            return;
-        }
-        
-        val ma = es.expr as MemberAccess
-        
-        if (!ma.isMethodInvoke) {
-            error("Only task calls are allowed in parfor statements (this isn't a task/method invocation)", null, INCORRECT_PAR_STMT_CONTENT)
-            return;
-        }
-        
-        if (!ma.getMethod.declaredTask) {
-            error("Only task calls are allowed in parfor statements (this isn't a task)", null, INCORRECT_PAR_STMT_CONTENT)
-            return;
-        }
     }
     
     // TODO: Introduce final classes and make array, slice, etc. final, so that they cannot be 
