@@ -1,8 +1,9 @@
 package foo
 
-class SomeImportantClass {
+class SomeImportantClass[T] {
 	var foo: readwrite Account
 	var i: int
+	var t: T
 	
 	new {}
 	
@@ -12,7 +13,10 @@ class SomeImportantClass {
 		return null;
 	}
 	
-	def readonly bar(a: int): {
+	def readonly bar(a: int): T {
 		this.bar;
+		
+		val t = this.t;
+		return t;
 	}
 }
