@@ -58,7 +58,7 @@ class ClassGenerator {
         «ENDIF»
         import static «jvmGuardedClassName».*;
         
-        public«IF isSliced» final«ENDIF» class «safeSimpleName» extends «generateGuardedSuperclassName»«IF isSliced» implements «slices.map[interfaceName].join(", ")»«ENDIF» {
+        public«IF isSliced» final«ENDIF» class «safeSimpleName»«IF typeParam != null»<«typeParam.name»>«ENDIF» extends «generateGuardedSuperclassName»«IF isSliced» implements «slices.map[interfaceName].join(", ")»«ENDIF» {
             « fields.map[gen].join»
             «constrs.map[gen].join»
             «methods.map[gen].join»

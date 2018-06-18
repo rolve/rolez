@@ -14,6 +14,7 @@ import static ch.trick17.rolez.Constants.*
 import static extension ch.trick17.rolez.RolezExtensions.*
 import static extension ch.trick17.rolez.generator.SafeJavaNames.*
 import static extension java.util.Objects.requireNonNull
+import ch.trick17.rolez.rolez.TypeParamRef
 
 class TypeGenerator {
     
@@ -22,7 +23,8 @@ class TypeGenerator {
     def CharSequence generate(Type it) { switch(it) {
         PrimitiveType: name
         RoleType: base.generate + if(isSliced) "£" + slice.safeName else ""
-        default: throw new AssertionError // Null or TypeParamRef
+        TypeParamRef: param.name
+        default: throw new AssertionError // Null
         // FIXME: val v = null; triggers the above error!
     }}
     

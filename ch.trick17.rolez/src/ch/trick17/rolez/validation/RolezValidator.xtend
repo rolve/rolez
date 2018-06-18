@@ -222,12 +222,12 @@ class RolezValidator extends RolezSystemValidator {
         }
     }
     
-    @Check
-    def checkTypeParam(NormalClass it) {
-        if(typeParam !== null && !isMapped)
-            error("Only mapped classes may declare a type parameter",
-                NORMAL_CLASS__TYPE_PARAM, INCORRECT_TYPE_PARAM)
-    }
+//    @Check
+//    def checkTypeParam(NormalClass it) {
+//        if(typeParam !== null && !isMapped)
+//            error("Only mapped classes may declare a type parameter",
+//                NORMAL_CLASS__TYPE_PARAM, INCORRECT_TYPE_PARAM)
+//    }
     
     @Check
     def checkNoDuplicateFields(Field it) {
