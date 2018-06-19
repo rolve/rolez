@@ -79,6 +79,7 @@ import static ch.trick17.rolez.RolezUtils.*
 import static ch.trick17.rolez.rolez.RolezPackage.Literals.*
 
 import static extension ch.trick17.rolez.RolezExtensions.*
+import static extension org.eclipse.emf.ecore.util.EcoreUtil.copy
 
 system ch.trick17.rolez.typesystem.RolezSystem
 
@@ -449,6 +450,11 @@ from {
     } or {
         v.decl.initializer != null
         G |- v.decl.initializer : t
+        
+        val c = v.decl.eContainer
+        if(c instanceof AtomicBlock && (c as AtomicBlock).decls.contains(v.decl)) {
+            t = newRoleType(createReadWrite, (t as RoleType).base.copy)
+        }
     }
 }
 

@@ -24,8 +24,8 @@ class SomeImportantClass {
 		t.bar;
 		t.baz(new SomeImportantClass);
 		
-		atomic (val t1 = this, val t2 = t) {
-			t2.i = 0;
+		atomic (val o = this) {
+			o.i = 0;
 		}
 	}
 }
