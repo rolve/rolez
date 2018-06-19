@@ -404,7 +404,7 @@ class CfgBuilderTest {
     
     private def cfg(Instr it) {
         assertNoErrors
-        controlFlowGraph
+        controlFlowGraph.get
     }
     
     private def assertStructure(ControlFlowGraph it, String expected) {
