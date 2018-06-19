@@ -164,8 +164,13 @@ class RolezUtils {
     }
     
     static def dispatch Iterable<? extends Var> varsAbove(AtomicBlock container, Stmt s) {
-        // variables declared outside of atomic block are not visible
-        container.decls.map[variable]
+        if(container.decls.contains(s)) {
+            container.decls.takeWhile[it != s].map[variable]
+                + varsAbove(container.eContainer, container)
+        } else {
+            // variables declared outside of atomic block are not visible
+            container.decls.map[variable]
+        }
     }
     
     static def dispatch Iterable<? extends Var> varsAbove(Executable container, Instr i) {
