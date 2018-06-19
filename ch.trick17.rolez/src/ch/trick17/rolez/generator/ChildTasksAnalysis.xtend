@@ -33,21 +33,21 @@ class ChildTasksAnalysisProvider {
     
     def newChildTasksAnalysis(FieldInitializer initializer) {
         if(childTasksAnalysisEnabled)
-            new DefaultChildTasksAnalysis(initializer.expr.controlFlowGraph, null)
+            new DefaultChildTasksAnalysis(initializer.expr.controlFlowGraph.get, null)
         else
             new NullChildTasksAnalysis
     }
     
     def newChildTasksAnalysis(Constr constr) {
         if(childTasksAnalysisEnabled)
-            new DefaultChildTasksAnalysis(constr.body.controlFlowGraph, null)
+            new DefaultChildTasksAnalysis(constr.body.controlFlowGraph.get, null)
         else
             new NullChildTasksAnalysis
     }
     
     def newChildTasksAnalysis(Method method, MethodKind methodKind) {
         if(childTasksAnalysisEnabled)
-            new DefaultChildTasksAnalysis(method.code.controlFlowGraph, methodKind)
+            new DefaultChildTasksAnalysis(method.code.controlFlowGraph.get, methodKind)
         else
             new NullChildTasksAnalysis
     }

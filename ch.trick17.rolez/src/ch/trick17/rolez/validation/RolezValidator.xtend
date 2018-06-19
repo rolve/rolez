@@ -358,15 +358,16 @@ class RolezValidator extends RolezSystemValidator {
     def checkReturnExpr(Method it) {
         if(body === null || type instanceof Void) return;
         
-        val cfg = body.controlFlowGraph
-        for(p : cfg.exit.predecessors) {
-            if(p instanceof InstrNode) {
-                if(!(p.instr instanceof ReturnExpr))
-                    error("Method must return a value of type " + type,
-                        nonReturningNode(p).instr, null, MISSING_RETURN_EXPR)
+        body.controlFlowGraph.ifPresent[cfg |
+            for(p : cfg.exit.predecessors) {
+                if(p instanceof InstrNode) {
+                    if(!(p.instr instanceof ReturnExpr))
+                        error("Method must return a value of type " + type,
+                            nonReturningNode(p).instr, null, MISSING_RETURN_EXPR)
+                }
+                else throw new AssertionError
             }
-            else throw new AssertionError
-        }
+        ]
     }
     
     private def InstrNode nonReturningNode(InstrNode n) {
@@ -398,30 +399,31 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkValFieldsInitialized(Constr it) {
-        if(body === null) return
+        if(body === null) return;
         
-        val cfg = body.controlFlowGraph
-        val extension analysis = valFieldsAnalysis.analyze(cfg, enclosingClass)
-        for(f : enclosingClass.fields.filter[kind == VAL])
-            if(!f.definitelyInitializedAfter(cfg.exit))
-                error("Value field " + f.name + " may not have been initialized",
-                    null, VAL_FIELD_NOT_INITIALIZED)
-        
-        for(a : all(Expr).filter[isValFieldInit]) {
-            val f = a.assignedField
-            if(f.possiblyInitializedBefore(cfg.nodeOf(a)))
-                error("Value field " + f.name + " may already have been initialized",
-                    a, null, VAL_FIELD_OVERINITIALIZED)
-        }
-        
-        for(a : all(MemberAccess).filter[isFieldAccess]) {
-            val f = a.field
-            if(f.kind == VAL && a.isVarOrFieldRead && a.target instanceof This
-                    && f.enclosingClass == enclosingClass // super class fields are fine
-                    && !f.definitelyInitializedBefore(cfg.nodeOf(a)))
-                error("Value field " + f.name + " may not have been initialized",
-                    a, MEMBER_ACCESS__MEMBER, VAL_FIELD_NOT_INITIALIZED)
-        }
+        body.controlFlowGraph.ifPresent[cfg |
+            val extension analysis = valFieldsAnalysis.analyze(cfg, enclosingClass)
+            for(f : enclosingClass.fields.filter[kind == VAL])
+                if(!f.definitelyInitializedAfter(cfg.exit))
+                    error("Value field " + f.name + " may not have been initialized",
+                        null, VAL_FIELD_NOT_INITIALIZED)
+            
+            for(a : all(Expr).filter[isValFieldInit]) {
+                val f = a.assignedField
+                if(f.possiblyInitializedBefore(cfg.nodeOf(a)))
+                    error("Value field " + f.name + " may already have been initialized",
+                        a, null, VAL_FIELD_OVERINITIALIZED)
+            }
+            
+            for(a : all(MemberAccess).filter[isFieldAccess]) {
+                val f = a.field
+                if(f.kind == VAL && a.isVarOrFieldRead && a.target instanceof This
+                        && f.enclosingClass == enclosingClass // super class fields are fine
+                        && !f.definitelyInitializedBefore(cfg.nodeOf(a)))
+                    error("Value field " + f.name + " may not have been initialized",
+                        a, MEMBER_ACCESS__MEMBER, VAL_FIELD_NOT_INITIALIZED)
+            }
+        ]
     }
     
     @Check
@@ -507,15 +509,16 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkLocalVarsInitialized(Executable it) {
-        if(code === null) return
+        if(code === null) return;
         
-        val cfg = code.controlFlowGraph
-        val extension analysis = new LocalVarsInitializedAnalysis(cfg)
-        for(v : all(Ref).filter[isVarRef])
-            if(v.variable instanceof LocalVar && v.isVarOrFieldRead
-                    && !v.variable.isInitializedBefore(cfg.nodeOf(v)))
-                error("Variable " + v.variable.name + " may not have been initialized",
-                    v, null, VAR_NOT_INITIALIZED)
+        code.controlFlowGraph.ifPresent[cfg |
+            val extension analysis = new LocalVarsInitializedAnalysis(cfg)
+            for(v : all(Ref).filter[isVarRef])
+                if(v.variable instanceof LocalVar && v.isVarOrFieldRead
+                        && !v.variable.isInitializedBefore(cfg.nodeOf(v)))
+                    error("Variable " + v.variable.name + " may not have been initialized",
+                        v, null, VAR_NOT_INITIALIZED)
+        ]
     }
     
     @Check
@@ -530,32 +533,33 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkSuperConstrCall(Constr it) {
-        if(body === null || enclosingClass.isObjectClass) return
+        if(body === null || enclosingClass.isObjectClass) return;
         
-        val cfg = body.controlFlowGraph
-        val extension analysis = new SuperConstrCallAnalysis(cfg)
-        for(t : all(This))
-            if(cfg.nodeOf(t).isBeforeSuperConstrCall)
-                error("Cannot refer to 'this' before calling the super constructor",
-                    t, null, THIS_BEFORE_SUPER_CONSTR_CALL)
-        for(n: all(New))
-            if(cfg.nodeOf(n).isBeforeSuperConstrCall
-                    && !(n.constr.checkedExceptionTypes.isEmpty))
-                error("Cannot call a mapped constructor that throws checked exceptions before callig the super constructor",
-                    n, null, UNCATCHABLE_CHECKED_EXCEPTION)
-        for(m: all(MemberAccess).filter[isTaskStart])
-            if(cfg.nodeOf(m).isBeforeSuperConstrCall)
-                error("Cannot start a task before callig the super constructor",
-                    m, null, TASK_START_BEFORE_SUPER_CONSTR_CALL)
-        for(m: all(MemberAccess).filter[isMethodInvoke && method.isAsync])
-            if(cfg.nodeOf(m).isBeforeSuperConstrCall)
-                error("Cannot call an 'async' method before callig the super constructor",
-                    m, null, ASYNC_INVOKE_BEFORE_SUPER_CONSTR_CALL)
-        
-        for(c : all(SuperConstrCall))
-            if(body.stmts.head !== c)
-                error("Super constructor call must be the first statement",
-                    c, null, SUPER_CONSTR_CALL_FIRST)
+        body.controlFlowGraph.ifPresent[cfg |
+            val extension analysis = new SuperConstrCallAnalysis(cfg)
+            for(t : all(This))
+                if(cfg.nodeOf(t).isBeforeSuperConstrCall)
+                    error("Cannot refer to 'this' before calling the super constructor",
+                        t, null, THIS_BEFORE_SUPER_CONSTR_CALL)
+            for(n: all(New))
+                if(cfg.nodeOf(n).isBeforeSuperConstrCall
+                        && !(n.constr.checkedExceptionTypes.isEmpty))
+                    error("Cannot call a mapped constructor that throws checked exceptions before callig the super constructor",
+                        n, null, UNCATCHABLE_CHECKED_EXCEPTION)
+            for(m: all(MemberAccess).filter[isTaskStart])
+                if(cfg.nodeOf(m).isBeforeSuperConstrCall)
+                    error("Cannot start a task before callig the super constructor",
+                        m, null, TASK_START_BEFORE_SUPER_CONSTR_CALL)
+            for(m: all(MemberAccess).filter[isMethodInvoke && method.isAsync])
+                if(cfg.nodeOf(m).isBeforeSuperConstrCall)
+                    error("Cannot call an 'async' method before callig the super constructor",
+                        m, null, ASYNC_INVOKE_BEFORE_SUPER_CONSTR_CALL)
+            
+            for(c : all(SuperConstrCall))
+                if(body.stmts.head !== c)
+                    error("Super constructor call must be the first statement",
+                        c, null, SUPER_CONSTR_CALL_FIRST)
+        ]
     }
     
     @Check

@@ -66,9 +66,9 @@ class RoleAnalysisProvider {
     
     def newRoleAnalysis(Executable executable) {
         if(roleAnalysisEnabled)
-            new DefaultRoleAnalysis(executable, executable.code.controlFlowGraph, system, utils)
+            new DefaultRoleAnalysis(executable, executable.code.controlFlowGraph.get, system, utils)
         else
-            new NullRoleAnalysis(executable, executable.code.controlFlowGraph, system, utils)
+            new NullRoleAnalysis(executable, executable.code.controlFlowGraph.get, system, utils)
     }
 }
 

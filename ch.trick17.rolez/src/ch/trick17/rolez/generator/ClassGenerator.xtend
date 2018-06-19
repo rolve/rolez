@@ -316,7 +316,7 @@ class ClassGenerator {
     }
     
     private def needsReturnNull(Method it) {
-        type instanceof Void && body.controlFlowGraph.exit.predecessors
+        type instanceof Void && body.controlFlowGraph.get.exit.predecessors
             .filter(InstrNode).exists[!(instr instanceof ReturnNothing)]
     }
     
