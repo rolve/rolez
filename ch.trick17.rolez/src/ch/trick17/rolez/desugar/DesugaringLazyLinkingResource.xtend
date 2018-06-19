@@ -7,7 +7,6 @@ import org.eclipse.emf.ecore.EReference
 import org.eclipse.xtext.linking.lazy.LazyLinkingResource
 import org.eclipse.xtext.linking.lazy.SyntheticLinkingSupport
 import org.eclipse.xtext.util.Triple
-import org.eclipse.xtext.resource.XtextSyntaxDiagnostic
 
 class DesugaringLazyLinkingResource extends LazyLinkingResource {
     
@@ -18,21 +17,19 @@ class DesugaringLazyLinkingResource extends LazyLinkingResource {
     
     override protected doLinking() {
         super.doLinking()
-        if(getErrors.filter(XtextSyntaxDiagnostic).isEmpty) {
-            val newRefs = desugarer.desugar(this)
-            
-            for(ref : newRefs)
+        val newRefs = desugarer.desugar(this)
+        
+        for(ref : newRefs)
+            ref.first.createAndSetProxy(ref.second, ref.third)
+        
+        for(var i = desugarRefs.iterator; i.hasNext;) {
+            val ref = i.next
+            if(ref.first.eResource === this)
                 ref.first.createAndSetProxy(ref.second, ref.third)
-            
-            for(var i = desugarRefs.iterator; i.hasNext;) {
-                val ref = i.next
-                if(ref.first.eResource === this)
-                    ref.first.createAndSetProxy(ref.second, ref.third)
-                else
-                    i.remove
-            }
-            
-            desugarRefs += newRefs
+            else
+                i.remove
         }
+        
+        desugarRefs += newRefs
     }
 }

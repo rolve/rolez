@@ -3,6 +3,7 @@ package ch.trick17.rolez.desugar
 import java.lang.reflect.Method
 import java.util.ArrayList
 import java.util.List
+import org.apache.log4j.Logger
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.EReference
 import org.eclipse.emf.ecore.resource.Resource
@@ -11,7 +12,11 @@ import org.eclipse.xtext.util.SimpleCache
 import org.eclipse.xtext.util.Triple
 import org.eclipse.xtext.util.Tuples
 
+import static org.apache.log4j.Logger.getLogger
+
 abstract class AbstractDeclarativeDesugarer implements IDesugarer {
+    
+    static val extension Logger = getLogger(AbstractDeclarativeDesugarer)
     
     val List<Method> ruleMethods = class.methods
         .filter[!isBridge && isAnnotationPresent(Rule)].toList
@@ -75,13 +80,17 @@ abstract class AbstractDeclarativeDesugarer implements IDesugarer {
     
     private def EObject desugar(EObject it) {
         for(m : methodsForType.get(class))
-            if(m.returnType == void)
-                m.invoke(this, it)
-            else {
-                val repl = m.invoke(this, it) as EObject
-                if(repl === null)
-                    throw new AssertionError("A @Rule method must not return null")
-                return repl
+            try {
+                if(m.returnType == void) {
+                    m.invoke(this, it)
+                } else {
+                    val repl = m.invoke(this, it) as EObject
+                    if(repl === null)
+                        throw new AssertionError("A @Rule method must not return null")
+                    return repl
+                }
+            } catch(RuntimeException e) {
+                warn("Exception while desugaring " + it, e)
             }
         null
     }
