@@ -28,15 +28,21 @@ import ch.trick17.rolez.rolez.VarRef
 import ch.trick17.rolez.rolez.WhileLoop
 import java.util.Map
 import java.util.Set
-import javax.lang.model.type.PrimitiveType
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.Super
 import java.util.HashMap
 import java.util.HashSet
 import java.util.Collection
 import ch.trick17.rolez.rolez.Parenthesized
+import ch.trick17.rolez.typesystem.RolezSystem
+import javax.inject.Inject
+import ch.trick17.rolez.rolez.PrimitiveType
 
-class TPINodeGenerator {
+import static extension ch.trick17.rolez.RolezExtensions.enclosingClass
+
+class TPINodeBuilder {
+	
+    @Inject RolezSystem system
 	
 	private ThisTPINode thisNode
 	private Map<String, LocalVarTPINode> varNodes
@@ -48,16 +54,14 @@ class TPINodeGenerator {
 		this.paramNames = new HashSet
 	}
 	
-	public def Set<RootTPINode> createTPITrees(Stmt stmt, Collection<String> userDefinedParamNames) {
+	public def Map<String, RootTPINode> createTPITrees(Stmt stmt, Collection<String> userDefinedParamNames) {
 		this.paramNames.addAll(userDefinedParamNames)
 		
 		createNodes(stmt)
 		
-		val result = new HashSet<RootTPINode>()
+		val result = new HashMap<String, RootTPINode>(this.varNodes)
 		if (this.thisNode != null)
-			result.add(this.thisNode)
-		for (LocalVarTPINode varNode : this.varNodes.values)
-			result.add(varNode)
+			result.put("this", this.thisNode)
 		
 		this.thisNode = null
 		this.varNodes.clear()
@@ -129,10 +133,13 @@ class TPINodeGenerator {
 	}
 	
 	private dispatch def void createNodesE(Assignment e) {
-		// e.left cannot be a variable, so we assume that e.left is a field access expression
-		val left = e.left as MemberAccess;
-		createNode(left.target, TPIRole.READ_WRITE, true);
-		createNode(e.right, getTPIRoleFromType(left.field.type), true)
+		val left = e.left;
+		if (left instanceof MemberAccess) {
+			createNode(left.target, TPIRole.READ_WRITE, true);
+			createNode(e.right, getTPIRoleFromType(left.field.type), true)
+		}
+		else // @= assignments
+			createNode(e.right, TPIRole.PURE, true)
 	}
 	
 	private dispatch def void createNodesE(Literal e) { }
@@ -172,7 +179,7 @@ class TPINodeGenerator {
 				val name = e.field.name
 				var node = parent.findChild(TPINodeType.FIELD_ACCESS, name)
 				if (node == null)
-					node = new FieldAccessTPINode(parent, name)
+					node = new FieldAccessTPINode(parent, name, system.type(e).value)
 				
 				node.setRole(role)
 				if (standalone)
@@ -184,10 +191,10 @@ class TPINodeGenerator {
 				null
 		}
 		else if (e.args.empty) {
-			val methodRole = getTPIRoleFromType(e.method.thisParam.type)
-			val parent = createNode(e.target, methodRole, false)
+			val thisParamRole = getTPIRoleFromType(e.method.thisParam.type)
+			val parent = createNode(e.target, thisParamRole, false)
 			if (parent != null) {
-				if (methodRole == TPIRole.READ_WRITE) {
+				if (thisParamRole == TPIRole.READ_WRITE) {
 					parent.setStandalone()
 					return null
 				}
@@ -195,7 +202,7 @@ class TPINodeGenerator {
 				val name = e.method.name
 				var node = parent.findChild(TPINodeType.NO_ARG_METHOD_CALL, name)
 				if (node == null)
-					node = new NoArgMethodCallTPINode(parent, name)
+					node = new NoArgMethodCallTPINode(parent, name, system.type(e).value)
 				
 				node.setRole(role)
 				if (standalone)
@@ -206,8 +213,18 @@ class TPINodeGenerator {
 			else
 				null
 		}
-		else
+		else {
+			val thisParamRole = getTPIRoleFromType(e.method.thisParam.type)
+			createNode(e.target, thisParamRole, true)
+			
+			val params = e.method.params
+			for (var i = 0; i < params.length; i++) {
+				val paramRole = getTPIRoleFromType(params.get(0).type)
+				createNode(e.args.get(i), paramRole, true)
+			}
+			
 			null
+		}
 	}
 	
 	private dispatch def TPINode createNode(Parenthesized e, TPIRole role, boolean standalone) {
@@ -220,7 +237,7 @@ class TPINodeGenerator {
 			val name = e.slice.name
 			var node = parent.findChild(TPINodeType.SLICING, name)
 			if (node == null)
-				node = new SlicingTPINode(parent, name)
+				node = new SlicingTPINode(parent, name, system.type(e).value)
 			
 			node.setRole(role)
 			if (standalone)
@@ -239,7 +256,7 @@ class TPINodeGenerator {
 		
 		var node = this.varNodes.get(name)
 		if (node == null) {
-			node = new LocalVarTPINode(name)
+			node = new LocalVarTPINode(name, system.type(e).value)
 			this.varNodes.put(name, node)
 		}
 		
@@ -251,16 +268,16 @@ class TPINodeGenerator {
 	}
 	
 	private dispatch def TPINode createNode(This e, TPIRole role, boolean standalone) {
-		createThisNode(role, standalone)
+		createThisNode(e, role, standalone)
 	}
 	
 	private dispatch def TPINode createNode(Super e, TPIRole role, boolean standalone) {
-		createThisNode(role, standalone)
+		createThisNode(e, role, standalone)
 	}
 	
-	private def TPINode createThisNode(TPIRole role, boolean standalone) {
+	private def TPINode createThisNode(Expr e, TPIRole role, boolean standalone) {
 		if (this.thisNode == null)
-			this.thisNode = new ThisTPINode()
+			this.thisNode = new ThisTPINode(system.type(e).value, e.enclosingClass)
 		
 		this.thisNode.setRole(role)
 		if (standalone)

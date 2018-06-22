@@ -2,6 +2,7 @@ package ch.trick17.rolez.generator
 
 import java.util.List
 import java.util.ArrayList
+import ch.trick17.rolez.rolez.Class
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.Super
@@ -12,8 +13,11 @@ import java.util.Map
 import java.util.Collections
 import java.util.HashMap
 import ch.trick17.rolez.rolez.Parenthesized
+import ch.trick17.rolez.rolez.Type
 
 abstract class TPINode {
+	
+	public val Type expressionType
 	
 	private val List<ChildTPINode> children
 	private val Map<String, FieldAccessTPINode> fieldAccesses
@@ -23,26 +27,27 @@ abstract class TPINode {
 	private var TPIRole childRole = TPIRole.PURE
 	private var boolean standalone = false
 	
-	new() {
+	new(Type expressionType) {
 		this.children = new ArrayList()
 		this.fieldAccesses = new HashMap()
 		this.noArgMethodCalls = new HashMap()
 		this.slicings = new HashMap()
+		this.expressionType = expressionType
 	}
 	
-	protected dispatch def addChild(FieldAccessTPINode child) {
+	protected dispatch def void addChild(FieldAccessTPINode child) {
 		this.children.add(child)
-		this.fieldAccesses.put(child.name, child)
+		this.fieldAccesses.put(child.id(), child)
 	}
 	
-	protected dispatch def addChild(NoArgMethodCallTPINode child) {
+	protected dispatch def void addChild(NoArgMethodCallTPINode child) {
 		this.children.add(child)
-		this.noArgMethodCalls.put(child.name, child)
+		this.noArgMethodCalls.put(child.id(), child)
 	}
 	
-	protected dispatch def addChild(SlicingTPINode child) {
+	protected dispatch def void addChild(SlicingTPINode child) {
 		this.children.add(child)
-		this.slicings.put(child.name, child)
+		this.slicings.put(child.id(), child)
 	}
 	
 	def ChildTPINode findChild(TPINodeType nodeType, String name) {
@@ -104,6 +109,8 @@ abstract class TPINode {
 	
 	abstract def TPINodeType nodeType()
 	
+	abstract def String id()
+	
 	static def boolean isStrongerThan(TPIRole role1, TPIRole role2) {
 		if (role1 == TPIRole.PURE)
 			false
@@ -120,7 +127,8 @@ abstract class ChildTPINode extends TPINode {
 	val TPINode parent
 	public val String name
 
-	new(TPINode parent, String name) {
+	new(TPINode parent, String name, Type expressionType) {
+		super(expressionType)
 		this.parent = parent
 		this.parent.addChild(this)
 		this.name = name
@@ -137,13 +145,17 @@ abstract class ChildTPINode extends TPINode {
 	override TPINode getRoot() {
 		this.parent.getRoot()
 	}
+	
+	override id() {
+		this.name
+	}
 
 }
 
 class FieldAccessTPINode extends ChildTPINode {
 	
-	new(TPINode parent, String fieldName) {
-		super(parent, fieldName)
+	new(TPINode parent, String fieldName, Type expressionType) {
+		super(parent, fieldName, expressionType)
 	}
 	
 	override matches(Expr expr) {
@@ -162,8 +174,8 @@ class FieldAccessTPINode extends ChildTPINode {
 
 class NoArgMethodCallTPINode extends ChildTPINode {
 	
-	new(TPINode parent, String methodName) {
-		super(parent, methodName)
+	new(TPINode parent, String methodName, Type expressionType) {
+		super(parent, methodName, expressionType)
 	}
 	
 	override matches(Expr expr) {
@@ -182,8 +194,8 @@ class NoArgMethodCallTPINode extends ChildTPINode {
 
 class SlicingTPINode extends ChildTPINode {
 	
-	new(TPINode parent, String sliceName) {
-		super(parent, sliceName)
+	new(TPINode parent, String sliceName, Type expressionType) {
+		super(parent, sliceName, expressionType)
 	}
 	
 	override matches(Expr expr) {
@@ -202,6 +214,10 @@ class SlicingTPINode extends ChildTPINode {
 
 abstract class RootTPINode extends TPINode {
 	
+	new(Type expressionType) {
+		super(expressionType)
+	}
+	
 	override TPINode getParent() {
 		null
 	}
@@ -216,16 +232,27 @@ abstract class RootTPINode extends TPINode {
 	
 }
 
-class ThisTPINode extends RootTPINode {
+class InferredParamTPINode extends RootTPINode {
+	
+	public val int index
+	public val TPINode param
+	
+	new(int index, TPINode param) {
+		super(param.expressionType)
+		this.index = index
+		this.param = param
+	}
 	
 	override matches(Expr expr) {
-		if (expr instanceof Parenthesized)
-			matches(expr.expr)
-		expr instanceof This || expr instanceof Super
+		param.matches(expr)
 	}
 	
 	override nodeType() {
-		TPINodeType.THIS
+		TPINodeType.INFERRED_PARAM
+	}
+	
+	override id() {
+		"$tpi" + this.index
 	}
 	
 }
@@ -234,7 +261,8 @@ class LocalVarTPINode extends RootTPINode {
 	
 	public val String name
 	
-	new(String name) {
+	new(String name, Type expressionType) {
+		super(expressionType)
 		this.name = name
 	}
 	
@@ -248,10 +276,39 @@ class LocalVarTPINode extends RootTPINode {
 		TPINodeType.LOCAL_VAR
 	}
 	
+	override id() {
+		this.name
+	}
+	
+}
+
+class ThisTPINode extends RootTPINode {
+	
+	public val Class enclosingClass
+	
+	new(Type expressionType, Class enclosingClass) {
+		super(expressionType)
+		this.enclosingClass = enclosingClass
+	}
+	
+	override matches(Expr expr) {
+		if (expr instanceof Parenthesized)
+			matches(expr.expr)
+		expr instanceof This || expr instanceof Super
+	}
+	
+	override nodeType() {
+		TPINodeType.THIS
+	}
+	
+	override id() {
+		"this"
+	}
+	
 }
 
 enum TPINodeType {
-	FIELD_ACCESS, NO_ARG_METHOD_CALL, SLICING, THIS, LOCAL_VAR
+	FIELD_ACCESS, NO_ARG_METHOD_CALL, SLICING, LOCAL_VAR, THIS, INFERRED_PARAM
 }
 
 enum TPIRole {

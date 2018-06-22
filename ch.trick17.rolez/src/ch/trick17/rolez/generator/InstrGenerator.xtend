@@ -25,6 +25,7 @@ import ch.trick17.rolez.rolez.LongLiteral
 import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.NullLiteral
+import ch.trick17.rolez.rolez.OpAssignment
 import ch.trick17.rolez.rolez.ParallelStmt
 import ch.trick17.rolez.rolez.Parenthesized
 import ch.trick17.rolez.rolez.Parfor
@@ -51,6 +52,8 @@ import ch.trick17.rolez.typesystem.RolezSystem
 import ch.trick17.rolez.validation.JavaMapper
 import com.google.inject.Injector
 import java.util.ArrayList
+import java.util.HashSet
+import java.util.Map
 import java.util.regex.Pattern
 import javax.inject.Inject
 import org.eclipse.xtext.common.types.JvmArrayType
@@ -63,8 +66,6 @@ import static ch.trick17.rolez.rolez.VarKind.*
 import static extension ch.trick17.rolez.RolezExtensions.*
 import static extension ch.trick17.rolez.generator.SafeJavaNames.*
 import static extension org.eclipse.xtext.util.Strings.convertToJavaString
-import java.util.Map
-import ch.trick17.rolez.rolez.OpAssignment
 
 /**
  * Generates Java code for Rolez instructions (single or code blocks). Relies on
@@ -108,7 +109,11 @@ class InstrGenerator {
     }
     
     private def newGenerator(MethodKind mk, RoleAnalysis ra, ChildTasksAnalysis cta) {
-        new Generator(mk, ra, cta) => [injectMembers]
+        new Generator(mk, ra, cta, newNodeBuilder()) => [injectMembers]
+    }
+    
+    private def newNodeBuilder() {
+        new TPINodeBuilder() => [injectMembers]
     }
     
     /**
@@ -118,6 +123,121 @@ class InstrGenerator {
      * not in a method (but in a constructor or field initializer).
      */
     private static class Generator {
+	
+		private static class TPIInfo {
+			
+			static def TPIInfo[] selectParameters(ParallelStmt stmt,
+				TPINodeBuilder nodeBuilder
+			) {
+				val paramNames1 = stmt.params1.map[variable.name]
+				val paramNames2 = stmt.params2.map[variable.name]
+				
+				//could possibly be parallelized
+				val nodes1 = nodeBuilder.createTPITrees(stmt.part1, paramNames1)
+				val nodes2 = nodeBuilder.createTPITrees(stmt.part2, paramNames2)
+				
+				val selectedParams1 = new ArrayList<TPINode>()
+				val selectedParams2 = new ArrayList<TPINode>()
+				
+				val handledIds2 = new HashSet<String>()
+				
+				for (RootTPINode node1 : nodes1.values) {
+					val node2 = nodes2.get(node1.id())
+					if (node2 == null)
+						selectedParams1.add(node1)
+					else if (roleConflict(node1.role, node2.role))
+						throw new Exception("could not find a solution") //TODO: better exception
+					else if (roleConflict(node1.childRole, node2.childRole)) {
+						if (node1.isStandalone || node2.isStandalone)
+							throw new Exception("could not find a solution") //TODO: better exception
+						compareChildren(node1, node2, selectedParams1, selectedParams2)
+						handledIds2.add(node2.id())
+					}
+					else {
+						selectedParams1.add(node1)
+						selectedParams2.add(node2)
+						handledIds2.add(node2.id())
+					}
+				}
+				
+				for (RootTPINode node2 : nodes2.values) {
+					if (!handledIds2.contains(node2.id()))
+						selectedParams2.add(node2)
+				}
+				
+				val result1 = new TPIInfo(selectedParams1)
+				val result2 = new TPIInfo(selectedParams1)
+				
+				#[result1, result2]
+			}
+			
+			static def TPIInfo selectParameters(Parfor stmt,
+				TPINodeBuilder nodeBuilder
+			) {
+				// ...
+			}
+			
+			private static def boolean roleConflict(TPIRole role1, TPIRole role2) {
+				switch(role1) {
+					case TPIRole.PURE: false
+					case TPIRole.READ_ONLY: role2 == TPIRole.READ_WRITE
+					case TPIRole.READ_WRITE: role1 != TPIRole.PURE
+				}
+			}
+			
+			private static def void compareChildren(TPINode node1, TPINode node2,
+				ArrayList<TPINode> selectedParams1, ArrayList<TPINode> selectedParams2
+			) {
+				val handledChildren2 = new HashSet<ChildTPINode>()
+				
+				for (ChildTPINode child1 : node1.children) {
+					val child2 = node2.findEquivChild(child1)
+					if (child2 == null)
+						selectedParams1.add(child1)
+					else if (roleConflict(child1.role, child2.role))
+						throw new Exception("could not find a solution") //TODO: better exception
+					else if (roleConflict(child1.childRole, child2.childRole)) {
+						if (child1.isStandalone || child2.isStandalone)
+							throw new Exception("could not find a solution") //TODO: better exception
+						compareChildren(child1, child2, selectedParams1, selectedParams2)
+						handledChildren2.add(child2)
+					}
+					else {
+						selectedParams1.add(child1)
+						selectedParams2.add(child2)
+						handledChildren2.add(child2)
+					}
+				}
+				
+				for (ChildTPINode child2 : node2.children) {
+					if (!handledChildren2.contains(node2))
+						selectedParams2.add(node2)
+				}
+			}
+			
+			private static def ChildTPINode findEquivChild(TPINode parent, ChildTPINode child) {
+				parent.findChild(child.nodeType, child.name)
+			}
+			
+			val TPINode[] selectedParams
+			
+			private new() {
+				this.selectedParams = #[]
+			}
+			
+			private new(TPINode[] selectedParams) {
+				this.selectedParams = selectedParams
+			}
+			
+			def int paramIndex(Expr expr) {
+				for (var i = 0; i < this.selectedParams.length; i++) {
+					if (this.selectedParams.get(i).matches(expr))
+						return i
+				}
+				return -1
+			}
+			
+		}
         
         @Inject extension RolezFactory
         @Inject extension JavaMapper
@@ -129,15 +249,18 @@ class InstrGenerator {
         val RoleAnalysis roleAnalysis
         val ChildTasksAnalysis childTasksAnalysis
         var MethodKind methodKind
+        val TPINodeBuilder nodeBuilder
         var Map<String, Integer> currentPam = emptyMap
         var int currentPidx = 0
         var int currentPlvl = 0
+        var TPIInfo currentTPI = new TPIInfo()
         
         private new(MethodKind methodKind, RoleAnalysis roleAnalysis,
-                ChildTasksAnalysis childTasksAnalysis) {
+                ChildTasksAnalysis childTasksAnalysis, TPINodeBuilder nodeBuilder) {
             this.methodKind = methodKind
             this.roleAnalysis = roleAnalysis
             this.childTasksAnalysis = childTasksAnalysis
+            this.nodeBuilder = nodeBuilder
         }
         
         /* Stmt */
@@ -218,6 +341,9 @@ class InstrGenerator {
             val argPrefix1 = "$t1Arg"
             val argPrefix2 = "$t2Arg"
             
+            val tpiPrefix1 = "$tpi1"
+            val tpiPrefix2 = "$tpi2"
+            
             val params1 = it.params1
             val params2 = it.params2
             
@@ -247,9 +373,9 @@ class InstrGenerator {
                 if (pitype instanceof RoleType) {
                     val role = (pitype as RoleType).role
                     if (role instanceof ReadWrite) 
-                        passed1.add(i)
+                        passed1.add(argPrefix1 + i)
                     else if(role instanceof ReadOnly)
-                        shared1.add(i)
+                        shared1.add(argPrefix1 + i)
                 }
             }
             
@@ -258,11 +384,15 @@ class InstrGenerator {
                 if (pitype instanceof RoleType) {
                     val role = (pitype as RoleType).role
                     if (role instanceof ReadWrite) 
-                        passed2.add(i)
+                        passed2.add(argPrefix2 + i)
                     else if(role instanceof ReadOnly)
-                        shared2.add(i)
+                        shared2.add(argPrefix2 + i)
                 }
             }
+            
+            val tpis = TPIInfo.selectParameters(it, this.nodeBuilder)
+            val tpi1 = tpis.get(0)
+            val tpi2 = tpis.get(1)
             
             val aboveVars = RolezUtils.varsAbove(eContainer, it)
             val aboveMap = aboveVars.toMap[name]
@@ -281,17 +411,38 @@ class InstrGenerator {
             
             val oldPam = currentPam
             val oldPidx = currentPidx
+            val oldTPI = currentTPI
             currentPlvl++
             val plvl = currentPlvl
             currentPam = pam1
             currentPidx = 1
+            currentTPI = tpi1
             val part1Gen = part1.generate
             currentPam = pam2
             currentPidx = 2
+            currentTPI = tpi2
          	val part2Gen = part2.generate
             currentPlvl--
          	currentPam = oldPam
          	currentPidx = oldPidx
+         	currentTPI = oldTPI
+            
+            // separate inferred arguments into shared and passed objects
+            for (var i = 0; i < tpi1.selectedParams.size; i++) {
+            	val pirole = tpi1.selectedParams.get(i).role;
+                if (pirole == TPIRole.READ_WRITE) 
+                    passed1.add(tpiPrefix1 + "_" + plvl + "_" + i)
+                else if(pirole == TPIRole.READ_ONLY)
+                    shared1.add(tpiPrefix1 + "_" + plvl + "_" + i)
+            }
+            
+            for (var i = 0; i < tpi2.selectedParams.size; i++) {
+            	val pirole = tpi2.selectedParams.get(i).role;
+                if (pirole == TPIRole.READ_WRITE) 
+                    passed2.add(tpiPrefix2 + "_" + plvl + "_" + i)
+                else if(pirole == TPIRole.READ_ONLY)
+                    shared2.add(tpiPrefix2 + "_" + plvl + "_" + i)
+            }
             
             '''
             { /* parallel-and */
@@ -301,12 +452,20 @@ class InstrGenerator {
                 «FOR i : 0..<params2.size»
                 final «genParamTypes2.get(i)» «argPrefix2»«i» = «args2.get(i).generate»;
                 «ENDFOR»
+                «FOR i : 0..<tpi1.selectedParams.size»
+                «val param = tpi1.selectedParams.get(i)»
+                final «param.expressionType.generate» «tpiPrefix1»_«plvl»_«i» = «param.generateTPI»;
+                «ENDFOR»
+                «FOR i : 0..<tpi2.selectedParams.size»
+                «val param = tpi2.selectedParams.get(i)»
+                final «param.expressionType.generate» «tpiPrefix2»_«plvl»_«i» = «param.generateTPI»;
+                «ENDFOR»
                 
-                final java.lang.Object[] $t1Passed = {«passed1.map[argPrefix1 + it].join(", ")»};
-                final java.lang.Object[] $t1Shared = {«shared1.map[argPrefix1 + it].join(", ")»};
+                final java.lang.Object[] $t1Passed = {«passed1.join(", ")»};
+                final java.lang.Object[] $t1Shared = {«shared1.join(", ")»};
                 final java.lang.Object[] $t1«plvl»Assign = new java.lang.Object[«paVars1.size»];
-                final java.lang.Object[] $t2Passed = {«passed2.map[argPrefix2 + it].join(", ")»};
-                final java.lang.Object[] $t2Shared = {«shared2.map[argPrefix2 + it].join(", ")»};
+                final java.lang.Object[] $t2Passed = {«passed2.join(", ")»};
+                final java.lang.Object[] $t2Shared = {«shared2.join(", ")»};
                 final java.lang.Object[] $t2«plvl»Assign = new java.lang.Object[«paVars2.size»];
                 
                 final «taskClassName»<?> $t1 = new «taskClassName»<java.lang.Void>($t1Passed, $t1Shared) {
@@ -502,23 +661,34 @@ class InstrGenerator {
         private def dispatch CharSequence generate(BitwiseNot it)
             '''~«expr.genNested»'''
         
-        private def dispatch CharSequence generate(Slicing it)
+        private def dispatch CharSequence generate(Slicing it) {
+        	val tpiidx = currentTPI.paramIndex(it)
+        	if (tpiidx >= 0)
+        		return tpiParamName(tpiidx)
+
             '''«target.generate».$«slice.safeName»Slice()'''
+        }
         
-        private def dispatch CharSequence generate(MemberAccess it) { switch(it) {
-            case utils.isSliceGet(it):         generateSliceGet
-            case utils.isSliceSet(it):         generateSliceSet
-            case utils.isArrayGet(it):         generateArrayGet
-            case utils.isArraySet(it):         generateArraySet
-            case utils.isArrayLength(it):      generateArrayLength
-            case utils.isVectorGet(it):        generateVectorGet
-            case utils.isVectorLength(it):     generateVectorLength
-            case utils.isVectorBuilderGet(it): generateArrayGet         // same code as for arrays
-            case utils.isVectorBuilderSet(it): generateVectorBuilderSet
-            case isFieldAccess:                generateFieldAccess
-            case isMethodInvoke:               generateMethodInvoke
-            case isTaskStart:                  generateTaskStart
-        }}
+        private def dispatch CharSequence generate(MemberAccess it) {
+        	val tpiidx = currentTPI.paramIndex(it)
+        	if (tpiidx >= 0)
+        		return tpiParamName(tpiidx)
+        	
+	        switch(it) {
+	            case utils.isSliceGet(it):         generateSliceGet
+	            case utils.isSliceSet(it):         generateSliceSet
+	            case utils.isArrayGet(it):         generateArrayGet
+	            case utils.isArraySet(it):         generateArraySet
+	            case utils.isArrayLength(it):      generateArrayLength
+	            case utils.isVectorGet(it):        generateVectorGet
+	            case utils.isVectorLength(it):     generateVectorLength
+	            case utils.isVectorBuilderGet(it): generateArrayGet         // same code as for arrays
+	            case utils.isVectorBuilderSet(it): generateVectorBuilderSet
+	            case isFieldAccess:                generateFieldAccess
+	            case isMethodInvoke:               generateMethodInvoke
+	            case isTaskStart:                  generateTaskStart
+	        }
+        }
         
         private def generateSliceGet(MemberAccess it)
             '''«target.genGuarded(createReadOnly, true)».«genSliceAccess("get")»(«args.get(0).generate»)'''
@@ -651,16 +821,30 @@ class InstrGenerator {
         }
         
         private def dispatch CharSequence generate(This it)  {
+        	val tpiidx = currentTPI.paramIndex(it)
+        	if (tpiidx >= 0)
+        		return tpiParamName(tpiidx)
+        	
             if(methodKind == TASK) '''«enclosingClass.safeSimpleName».this'''
             else '''this'''
         }
         
         private def dispatch CharSequence generate(Super it)  {
+        	val tpiidx = currentTPI.paramIndex(it)
+        	if (tpiidx >= 0)
+        		return tpiParamName(tpiidx)
+        	
             if(methodKind == TASK) '''«enclosingClass.safeSimpleName».super'''
             else '''super'''
         }
         
-        private def dispatch CharSequence generate(VarRef it) { variable.safeName }
+        private def dispatch CharSequence generate(VarRef it) {
+        	val tpiidx = currentTPI.paramIndex(it)
+        	if (tpiidx >= 0)
+        		return tpiParamName(tpiidx)
+        	
+        	variable.safeName
+        }
         
         private def dispatch CharSequence generate(New it) {
             val generatedArgs = 
@@ -726,6 +910,35 @@ class InstrGenerator {
                 if(nested) genNested else generate
             
             // IMPROVE: Better syntax (and performance?) when using type system
+        }
+        
+        private def dispatch CharSequence generateTPI(FieldAccessTPINode it) {
+        	parent.generateTPI() + "." + safe(name)
+        }
+        
+        private def dispatch generateTPI(InferredParamTPINode it) {
+        	tpiParamName(index)
+        }
+        
+        private def dispatch generateTPI(LocalVarTPINode it) {
+        	safe(name)
+        }
+        
+        private def dispatch CharSequence generateTPI(NoArgMethodCallTPINode it) {
+        	parent.generateTPI() + "." + safe(name)
+        }
+        
+        private def dispatch CharSequence generateTPI(SlicingTPINode it) {
+        	parent.generateTPI() + "." + safe(name) + "Slice()"
+        }
+        
+        private def dispatch generateTPI(ThisTPINode it) {
+        	if (methodKind == TASK) enclosingClass.safeSimpleName() + ".this"
+            else "this"
+        }
+        
+        private def tpiParamName(int index) {
+        	"$tpi" + currentPidx + "_" + currentPlvl + "_" + index
         }
     }
     
