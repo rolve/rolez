@@ -17,14 +17,6 @@
         </dependency>
     </dependencies>
     
-    <repositories>
-        <repository>
-            <id>rolez-maven-repo</id>
-            <url>https://rolve.gitlab.io/rolez/maven/</url>
-            <snapshots><enabled>true</enabled></snapshots>
-        </repository>
-    </repositories>
-    
     <build>
         <plugins>
             <plugin>
@@ -79,12 +71,4 @@
             </plugin>
         </plugins>
     </build>
-    
-    <pluginRepositories>
-        <pluginRepository>
-            <id>rolez-maven-repo</id>
-            <url>https://rolve.gitlab.io/rolez/maven/</url>
-            <snapshots><enabled>true</enabled></snapshots>
-        </pluginRepository>
-    </pluginRepositories>
 </project>
