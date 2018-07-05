@@ -26,6 +26,7 @@
         <module>ch.trick17.rolez.ui.tests</module>
         <module>ch.trick17.rolez.repository</module>
         <module>ch.trick17.rolez.sdk</module>
+        <module>rolez-parent</module>
     </modules>
     <build>
         <plugins>
