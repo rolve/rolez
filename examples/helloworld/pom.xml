@@ -9,4 +9,12 @@
     <groupId>ch.trick17.rolez-examples</groupId>
     <artifactId>helloworld</artifactId>
     <version>0.0.1-SNAPSHOT</version>
+    
+    <repositories>
+        <repository>
+            <id>rolez-maven-repo</id>
+            <url>https://rolve.gitlab.io/rolez/maven/</url>
+            <snapshots><enabled>true</enabled></snapshots>
+        </repository>
+    </repositories>
 </project>
