@@ -51,82 +51,23 @@ code into Java code, which can be compiled to bytecode using a standard Java
 compiler.
 
 The simplest way to use the Rolez compiler is using [Maven][mvn].
-Create a new Maven project and add the following configuration to your
-`pom.xml` file:
+Create a new Maven project and add `rolez-parent` as the parent project to your
+`pom.xml` file, as follows.
+This will pull in all the necessary dependencies and configuration to compile a
+Rolez program.
 
 ```xml
-<properties>
-    <rolezOutputDir>${project.build.directory}/generated-sources/rolez</rolezOutputDir>
-</properties>
-
-<build>
-    <plugins>
-        <plugin>
-            <groupId>org.eclipse.xtext</groupId>
-            <artifactId>xtext-maven-plugin</artifactId>
-            <version>2.9.1</version>
-            <executions>
-                <execution>
-                    <goals><goal>generate</goal></goals>
-                </execution>
-            </executions>
-            <configuration>
-                <languages>
-                    <language>
-                        <setup>ch.trick17.rolez.RolezStandaloneSetup</setup>
-                        <outputConfigurations>
-                            <outputConfiguration>
-                                <outputDirectory>${rolezOutputDir}</outputDirectory>
-                            </outputConfiguration>
-                        </outputConfigurations>
-                    </language>
-                </languages>
-            </configuration>
-            <dependencies>
-                <dependency>
-                    <groupId>ch.trick17.rolez</groupId>
-                    <artifactId>ch.trick17.rolez</artifactId>
-                    <version>1.0.0-SNAPSHOT</version>
-                </dependency>
-            </dependencies>
-        </plugin>
-        <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>build-helper-maven-plugin</artifactId>
-            <version>1.10</version>
-            <executions>
-                <execution>
-                    <goals><goal>add-source</goal></goals>
-                    <configuration>
-                        <sources><source>${rolezOutputDir}</source></sources>
-                    </configuration>
-                </execution>
-            </executions>
-        </plugin>
-    </plugins>
-</build>
-
-<pluginRepositories>
-    <pluginRepository>
-        <id>rolez-maven-repo</id>
-        <url>https://rolve.gitlab.io/rolez/maven/</url>
-        <snapshots><enabled>true</enabled></snapshots>
-    </pluginRepository>
-</pluginRepositories>
+<parent>
+    <groupId>ch.trick17.rolez</groupId>
+    <artifactId>rolez-parent</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+</parent>
 ```
 
-In addition to the Rolez compiler, you'll need the Rolez runtime library.
-Add it as a dependency to your project:
+In addition, you need to add the Rolez Maven repository, which always contains
+the most up-to-date version of the Rolez compiler and runtime library.
 
 ```xml
-<dependencies>
-    <dependency>
-        <groupId>ch.trick17.rolez</groupId>
-        <artifactId>ch.trick17.rolez.lib</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
-    </dependency>
-</dependencies>
-
 <repositories>
     <repository>
         <id>rolez-maven-repo</id>
@@ -140,7 +81,7 @@ Now, create an `App.rz` file in your project's `src/main/java` folder and paste
 the *Hello World!* code from above. Run `mvn compile` in the project root to
 compile the program and `mvn exec:java -q` to execute it. Note that the first
 time you run these commands, Maven automatically downloads the Rolez compiler
-and the Rolez runtime library, which can take some time.
+and the runtime library (and many other dependencies), which can take some time.
 
 You can find a complete *Hello World!* Maven project, including more detailed build
 instructions, in the examples directory:
