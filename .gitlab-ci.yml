@@ -27,6 +27,9 @@ test-lib:
   script:
     - cd ch.trick17.rolez.lib.tests
     - "xvfb-run mvn surefire:test -B -Dmaven.repo.local=$MAVEN_REPO"
+  except:
+    variables:
+      - $CI_COMMIT_MESSAGE =~ /skip-lib-tests/i
 
 test-examples:
   stage: test
