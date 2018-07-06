@@ -4,4 +4,5 @@
       <category name="ch.trick17.rolez.sdk"/>
    </feature>
    <category-def name="ch.trick17.rolez.sdk" label="Rolez SDK"/>
+   <repository-reference location="https://dl.bintray.com/lorenzobettini/xsemantics/updates/1.10/" enabled="true" />
 </site>
