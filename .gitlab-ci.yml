@@ -43,6 +43,7 @@ pages:
     - mvn deploy -B -Dexec.skip -Dxtext.generator.skip -DskipXtend -DskipTests -Dmaven.repo.local=$MAVEN_REPO -DaltDeploymentRepository=snapshot-repo::default::file:public/maven
     - mkdir public/eclipse
     - cp -r ch.trick17.rolez.repository/target/repository/* public/eclipse/
+    - rm -r public/eclipse/index.html public/eclipse/web
   artifacts:
     paths:
       - public
