@@ -1116,7 +1116,7 @@ class RolezValidatorTest {
                 task pure foo: int { return 0; }
             }
             class A {
-                val i: int = (the Tasks start foo).get
+                val i: int = (Tasks start foo).get
             }
         ''').assertError(MEMBER_ACCESS, TASK_START_IN_FIELD_INIT)
         parse('''
