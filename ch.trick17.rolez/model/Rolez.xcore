@@ -614,9 +614,12 @@ class RoleTypeOrTypeParamRef extends Type {
     }
     
     op TypeParamRef toTypeParamRef() {
-        RolezFactory.eINSTANCE.createTypeParamRef => [
-            param = ref as TypeParam
-        ]
+        if(ref.eIsProxy)
+            null
+        else
+            RolezFactory.eINSTANCE.createTypeParamRef => [
+                param = ref as TypeParam
+            ]
     }
 }
 
