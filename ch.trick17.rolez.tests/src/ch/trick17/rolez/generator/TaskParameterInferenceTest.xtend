@@ -220,6 +220,23 @@ class TaskParameterInferenceTest {
         '''.withFrameD1, testResources).testParallelStmtNoSolution()
     }
     
+    @Test def testParallelField10() {
+        parse('''
+            parallel {
+            	val a = objC.fieldA;
+            	val c: readonly C = objC.fieldC;
+            	a.mRW();
+            	c.mRO();
+            }
+            and {
+            	val b = objC.fieldB;
+            	val c: readonly C = objC.fieldC;
+            	b.mRW();
+            	c.mRO();
+            }
+        '''.withFrameC1, testResources).testParallelStmt(#["objC.fieldA", "objC.fieldC"], #["objC.fieldB", "objC.fieldC"]) //TODO: does this make sense?
+    }
+    
     @Test def testParallelNAM1() {
         parse('''
             parallel {

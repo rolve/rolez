@@ -47,11 +47,13 @@ class TPINodeBuilder {
 	private ThisTPINode thisNode
 	private Map<String, LocalVarTPINode> varNodes
 	private Set<String> paramNames
+	private Set<String> insideVarNames
 	
 	public new() {
 		this.thisNode = null
 		this.varNodes = new HashMap
 		this.paramNames = new HashSet
+		this.insideVarNames = new HashSet
 	}
 	
 	public def Map<String, RootTPINode> createTPITrees(Stmt stmt, Collection<String> userDefinedParamNames) {
@@ -94,6 +96,7 @@ class TPINodeBuilder {
 	}
 	
 	private dispatch def void createNodes(LocalVarDecl stmt) {
+		this.insideVarNames.add(stmt.variable.name)
 		if (stmt.initializer !== null) {
 			val type = if (stmt.variable.type != null) stmt.variable.type else system.type(stmt.initializer).value
 			createNode(stmt.initializer, getTPIRoleFromType(type), true)
@@ -253,7 +256,7 @@ class TPINodeBuilder {
 	
 	private dispatch def TPINode createNode(VarRef e, TPIRole role, boolean standalone) {
 		val name = e.variable.name
-		if (this.paramNames.contains(name))
+		if (this.paramNames.contains(name) || this.insideVarNames.contains(name))
 			return null
 		
 		var node = this.varNodes.get(name)
