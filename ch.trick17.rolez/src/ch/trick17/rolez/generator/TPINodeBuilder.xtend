@@ -94,8 +94,10 @@ class TPINodeBuilder {
 	}
 	
 	private dispatch def void createNodes(LocalVarDecl stmt) {
-		if (stmt.initializer !== null)
-			createNode(stmt.initializer, getTPIRoleFromType(stmt.variable.type), true)
+		if (stmt.initializer !== null) {
+			val type = if (stmt.variable.type != null) stmt.variable.type else system.type(stmt.initializer).value
+			createNode(stmt.initializer, getTPIRoleFromType(type), true)
+		}
 	}
 	
 	private dispatch def void createNodes(ParallelStmt stmt) {

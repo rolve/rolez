@@ -123,121 +123,6 @@ class InstrGenerator {
      * not in a method (but in a constructor or field initializer).
      */
     private static class Generator {
-	
-		private static class TPIInfo {
-			
-			static def TPIInfo[] selectParameters(ParallelStmt stmt,
-				TPINodeBuilder nodeBuilder
-			) {
-				val paramNames1 = stmt.params1.map[variable.name]
-				val paramNames2 = stmt.params2.map[variable.name]
-				
-				//could possibly be parallelized
-				val nodes1 = nodeBuilder.createTPITrees(stmt.part1, paramNames1)
-				val nodes2 = nodeBuilder.createTPITrees(stmt.part2, paramNames2)
-				
-				val selectedParams1 = new ArrayList<TPINode>()
-				val selectedParams2 = new ArrayList<TPINode>()
-				
-				val handledIds2 = new HashSet<String>()
-				
-				for (RootTPINode node1 : nodes1.values) {
-					val node2 = nodes2.get(node1.id())
-					if (node2 == null)
-						selectedParams1.add(node1)
-					else if (roleConflict(node1.role, node2.role))
-						throw new Exception("could not find a solution") //TODO: better exception
-					else if (roleConflict(node1.childRole, node2.childRole)) {
-						if (node1.isStandalone || node2.isStandalone)
-							throw new Exception("could not find a solution") //TODO: better exception
-						compareChildren(node1, node2, selectedParams1, selectedParams2)
-						handledIds2.add(node2.id())
-					}
-					else {
-						selectedParams1.add(node1)
-						selectedParams2.add(node2)
-						handledIds2.add(node2.id())
-					}
-				}
-				
-				for (RootTPINode node2 : nodes2.values) {
-					if (!handledIds2.contains(node2.id()))
-						selectedParams2.add(node2)
-				}
-				
-				val result1 = new TPIInfo(selectedParams1)
-				val result2 = new TPIInfo(selectedParams1)
-				
-				#[result1, result2]
-			}
-			
-			static def TPIInfo selectParameters(Parfor stmt,
-				TPINodeBuilder nodeBuilder
-			) {
-				// ...
-			}
-			
-			private static def boolean roleConflict(TPIRole role1, TPIRole role2) {
-				switch(role1) {
-					case TPIRole.PURE: false
-					case TPIRole.READ_ONLY: role2 == TPIRole.READ_WRITE
-					case TPIRole.READ_WRITE: role1 != TPIRole.PURE
-				}
-			}
-			
-			private static def void compareChildren(TPINode node1, TPINode node2,
-				ArrayList<TPINode> selectedParams1, ArrayList<TPINode> selectedParams2
-			) {
-				val handledChildren2 = new HashSet<ChildTPINode>()
-				
-				for (ChildTPINode child1 : node1.children) {
-					val child2 = node2.findEquivChild(child1)
-					if (child2 == null)
-						selectedParams1.add(child1)
-					else if (roleConflict(child1.role, child2.role))
-						throw new Exception("could not find a solution") //TODO: better exception
-					else if (roleConflict(child1.childRole, child2.childRole)) {
-						if (child1.isStandalone || child2.isStandalone)
-							throw new Exception("could not find a solution") //TODO: better exception
-						compareChildren(child1, child2, selectedParams1, selectedParams2)
-						handledChildren2.add(child2)
-					}
-					else {
-						selectedParams1.add(child1)
-						selectedParams2.add(child2)
-						handledChildren2.add(child2)
-					}
-				}
-				
-				for (ChildTPINode child2 : node2.children) {
-					if (!handledChildren2.contains(node2))
-						selectedParams2.add(node2)
-				}
-			}
-			
-			private static def ChildTPINode findEquivChild(TPINode parent, ChildTPINode child) {
-				parent.findChild(child.nodeType, child.name)
-			}
-			
-			val TPINode[] selectedParams
-			
-			private new() {
-				this.selectedParams = #[]
-			}
-			
-			private new(TPINode[] selectedParams) {
-				this.selectedParams = selectedParams
-			}
-			
-			def int paramIndex(Expr expr) {
-				for (var i = 0; i < this.selectedParams.length; i++) {
-					if (this.selectedParams.get(i).matches(expr))
-						return i
-				}
-				return -1
-			}
-			
-		}
         
         @Inject extension RolezFactory
         @Inject extension JavaMapper
@@ -253,7 +138,7 @@ class InstrGenerator {
         var Map<String, Integer> currentPam = emptyMap
         var int currentPidx = 0
         var int currentPlvl = 0
-        var TPIInfo currentTPI = new TPIInfo()
+        var TPIResult currentTPI = new TPIResult()
         
         private new(MethodKind methodKind, RoleAnalysis roleAnalysis,
                 ChildTasksAnalysis childTasksAnalysis, TPINodeBuilder nodeBuilder) {
@@ -390,7 +275,7 @@ class InstrGenerator {
                 }
             }
             
-            val tpis = TPIInfo.selectParameters(it, this.nodeBuilder)
+            val tpis = TPIResult.selectParameters(it, this.nodeBuilder)
             val tpi1 = tpis.get(0)
             val tpi2 = tpis.get(1)
             

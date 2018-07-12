@@ -130,8 +130,9 @@ abstract class ChildTPINode extends TPINode {
 	new(TPINode parent, String name, Type expressionType) {
 		super(expressionType)
 		this.parent = parent
-		this.parent.addChild(this)
 		this.name = name
+		
+		this.parent.addChild(this)
 	}
 	
 	override TPINode getParent() {
@@ -170,6 +171,10 @@ class FieldAccessTPINode extends ChildTPINode {
 		TPINodeType.FIELD_ACCESS
 	}
 	
+	override toString() {
+		parent.toString() + "." + this.name
+	}
+	
 }
 
 class NoArgMethodCallTPINode extends ChildTPINode {
@@ -188,6 +193,10 @@ class NoArgMethodCallTPINode extends ChildTPINode {
 	
 	override nodeType() {
 		TPINodeType.NO_ARG_METHOD_CALL
+	}
+	
+	override toString() {
+		parent.toString() + "." + this.name + "()"
 	}
 	
 }
@@ -210,6 +219,10 @@ class SlicingTPINode extends ChildTPINode {
 		TPINodeType.SLICING
 	}
 	
+	override toString() {
+		parent.toString() + " slice " + this.name
+	}
+	
 }
 
 abstract class RootTPINode extends TPINode {
@@ -228,6 +241,10 @@ abstract class RootTPINode extends TPINode {
 	
 	override TPINode getRoot() {
 		this
+	}
+	
+	override toString() {
+		this.id()
 	}
 	
 }
