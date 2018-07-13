@@ -9,7 +9,7 @@ import ch.trick17.rolez.rolez.RolezPackage
  */
 class RolezStandaloneSetup extends RolezStandaloneSetupGenerated {
     
-    private static val ROLEZ_MODEL = "http://trick17.ch/rolez/Rolez"
+    static val ROLEZ_MODEL = "http://trick17.ch/rolez/Rolez"
 
 	def static void doSetup() {
 		new RolezStandaloneSetup().createInjectorAndDoEMFRegistration()

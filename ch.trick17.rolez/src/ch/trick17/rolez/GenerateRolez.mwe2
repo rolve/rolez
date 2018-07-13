@@ -23,6 +23,7 @@ Workflow {
 				eclipsePluginTest = {
 					enabled = true
 				}
+				createEclipseMetaData = true
 			}
 			code = {
 				encoding = "UTF-8"
@@ -31,10 +32,10 @@ Workflow {
 		language = StandardLanguage {
 			name = "${projectName}.Rolez"
 			fileExtensions = "rz,rolez"
-            referencedResource = "platform:/resource/${projectName}/model/Rolez.xcore"
-            serializer = {
-                generateStub = false
-            }
+			referencedResource = "platform:/resource/${projectName}/model/Rolez.xcore"
+			serializer = {
+				generateStub = false
+			}
 			fragment = types.TypesGeneratorFragment2 {}
 		}
 	}

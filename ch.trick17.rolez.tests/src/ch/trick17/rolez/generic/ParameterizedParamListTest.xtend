@@ -1,10 +1,13 @@
 package ch.trick17.rolez.generic
 
+import ch.trick17.rolez.rolez.Param
 import ch.trick17.rolez.rolez.RolezFactory
 import ch.trick17.rolez.tests.RolezInjectorProvider
+import java.util.List
 import javax.inject.Inject
-import org.eclipse.xtext.junit4.InjectWith
-import org.eclipse.xtext.junit4.XtextRunner
+import org.eclipse.xtext.testing.InjectWith
+import org.eclipse.xtext.testing.XtextRunner
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -12,9 +15,6 @@ import static java.util.Arrays.asList
 import static org.hamcrest.Matchers.*
 
 import static extension org.hamcrest.MatcherAssert.assertThat
-import org.junit.Before
-import ch.trick17.rolez.rolez.Param
-import java.util.List
 
 @RunWith(XtextRunner)
 @InjectWith(RolezInjectorProvider)

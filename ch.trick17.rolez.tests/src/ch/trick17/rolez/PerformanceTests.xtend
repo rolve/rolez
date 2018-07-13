@@ -2,8 +2,8 @@ package ch.trick17.rolez
 
 import ch.trick17.rolez.rolez.Program
 import javax.inject.Inject
-import org.eclipse.xtext.junit4.util.ParseHelper
-import org.eclipse.xtext.junit4.validation.ValidationTestHelper
+import org.eclipse.xtext.testing.util.ParseHelper
+import org.eclipse.xtext.testing.validation.ValidationTestHelper
 
 class PerformanceTests {
     

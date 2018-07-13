@@ -2,13 +2,12 @@ package ch.trick17.rolez.typesystem
 
 import ch.trick17.rolez.TestUtils
 import ch.trick17.rolez.rolez.Boolean
+import ch.trick17.rolez.rolez.Byte
 import ch.trick17.rolez.rolez.Char
 import ch.trick17.rolez.rolez.Double
 import ch.trick17.rolez.rolez.GenericClassRef
 import ch.trick17.rolez.rolez.Int
 import ch.trick17.rolez.rolez.Long
-import ch.trick17.rolez.rolez.Short
-import ch.trick17.rolez.rolez.Byte
 import ch.trick17.rolez.rolez.Null
 import ch.trick17.rolez.rolez.Program
 import ch.trick17.rolez.rolez.Pure
@@ -16,12 +15,13 @@ import ch.trick17.rolez.rolez.ReadOnly
 import ch.trick17.rolez.rolez.ReadWrite
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
+import ch.trick17.rolez.rolez.Short
 import ch.trick17.rolez.tests.RolezInjectorProvider
 import javax.inject.Inject
-import org.eclipse.xtext.junit4.InjectWith
-import org.eclipse.xtext.junit4.XtextRunner
-import org.eclipse.xtext.junit4.util.ParseHelper
-import org.eclipse.xtext.junit4.validation.ValidationTestHelper
+import org.eclipse.xtext.testing.InjectWith
+import org.eclipse.xtext.testing.XtextRunner
+import org.eclipse.xtext.testing.util.ParseHelper
+import org.eclipse.xtext.testing.validation.ValidationTestHelper
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runner.RunWith

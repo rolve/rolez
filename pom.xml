@@ -8,8 +8,8 @@
 
     <properties>
         <tychoVersion>1.1.0</tychoVersion>
-        <xtextVersion>2.10.0</xtextVersion>
-        <xsemanticsVersion>1.9.0</xsemanticsVersion>
+        <xtextVersion>2.14.0</xtextVersion>
+        <xsemanticsVersion>1.14.0-SNAPSHOT</xsemanticsVersion>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
@@ -35,6 +35,47 @@
                 <artifactId>tycho-maven-plugin</artifactId>
                 <version>${tychoVersion}</version>
                 <extensions>true</extensions>
+            </plugin>
+            <plugin>
+                <groupId>org.eclipse.tycho</groupId>
+                <artifactId>tycho-source-plugin</artifactId>
+                <version>${tychoVersion}</version>
+                <executions>
+                    <execution>
+                        <id>plugin-source</id>
+                        <goals>
+                            <goal>plugin-source</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.eclipse.tycho.extras</groupId>
+                <artifactId>tycho-source-feature-plugin</artifactId>
+                <version>${tychoVersion}</version>
+                <executions>
+                    <execution>
+                        <id>source-feature</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>source-feature</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.eclipse.tycho</groupId>
+                <artifactId>tycho-p2-plugin</artifactId>
+                <version>${tychoVersion}</version>
+                <executions>
+                    <execution>
+                        <id>attach-p2-metadata</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>p2-metadata</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.eclipse.tycho</groupId>
@@ -78,7 +119,9 @@
                         <execution>
                             <goals>
                                 <goal>compile</goal>
+                                <goal>xtend-install-debug-info</goal>
                                 <goal>testCompile</goal>
+                                <goal>xtend-test-install-debug-info</goal>
                             </goals>
                         </execution>
                     </executions>
@@ -124,11 +167,26 @@
                                 </pluginExecution>
                                 <pluginExecution>
                                     <pluginExecutionFilter>
+                                        <groupId>org.apache.maven.plugins</groupId>
+                                        <artifactId>maven-resources-plugin</artifactId>
+                                        <versionRange>[2.4.3,)</versionRange>
+                                        <goals>
+                                            <goal>resources</goal>
+                                            <goal>testResources</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <ignore></ignore>
+                                    </action>
+                                </pluginExecution>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
                                         <groupId>org.eclipse.tycho</groupId>
                                         <artifactId>tycho-packaging-plugin</artifactId>
                                         <versionRange>[1.1.0,)</versionRange>
                                         <goals>
                                             <goal>build-qualifier</goal>
+                                            <goal>build-qualifier-aggregator</goal>
                                             <goal>validate-id</goal>
                                             <goal>validate-version</goal>
                                         </goals>
@@ -169,5 +227,38 @@
                 <enabled>false</enabled>
             </snapshots>
         </pluginRepository>
+        <pluginRepository>
+            <id>sonatype_snapshots</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
     </pluginRepositories>
+    <profiles>
+        <profile>
+            <id>macos</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                </os>
+            </activation>
+            <properties>
+                <!-- THE FOLLOWING LINE MUST NOT BE BROKEN BY AUTOFORMATTING -->
+                <platformSystemProperties>-XstartOnFirstThread</platformSystemProperties>
+            </properties>
+        </profile>
+        <profile>
+            <id>jdk9-or-newer</id>
+            <activation>
+                <jdk>[9,)</jdk>
+            </activation>
+            <properties>
+                <moduleProperties>--add-modules=ALL-SYSTEM</moduleProperties>
+            </properties>
+        </profile>
+    </profiles>
 </project>

@@ -20,14 +20,14 @@ class Config {
     }
     
     def taskParamEnabled() {
-        System.getProperty(noTaskParam) == null
+        System.getProperty(noTaskParam) === null
     }
     
     def roleAnalysisEnabled() {
-        System.getProperty(noRoleAnalysis) == null
+        System.getProperty(noRoleAnalysis) === null
     }
     
     def childTasksAnalysisEnabled() {
-        System.getProperty(noChildTasksAnalysis) == null
+        System.getProperty(noChildTasksAnalysis) === null
     }
 }

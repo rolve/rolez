@@ -7,8 +7,8 @@ import ch.trick17.rolez.scoping.RolezImportedNamespaceScopeProvider
 import ch.trick17.rolez.typesystem.RolezValidatorFilter
 import com.google.inject.Binder
 import com.google.inject.name.Names
-import it.xsemantics.runtime.StringRepresentation
-import it.xsemantics.runtime.validation.XsemanticsValidatorFilter
+import org.eclipse.xsemantics.runtime.StringRepresentation
+import org.eclipse.xsemantics.runtime.validation.XsemanticsValidatorFilter
 import org.eclipse.xtext.conversion.IValueConverterService
 import org.eclipse.xtext.resource.XtextResource
 import org.eclipse.xtext.scoping.IScopeProvider
