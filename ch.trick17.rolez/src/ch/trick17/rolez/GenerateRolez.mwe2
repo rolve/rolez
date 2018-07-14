@@ -36,6 +36,9 @@ Workflow {
 			serializer = {
 				generateStub = false
 			}
+			projectWizard = {
+				generate = true
+			}
 			fragment = types.TypesGeneratorFragment2 {}
 		}
 	}

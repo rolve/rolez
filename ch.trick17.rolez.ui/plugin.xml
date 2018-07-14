@@ -170,7 +170,7 @@
 			</command>
 		</menuContribution>
 		<menuContribution locationURI="popup:org.eclipse.xtext.ui.outline?after=additions">
-			<command commandId="org.eclipse.xtext.ui.editor.copyqualifiedname.OutlineCopyQualifiedName" 
+			<command commandId="org.eclipse.xtext.ui.editor.copyqualifiedname.OutlineCopyQualifiedName"
 				style="push" tooltip="Copy Qualified Name">
 				<visibleWhen checkEnabled="false">
 					<and>
@@ -461,4 +461,33 @@
             class="ch.trick17.rolez.ui.buildpath.RolezStdLibInitializer">
         </classpathContainerInitializer>
     </extension>
+	<extension
+		point="org.eclipse.ui.newWizards">
+		<category id="ch.trick17.rolez.ui.category" name="Rolez">
+		</category>
+		<wizard
+			category="ch.trick17.rolez.ui.category"
+			class="ch.trick17.rolez.ui.RolezExecutableExtensionFactory:org.eclipse.xtext.ui.wizard.template.TemplateNewProjectWizard"
+			id="ch.trick17.rolez.ui.wizard.RolezNewProjectWizard"
+			name="Rolez Project"
+			icon="icons/new_Rolez_proj.gif"
+			project="true">
+		</wizard>
+	</extension>
+	<extension
+	      point="org.eclipse.xtext.ui.projectTemplate">
+	   <projectTemplateProvider
+	         class="ch.trick17.rolez.ui.wizard.RolezProjectTemplateProvider"
+	         grammarName="ch.trick17.rolez.Rolez">
+	   </projectTemplateProvider>
+	</extension>
+	<extension
+		point="org.eclipse.ui.perspectiveExtensions">
+		<perspectiveExtension targetID="org.eclipse.ui.resourcePerspective">
+			<newWizardShortcut id="ch.trick17.rolez.ui.wizard.RolezNewProjectWizard"/>
+		</perspectiveExtension>
+		<perspectiveExtension targetID="org.eclipse.jdt.ui.JavaPerspective">
+			<newWizardShortcut id="ch.trick17.rolez.ui.wizard.RolezNewProjectWizard"/>
+		</perspectiveExtension>
+	</extension>
 </plugin>
