@@ -1,4 +1,4 @@
-package ch.trick17.rolez.generator
+package ch.trick17.rolez.tpi
 
 import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.BinaryExpr
@@ -13,7 +13,9 @@ import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.Null
 import ch.trick17.rolez.rolez.ParallelStmt
+import ch.trick17.rolez.rolez.Parenthesized
 import ch.trick17.rolez.rolez.Parfor
+import ch.trick17.rolez.rolez.PrimitiveType
 import ch.trick17.rolez.rolez.Pure
 import ch.trick17.rolez.rolez.ReadOnly
 import ch.trick17.rolez.rolez.ReadWrite
@@ -21,22 +23,20 @@ import ch.trick17.rolez.rolez.RoleParamRef
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.Slicing
 import ch.trick17.rolez.rolez.Stmt
+import ch.trick17.rolez.rolez.Super
 import ch.trick17.rolez.rolez.The
+import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.TypeParamRef
 import ch.trick17.rolez.rolez.UnaryExpr
 import ch.trick17.rolez.rolez.VarRef
 import ch.trick17.rolez.rolez.WhileLoop
-import java.util.Map
-import java.util.Set
-import ch.trick17.rolez.rolez.This
-import ch.trick17.rolez.rolez.Super
+import ch.trick17.rolez.typesystem.RolezSystem
+import java.util.Collection
 import java.util.HashMap
 import java.util.HashSet
-import java.util.Collection
-import ch.trick17.rolez.rolez.Parenthesized
-import ch.trick17.rolez.typesystem.RolezSystem
+import java.util.Map
+import java.util.Set
 import javax.inject.Inject
-import ch.trick17.rolez.rolez.PrimitiveType
 
 import static extension ch.trick17.rolez.RolezExtensions.enclosingClass
 
@@ -46,18 +46,28 @@ class TPINodeBuilder {
 	
 	private ThisTPINode thisNode
 	private Map<String, LocalVarTPINode> varNodes
+	private Map<Integer, InferredParamTPINode> inferredParamNodes
 	private Set<String> paramNames
 	private Set<String> insideVarNames
+	private TPIResult parentResult
+	private String stepVar
 	
 	public new() {
 		this.thisNode = null
 		this.varNodes = new HashMap
+		this.inferredParamNodes = new HashMap
 		this.paramNames = new HashSet
 		this.insideVarNames = new HashSet
+		this.parentResult = null
+		this.stepVar = null
 	}
 	
-	public def Map<String, RootTPINode> createTPITrees(Stmt stmt, Collection<String> userDefinedParamNames) {
+	public def Map<String, RootTPINode> createTPITrees(Stmt stmt, Collection<String> userDefinedParamNames,
+		TPIResult parentResult, String stepVar
+	) {
 		this.paramNames.addAll(userDefinedParamNames)
+		this.parentResult = parentResult
+		this.stepVar = stepVar
 		
 		createNodes(stmt)
 		
@@ -68,6 +78,8 @@ class TPINodeBuilder {
 		this.thisNode = null
 		this.varNodes.clear()
 		this.paramNames.clear()
+		this.parentResult = null
+		this.stepVar = null
 		
 		result
 	}
@@ -178,6 +190,10 @@ class TPINodeBuilder {
 	}
 	
 	private dispatch def TPINode createNode(MemberAccess e, TPIRole role, boolean standalone) {
+    	val tpiidx = parentResult.paramIndex(e)
+    	if (tpiidx >= 0)
+    		return createInferredParamNode(e, tpiidx, parentResult.selectedParams.get(tpiidx), role, standalone)
+		
 		if (e.fieldAccess) {
 			val parent = createNode(e.target, TPIRole.READ_ONLY, false)
 			if (parent != null) {
@@ -218,6 +234,27 @@ class TPINodeBuilder {
 			else
 				null
 		}
+		else if (stepVar != null && StepVarArgMethodCallTPINode.isStepVarArgMethodCall(e, stepVar)) {
+			val thisParamRole = getTPIRoleFromType(e.method.thisParam.type)
+			val parent = createNode(e.target, thisParamRole, false)
+			if (parent != null) {
+				if (thisParamRole == TPIRole.READ_WRITE) {
+					parent.setStandalone()
+					return null
+				}
+				
+				val name = e.method.name
+				var node = parent.findChild(TPINodeType.STEP_VAR_ARG_METHOD_CALL, name)
+				if (node == null)
+					node = new StepVarArgMethodCallTPINode(parent, name, system.type(e).value, stepVar)
+				
+				node.setRole(role)
+				if (standalone)
+					node.setStandalone()
+				
+				node
+			}
+		}
 		else {
 			val thisParamRole = getTPIRoleFromType(e.method.thisParam.type)
 			createNode(e.target, thisParamRole, true)
@@ -237,6 +274,10 @@ class TPINodeBuilder {
 	}
 	
 	private dispatch def TPINode createNode(Slicing e, TPIRole role, boolean standalone) {
+    	val tpiidx = parentResult.paramIndex(e)
+    	if (tpiidx >= 0)
+    		return createInferredParamNode(e, tpiidx, parentResult.selectedParams.get(tpiidx), role, standalone)
+    	
 		val parent = createNode(e.target, TPIRole.READ_ONLY, false)
 		if (parent != null) {
 			val name = e.slice.name
@@ -255,13 +296,20 @@ class TPINodeBuilder {
 	}
 	
 	private dispatch def TPINode createNode(VarRef e, TPIRole role, boolean standalone) {
+    	val tpiidx = parentResult.paramIndex(e)
+    	if (tpiidx >= 0)
+    		return createInferredParamNode(e, tpiidx, parentResult.selectedParams.get(tpiidx), role, standalone)
+    	
 		val name = e.variable.name
 		if (this.paramNames.contains(name) || this.insideVarNames.contains(name))
 			return null
 		
 		var node = this.varNodes.get(name)
 		if (node == null) {
-			node = new LocalVarTPINode(name, system.type(e).value)
+			if (name == stepVar)
+				node = new StepVarTPINode(name, system.type(e).value)
+			else
+				node = new LocalVarTPINode(name, system.type(e).value)
 			this.varNodes.put(name, node)
 		}
 		
@@ -273,14 +321,22 @@ class TPINodeBuilder {
 	}
 	
 	private dispatch def TPINode createNode(This e, TPIRole role, boolean standalone) {
+    	val tpiidx = parentResult.paramIndex(e)
+    	if (tpiidx >= 0)
+    		return createInferredParamNode(e, tpiidx, parentResult.selectedParams.get(tpiidx), role, standalone)
+    		
 		createThisNode(e, role, standalone)
 	}
 	
 	private dispatch def TPINode createNode(Super e, TPIRole role, boolean standalone) {
-		createThisNode(e, role, standalone)
+    	val tpiidx = parentResult.paramIndex(e)
+    	if (tpiidx >= 0)
+    		return createInferredParamNode(e, tpiidx, parentResult.selectedParams.get(tpiidx), role, standalone)
+    	
+		createThisNode(e, role, standalone) //TODO: super method calls
 	}
 	
-	private def TPINode createThisNode(Expr e, TPIRole role, boolean standalone) {
+	private def ThisTPINode createThisNode(Expr e, TPIRole role, boolean standalone) {
 		if (this.thisNode == null)
 			this.thisNode = new ThisTPINode(system.type(e).value, e.enclosingClass)
 		
@@ -289,6 +345,22 @@ class TPINodeBuilder {
 			this.thisNode.setStandalone()
 		
 		this.thisNode
+	}
+	
+	private def InferredParamTPINode createInferredParamNode(Expr e, int index, TPINode param,
+		TPIRole role, boolean standalone
+	) {
+		var node = this.inferredParamNodes.get(index)
+		if (node == null) {
+			node = new InferredParamTPINode(index, param)
+			this.inferredParamNodes.put(index, node)
+		}
+		
+		node.setRole(role)
+		if (standalone)
+			node.setStandalone()
+		
+		node
 	}
 	
 	private static dispatch def TPIRole getTPIRoleFromType(PrimitiveType type) {

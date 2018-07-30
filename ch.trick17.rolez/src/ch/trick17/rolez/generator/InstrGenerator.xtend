@@ -48,11 +48,19 @@ import ch.trick17.rolez.rolez.UnaryExpr
 import ch.trick17.rolez.rolez.VarKind
 import ch.trick17.rolez.rolez.VarRef
 import ch.trick17.rolez.rolez.WhileLoop
+import ch.trick17.rolez.tpi.FieldAccessTPINode
+import ch.trick17.rolez.tpi.InferredParamTPINode
+import ch.trick17.rolez.tpi.LocalVarTPINode
+import ch.trick17.rolez.tpi.NoArgMethodCallTPINode
+import ch.trick17.rolez.tpi.SlicingTPINode
+import ch.trick17.rolez.tpi.TPINodeBuilder
+import ch.trick17.rolez.tpi.TPIResult
+import ch.trick17.rolez.tpi.TPIRole
+import ch.trick17.rolez.tpi.ThisTPINode
 import ch.trick17.rolez.typesystem.RolezSystem
 import ch.trick17.rolez.validation.JavaMapper
 import com.google.inject.Injector
 import java.util.ArrayList
-import java.util.HashSet
 import java.util.Map
 import java.util.regex.Pattern
 import javax.inject.Inject
@@ -66,6 +74,7 @@ import static ch.trick17.rolez.rolez.VarKind.*
 import static extension ch.trick17.rolez.RolezExtensions.*
 import static extension ch.trick17.rolez.generator.SafeJavaNames.*
 import static extension org.eclipse.xtext.util.Strings.convertToJavaString
+import ch.trick17.rolez.tpi.TPIProvider
 
 /**
  * Generates Java code for Rolez instructions (single or code blocks). Relies on
@@ -109,11 +118,7 @@ class InstrGenerator {
     }
     
     private def newGenerator(MethodKind mk, RoleAnalysis ra, ChildTasksAnalysis cta) {
-        new Generator(mk, ra, cta, newNodeBuilder()) => [injectMembers]
-    }
-    
-    private def newNodeBuilder() {
-        new TPINodeBuilder() => [injectMembers]
+        new Generator(mk, ra, cta) => [injectMembers]
     }
     
     /**
@@ -130,22 +135,21 @@ class InstrGenerator {
         @Inject RolezSystem system
         
         @Inject extension TypeGenerator
+    	@Inject extension TPIProvider
         
         val RoleAnalysis roleAnalysis
         val ChildTasksAnalysis childTasksAnalysis
         var MethodKind methodKind
-        val TPINodeBuilder nodeBuilder
         var Map<String, Integer> currentPam = emptyMap
         var int currentPidx = 0
         var int currentPlvl = 0
         var TPIResult currentTPI = new TPIResult()
         
         private new(MethodKind methodKind, RoleAnalysis roleAnalysis,
-                ChildTasksAnalysis childTasksAnalysis, TPINodeBuilder nodeBuilder) {
+                ChildTasksAnalysis childTasksAnalysis) {
             this.methodKind = methodKind
             this.roleAnalysis = roleAnalysis
             this.childTasksAnalysis = childTasksAnalysis
-            this.nodeBuilder = nodeBuilder
         }
         
         /* Stmt */
@@ -275,7 +279,7 @@ class InstrGenerator {
                 }
             }
             
-            val tpis = TPIResult.selectParameters(it, this.nodeBuilder)
+            val tpis = it.tpi
             val tpi1 = tpis.get(0)
             val tpi2 = tpis.get(1)
             

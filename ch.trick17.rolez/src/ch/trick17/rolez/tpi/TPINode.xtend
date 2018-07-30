@@ -1,19 +1,19 @@
-package ch.trick17.rolez.generator
+package ch.trick17.rolez.tpi
 
-import java.util.List
-import java.util.ArrayList
 import ch.trick17.rolez.rolez.Class
 import ch.trick17.rolez.rolez.Expr
-import ch.trick17.rolez.rolez.This
-import ch.trick17.rolez.rolez.Super
-import ch.trick17.rolez.rolez.VarRef
 import ch.trick17.rolez.rolez.MemberAccess
+import ch.trick17.rolez.rolez.Parenthesized
 import ch.trick17.rolez.rolez.Slicing
-import java.util.Map
+import ch.trick17.rolez.rolez.Super
+import ch.trick17.rolez.rolez.This
+import ch.trick17.rolez.rolez.Type
+import ch.trick17.rolez.rolez.VarRef
+import java.util.ArrayList
 import java.util.Collections
 import java.util.HashMap
-import ch.trick17.rolez.rolez.Parenthesized
-import ch.trick17.rolez.rolez.Type
+import java.util.List
+import java.util.Map
 
 abstract class TPINode {
 	
@@ -23,6 +23,7 @@ abstract class TPINode {
 	private val Map<String, FieldAccessTPINode> fieldAccesses
 	private val Map<String, NoArgMethodCallTPINode> noArgMethodCalls
 	private val Map<String, SlicingTPINode> slicings
+	private val Map<String, StepVarArgMethodCallTPINode> stepVarArgMethodCalls
 	private var TPIRole role = TPIRole.PURE
 	private var TPIRole childRole = TPIRole.PURE
 	private var boolean standalone = false
@@ -32,6 +33,7 @@ abstract class TPINode {
 		this.fieldAccesses = new HashMap()
 		this.noArgMethodCalls = new HashMap()
 		this.slicings = new HashMap()
+		this.stepVarArgMethodCalls = new HashMap()
 		this.expressionType = expressionType
 	}
 	
@@ -50,6 +52,11 @@ abstract class TPINode {
 		this.slicings.put(child.id(), child)
 	}
 	
+	protected dispatch def void addChild(StepVarArgMethodCallTPINode child) {
+		this.children.add(child)
+		this.stepVarArgMethodCalls.put(child.id(), child)
+	}
+	
 	def ChildTPINode findChild(TPINodeType nodeType, String name) {
 		switch (nodeType) {
 			case TPINodeType.FIELD_ACCESS:
@@ -58,6 +65,8 @@ abstract class TPINode {
 				this.noArgMethodCalls.get(name)
 			case TPINodeType.SLICING:
 				this.slicings.get(name)
+			case TPINodeType.STEP_VAR_ARG_METHOD_CALL:
+				this.stepVarArgMethodCalls.get(name)
 			default:
 				null
 		}
@@ -162,9 +171,10 @@ class FieldAccessTPINode extends ChildTPINode {
 	override matches(Expr expr) {
 		if (expr instanceof Parenthesized)
 			matches(expr.expr)
-		if (expr instanceof MemberAccess)
+		else if (expr instanceof MemberAccess)
 			expr.fieldAccess && expr.field.name.equals(name) && parent.matches(expr.target)
-		false
+		else
+			false
 	}
 	
 	override nodeType() {
@@ -186,9 +196,10 @@ class NoArgMethodCallTPINode extends ChildTPINode {
 	override matches(Expr expr) {
 		if (expr instanceof Parenthesized)
 			matches(expr.expr)
-		if (expr instanceof MemberAccess)
+		else if (expr instanceof MemberAccess)
 			expr.methodInvoke && expr.method.name.equals(name) && expr.args.empty && parent.matches(expr.target)
-		false
+		else
+			false
 	}
 	
 	override nodeType() {
@@ -210,9 +221,10 @@ class SlicingTPINode extends ChildTPINode {
 	override matches(Expr expr) {
 		if (expr instanceof Parenthesized)
 			matches(expr.expr)
-		if (expr instanceof Slicing)
+		else if (expr instanceof Slicing)
 			expr.slice.name.equals(name) && parent.matches(expr.target)
-		false
+		else
+			false
 	}
 	
 	override nodeType() {
@@ -221,6 +233,43 @@ class SlicingTPINode extends ChildTPINode {
 	
 	override toString() {
 		parent.toString() + " slice " + this.name
+	}
+	
+}
+
+class StepVarArgMethodCallTPINode extends ChildTPINode {
+	
+	public static def boolean isStepVarArgMethodCall(MemberAccess expr, String stepVar) {
+		if (expr.args.length == 1) {
+			val arg = expr.args.get(0)
+			if (arg instanceof VarRef)
+				return arg.variable.name == stepVar
+		}
+		false
+	}
+	
+	public val String stepVar
+	
+	new(TPINode parent, String methodName, Type expressionType, String stepVar) {
+		super(parent, methodName, expressionType)
+		this.stepVar = stepVar
+	}
+	
+	override matches(Expr expr) {
+		if (expr instanceof Parenthesized)
+			matches(expr.expr)
+		else if (expr instanceof MemberAccess)
+			expr.methodInvoke && expr.method.name.equals(name) && parent.matches(expr.target) && isStepVarArgMethodCall(expr, stepVar)
+		else
+			false
+	}
+	
+	override nodeType() {
+		TPINodeType.STEP_VAR_ARG_METHOD_CALL
+	}
+	
+	override toString() {
+		parent.toString() + "." + this.name + "(" + stepVar + ")"
 	}
 	
 }
@@ -286,7 +335,8 @@ class LocalVarTPINode extends RootTPINode {
 	override matches(Expr expr) {
 		if (expr instanceof Parenthesized)
 			matches(expr.expr)
-		expr instanceof VarRef && (expr as VarRef).variable.name.equals(this.name)
+		else
+			expr instanceof VarRef && (expr as VarRef).variable.name.equals(this.name)
 	}
 	
 	override nodeType() {
@@ -295,6 +345,18 @@ class LocalVarTPINode extends RootTPINode {
 	
 	override id() {
 		this.name
+	}
+	
+}
+
+class StepVarTPINode extends LocalVarTPINode {
+	
+	new(String name, Type expressionType) {
+		super(name, expressionType)
+	}
+	
+	override nodeType() {
+		TPINodeType.STEP_VAR
 	}
 	
 }
@@ -311,7 +373,8 @@ class ThisTPINode extends RootTPINode {
 	override matches(Expr expr) {
 		if (expr instanceof Parenthesized)
 			matches(expr.expr)
-		expr instanceof This || expr instanceof Super
+		else
+			expr instanceof This || expr instanceof Super
 	}
 	
 	override nodeType() {
@@ -325,7 +388,7 @@ class ThisTPINode extends RootTPINode {
 }
 
 enum TPINodeType {
-	FIELD_ACCESS, NO_ARG_METHOD_CALL, SLICING, LOCAL_VAR, THIS, INFERRED_PARAM
+	FIELD_ACCESS, NO_ARG_METHOD_CALL, SLICING, LOCAL_VAR, STEP_VAR, STEP_VAR_ARG_METHOD_CALL, THIS, INFERRED_PARAM
 }
 
 enum TPIRole {

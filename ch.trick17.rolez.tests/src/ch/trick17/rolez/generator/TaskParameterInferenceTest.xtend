@@ -1,11 +1,13 @@
 package ch.trick17.rolez.generator
 
 import ch.trick17.rolez.TestUtils
+import ch.trick17.rolez.rolez.Block
 import ch.trick17.rolez.rolez.ParallelStmt
 import ch.trick17.rolez.rolez.Parfor
 import ch.trick17.rolez.rolez.Program
 import ch.trick17.rolez.tests.RolezInjectorProvider
-import com.google.inject.Injector
+import ch.trick17.rolez.tpi.TPIException
+import ch.trick17.rolez.tpi.TPIProvider
 import java.util.Collection
 import java.util.HashSet
 import javax.inject.Inject
@@ -16,7 +18,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 import static extension org.junit.Assert.*
-import ch.trick17.rolez.rolez.Block
 
 @RunWith(XtextRunner)
 @InjectWith(RolezInjectorProvider)
@@ -24,8 +25,7 @@ class TaskParameterInferenceTest {
     
     @Inject extension ParseHelper<Program>
     @Inject extension TestUtils
-    
-    @Inject extension Injector
+    @Inject extension TPIProvider
     
     @Test def testEmptyParallel() {
     	val res = testResources
@@ -326,7 +326,7 @@ class TaskParameterInferenceTest {
             parfor(var i = 0; i < 10; i++) {
             	objD.field = 3;
             }
-        '''.withFrameD1, testResources).testParallelStmtNoSolution()
+        '''.withFrameD1, testResources).testParforStmtNoSolution()
     }
     
     @Test def testParforNAM1() {
@@ -351,6 +351,22 @@ class TaskParameterInferenceTest {
             	(objE slice a).fieldA = 5;
             }
         '''.withFrameE1, testResources).testParforStmtNoSolution()
+    }
+    
+    @Test def testParforStepVar1() {
+        parse('''
+            parfor(var i = 0; i < 10; i++) {
+            	objF.array.get(i).mRO();
+            }
+        '''.withFrameF1, testResources).testParforStmt(#["objF"])
+    }
+    
+    @Test def testParforStepVar2() {
+        parse('''
+            parfor(var i = 0; i < 10; i++) {
+            	objF.array.get(i).mRW();
+            }
+        '''.withFrameF1, testResources).testParforStmt(#["objF.array.get(i)"])
     }
     
     /* Test infrastructure */
@@ -418,46 +434,61 @@ class TaskParameterInferenceTest {
         }
     '''
     
+    /** Wraps the given Rolez code in a m(F) method and in a class. */
+    private def withFrameF1(CharSequence it) '''
+        class M {
+            def readwrite m(objF: readwrite F): {
+                «it»
+            }
+        }
+    '''
+    
     private def testParallelStmt(Program p, Collection<String> params1, Collection<String> params2) {
-    	//TODO: better exception handling
-    	val tpi = TPIResult.selectParameters(findParallelStmt(p), newNodeBuilder())
-    	
-    	val tpiSet1 = new HashSet(tpi.get(0).selectedParams.map[toString])
-    	val tpiSet2 = new HashSet(tpi.get(1).selectedParams.map[toString])
-    	
-    	val expectedSet1 = new HashSet(params1)
-    	val expectedSet2 = new HashSet(params2)
-    	
-    	expectedSet1.assertEquals(tpiSet1)
-    	expectedSet2.assertEquals(tpiSet2)
+    	try {
+	    	val tpi = findParallelStmt(p).tpi
+	    	
+	    	val tpiSet1 = new HashSet(tpi.get(0).selectedParams.map[toString])
+	    	val tpiSet2 = new HashSet(tpi.get(1).selectedParams.map[toString])
+	    	
+	    	val expectedSet1 = new HashSet(params1)
+	    	val expectedSet2 = new HashSet(params2)
+	    	
+	    	expectedSet1.assertEquals(tpiSet1)
+	    	expectedSet2.assertEquals(tpiSet2)
+    	}
+    	catch (TPIException e) {
+    		fail()
+    	}
     }
     
     private def testParallelStmtNoSolution(Program p) {
     	try {
-    		TPIResult.selectParameters(findParallelStmt(p), newNodeBuilder())
+    		findParallelStmt(p).tpi
     	}
-    	catch (Exception e) {
-    		//TODO: better exception handling
+    	catch (TPIException e) {
     		return
     	}
     	fail()
     }
     
     private def testParforStmt(Program p, Collection<String> params) {
-    	//TODO: better exception handling
-    	val tpi = TPIResult.selectParameters(findParforStmt(p), newNodeBuilder())
-    	
-    	val tpiSet = new HashSet(tpi.selectedParams.map[toString])
-    	val expectedSet = new HashSet(params)
-    	expectedSet.assertEquals(tpiSet)
+    	try {
+	    	val tpi = findParforStmt(p).tpi
+	    	
+	    	val tpiSet = new HashSet(tpi.selectedParams.map[toString])
+	    	val expectedSet = new HashSet(params)
+	    	expectedSet.assertEquals(tpiSet)
+    	}
+    	catch (TPIException e) {
+    		fail()
+    	}
     }
     
     private def testParforStmtNoSolution(Program p) {
     	try {
-    		TPIResult.selectParameters(findParforStmt(p), newNodeBuilder())
+    		findParforStmt(p).tpi
     	}
-    	catch (Exception e) {
-    		//TODO: better exception handling
+    	catch (TPIException e) {
     		return
     	}
     	fail()
@@ -487,10 +518,6 @@ class TaskParameterInferenceTest {
     			return stmt;
     	}
     	return null;
-    }
-    
-    private def newNodeBuilder() {
-        new TPINodeBuilder() => [injectMembers]
     }
     
     private def testResources() {
@@ -543,6 +570,9 @@ class TaskParameterInferenceTest {
     		class E extends A {
     			slice a { var fieldA: int }
     			slice b { var fieldB: int }
+    		}
+    		class F extends A {
+    			var array: readwrite Slice[readwrite A]
     		}
         ''')
     }
