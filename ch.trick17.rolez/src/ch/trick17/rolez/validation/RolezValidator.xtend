@@ -63,6 +63,8 @@ import static ch.trick17.rolez.rolez.VarKind.*
 
 import static extension ch.trick17.rolez.RolezExtensions.*
 import static extension ch.trick17.rolez.RolezUtils.*
+import ch.trick17.rolez.tpi.TPIException
+import ch.trick17.rolez.tpi.TPIProvider
 
 class RolezValidator extends RolezSystemValidator {
 
@@ -130,11 +132,12 @@ class RolezValidator extends RolezSystemValidator {
     public static val INCORRECT_MAPPED_METHOD = "incorrect mapped method"
     public static val INCORRECT_MAPPED_TASK = "incorrect mapped task"
     public static val INCORRECT_MAPPED_CONSTR = "incorrect mapped constructor"
-    
     public static val INCORRECT_PAR_STMT_CONTENT = "incorrect parallel statement content"
+    public static val NO_TPI = "task parameter inference not possible"
     
     @Inject extension RolezFactory
     @Inject extension CfgProvider
+    @Inject extension TPIProvider
     @Inject extension JavaMapper javaMapper
     @Inject ValFieldsInitializedAnalysis.Provider valFieldsAnalysis
     @Inject RolezSystem system
@@ -797,6 +800,55 @@ class RolezValidator extends RolezSystemValidator {
             error("Only task calls are allowed in parfor statements (this isn't a task)", null, INCORRECT_PAR_STMT_CONTENT)
             return;
         }*/
+    }
+    
+    @Check
+    def checkParallelStatementTPI(ParallelStmt it){
+        /*if (!(part1 instanceof ExprStmt && part2 instanceof ExprStmt)) {
+            error("Only task calls are allowed in parallel statements (this isn't an expr stmt)", null, INCORRECT_PAR_STMT_CONTENT)
+            return;
+        }
+        val es1 = part1 as ExprStmt
+        val es2 = part2 as ExprStmt
+        if (!(es1.expr instanceof MemberAccess && es2.expr instanceof MemberAccess)) {
+            error("Only task calls are allowed in parallel statements (this isn't a member access)", null, INCORRECT_PAR_STMT_CONTENT)
+            return;
+        }
+        
+        val ma1 = es1.expr as MemberAccess
+        val ma2 = es2.expr as MemberAccess
+        
+        if (!ma1.isMethodInvoke || !ma2.isMethodInvoke) {
+            error("Only task calls are allowed in parallel statements (this isn't a task/method invocation)", null, INCORRECT_PAR_STMT_CONTENT)
+            return;
+        }
+        
+        if (!ma1.getMethod.declaredTask || !ma2.getMethod.declaredTask) {
+            error("Only task calls are allowed in parallel statements (this isn't a task)", null, INCORRECT_PAR_STMT_CONTENT)
+            return;
+        }*/
+    }
+    
+    @Check
+    def checkParallelStmtTPI(ParallelStmt p){
+        try {
+        	p.tpi()
+        }
+        catch (TPIException e) {
+        	error("Couldn't find a solution for task parameter inference",
+                    p, null, NO_TPI)
+        }
+    }
+    
+    @Check
+    def checkParforTPI(Parfor p){
+        try {
+        	p.tpi()
+        }
+        catch (TPIException e) {
+        	error("Couldn't find a solution for task parameter inference",
+                    p, null, NO_TPI)
+        }
     }
     
     // TODO: Introduce final classes and make array, slice, etc. final, so that they cannot be 
