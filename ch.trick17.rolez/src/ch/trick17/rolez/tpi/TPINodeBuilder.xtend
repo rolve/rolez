@@ -39,6 +39,8 @@ import java.util.Set
 import javax.inject.Inject
 
 import static extension ch.trick17.rolez.RolezExtensions.enclosingClass
+import ch.trick17.rolez.rolez.ArithmeticUnaryExpr
+import ch.trick17.rolez.rolez.OpArithmeticUnary
 
 class TPINodeBuilder {
 	
@@ -177,6 +179,16 @@ class TPINodeBuilder {
 	private dispatch def void createNodesE(The e) { }
 	
 	private dispatch def void createNodesE(UnaryExpr e) {
+		if (e instanceof ArithmeticUnaryExpr) {
+			if (e.op == OpArithmeticUnary.POST_DECREMENT ||
+				e.op == OpArithmeticUnary.POST_INCREMENT ||
+				e.op == OpArithmeticUnary.PRE_DECREMENT ||
+				e.op == OpArithmeticUnary.PRE_INCREMENT
+			) {
+				createNode(e.expr, TPIRole.READ_WRITE, true)
+				return	
+			}
+		}
 		createNodesE(e.expr)
 	}
 	

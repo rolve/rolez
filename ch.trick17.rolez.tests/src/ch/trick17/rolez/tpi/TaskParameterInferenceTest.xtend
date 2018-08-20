@@ -1,4 +1,4 @@
-package ch.trick17.rolez.generator
+package ch.trick17.rolez.tpi
 
 import ch.trick17.rolez.TestUtils
 import ch.trick17.rolez.rolez.Block
