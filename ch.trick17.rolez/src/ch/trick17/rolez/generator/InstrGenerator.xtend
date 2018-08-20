@@ -1,5 +1,6 @@
 package ch.trick17.rolez.generator
 
+import ch.trick17.rolez.Config
 import ch.trick17.rolez.RolezUtils
 import ch.trick17.rolez.rolez.Argumented
 import ch.trick17.rolez.rolez.ArithmeticUnaryExpr
@@ -32,6 +33,7 @@ import ch.trick17.rolez.rolez.Parfor
 import ch.trick17.rolez.rolez.PrimitiveType
 import ch.trick17.rolez.rolez.ReadOnly
 import ch.trick17.rolez.rolez.ReadWrite
+import ch.trick17.rolez.rolez.Ref
 import ch.trick17.rolez.rolez.ReturnExpr
 import ch.trick17.rolez.rolez.ReturnNothing
 import ch.trick17.rolez.rolez.Role
@@ -42,11 +44,9 @@ import ch.trick17.rolez.rolez.Stmt
 import ch.trick17.rolez.rolez.StringLiteral
 import ch.trick17.rolez.rolez.Super
 import ch.trick17.rolez.rolez.SuperConstrCall
-import ch.trick17.rolez.rolez.The
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.UnaryExpr
 import ch.trick17.rolez.rolez.VarKind
-import ch.trick17.rolez.rolez.VarRef
 import ch.trick17.rolez.rolez.WhileLoop
 import ch.trick17.rolez.tpi.FieldAccessTPINode
 import ch.trick17.rolez.tpi.InferredParamTPINode
@@ -129,6 +129,7 @@ class InstrGenerator {
      */
     private static class Generator {
         
+        @Inject extension Config
         @Inject extension RolezFactory
         @Inject extension JavaMapper
         @Inject RolezUtils utils
@@ -633,10 +634,7 @@ class InstrGenerator {
         
         private def generateMethodInvoke(MemberAccess it) {
             if(method.isMapped) {
-                // Shorter and more efficient code for access to mapped singletons, like System, Math
-                val genTarget = 
-                    if(target instanceof The) (target as The).classRef.clazz.jvmClass.getQualifiedName('.')
-                    else target.genGuardedMapped(method.original.thisParam.type.role.erased, true)
+                val genTarget = target.genGuardedMapped(method.original.thisParam.type.role.erased, true)
                 val genInvoke = '''«genTarget».«method.safeName»(«genArgs»)'''
                 if(method.type.isArrayType && method.jvmMethod.returnType.type instanceof JvmArrayType) {
                     val componentType = ((method.type as RoleType).base as GenericClassRef).typeArg
@@ -710,31 +708,37 @@ class InstrGenerator {
         }
         
         private def dispatch CharSequence generate(This it)  {
-        	val tpiidx = currentTPI.paramIndex(it)
-        	if (tpiidx >= 0)
-        		return tpiParamName(tpiidx)
-        	
+            val tpiidx = currentTPI.paramIndex(it)
+            if (tpiidx >= 0)
+                return tpiParamName(tpiidx)
+            
             if(methodKind == TASK) '''«enclosingClass.safeSimpleName».this'''
             else '''this'''
         }
         
         private def dispatch CharSequence generate(Super it)  {
-        	val tpiidx = currentTPI.paramIndex(it)
-        	if (tpiidx >= 0)
-        		return tpiParamName(tpiidx)
-        	
+            val tpiidx = currentTPI.paramIndex(it)
+            if (tpiidx >= 0)
+                return tpiParamName(tpiidx)
+            
             if(methodKind == TASK) '''«enclosingClass.safeSimpleName».super'''
             else '''super'''
         }
-        
-        private def dispatch CharSequence generate(VarRef it) {
-        	val tpiidx = currentTPI.paramIndex(it)
-        	if (tpiidx >= 0)
-        		return tpiParamName(tpiidx)
-        	
-        	variable.safeName
-        }
-        
+
+        private def dispatch CharSequence generate(Ref it) {
+            if(isVarRef) {
+                val tpiidx = currentTPI.paramIndex(it)
+                if (tpiidx >= 0)
+                    return tpiParamName(tpiidx)
+                
+                variable.safeName
+            }
+            else if(eContainer instanceof MemberAccess &&
+                    it == (eContainer as MemberAccess).target && clazz.isMapped)
+                clazz.jvmClass.qualifiedName // more efficient access to static members
+            else
+                '''«toClassRef.generate».INSTANCE'''
+        }        
         private def dispatch CharSequence generate(New it) {
             val generatedArgs = 
                 if(classRef.clazz.isArrayClass || classRef.clazz.isVectorBuilderClass) {
@@ -750,14 +754,6 @@ class InstrGenerator {
         }
         
         private static val bracketPattern = Pattern.compile("\\](\\[\\])*$")
-        
-        private def dispatch CharSequence generate(The it) {
-            if(eContainer instanceof MemberAccess && it == (eContainer as MemberAccess).target
-                    && classRef.clazz.isMapped)
-                classRef.clazz.jvmClass.qualifiedName // more efficient access to static members
-            else
-                '''«classRef.generate».INSTANCE'''
-        }
         
         private def dispatch CharSequence generate(Parenthesized it) { expr.generate }
         
@@ -788,10 +784,14 @@ class InstrGenerator {
             val needsGuard = childTasksAnalysis.childTasksMayExist(it)
                     && !system.subroleSucceeded(roleAnalysis.dynamicRole(it), requiredRole)
             if(utils.isGuarded(type) && needsGuard) {
-                val slice = if((type as RoleType).isSliced) "Slice" else ""
+                val suffix =
+                    if((type as RoleType).isSliced) "Slice"
+                    else if((type as RoleType).base.clazz.isObjectClass) "IfNeeded"
+                    else ""
+                val task = if(taskParamEnabled) ", $task" else ""
                 switch(requiredRole) {
-                    ReadWrite: "guardReadWrite" + slice + "(" + generate + ", $task)"
-                    ReadOnly : "guardReadOnly"  + slice + "(" + generate + ", $task)"
+                    ReadWrite: "guardReadWrite" + suffix + "(" + generate + task + ")"
+                    ReadOnly : "guardReadOnly"  + suffix + "(" + generate + task + ")"
                     default  : throw new AssertionError("unexpected role: " + requiredRole)
                 }
             }

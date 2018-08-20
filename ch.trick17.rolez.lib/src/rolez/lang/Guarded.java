@@ -277,6 +277,21 @@ public abstract class Guarded {
         return slice;
     }
     
+    /* The following two are required for expressions of type java.lang.Object, for which it is only
+     * known at runtime whether guarding is needed */
+    
+    public static <G> G guardReadOnlyIfNeeded(G guarded, long taskBits) {
+        if(guarded instanceof Guarded)
+            guardReadOnly((Guarded) guarded, taskBits);
+        return guarded;
+    }
+    
+    public static <G> G guardReadWriteIfNeeded(G guarded, long taskBits) {
+        if(guarded instanceof Guarded)
+            guardReadWrite((Guarded) guarded, taskBits);
+        return guarded;
+    }
+    
     private boolean mayRead(long taskBits) {
         return readerBits.get() != 0 ||
                 ownerBits == taskBits &&

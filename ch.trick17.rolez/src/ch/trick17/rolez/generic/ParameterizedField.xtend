@@ -12,7 +12,7 @@ import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.EStructuralFeature
 import org.eclipse.xtext.common.types.JvmField
 
-import static ch.trick17.rolez.rolez.RolezPackage.Literals.TYPED__TYPE
+import static ch.trick17.rolez.rolez.RolezPackage.Literals.TYPED__RAW_TYPE
 
 package class ParameterizedField extends ParameterizedEObject<Field> implements Field {
     
@@ -23,20 +23,21 @@ package class ParameterizedField extends ParameterizedEObject<Field> implements 
     override getJvmField()    { eObject.jvmField }
     override getKind()        { eObject.kind }
     override getName()        { eObject.name }
-    override getType()        { eObject.type.parameterized }
+    override getRawType()     { eObject.rawType }
     override getInitializer() { eObject.initializer }
     
     override isMapped()         { eObject.isMapped }
     override getQualifiedName() { eObject.qualifiedName }
+    override getType()          { eObject.type.parameterized }
     
     override eGet(EStructuralFeature feature) {
-        if(feature === TYPED__TYPE) type
+        if(feature === TYPED__RAW_TYPE) rawType
         else eObject.eGet(feature)
     }
     
     override setJvmField(JvmField            value) { throw new AssertionError }
     override setKind(VarKind                 value) { throw new AssertionError }
     override setName(String                  value) { throw new AssertionError }
-    override setType(Type                    value) { throw new AssertionError }
+    override setRawType(Type                 value) { throw new AssertionError }
     override setInitializer(FieldInitializer value) { throw new AssertionError }
 }

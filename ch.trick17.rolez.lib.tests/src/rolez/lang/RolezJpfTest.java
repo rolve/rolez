@@ -7,20 +7,24 @@ import org.junit.internal.AssumptionViolatedException;
 
 import ch.trick17.simplejpf.test.JpfParallelismTest;
 
-public class TaskBasedJpfTest extends JpfParallelismTest {
+public class RolezJpfTest extends JpfParallelismTest {
     
     final TaskSystem s;
     final VerifyMode mode;
     
-    public TaskBasedJpfTest(TaskSystem s, VerifyMode mode) {
+    public RolezJpfTest(TaskSystem s, VerifyMode mode) {
         this.s = s;
         this.mode = mode;
     }
     
     @Override
     protected Map<String, Object> additionalJpfProperties() {
-        final Map<String, Object> props = new HashMap<>();
-        props.put("vm.por", "false");
+        Map<String, Object> props = new HashMap<>();
+        // some properties to speedup JPF
+        props.put("vm.shared.skip_static_finals", "true");
+        props.put("vm.shared.skip_constructed_finals", "true");
+        props.put("vm.gc", "false");
+        
         // props.put("report.console.property_violation", "error,snapshot,trace");
         // props.put("sourcepath", "src" + pathSeparator + "../ch.trick17.rolez.lib/src");
         return props;

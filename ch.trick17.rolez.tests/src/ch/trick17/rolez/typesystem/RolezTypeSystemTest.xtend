@@ -122,9 +122,19 @@ class RolezTypeSystemTest {
         ''').assertError(MEMBER_ACCESS, AMEMBERACCESS, "assign")
         
         parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            object A
+            class App {
+                task pure main: {
+                    A = null;
+                }
+            }
+        ''').assertError(REF, null, "assign", "class")
+        
+        parse('''
             val x: int = 5;
             x = 5;
-        '''.withFrame).assertError(VAR_REF, AVARREF, "assign", "value")
+        '''.withFrame).assertError(REF, null, "assign", "value")
         
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
@@ -146,7 +156,7 @@ class RolezTypeSystemTest {
             var i: int = 0;
             var s: short;
             s = i;
-        '''.withFrame).assertError(VAR_REF, SUBTYPEEXPR, "short", "int")
+        '''.withFrame).assertError(REF, SUBTYPEEXPR, "short", "int")
         parse('''
             var i: int;
             i /= true;
@@ -423,7 +433,7 @@ class RolezTypeSystemTest {
     
     @Test def testTArithmeticUnaryExprNotAssignable() {
         parse("1++;".withFrame).assertError(INT_LITERAL, AEXPR, "assign")
-        parse("val i = 1; i--;".withFrame).assertError(VAR_REF, AVARREF, "assign")
+        parse("val i = 1; i--;".withFrame).assertError(REF, null, "assign")
         parse("var i = 1; --(++i);".withFrame).assertError(PARENTHESIZED, AEXPR, "assign")
     }
     
@@ -683,8 +693,7 @@ class RolezTypeSystemTest {
                     a.x;
                 }
             }
-        ''').assertError(VAR_REF, null,
-                "Role", "mismatch", "field", "pure")
+        ''').assertError(REF, null, "Role", "mismatch", "field", "pure")
     }
     
     /* More member access tests in RolezLinkingTest */
@@ -981,7 +990,7 @@ class RolezTypeSystemTest {
         ''').findNormalClass("B").constrs.head.lastExpr.type.assertRoleType(ReadWrite, "A")
     }
     
-    @Test def testTVarRef() {
+    @Test def testTRefVar() {
         parse('''
             val i = 5;
             i;
@@ -999,6 +1008,16 @@ class RolezTypeSystemTest {
             val foo: readonly A = new A;
             foo;
         '''.withFrame).task.lastExpr.type.assertRoleType(ReadOnly, "A")
+    }
+    
+    @Test def testTRefSingleton() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            object A
+            class App {
+                task pure main: { A; }
+            }
+        ''').task.lastExpr.type.assertRoleType(ReadOnly, "A")
     }
     
     /* More "new" tests in RolezLinkingTest */
@@ -1073,16 +1092,6 @@ class RolezTypeSystemTest {
                 typeArg.assertRoleType(ReadOnly, stringClassName)
             ]
         ]
-    }
-    
-    @Test def testTThe() {
-        parse('''
-            class rolez.lang.Object mapped to java.lang.Object
-            object A
-            class App {
-                task pure main: { the A; }
-            }
-        ''').task.lastExpr.type.assertRoleType(ReadOnly, "A")
     }
     
     @Test def testTParenthesized() {

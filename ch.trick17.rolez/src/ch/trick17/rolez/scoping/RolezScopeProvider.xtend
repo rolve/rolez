@@ -9,11 +9,11 @@ import ch.trick17.rolez.rolez.MemberAccess
 import ch.trick17.rolez.rolez.Method
 import ch.trick17.rolez.rolez.New
 import ch.trick17.rolez.rolez.NormalClass
+import ch.trick17.rolez.rolez.Ref
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
 import ch.trick17.rolez.rolez.Slicing
 import ch.trick17.rolez.rolez.SuperConstrCall
-import ch.trick17.rolez.rolez.VarRef
 import ch.trick17.rolez.typesystem.RolezSystem
 import ch.trick17.rolez.validation.JavaMapper
 import ch.trick17.rolez.validation.RolezValidator
@@ -213,8 +213,8 @@ class RolezScopeProvider extends AbstractDeclarativeScopeProvider {
         scopeFor(candidates, [QualifiedName.create("mapped")], IScope.NULLSCOPE)
     }
     
-    def IScope scope_VarRef_variable(VarRef it, EReference eRef) {
-        scopeFor(varsAbove(eContainer, it))
+    def IScope scope_Ref_referee(Ref it, EReference eRef) {
+        scopeFor(varsAbove(eContainer, it), delegateGetScope(enclosingClass, eRef))
     }
     
     /**

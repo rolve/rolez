@@ -5,7 +5,7 @@ object Pi {
         val n = 1000000000;
         val cores = 4;
         
-        val tasks = new Array[pure Task[int]](cores);
+        val tasks = new Array[Task[int]](cores);
         for(var i = 0; i < cores; i++)
             tasks.set(i, this start simulate(n/cores));
         
@@ -13,13 +13,13 @@ object Pi {
         for(var i = 0; i < cores; i++)
             totalHits += tasks.get(i).get;
         
-        the System.out.println("π = " + totalHits / (0.25 * n));
+        System.out.println("π = " + totalHits / (0.25 * n));
     }
     
     task pure simulate(n: int): int {
         val random = new Random;
         var hits = 0;
-        for(var i = 0; i < n ; i++) {
+        for(var i = 0; i < n; i++) {
             val x = random.nextDouble;              
             val y = random.nextDouble;
             if(x*x + y*y <= 1)

@@ -15,7 +15,7 @@ public class GuardedSlice<A> extends Guarded {
     public final A data;
     public final SliceRange range;
     
-    /* References to all slices that can at least one index in common. When a slice changes it role,
+    /* References to all slices that have at least one index in common. When a slice changes it role,
      * all overlapping slices change their role too. */
     final Set<GuardedSlice<A>> overlappingSlices = newSetFromMap(
             new WeakHashMap<GuardedSlice<A>, java.lang.Boolean>());

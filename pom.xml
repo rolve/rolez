@@ -7,12 +7,12 @@
     <packaging>pom</packaging>
 
     <properties>
-        <tychoVersion>0.23.1</tychoVersion>
+        <tychoVersion>1.1.0</tychoVersion>
         <xtextVersion>2.10.0</xtextVersion>
         <xsemanticsVersion>1.9.0</xsemanticsVersion>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.7</maven.compiler.source>
-        <maven.compiler.target>1.7</maven.compiler.target>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
         <xtendOutputDir>${basedir}/xtend-gen</xtendOutputDir>
     </properties>
     <modules>
@@ -26,6 +26,7 @@
         <module>ch.trick17.rolez.ui.tests</module>
         <module>ch.trick17.rolez.repository</module>
         <module>ch.trick17.rolez.sdk</module>
+        <module>rolez-parent</module>
     </modules>
     <build>
         <plugins>
@@ -112,7 +113,7 @@
                                     <pluginExecutionFilter>
                                         <groupId>org.eclipse.tycho</groupId>
                                         <artifactId>tycho-compiler-plugin</artifactId>
-                                        <versionRange>[0.23.1,)</versionRange>
+                                        <versionRange>[1.1.0,)</versionRange>
                                         <goals>
                                             <goal>compile</goal>
                                         </goals>
@@ -125,7 +126,7 @@
                                     <pluginExecutionFilter>
                                         <groupId>org.eclipse.tycho</groupId>
                                         <artifactId>tycho-packaging-plugin</artifactId>
-                                        <versionRange>[0.23.1,)</versionRange>
+                                        <versionRange>[1.1.0,)</versionRange>
                                         <goals>
                                             <goal>build-qualifier</goal>
                                             <goal>validate-id</goal>

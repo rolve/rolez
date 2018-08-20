@@ -18,15 +18,17 @@ package class ParameterizedGenericClassRef extends ParameterizedEObject<GenericC
         super(eObject, eContainer, typeArgs, roleArgs)
     }
     
-    override getClazz()   { eObject.clazz.parameterized }
+    override getClazz()      { eObject.clazz.parameterized }
+    override getRawTypeArg() { eObject.rawTypeArg }
+    
     override getTypeArg() { eObject.typeArg.parameterized }
     
     override eGet(EStructuralFeature feature) {
         if(feature === GENERIC_CLASS_REF__CLAZZ) clazz
-        else if(feature === GENERIC_CLASS_REF__TYPE_ARG) typeArg
+        else if(feature === GENERIC_CLASS_REF__RAW_TYPE_ARG) typeArg
         else throw new AssertionError
     }
     
     override setClazz(NormalClass value) { throw new AssertionError }
-    override setTypeArg(     Type value) { throw new AssertionError }
+    override setRawTypeArg(  Type value) { throw new AssertionError }
 }

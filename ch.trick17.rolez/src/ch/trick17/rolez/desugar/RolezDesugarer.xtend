@@ -4,6 +4,7 @@ import ch.trick17.rolez.rolez.Class
 import ch.trick17.rolez.rolez.Constr
 import ch.trick17.rolez.rolez.NormalClass
 import ch.trick17.rolez.rolez.RoleParam
+import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
 import ch.trick17.rolez.rolez.Super
 import ch.trick17.rolez.rolez.SuperConstrCall
@@ -18,9 +19,9 @@ import static ch.trick17.rolez.rolez.RolezPackage.Literals.*
 import static extension ch.trick17.rolez.RolezExtensions.*
 
 class RolezDesugarer extends AbstractDeclarativeDesugarer {
-
+    
     @Inject extension RolezFactory
-
+    
     @Rule
     def void addDefaultConstr(NormalClass it) {
         if(constrs.isEmpty && (!isMapped || jvmClass.hasNoArgConstr)) {
@@ -63,7 +64,7 @@ class RolezDesugarer extends AbstractDeclarativeDesugarer {
     def addThisParam(Constr it) {
         if(thisParam === null)
             thisParam = createThisParam => [
-                type = createRoleType => [
+                rawType = createRoleType => [
                     role = createReadWrite
                 ]
             ]
@@ -76,7 +77,7 @@ class RolezDesugarer extends AbstractDeclarativeDesugarer {
             val clazz = enclosingClass
             if(clazz instanceof NormalClass && (clazz as NormalClass).typeParam !== null) {
                 type.base = createGenericClassRef => [
-                    typeArg = createTypeParamRef => [
+                    rawTypeArg = createTypeParamRef => [
                         param = (clazz as NormalClass).typeParam
                     ]
                 ]
@@ -92,7 +93,14 @@ class RolezDesugarer extends AbstractDeclarativeDesugarer {
     }
     
     @Rule
+    def completeRoleType(RoleType it) {
+        if(role === null) {
+            role = createPure
+        }
+    }
+    
+    @Rule
     def modifySuperRef(Super it) {
-        createReference(VAR_REF__VARIABLE, "this")
+        createReference(REF__REFEREE, "this")
     }
 }

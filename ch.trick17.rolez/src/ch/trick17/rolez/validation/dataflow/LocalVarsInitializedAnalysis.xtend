@@ -4,7 +4,6 @@ import ch.trick17.rolez.rolez.Assignment
 import ch.trick17.rolez.rolez.Instr
 import ch.trick17.rolez.rolez.LocalVarDecl
 import ch.trick17.rolez.rolez.Var
-import ch.trick17.rolez.rolez.VarRef
 import ch.trick17.rolez.validation.cfg.ControlFlowGraph
 import ch.trick17.rolez.validation.cfg.InstrNode
 import ch.trick17.rolez.validation.cfg.Node
@@ -13,6 +12,7 @@ import java.util.Set
 import static com.google.common.collect.ImmutableSet.copyOf
 
 import static extension com.google.common.collect.Sets.intersection
+import ch.trick17.rolez.rolez.Ref
 
 class LocalVarsInitializedAnalysis extends DataFlowAnalysis<Set<Var>> {
     
@@ -30,8 +30,10 @@ class LocalVarsInitializedAnalysis extends DataFlowAnalysis<Set<Var>> {
     
     protected def dispatch flowThrough(Assignment a, Set<Var> in) {
         val left = a.left
-        if(left instanceof VarRef) in.with(left.variable)
-        else in
+        if(left instanceof Ref && (left as Ref).isVarRef)
+            in.with((left as Ref).variable)
+        else 
+            in
     }
     
     protected def dispatch flowThrough(LocalVarDecl d, Set<Var> in) {

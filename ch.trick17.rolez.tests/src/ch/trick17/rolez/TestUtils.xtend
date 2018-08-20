@@ -2,7 +2,6 @@ package ch.trick17.rolez
 
 import ch.trick17.rolez.rolez.Block
 import ch.trick17.rolez.rolez.Constr
-import ch.trick17.rolez.rolez.Executable
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.ExprStmt
 import ch.trick17.rolez.rolez.GenericClassRef
@@ -17,7 +16,6 @@ import ch.trick17.rolez.rolez.SimpleClassRef
 import ch.trick17.rolez.rolez.Slice
 import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.Var
-import ch.trick17.rolez.rolez.VarRef
 import ch.trick17.rolez.typesystem.RolezSystem
 import java.util.Random
 import javax.inject.Inject
@@ -32,7 +30,6 @@ import org.eclipse.xtext.util.StringInputStream
 import static org.hamcrest.Matchers.*
 import static org.junit.Assert.assertEquals
 
-import static extension ch.trick17.rolez.RolezExtensions.*
 import static extension org.hamcrest.MatcherAssert.assertThat
 
 class TestUtils {
@@ -142,8 +139,6 @@ class TestUtils {
     def lastExpr(Block it) {
         stmts.filter(ExprStmt).last.expr
     }
-    
-    def lastVarRef(Executable it) { all(VarRef).last }
     
     def type(Expr e) {
         val result = system.type(e)

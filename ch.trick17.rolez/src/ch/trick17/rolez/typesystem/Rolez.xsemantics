@@ -45,6 +45,7 @@ import ch.trick17.rolez.rolez.PrimitiveType
 import ch.trick17.rolez.rolez.Pure
 import ch.trick17.rolez.rolez.ReadOnly
 import ch.trick17.rolez.rolez.ReadWrite
+import ch.trick17.rolez.rolez.Ref
 import ch.trick17.rolez.rolez.ReferenceType
 import ch.trick17.rolez.rolez.RelationalExpr
 import ch.trick17.rolez.rolez.ReturnExpr
@@ -55,18 +56,17 @@ import ch.trick17.rolez.rolez.RoleParamRef
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.RolezFactory
 import ch.trick17.rolez.rolez.SimpleClassRef
+import ch.trick17.rolez.rolez.SingletonClass
 import ch.trick17.rolez.rolez.Slicing
 import ch.trick17.rolez.rolez.Stmt
 import ch.trick17.rolez.rolez.StringLiteral
 import ch.trick17.rolez.rolez.Super
 import ch.trick17.rolez.rolez.SuperConstrCall
-import ch.trick17.rolez.rolez.The
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.Type
 import ch.trick17.rolez.rolez.TypeParamRef
-import ch.trick17.rolez.rolez.Var
 import ch.trick17.rolez.rolez.VarKind
-import ch.trick17.rolez.rolez.VarRef
+import ch.trick17.rolez.rolez.VarLike
 import ch.trick17.rolez.rolez.WhileLoop
 import ch.trick17.rolez.validation.AbstractRolezValidator
 import java.util.HashMap
@@ -93,8 +93,8 @@ auxiliary {
 
 judgments {
     type      |- Expr e : output Type
-    varType   ||- Var v : output Type
-    // IMPROVE: Enable type inference for fields too (introduce VarLike class?)
+    varType   ||- VarLike v : output Type
+    // IMPROVE: Enable type inference for fields too (make fields VarLike?)
     wellTyped |- Stmt s
     
     validArgs |- Argumented a << Executable e
@@ -382,14 +382,14 @@ from {
 rule TSuper
     G |- Super s : Type t
 from {
-    G ||- s.variable : var RoleType thisType
+    G ||- s.referee : var RoleType thisType
     t = newRoleType(thisType.role, thisType.base.clazz.superclassRef)
 }
 
-rule TVarRef
-    G |- VarRef r : Type t
+rule TRef
+    G |- Ref r : Type t
 from {
-    G ||- r.variable : t
+    G ||- r.referee : t
 }
 
 rule TNew
@@ -399,9 +399,6 @@ from {
         G |- arg : var Type _
     }
 }
-
-axiom TThe
-    G |- The t : newRoleType(createReadOnly, t.classRef)
 
 rule TParenthesized
     G |- Parenthesized p : Type t
@@ -436,6 +433,7 @@ axiom TCharLiteral
 axiom TBooleanLiteral
     G |- BooleanLiteral __ : createBoolean
 
+
 axiom VParam
     G ||- Param p : p.type
 
@@ -451,6 +449,10 @@ from {
         G |- v.decl.initializer : t
     }
 }
+
+axiom VSingletonClass
+    G ||- SingletonClass c : newRoleType(createReadOnly, newClassRef(c))
+
 
 rule WBlock
     G |- Block b
@@ -660,11 +662,13 @@ from {
 }
 
 
-rule AVarRef
-    G |= VarRef r
-    error "Cannot assign to a value" source r
+rule ARef
+    G |= Ref r
 from {
+    r.isVarRef
+        or fail error "Cannot assign to a singleton class" source r
     r.variable.kind == VarKind.VAR
+        or fail error "Cannot assign to a value" source r
 }
 
 rule AMemberAccess

@@ -1,8 +1,8 @@
 package rolez.lang;
 
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.locks.LockSupport;
 
@@ -18,10 +18,9 @@ public class TaskSystemTest extends JpfParallelismTest {
     
     @Parameterized.Parameters(name = "{0}")
     public static List<?> taskSystems() {
-        return Arrays.asList(new TaskSystem[][]{{new SingleThreadTaskSystem()},
-                {new NewThreadTaskSystem()}, {new ThreadPoolTaskSystem()}, {
-                        new ThreadPoolTaskSystem(1)}, {new ThreadPoolTaskSystem(
-                                2)}});
+        return asList(new TaskSystem[][]{
+        	{new SingleThreadTaskSystem()},
+        	{new NewThreadTaskSystem()}});
     }
     
     private final TaskSystem system;
@@ -77,13 +76,8 @@ public class TaskSystemTest extends JpfParallelismTest {
                     system.start(new VoidTask(new Runnable() {
                         @Override
                         public void run() {
-                            system.start(new VoidTask(new Runnable() {
-                                @Override
-                                public void run() {
-                                    flag = true;
-                                    LockSupport.unpark(original);
-                                }
-                            }));
+                            flag = true;
+                            LockSupport.unpark(original);
                         }
                     }));
                 }

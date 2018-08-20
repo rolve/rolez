@@ -969,7 +969,10 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public static void main(final java.lang.String[] args) {
-                    rolez.lang.TaskSystem.getDefault().run(new App(0L).main$Task());
+                    rolez.lang.Task.registerNewRootTask();
+                    final long $task = rolez.lang.Task.currentTask().idBits();
+                    new App($task).main$Unguarded($task);
+                    rolez.lang.Task.unregisterRootTask();
                 }
             }
         ''')
@@ -1005,7 +1008,10 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public static void main(final java.lang.String[] args) {
-                    rolez.lang.TaskSystem.getDefault().run(INSTANCE.main$Task());
+                    rolez.lang.Task.registerNewRootTask();
+                    final long $task = rolez.lang.Task.currentTask().idBits();
+                    INSTANCE.main$Unguarded($task);
+                    rolez.lang.Task.unregisterRootTask();
                 }
             }
         ''')
@@ -1043,7 +1049,10 @@ class ClassGeneratorTest extends GeneratorTest {
                 }
                 
                 public static void main(final java.lang.String[] args) {
-                    rolez.lang.TaskSystem.getDefault().run(new App(0L).main$Task(rolez.lang.GuardedArray.<java.lang.String[]>wrap(args)));
+                    rolez.lang.Task.registerNewRootTask();
+                    final long $task = rolez.lang.Task.currentTask().idBits();
+                    new App($task).main$Unguarded(rolez.lang.GuardedArray.<java.lang.String[]>wrap(args), $task);
+                    rolez.lang.Task.unregisterRootTask();
                 }
             }
         ''')
@@ -1053,7 +1062,7 @@ class ClassGeneratorTest extends GeneratorTest {
         parse('''
             class App {
                 task readwrite foo(o1: readwrite Base, o2: readonly Base, o3: pure Base): {
-                    the System.out.println("Hello World!");
+                    System.out.println("Hello World!");
                 }
             }
         ''', someClasses).onlyClass.generate.assertEqualsJava('''
@@ -1416,7 +1425,7 @@ class ClassGeneratorTest extends GeneratorTest {
         parse('''
             class A {
                 new {
-                    the Tasks start bar(this);
+                    Tasks start bar(this);
                 }
             }
         ''', someClasses).onlyClass.generate.assertEqualsJava('''

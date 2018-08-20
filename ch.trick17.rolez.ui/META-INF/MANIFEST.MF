@@ -22,7 +22,7 @@ Require-Bundle: ch.trick17.rolez,
  org.eclipse.jdt.core,
  org.eclipse.xtext.xbase.ui
 Import-Package: org.apache.log4j
-Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: ch.trick17.rolez.ui.buildpath,
  ch.trick17.rolez.ui.contentassist,
  ch.trick17.rolez.ui.internal,

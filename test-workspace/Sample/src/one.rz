@@ -3,11 +3,11 @@ package foo
 import rolez.io.PrintStream
 
 class Person {
-	val name: readonly String
-	val surname: readonly String
+	val name: String
+	val surname: String
 	var address: readonly Address
 	
-	new(name: readonly String, surname: readonly String, address: readonly Address) {
+	new(name: String, surname: String, address: readonly Address) {
 		this.name = name;
 		this.surname = surname;
 		this.address = address;
@@ -26,12 +26,12 @@ class Person {
 	
 	def readonly bar(k: int): {
 		var fives: int = -555555555;
-		val j: readonly String = "Hi";
+		val j: String = "Hi";
 		
-		val s: readonly String = "Hi" + 'c' + null + 5 + null + this.surname.length;
+		val s: String = "Hi" + 'c' + null + 5 + null + this.surname.length;
 		
 		for(var i: int = 0; i < 10; i += 1)
-			the System.out.println("Hi, number " + i);
+			System.out.println("Hi, number " + i);
 		
 		while(fives < j.length)
 			if((false && !true) || 5 < 0 + 7)
@@ -42,7 +42,7 @@ class Person {
 }
 
 class Student extends Person {
-	val university: pure String
+	val university: String
 	
 	new {
 		super("John", "Doe", null);
@@ -54,14 +54,14 @@ class Student extends Person {
 
 class Account {
 	var owner: readonly Person
-	var description: readonly String
+	var description: String
 }
 
 class Address {
-	var street: pure String
-	var number: pure String
-	var city: pure String
-	var zipCode: pure String
+	var street: String
+	var number: String
+	var city: String
+	var zipCode: String
 	
 	def readonly foo(a: readonly Account, b: readonly Account): {
 		this.city;
@@ -91,12 +91,12 @@ object Test {
 	}
 	
 	def pure bar: {
-		the System.out.println("Hello World!");
+		System.out.println("Hello World!");
 		
 		val s: readonly PrintStream = new PrintStream("out.txt");
 		s.println("Good bye!");
 		s.close;
 		
-		the System.exit(0);
+		System.exit(0);
 	}
 }

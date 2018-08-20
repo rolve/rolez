@@ -18,16 +18,14 @@ import rolez.lang.SomeClasses.Int;
 import rolez.lang.SomeClasses.Ref;
 
 @RunWith(Parameterized.class)
-public class ArrayGuardingTest extends TaskBasedJpfTest {
+public class ArrayGuardingTest extends RolezJpfTest {
     
     @Parameters(name = "{0}, {1}")
     public static List<?> taskSystems() {
         return asList(new Object[][]{
                 {new NewThreadTaskSystem(), CORRECTNESS},
-                {new ThreadPoolTaskSystem(), CORRECTNESS},
                 {new SingleThreadTaskSystem(), CORRECTNESS},
                 {new NewThreadTaskSystem(), PARALLELISM},
-                {new ThreadPoolTaskSystem(3), PARALLELISM}
         });
     }
     
@@ -150,14 +148,35 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 };
                 s.start(task2);
                 
-                Task<?> task3 = new Task<Void>(new Object[]{}, new Object[]{i}) {
+                guardReadWrite(i).value = 1;
+            }
+        });
+    }
+    
+    @Test
+    public void testShareArrayElement2() {
+        verifyTask(new Runnable() {
+            public void run() {
+                final Int i = new Int();
+                final GuardedArray<Int[]> a = new GuardedArray<>(new Int[]{i});
+                
+                Task<?> task1 = new Task<Void>(new Object[]{}, new Object[]{a}) {
+                    @Override
+                    protected Void runRolez() {
+                        assertEquals(0, a.data[0].value);
+                        return null;
+                    }
+                };
+                s.start(task1);
+                
+                Task<?> task2 = new Task<Void>(new Object[]{}, new Object[]{i}) {
                     @Override
                     protected Void runRolez() {
                         assertEquals(0, i.value);
                         return null;
                     }
                 };
-                s.start(task3);
+                s.start(task2);
                 
                 guardReadWrite(i).value = 1;
             }
@@ -189,16 +208,37 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 };
                 s.start(task2);
                 
-                Task<?> task3 = new Task<Void>(new Object[]{i}, new Object[]{}) {
+                assertEquals(2, guardReadOnly(i).value);
+            }
+        });
+    }
+    
+    @Test
+    public void testPassArrayElement2() {
+        verifyTask(new Runnable() {
+            public void run() {
+                final Int i = new Int();
+                final GuardedArray<Int[]> a = new GuardedArray<>(new Int[]{i});
+                
+                Task<?> task1 = new Task<Void>(new Object[]{a}, new Object[]{}) {
+                    @Override
+                    protected Void runRolez() {
+                        a.data[0].value++;
+                        return null;
+                    }
+                };
+                s.start(task1);
+                
+                Task<?> task2 = new Task<Void>(new Object[]{i}, new Object[]{}) {
                     @Override
                     protected Void runRolez() {
                         i.value++;
                         return null;
                     }
                 };
-                s.start(task3);
+                s.start(task2);
                 
-                assertEquals(3, guardReadOnly(i).value);
+                assertEquals(2, guardReadOnly(i).value);
             }
         });
     }
@@ -646,14 +686,36 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 };
                 s.start(task2);
                 
-                Task<?> task3 = new Task<Void>(new Object[]{}, new Object[]{slice}) {
+                guardReadWrite(i).value = 1;
+            }
+        });
+    }
+    
+    @Test
+    public void testShareSliceMultiple2() {
+        verifyTask(new Runnable() {
+            public void run() {
+                final Int i = new Int();
+                final GuardedArray<Int[]> a = new GuardedArray<>(new Int[]{i});
+                final GuardedSlice<Int[]> slice = a.slice(0, 1, 1);
+                
+                Task<?> task1 = new Task<Void>(new Object[]{}, new Object[]{a}) {
+                    @Override
+                    protected Void runRolez() {
+                        assertEquals(0, a.data[0].value);
+                        return null;
+                    }
+                };
+                s.start(task1);
+                
+                Task<?> task2 = new Task<Void>(new Object[]{}, new Object[]{slice}) {
                     @Override
                     protected Void runRolez() {
                         assertEquals(0, slice.data[0].value);
                         return null;
                     }
                 };
-                s.start(task3);
+                s.start(task2);
                 
                 guardReadWrite(i).value = 1;
             }
@@ -686,16 +748,38 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                 };
                 s.start(task2);
                 
-                Task<?> task3 = new Task<Void>(new Object[]{slice}, new Object[]{}) {
+                assertEquals(2, guardReadOnly(i).value);
+            }
+        });
+    }
+    
+    @Test
+    public void testPassSliceMultiple2() {
+        verifyTask(new Runnable() {
+            public void run() {
+                final Int i = new Int();
+                final GuardedArray<Int[]> a = new GuardedArray<>(new Int[]{i});
+                final GuardedSlice<Int[]> slice = a.slice(0, 1, 1);
+                
+                Task<?> task1 = new Task<Void>(new Object[]{a}, new Object[]{}) {
+                    @Override
+                    protected Void runRolez() {
+                        a.data[0].value++;
+                        return null;
+                    }
+                };
+                s.start(task1);
+                
+                Task<?> task2 = new Task<Void>(new Object[]{slice}, new Object[]{}) {
                     @Override
                     protected Void runRolez() {
                         slice.data[0].value++;
                         return null;
                     }
                 };
-                s.start(task3);
+                s.start(task2);
                 
-                assertEquals(3, guardReadOnly(i).value);
+                assertEquals(2, guardReadOnly(i).value);
             }
         });
     }
@@ -704,11 +788,11 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
     public void testPassDifferentSlices() {
         verifyTask(new Runnable() {
             public void run() {
-                final GuardedArray<Int[]> a = new GuardedArray<>(new Int[10]);
+                final GuardedArray<Int[]> a = new GuardedArray<>(new Int[2]);
                 for(int i = 0; i < a.data.length; i++)
                     a.data[i] = new Int(i);
                 
-                final GuardedSlice<Int[]> slice1 = a.slice(0, 5, 1);
+                final GuardedSlice<Int[]> slice1 = a.slice(0, 1, 1);
                 final GuardedSlice<Int[]> slice2 = a.slice(slice1.range.end, a.data.length, 1);
                 
                 Task<?> task1 = new Task<Void>(new Object[]{slice1}, new Object[]{}) {
@@ -743,9 +827,9 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
     
     @Test
     public void testPassSubsliceNested() {
-        /* IMPROVE: Allow {0, 2} by releasing slices independent of subslices that are still owned
+        /* IMPROVE: Allow {0, 1} by releasing slices independent of subslices that are still owned
          * by other threads. */
-        verifyTask(new int[][]{{1, 2}, {0, 2}}, new Runnable() {
+        verifyTask(new int[][]{{0, 1}}, new Runnable() {
             public void run() {
                 final GuardedArray<Int[]> a = new GuardedArray<>(new Int[3]);
                 for(int i = 0; i < a.data.length; i++)
@@ -770,28 +854,26 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                         slice1.data[1].value++;
                         region(1);
                         
-                        region(2);
                         return null;
                     }
                 };
                 s.start(task1);
                 
                 a.data[2].value++;
-                region(3);
+                region(2);
                 
                 guardReadOnly(a);
                 for(int i = 0; i < a.data.length; i++)
                     assertEquals(i + 1, guardReadOnly(a.data[i]).value);
             }
         });
-        
     }
     
     @Test
     public void testPassPrimitiveSubsliceNested() {
-        /* IMPROVE: Allow {0, 2} by releasing slices independent of subslices that are still owned
+        /* IMPROVE: Allow {0, 1} by releasing slices independent of subslices that are still owned
          * by other threads. */
-        verifyTask(new int[][]{{1, 2}, {0, 2}}, new Runnable() {
+        verifyTask(new int[][]{{0, 2}}, new Runnable() {
             public void run() {
                 final GuardedArray<int[]> a = new GuardedArray<>(new int[]{0, 1, 2});
                 
@@ -814,21 +896,19 @@ public class ArrayGuardingTest extends TaskBasedJpfTest {
                         slice1.data[1]++;
                         region(1);
                         
-                        region(2);
                         return null;
                     }
                 };
                 s.start(task1);
                 
                 a.data[2]++;
-                region(3);
+                region(2);
                 
                 guardReadOnly(a);
                 for(int i = 0; i < a.data.length; i++)
                     assertEquals(i + 1, a.data[i]);
             }
         });
-        
     }
     
     @Test

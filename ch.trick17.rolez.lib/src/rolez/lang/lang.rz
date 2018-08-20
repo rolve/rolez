@@ -118,7 +118,7 @@ object MathExtra {
     
     def pure log2(i: int): int {
         if(i < 1) return -1;
-        else return 31 - the Int.numberOfLeadingZeros(i);
+        else return 31 - Int.numberOfLeadingZeros(i);
     }
 }
 

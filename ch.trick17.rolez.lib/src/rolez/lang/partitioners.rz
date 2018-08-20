@@ -16,7 +16,7 @@ object ContiguousPartitioner extends Partitioner {
             var size = orig.step * baseSize;
             if(i < largeRanges)
                 size += orig.step;
-            val end = the Math.min(begin + size, orig.end);
+            val end = Math.min(begin + size, orig.end);
             ranges.set(i, new SliceRange(begin, end, orig.step));
             begin = end;
         }
@@ -30,7 +30,7 @@ object StripedPartitioner extends Partitioner {
     override pure partition(orig: pure SliceRange, n: int): pure Vector[pure SliceRange] {
         val ranges = new VectorBuilder[pure SliceRange](n);
         for(var i = 0; i < n; i++)
-            ranges.set(i, new SliceRange(the Math.min(orig.begin + i * orig.step, orig.end), orig.end, orig.step * n));
+            ranges.set(i, new SliceRange(Math.min(orig.begin + i * orig.step, orig.end), orig.end, orig.step * n));
         return ranges.build;
     }
     
@@ -59,7 +59,7 @@ class BlockPartitioner extends Partitioner {
             var size = orig.step * baseSize;
             if(i < largeRanges)
                 size += orig.step * this.blockSize;
-            val end = the Math.min(begin + size, orig.end);
+            val end = Math.min(begin + size, orig.end);
             ranges.set(i, new SliceRange(begin, end, orig.step));
             begin = end;
         }

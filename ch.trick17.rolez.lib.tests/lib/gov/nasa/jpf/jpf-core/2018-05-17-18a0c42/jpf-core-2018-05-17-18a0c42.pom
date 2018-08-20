@@ -4,6 +4,6 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>gov.nasa.jpf</groupId>
   <artifactId>jpf-core</artifactId>
-  <version>1139</version>
+  <version>2018-05-17-18a0c42</version>
   <description>POM was created from install:install-file</description>
 </project>

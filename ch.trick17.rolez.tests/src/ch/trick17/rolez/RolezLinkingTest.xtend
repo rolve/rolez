@@ -9,8 +9,10 @@ import ch.trick17.rolez.rolez.Program
 import ch.trick17.rolez.rolez.Pure
 import ch.trick17.rolez.rolez.ReadOnly
 import ch.trick17.rolez.rolez.ReadWrite
+import ch.trick17.rolez.rolez.Ref
 import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.SuperConstrCall
+import ch.trick17.rolez.rolez.TypeParamRef
 import ch.trick17.rolez.tests.RolezInjectorProvider
 import javax.inject.Inject
 import org.eclipse.xtext.junit4.InjectWith
@@ -27,6 +29,7 @@ import static ch.trick17.rolez.rolez.RolezPackage.Literals.*
 import static ch.trick17.rolez.scoping.RolezScopeProvider.AMBIGUOUS_CALL
 import static org.eclipse.xtext.diagnostics.Diagnostic.*
 import static org.hamcrest.Matchers.*
+import static org.junit.Assert.assertTrue
 
 import static extension ch.trick17.rolez.RolezExtensions.*
 import static extension org.hamcrest.MatcherAssert.assertThat
@@ -1018,9 +1021,10 @@ class RolezLinkingTest {
         ''').assertError(NEW, LINKING_DIAGNOSTIC)
     }
     
-    @Test def testVarRef() {
+    @Test def testRef() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
+            object i
             class A {
                 def pure foo(i: int): {
                     i;
@@ -1040,24 +1044,67 @@ class RolezLinkingTest {
             }
         ''').assertNoErrors
         
+        var program = parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            object i
+            class A {
+                def pure foo: {
+                    var i = 0;
+                    i;
+                }
+            }
+        ''')
+        program.assertNoErrors
+        program.classes.filter[name == "A"].head.methods.head.firstExpr as Ref => [
+            assertTrue(isVarRef)
+        ]
+        
+        program = parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            object i
+            class A {
+                def pure foo(i: int): {
+                    i;
+                }
+            }
+        ''')
+        program.assertNoErrors
+        program.classes.filter[name == "A"].head.methods.head.firstExpr as Ref => [
+            assertTrue(isVarRef)
+        ]
+        
+        program = parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            object i
+            class A {
+                def pure foo: {
+                    i;
+                }
+            }
+        ''')
+        program.assertNoErrors
+        program.classes.filter[name == "A"].head.methods.head.firstExpr as Ref => [
+            assertTrue(isSingletonRef)
+        ]
+        
         parse('''
             i;
             val i = 0;
-        '''.withFrame).assertError(VAR_REF, LINKING_DIAGNOSTIC, "var", "i")
+        '''.withFrame).assertError(REF, LINKING_DIAGNOSTIC, "var", "i")
         parse('''
             {
                 val i = 0;
             }
             i;
-        '''.withFrame).assertError(VAR_REF, LINKING_DIAGNOSTIC, "var", "i")
+        '''.withFrame).assertError(REF, LINKING_DIAGNOSTIC, "var", "i")
         
         parse('''
             for(var i = i; true; true) {}
-        '''.withFrame).assertError(VAR_REF, LINKING_DIAGNOSTIC, "var", "i")
+        '''.withFrame).assertError(REF, LINKING_DIAGNOSTIC, "var", "i")
         parse('''
             for(var i = 0; true; true) {}
             i;
-        '''.withFrame).assertError(VAR_REF, LINKING_DIAGNOSTIC, "var", "i")
+        '''.withFrame).assertError(REF, LINKING_DIAGNOSTIC, "var", "i")
     }
     
     @Test def testSuperMethod() {
@@ -1191,7 +1238,7 @@ class RolezLinkingTest {
         def T foo() { null }
     }
     
-    @Test def testTypeParam() {
+    @Test def testClassOrTypeParam() {
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
             class GenericClass[T] mapped to «GenericClass.canonicalName» {
@@ -1201,13 +1248,46 @@ class RolezLinkingTest {
         
         parse('''
             class rolez.lang.Object mapped to java.lang.Object
+            class T {
+                new(t: T) {}
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class T
+            class GenericClass[T] mapped to «GenericClass.canonicalName» {
+                mapped new(t: T)
+            }
+        ''').classes.filter[name == "GenericClass"].filter(NormalClass)
+                .head.constrs.head.params.head.type.assertInstanceOf(TypeParamRef)
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class T {
+                new(t: T)
+            }
+        ''').classes.filter[name == "T"].filter(NormalClass)
+                .head.constrs.head.params.head.type.assertInstanceOf(RoleType)
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class T
+            class GenericClass[T] mapped to «GenericClass.canonicalName» {
+                mapped new(t: T)
+            }
+        ''').classes.filter[name == "GenericClass"].filter(NormalClass)
+                .head.constrs.head.params.head.type.assertInstanceOf(TypeParamRef)
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
             class GenericClass[T] mapped to «GenericClass.canonicalName» {
                 mapped new(t: T)
             }
             class A {
                 def pure foo: T { return null; }
             }
-        ''').assertError(TYPE_PARAM_REF, LINKING_DIAGNOSTIC)
+        ''').assertError(ROLE_TYPE_OR_TYPE_PARAM_REF, LINKING_DIAGNOSTIC)
     }
     
     @Test def testRoleParam() {
