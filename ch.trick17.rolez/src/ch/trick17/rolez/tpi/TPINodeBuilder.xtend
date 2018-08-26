@@ -44,6 +44,7 @@ import ch.trick17.rolez.rolez.Method
 import ch.trick17.rolez.rolez.SingletonClass
 import ch.trick17.rolez.rolez.Return
 import ch.trick17.rolez.rolez.FinishStmt
+import ch.trick17.rolez.rolez.VarKind
 
 class TPINodeBuilder {
 	
@@ -216,7 +217,11 @@ class TPINodeBuilder {
     		return createInferredParamNode(e, tpiidx, parentResult.selectedParams.get(tpiidx), role, standalone)
 		
 		if (e.fieldAccess) {
-			val parent = createNode(e.target, TPIRole.READ_ONLY, false)
+			var parentRole = TPIRole.READ_ONLY
+			if (e.field.kind == VarKind.VAL)
+				parentRole = TPIRole.PURE
+			
+			val parent = createNode(e.target, parentRole, false)
 			if (parent != null) {
 				val name = e.field.name
 				var node = parent.findChild(TPINodeType.FIELD_ACCESS, name)
