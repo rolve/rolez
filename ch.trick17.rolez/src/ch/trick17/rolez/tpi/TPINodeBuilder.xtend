@@ -24,11 +24,9 @@ import ch.trick17.rolez.rolez.RoleType
 import ch.trick17.rolez.rolez.Slicing
 import ch.trick17.rolez.rolez.Stmt
 import ch.trick17.rolez.rolez.Super
-import ch.trick17.rolez.rolez.The
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.TypeParamRef
 import ch.trick17.rolez.rolez.UnaryExpr
-import ch.trick17.rolez.rolez.VarRef
 import ch.trick17.rolez.rolez.WhileLoop
 import ch.trick17.rolez.typesystem.RolezSystem
 import java.util.Collection
@@ -41,6 +39,11 @@ import javax.inject.Inject
 import static extension ch.trick17.rolez.RolezExtensions.enclosingClass
 import ch.trick17.rolez.rolez.ArithmeticUnaryExpr
 import ch.trick17.rolez.rolez.OpArithmeticUnary
+import ch.trick17.rolez.rolez.Ref
+import ch.trick17.rolez.rolez.Method
+import ch.trick17.rolez.rolez.SingletonClass
+import ch.trick17.rolez.rolez.Return
+import ch.trick17.rolez.rolez.FinishStmt
 
 class TPINodeBuilder {
 	
@@ -48,6 +51,7 @@ class TPINodeBuilder {
 	
 	private ThisTPINode thisNode
 	private Map<String, LocalVarTPINode> varNodes
+	private Map<String, SingletonTPINode> singletonNodes
 	private Map<Integer, InferredParamTPINode> inferredParamNodes
 	private Set<String> paramNames
 	private Set<String> insideVarNames
@@ -57,6 +61,7 @@ class TPINodeBuilder {
 	public new() {
 		this.thisNode = null
 		this.varNodes = new HashMap
+		this.singletonNodes = new HashMap
 		this.inferredParamNodes = new HashMap
 		this.paramNames = new HashSet
 		this.insideVarNames = new HashSet
@@ -74,11 +79,13 @@ class TPINodeBuilder {
 		createNodes(stmt)
 		
 		val result = new HashMap<String, RootTPINode>(this.varNodes)
+		result.putAll(this.singletonNodes)
 		if (this.thisNode != null)
 			result.put("this", this.thisNode)
 		
 		this.thisNode = null
 		this.varNodes.clear()
+		this.singletonNodes.clear()
 		this.paramNames.clear()
 		this.parentResult = null
 		this.stepVar = null
@@ -94,6 +101,8 @@ class TPINodeBuilder {
 	private dispatch def void createNodes(ExprStmt stmt) {
 		createNodesE(stmt.expr)
 	}
+	
+	private dispatch def void createNodes(FinishStmt stmt) { }
 	
 	private dispatch def void createNodes(ForLoop stmt) {
 		createNodes(stmt.initializer)
@@ -139,6 +148,8 @@ class TPINodeBuilder {
 		createNodes(stmt.body)
 	}
 	
+	private dispatch def void createNodes(Return stmt) { }
+	
 	private dispatch def void createNodes(WhileLoop stmt) {
 		createNode(stmt.condition, TPIRole.PURE, true)
 		createNodes(stmt.body)
@@ -176,8 +187,6 @@ class TPINodeBuilder {
 		createNode(e, TPIRole.PURE, true)
 	}
 	
-	private dispatch def void createNodesE(The e) { }
-	
 	private dispatch def void createNodesE(UnaryExpr e) {
 		if (e instanceof ArithmeticUnaryExpr) {
 			if (e.op == OpArithmeticUnary.POST_DECREMENT ||
@@ -192,7 +201,7 @@ class TPINodeBuilder {
 		createNodesE(e.expr)
 	}
 	
-	private dispatch def void createNodesE(VarRef e) {
+	private dispatch def void createNodesE(Ref e) {
 		createNode(e, TPIRole.PURE, true)
 	}
 	
@@ -224,7 +233,7 @@ class TPINodeBuilder {
 				null
 		}
 		else if (e.args.empty) {
-			val thisParamRole = getTPIRoleFromType(e.method.thisParam.type)
+			val thisParamRole = getTPIRoleFromMethod(e.method)
 			val parent = createNode(e.target, thisParamRole, false)
 			if (parent != null) {
 				if (thisParamRole == TPIRole.READ_WRITE) {
@@ -247,7 +256,7 @@ class TPINodeBuilder {
 				null
 		}
 		else if (stepVar != null && StepVarArgMethodCallTPINode.isStepVarArgMethodCall(e, stepVar)) {
-			val thisParamRole = getTPIRoleFromType(e.method.thisParam.type)
+			val thisParamRole = getTPIRoleFromMethod(e.method)
 			val parent = createNode(e.target, thisParamRole, false)
 			if (parent != null) {
 				if (thisParamRole == TPIRole.READ_WRITE) {
@@ -273,7 +282,7 @@ class TPINodeBuilder {
 			
 			val params = e.method.params
 			for (var i = 0; i < params.length; i++) {
-				val paramRole = getTPIRoleFromType(params.get(0).type)
+				val paramRole = getTPIRoleFromType(params.get(i).type)
 				createNode(e.args.get(i), paramRole, true)
 			}
 			
@@ -307,29 +316,52 @@ class TPINodeBuilder {
 			null
 	}
 	
-	private dispatch def TPINode createNode(VarRef e, TPIRole role, boolean standalone) {
+	private dispatch def TPINode createNode(Ref e, TPIRole role, boolean standalone) {
     	val tpiidx = parentResult.paramIndex(e)
     	if (tpiidx >= 0)
     		return createInferredParamNode(e, tpiidx, parentResult.selectedParams.get(tpiidx), role, standalone)
     	
-		val name = e.variable.name
-		if (this.paramNames.contains(name) || this.insideVarNames.contains(name))
-			return null
-		
-		var node = this.varNodes.get(name)
-		if (node == null) {
-			if (name == stepVar)
-				node = new StepVarTPINode(name, system.type(e).value)
-			else
-				node = new LocalVarTPINode(name, system.type(e).value)
-			this.varNodes.put(name, node)
+    	if (e.varRef) {
+			val name = e.variable.name
+			if (this.paramNames.contains(name) || this.insideVarNames.contains(name))
+				return null
+			
+			var node = this.varNodes.get(name)
+			if (node == null) {
+				if (name == stepVar)
+					node = new StepVarTPINode(name, system.type(e).value)
+				else
+					node = new LocalVarTPINode(name, system.type(e).value)
+				this.varNodes.put(name, node)
+			}
+			
+			node.setRole(role)
+			if (standalone)
+				node.setStandalone()
+			
+			node
 		}
-		
-		node.setRole(role)
-		if (standalone)
-			node.setStandalone()
-		
-		node
+		else if (e.singletonRef) {
+			val name = getFullName(e.referee as SingletonClass)
+			
+			var node = this.singletonNodes.get(name)
+			if (node == null) {
+				node = new SingletonTPINode(name, e.referee as SingletonClass, system.type(e).value)
+				this.singletonNodes.put(name, node)
+			}
+			
+			node.setRole(role)
+			if (standalone)
+				node.setStandalone()
+			
+			node
+		}
+		else
+			return null
+	}
+	
+	private static def String getFullName(SingletonClass singleton) {
+		singleton.qualifiedName.toString
 	}
 	
 	private dispatch def TPINode createNode(This e, TPIRole role, boolean standalone) {
@@ -405,6 +437,28 @@ class TPINodeBuilder {
 	
 	private static dispatch def TPIRole getTPIRoleFromRole(ReadWrite role) {
 		TPIRole.READ_WRITE
+	}
+	
+	private static def TPIRole getTPIRoleFromMethod(Method method) {
+		// TODO: For some reason, we need to use this workaround to get the actual role of this method. Maybe there is a better solution.
+		val declString = method.toString();
+		val split = declString.split(" ");
+		val roleString = split.get(0);
+		
+		switch (roleString) {
+			case "pure":
+				return TPIRole.PURE
+			case "readonly":
+				return TPIRole.READ_ONLY
+			case "readwrite":
+				return TPIRole.READ_WRITE
+			default:
+				for (roleParam : method.roleParams) {
+					if (roleParam.name.equals(roleString))
+						return getTPIRoleFromRole(roleParam.upperBound)
+				}
+		}
+		null
 	}
 	
 }

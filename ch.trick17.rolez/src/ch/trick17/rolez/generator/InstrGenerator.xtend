@@ -53,7 +53,7 @@ import ch.trick17.rolez.tpi.InferredParamTPINode
 import ch.trick17.rolez.tpi.LocalVarTPINode
 import ch.trick17.rolez.tpi.NoArgMethodCallTPINode
 import ch.trick17.rolez.tpi.SlicingTPINode
-import ch.trick17.rolez.tpi.TPINodeBuilder
+import ch.trick17.rolez.tpi.TPIProvider
 import ch.trick17.rolez.tpi.TPIResult
 import ch.trick17.rolez.tpi.TPIRole
 import ch.trick17.rolez.tpi.ThisTPINode
@@ -74,7 +74,10 @@ import static ch.trick17.rolez.rolez.VarKind.*
 import static extension ch.trick17.rolez.RolezExtensions.*
 import static extension ch.trick17.rolez.generator.SafeJavaNames.*
 import static extension org.eclipse.xtext.util.Strings.convertToJavaString
-import ch.trick17.rolez.tpi.TPIProvider
+import ch.trick17.rolez.tpi.StepVarTPINode
+import ch.trick17.rolez.tpi.StepVarArgMethodCallTPINode
+import ch.trick17.rolez.rolez.FinishStmt
+import ch.trick17.rolez.tpi.SingletonTPINode
 
 /**
  * Generates Java code for Rolez instructions (single or code blocks). Relies on
@@ -158,6 +161,8 @@ class InstrGenerator {
             val canHazChildTask = childTasksAnalysis.childTasksMayExist(it)
             // TODO: generate unguarded version
             
+            val tpiPrefix = "$tpi0"
+            
             val params = it.params;
             val paramTypes = params.map[
             	if (variable.type != null) variable.type
@@ -175,37 +180,82 @@ class InstrGenerator {
                 if (pitype instanceof RoleType) {
                     val role = (pitype as RoleType).role
                     if (role instanceof ReadWrite) 
-                        passed.add(i)
+                        passed.add("$args[" + i + "]")
                     else if (role instanceof ReadOnly)
-                        shared.add(i)
+                        shared.add("$args[" + i + "]")
                 }
+            }
+            
+            val tpi = it.tpi
+            val genTpiTypes = tpi.selectedParams.map[expressionType].map[generate]
+            
+            val aboveVars = RolezUtils.varsAbove(eContainer, it)
+            val aboveMap = aboveVars.toMap[name]
+            val aboveNames = aboveMap.keySet
+            val paVars = RolezUtils.parallelAssignmentVars(body).toSet
+            paVars.retainAll(aboveNames);
+            val pal = paVars.toList
+            val pam = pal.toInvertedMap[pal.indexOf(it)]
+            
+            val oldPam = currentPam
+            val oldPidx = currentPidx
+            val oldTPI = currentTPI
+            currentPlvl++
+            val plvl = currentPlvl
+            currentPam = pam
+            currentPidx = 0
+            currentTPI = tpi
+            val bodyGen = body.generate
+            currentPlvl--
+         	currentPam = oldPam
+         	currentPidx = oldPidx
+         	currentTPI = oldTPI
+            
+            // separate inferred arguments into shared and passed objects
+            for (var i = 0; i < tpi.selectedParams.size; i++) {
+            	val pirole = tpi.selectedParams.get(i).role;
+                if (pirole == TPIRole.READ_WRITE) 
+                    passed.add("$tpi[" + i + "]")
+                else if(pirole == TPIRole.READ_ONLY)
+                    shared.add("$tpi[" + i + "]")
             }
             
             '''
             { /* parfor */
                 final java.util.List<java.lang.Object[]> $argsList = new java.util.ArrayList<>();
-                for(«initializer.generate» «condition.generate»; «step.generate»)
+                final java.util.List<java.lang.Object[]> $tpiList = new java.util.ArrayList<>();
+                for(«initializer.generate» «condition.generate»; «step.generate») {
                     $argsList.add(new java.lang.Object[] {«args.map[generate].join(", ")»});
+                    $tpiList.add(new java.lang.Object[] {«tpi.selectedParams.map[generateTPI].join(", ")»});
+                }
                 
                 final java.lang.Object[][] $passed = new java.lang.Object[$argsList.size()][];
                 final java.lang.Object[][] $shared = new java.lang.Object[$argsList.size()][];
+                «IF paVars.size > 0»
+                final java.lang.Object[] $t0«plvl»Assign = new java.lang.Object[«paVars.size»];
+                «ENDIF»
                 for(int $i = 0; $i < $argsList.size(); $i++) {
                     final java.lang.Object[] $args = $argsList.get($i);
-                    $passed[$i] = new java.lang.Object[] {«passed.map["$args["+it+"]"].join(", ")»};
-                    $shared[$i] = new java.lang.Object[] {«shared.map["$args["+it+"]"].join(", ")»};
+                    final java.lang.Object[] $tpi = $tpiList.get($i);
+                    $passed[$i] = new java.lang.Object[] {«passed.join(", ")»};
+                    $shared[$i] = new java.lang.Object[] {«shared.join(", ")»};
                 }
                 
                 final «taskClassName»<?>[] $tasks = new «taskClassName»<?>[$argsList.size()];
                 long $tasksBits = 0;
                 for(int $i = 0; $i < $tasks.length; $i++) {
                     final java.lang.Object[] $args = $argsList.get($i);
+                    final java.lang.Object[] $tpi = $tpiList.get($i);
                     $tasks[$i] = new «taskClassName»<java.lang.Void>($passed[$i], $shared[$i], $tasksBits) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
                         	«FOR i : 0..<params.size»
                             «genParamTypes.get(i)» «params.get(i).variable.name» = («genParamTypes.get(i)») $args[«i»];
                             «ENDFOR»
-                            «body.generate»
+        		            «FOR i : 0..<tpi.selectedParams.size»
+                            «genTpiTypes.get(i)» «tpiPrefix»_«plvl»_«i» = («genTpiTypes.get(i)») $tpi[«i»];
+        		            «ENDFOR»
+                            «bodyGen»
                             return null;
                         }
                     };
@@ -220,6 +270,11 @@ class InstrGenerator {
                     for(«taskClassName»<?> $t : $tasks)
                         $t.get();
                 }
+                
+                «FOR i : 0..<pal.size»
+                if ($t0«plvl»Assign[«i»] != null)
+                    «parallelAssignRcvr(pal.get(i))» = («aboveMap.get(pal.get(i)).type.generate»)$t0«plvl»Assign[«i»];
+                «ENDFOR»
             }
             '''
         }
@@ -353,10 +408,14 @@ class InstrGenerator {
                 
                 final java.lang.Object[] $t1Passed = {«passed1.join(", ")»};
                 final java.lang.Object[] $t1Shared = {«shared1.join(", ")»};
+                «IF paVars1.size > 0»
                 final java.lang.Object[] $t1«plvl»Assign = new java.lang.Object[«paVars1.size»];
+                «ENDIF»
                 final java.lang.Object[] $t2Passed = {«passed2.join(", ")»};
                 final java.lang.Object[] $t2Shared = {«shared2.join(", ")»};
+                «IF paVars2.size > 0»
                 final java.lang.Object[] $t2«plvl»Assign = new java.lang.Object[«paVars2.size»];
+                «ENDIF»
                 
                 final «taskClassName»<?> $t1 = new «taskClassName»<java.lang.Void>($t1Passed, $t1Shared) {
                     @java.lang.Override
@@ -421,6 +480,12 @@ class InstrGenerator {
 	        
 	        return ma.getMethod.declaredTask;
         }*/
+        
+        private def dispatch CharSequence generate(FinishStmt it) {
+        	'''
+                return null;
+            '''
+        }
         
         private def dispatch CharSequence generate(Block it) '''
             {
@@ -726,13 +791,12 @@ class InstrGenerator {
         }
 
         private def dispatch CharSequence generate(Ref it) {
-            if(isVarRef) {
-                val tpiidx = currentTPI.paramIndex(it)
-                if (tpiidx >= 0)
-                    return tpiParamName(tpiidx)
+            val tpiidx = currentTPI.paramIndex(it)
+            if (tpiidx >= 0)
+                return tpiParamName(tpiidx)
                 
+            if(isVarRef)
                 variable.safeName
-            }
             else if(eContainer instanceof MemberAccess &&
                     it == (eContainer as MemberAccess).target && clazz.isMapped)
                 clazz.jvmClass.qualifiedName // more efficient access to static members
@@ -813,8 +877,16 @@ class InstrGenerator {
         	safe(name)
         }
         
+        private def dispatch generateTPI(SingletonTPINode it) {
+        	singleton.safeQualifiedName + ".INSTANCE"
+        }
+        
         private def dispatch CharSequence generateTPI(NoArgMethodCallTPINode it) {
-        	parent.generateTPI() + "." + safe(name)
+        	parent.generateTPI() + "." + safe(name) + "()"
+        }
+        
+        private def dispatch CharSequence generateTPI(StepVarArgMethodCallTPINode it) {
+        	parent.generateTPI() + "." + safe(name) + "(" + stepVar + ")"
         }
         
         private def dispatch CharSequence generateTPI(SlicingTPINode it) {

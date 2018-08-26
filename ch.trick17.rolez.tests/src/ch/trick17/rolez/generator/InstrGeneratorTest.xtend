@@ -1279,14 +1279,18 @@ class InstrGeneratorTest extends GeneratorTest {
                 array.data[j] = new Base($task);
             { /* parfor */
                 final java.util.List<java.lang.Object[]> $argsList = new java.util.ArrayList<>();
-                for(int j = 0; j < 3; j++)
-                    $argsList.add(new java.lang.Object[] {Tasks.INSTANCE, array.data[j]});
+                final java.util.List<java.lang.Object[]> $tpiList = new java.util.ArrayList<>();
+                for(int j = 0; j < 3; j++) {
+                    $argsList.add(new java.lang.Object[] {});
+                    $tpiList.add(new java.lang.Object[] {array.get(j), Tasks.INSTANCE});
+                }
                 
                 final java.lang.Object[][] $passed = new java.lang.Object[$argsList.size()][];
                 final java.lang.Object[][] $shared = new java.lang.Object[$argsList.size()][];
                 for(int $i = 0; $i < $argsList.size(); $i++) {
                     final java.lang.Object[] $args = $argsList.get($i);
-                    $passed[$i] = new java.lang.Object[] {$args[1]};
+                    final java.lang.Object[] $tpi = $tpiList.get($i);
+                    $passed[$i] = new java.lang.Object[] {$tpi[0]};
                     $shared[$i] = new java.lang.Object[] {};
                 }
                 
@@ -1294,10 +1298,13 @@ class InstrGeneratorTest extends GeneratorTest {
                 long $tasksBits = 0;
                 for(int $i = 0; $i < $tasks.length; $i++) {
                     final java.lang.Object[] $args = $argsList.get($i);
+                    final java.lang.Object[] $tpi = $tpiList.get($i);
                     $tasks[$i] = new rolez.lang.Task<java.lang.Void>($passed[$i], $shared[$i], $tasksBits) {
                         @java.lang.Override
                         protected java.lang.Void runRolez() {
-                            ((Tasks) $args[0]).bar$Unguarded((java.lang.Object) $args[1], idBits());
+        Base $tpi0_1_0 = (Base) $tpi[0];
+        Tasks $tpi0_1_1 = (Tasks) $tpi[1];
+                            $tpi0_1_1.bar($tpi0_1_0, $task);
                             return null;
                         }
                     };
@@ -1329,27 +1336,27 @@ class InstrGeneratorTest extends GeneratorTest {
             Base o1 = new Base($task);
             Base o2 = new Base($task);
             { /* parallel-and */
-                final Tasks $t1Arg0 = Tasks.INSTANCE;
-                final java.lang.Object $t1Arg1 = o1;
-                final Tasks $t2Arg0 = Tasks.INSTANCE;
-                final java.lang.Object $t2Arg1 = o2;
+                final Base $tpi1_1_0 = o1;
+                final Tasks $tpi1_1_1 = Tasks.INSTANCE;
+                final Tasks $tpi2_1_0 = Tasks.INSTANCE;
+                final Base $tpi2_1_1 = o2;
                 
-                final java.lang.Object[] $t1Passed = {$t1Arg1};
+                final java.lang.Object[] $t1Passed = {$tpi1_1_0};
                 final java.lang.Object[] $t1Shared = {};
-                final java.lang.Object[] $t2Passed = {$t2Arg1};
+                final java.lang.Object[] $t2Passed = {$tpi2_1_1};
                 final java.lang.Object[] $t2Shared = {};
                 
                 final rolez.lang.Task<?> $t1 = new rolez.lang.Task<java.lang.Void>($t1Passed, $t1Shared) {
                     @java.lang.Override
                     protected java.lang.Void runRolez() {
-                        $t1Arg0.bar$Unguarded($t1Arg1, idBits());
+                        $tpi1_1_1.bar($tpi1_1_0, $task);
                         return null;
                     }
                 };
                 final rolez.lang.Task<?> $t2 = new rolez.lang.Task<java.lang.Void>($t2Passed, $t2Shared, $t1.idBits()) {
                     @java.lang.Override
                     protected java.lang.Void runRolez() {
-                        $t2Arg0.bar$Unguarded($t2Arg1, idBits());
+                        $tpi2_1_0.bar($tpi2_1_1, $task);
                         return null;
                     }
                 };
@@ -1360,6 +1367,8 @@ class InstrGeneratorTest extends GeneratorTest {
                 } finally {
                     $t1.get();
                 }
+                
+                
             }
         '''.withJavaFrame)
     }
@@ -1372,8 +1381,8 @@ class InstrGeneratorTest extends GeneratorTest {
                 Tasks.foo();
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
             { /* parallel-and */
-                final Tasks $t1Arg0 = Tasks.INSTANCE;
-                final Tasks $t2Arg0 = Tasks.INSTANCE;
+                final Tasks $tpi1_1_0 = Tasks.INSTANCE;
+                final Tasks $tpi2_1_0 = Tasks.INSTANCE;
                 
                 final java.lang.Object[] $t1Passed = {};
                 final java.lang.Object[] $t1Shared = {};
@@ -1383,14 +1392,14 @@ class InstrGeneratorTest extends GeneratorTest {
                 final rolez.lang.Task<?> $t1 = new rolez.lang.Task<java.lang.Void>($t1Passed, $t1Shared) {
                     @java.lang.Override
                     protected java.lang.Void runRolez() {
-                        $t1Arg0.foo$Unguarded(idBits());
+                        $tpi1_1_0.foo($task);
                         return null;
                     }
                 };
                 final rolez.lang.Task<?> $t2 = new rolez.lang.Task<java.lang.Void>($t2Passed, $t2Shared, $t1.idBits()) {
                     @java.lang.Override
                     protected java.lang.Void runRolez() {
-                        $t2Arg0.foo$Unguarded(idBits());
+                        $tpi2_1_0.foo($task);
                         return null;
                     }
                 };
@@ -1401,6 +1410,8 @@ class InstrGeneratorTest extends GeneratorTest {
                 } finally {
                     $t1.get();
                 }
+                
+                
             }
         '''.withJavaFrame)
     }
@@ -1440,7 +1451,9 @@ class InstrGeneratorTest extends GeneratorTest {
             }
             
             public void foo$Unguarded(final int i, final boolean b, final long $task) {
-                «it.toString.replaceAll("///", "").replaceAll("%%%.*%%%", "")»
+                «it.toString.replaceAll("///", "").replaceAll("%%%.*%%%", "")
+                .replaceAll("\\.foo\\(", ".foo\\$Unguarded(")
+                .replaceAll("\\.bar\\(", ".bar\\$Unguarded(")»
             }
             
             @java.lang.Override

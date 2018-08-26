@@ -47,7 +47,7 @@ import static extension org.eclipse.emf.ecore.util.EcoreUtil.resolve
 import ch.trick17.rolez.rolez.Parfor
 import ch.trick17.rolez.rolez.ParallelStmt
 import ch.trick17.rolez.rolez.OpAssignment
-import ch.trick17.rolez.rolez.VarRef
+import ch.trick17.rolez.rolez.Ref
 import ch.trick17.rolez.rolez.ExprStmt
 import ch.trick17.rolez.rolez.WhileLoop
 import ch.trick17.rolez.rolez.IfStmt
@@ -153,7 +153,7 @@ class RolezUtils {
     
     static def assignedField(Expr it) { (assignmentLhs as MemberAccess).field }
     
-    static def assignedVariable(Expr it) { (assignmentLhs as VarRef).variable }
+    static def assignedVariable(Expr it) { (assignmentLhs as Ref).variable }
     
     static def dispatch Iterable<? extends Var> varsAbove(Block container, Stmt s) {
         container.stmts.takeWhile[it != s].filter(LocalVarDecl).map[variable]

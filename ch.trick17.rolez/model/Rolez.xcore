@@ -313,6 +313,8 @@ class ReturnExpr extends Return {
     contains Expr expr
 }
 
+class FinishStmt extends Stmt {}
+
 class ExprStmt extends Stmt {
     contains Expr expr
 }

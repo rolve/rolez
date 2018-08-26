@@ -28,6 +28,7 @@ import java.util.Map
 import static ch.trick17.rolez.rolez.OpLogical.*
 
 import static extension java.util.Objects.requireNonNull
+import ch.trick17.rolez.rolez.FinishStmt
 
 class CfgBuilder {
     
@@ -149,6 +150,12 @@ class CfgBuilder {
     
     private def dispatch Linker process(ReturnNothing r, Linker prev) {
         prev.linkAndReturn(newInstrNode(r)).link(exit);
+        [false]
+    }
+    
+    private def dispatch Linker process(FinishStmt f, Linker prev) {
+    	//TODO: this is currently implemented like a return statement
+        prev.linkAndReturn(newInstrNode(f)).link(exit);
         [false]
     }
     

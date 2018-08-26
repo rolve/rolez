@@ -6,7 +6,6 @@ import ch.trick17.rolez.rolez.OpArithmeticUnary
 import ch.trick17.rolez.rolez.ParallelStmt
 import ch.trick17.rolez.rolez.Parfor
 import ch.trick17.rolez.rolez.Stmt
-import ch.trick17.rolez.rolez.VarRef
 import com.google.inject.Inject
 import com.google.inject.Injector
 import java.util.ArrayList
@@ -15,6 +14,7 @@ import java.util.HashSet
 import java.util.Map
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.util.OnChangeEvictingCache
+import ch.trick17.rolez.rolez.Ref
 
 class TPIProvider {
 	
@@ -67,7 +67,7 @@ class TPIProvider {
 			val step = container.step
 			if (step instanceof Assignment) {
 				val l = step.left
-				if (l instanceof VarRef)
+				if (l instanceof Ref)
 					return l.variable.name
 			}
 			else if (step instanceof ArithmeticUnaryExpr) {
@@ -75,17 +75,10 @@ class TPIProvider {
 					step.op == OpArithmeticUnary.PRE_DECREMENT || step.op == OpArithmeticUnary.PRE_INCREMENT
 				) {
 					val e = step.expr
-					if (e instanceof VarRef)
+					if (e instanceof Ref)
 						return e.variable.name
 				}
 			}
-			/*else if (step instanceof MemberAccess) {
-				if (step.methodInvoke && step.method.thisParam.type.role instanceof ReadWrite) {
-					val t = step.target
-					if (t instanceof VarRef)
-						return t.variable.name
-				}
-			}*/
 		}
 		
 		null

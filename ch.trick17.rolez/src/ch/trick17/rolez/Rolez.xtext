@@ -88,7 +88,7 @@ Block:
     {Block} '{' (stmts+=Stmt)* '}';
 
 Stmt:
-    Block | LocalVarDecl | IfStmt | WhileLoop | ForLoop | SuperConstrCall | Return | ExprStmt | ParallelStmt | Parfor;
+    Block | LocalVarDecl | IfStmt | WhileLoop | ForLoop | SuperConstrCall | Return | FinishStmt | ExprStmt | ParallelStmt | Parfor;
 
 ParallelStmt:
     'parallel' ('[' (params1+=LocalVarDecl)+ ']')? part1=Stmt 'and' ('[' (params2+=LocalVarDecl)+ ']')? part2=Stmt;
@@ -128,6 +128,9 @@ ReturnNothing:
 
 ReturnExpr:
     'return' expr=Expr ';';
+
+FinishStmt:
+    {FinishStmt} 'finish' ';';
 
 ExprStmt:
     expr=Expr ';';

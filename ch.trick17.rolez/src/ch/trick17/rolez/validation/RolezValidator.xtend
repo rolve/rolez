@@ -64,6 +64,12 @@ import static extension ch.trick17.rolez.RolezExtensions.*
 import static extension ch.trick17.rolez.RolezUtils.*
 import ch.trick17.rolez.tpi.TPIException
 import ch.trick17.rolez.tpi.TPIProvider
+import ch.trick17.rolez.rolez.Ref
+import ch.trick17.rolez.rolez.Return
+import ch.trick17.rolez.rolez.FinishStmt
+import ch.trick17.rolez.rolez.Stmt
+import ch.trick17.rolez.rolez.Var
+import java.util.LinkedList
 
 class RolezValidator extends RolezSystemValidator {
 
@@ -133,6 +139,10 @@ class RolezValidator extends RolezSystemValidator {
     public static val INCORRECT_MAPPED_CONSTR = "incorrect mapped constructor"
     public static val INCORRECT_PAR_STMT_CONTENT = "incorrect parallel statement content"
     public static val NO_TPI = "task parameter inference not possible"
+    public static val RETURN_IN_PARALLEL = "return used inside parallel/parfor statement"
+    public static val LOCAL_VAR_ASSIGNMENT_IN_PARALLEL = "assignment to local external local variable inside parallel/parfor statement"
+    public static val FINISH_NOT_IN_PARALLEL = "finish not used inside parallel/parfor statement"
+    public static val TASK_PARAM_NOT_VAL = "manually declared task parameter is not a val"
     
     @Inject extension RolezFactory
     @Inject extension CfgProvider
@@ -802,33 +812,6 @@ class RolezValidator extends RolezSystemValidator {
     }
     
     @Check
-    def checkParallelStatementTPI(ParallelStmt it){
-        /*if (!(part1 instanceof ExprStmt && part2 instanceof ExprStmt)) {
-            error("Only task calls are allowed in parallel statements (this isn't an expr stmt)", null, INCORRECT_PAR_STMT_CONTENT)
-            return;
-        }
-        val es1 = part1 as ExprStmt
-        val es2 = part2 as ExprStmt
-        if (!(es1.expr instanceof MemberAccess && es2.expr instanceof MemberAccess)) {
-            error("Only task calls are allowed in parallel statements (this isn't a member access)", null, INCORRECT_PAR_STMT_CONTENT)
-            return;
-        }
-        
-        val ma1 = es1.expr as MemberAccess
-        val ma2 = es2.expr as MemberAccess
-        
-        if (!ma1.isMethodInvoke || !ma2.isMethodInvoke) {
-            error("Only task calls are allowed in parallel statements (this isn't a task/method invocation)", null, INCORRECT_PAR_STMT_CONTENT)
-            return;
-        }
-        
-        if (!ma1.getMethod.declaredTask || !ma2.getMethod.declaredTask) {
-            error("Only task calls are allowed in parallel statements (this isn't a task)", null, INCORRECT_PAR_STMT_CONTENT)
-            return;
-        }*/
-    }
-    
-    @Check
     def checkParallelStmtTPI(ParallelStmt p){
         try {
         	p.tpi()
@@ -848,6 +831,106 @@ class RolezValidator extends RolezSystemValidator {
         	error("Couldn't find a solution for task parameter inference",
                     p, null, NO_TPI)
         }
+    }
+    
+    @Check
+    def checkParallelParforReturn(Return r){
+        if (isInsideParallelParfor(r)) {
+        	error("Return statements cannot be used inside parallel or parfor statements",
+                    r, null, RETURN_IN_PARALLEL)
+        }
+    }
+    
+    @Check
+    def checkParallelParforLVAssignment(Assignment a){
+        val left = a.left
+        if (left instanceof Ref) {
+        	if (left.varRef) {
+        		val forbiddenLVs = getForbiddenAssignmentLVs(a);
+        		if (forbiddenLVs.exists[equals(left.variable)])
+        			error("Assignments to externally declared local variables are not allowed inside parallel/parfor statements",
+                            a, null, LOCAL_VAR_ASSIGNMENT_IN_PARALLEL)
+        	}
+        }
+    }
+    
+    @Check
+    def checkParallelParams(ParallelStmt p){
+        for (param : p.params1) {
+        	if (param.variable.kind != VarKind.VAL)
+        		error("Manually declared task parameters need to be vals",
+                        param, null, TASK_PARAM_NOT_VAL)
+        }
+        for (param : p.params2) {
+        	if (param.variable.kind != VarKind.VAL)
+        		error("Manually declared task parameters need to be vals",
+                        param, null, TASK_PARAM_NOT_VAL)
+        }
+    }
+    
+    @Check
+    def checkParforParams(Parfor p){
+        for (param : p.params) {
+        	if (param.variable.kind != VarKind.VAL)
+        		error("Manually declared task parameters need to be vals",
+                        param, null, TASK_PARAM_NOT_VAL)
+        }
+    }
+    
+    @Check
+    def checkParallelParforFinish(FinishStmt f){
+        if (!isInsideParallelParfor(f)) {
+        	error("Finish statements can only be used inside parallel and parfor statements",
+                    f, null, FINISH_NOT_IN_PARALLEL)
+        }
+    }
+    
+    private static def boolean isInsideParallelParfor(Stmt s) {
+    	val container = s.eContainer
+    	if (container instanceof ParallelStmt || container instanceof Parfor)
+    		true
+    	else if (container instanceof Stmt)
+    		isInsideParallelParfor(container)
+    	else if (container instanceof Expr)
+    		isInsideParallelParfor(container)
+    	else
+    		false
+    }
+    
+    private static def boolean isInsideParallelParfor(Expr e) {
+    	val container = e.eContainer
+    	if (container instanceof ParallelStmt || container instanceof Parfor)
+    		true
+    	else if (container instanceof Stmt)
+    		isInsideParallelParfor(container)
+    	else if (container instanceof Expr)
+    		isInsideParallelParfor(container)
+    	else
+    		false
+    }
+    
+    private static def Iterable<? extends Var> getForbiddenAssignmentLVs(Stmt s) {
+    	val container = s.eContainer
+    	if (container instanceof ParallelStmt || container instanceof Parfor)
+    		varsAbove(container.eContainer, container as Stmt)
+    	else if (container instanceof Stmt)
+    		getForbiddenAssignmentLVs(container)
+    	else if (container instanceof Expr)
+    		getForbiddenAssignmentLVs(container)
+    	else
+    		new LinkedList()
+    }
+    
+    private static def Iterable<? extends Var> getForbiddenAssignmentLVs(Expr e) {
+    	val container = e.eContainer
+    	if (container instanceof ParallelStmt || container instanceof Parfor)
+    		varsAbove(container.eContainer, container as Stmt)
+    	else if (container instanceof Stmt)
+    		getForbiddenAssignmentLVs(container)
+    	else if (container instanceof Expr)
+    		getForbiddenAssignmentLVs(container)
+    	else
+    		new LinkedList()
     }
     
     // TODO: Introduce final classes and make array, slice, etc. final, so that they cannot be 

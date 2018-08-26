@@ -1955,4 +1955,176 @@ class RolezValidatorTest {
             }
         ''').assertError(DOUBLE, INCORRECT_MAPPED_FIELD)
     }
+    
+    @Test def testParallelReturn() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def pure a: {
+                    parallel { }
+                    and { }
+                    return;
+                }
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def pure a: {
+                    parallel { return; }
+                    and { }
+                }
+            }
+        ''').assertError(RETURN, RETURN_IN_PARALLEL)
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def pure a: {
+                    parallel { }
+                    and { return; }
+                }
+            }
+        ''').assertError(RETURN, RETURN_IN_PARALLEL)
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def pure a: {
+                    parfor(val i = 0; i < 10; i++) { }
+                    return;
+                }
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def pure a: {
+                    parfor(val i = 0; i < 10; i++) { return; }
+                }
+            }
+        ''').assertError(RETURN, RETURN_IN_PARALLEL)
+    }
+    
+    @Test def testParallelParams() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def pure a: {
+                    parallel [
+                        val i: int = 0;
+                    ] { }
+                    and [
+                        val i: int = 0;
+                    ] { }
+                }
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def pure a: {
+                    parallel [
+                        var i: int = 0;
+                    ] { }
+                    and [
+                        val i: int = 0;
+                    ] { }
+                }
+            }
+        ''').assertError(LOCAL_VAR_DECL, TASK_PARAM_NOT_VAL)
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def pure a: {
+                    parallel [
+                        val i: int = 0;
+                    ] { }
+                    and [
+                        var i: int = 0;
+                    ] { }
+                }
+            }
+        ''').assertError(LOCAL_VAR_DECL, TASK_PARAM_NOT_VAL)
+    }
+    
+    @Test def testParforParams() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def pure a: {
+                    parfor(val i = 0; i < 10; i++) [
+                        val j: int = 0;
+                    ] { }
+                }
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def pure a: {
+                    parfor(val i = 0; i < 10; i++) [
+                        var j: int = 0;
+                    ] { }
+                }
+            }
+        ''').assertError(LOCAL_VAR_DECL, TASK_PARAM_NOT_VAL)
+    }
+    
+    @Test def testFinishStmt() {
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def pure a: {
+                    parallel { }
+                    and { }
+                    finish;
+                }
+            }
+        ''').assertError(FINISH_STMT, FINISH_NOT_IN_PARALLEL)
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def pure a: {
+                    parallel { finish; }
+                    and { }
+                }
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def pure a: {
+                    parallel { }
+                    and { finish; }
+                }
+            }
+        ''').assertNoErrors
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def pure a: {
+                    parfor(val i = 0; i < 10; i++) { }
+                    finish;
+                }
+            }
+        ''').assertError(FINISH_STMT, FINISH_NOT_IN_PARALLEL)
+        
+        parse('''
+            class rolez.lang.Object mapped to java.lang.Object
+            class A {
+                def pure a: {
+                    parfor(val i = 0; i < 10; i++) { finish; }
+                }
+            }
+        ''').assertNoErrors
+    }
 }

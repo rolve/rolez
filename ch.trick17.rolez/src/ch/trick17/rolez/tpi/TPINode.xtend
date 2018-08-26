@@ -8,12 +8,13 @@ import ch.trick17.rolez.rolez.Slicing
 import ch.trick17.rolez.rolez.Super
 import ch.trick17.rolez.rolez.This
 import ch.trick17.rolez.rolez.Type
-import ch.trick17.rolez.rolez.VarRef
 import java.util.ArrayList
 import java.util.Collections
 import java.util.HashMap
 import java.util.List
 import java.util.Map
+import ch.trick17.rolez.rolez.Ref
+import ch.trick17.rolez.rolez.SingletonClass
 
 abstract class TPINode {
 	
@@ -242,8 +243,8 @@ class StepVarArgMethodCallTPINode extends ChildTPINode {
 	public static def boolean isStepVarArgMethodCall(MemberAccess expr, String stepVar) {
 		if (expr.args.length == 1) {
 			val arg = expr.args.get(0)
-			if (arg instanceof VarRef)
-				return arg.variable.name == stepVar
+			if (arg instanceof Ref)
+				return arg.varRef && arg.variable.name == stepVar
 		}
 		false
 	}
@@ -336,11 +337,39 @@ class LocalVarTPINode extends RootTPINode {
 		if (expr instanceof Parenthesized)
 			matches(expr.expr)
 		else
-			expr instanceof VarRef && (expr as VarRef).variable.name.equals(this.name)
+			expr instanceof Ref && (expr as Ref).varRef && (expr as Ref).variable.name.equals(this.name)
 	}
 	
 	override nodeType() {
 		TPINodeType.LOCAL_VAR
+	}
+	
+	override id() {
+		this.name
+	}
+	
+}
+
+class SingletonTPINode extends RootTPINode {
+	
+	public val String name
+	public val SingletonClass singleton
+	
+	new(String name, SingletonClass singleton, Type expressionType) {
+		super(expressionType)
+		this.name = name
+		this.singleton = singleton
+	}
+	
+	override matches(Expr expr) {
+		if (expr instanceof Parenthesized)
+			matches(expr.expr)
+		else
+			expr instanceof Ref && (expr as Ref).singletonRef && (expr as Ref).referee === this.singleton
+	}
+	
+	override nodeType() {
+		TPINodeType.SINGLETON
 	}
 	
 	override id() {
@@ -388,7 +417,7 @@ class ThisTPINode extends RootTPINode {
 }
 
 enum TPINodeType {
-	FIELD_ACCESS, NO_ARG_METHOD_CALL, SLICING, LOCAL_VAR, STEP_VAR, STEP_VAR_ARG_METHOD_CALL, THIS, INFERRED_PARAM
+	FIELD_ACCESS, NO_ARG_METHOD_CALL, SLICING, LOCAL_VAR, SINGLETON, STEP_VAR, STEP_VAR_ARG_METHOD_CALL, THIS, INFERRED_PARAM
 }
 
 enum TPIRole {
