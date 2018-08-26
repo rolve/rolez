@@ -199,7 +199,8 @@ class RolezUtils {
     
     static def dispatch Set<String> parallelAssignmentVars(IfStmt i) {
     	val result = parallelAssignmentVars(i.thenPart)
-        result.addAll(parallelAssignmentVars(i.elsePart))
+    	if (i.elsePart != null)
+        	result.addAll(parallelAssignmentVars(i.elsePart))
         result
     }
     
