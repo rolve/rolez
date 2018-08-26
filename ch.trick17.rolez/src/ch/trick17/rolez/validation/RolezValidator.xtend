@@ -145,6 +145,7 @@ class RolezValidator extends RolezSystemValidator {
     public static val FINISH_NOT_IN_PARALLEL = "finish not used inside parallel/parfor statement"
     public static val PARALLEL_ASSIGN_NOT_IN_PARALLEL = "@= not used inside parallel/parfor statement"
     public static val TASK_PARAM_NOT_VAL = "manually declared task parameter is not a val"
+    public static val SUPER_IN_PARALLEL = "'super' in parallel or parfor statement"
     
     @Inject extension RolezFactory
     @Inject extension CfgProvider
@@ -898,6 +899,14 @@ class RolezValidator extends RolezSystemValidator {
         if (!isInsideParallelParfor(f)) {
         	error("Finish statements can only be used inside parallel and parfor statements",
                     f, null, FINISH_NOT_IN_PARALLEL)
+        }
+    }
+    
+    @Check
+    def checkParallelParforSuper(Super s) {
+    	if (isInsideParallelParfor(s)) {
+        	error("Super calls cannot be used inside parallel and parfor statements",
+                    s, null, SUPER_IN_PARALLEL)
         }
     }
     
