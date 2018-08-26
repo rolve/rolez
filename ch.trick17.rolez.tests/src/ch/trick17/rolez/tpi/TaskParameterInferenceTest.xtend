@@ -17,7 +17,11 @@ import org.eclipse.xtext.junit4.util.ParseHelper
 import org.junit.Test
 import org.junit.runner.RunWith
 
+import static ch.trick17.rolez.rolez.RolezPackage.Literals.*
+import static ch.trick17.rolez.validation.RolezValidator.*
+
 import static extension org.junit.Assert.*
+import org.eclipse.xtext.junit4.validation.ValidationTestHelper
 
 @RunWith(XtextRunner)
 @InjectWith(RolezInjectorProvider)
@@ -26,6 +30,7 @@ class TaskParameterInferenceTest {
     @Inject extension ParseHelper<Program>
     @Inject extension TestUtils
     @Inject extension TPIProvider
+    @Inject extension ValidationTestHelper
     
     @Test def testEmptyParallel() {
     	val res = testResources
@@ -80,7 +85,7 @@ class TaskParameterInferenceTest {
             and {
                 objA.mRW();
             }
-        '''.withFrameA1, testResources).testParallelStmtNoSolution()
+        '''.withFrameA1, testResources).assertError(PARALLEL_STMT, NO_TPI)
     }
     
     @Test def testParallelVar5() {
@@ -91,7 +96,7 @@ class TaskParameterInferenceTest {
             and {
                 objA.mRW();
             }
-        '''.withFrameA1, testResources).testParallelStmtNoSolution()
+        '''.withFrameA1, testResources).assertError(PARALLEL_STMT, NO_TPI)
     }
     
     @Test def testParallelVar6() {
@@ -148,7 +153,7 @@ class TaskParameterInferenceTest {
             and {
                 objB.field1.mRW();
             }
-        '''.withFrameB1, testResources).testParallelStmtNoSolution()
+        '''.withFrameB1, testResources).assertError(PARALLEL_STMT, NO_TPI)
     }
     
     @Test def testParallelField4() {
@@ -217,7 +222,7 @@ class TaskParameterInferenceTest {
             and {
             	objD.mRO();
             }
-        '''.withFrameD1, testResources).testParallelStmtNoSolution()
+        '''.withFrameD1, testResources).assertError(PARALLEL_STMT, NO_TPI)
     }
     
     @Test def testParallelField10() {
@@ -267,7 +272,7 @@ class TaskParameterInferenceTest {
             and {
             	objE.mRW();
             }
-        '''.withFrameE1, testResources).testParallelStmtNoSolution()
+        '''.withFrameE1, testResources).assertError(PARALLEL_STMT, NO_TPI)
     }
     
     @Test def testParallelSlicing3() {
@@ -302,7 +307,7 @@ class TaskParameterInferenceTest {
         	parfor(var i = 0; i < 10; i++) {
         		objA.mRW();
         	}
-        '''.withFrameA1, testResources).testParforStmtNoSolution()
+        '''.withFrameA1, testResources).assertError(PARFOR, NO_TPI)
     }
     
     @Test def testParforField1() {
@@ -318,7 +323,7 @@ class TaskParameterInferenceTest {
             parfor(var i = 0; i < 10; i++) {
             	objB.field1.mRW();
             }
-        '''.withFrameB1, testResources).testParforStmtNoSolution()
+        '''.withFrameB1, testResources).assertError(PARFOR, NO_TPI)
     }
     
     @Test def testParforField3() {
@@ -326,7 +331,7 @@ class TaskParameterInferenceTest {
             parfor(var i = 0; i < 10; i++) {
             	objD.field = 3;
             }
-        '''.withFrameD1, testResources).testParforStmtNoSolution()
+        '''.withFrameD1, testResources).assertError(PARFOR, NO_TPI)
     }
     
     @Test def testParforNAM1() {
@@ -350,7 +355,7 @@ class TaskParameterInferenceTest {
             parfor(var i = 0; i < 10; i++) {
             	(objE slice a).fieldA = 5;
             }
-        '''.withFrameE1, testResources).testParforStmtNoSolution()
+        '''.withFrameE1, testResources).assertError(PARFOR, NO_TPI)
     }
     
     @Test def testParforStepVar1() {
@@ -358,7 +363,7 @@ class TaskParameterInferenceTest {
             parfor(var i = 0; i < 10; i++) {
             	objF.array.get(i).mRO();
             }
-        '''.withFrameF1, testResources).testParforStmt(#["objF"])
+        '''.withFrameF1, testResources).testParforStmt(#["i, objF"])
     }
     
     @Test def testParforStepVar2() {
@@ -444,54 +449,24 @@ class TaskParameterInferenceTest {
     '''
     
     private def testParallelStmt(Program p, Collection<String> params1, Collection<String> params2) {
-    	try {
-	    	val tpi = findParallelStmt(p).tpi
-	    	
-	    	val tpiSet1 = new HashSet(tpi.get(0).selectedParams.map[toString])
-	    	val tpiSet2 = new HashSet(tpi.get(1).selectedParams.map[toString])
-	    	
-	    	val expectedSet1 = new HashSet(params1)
-	    	val expectedSet2 = new HashSet(params2)
-	    	
-	    	expectedSet1.assertEquals(tpiSet1)
-	    	expectedSet2.assertEquals(tpiSet2)
-    	}
-    	catch (TPIException e) {
-    		fail()
-    	}
-    }
-    
-    private def testParallelStmtNoSolution(Program p) {
-    	try {
-    		findParallelStmt(p).tpi
-    	}
-    	catch (TPIException e) {
-    		return
-    	}
-    	fail()
+    	val tpi = findParallelStmt(p).tpi
+    	
+    	val tpiSet1 = new HashSet(tpi.get(0).selectedParams.map[toString])
+    	val tpiSet2 = new HashSet(tpi.get(1).selectedParams.map[toString])
+    	
+    	val expectedSet1 = new HashSet(params1)
+    	val expectedSet2 = new HashSet(params2)
+    	
+    	expectedSet1.assertEquals(tpiSet1)
+    	expectedSet2.assertEquals(tpiSet2)
     }
     
     private def testParforStmt(Program p, Collection<String> params) {
-    	try {
-	    	val tpi = findParforStmt(p).tpi
-	    	
-	    	val tpiSet = new HashSet(tpi.selectedParams.map[toString])
-	    	val expectedSet = new HashSet(params)
-	    	expectedSet.assertEquals(tpiSet)
-    	}
-    	catch (TPIException e) {
-    		fail()
-    	}
-    }
-    
-    private def testParforStmtNoSolution(Program p) {
-    	try {
-    		findParforStmt(p).tpi
-    	}
-    	catch (TPIException e) {
-    		return
-    	}
-    	fail()
+    	val tpi = findParforStmt(p).tpi
+    	
+    	val tpiSet = new HashSet(tpi.selectedParams.map[toString])
+    	val expectedSet = new HashSet(params)
+    	expectedSet.assertEquals(tpiSet)
     }
     
     private def ParallelStmt findParallelStmt(Program p) {

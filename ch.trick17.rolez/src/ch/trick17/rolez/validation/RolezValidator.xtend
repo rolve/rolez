@@ -70,6 +70,7 @@ import ch.trick17.rolez.rolez.FinishStmt
 import ch.trick17.rolez.rolez.Stmt
 import ch.trick17.rolez.rolez.Var
 import java.util.LinkedList
+import ch.trick17.rolez.rolez.OpAssignment
 
 class RolezValidator extends RolezSystemValidator {
 
@@ -142,6 +143,7 @@ class RolezValidator extends RolezSystemValidator {
     public static val RETURN_IN_PARALLEL = "return used inside parallel/parfor statement"
     public static val LOCAL_VAR_ASSIGNMENT_IN_PARALLEL = "assignment to local external local variable inside parallel/parfor statement"
     public static val FINISH_NOT_IN_PARALLEL = "finish not used inside parallel/parfor statement"
+    public static val PARALLEL_ASSIGN_NOT_IN_PARALLEL = "@= not used inside parallel/parfor statement"
     public static val TASK_PARAM_NOT_VAL = "manually declared task parameter is not a val"
     
     @Inject extension RolezFactory
@@ -843,6 +845,9 @@ class RolezValidator extends RolezSystemValidator {
     
     @Check
     def checkParallelParforLVAssignment(Assignment a){
+    	if (a.op == OpAssignment.PARALLEL_ASSIGN)
+    		return;
+    	
         val left = a.left
         if (left instanceof Ref) {
         	if (left.varRef) {
@@ -851,6 +856,17 @@ class RolezValidator extends RolezSystemValidator {
         			error("Assignments to externally declared local variables are not allowed inside parallel/parfor statements",
                             a, null, LOCAL_VAR_ASSIGNMENT_IN_PARALLEL)
         	}
+        }
+    }
+    
+    @Check
+    def checkPostTaskAssignment(Assignment a){
+    	if (a.op != OpAssignment.PARALLEL_ASSIGN)
+    		return;
+    	
+        if (!isInsideParallelParfor(a)) {
+        	error("Post-task assignments can only be used inside parallel and parfor statements",
+                    a, null, PARALLEL_ASSIGN_NOT_IN_PARALLEL)
         }
     }
     

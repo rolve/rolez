@@ -15,6 +15,7 @@ import java.util.Map
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.util.OnChangeEvictingCache
 import ch.trick17.rolez.rolez.Ref
+import java.util.LinkedList
 
 class TPIProvider {
 	
@@ -138,10 +139,13 @@ class TPIProvider {
 		val nodes = nodeBuilder.createTPITrees(stmt.body, paramNames)
 		
 		val selectedParams = new ArrayList<TPINode>()
+		var stepVarSelected = false
 		
 		for (RootTPINode node : nodes.values) {
-			if (node.nodeType == TPINodeType.STEP_VAR)
+			if (node.nodeType == TPINodeType.STEP_VAR) {
 				selectedParams.add(node)
+				stepVarSelected = true	
+			}
 			else if (roleConflict(node.role, node.role))
 				throw new TPIException(stmt)
 			else if (roleConflict(node.childRole, node.childRole)) {
@@ -151,6 +155,13 @@ class TPIProvider {
 			}
 			else
 				selectedParams.add(node)
+		}
+		
+		if (!stepVarSelected) {
+			val svamcs = getStepVarArgMethodCalls(nodes.values)
+			svamcs.removeAll(selectedParams)
+			if (svamcs.size > 0)
+				selectedParams.add(nodeBuilder.createStepVarNode(stmt))
 		}
 		
 		new TPIResult(selectedParams)
@@ -214,6 +225,20 @@ class TPIProvider {
 	
 	private def ChildTPINode findEquivChild(TPINode parent, ChildTPINode child) {
 		parent.findChild(child.nodeType, child.name)
+	}
+	
+	private def getStepVarArgMethodCalls(Collection<RootTPINode> nodes) {
+		val Collection<TPINode> result = new LinkedList();
+		for (node : nodes)
+			addStepVarArgMethodCalls(node, result)
+		result
+	}
+	
+	private def void addStepVarArgMethodCalls(TPINode node, Collection<TPINode> result) {
+		if (node.nodeType == TPINodeType.STEP_VAR_ARG_METHOD_CALL)
+			result.add(node);
+		for (child : node.children)
+			addStepVarArgMethodCalls(child, result)
 	}
 	
 }

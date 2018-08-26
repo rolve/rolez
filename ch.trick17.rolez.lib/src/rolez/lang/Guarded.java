@@ -200,9 +200,11 @@ public abstract class Guarded {
     private void checkInterferesRwView(long newTaskBits, long otherTaskBits, Guarded original) {
         if((ownerBits & otherTaskBits) != 0)
             throw new InterferenceError(original, this, "readwrite", "readwrite", newTaskBits, ownerBits);
-        long otherReaders = readerBits.get() & otherTaskBits;
-        if(otherReaders != 0)
-            throw new InterferenceError(original, this, "readwrite", "readonly", newTaskBits, otherReaders);
+        if (guardingInitialized()) {
+        	long otherReaders = readerBits.get() & otherTaskBits;
+            if(otherReaders != 0)
+                throw new InterferenceError(original, this, "readwrite", "readonly", newTaskBits, otherReaders);
+        }
     }
     
     

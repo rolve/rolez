@@ -461,4 +461,24 @@ class TPINodeBuilder {
 		null
 	}
 	
+	public def StepVarTPINode createStepVarNode(Parfor parforStmt) {
+		val step = parforStmt.step
+		if (step instanceof Assignment) {
+			val l = step.left
+			if (l instanceof Ref)
+				return new StepVarTPINode(l.variable.name, system.type(l).value)
+		}
+		else if (step instanceof ArithmeticUnaryExpr) {
+			if (step.op == OpArithmeticUnary.POST_DECREMENT || step.op == OpArithmeticUnary.POST_INCREMENT ||
+				step.op == OpArithmeticUnary.PRE_DECREMENT || step.op == OpArithmeticUnary.PRE_INCREMENT
+			) {
+				val e = step.expr
+				if (e instanceof Ref)
+					return new StepVarTPINode(e.variable.name, system.type(e).value)
+			}
+		}
+		
+		null
+	}
+	
 }
