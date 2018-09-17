@@ -1274,52 +1274,53 @@ class InstrGeneratorTest extends GeneratorTest {
             parfor(var j = 0; j < 3; j++)
                 Tasks.bar(array.get(j));
         '''.withFrame, someClasses).onlyClass.generate.assertEqualsJava('''
-            rolez.lang.GuardedArray<Base[]> array = new rolez.lang.GuardedArray<Base[]>(new Base[10]);
-            for(int j = 0; j < 10; j++)
-                array.data[j] = new Base($task);
-            { /* parfor */
-                final java.util.List<java.lang.Object[]> $argsList = new java.util.ArrayList<>();
-                final java.util.List<java.lang.Object[]> $tpiList = new java.util.ArrayList<>();
-                for(int j = 0; j < 3; j++) {
-                    $argsList.add(new java.lang.Object[] {});
-                    $tpiList.add(new java.lang.Object[] {array.get(j), Tasks.INSTANCE});
-                }
-                
-                final java.lang.Object[][] $passed = new java.lang.Object[$argsList.size()][];
-                final java.lang.Object[][] $shared = new java.lang.Object[$argsList.size()][];
-                for(int $i = 0; $i < $argsList.size(); $i++) {
-                    final java.lang.Object[] $args = $argsList.get($i);
-                    final java.lang.Object[] $tpi = $tpiList.get($i);
-                    $passed[$i] = new java.lang.Object[] {$tpi[0]};
-                    $shared[$i] = new java.lang.Object[] {};
-                }
-                
-                final rolez.lang.Task<?>[] $tasks = new rolez.lang.Task<?>[$argsList.size()];
-                long $tasksBits = 0;
-                for(int $i = 0; $i < $tasks.length; $i++) {
-                    final java.lang.Object[] $args = $argsList.get($i);
-                    final java.lang.Object[] $tpi = $tpiList.get($i);
-                    $tasks[$i] = new rolez.lang.Task<java.lang.Void>($passed[$i], $shared[$i], $tasksBits) {
-                        @java.lang.Override
-                        protected java.lang.Void runRolez() {
+        rolez.lang.GuardedArray<Base[]> array = new rolez.lang.GuardedArray<Base[]>(new Base[10]);
+        for(int j = 0; j < 10; j++)
+            array.data[j] = new Base($task);
+        { /* parfor */
+            final java.util.List<java.lang.Object[]> $argsList = new java.util.ArrayList<>();
+            final java.util.List<java.lang.Object[]> $tpiList = new java.util.ArrayList<>();
+            for(int j = 0; j < 3; j++) {
+                $argsList.add(new java.lang.Object[] {});
+                $tpiList.add(new java.lang.Object[] {array.get(j), Tasks.INSTANCE});
+            }
+            
+            final java.lang.Object[][] $passed = new java.lang.Object[$argsList.size()][];
+            final java.lang.Object[][] $shared = new java.lang.Object[$argsList.size()][];
+            for(int $i = 0; $i < $argsList.size(); $i++) {
+                final java.lang.Object[] $args = $argsList.get($i);
+                final java.lang.Object[] $tpi = $tpiList.get($i);
+                $passed[$i] = new java.lang.Object[] {$tpi[0]};
+                $shared[$i] = new java.lang.Object[] {};
+            }
+            
+            final rolez.lang.Task<?>[] $tasks = new rolez.lang.Task<?>[$argsList.size()];
+            long $tasksBits = 0;
+            for(int $i = 0; $i < $tasks.length; $i++) {
+                final java.lang.Object[] $args = $argsList.get($i);
+                final java.lang.Object[] $tpi = $tpiList.get($i);
+                $tasks[$i] = new rolez.lang.Task<java.lang.Void>($passed[$i], $shared[$i], $tasksBits) {
+                    @java.lang.Override
+                    protected java.lang.Void runRolez() {
         Base $tpi0_1_0 = (Base) $tpi[0];
         Tasks $tpi0_1_1 = (Tasks) $tpi[1];
-                            $tpi0_1_1.bar($tpi0_1_0, $task);
-                            return null;
-                        }
-                    };
-                    $tasksBits |= $tasks[$i].idBits();
-                }
-                
-                try {
-                    for(int $i = 0; $i < $tasks.length-1; $i++)
-                        rolez.lang.TaskSystem.getDefault().start($tasks[$i]);
-                    rolez.lang.TaskSystem.getDefault().run($tasks[$tasks.length - 1]);
-                } finally {
-                    for(rolez.lang.Task<?> $t : $tasks)
-                        $t.get();
-                }
+                        $tpi0_1_1.bar($tpi0_1_0, $task);
+                        return null;
+                    }
+                };
+                $tasksBits |= $tasks[$i].idBits();
             }
+            
+            try {
+                for(int $i = 0; $i < $tasks.length-1; $i++)
+                    rolez.lang.TaskSystem.getDefault().start($tasks[$i]);
+                rolez.lang.TaskSystem.getDefault().run($tasks[$tasks.length - 1]);
+            } finally {
+                for(rolez.lang.Task<?> $t : $tasks)
+                    $t.get();
+            }
+            
+        }
         '''.withJavaFrame)
         
     }

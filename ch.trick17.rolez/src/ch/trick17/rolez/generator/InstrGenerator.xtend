@@ -15,6 +15,7 @@ import ch.trick17.rolez.rolez.DoubleLiteral
 import ch.trick17.rolez.rolez.Expr
 import ch.trick17.rolez.rolez.ExprStmt
 import ch.trick17.rolez.rolez.FieldInitializer
+import ch.trick17.rolez.rolez.FinishStmt
 import ch.trick17.rolez.rolez.ForLoop
 import ch.trick17.rolez.rolez.GenericClassRef
 import ch.trick17.rolez.rolez.IfStmt
@@ -52,7 +53,9 @@ import ch.trick17.rolez.tpi.FieldAccessTPINode
 import ch.trick17.rolez.tpi.InferredParamTPINode
 import ch.trick17.rolez.tpi.LocalVarTPINode
 import ch.trick17.rolez.tpi.NoArgMethodCallTPINode
+import ch.trick17.rolez.tpi.SingletonTPINode
 import ch.trick17.rolez.tpi.SlicingTPINode
+import ch.trick17.rolez.tpi.StepVarArgMethodCallTPINode
 import ch.trick17.rolez.tpi.TPIProvider
 import ch.trick17.rolez.tpi.TPIResult
 import ch.trick17.rolez.tpi.TPIRole
@@ -74,10 +77,6 @@ import static ch.trick17.rolez.rolez.VarKind.*
 import static extension ch.trick17.rolez.RolezExtensions.*
 import static extension ch.trick17.rolez.generator.SafeJavaNames.*
 import static extension org.eclipse.xtext.util.Strings.convertToJavaString
-import ch.trick17.rolez.tpi.StepVarTPINode
-import ch.trick17.rolez.tpi.StepVarArgMethodCallTPINode
-import ch.trick17.rolez.rolez.FinishStmt
-import ch.trick17.rolez.tpi.SingletonTPINode
 
 /**
  * Generates Java code for Rolez instructions (single or code blocks). Relies on

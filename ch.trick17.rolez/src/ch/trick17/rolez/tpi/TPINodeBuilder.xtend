@@ -230,7 +230,7 @@ class TPINodeBuilder {
 				
 				node.setRole(role)
 				if (standalone)
-					node.setStandalone()
+					node.setStandalone(role)
 				
 				node
 			}
@@ -242,7 +242,7 @@ class TPINodeBuilder {
 			val parent = createNode(e.target, thisParamRole, false)
 			if (parent != null) {
 				if (thisParamRole == TPIRole.READ_WRITE) {
-					parent.setStandalone()
+					parent.setStandalone(thisParamRole)
 					return null
 				}
 				
@@ -253,7 +253,7 @@ class TPINodeBuilder {
 				
 				node.setRole(role)
 				if (standalone)
-					node.setStandalone()
+					node.setStandalone(role)
 				
 				node
 			}
@@ -265,7 +265,7 @@ class TPINodeBuilder {
 			val parent = createNode(e.target, thisParamRole, false)
 			if (parent != null) {
 				if (thisParamRole == TPIRole.READ_WRITE) {
-					parent.setStandalone()
+					parent.setStandalone(thisParamRole)
 					return null
 				}
 				
@@ -276,7 +276,7 @@ class TPINodeBuilder {
 				
 				node.setRole(role)
 				if (standalone)
-					node.setStandalone()
+					node.setStandalone(role)
 				
 				node
 			}
@@ -313,7 +313,7 @@ class TPINodeBuilder {
 			
 			node.setRole(role)
 			if (standalone)
-				node.setStandalone()
+				node.setStandalone(role)
 			
 			node
 		}
@@ -342,7 +342,7 @@ class TPINodeBuilder {
 			
 			node.setRole(role)
 			if (standalone)
-				node.setStandalone()
+				node.setStandalone(role)
 			
 			node
 		}
@@ -351,13 +351,13 @@ class TPINodeBuilder {
 			
 			var node = this.singletonNodes.get(name)
 			if (node == null) {
-				node = new SingletonTPINode(name, e.referee as SingletonClass, system.type(e).value)
+				node = new SingletonTPINode(e.referee as SingletonClass, system.type(e).value)
 				this.singletonNodes.put(name, node)
 			}
 			
 			node.setRole(role)
 			if (standalone)
-				node.setStandalone()
+				node.setStandalone(role)
 			
 			node
 		}
@@ -387,11 +387,11 @@ class TPINodeBuilder {
 	
 	private def ThisTPINode createThisNode(Expr e, TPIRole role, boolean standalone) {
 		if (this.thisNode == null)
-			this.thisNode = new ThisTPINode(system.type(e).value, e.enclosingClass)
+			this.thisNode = new ThisTPINode(e.enclosingClass, system.type(e).value)
 		
 		this.thisNode.setRole(role)
 		if (standalone)
-			this.thisNode.setStandalone()
+			this.thisNode.setStandalone(role)
 		
 		this.thisNode
 	}
@@ -407,7 +407,7 @@ class TPINodeBuilder {
 		
 		node.setRole(role)
 		if (standalone)
-			node.setStandalone()
+			node.setStandalone(role)
 		
 		node
 	}

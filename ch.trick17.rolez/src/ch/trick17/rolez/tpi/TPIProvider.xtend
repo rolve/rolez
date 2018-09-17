@@ -16,6 +16,8 @@ import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.util.OnChangeEvictingCache
 import ch.trick17.rolez.rolez.Ref
 import java.util.LinkedList
+import java.util.List
+import ch.trick17.rolez.rolez.Expr
 
 class TPIProvider {
 	
@@ -107,8 +109,20 @@ class TPIProvider {
 			else if (roleConflict(node1.role, node2.role))
 				throw new TPIException(stmt)
 			else if (roleConflict(node1.childRole, node2.childRole)) {
-				if (node1.isStandalone || node2.isStandalone)
-					throw new TPIException(stmt)
+				if (node1.isStandalone) {
+					if (node1.standaloneRole == TPIRole.PURE) {
+						selectedParams1.add(node1.standaloneNode);
+					}
+					else
+						throw new TPIException(stmt);
+				}
+				if (node2.isStandalone) {
+					if (node2.standaloneRole == TPIRole.PURE) {
+						selectedParams2.add(node2.standaloneNode);
+					}
+					else
+						throw new TPIException(stmt);
+				}
 				compareChildren(node1, node2, selectedParams1, selectedParams2)
 				handledIds2.add(node2.id())
 			}
@@ -149,8 +163,13 @@ class TPIProvider {
 			else if (roleConflict(node.role, node.role))
 				throw new TPIException(stmt)
 			else if (roleConflict(node.childRole, node.childRole)) {
-				if (node.isStandalone)
-					throw new TPIException(stmt)
+				if (node.isStandalone) {
+					if (node.standaloneRole == TPIRole.PURE) {
+						selectedParams.add(node.standaloneNode);
+					}
+					else
+						throw new TPIException();
+				}
 				compareChildren(node, selectedParams)
 			}
 			else
@@ -187,8 +206,20 @@ class TPIProvider {
 			else if (roleConflict(child1.role, child2.role))
 				throw new TPIException()
 			else if (roleConflict(child1.childRole, child2.childRole)) {
-				if (child1.isStandalone || child2.isStandalone)
-					throw new TPIException()
+				if (child1.isStandalone) {
+					if (child1.standaloneRole == TPIRole.PURE) {
+						selectedParams1.add(child1.standaloneNode);
+					}
+					else
+						throw new TPIException();
+				}
+				if (child2.isStandalone) {
+					if (child2.standaloneRole == TPIRole.PURE) {
+						selectedParams2.add(child2.standaloneNode);
+					}
+					else
+						throw new TPIException();
+				}
 				compareChildren(child1, child2, selectedParams1, selectedParams2)
 				handledChildren2.add(child2)
 			}
@@ -214,8 +245,13 @@ class TPIProvider {
 			else if (roleConflict(child.role, child.role))
 				throw new TPIException()
 			else if (roleConflict(child.childRole, child.childRole)) {
-				if (child.isStandalone)
-					throw new TPIException()
+				if (child.isStandalone) {
+					if (child.standaloneRole == TPIRole.PURE) {
+						selectedParams.add(child.standaloneNode);
+					}
+					else
+						throw new TPIException();
+				}
 				compareChildren(child, selectedParams)
 			}
 			else

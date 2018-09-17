@@ -817,7 +817,9 @@ class RolezValidator extends RolezSystemValidator {
     @Check
     def checkParallelStmtTPI(ParallelStmt p){
         try {
-        	p.tpi()
+        	val result = p.tpi()
+        	info("Inferred parameters: " + result.get(0).selectedParams.map[it.toString()] + "", p.part1, null, "INFERRED_PARAMS");
+        	info("Inferred parameters: " + result.get(1).selectedParams.map[it.toString()] + "", p.part2, null, "INFERRED_PARAMS");
         }
         catch (TPIException e) {
         	error("Couldn't find a solution for task parameter inference",

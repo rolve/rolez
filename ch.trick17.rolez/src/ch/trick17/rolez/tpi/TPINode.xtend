@@ -28,6 +28,7 @@ abstract class TPINode {
 	private var TPIRole role = TPIRole.PURE
 	private var TPIRole childRole = TPIRole.PURE
 	private var boolean standalone = false
+	private var TPIRole standaloneRole = TPIRole.PURE
 	
 	new(Type expressionType) {
 		this.children = new ArrayList()
@@ -36,6 +37,11 @@ abstract class TPINode {
 		this.slicings = new HashMap()
 		this.stepVarArgMethodCalls = new HashMap()
 		this.expressionType = expressionType
+	}
+	
+	protected new(Type expressionType, TPIRole role) {
+		this(expressionType)
+		this.role = role
 	}
 	
 	protected dispatch def void addChild(FieldAccessTPINode child) {
@@ -111,8 +117,14 @@ abstract class TPINode {
 		this.standalone
 	}
 	
-	def void setStandalone() {
+	def void setStandalone(TPIRole role) {
 		this.standalone = true
+		if (isStrongerThan(role, this.standaloneRole))
+			this.standaloneRole = role
+	}
+	
+	def TPIRole getStandaloneRole() {
+		this.standaloneRole
 	}
 	
 	abstract def boolean matches(Expr expr)
@@ -120,6 +132,8 @@ abstract class TPINode {
 	abstract def TPINodeType nodeType()
 	
 	abstract def String id()
+	
+	abstract def TPINode standaloneNode()
 	
 	static def boolean isStrongerThan(TPIRole role1, TPIRole role2) {
 		if (role1 == TPIRole.PURE)
@@ -143,6 +157,12 @@ abstract class ChildTPINode extends TPINode {
 		this.name = name
 		
 		this.parent.addChild(this)
+	}
+	
+	protected new(TPINode parent, String name, Type expressionType, TPIRole role) {
+		super(expressionType, role)
+		this.parent = parent
+		this.name = name
 	}
 	
 	override TPINode getParent() {
@@ -169,6 +189,10 @@ class FieldAccessTPINode extends ChildTPINode {
 		super(parent, fieldName, expressionType)
 	}
 	
+	private new(TPINode parent, String name, Type expressionType, TPIRole role) {
+		super(parent, name, expressionType, role)
+	}
+	
 	override matches(Expr expr) {
 		if (expr instanceof Parenthesized)
 			matches(expr.expr)
@@ -186,12 +210,20 @@ class FieldAccessTPINode extends ChildTPINode {
 		parent.toString() + "." + this.name
 	}
 	
+	override standaloneNode() {
+		new FieldAccessTPINode(this.parent, this.name, this.expressionType, this.standaloneRole)
+	}
+	
 }
 
 class NoArgMethodCallTPINode extends ChildTPINode {
 	
 	new(TPINode parent, String methodName, Type expressionType) {
 		super(parent, methodName, expressionType)
+	}
+	
+	private new(TPINode parent, String name, Type expressionType, TPIRole role) {
+		super(parent, name, expressionType, role)
 	}
 	
 	override matches(Expr expr) {
@@ -211,12 +243,20 @@ class NoArgMethodCallTPINode extends ChildTPINode {
 		parent.toString() + "." + this.name + "()"
 	}
 	
+	override standaloneNode() {
+		new NoArgMethodCallTPINode(this.parent, this.name, this.expressionType, this.standaloneRole)
+	}
+	
 }
 
 class SlicingTPINode extends ChildTPINode {
 	
 	new(TPINode parent, String sliceName, Type expressionType) {
 		super(parent, sliceName, expressionType)
+	}
+	
+	private new(TPINode parent, String name, Type expressionType, TPIRole role) {
+		super(parent, name, expressionType, role)
 	}
 	
 	override matches(Expr expr) {
@@ -234,6 +274,10 @@ class SlicingTPINode extends ChildTPINode {
 	
 	override toString() {
 		parent.toString() + " slice " + this.name
+	}
+	
+	override standaloneNode() {
+		new SlicingTPINode(this.parent, this.name, this.expressionType, this.standaloneRole)
 	}
 	
 }
@@ -256,6 +300,11 @@ class StepVarArgMethodCallTPINode extends ChildTPINode {
 		this.stepVar = stepVar
 	}
 	
+	private new(TPINode parent, String name, Type expressionType, String stepVar, TPIRole role) {
+		super(parent, name, expressionType, role)
+		this.stepVar = stepVar
+	}
+	
 	override matches(Expr expr) {
 		if (expr instanceof Parenthesized)
 			matches(expr.expr)
@@ -273,12 +322,20 @@ class StepVarArgMethodCallTPINode extends ChildTPINode {
 		parent.toString() + "." + this.name + "(" + stepVar + ")"
 	}
 	
+	override standaloneNode() {
+		new StepVarArgMethodCallTPINode(this.parent, this.name, this.expressionType, this.stepVar, this.standaloneRole)
+	}
+	
 }
 
 abstract class RootTPINode extends TPINode {
 	
 	new(Type expressionType) {
 		super(expressionType)
+	}
+	
+	protected new(Type expressionType, TPIRole role) {
+		super(expressionType, role)
 	}
 	
 	override TPINode getParent() {
@@ -310,6 +367,12 @@ class InferredParamTPINode extends RootTPINode {
 		this.param = param
 	}
 	
+	new(int index, TPINode param, TPIRole role) {
+		super(param.expressionType, role)
+		this.index = index
+		this.param = param
+	}
+	
 	override matches(Expr expr) {
 		param.matches(expr)
 	}
@@ -322,6 +385,10 @@ class InferredParamTPINode extends RootTPINode {
 		"$tpi" + this.index
 	}
 	
+	override standaloneNode() {
+		new InferredParamTPINode(this.index, this.param, this.standaloneRole)
+	}
+	
 }
 
 class LocalVarTPINode extends RootTPINode {
@@ -331,6 +398,12 @@ class LocalVarTPINode extends RootTPINode {
 	new(String name, Type expressionType) {
 		super(expressionType)
 		this.name = name
+	}
+	
+	new(String name, Type expressionType, TPIRole role) {
+		super(expressionType)
+		this.name = name
+		this.role = role
 	}
 	
 	override matches(Expr expr) {
@@ -348,17 +421,25 @@ class LocalVarTPINode extends RootTPINode {
 		this.name
 	}
 	
+	override standaloneNode() {
+		new LocalVarTPINode(this.name, this.expressionType, this.standaloneRole)
+	}
+	
 }
 
 class SingletonTPINode extends RootTPINode {
 	
-	public val String name
 	public val SingletonClass singleton
 	
-	new(String name, SingletonClass singleton, Type expressionType) {
+	new(SingletonClass singleton, Type expressionType) {
 		super(expressionType)
-		this.name = name
 		this.singleton = singleton
+	}
+	
+	new(SingletonClass singleton, Type expressionType, TPIRole role) {
+		super(expressionType)
+		this.singleton = singleton
+		this.role = role
 	}
 	
 	override matches(Expr expr) {
@@ -373,7 +454,11 @@ class SingletonTPINode extends RootTPINode {
 	}
 	
 	override id() {
-		this.name
+		this.singleton.qualifiedName.toString
+	}
+	
+	override standaloneNode() {
+		new SingletonTPINode(this.singleton, this.expressionType, this.standaloneRole)
 	}
 	
 }
@@ -394,9 +479,15 @@ class ThisTPINode extends RootTPINode {
 	
 	public val Class enclosingClass
 	
-	new(Type expressionType, Class enclosingClass) {
+	new(Class enclosingClass, Type expressionType) {
 		super(expressionType)
 		this.enclosingClass = enclosingClass
+	}
+	
+	new(Class enclosingClass, Type expressionType, TPIRole role) {
+		super(expressionType)
+		this.enclosingClass = enclosingClass
+		this.role = role
 	}
 	
 	override matches(Expr expr) {
@@ -412,6 +503,10 @@ class ThisTPINode extends RootTPINode {
 	
 	override id() {
 		"this"
+	}
+	
+	override standaloneNode() {
+		new ThisTPINode(this.enclosingClass, this.expressionType, this.standaloneRole)
 	}
 	
 }

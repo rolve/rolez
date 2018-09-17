@@ -363,7 +363,7 @@ class TaskParameterInferenceTest {
             parfor(var i = 0; i < 10; i++) {
             	objF.array.get(i).mRO();
             }
-        '''.withFrameF1, testResources).testParforStmt(#["i, objF"])
+        '''.withFrameF1, testResources).testParforStmt(#["i", "objF"])
     }
     
     @Test def testParforStepVar2() {
