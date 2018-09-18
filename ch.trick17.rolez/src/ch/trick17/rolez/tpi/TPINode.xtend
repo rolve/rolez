@@ -97,6 +97,8 @@ abstract class TPINode {
 			if (hasParent)
 				parent.propagateChildRole(role)
 		}
+		if (isStrongerThan(role, this.childRole))
+			this.childRole = role
 	}
 	
 	def TPIRole getChildRole() {

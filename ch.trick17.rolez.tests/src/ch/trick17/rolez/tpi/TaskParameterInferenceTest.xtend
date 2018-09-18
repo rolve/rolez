@@ -142,7 +142,7 @@ class TaskParameterInferenceTest {
             and {
                 objB.field1.mRW();
             }
-        '''.withFrameB1, testResources).testParallelStmt(#["objB"], #["objB"])
+        '''.withFrameB1, testResources).testParallelStmt(#["objB.field1"], #["objB.field1"])
     }
     
     @Test def testParallelField3() {
@@ -200,7 +200,7 @@ class TaskParameterInferenceTest {
             and {
             	objC.fieldC.fieldC.mRW();
             }
-        '''.withFrameC1, testResources).testParallelStmt(#["objC.fieldC"], #["objC.fieldC"]) //TODO: does this make sense?
+        '''.withFrameC1, testResources).testParallelStmt(#["objC.fieldC.mRO()"], #["objC.fieldC.fieldC"]) //TODO: does this make sense?
     }
     
     @Test def testParallelField8() {
