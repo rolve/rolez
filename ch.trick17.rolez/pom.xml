@@ -10,6 +10,8 @@
     <packaging>eclipse-plugin</packaging>
 
     <properties>
+        <emfVersion>2.12.0</emfVersion>
+        <emfCodegenVersion>2.11.0</emfCodegenVersion>
         <ecoreXtextVersion>1.2.0</ecoreXtextVersion>
         <xcoreVersion>1.3.1</xcoreVersion>
         <xcoreLibVersion>1.1.100</xcoreLibVersion>
@@ -23,6 +25,26 @@
             <groupId>net.sf.xsemantics</groupId>
             <artifactId>it.xsemantics.runtime</artifactId>
             <version>${xsemanticsVersion}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.emf</groupId>
+            <artifactId>org.eclipse.emf.common</artifactId>
+            <version>${emfVersion}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.emf</groupId>
+            <artifactId>org.eclipse.emf.codegen</artifactId>
+            <version>${emfCodegenVersion}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.emf</groupId>
+            <artifactId>org.eclipse.emf.ecore</artifactId>
+            <version>${emfVersion}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.emf</groupId>
+            <artifactId>org.eclipse.emf.ecore.xmi</artifactId>
+            <version>${emfVersion}</version>
         </dependency>
         <dependency>
             <groupId>org.eclipse.emf</groupId>
