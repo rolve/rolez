@@ -8,7 +8,7 @@ Bundle-ActivationPolicy: lazy
 Require-Bundle: ch.trick17.rolez,
  org.eclipse.xtext.ide,
  org.eclipse.xtext.xbase.ide,
- org.antlr.runtime
+ org.antlr.runtime;bundle-version="[3.2.0,3.2.1)"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-Vendor: Michael Faes
 Export-Package: ch.trick17.rolez.ide.contentassist.antlr,

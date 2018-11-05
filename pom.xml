@@ -7,8 +7,8 @@
     <packaging>pom</packaging>
 
     <properties>
-        <tychoVersion>1.1.0</tychoVersion>
-        <xtextVersion>2.14.0</xtextVersion>
+        <xtextVersion>2.15.0</xtextVersion>
+        <tychoVersion>1.2.0</tychoVersion>
         <xsemanticsVersion>1.14.0-SNAPSHOT</xsemanticsVersion>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -156,7 +156,7 @@
                                     <pluginExecutionFilter>
                                         <groupId>org.eclipse.tycho</groupId>
                                         <artifactId>tycho-compiler-plugin</artifactId>
-                                        <versionRange>[1.1.0,)</versionRange>
+                                        <versionRange>[${tychoVersion},)</versionRange>
                                         <goals>
                                             <goal>compile</goal>
                                         </goals>
@@ -183,7 +183,7 @@
                                     <pluginExecutionFilter>
                                         <groupId>org.eclipse.tycho</groupId>
                                         <artifactId>tycho-packaging-plugin</artifactId>
-                                        <versionRange>[1.1.0,)</versionRange>
+                                        <versionRange>[${tychoVersion}},)</versionRange>
                                         <goals>
                                             <goal>build-qualifier</goal>
                                             <goal>build-qualifier-aggregator</goal>
