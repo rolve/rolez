@@ -181,7 +181,7 @@ class RolezValidator extends RolezSystemValidator {
     @Check
     def checkSlicedSuperclass(Class it) {
         /* At the moment, sliced classes cannot be extended, for simplicity's sake. */
-        if(superclass != null && superclass.isSliced)
+        if(superclass !== null && superclass.isSliced)
             error("Cannot extend sliced class", CLASS__SUPERCLASS_REF, SLICED_SUPERCLASS)
     }
     
@@ -815,7 +815,7 @@ class RolezValidator extends RolezSystemValidator {
      * Delayed errors
      */
     
-    private val Set<Error> delayedErrors = new HashSet
+    val Set<Error> delayedErrors = new HashSet
     
     /**
      * Can be called by other classes (e.g. the scope provider) to create

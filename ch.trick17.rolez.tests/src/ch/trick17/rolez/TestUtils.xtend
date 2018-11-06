@@ -22,9 +22,9 @@ import javax.inject.Inject
 import javax.inject.Provider
 import org.eclipse.emf.common.util.URI
 import org.eclipse.emf.ecore.resource.ResourceSet
-import org.eclipse.xtext.junit4.validation.ValidationTestHelper
 import org.eclipse.xtext.naming.QualifiedName
 import org.eclipse.xtext.resource.XtextResourceSet
+import org.eclipse.xtext.testing.validation.ValidationTestHelper
 import org.eclipse.xtext.util.StringInputStream
 
 import static org.hamcrest.Matchers.*
@@ -38,7 +38,7 @@ class TestUtils {
     @Inject extension ValidationTestHelper
     @Inject Provider<XtextResourceSet> resourceSetProvider
     
-    private val r = new Random
+    val r = new Random
 
     def newResourceSet() { resourceSetProvider.get }
     

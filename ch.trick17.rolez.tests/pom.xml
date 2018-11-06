@@ -20,8 +20,8 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>net.sf.xsemantics</groupId>
-            <artifactId>it.xsemantics.runtime</artifactId>
+            <groupId>org.eclipse.xsemantics</groupId>
+            <artifactId>org.eclipse.xsemantics.runtime</artifactId>
             <version>${xsemanticsVersion}</version>
         </dependency>
         <dependency>
@@ -30,7 +30,7 @@
         </dependency>
         <dependency>
             <groupId>org.eclipse.xtext</groupId>
-            <artifactId>org.eclipse.xtext.junit4</artifactId>
+            <artifactId>org.eclipse.xtext.testing</artifactId>
             <version>${xtextVersion}</version>
         </dependency>
         <dependency>
@@ -38,6 +38,11 @@
             <artifactId>org.eclipse.xtext.common.types</artifactId>
             <version>${xtextVersion}</version>
         </dependency>
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>4.12</version>
+            </dependency>
         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-library</artifactId>
@@ -51,11 +56,6 @@
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
                 <version>17.0</version>
-            </dependency>
-            <dependency>
-                <groupId>junit</groupId>
-                <artifactId>junit</artifactId>
-                <version>4.12</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

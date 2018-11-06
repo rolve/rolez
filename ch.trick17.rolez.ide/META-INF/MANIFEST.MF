@@ -1,4 +1,5 @@
 Manifest-Version: 1.0
+Automatic-Module-Name: ch.trick17.rolez.ide
 Bundle-ManifestVersion: 2
 Bundle-Name: ch.trick17.rolez.ide
 Bundle-Version: 1.0.0.qualifier
@@ -6,9 +7,10 @@ Bundle-SymbolicName: ch.trick17.rolez.ide;singleton:=true
 Bundle-ActivationPolicy: lazy
 Require-Bundle: ch.trick17.rolez,
  org.eclipse.xtext.ide,
- org.eclipse.xtext.xbase.ide
+ org.eclipse.xtext.xbase.ide,
+ org.antlr.runtime;bundle-version="[3.2.0,3.2.1)"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Export-Package: ch.trick17.rolez.ide.contentassist.antlr.internal,
- ch.trick17.rolez.ide.contentassist.antlr
 Bundle-Vendor: Michael Faes
+Export-Package: ch.trick17.rolez.ide.contentassist.antlr,
+ ch.trick17.rolez.ide.contentassist.antlr.internal
 

@@ -21,7 +21,7 @@ class RolezGenerator extends AbstractGenerator {
     
     override void doGenerate(Resource resource, IFileSystemAccess2 fsa, IGeneratorContext _) {
         val program = resource.contents.head as Program
-        if(program != null)
+        if(program !== null)
             for (c : program.classes.filter[!mapped || isSingleton]) {
                 val baseName = c.qualifiedName.segments.map[safe].join(File.separator)
                 fsa.generateFile(baseName + ".java", classGenerator.generate(c))

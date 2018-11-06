@@ -1,7 +1,7 @@
 package ch.trick17.rolez
 
 import ch.trick17.rolez.rolez.SuperConstrCall
-import it.xsemantics.runtime.StringRepresentation
+import org.eclipse.xsemantics.runtime.StringRepresentation
 
 class StringRepresentationFix extends StringRepresentation {
 

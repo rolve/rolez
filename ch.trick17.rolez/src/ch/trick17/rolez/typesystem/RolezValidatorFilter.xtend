@@ -1,7 +1,7 @@
 package ch.trick17.rolez.typesystem
 
-import it.xsemantics.runtime.RuleFailedException
-import it.xsemantics.runtime.validation.XsemanticsValidatorFilter
+import org.eclipse.xsemantics.runtime.RuleFailedException
+import org.eclipse.xsemantics.runtime.validation.XsemanticsValidatorFilter
 
 /**
  * Filters out failures that are due to unresolved cross references.

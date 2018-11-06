@@ -1,5 +1,6 @@
 package ch.trick17.rolez.ui.buildpath
 
+import java.io.File
 import org.apache.log4j.Logger
 import org.eclipse.core.runtime.FileLocator
 import org.eclipse.core.runtime.IPath
@@ -26,7 +27,15 @@ class RolezStdLib implements IClasspathContainer {
     override getClasspathEntries() {
         if(classpathEntries === null) {
             val libBundle = Platform.getBundle(ROLEZ_LIB_BUNDLE_ID)
-            val libPath = new Path(FileLocator.getBundleFile(libBundle).absolutePath)
+            var libPath = new Path(FileLocator.getBundleFile(libBundle).absolutePath)
+            // libPath points to the folder of the "lib" project when Eclipse is started
+            // from within Eclipse. Replace with jar file to make it work there:
+            if(libPath.toFile.isDirectory && libPath.toFile.list.contains("target")) {
+                val jars = new File(libPath + "/target").listFiles
+                        .filter[name.endsWith(".jar") && !name.endsWith("sources.jar")]
+                if(jars.size == 1)
+                    libPath = new Path(jars.head.absolutePath)
+            }
             val sourcePath =
                 try {
                     val bundlesFolder = libPath.removeLastSegments(1)

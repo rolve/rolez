@@ -371,7 +371,7 @@ from {
         
         if(a.isTaskStart) {
             val taskClass = utils.findNormalClass(taskClassName, a)
-            taskClass != null
+            taskClass !== null
             t = newRoleType(createPure, newClassRef(taskClass, a.method.type))
         }
         else
@@ -411,7 +411,7 @@ rule TStringLiteral
     error stringClassName + " class is not defined" source s
 from {
     val stringClass = utils.findClass(stringClassName, s)
-    stringClass != null
+    stringClass !== null
     t = newRoleType(createReadWrite, newClassRef(stringClass))
 }
 
@@ -442,10 +442,10 @@ rule VLocalVar
     error "Missing variable type" source v
 from {
     {
-        v.type != null
+        v.type !== null
         t = v.type
     } or {
-        v.decl.initializer != null
+        v.decl.initializer !== null
         G |- v.decl.initializer : t
     }
 }
@@ -467,8 +467,8 @@ rule WLocalVarDecl
     G |- LocalVarDecl d
 from {
     G ||- d.variable : var Type _
-    d.initializer == null
-        or d.variable.type == null
+    d.initializer === null
+        or d.variable.type === null
         or G |- d.initializer <| d.variable.type
 }
 
@@ -477,7 +477,7 @@ rule WIfStmt
 from {
     G |- ifStmt.^condition <| createBoolean
     G |- ifStmt.thenPart
-    ifStmt.elsePart == null or G |- ifStmt.elsePart
+    ifStmt.elsePart === null or G |- ifStmt.elsePart
 }
 
 rule WWhileLoop

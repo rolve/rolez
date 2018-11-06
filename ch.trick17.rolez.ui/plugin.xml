@@ -58,20 +58,20 @@
 			<and>
 				<reference definitionId="isActiveEditorAnInstanceOfXtextEditor"/>
 				<with variable="activeEditor">
-					<test property="org.eclipse.xtext.ui.editor.XtextEditor.languageName" 
-						value="ch.trick17.rolez.Rolez" 
+					<test property="org.eclipse.xtext.ui.editor.XtextEditor.languageName"
+						value="ch.trick17.rolez.Rolez"
 						forcePluginActivation="true"/>
-				</with>		
+				</with>
 			</and>
 		</definition>
 		<definition id="ch.trick17.rolez.Rolez.XtextEditor.opened">
 			<and>
 				<reference definitionId="isXtextEditorActive"/>
 				<with variable="activeEditor">
-					<test property="org.eclipse.xtext.ui.editor.XtextEditor.languageName" 
-						value="ch.trick17.rolez.Rolez" 
+					<test property="org.eclipse.xtext.ui.editor.XtextEditor.languageName"
+						value="ch.trick17.rolez.Rolez"
 						forcePluginActivation="true"/>
-				</with>		
+				</with>
 			</and>
 		</definition>
 	</extension>
@@ -150,16 +150,16 @@
 					definitionId="ch.trick17.rolez.Rolez.Editor.opened">
 				</reference>
 			</visibleWhen>
-		</command>  
+		</command>
 		</menuContribution>
 		<!-- copy qualified name -->
 		<menuContribution locationURI="popup:#TextEditorContext?after=copy">
-			<command commandId="org.eclipse.xtext.ui.editor.copyqualifiedname.EditorCopyQualifiedName" 
+			<command commandId="org.eclipse.xtext.ui.editor.copyqualifiedname.EditorCopyQualifiedName"
 				style="push" tooltip="Copy Qualified Name">
 				<visibleWhen checkEnabled="false">
 					<reference definitionId="ch.trick17.rolez.Rolez.Editor.opened" />
 				</visibleWhen>
-			</command>  
+			</command>
 		</menuContribution>
 		<menuContribution locationURI="menu:edit?after=copy">
 			<command commandId="org.eclipse.xtext.ui.editor.copyqualifiedname.EditorCopyQualifiedName"
@@ -167,10 +167,10 @@
 				<visibleWhen checkEnabled="false">
 					<reference definitionId="ch.trick17.rolez.Rolez.Editor.opened" />
 				</visibleWhen>
-			</command>  
+			</command>
 		</menuContribution>
 		<menuContribution locationURI="popup:org.eclipse.xtext.ui.outline?after=additions">
-			<command commandId="org.eclipse.xtext.ui.editor.copyqualifiedname.OutlineCopyQualifiedName" 
+			<command commandId="org.eclipse.xtext.ui.editor.copyqualifiedname.OutlineCopyQualifiedName"
 				style="push" tooltip="Copy Qualified Name">
 				<visibleWhen checkEnabled="false">
 					<and>
@@ -204,6 +204,15 @@
 			</activeWhen>
 		</handler>
 	</extension>
+	<extension point="org.eclipse.core.contenttype.contentTypes">
+		<content-type
+			base-type="org.eclipse.core.runtime.text"
+			file-extensions="rz,rolez"
+			id="ch.trick17.rolez.Rolez.contenttype"
+			name="Rolez File"
+			priority="normal">
+		</content-type>
+	</extension>
 	<!-- adding resource factories -->
 	<extension
 		point="org.eclipse.emf.ecore.extension_parser">
@@ -213,10 +222,10 @@
 		</parser>
 	</extension>
 	<extension point="org.eclipse.xtext.extension_resourceServiceProvider">
-	    <resourceServiceProvider
-	        class="ch.trick17.rolez.ui.RolezExecutableExtensionFactory:org.eclipse.xtext.ui.resource.IResourceUIServiceProvider"
-	        uriExtension="rz">
-	    </resourceServiceProvider>
+		<resourceServiceProvider
+			class="ch.trick17.rolez.ui.RolezExecutableExtensionFactory:org.eclipse.xtext.ui.resource.IResourceUIServiceProvider"
+			uriExtension="rz">
+		</resourceServiceProvider>
 	</extension>
 	<extension
 		point="org.eclipse.emf.ecore.extension_parser">
@@ -226,10 +235,10 @@
 		</parser>
 	</extension>
 	<extension point="org.eclipse.xtext.extension_resourceServiceProvider">
-	    <resourceServiceProvider
-	        class="ch.trick17.rolez.ui.RolezExecutableExtensionFactory:org.eclipse.xtext.ui.resource.IResourceUIServiceProvider"
-	        uriExtension="rolez">
-	    </resourceServiceProvider>
+		<resourceServiceProvider
+			class="ch.trick17.rolez.ui.RolezExecutableExtensionFactory:org.eclipse.xtext.ui.resource.IResourceUIServiceProvider"
+			uriExtension="rolez">
+		</resourceServiceProvider>
 	</extension>
 	<!-- marker definitions for ch.trick17.rolez.Rolez -->
 	<extension
@@ -252,6 +261,15 @@
 			point="org.eclipse.core.resources.markers">
 		<super type="org.eclipse.xtext.ui.check.expensive"/>
 		<persistent value="true"/>
+	</extension>
+	<extension point="org.eclipse.ui.preferencePages">
+		<page
+			category="ch.trick17.rolez.Rolez"
+			class="ch.trick17.rolez.ui.RolezExecutableExtensionFactory:org.eclipse.xtext.ui.validation.ValidatorPreferencePage"
+			id="ch.trick17.rolez.Rolez.validator.preferencePage"
+			name="Errors/Warnings">
+			<keywordReference id="ch.trick17.rolez.ui.keyword_Rolez"/>
+		</page>
 	</extension>
 	<extension point="org.eclipse.xtext.builder.participant">
 		<participant
@@ -336,31 +354,31 @@
 	</extension>
 	<!-- quickfix marker resolution generator for ch.trick17.rolez.Rolez -->
 	<extension
-	        point="org.eclipse.ui.ide.markerResolution">
-	    <markerResolutionGenerator
-	        class="ch.trick17.rolez.ui.RolezExecutableExtensionFactory:org.eclipse.xtext.ui.editor.quickfix.MarkerResolutionGenerator"
-	        markerType="ch.trick17.rolez.ui.rolez.check.fast">
-	        <attribute
-	            name="FIXABLE_KEY"
-	            value="true">
-	        </attribute>
-	    </markerResolutionGenerator>
-	    <markerResolutionGenerator
-	        class="ch.trick17.rolez.ui.RolezExecutableExtensionFactory:org.eclipse.xtext.ui.editor.quickfix.MarkerResolutionGenerator"
-	        markerType="ch.trick17.rolez.ui.rolez.check.normal">
-	        <attribute
-	            name="FIXABLE_KEY"
-	            value="true">
-	        </attribute>
-	    </markerResolutionGenerator>
-	    <markerResolutionGenerator
-	        class="ch.trick17.rolez.ui.RolezExecutableExtensionFactory:org.eclipse.xtext.ui.editor.quickfix.MarkerResolutionGenerator"
-	        markerType="ch.trick17.rolez.ui.rolez.check.expensive">
-	        <attribute
-	            name="FIXABLE_KEY"
-	            value="true">
-	        </attribute>
-	    </markerResolutionGenerator>
+			point="org.eclipse.ui.ide.markerResolution">
+		<markerResolutionGenerator
+			class="ch.trick17.rolez.ui.RolezExecutableExtensionFactory:org.eclipse.xtext.ui.editor.quickfix.MarkerResolutionGenerator"
+			markerType="ch.trick17.rolez.ui.rolez.check.fast">
+			<attribute
+				name="FIXABLE_KEY"
+				value="true">
+			</attribute>
+		</markerResolutionGenerator>
+		<markerResolutionGenerator
+			class="ch.trick17.rolez.ui.RolezExecutableExtensionFactory:org.eclipse.xtext.ui.editor.quickfix.MarkerResolutionGenerator"
+			markerType="ch.trick17.rolez.ui.rolez.check.normal">
+			<attribute
+				name="FIXABLE_KEY"
+				value="true">
+			</attribute>
+		</markerResolutionGenerator>
+		<markerResolutionGenerator
+			class="ch.trick17.rolez.ui.RolezExecutableExtensionFactory:org.eclipse.xtext.ui.editor.quickfix.MarkerResolutionGenerator"
+			markerType="ch.trick17.rolez.ui.rolez.check.expensive">
+			<attribute
+				name="FIXABLE_KEY"
+				value="true">
+			</attribute>
+		</markerResolutionGenerator>
 	</extension>
 	<!-- Rename Refactoring -->
 	<extension point="org.eclipse.ui.handlers">
@@ -401,12 +419,18 @@
 			class="ch.trick17.rolez.ui.RolezExecutableExtensionFactory:org.eclipse.xtext.ui.compare.InjectableViewerCreator"
 			extensions="rz,rolez">
 		</viewer>
+		<contentTypeBinding
+			contentTypeId="ch.trick17.rolez.Rolez.contenttype"
+			contentViewerId="ch.trick17.rolez.Rolez.compare.contentViewers" />
 	</extension>
 	<extension point="org.eclipse.compare.contentMergeViewers">
 		<viewer id="ch.trick17.rolez.Rolez.compare.contentMergeViewers"
 			class="ch.trick17.rolez.ui.RolezExecutableExtensionFactory:org.eclipse.xtext.ui.compare.InjectableViewerCreator"
 			extensions="rz,rolez" label="Rolez Compare">
 		</viewer>
+		<contentTypeBinding
+			contentTypeId="ch.trick17.rolez.Rolez.contenttype"
+			contentMergeViewerId="ch.trick17.rolez.Rolez.compare.contentMergeViewers" />
 	</extension>
 	<extension point="org.eclipse.ui.editors.documentProviders">
 		<provider id="ch.trick17.rolez.Rolez.editors.documentProviders"
@@ -437,4 +461,33 @@
             class="ch.trick17.rolez.ui.buildpath.RolezStdLibInitializer">
         </classpathContainerInitializer>
     </extension>
+	<extension
+		point="org.eclipse.ui.newWizards">
+		<category id="ch.trick17.rolez.ui.category" name="Rolez">
+		</category>
+		<wizard
+			category="ch.trick17.rolez.ui.category"
+			class="ch.trick17.rolez.ui.RolezExecutableExtensionFactory:org.eclipse.xtext.ui.wizard.template.TemplateNewProjectWizard"
+			id="ch.trick17.rolez.ui.wizard.RolezNewProjectWizard"
+			name="Rolez Project"
+			icon="icons/new_Rolez_proj.gif"
+			project="true">
+		</wizard>
+	</extension>
+	<extension
+	      point="org.eclipse.xtext.ui.projectTemplate">
+	   <projectTemplateProvider
+	         class="ch.trick17.rolez.ui.wizard.RolezProjectTemplateProvider"
+	         grammarName="ch.trick17.rolez.Rolez">
+	   </projectTemplateProvider>
+	</extension>
+	<extension
+		point="org.eclipse.ui.perspectiveExtensions">
+		<perspectiveExtension targetID="org.eclipse.ui.resourcePerspective">
+			<newWizardShortcut id="ch.trick17.rolez.ui.wizard.RolezNewProjectWizard"/>
+		</perspectiveExtension>
+		<perspectiveExtension targetID="org.eclipse.jdt.ui.JavaPerspective">
+			<newWizardShortcut id="ch.trick17.rolez.ui.wizard.RolezNewProjectWizard"/>
+		</perspectiveExtension>
+	</extension>
 </plugin>

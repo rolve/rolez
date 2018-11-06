@@ -4,15 +4,15 @@ import ch.trick17.rolez.TestUtils
 import ch.trick17.rolez.rolez.Program
 import ch.trick17.rolez.tests.RolezInjectorProvider
 import javax.inject.Inject
-import org.eclipse.xtext.junit4.InjectWith
-import org.eclipse.xtext.junit4.XtextRunner
-import org.eclipse.xtext.junit4.util.ParseHelper
+import org.eclipse.xtext.testing.InjectWith
+import org.eclipse.xtext.testing.XtextRunner
+import org.eclipse.xtext.testing.util.ParseHelper
 import org.junit.Test
 import org.junit.runner.RunWith
 import rolez.lang.Guarded
+import rolez.lang.Safe
 
 import static ch.trick17.rolez.Constants.*
-import rolez.lang.Safe
 
 @RunWith(XtextRunner)
 @InjectWith(RolezInjectorProvider)
@@ -643,13 +643,13 @@ class InstrGeneratorTest extends GeneratorTest {
     }
     
     static class SomethingWithChars extends Guarded {
-        public def void doSomething(char[] chars) {}
+        def void doSomething(char[] chars) {}
     }
     
     static class SomethingSafeWithChars extends Guarded {
         @Safe
-        public def void doSomething(char[] chars) {}
-        public def void doSomethingElse(@Safe char[] chars) {}
+        def void doSomething(char[] chars) {}
+        def void doSomethingElse(@Safe char[] chars) {}
     }
     
     @Test def testMemberAccessGuardedObject() {
