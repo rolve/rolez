@@ -65,7 +65,8 @@ Rolez program.
 ```
 
 In addition, you need to add the Rolez Maven repository, which always contains
-the most up-to-date version of the Rolez compiler and runtime library.
+the most up-to-date version of the Rolez compiler and runtime library (and the
+`rolez-parent` project above).
 
 ```xml
 <repositories>
