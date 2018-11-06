@@ -50,7 +50,17 @@ It uses a source-to-source compiler based on [Xtext][xtext] to translate Rolez
 code into Java code, which can be compiled to bytecode using a standard Java
 compiler.
 
-The simplest way to use the Rolez compiler is using [Maven][mvn].
+There are two ways to use the Rolez compiler, either from the command line,
+using [Maven][mvn], or using the [Eclipse IDE][eclipse].
+If you already have Maven installed on your system, using Maven is the quickest
+way to try out Rolez.
+Otherwise, or if you want to do more than some quick experiments, then we
+recommend to use Eclipse, as the Eclipse Rolez editor gives you some nice
+features, like syntax highlighting, tooltips, simple code completion, and
+automatic compilation including error markers.
+
+### Maven
+
 Create a new Maven project and add `rolez-parent` as the parent project to your
 `pom.xml` file, as follows.
 This will pull in all the necessary dependencies and configuration to compile a
@@ -89,10 +99,39 @@ You can find a complete *Hello World!* Maven project, including more detailed bu
 instructions, in the examples directory:
 [examples/helloworld](https://github.com/rolve/rolez/tree/master/examples/helloworld).
 
+### Eclipse
 
-## Using Rolez in Eclipse
+To use Rolez inside Eclipse, first you need to download and install the
+[Eclipse IDE for Java Developers][eclipse-java], if you haven't already.
+Rolez requires at least Eclipse Photon.
 
-*TODO*
+You can install the Rolez SDK plugin by going to the *Help* menu and selecting
+*Install New Software*.
+In the field that says "type or select a site", enter the Rolez update site:
+
+    http://rolve.gitlab.io/rolez/eclipse/
+
+and press Enter.
+Select the *Rolez SDK* item below and follow the dialog to finish the installation.
+
+After a restart, you are ready to create a Rolez project.
+In the menu, go to *File → New → Project* (**not** *Java Project*!) and then select
+*Rolez → Rolez Project*.
+Enter a name and press *Finish*; this will generate a Java project with Rolez support.
+The project already contains a `HelloWorld.rz` file that contains a Rolez program
+similar to the one above.
+In addition, you will find a `src-gen` folder, which contains the Java code that is
+generated from the Rolez code inside `HelloWorld.rz`.
+
+Modify the Rolez file and save it.
+If you did not introduce any compile errors, the file will be recompiled and the Java
+file will be updated immediately.
+You can have both the Rolez and Java file open in two editors next to each other, to
+see the changes happen right away.
+
+To execute the program, you simply open or select the generated Java file and press
+the green Run button.
+You should see the output of the program in the *Console* view.
 
 
 ## Declaring and Starting Tasks
@@ -188,3 +227,6 @@ You can find the complete *Pi* Maven project in the examples directory:
 [pr]: http://people.inf.ethz.ch/mfaes/publications/parallel-roles-corrected.pdf
 [xtext]: http://www.eclipse.org/Xtext/
 [mvn]: https://maven.apache.org/
+[eclipse]: https://www.eclipse.org/ide/
+[eclipse-java]: 
+https://www.eclipse.org/downloads/packages/release/2018-09/r/eclipse-ide-java-developers
