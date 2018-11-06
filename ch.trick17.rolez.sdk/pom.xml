@@ -8,4 +8,17 @@
     </parent>
     <artifactId>ch.trick17.rolez.sdk</artifactId>
     <packaging>eclipse-feature</packaging>
+    
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.eclipse.tycho.extras</groupId>
+                <artifactId>tycho-source-feature-plugin</artifactId>
+                <version>1.2.0</version>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>
