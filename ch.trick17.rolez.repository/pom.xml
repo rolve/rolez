@@ -25,6 +25,7 @@
                         <configuration>
                             <associateSites>
                                 <site>http://download.eclipse.org/xsemantics/milestones/</site>
+                                <site>http://repo1.maven.org/maven2/.m2e/connectors/m2eclipse-buildhelper/0.15.0/N/0.15.0.201207090124/</site>
                             </associateSites>
                         </configuration>
                     </execution>
