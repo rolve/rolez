@@ -52,12 +52,14 @@ compiler.
 
 There are two ways to use the Rolez compiler, either from the command line,
 using [Maven][mvn], or using the [Eclipse IDE][eclipse].
-If you already have Maven installed on your system, using Maven is the quickest
-way to try out Rolez.
+If you already have Maven installed on your system, using Maven from the
+command line is the quickest way to try out Rolez.
 Otherwise, or if you want to do more than some quick experiments, then we
-recommend to use Eclipse, as the Eclipse Rolez editor gives you some nice
+recommend to use Eclipse, as the Rolez SDK for Eclipse gives you some nice
 features, like syntax highlighting, tooltips, simple code completion, and
 automatic compilation including error markers.
+Plus, the Rolez SDK for Eclipse has Maven support too, so you can get the best
+of both worlds.
 
 ### Maven
 
@@ -99,13 +101,13 @@ You can find a complete *Hello World!* Maven project, including more detailed bu
 instructions, in the examples directory:
 [examples/helloworld](https://github.com/rolve/rolez/tree/master/examples/helloworld).
 
-### Eclipse
+### Rolez SDK for Eclipse
 
 To use Rolez inside Eclipse, first you need to download and install the
 [Eclipse IDE for Java Developers][eclipse-java], if you haven't already.
 Rolez requires at least Eclipse Photon.
 
-You can install the Rolez SDK plugin by going to the *Help* menu and selecting
+You can install the Rolez SDK for Eclipse by going to the *Help* menu and selecting
 *Install New Software*.
 In the field that says "type or select a site", enter the Rolez update site:
 
@@ -114,7 +116,7 @@ In the field that says "type or select a site", enter the Rolez update site:
 and press Enter.
 Select the *Rolez SDK* item below and follow the dialog to finish the installation.
 
-After a restart, you are ready to create a Rolez project.
+After a restart of Eclipse, you are ready to create a Rolez project.
 In the menu, go to *File → New → Project* (**not** *Java Project*!) and then select
 *Rolez → Rolez Project*.
 Enter a name and press *Finish*; this will generate a Java project with Rolez support.
@@ -132,6 +134,18 @@ see the changes happen right away.
 To execute the program, you simply open or select the generated Java file and press
 the green Run button.
 You should see the output of the program in the *Console* view.
+
+### Eclipse Maven Integration
+
+The Rolez SDK for Eclipse supports Maven projects, via the [M2Eclipse][m2eclipse]
+plugin (already part of Eclipse for Java Devs).
+
+To use the Eclipse Maven integration with Rolez, create a Rolez Maven project, as
+explained above, and then import it into Eclipse as follows:
+Select *File → Import*, then *Maven → Existing Maven Projects*, then browse to the
+directory that contains the `pom.xml` file and press *Finish*.
+After a short while, the project should be completely built and you should find the
+generated Java files under `target/generated-sources/rolez`.
 
 
 ## Declaring and Starting Tasks
@@ -230,3 +244,4 @@ You can find the complete *Pi* Maven project in the examples directory:
 [eclipse]: https://www.eclipse.org/ide/
 [eclipse-java]: 
 https://www.eclipse.org/downloads/packages/release/2018-09/r/eclipse-ide-java-developers
+[m2eclipse]: http://www.eclipse.org/m2e/
