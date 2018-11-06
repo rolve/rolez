@@ -24,7 +24,7 @@
                         </goals>
                         <configuration>
                             <associateSites>
-                                <site>https://dl.bintray.com/lorenzobettini/xsemantics/updates/1.10/</site>
+                                <site>http://download.eclipse.org/xsemantics/milestones/</site>
                             </associateSites>
                         </configuration>
                     </execution>
