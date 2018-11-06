@@ -5,6 +5,10 @@
       version="1.0.0.qualifier"
       provider-name="Michael Faes">
 
+   <requires>
+      <import feature="org.sonatype.m2e.buildhelper.feature" version="0.15.0.201207090124"/>
+   </requires>
+
    <plugin
          id="ch.trick17.rolez"
          download-size="0"
