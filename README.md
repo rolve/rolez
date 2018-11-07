@@ -250,6 +250,146 @@ run `mvn test`:
 - `ch.trick17.rolez.lib.tests`: Runtime system and standard library tests
 
 
+## Implementation Details
+
+This section provides some additional details about the Rolez language
+implementation, for people that are interested in studying or modifying the
+compiler or runtime system.
+
+### Overview
+
+Rolez is build on top of the Java platform (currently Java 8). The runtime
+system, which performs guarding and the role transitions, is implemented as a
+Java library. This library also contains implementations of the built-in Rolez
+classes like `Array` and `Slice`. The compiler is implemented with the
+[Xtext framework](http://www.eclipse.org/Xtext/) and transforms Rolez source
+code into Java source code, inserting role transition and guarding operations as
+calls to the runtime library where necessary. The generated Java code is
+compiled using a standard Java compiler and executed on a standard Java Virtual
+Machine (JVM).
+
+The Xtext framework is also based on the Java platform, and more specifically on
+the [Eclipse](https://www.eclipse.org/) platform. Hence, the compiler is 
+implemented in Java and in other languages that can be compiled into Java
+bytecode. In addition, the Rolez implementation uses the Java-based
+[Maven][mvn] build tool.
+
+According to Xtext conventions, the Rolez language infrastructure in divided
+into several modules, which correspond to directories inside `~/rolez`. The most
+important are the following:
+
+- `ch.trick17.rolez`: the compiler
+- `ch.trick17.rolez.lib`: the runtime system and Rolez standard library
+
+For both of these modules, there exists a `.test` module that contains the
+respective unit and integration tests. The rest of the modules mostly concern
+the Eclipse IDE support and are not discussed here.
+
+### Compiler
+
+The compiler is located in the `ch.trick17.rolez` directory. Most of its parts
+are implemented using [Xtend](http://www.eclipse.org/xtend/), a language very
+similar to Java, while some parts are implemented using a range of
+domain-specific languages (DSLs).
+
+**Syntax**:
+The syntax of Rolez is described using the "Xtext" language, in the
+`Rolez.xtext` file in `src/ch/trick17/rolez`. In addition to the Rolez syntax,
+this file also defines how the parsed elements are mapped to objects of the
+intermediate representation (IR) of the compiler. The Xtext framework generates
+an [Antlr](http://www.antlr.org/) grammar from the `Rolez.xtext` file, which in
+turn is used to generate a lexer and parser.
+
+**IR**:
+The structure of the IR (or "model" in Eclipse terminology) is defined in the
+`Rolez.xcore` file in the `model` directory. This is an
+[Xcore](https://wiki.eclipse.org/Xcore) file, which defines the IR classes,
+their properties, their methods, and their relationship to each other.
+
+**Type System and Semantic Checks**:
+The Rolez type system is implemented using the
+[Xsemantics](https://projects.eclipse.org/projects/modeling.xsemantics)
+language, a specific DSL for type systems. All typing rules are defined in the
+`Rolez.xsemantics` file in the `src/ch/trick17/rolez/typesystem` directory.
+Additional semantic checks are implemented using plain Xtend in
+`src/ch/trick17/rolez/validation/RolezValidator.xtend`.
+
+Like in Java, some semantic checks are based on dataflow analysis (e.g. whether
+a variable has been initialized on all paths to some statement), which in turn
+is based on control flow. The `cfg` subdirectory of the `validation` directory
+contains both the classes of the control flow graph (CFG) itself, as well as the
+code to construct it, while the `dataflow` subdirectory contains various
+concrete dataflow analyses.
+
+**Scoping**:
+In Xtext, scoping is handled somewhat separately from the other semantic checks.
+The scoping rules, including method overloading resolution, are implemented in
+the `src/ch/trick17/rolez/scoping/RolezScopeProvider.xtend` file. Apart from
+standard scoping rules similar to Java, this file also implements scoping for
+class slices, which are explained in the paper.
+
+**Code Generation**:
+Finally, the implementation of the Java code generation is located in the
+`src/ch/trick17/rolez/generator` directory. While the entry point for the code
+generator is in the `RolezGenerator.xtend` file, the `generator` directory
+contains various other relevant files, including two static analyses,
+`RoleAnalysis.xtend` and `ChildTasksAnalysis.xtend`, which are used to generate
+code with less redundant guarding.
+
+### Runtime System & Standard Library
+
+The Rolez runtime and standard library are in the `ch.trick17.rolez.lib`
+directory. The runtime system, which takes care of guarding and role
+transitions, is implemented in Java. The (minimal) standard library, which
+contains classes like `Array` and `String` is implemented using a mix of Rolez
+and Java.
+
+**Guarding**:
+Guarding is implemented in the `rolez.lang.Guarded` class defined in the
+`src/rolez/lang/Guarded.java` file. The Java classes generated from most Rolez
+classes extend the `Guarded` class and thus inherit its methods and fields,
+which implement guarding and individual role transitions.
+
+**Arrays and Slices**:
+Rolez arrays and (array) slices are implemented in the `rolez.lang.GuardedArray`
+and `rolez.lang.GuardedSlice` Java classes defined in the `GuardedArray.java`
+and `GuardedSlice.java` files in `src/rolez/lang` directory. Additional
+functionality related to slicing is found in the `SliceRange.java` and
+`partitioners.rz` files.
+
+**Tasks**:
+The implementation of Rolez tasks can be found in the `src/rolez/lang/Task.java`
+file. When tasks start and finish, they perform all the required role
+transitions. This includes collecting the objects that are reachable from the
+directly shared objects, to perform "joint role transitions", as described in
+the paper.
+
+**Standard Library**:
+The Rolez standard library so far only contains a few basic classes like
+`Array`, `String`, and `Math`. Most of these classes are implemented in Java
+or directly map to classes from the Java standard library. This is achieved
+using `mapped` classes. Such classes have no Rolez implementation, but only
+contain the field declarations and method signatures (including role
+declarations!) required to compile against them. The actual implementations
+of the methods is provided by the Java class that a Rolez class is mapped to.
+
+Most of the mapped Rolez standard library classes are defined in the following
+files:
+
+- `src/rolez/lang/lang.rz`: Contains basic classes such as `Array`, `String`,
+  and `Math`. Also includes the `Object` class, the base class for all Rolez
+  classes.
+- `src/rolez/lang/primitives.rz`: Contains classes related to the primitive
+  types `int`, `boolean`, etc.
+- `src/rolez/io/io.rz`: Contains a minimal set of classes to perform I/O.
+- `src/rolez/util/util.rz`: Contains a few utility classes like `Scanner` and
+  `Random`.
+
+In addition, there is a file `src/rolez/lang/partitioners.rz`, which contains
+the implementation of the three built-in partitioning schemes described in the
+paper.
+
+
 [threads]: http://www.eecs.berkeley.edu/Pubs/TechRpts/2006/EECS-2006-1.pdf
 [deterministic]: https://www.usenix.org/legacy/event/hotpar09/tech/full_papers/bocchino/bocchino_html/
 [pr]: http://people.inf.ethz.ch/mfaes/publications/parallel-roles-corrected.pdf
