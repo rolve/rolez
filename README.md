@@ -68,7 +68,7 @@ automatic compilation including error markers.
 Plus, the Rolez SDK for Eclipse has Maven support too, so you can get the best
 of both worlds.
 
-### Maven
+### Using Maven
 
 Create a new Maven project and add `rolez-parent` as the parent project to your
 `pom.xml` file, as follows.
@@ -108,7 +108,7 @@ You can find a complete *Hello World!* Maven project, including more detailed bu
 instructions, in the examples directory:
 [examples/helloworld](https://github.com/rolve/rolez/tree/master/examples/helloworld).
 
-### Rolez SDK for Eclipse
+### Using the Rolez SDK for Eclipse
 
 To use Rolez inside Eclipse, first you need to download and install the
 [Eclipse IDE for Java Developers][eclipse-java], if you haven't already.
@@ -153,6 +153,10 @@ Select *File → Import*, then *Maven → Existing Maven Projects*, then browse 
 directory that contains the `pom.xml` file and press *Finish*.
 After a short while, the project should be completely built and you should find the
 generated Java files under `target/generated-sources/rolez`.
+
+You can import any of the
+[Rolez example projects](https://github.com/rolve/rolez/tree/master/examples/)
+in the same way.
 
 
 ## Declaring and Starting Tasks
