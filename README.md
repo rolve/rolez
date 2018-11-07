@@ -11,8 +11,15 @@ sequential programs.
 
 Rolez is based on the *Parallel Roles* programming model, which is described in
 [this research paper][pr].
-Until this mini-tutorial is complete, we recommend to read Sections 1&ndash;3
-of the paper to understand the basics of Rolez.
+We recommend to read at least Sections 1, 2, and 4 of the paper to understand
+the basics of Rolez.
+(Sections 5 and 6 may be of interest too, as they describe two language features
+that are important for programs with data parallelism.)
+Another paper, titled *Efficient VM-Independent Runtime Checks for Parallel
+Programming*, describes the implementation of Rolez, in particular two
+optimization techniques that helped achieving good guarding performance.
+The paper is available from the [author's website][mfaes].
+
 For more background about deterministic parallel programming, see
 [this][threads] and [this article][deterministic].
 
@@ -392,7 +399,8 @@ paper.
 
 [threads]: http://www.eecs.berkeley.edu/Pubs/TechRpts/2006/EECS-2006-1.pdf
 [deterministic]: https://www.usenix.org/legacy/event/hotpar09/tech/full_papers/bocchino/bocchino_html/
-[pr]: http://people.inf.ethz.ch/mfaes/publications/parallel-roles-corrected.pdf
+[pr]: https://doi.org/10.1145/3276500
+[mfaes]: http://people.inf.ethz.ch/mfaes/
 [xtext]: http://www.eclipse.org/Xtext/
 [mvn]: https://maven.apache.org/
 [eclipse]: https://www.eclipse.org/ide/
