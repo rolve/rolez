@@ -231,9 +231,23 @@ You can find the complete *Pi* Maven project in the examples directory:
 *TODO*.
 
 
-## Compiling the Rolez Infrastructure
+## Building the Rolez Infrastructure
 
-*TODO*, but basically `mvn install -DskipTests` in the root directory.
+The Rolez compiler, runtime system, and standard library can be built using
+the following command:
+
+    mvn install -DskipTests
+
+Rolez uses the [Maven][mvn] build tool.
+The `-DskipTests` flag skips the testing phase.
+The tests of the Rolez runtime use a software model checker
+([Java PathFinder][jpf]) that checks all possible thread interleavings, which
+is why these tests take very long (hours).
+To execute the tests anyway, change to one of the following directories and
+run `mvn test`:
+
+- `ch.trick17.rolez.tests`: Compiler tests
+- `ch.trick17.rolez.lib.tests`: Runtime system and standard library tests
 
 
 [threads]: http://www.eecs.berkeley.edu/Pubs/TechRpts/2006/EECS-2006-1.pdf
@@ -245,3 +259,4 @@ You can find the complete *Pi* Maven project in the examples directory:
 [eclipse-java]: 
 https://www.eclipse.org/downloads/packages/release/2018-09/r/eclipse-ide-java-developers
 [m2eclipse]: http://www.eclipse.org/m2e/
+[jpf]: https://github.com/javapathfinder/jpf-core
