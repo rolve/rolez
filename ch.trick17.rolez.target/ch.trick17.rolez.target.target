@@ -2,7 +2,7 @@
 <locations>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.xsemantics.runtime.feature.feature.group" version="0.0.0"/>
-<repository location="http://download.eclipse.org/xsemantics/milestones/"/>
+<repository location="https://download.eclipse.org/xsemantics/milestones/"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.platform.feature.group" version="0.0.0"/>
@@ -14,22 +14,22 @@
 <unit id="org.eclipse.xtext.sdk.feature.group" version="0.0.0"/>
 <unit id="org.eclipse.xtend" version="0.0.0"/>
 <unit id="org.eclipse.xtend.typesystem.emf" version="0.0.0"/>
-<repository location="http://download.eclipse.org/releases/photon"/>
+<repository location="https://download.eclipse.org/releases/photon"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.emf.mwe2.launcher.feature.group" version="0.0.0"/>
-<repository location="http://download.eclipse.org/modeling/emft/mwe/updates/releases/2.9.1/"/>
+<repository location="https://download.eclipse.org/modeling/emft/mwe/updates/releases/2.9.1/"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
 	<unit id="com.google.gson" version="2.7.0.v20170129-0911"/>
 	<unit id="org.antlr.runtime" version="3.2.0.v201101311130"/>
-	<unit id="org.objectweb.asm" version="6.1.1.v20180414-0329"/>
-	<unit id="org.objectweb.asm.tree" version="6.1.1.v20180414-0329"/>
-	<repository location="http://download.eclipse.org/tools/orbit/downloads/drops/S20180504181223/repository"/>
+	<unit id="org.objectweb.asm" version="6.2.1.v20180823-1831"/>
+	<unit id="org.objectweb.asm.tree" version="6.2.1.v20180823-1831"/>
+	<repository location="https://download.eclipse.org/modeling/tmf/xtext/updates/orbit/2018-09"/>
 </location>
     <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
         <unit id="org.sonatype.m2e.buildhelper.feature.feature.group" version="0.15.0.201207090124"/>
-        <repository location="http://repo1.maven.org/maven2/.m2e/connectors/m2eclipse-buildhelper/0.15.0/N/0.15.0.201207090124/"/>
+        <repository location="https://repo1.maven.org/maven2/.m2e/connectors/m2eclipse-buildhelper/0.15.0/N/0.15.0.201207090124/"/>
     </location>
 </locations>
 </target>
