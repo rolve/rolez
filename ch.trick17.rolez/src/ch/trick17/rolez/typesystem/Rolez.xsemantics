@@ -238,7 +238,7 @@ from {
     G |- e.left  : var Type  leftType
     G |- e.right : var Type rightType
 
-    val stringType = newRoleType(createReadOnly, newClassRef(utils.findClass(stringClassName, e)))
+    val stringType = newRoleType(createReadWrite, newClassRef(utils.findClass(stringClassName, e)))
     {
         leftType instanceof NumericType && rightType instanceof NumericType
     } or {
