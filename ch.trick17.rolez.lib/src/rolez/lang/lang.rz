@@ -75,6 +75,8 @@ object System mapped to java.lang.System {
     mapped val err: readonly PrintStream
     
     mapped def readonly exit(code: int):
+    mapped def readonly arraycopy(src: readonly Object, srcPos: int,
+        dest: readwrite Object, destPos: int, length: int):
 }
 
 object Math mapped to java.lang.Math {
