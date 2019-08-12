@@ -10,8 +10,6 @@
     <packaging>eclipse-plugin</packaging>
 
     <properties>
-        <ecoreXtextVersion>1.4.0</ecoreXtextVersion>
-        <xcoreVersion>1.7.0</xcoreVersion>
         <xcoreOutputDir>${basedir}/xcore-gen</xcoreOutputDir>
         <xsemanticsOutputDir>${basedir}/xsemantics-gen</xsemanticsOutputDir>
     </properties>
@@ -149,6 +147,12 @@
                         <groupId>org.eclipse.emf</groupId>
                         <artifactId>org.eclipse.emf.codegen.ecore.xtext</artifactId>
                         <version>${ecoreXtextVersion}</version>
+                        <exclusions>
+                            <exclusion>
+                                <groupId>org.eclipse.jdt</groupId>
+                                <artifactId>org.eclipse.jdt.core</artifactId>
+                            </exclusion>
+                        </exclusions>
                     </dependency>
                     <dependency>
                         <groupId>org.eclipse.emf</groupId>

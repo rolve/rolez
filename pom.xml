@@ -10,6 +10,8 @@
         <xtextVersion>2.15.0</xtextVersion>
         <tychoVersion>1.2.0</tychoVersion>
         <xsemanticsVersion>1.14.0-SNAPSHOT</xsemanticsVersion>
+        <ecoreXtextVersion>1.4.0</ecoreXtextVersion>
+        <xcoreVersion>1.7.0</xcoreVersion>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
