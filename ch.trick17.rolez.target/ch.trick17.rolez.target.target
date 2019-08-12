@@ -2,7 +2,7 @@
 <locations>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.xsemantics.runtime.feature.feature.group" version="0.0.0"/>
-<repository location="https://download.eclipse.org/xsemantics/milestones/"/>
+<repository location="https://download.eclipse.org/xsemantics/milestones/1.14/"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.platform.feature.group" version="0.0.0"/>
