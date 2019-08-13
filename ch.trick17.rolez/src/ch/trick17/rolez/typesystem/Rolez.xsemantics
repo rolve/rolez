@@ -83,7 +83,7 @@ system ch.trick17.rolez.typesystem.RolezSystem
 validatorExtends AbstractRolezValidator
 
 inject RolezUtils utils
-inject extension RolezFactory _
+inject extension RolezFactory __
 
 auxiliary {
     leastCommonSuperrole(Role r1, Role r2): Role
@@ -505,7 +505,7 @@ from {
 }
 
 axiom WReturnNothing
-    G |- ReturnNothing _
+    G |- ReturnNothing __
 
 rule WReturnExpr
     G |- ReturnExpr r
