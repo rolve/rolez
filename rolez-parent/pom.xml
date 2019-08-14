@@ -13,6 +13,8 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <rolezVersion>1.0.0-SNAPSHOT</rolezVersion>
         <rolezOutputDir>${project.build.directory}/generated-sources/rolez</rolezOutputDir>
+        <xtextVersion>2.15.0</xtextVersion>
+        <ecoreXtextVersion>1.4.0</ecoreXtextVersion>
     </properties>
 
     <dependencies>
@@ -43,7 +45,7 @@
                     <plugin>
                         <groupId>org.eclipse.xtext</groupId>
                         <artifactId>xtext-maven-plugin</artifactId>
-                        <version>2.15.0</version>
+                        <version>${xtextVersion}</version>
                         <executions>
                             <execution>
                                 <goals>
@@ -68,6 +70,17 @@
                                 <groupId>ch.trick17.rolez</groupId>
                                 <artifactId>ch.trick17.rolez</artifactId>
                                 <version>${rolezVersion}</version>
+                            </dependency>
+                            <dependency>
+                                <groupId>org.eclipse.emf</groupId>
+                                <artifactId>org.eclipse.emf.codegen.ecore.xtext</artifactId>
+                                <version>${ecoreXtextVersion}</version>
+                                <exclusions>
+                                    <exclusion>
+                                        <groupId>org.eclipse.jdt</groupId>
+                                        <artifactId>org.eclipse.jdt.core</artifactId>
+                                    </exclusion>
+                                </exclusions>
                             </dependency>
                         </dependencies>
                     </plugin>
